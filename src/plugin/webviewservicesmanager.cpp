@@ -49,9 +49,7 @@ void
 WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     // called by the plugin manager whenever a plugin is loaded
-    auto registerWebViewHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard lk(pmMtx_);
-
+    auto registerWebViewHandler = [this](void* data, std::mutex&) {
         WebViewHandlerPtr ptr {(static_cast<WebViewHandler*>(data))};
 
         // make sure pointer is valid
@@ -64,15 +62,15 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
         auto id = ptr->id();
 
         // add the handler to our map
+        std::unique_lock<std::mutex> lk(operationState_.mutex());
+        operationState_.waitUntilReady(lk);
         handlersIdMap[id] = std::move(ptr);
 
         return 0;
     };
 
     // called by the plugin manager whenever a plugin is unloaded
-    auto unregisterWebViewHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard pluginManagerLock(pmMtx_);
-
+    auto unregisterWebViewHandler = [this](void* data, std::mutex&) {
         WebViewHandler* ptr {(static_cast<WebViewHandler*>(data))};
 
         // make sure pointer is valid
@@ -85,7 +83,11 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
         auto id = ptr->id();
 
         // remove from our map, unique_ptr gets destroyed
-        handlersIdMap.erase(id);
+        std::unique_lock<std::mutex> lk(operationState_.mutex());
+        operationState_.beginUnload(lk);
+        if (auto it = handlersIdMap.find(id); it != handlersIdMap.end())
+            handlersIdMap.erase(it);
+        operationState_.endUnload(lk);
 
         return true;
     };
@@ -123,7 +125,13 @@ WebViewServicesManager::sendWebViewMessage(const std::string& pluginId,
                                            const std::string& messageId,
                                            const std::string& payload)
 {
-    if (auto* handler = getWebViewHandlerPointer(pluginId)) {
+    auto operation = operationState_.acquire();
+    WebViewHandler* handler = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        handler = getWebViewHandlerPointer(pluginId);
+    }
+    if (handler) {
         handler->pluginWebViewMessage(webViewId, messageId, payload);
     }
 }
@@ -134,7 +142,13 @@ WebViewServicesManager::sendWebViewAttach(const std::string& pluginId,
                                           const std::string& webViewId,
                                           const std::string& action)
 {
-    if (auto* handler = getWebViewHandlerPointer(pluginId)) {
+    auto operation = operationState_.acquire();
+    WebViewHandler* handler = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        handler = getWebViewHandlerPointer(pluginId);
+    }
+    if (handler) {
         return handler->pluginWebViewAttach(accountId, webViewId, action);
     }
     return "";
@@ -143,7 +157,13 @@ WebViewServicesManager::sendWebViewAttach(const std::string& pluginId,
 void
 WebViewServicesManager::sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
 {
-    if (auto* handler = getWebViewHandlerPointer(pluginId)) {
+    auto operation = operationState_.acquire();
+    WebViewHandler* handler = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        handler = getWebViewHandlerPointer(pluginId);
+    }
+    if (handler) {
         handler->pluginWebViewDetach(webViewId);
     }
 }

@@ -17,9 +17,9 @@
 #pragma once
 #include <string>
 #include <map>
-#include <cstdint>
 
-enum class StreamType : uint8_t { audio, video };
+// NOLINTNEXTLINE(performance-enum-size)
+enum class StreamType { audio, video };
 
 /**
  * @struct StreamData

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "pluginoperationguard.h"
 #include "webviewhandler.h"
 #include <memory>
 #include <map>
@@ -101,6 +102,7 @@ private:
     /**
      * @brief map of all registered handlers, pluginId -> HandlerPtr
      */
-    std::map<std::string, WebViewHandlerPtr> handlersIdMap {};
+    std::map<std::string, WebViewHandlerPtr> handlersIdMap;
+    mutable PluginOperationGuardState operationState_;
 };
 } // namespace jami

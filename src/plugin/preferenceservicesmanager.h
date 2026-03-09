@@ -17,6 +17,7 @@
 #pragma once
 
 #include "preferencehandler.h"
+#include "pluginoperationguard.h"
 
 #include "noncopyable.h"
 
@@ -92,5 +93,6 @@ private:
 
     // Components that a plugin can register through registerPreferenceHandler service.
     std::list<PreferenceHandlerPtr> handlers_;
+    mutable PluginOperationGuardState operationState_;
 };
 } // namespace jami

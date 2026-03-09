@@ -17,6 +17,7 @@
 #pragma once
 
 #include "mediahandler.h"
+#include "pluginoperationguard.h"
 #include "streamdata.h"
 
 #include "noncopyable.h"
@@ -48,7 +49,7 @@ public:
      * from the Plugin System once a plugin is loaded or unloaded.
      * @param pluginManager
      */
-    CallServicesManager(PluginManager& pluginManager);
+    explicit CallServicesManager(PluginManager& pluginManager);
 
     ~CallServicesManager();
 
@@ -131,7 +132,7 @@ private:
      * @param data
      * @param subject
      */
-    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr, const StreamData& data, AVSubjectSPtr& subject);
+    static void notifyAVSubject(CallMediaHandler& callMediaHandlerPtr, const StreamData& data, AVSubjectSPtr& subject);
 
     void toggleCallMediaHandler(const uintptr_t mediaHandlerId, const std::string& callId, const bool toggle);
 
@@ -141,7 +142,7 @@ private:
      * @param mediaHandler
      * @return True if a MediaHandler expects a video stream.
      */
-    bool isVideoType(const CallMediaHandlerPtr& mediaHandler);
+    static bool isVideoType(CallMediaHandler& mediaHandler);
 
     /**
      * @brief Checks if the MediaHandler was properly attached to a AV stream.
@@ -149,11 +150,14 @@ private:
      * @param mediaHandler
      * @return True if a MediaHandler is attached to a AV stream.
      */
-    bool isAttached(const CallMediaHandlerPtr& mediaHandler);
+    static bool isAttached(CallMediaHandler& mediaHandler);
+
+    static void restartSender(const std::string& callId);
 
     // Components that a plugin can register through registerMediaHandler service.
     // These objects can then be activated with toggleCallMediaHandler.
     std::list<CallMediaHandlerPtr> callMediaHandlers_;
+    std::map<uintptr_t, std::string> handlerNames_;
 
     // When there is a SIPCall, AVSubjects are created there.
     // Here we store their references in order to make them interact with MediaHandlers.
@@ -163,5 +167,6 @@ private:
     // Component that stores MediaHandlers' status for each existing call.
     // A map of callIds and MediaHandler-status pairs.
     std::map<std::string, std::map<uintptr_t, bool>> mediaHandlerToggled_;
+    mutable PluginOperationGuardState operationState_;
 };
 } // namespace jami

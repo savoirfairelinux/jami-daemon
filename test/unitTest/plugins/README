@@ -35,10 +35,10 @@ The default test plugin is TestSuite.
 Test plugin build
 -----------------
 
-For the CI tests, which uses a Ubuntu 20.04 docker, the test suite must be build with an appropriate glibc version, meaning a glib 3.31 or older.
+For the CI tests, which uses a Ubuntu 20.04 docker, the test suite must be build with an appropriate glibc version, meaning a glib 2.31 or older.
 
 Jami supports systems from Ubuntu 18.04, which uses glib 2.27.
 
 If the plugin is build within a Ubuntu 18.04, it should work on all Jami supported platforms.
 
-TO check your system glib version: `ldd --version`
+To check your system glib version: `ldd --version`

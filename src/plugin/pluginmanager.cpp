@@ -46,8 +46,12 @@ PluginManager::~PluginManager()
 bool
 PluginManager::load(const std::string& path)
 {
-    auto it = dynPluginMap_.find(path);
-    if (it != dynPluginMap_.end()) {
+    bool alreadyLoaded = false;
+    {
+        std::lock_guard lk(mutex_);
+        alreadyLoaded = dynPluginMap_.contains(path);
+    }
+    if (alreadyLoaded) {
         unload(path);
     }
 
@@ -71,7 +75,10 @@ PluginManager::load(const std::string& path)
         return false;
 
     // Put Plugin loader into loaded plugins Map.
-    dynPluginMap_[path] = {std::move(plugin), true};
+    {
+        std::lock_guard lk(mutex_);
+        dynPluginMap_[path] = {std::move(plugin), true};
+    }
     return true;
 }
 
@@ -79,13 +86,29 @@ bool
 PluginManager::unload(const std::string& path)
 {
     destroyPluginComponents(path);
-    auto it = dynPluginMap_.find(path);
-    if (it != dynPluginMap_.end()) {
-        std::lock_guard lk(mtx_);
-        exitFunc_[path]();
+    JAMI_PluginExitFunc exitFunc = nullptr;
+    std::shared_ptr<Plugin> pluginKeeper;
+    {
+        std::lock_guard lk(mutex_);
+        auto it = dynPluginMap_.find(path);
+        if (it == dynPluginMap_.end())
+            return true;
+        pluginKeeper = it->second.first;
+        if (auto exitIt = exitFunc_.find(path); exitIt != exitFunc_.end()) {
+            exitFunc = exitIt->second;
+            exitFunc_.erase(exitIt);
+        }
         dynPluginMap_.erase(it);
-        exitFunc_.erase(path);
     }
+
+    if (exitFunc) {
+        try {
+            exitFunc();
+        } catch (...) {
+            JAMI_ERR() << "Exception caught during plugin exit";
+        }
+    }
+    pluginKeeper.reset();
 
     return true;
 }
@@ -93,6 +116,7 @@ PluginManager::unload(const std::string& path)
 bool
 PluginManager::checkLoadedPlugin(const std::string& rootPath) const
 {
+    std::lock_guard lk(mutex_);
     for (const auto& item : dynPluginMap_) {
         if (item.first.find(rootPath) != std::string::npos && item.second.second)
             return true;
@@ -103,6 +127,7 @@ PluginManager::checkLoadedPlugin(const std::string& rootPath) const
 std::vector<std::string>
 PluginManager::getLoadedPlugins() const
 {
+    std::lock_guard lk(mutex_);
     std::vector<std::string> res {};
     for (const auto& pair : dynPluginMap_) {
         if (pair.second.second)
@@ -114,15 +139,25 @@ PluginManager::getLoadedPlugins() const
 void
 PluginManager::destroyPluginComponents(const std::string& path)
 {
-    auto itComponents = pluginComponentsMap_.find(path);
-    if (itComponents != pluginComponentsMap_.end()) {
-        for (auto pairIt = itComponents->second.begin(); pairIt != itComponents->second.end();) {
-            auto clcm = componentsLifeCycleManagers_.find(pairIt->first);
-            if (clcm != componentsLifeCycleManagers_.end()) {
-                clcm->second.destroyComponent(pairIt->second, mtx_);
-                pairIt = itComponents->second.erase(pairIt);
-            }
+    ComponentPtrList components;
+    {
+        std::lock_guard lk(mutex_);
+        if (auto itComponents = pluginComponentsMap_.find(path); itComponents != pluginComponentsMap_.end()) {
+            components = std::move(itComponents->second);
+            pluginComponentsMap_.erase(itComponents);
         }
+    }
+
+    for (auto& component : components) {
+        ComponentFunction destroyComponent;
+        {
+            std::lock_guard lk(mutex_);
+            auto clcm = componentsLifeCycleManagers_.find(component.first);
+            if (clcm == componentsLifeCycleManagers_.end())
+                continue;
+            destroyComponent = clcm->second.destroyComponent;
+        }
+        destroyComponent(component.second, mutex_);
     }
 }
 
@@ -130,10 +165,16 @@ bool
 PluginManager::callPluginInitFunction(const std::string& path)
 {
     bool returnValue {false};
-    auto it = dynPluginMap_.find(path);
-    if (it != dynPluginMap_.end()) {
+    std::shared_ptr<Plugin> loadedPlugin;
+    {
+        std::lock_guard lk(mutex_);
+        auto it = dynPluginMap_.find(path);
+        if (it != dynPluginMap_.end())
+            loadedPlugin = it->second.first;
+    }
+    if (loadedPlugin) {
         // Since the Plugin was found it's of type DLPlugin with a valid init symbol
-        std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second.first);
+        std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(loadedPlugin);
         const auto& initFunc = plugin->getInitFunction();
         JAMI_PluginExitFunc exitFunc = nullptr;
 
@@ -162,7 +203,7 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
 {
     // Here we already know that Plugin is of type DLPlugin with a valid init symbol
     const auto& initFunc = plugin->getInitFunction();
-    DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
+    DLPlugin* pluginPtr = dynamic_cast<DLPlugin*>(plugin.get());
     JAMI_PluginExitFunc exitFunc = nullptr;
 
     pluginPtr->apiContext_ = this;
@@ -209,13 +250,17 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
         return false;
     }
 
-    exitFunc_[pluginPtr->getPath()] = exitFunc;
+    {
+        std::lock_guard lk(mutex_);
+        exitFunc_[pluginPtr->getPath()] = exitFunc;
+    }
     return true;
 }
 
 bool
 PluginManager::registerService(const std::string& name, ServiceFunction&& func)
 {
+    std::lock_guard lk(mutex_);
     services_[name] = std::forward<ServiceFunction>(func);
     return true;
 }
@@ -223,6 +268,7 @@ PluginManager::registerService(const std::string& name, ServiceFunction&& func)
 void
 PluginManager::unRegisterService(const std::string& name)
 {
+    std::lock_guard lk(mutex_);
     services_.erase(name);
 }
 
@@ -230,13 +276,16 @@ int32_t
 PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, void* data)
 {
     // Search if desired service exists
-    const auto& iterFunc = services_.find(name);
-    if (iterFunc == services_.cend()) {
-        JAMI_ERR() << "Services not found: " << name;
-        return -1;
+    ServiceFunction func;
+    {
+        std::lock_guard lk(mutex_);
+        const auto& iterFunc = services_.find(name);
+        if (iterFunc == services_.cend()) {
+            JAMI_ERR() << "Services not found: " << name;
+            return -1;
+        }
+        func = iterFunc->second;
     }
-
-    const auto& func = iterFunc->second;
 
     try {
         // Call service with data
@@ -250,20 +299,24 @@ PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, vo
 int32_t
 PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, void* data)
 {
-    const auto& iter = componentsLifeCycleManagers_.find(name);
-    if (iter == componentsLifeCycleManagers_.end()) {
-        JAMI_ERR() << "Component lifecycle manager not found: " << name;
-        return -1;
+    ComponentLifeCycleManager componentLifecycleManager;
+    {
+        std::lock_guard lk(mutex_);
+        const auto& iter = componentsLifeCycleManagers_.find(name);
+        if (iter == componentsLifeCycleManagers_.end()) {
+            JAMI_ERR() << "Component lifecycle manager not found: " << name;
+            return -1;
+        }
+        componentLifecycleManager = iter->second;
     }
 
-    const auto& componentLifecycleManager = iter->second;
-
     try {
-        int32_t r = componentLifecycleManager.takeComponentOwnership(data, mtx_);
-        if (r == 0) {
+        int32_t result = componentLifecycleManager.takeComponentOwnership(data, mutex_);
+        if (result == 0) {
+            std::lock_guard lk(mutex_);
             pluginComponentsMap_[plugin->getPath()].emplace_back(name, data);
         }
-        return r;
+        return result;
     } catch (const std::runtime_error& e) {
         JAMI_ERR() << e.what();
         return -1;
@@ -292,6 +345,7 @@ PluginManager::registerObjectFactory(const char* type, const JAMI_PluginObjectFa
         factoryData.destroy(o, factoryData.closure);
     };
     ObjectFactory factory = {factoryData, deleter};
+    std::lock_guard lk(mutex_);
 
     // Wildcard registration
     if (key == "*") {
@@ -300,7 +354,7 @@ PluginManager::registerObjectFactory(const char* type, const JAMI_PluginObjectFa
     }
 
     // Fails on duplicate for exactMatch map
-    if (exactMatchMap_.find(key) != exactMatchMap_.end())
+    if (exactMatchMap_.contains(key))
         return false;
 
     exactMatchMap_[key] = factory;
@@ -312,6 +366,7 @@ PluginManager::registerComponentManager(const std::string& name,
                                         ComponentFunction&& takeOwnership,
                                         ComponentFunction&& destroyComponent)
 {
+    std::lock_guard lk(mutex_);
     componentsLifeCycleManagers_[name] = {std::forward<ComponentFunction>(takeOwnership),
                                           std::forward<ComponentFunction>(destroyComponent)};
     return true;
@@ -329,27 +384,38 @@ PluginManager::createObject(const std::string& type)
     };
 
     // Try to find an exact match
-    const auto& factoryIter = exactMatchMap_.find(type);
-    if (factoryIter != exactMatchMap_.end()) {
-        const auto& factory = factoryIter->second;
+    ObjectFactory factory;
+    bool hasExactFactory = false;
+    ObjectFactoryVec wildCardFactories;
+    {
+        std::lock_guard lk(mutex_);
+        if (const auto factoryIter = exactMatchMap_.find(type); factoryIter != exactMatchMap_.end()) {
+            factory = factoryIter->second;
+            hasExactFactory = true;
+        } else {
+            wildCardFactories = wildCardVec_;
+        }
+    }
+
+    if (hasExactFactory) {
         auto* object = factory.data.create(&op, factory.data.closure);
         if (object)
             return {object, factory.deleter};
     }
 
     // Try to find a wildcard match
-    for (const auto& factory : wildCardVec_) {
-        auto* object = factory.data.create(&op, factory.data.closure);
+    for (const auto& wildCardFactory : wildCardFactories) {
+        auto* object = wildCardFactory.data.create(&op, wildCardFactory.data.closure);
         if (object) {
             // Promote registration to exactMatch_
             // (but keep also wildcard registration for other object types)
-            int32_t res = registerObjectFactory(op.type, factory.data);
+            int32_t res = registerObjectFactory(op.type, wildCardFactory.data);
             if (res < 0) {
                 JAMI_ERR() << "failed to register object " << op.type;
                 return {nullptr, nullptr};
             }
 
-            return {object, factory.deleter};
+            return {object, wildCardFactory.deleter};
         }
     }
 

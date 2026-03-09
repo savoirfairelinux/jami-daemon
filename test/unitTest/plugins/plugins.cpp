@@ -48,34 +48,34 @@ struct CallData
 {
     struct Signal
     {
-        Signal(const std::string& name, const std::string& event = {})
+        explicit Signal(const std::string& name, const std::string& event = {})
             : name_(std::move(name))
             , event_(std::move(event)) {};
 
-        std::string name_ {};
-        std::string event_ {};
+        std::string name_;
+        std::string event_;
     };
 
     CallData() = default;
     CallData(CallData&& other) = delete;
     CallData(const CallData& other)
-    {
-        accountId_ = std::move(other.accountId_);
-        listeningPort_ = other.listeningPort_;
-        userName_ = std::move(other.userName_);
-        alias_ = std::move(other.alias_);
-        callId_ = std::move(other.callId_);
-        signals_ = std::move(other.signals_);
-    };
+        : accountId_(std::move(other.accountId_))
+        , userName_(std::move(other.userName_))
+        , alias_(std::move(other.alias_))
+        , listeningPort_(other.listeningPort_)
+        , callId_(std::move(other.callId_))
+        , signals_(std::move(other.signals_)) {
 
-    std::string accountId_ {};
-    std::string userName_ {};
-    std::string alias_ {};
+        };
+
+    std::string accountId_;
+    std::string userName_;
+    std::string alias_;
     uint16_t listeningPort_ {0};
-    std::string toUri_ {};
-    std::string callId_ {};
+    std::string toUri_;
+    std::string callId_;
     std::vector<Signal> signals_;
-    std::condition_variable cv_ {};
+    std::condition_variable cv_;
     std::mutex mtx_;
 };
 
@@ -86,7 +86,7 @@ public:
     {
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
+        if (not jami::Manager::initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
     ~PluginsTest() { libjami::fini(); }
@@ -109,19 +109,19 @@ private:
                                const std::vector<libjami::MediaMap>& mediaList,
                                CallData& callData);
 
-    std::string name_ {};
-    std::string jplPath_ {};
-    std::string certPath_ {};
-    std::string pluginCertNotFound_ {};
-    std::string pluginNotSign_ {};
-    std::string pluginFileNotSign_ {};
-    std::string pluginManifestChanged_ {};
-    std::string pluginNotSignByIssuer_ {};
-    std::string pluginNotFoundPath_ {};
-    std::unique_ptr<dht::crypto::Certificate> cert_ {};
-    std::string installationPath_ {};
-    std::vector<std::string> mediaHandlers_ {};
-    std::vector<std::string> chatHandlers_ {};
+    std::string name_;
+    std::string jplPath_;
+    std::string certPath_;
+    std::string pluginCertNotFound_;
+    std::string pluginNotSign_;
+    std::string pluginFileNotSign_;
+    std::string pluginManifestChanged_;
+    std::string pluginNotSignByIssuer_;
+    std::string pluginNotFoundPath_;
+    std::unique_ptr<dht::crypto::Certificate> cert_;
+    std::string installationPath_;
+    std::vector<std::string> mediaHandlers_;
+    std::vector<std::string> chatHandlers_;
 
     void testEnable();
     void testCertificateVerification();
@@ -720,7 +720,7 @@ PluginsTest::testMessage()
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
         [&](const std::string& /*accountId*/,
             const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*metadatas*/) {
+            const std::map<std::string, std::string>& /*metadatas*/) {
             requestReceived = true;
             cv.notify_one();
         }));
@@ -779,7 +779,7 @@ PluginsTest::testMessage()
         }
     }
 
-    // Unregister custom signal handlers to prevent segfault when uninstalling
+    // Unregister custom signal handlers before cleanup.
     libjami::unregisterSignalHandlers();
 
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));

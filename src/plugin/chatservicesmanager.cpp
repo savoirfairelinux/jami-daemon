@@ -22,6 +22,9 @@
 #include "jamidht/jamiaccount.h"
 #include "fileutils.h"
 
+#include <filesystem>
+#include <vector>
+
 namespace jami {
 
 ChatServicesManager::ChatServicesManager(PluginManager& pluginManager)
@@ -35,44 +38,61 @@ void
 ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     // registerChatHandler may be called by the PluginManager upon loading a plugin.
-    auto registerChatHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard lk(pmMtx_);
+    auto registerChatHandler = [this](void* data, std::mutex&) {
         ChatHandlerPtr ptr {(static_cast<ChatHandler*>(data))};
 
         if (!ptr)
             return -1;
-        handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
-        std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+        const auto details = ptr->getChatHandlerDetails();
+        const auto handlerName = details.at("name");
+        const auto handlerId = reinterpret_cast<uintptr_t>(ptr.get());
+        std::unique_lock<std::mutex> lk(operationState_.mutex());
+        operationState_.waitUntilReady(lk);
+        handlersNameMap_[handlerName] = handlerId;
+        handlerNames_[handlerId] = handlerName;
         // Adding preference that tells us to automatically activate a ChatHandler.
-        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"),
-                                                           ptr->id().substr(0, found));
+        PluginPreferencesUtils::addAlwaysHandlerPreference(
+            handlerName, std::filesystem::path(ptr->id()).parent_path().string());
         chatHandlers_.emplace_back(std::move(ptr));
         return 0;
     };
 
     // unregisterChatHandler may be called by the PluginManager while unloading.
-    auto unregisterChatHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard lk(pmMtx_);
+    auto unregisterChatHandler = [this](void* data, std::mutex&) {
+        ChatHandlerPtr removedHandler;
+        std::vector<chatSubjectPtr> subjectsToDetach;
+        std::unique_lock<std::mutex> lk(operationState_.mutex());
+        operationState_.beginUnload(lk);
         auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(), [data](ChatHandlerPtr& handler) {
-            return (handler.get() == data);
+            return handler.get() == data;
         });
 
         if (handlerIt != chatHandlers_.end()) {
+            const auto handlerId = reinterpret_cast<uintptr_t>(handlerIt->get());
+            removedHandler = std::move(*handlerIt);
+            chatHandlers_.erase(handlerIt);
+
             for (auto& toggledList : chatHandlerToggled_) {
-                auto handlerId = std::find_if(toggledList.second.begin(),
-                                              toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
-                                                  return (handlerId == id);
-                                              });
-                // If ChatHandler is attempting to destroy one which is currently in use, we deactivate it.
-                if (handlerId != toggledList.second.end()) {
-                    (*handlerIt)->detach(chatSubjects_[toggledList.first]);
-                    toggledList.second.erase(handlerId);
+                if (toggledList.second.erase(handlerId) != 0) {
+                    auto subjectIt = chatSubjects_.find(toggledList.first);
+                    if (subjectIt != chatSubjects_.end())
+                        subjectsToDetach.emplace_back(subjectIt->second);
                 }
             }
-            handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
-            chatHandlers_.erase(handlerIt);
+
+            if (const auto nameIt = handlerNames_.find(handlerId); nameIt != handlerNames_.end()) {
+                handlersNameMap_.erase(nameIt->second);
+                handlerNames_.erase(nameIt);
+            }
         }
+
+        lk.unlock();
+        if (removedHandler) {
+            for (auto& subject : subjectsToDetach)
+                removedHandler->detach(subject);
+        }
+        lk.lock();
+        operationState_.endUnload(lk);
         return true;
     };
 
@@ -106,12 +126,16 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
 bool
 ChatServicesManager::hasHandlers() const
 {
+    auto operation = operationState_.acquire();
+    std::lock_guard<std::mutex> lk(operationState_.mutex());
     return not chatHandlers_.empty();
 }
 
 std::vector<std::string>
 ChatServicesManager::getChatHandlers() const
 {
+    auto operation = operationState_.acquire();
+    std::lock_guard<std::mutex> lk(operationState_.mutex());
     std::vector<std::string> res;
     res.reserve(chatHandlers_.size());
     for (const auto& chatHandler : chatHandlers_) {
@@ -123,47 +147,81 @@ ChatServicesManager::getChatHandlers() const
 void
 ChatServicesManager::publishMessage(const pluginMessagePtr& message)
 {
-    if (message->fromPlugin or chatHandlers_.empty())
+    if (message->fromPlugin)
         return;
 
+    auto operation = operationState_.acquire();
     std::pair<std::string, std::string> mPair(message->accountId, message->peerId);
-    auto& handlers = chatHandlerToggled_[mPair];
-    auto& chatAllowDenySet = allowDenyList_[mPair];
+    std::vector<std::pair<ChatHandler*, chatSubjectPtr>> attachments;
+    ChatHandlerList allowDenyList;
+    chatSubjectPtr subject;
+    std::size_t publishCount = 0;
+    bool persistAllowDeny = false;
 
-    // Search for activation flag.
-    for (auto& chatHandler : chatHandlers_) {
-        std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
-        std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        // toggle is true if we should automatically activate the ChatHandler.
-        bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
-                                                                  chatHandlerName,
-                                                                  message->accountId);
-        // toggle is overwritten if we have previously activated/deactivated the ChatHandler
-        // for the given conversation.
-        auto allowedIt = chatAllowDenySet.find(chatHandlerName);
-        if (allowedIt != chatAllowDenySet.end())
-            toggle = (*allowedIt).second;
-        bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
-        if (toggle || toggled) {
-            // Creates chat subjects if it doesn't exist yet.
-            auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
-                                .first->second;
-            if (!toggled) {
-                // If activation is expected, and not yet performed, we perform activation
-                handlers.insert((uintptr_t) chatHandler.get());
-                chatHandler->notifyChatSubject(mPair, subject);
-                chatAllowDenySet[chatHandlerName] = true;
-                PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        if (chatHandlers_.empty())
+            return;
+
+        auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatAllowDenySet = allowDenyList_[mPair];
+
+        // Search for activation flag.
+        for (auto& chatHandler : chatHandlers_) {
+            const auto handlerId = reinterpret_cast<uintptr_t>(chatHandler.get());
+            const auto nameIt = handlerNames_.find(handlerId);
+            if (nameIt == handlerNames_.end())
+                continue;
+
+            bool toggle = PluginPreferencesUtils::getAlwaysPreference(
+                std::filesystem::path(chatHandler->id()).parent_path().string(),
+                nameIt->second,
+                message->accountId);
+            auto allowedIt = chatAllowDenySet.find(nameIt->second);
+            if (allowedIt != chatAllowDenySet.end())
+                toggle = allowedIt->second;
+
+            const bool toggled = handlers.contains(handlerId);
+            if (!(toggle || toggled))
+                continue;
+
+            if (!subject) {
+                subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
+                              .first->second;
             }
-            // Finally we feed Chat subject with the message.
-            subject->publish(message);
+
+            if (!toggled) {
+                handlers.insert(handlerId);
+                chatAllowDenySet[nameIt->second] = true;
+                attachments.emplace_back(chatHandler.get(), subject);
+                persistAllowDeny = true;
+            }
+            ++publishCount;
         }
+
+        if (persistAllowDeny)
+            allowDenyList = allowDenyList_;
     }
+
+    for (auto& attachment : attachments) {
+        auto subjectConnection = mPair;
+        attachment.first->notifyChatSubject(subjectConnection, attachment.second);
+    }
+
+    if (subject) {
+        for (std::size_t i = 0; i < publishCount; ++i)
+            subject->publish(message);
+    }
+
+    if (persistAllowDeny)
+        PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList);
 }
 
 void
 ChatServicesManager::cleanChatSubjects(const std::string& accountId, const std::string& peerId)
 {
+    auto operation = operationState_.acquire();
+    std::lock_guard<std::mutex> lk(operationState_.mutex());
     std::pair<std::string, std::string> mPair(accountId, peerId);
     for (auto it = chatSubjects_.begin(); it != chatSubjects_.end();) {
         if (peerId.empty() && it->first.first == accountId)
@@ -181,20 +239,22 @@ ChatServicesManager::toggleChatHandler(const std::string& chatHandlerId,
                                        const std::string& peerId,
                                        const bool toggle)
 {
+    auto operation = operationState_.acquire();
     toggleChatHandler(std::stoull(chatHandlerId), accountId, peerId, toggle);
 }
 
 std::vector<std::string>
 ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
 {
+    auto operation = operationState_.acquire();
+    std::lock_guard<std::mutex> lk(operationState_.mutex());
     std::pair<std::string, std::string> mPair(accountId, peerId);
     const auto& it = allowDenyList_.find(mPair);
     std::vector<std::string> ret;
     if (it != allowDenyList_.end()) {
         for (const auto& chatHandlerName : it->second)
             if (chatHandlerName.second
-                && handlersNameMap_.find(chatHandlerName.first)
-                       != handlersNameMap_.end()) { // We only return active ChatHandler ids
+                && handlersNameMap_.contains(chatHandlerName.first)) { // We only return active ChatHandler ids
                 ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName.first)));
             }
     }
@@ -205,25 +265,41 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
 std::map<std::string, std::string>
 ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 {
+    auto operation = operationState_.acquire();
     auto chatHandlerId = std::stoull(chatHandlerIdStr);
-    for (auto& chatHandler : chatHandlers_) {
-        if ((uintptr_t) chatHandler.get() == chatHandlerId) {
-            return chatHandler->getChatHandlerDetails();
+    ChatHandler* handler = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        for (auto& chatHandler : chatHandlers_) {
+            if (reinterpret_cast<uintptr_t>(chatHandler.get()) == chatHandlerId) {
+                handler = chatHandler.get();
+                break;
+            }
         }
     }
+    if (handler)
+        return handler->getChatHandlerDetails();
     return {};
 }
 
 bool
 ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
 {
+    auto operation = operationState_.acquire();
+    std::vector<ChatHandler*> handlers;
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        for (auto& chatHandler : chatHandlers_) {
+            if (chatHandler->id().find(rootPath) != std::string::npos)
+                handlers.emplace_back(chatHandler.get());
+        }
+    }
+
     bool status {true};
-    for (auto& chatHandler : chatHandlers_) {
-        if (chatHandler->id().find(rootPath) != std::string::npos) {
-            if (chatHandler->preferenceMapHasKey(key)) {
-                chatHandler->setPreferenceAttribute(key, value);
-                status &= false;
-            }
+    for (auto* chatHandler : handlers) {
+        if (chatHandler->preferenceMapHasKey(key)) {
+            chatHandler->setPreferenceAttribute(key, value);
+            status &= false;
         }
     }
     return status;
@@ -236,28 +312,49 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
                                        const bool toggle)
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
-    auto& handlers = chatHandlerToggled_[mPair];
-    auto& chatAllowDenySet = allowDenyList_[mPair];
-    chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
+    ChatHandler* handler = nullptr;
+    chatSubjectPtr subject;
+    ChatHandlerList allowDenyList;
+    bool persistAllowDeny = false;
 
-    auto chatHandlerIt = std::find_if(chatHandlers_.begin(),
-                                      chatHandlers_.end(),
-                                      [chatHandlerId](ChatHandlerPtr& handler) {
-                                          return ((uintptr_t) handler.get() == chatHandlerId);
-                                      });
+    {
+        std::lock_guard<std::mutex> lk(operationState_.mutex());
+        auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatAllowDenySet = allowDenyList_[mPair];
+        subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>()).first->second;
 
-    if (chatHandlerIt != chatHandlers_.end()) {
-        if (toggle) {
-            (*chatHandlerIt)->notifyChatSubject(mPair, chatSubjects_[mPair]);
-            if (handlers.find(chatHandlerId) == handlers.end())
-                handlers.insert(chatHandlerId);
-            chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = true;
-        } else {
-            (*chatHandlerIt)->detach(chatSubjects_[mPair]);
+        auto chatHandlerIt = std::find_if(chatHandlers_.begin(),
+                                          chatHandlers_.end(),
+                                          [chatHandlerId](ChatHandlerPtr& chatHandler) {
+                                              return reinterpret_cast<uintptr_t>(chatHandler.get()) == chatHandlerId;
+                                          });
+
+        if (chatHandlerIt == chatHandlers_.end())
+            return;
+
+        handler = chatHandlerIt->get();
+        const auto nameIt = handlerNames_.find(chatHandlerId);
+        if (nameIt == handlerNames_.end())
+            return;
+
+        if (toggle)
+            handlers.insert(chatHandlerId);
+        else
             handlers.erase(chatHandlerId);
-            chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = false;
-        }
-        PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
+
+        chatAllowDenySet[nameIt->second] = toggle;
+        allowDenyList = allowDenyList_;
+        persistAllowDeny = true;
     }
+
+    if (toggle) {
+        auto subjectConnection = mPair;
+        handler->notifyChatSubject(subjectConnection, subject);
+    } else {
+        handler->detach(subject);
+    }
+
+    if (persistAllowDeny)
+        PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList);
 }
 } // namespace jami

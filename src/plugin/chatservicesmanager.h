@@ -18,6 +18,7 @@
 
 #include "noncopyable.h"
 #include "chathandler.h"
+#include "pluginoperationguard.h"
 #include "pluginpreferencesutils.h"
 
 namespace jami {
@@ -141,11 +142,13 @@ private:
     std::map<std::pair<std::string, std::string>, chatSubjectPtr> chatSubjects_;
 
     // Maps a ChatHandler name and the address of this ChatHandler.
-    std::map<std::string, uintptr_t> handlersNameMap_ {};
+    std::map<std::string, uintptr_t> handlersNameMap_;
+    std::map<uintptr_t, std::string> handlerNames_;
 
     // Component that stores persistent ChatHandlers' status for each existing
     // accountId, peerId pair.
     // A map of accountId, peerId pairs and ChatHandler-status pairs.
-    ChatHandlerList allowDenyList_ {};
+    ChatHandlerList allowDenyList_;
+    mutable PluginOperationGuardState operationState_;
 };
 } // namespace jami

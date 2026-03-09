@@ -198,7 +198,7 @@ private:
      */
     int32_t manageComponent(const DLPlugin* plugin, const std::string& name, void* data);
 
-    std::mutex mutex_ {};
+    mutable std::mutex mutex_;
     JAMI_PluginAPI pluginApi_ = {{JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION},
                                  nullptr, // set by PluginManager constructor
                                  registerObjectFactory_,
@@ -206,23 +206,21 @@ private:
                                  nullptr};
     // Keeps a map between plugin library path and a Plugin instance
     // for dynamically loaded plugins.
-    PluginMap dynPluginMap_ {};
+    PluginMap dynPluginMap_;
 
     // Should keep reference to plugins' destruction functions read during library loading.
-    ExitFuncMap exitFunc_ {};
+    ExitFuncMap exitFunc_;
 
-    ObjectFactoryMap exactMatchMap_ {};
-    ObjectFactoryVec wildCardVec_ {};
+    ObjectFactoryMap exactMatchMap_;
+    ObjectFactoryVec wildCardVec_;
 
     // Keeps a map between services names and service functions.
-    std::map<std::string, ServiceFunction> services_ {};
+    std::map<std::string, ServiceFunction> services_;
 
     // Keeps a ComponentsLifeCycleManager for each available Handler API.
     std::map<std::string, ComponentLifeCycleManager> componentsLifeCycleManagers_ {};
 
     // Keeps a map between plugins' library path and their components list.
-    PluginComponentsMap pluginComponentsMap_ {};
-
-    std::mutex mtx_;
+    PluginComponentsMap pluginComponentsMap_;
 };
 } // namespace jami
