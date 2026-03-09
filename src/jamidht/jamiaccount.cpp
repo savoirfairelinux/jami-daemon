@@ -453,7 +453,7 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
     JAMI_LOG("[Account {}] Calling peer {}", getAccountID(), uri.authority());
     try {
         startOutgoingCall(call, uri.authority());
-    } catch (...) {
+    } catch (const std::invalid_argument&) {
         auto suffix = stripPrefix(uri.toString());
         NameDirectory::lookupUri(suffix,
                                  config().nameServer,
@@ -469,8 +469,8 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
                                          }
                                          if (auto sthis = wthis_.lock()) {
                                              try {
-                                                 sthis->startOutgoingCall(call, regName);
-                                             } catch (...) {
+                                                 sthis->startOutgoingCall(call, address);
+                                             } catch (const std::invalid_argument&) {
                                                  call->onFailure(PJSIP_SC_NOT_FOUND);
                                              }
                                          } else {
@@ -685,6 +685,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                    });
 
     dht::InfoHash peer_account(toUri);
+    if (!peer_account) {
+        throw std::invalid_argument("Invalid peer account: " + toUri);
+    }
 
     // Call connected devices
     std::set<DeviceId> devices;
@@ -1176,27 +1179,18 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    time_t received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
