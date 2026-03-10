@@ -693,7 +693,7 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
         return 0;
     }
 
-    int32_t deltaS = static_cast<int32_t>(sendTS - lastSendTS_) * 1000; // milliseconds
+    int32_t deltaS = static_cast<int32_t>((sendTS - lastSendTS_) * 1000); // milliseconds
     if (deltaS < 0)
         deltaS += 64000;
     lastSendTS_ = sendTS;
