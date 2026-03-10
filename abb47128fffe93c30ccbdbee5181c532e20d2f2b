@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cae496ef_c91a928a",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-10T21:19:26Z",
+      "side": 1,
+      "message": "Jami doesn\u0027t save its logs to a file by default, so maybe change this to something like `jami -f /tmp/jami.log \u0026` (and edit step 5 accordingly) so that the commands work when copy-pasted?",
+      "range": {
+        "startLine": 93,
+        "startChar": 3,
+        "endLine": 93,
+        "endChar": 9
+      },
+      "revId": "abb47128fffe93c30ccbdbee5181c532e20d2f2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c012b07_c2545564",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-10T21:19:26Z",
+      "side": 1,
+      "message": "I get an error here because the call to cleanup on line 56 deletes the directory created on line 28:\n```\n./setup-fake-upnp-network.sh: line 133: /tmp/jami-upnp-lab.uxXkn3/miniupnpd.conf: No such file or directory\n```",
+      "range": {
+        "startLine": 133,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 38
+      },
+      "revId": "abb47128fffe93c30ccbdbee5181c532e20d2f2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
