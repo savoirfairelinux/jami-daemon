@@ -1066,13 +1066,12 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
 
     // Alice and Bob exchange messages
     std::string msgId1 = "", msgId2 = "";
-    aliceAccount->convModule()
-        ->sendMessage(convId, "1"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
-            msgId1 = commitId;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->sendMessage(convId, "1"s, "", true, {}, [&](bool, std::string commitId) {
+        msgId1 = commitId;
+        cv.notify_one();
+    });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
-    bobAccount->convModule()->sendMessage(convId, "2"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+    bobAccount->convModule()->sendMessage(convId, "2"s, "", true, {}, [&](bool, std::string commitId) {
         msgId2 = commitId;
         cv.notify_one();
     });

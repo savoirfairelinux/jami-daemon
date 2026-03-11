@@ -292,10 +292,8 @@ public:
     bool isBanned(const std::string& uri) const;
 
     // Message send
-    void sendMessage(CommitMessage&& message,
-                     const std::string& replyTo = "",
-                     OnCommitCb&& onCommit = {},
-                     OnDoneCb&& cb = {});
+    void createCommit(CommitMessage&& message, OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
+
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
