@@ -186,24 +186,24 @@ ConversationRepositoryTest::testAddSomeMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount);
 
-    auto id1 = repository->commitMessage("Commit 1");
-    auto id2 = repository->commitMessage("Commit 2");
-    auto id3 = repository->commitMessage("Commit 3");
+    auto id1 = repository->commitMessage(R"({"body":"Commit 1","type":"text/plain"})");
+    auto id2 = repository->commitMessage(R"({"body":"Commit 2","type":"text/plain"})");
+    auto id3 = repository->commitMessage(R"({"body":"Commit 3","type":"text/plain"})");
 
     auto messages = repository->log();
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);
     CPPUNIT_ASSERT(messages[0].parents.front() == id2);
-    CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
+    CPPUNIT_ASSERT(messages[0].commitMsg.toString() == R"({"body":"Commit 3","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[1].id == id2);
     CPPUNIT_ASSERT(messages[1].parents.front() == id1);
-    CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
+    CPPUNIT_ASSERT(messages[1].commitMsg.toString() == R"({"body":"Commit 2","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[2].id == id1);
-    CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
+    CPPUNIT_ASSERT(messages[2].commitMsg.toString() == R"({"body":"Commit 1","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[2].parents.front() == repository->id());
@@ -222,9 +222,9 @@ ConversationRepositoryTest::testLogMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount);
 
-    auto id1 = repository->commitMessage("Commit 1");
-    auto id2 = repository->commitMessage("Commit 2");
-    auto id3 = repository->commitMessage("Commit 3");
+    auto id1 = repository->commitMessage(R"({"body":"Commit 1","type":"text/plain"})");
+    auto id2 = repository->commitMessage(R"({"body":"Commit 2","type":"text/plain"})");
+    auto id3 = repository->commitMessage(R"({"body":"Commit 3","type":"text/plain"})");
 
     LogOptions options;
     options.from = repository->id();
@@ -468,7 +468,7 @@ ConversationRepositoryTest::testMerge()
     // Assert that first commit is signed by alice
     git_repository* repo;
     CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
-    auto id1 = addCommit(repo, aliceAccount, "main", "Commit 1");
+    auto id1 = addCommit(repo, aliceAccount, "main", R"({"body":"Commit 1","type":"text/plain"})");
 
     git_reference* ref = nullptr;
     git_commit* commit = nullptr;
@@ -479,7 +479,7 @@ ConversationRepositoryTest::testMerge()
     git_reference_free(ref);
     git_repository_set_head(repo, "refs/heads/to_merge");
 
-    auto id2 = addCommit(repo, aliceAccount, "to_merge", "Commit 2");
+    auto id2 = addCommit(repo, aliceAccount, "to_merge", R"({"body":"Commit 2","type":"text/plain"})");
     git_repository_free(repo);
 
     // This will create a merge commit
@@ -502,7 +502,7 @@ ConversationRepositoryTest::testFFMerge()
     // Assert that first commit is signed by alice
     git_repository* repo;
     CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
-    auto id1 = addCommit(repo, aliceAccount, "main", "Commit 1");
+    auto id1 = addCommit(repo, aliceAccount, "main", R"({"body":"Commit 1","type":"text/plain"})");
 
     git_reference* ref = nullptr;
     git_commit* commit = nullptr;
@@ -513,7 +513,7 @@ ConversationRepositoryTest::testFFMerge()
     git_reference_free(ref);
     git_repository_set_head(repo, "refs/heads/to_merge");
 
-    auto id2 = addCommit(repo, aliceAccount, "to_merge", "Commit 2");
+    auto id2 = addCommit(repo, aliceAccount, "to_merge", R"({"body":"Commit 2","type":"text/plain"})");
     git_repository_free(repo);
 
     // This will use a fast forward merge
@@ -566,7 +566,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
         profile.close();
     }
     addAll(repo);
-    auto id1 = addCommit(repo, aliceAccount, "main", "add profile");
+    auto id1 = addCommit(repo, aliceAccount, "main", R"({"type":"application/update-profile"})");
     profile = std::ofstream(repoPath / "profile.vcf");
     if (profile.is_open()) {
         profile << "TITLE: SWARM\n";
@@ -575,7 +575,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
         profile.close();
     }
     addAll(repo);
-    auto id2 = addCommit(repo, aliceAccount, "main", "modify profile");
+    auto id2 = addCommit(repo, aliceAccount, "main", R"({"type":"application/update-profile"})");
 
     git_reference* ref = nullptr;
     git_commit* commit = nullptr;
@@ -594,7 +594,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
         profile.close();
     }
     addAll(repo);
-    auto id3 = addCommit(repo, aliceAccount, "to_merge", "modify profile merge");
+    auto id3 = addCommit(repo, aliceAccount, "to_merge", R"({"type":"application/update-profile"})");
 
     // This will create a merge commit
     repository->merge(id3);
@@ -1066,12 +1066,13 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
 
     // Alice and Bob exchange messages
     std::string msgId1 = "", msgId2 = "";
-    aliceAccount->convModule()->sendMessage(convId, "1"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
-        msgId1 = commitId;
-        cv.notify_one();
-    });
+    aliceAccount->convModule()
+        ->sendMessage(convId, "1"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+            msgId1 = commitId;
+            cv.notify_one();
+        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
-    bobAccount->convModule()->sendMessage(convId, "2"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
+    bobAccount->convModule()->sendMessage(convId, "2"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
         msgId2 = commitId;
         cv.notify_one();
     });
