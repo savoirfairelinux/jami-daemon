@@ -4160,58 +4160,58 @@ JamiAccount::sendFile(const std::string& conversationId,
             commitMessage.totalSize = fileutils::size(path);
             commitMessage.sha3sum = fileutils::sha3File(path);
             commitMessage.type = CommitType::DATA_TRANSFER;
+            commitMessage.replyTo = replyTo;
 
             shared->convModule()
-                ->sendMessage(conversationId,
-                              std::move(commitMessage),
-                              replyTo,
-                              true,
-                              [accId = shared->getAccountID(), conversationId, tid, path](const std::string& commitId) {
-                                  // Create a symlink to answer to re-ask
-                                  auto filelinkPath = fileutils::get_data_dir() / accId / "conversation_data"
-                                                      / conversationId / fmt::format("{}_{}", commitId, tid);
-                                  filelinkPath += path.extension();
-                                  if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
-                                      if (!fileutils::createFileLink(filelinkPath, path, true)) {
-                                          JAMI_WARNING("Unable to create symlink for file transfer {} - {}. Copy file",
-                                                       filelinkPath,
-                                                       path);
-                                          std::error_code ec;
-                                          auto success = std::filesystem::copy_file(path, filelinkPath, ec);
-                                          if (ec || !success) {
-                                              JAMI_ERROR("Unable to copy file for file transfer {} - {}",
-                                                         filelinkPath,
-                                                         path);
-                                              // Signal to notify clients that the operation failed.
-                                              // The fileId field sends the filePath.
-                                              // libjami::DataTransferEventCode::unsupported (2) is unused elsewhere.
-                                              emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
-                                                  accId,
-                                                  conversationId,
-                                                  commitId,
-                                                  path.string(),
-                                                  uint32_t(libjami::DataTransferEventCode::invalid));
-                                          } else {
-                                              // Signal to notify clients that the file is copied and can be
-                                              // safely deleted. The fileId field sends the filePath.
-                                              // libjami::DataTransferEventCode::created (1) is unused elsewhere.
-                                              emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
-                                                  accId,
-                                                  conversationId,
-                                                  commitId,
-                                                  path.string(),
-                                                  uint32_t(libjami::DataTransferEventCode::created));
-                                          }
-                                      } else {
-                                          emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
-                                              accId,
-                                              conversationId,
-                                              commitId,
-                                              path.string(),
-                                              uint32_t(libjami::DataTransferEventCode::created));
-                                      }
-                                  }
-                              });
+                ->createCommit(conversationId,
+                               std::move(commitMessage),
+                               true,
+                               [accId = shared->getAccountID(), conversationId, tid, path](const std::string& commitId) {
+                                   // Create a symlink to answer to re-ask
+                                   auto filelinkPath = fileutils::get_data_dir() / accId / "conversation_data"
+                                                       / conversationId / fmt::format("{}_{}", commitId, tid);
+                                   filelinkPath += path.extension();
+                                   if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
+                                       if (!fileutils::createFileLink(filelinkPath, path, true)) {
+                                           JAMI_WARNING("Unable to create symlink for file transfer {} - {}. Copy file",
+                                                        filelinkPath,
+                                                        path);
+                                           std::error_code ec;
+                                           auto success = std::filesystem::copy_file(path, filelinkPath, ec);
+                                           if (ec || !success) {
+                                               JAMI_ERROR("Unable to copy file for file transfer {} - {}",
+                                                          filelinkPath,
+                                                          path);
+                                               // Signal to notify clients that the operation failed.
+                                               // The fileId field sends the filePath.
+                                               // libjami::DataTransferEventCode::unsupported (2) is unused elsewhere.
+                                               emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                                                   accId,
+                                                   conversationId,
+                                                   commitId,
+                                                   path.string(),
+                                                   uint32_t(libjami::DataTransferEventCode::invalid));
+                                           } else {
+                                               // Signal to notify clients that the file is copied and can be
+                                               // safely deleted. The fileId field sends the filePath.
+                                               // libjami::DataTransferEventCode::created (1) is unused elsewhere.
+                                               emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                                                   accId,
+                                                   conversationId,
+                                                   commitId,
+                                                   path.string(),
+                                                   uint32_t(libjami::DataTransferEventCode::created));
+                                           }
+                                       } else {
+                                           emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                                               accId,
+                                               conversationId,
+                                               commitId,
+                                               path.string(),
+                                               uint32_t(libjami::DataTransferEventCode::created));
+                                       }
+                                   }
+                               });
         }
     });
 }
