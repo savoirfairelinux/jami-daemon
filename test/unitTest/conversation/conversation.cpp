@@ -1710,23 +1710,20 @@ ConversationTest::testCountInteractions()
     auto convId = libjami::startConversation(aliceId);
 
     std::string msgId1 = "", msgId2 = "", msgId3 = "";
-    aliceAccount->convModule()
-        ->sendMessage(convId, "1"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
-            msgId1 = commitId;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->sendMessage(convId, "1"s, "", true, {}, [&](bool, std::string commitId) {
+        msgId1 = commitId;
+        cv.notify_one();
+    });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
-    aliceAccount->convModule()
-        ->sendMessage(convId, "2"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
-            msgId2 = commitId;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->sendMessage(convId, "2"s, "", true, {}, [&](bool, std::string commitId) {
+        msgId2 = commitId;
+        cv.notify_one();
+    });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId2.empty(); }));
-    aliceAccount->convModule()
-        ->sendMessage(convId, "3"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
-            msgId3 = commitId;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->sendMessage(convId, "3"s, "", true, {}, [&](bool, std::string commitId) {
+        msgId3 = commitId;
+        cv.notify_one();
+    });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId3.empty(); }));
 
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, "", "", "") == 4 /* 3 + initial */);

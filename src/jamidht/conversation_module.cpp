@@ -297,17 +297,15 @@ public:
     }
 
     // Message send/load
-    void sendMessage(const std::string& conversationId,
-                     CommitMessage&& message,
-                     const std::string& replyTo = "",
-                     bool announce = true,
-                     OnCommitCb&& onCommit = {},
-                     OnDoneCb&& cb = {});
+    void createCommit(const std::string& conversationId,
+                      CommitMessage&& message,
+                      bool announce = true,
+                      OnCommitCb&& onCommit = {},
+                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
                      std::string message,
                      const std::string& replyTo = "",
-                     const std::string& type = CommitType::TEXT,
                      bool announce = true,
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
@@ -1145,45 +1143,40 @@ void
 ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       std::string message,
                                       const std::string& replyTo,
-                                      const std::string& type,
                                       bool announce,
                                       OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
     CommitMessage msg;
     msg.body = std::move(message);
-    msg.type = type;
-    sendMessage(conversationId, std::move(msg), replyTo, announce, std::move(onCommit), std::move(cb));
+    msg.type = CommitType::TEXT;
+    msg.replyTo = replyTo;
+    createCommit(conversationId, std::move(msg), announce, std::move(onCommit), std::move(cb));
 }
 
 void
-ConversationModule::Impl::sendMessage(const std::string& conversationId,
-                                      CommitMessage&& message,
-                                      const std::string& replyTo,
-                                      bool announce,
-                                      OnCommitCb&& onCommit,
-                                      OnDoneCb&& cb)
+ConversationModule::Impl::createCommit(
+    const std::string& conversationId, CommitMessage&& message, bool announce, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
-            conv->conversation->sendMessage(std::move(message),
-                                            replyTo,
-                                            std::move(onCommit),
-                                            [this,
-                                             conversationId,
-                                             announce,
-                                             cb = std::move(cb)](bool ok, const std::string& commitId) {
-                                                if (cb)
-                                                    cb(ok, commitId);
-                                                if (!announce)
-                                                    return;
-                                                if (ok)
-                                                    sendMessageNotification(conversationId, true, commitId);
-                                                else
-                                                    JAMI_ERR("Failed to send message to conversation %s",
-                                                             conversationId.c_str());
-                                            });
+            conv->conversation->createCommit(std::move(message),
+                                             std::move(onCommit),
+                                             [this,
+                                              conversationId,
+                                              announce,
+                                              cb = std::move(cb)](bool ok, const std::string& commitId) {
+                                                 if (cb)
+                                                     cb(ok, commitId);
+                                                 if (!announce)
+                                                     return;
+                                                 if (ok)
+                                                     sendMessageNotification(conversationId, true, commitId);
+                                                 else
+                                                     JAMI_ERR("Failed to send message to conversation %s",
+                                                              conversationId.c_str());
+                                             });
     }
 }
 
@@ -1224,7 +1217,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
     }
     message.editedId = editedId;
     message.type = type;
-    sendMessage(conversationId, std::move(message));
+    createCommit(conversationId, std::move(message));
 }
 
 void
@@ -2123,23 +2116,18 @@ void
 ConversationModule::sendMessage(const std::string& conversationId,
                                 std::string message,
                                 const std::string& replyTo,
-                                const std::string& type,
-                                bool announce,
-                                OnCommitCb&& onCommit,
-                                OnDoneCb&& cb)
-{
-    pimpl_->sendMessage(conversationId, std::move(message), replyTo, type, announce, std::move(onCommit), std::move(cb));
-}
-
-void
-ConversationModule::sendMessage(const std::string& conversationId,
-                                CommitMessage&& message,
-                                const std::string& replyTo,
                                 bool announce,
                                 OnCommitCb&& onCommit,
                                 OnDoneCb&& cb)
 {
     pimpl_->sendMessage(conversationId, std::move(message), replyTo, announce, std::move(onCommit), std::move(cb));
+}
+
+void
+ConversationModule::createCommit(
+    const std::string& conversationId, CommitMessage&& message, bool announce, OnCommitCb&& onCommit, OnDoneCb&& cb)
+{
+    pimpl_->createCommit(conversationId, std::move(message), announce, std::move(onCommit), std::move(cb));
 }
 
 void
@@ -2160,7 +2148,7 @@ ConversationModule::reactToMessage(const std::string& conversationId,
     message.body = newBody;
     message.reactTo = reactToId;
     message.type = CommitType::TEXT;
-    pimpl_->sendMessage(conversationId, std::move(message));
+    pimpl_->createCommit(conversationId, std::move(message));
 }
 
 void
@@ -2175,7 +2163,7 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
         message.type = CommitType::CALL_HISTORY;
         message.duration = std::to_string(duration_ms);
         message.reason = reason;
-        sendMessage(convId, std::move(message));
+        pimpl_->createCommit(convId, std::move(message));
     }
 }
 
