@@ -200,18 +200,15 @@ public:
     std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
                                   const dht::InfoHash& otherMember = {});
 
-    // Message send/load
-    void sendMessage(const std::string& conversationId,
-                     CommitMessage&& commitMessage,
-                     const std::string& replyTo = "",
-                     bool announce = true,
-                     OnCommitCb&& onCommit = {},
-                     OnDoneCb&& cb = {});
+    void createCommit(const std::string& conversationId,
+                      CommitMessage&& commitMessage,
+                      bool announce = true,
+                      OnCommitCb&& onCommit = {},
+                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
                      std::string message,
                      const std::string& replyTo = "",
-                     const std::string& type = CommitType::TEXT,
                      bool announce = true,
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
