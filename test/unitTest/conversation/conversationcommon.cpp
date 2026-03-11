@@ -63,11 +63,11 @@ addVote(std::shared_ptr<JamiAccount> account,
         file.close();
     }
 
-    Json::Value json;
-    json["uri"] = votedUri;
-    json["type"] = "vote";
+    CommitMessage message;
+    message.uri = votedUri;
+    message.type = CommitType::VOTE;
     ConversationRepository cr(account, convId);
-    cr.commitMessage(json::toString(json), false);
+    cr.commitMessage(message.toString(), false);
 }
 
 void
@@ -96,11 +96,11 @@ simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId,
 
     ConversationRepository cr(account, convId);
 
-    Json::Value json;
-    json["action"] = "ban";
-    json["uri"] = votedUri;
-    json["type"] = "member";
-    cr.commitMessage(json::toString(json));
+    CommitMessage message;
+    message.action = CommitAction::BAN;
+    message.uri = votedUri;
+    message.type = CommitType::MEMBER;
+    cr.commitMessage(message.toString());
 
     libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
 }
@@ -161,11 +161,11 @@ addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 }
 
 void
-commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Value& message)
+commit(const std::shared_ptr<JamiAccount>& account, const std::string& convId, const CommitMessage& message)
 {
     ConversationRepository::DISABLE_RESET = true;
     ConversationRepository cr(account, convId);
-    cr.commitMessage(json::toString(message));
+    cr.commitMessage(message.toString());
 }
 
 std::string
