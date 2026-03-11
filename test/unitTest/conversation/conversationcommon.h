@@ -17,6 +17,7 @@
 #pragma once
 
 #include "jamidht/jamiaccount.h"
+#include "jamidht/commit_message.h"
 #include <string>
 
 namespace jami {
@@ -35,7 +36,7 @@ void addFile(std::shared_ptr<JamiAccount> account,
 
 void addAll(std::shared_ptr<JamiAccount> account, const std::string& convId);
 
-void commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Value& message);
+void commit(const std::shared_ptr<JamiAccount>& account, const std::string& convId, const CommitMessage& message);
 
 std::string commitInRepo(const std::string& repoPath, std::shared_ptr<JamiAccount> account, const std::string& message);
 } // namespace jami

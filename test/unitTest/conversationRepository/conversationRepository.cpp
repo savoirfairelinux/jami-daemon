@@ -186,24 +186,24 @@ ConversationRepositoryTest::testAddSomeMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount);
 
-    auto id1 = repository->commitMessage("Commit 1");
-    auto id2 = repository->commitMessage("Commit 2");
-    auto id3 = repository->commitMessage("Commit 3");
+    auto id1 = repository->commitMessage(R"({"body":"Commit 1","type":"text/plain"})");
+    auto id2 = repository->commitMessage(R"({"body":"Commit 2","type":"text/plain"})");
+    auto id3 = repository->commitMessage(R"({"body":"Commit 3","type":"text/plain"})");
 
     auto messages = repository->log();
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);
     CPPUNIT_ASSERT(messages[0].parents.front() == id2);
-    CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
+    CPPUNIT_ASSERT(messages[0].commitMsg.toString() == R"({"body":"Commit 3","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[1].id == id2);
     CPPUNIT_ASSERT(messages[1].parents.front() == id1);
-    CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
+    CPPUNIT_ASSERT(messages[1].commitMsg.toString() == R"({"body":"Commit 2","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[2].id == id1);
-    CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
+    CPPUNIT_ASSERT(messages[2].commitMsg.toString() == R"({"body":"Commit 1","type":"text/plain"})");
     CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[2].parents.front() == repository->id());
@@ -1066,12 +1066,13 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
 
     // Alice and Bob exchange messages
     std::string msgId1 = "", msgId2 = "";
-    aliceAccount->convModule()->sendMessage(convId, "1"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
-        msgId1 = commitId;
-        cv.notify_one();
-    });
+    aliceAccount->convModule()
+        ->sendMessage(convId, "1"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+            msgId1 = commitId;
+            cv.notify_one();
+        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
-    bobAccount->convModule()->sendMessage(convId, "2"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
+    bobAccount->convModule()->sendMessage(convId, "2"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
         msgId2 = commitId;
         cv.notify_one();
     });
