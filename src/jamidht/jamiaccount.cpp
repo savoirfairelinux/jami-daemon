@@ -29,6 +29,7 @@
 #include "contact_list.h"
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
+#include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
@@ -1173,27 +1174,18 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    time_t received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -4161,17 +4153,17 @@ JamiAccount::sendFile(const std::string& conversationId,
     // to send a big file
     dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
         if (auto shared = w.lock()) {
-            Json::Value value;
+            CommitMessage commitMessage;
             auto tid = jami::generateUID(shared->rand);
-            value["tid"] = std::to_string(tid);
-            value["displayName"] = name.empty() ? path.filename().string() : name;
-            value["totalSize"] = std::to_string(fileutils::size(path));
-            value["sha3sum"] = fileutils::sha3File(path);
-            value["type"] = "application/data-transfer+json";
+            commitMessage.tid = std::to_string(tid);
+            commitMessage.displayName = name.empty() ? path.filename().string() : name;
+            commitMessage.totalSize = fileutils::size(path);
+            commitMessage.sha3sum = fileutils::sha3File(path);
+            commitMessage.type = CommitType::DATA_TRANSFER;
 
             shared->convModule()
                 ->sendMessage(conversationId,
-                              std::move(value),
+                              std::move(commitMessage),
                               replyTo,
                               true,
                               [accId = shared->getAccountID(), conversationId, tid, path](const std::string& commitId) {
