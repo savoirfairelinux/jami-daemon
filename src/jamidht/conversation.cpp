@@ -1495,14 +1495,13 @@ Conversation::isBanned(const std::string& uri) const
 }
 
 void
-Conversation::sendMessage(CommitMessage&& message, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
+Conversation::createCommit(CommitMessage&& message, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
-    if (!replyTo.empty()) {
-        if (!pimpl_->repository_->hasCommit(replyTo)) {
-            JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
+    if (!message.replyTo.empty()) {
+        if (!pimpl_->repository_->hasCommit(message.replyTo)) {
+            JAMI_ERROR("Replying to invalid commit {}", message.replyTo);
             return;
         }
-        message.replyTo = replyTo;
     }
     dht::ThreadPool::io().run(
         [w = weak(), message = std::move(message), onCommit = std::move(onCommit), cb = std::move(cb)] {
@@ -2452,7 +2451,7 @@ Conversation::hostConference(CommitMessage&& message, OnDoneCb&& cb)
         pimpl_->saveHostedCalls();
     }
 
-    sendMessage(std::move(message), "", {}, std::move(cb));
+    createCommit(std::move(message), {}, std::move(cb));
 }
 
 bool
@@ -2480,7 +2479,7 @@ Conversation::removeActiveConference(CommitMessage&& message, OnDoneCb&& cb)
     }
     if (erased) {
         pimpl_->saveHostedCalls();
-        sendMessage(std::move(message), "", {}, std::move(cb));
+        createCommit(std::move(message), {}, std::move(cb));
     } else
         cb(false, "");
 }

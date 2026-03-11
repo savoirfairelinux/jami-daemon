@@ -4161,11 +4161,11 @@ JamiAccount::sendFile(const std::string& conversationId,
             commitMessage.totalSize = fileutils::size(path);
             commitMessage.sha3sum = fileutils::sha3File(path);
             commitMessage.type = CommitType::DATA_TRANSFER;
+            commitMessage.replyTo = replyTo;
 
-            shared->convModule()->sendMessage(
+            shared->convModule()->createCommit(
                 conversationId,
                 std::move(commitMessage),
-                replyTo,
                 true,
                 [accId = shared->getAccountID(), conversationId, tid, displayName, path](const std::string& commitId) {
                     // Create a symlink to answer to re-ask
