@@ -18,6 +18,7 @@
 #include "def.h"
 #include "vcard.h"
 #include "git_def.h"
+#include "jamidht/commit_message.h"
 
 #include <opendht/default_types.h>
 
@@ -69,8 +70,6 @@ struct GitAuthor
     std::string name {};
     std::string email {};
 };
-
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
 
 struct ConversationCommit
 {

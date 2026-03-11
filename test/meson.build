@@ -128,6 +128,21 @@ test(
     timeout: 1800,
 )
 
+ut_commit_message = executable(
+    'ut_commit_message',
+    sources: files('unitTest/conversation/commit_message_test.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'commit_message',
+    ut_commit_message,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 300,
+)
+
 ut_conversation_call = executable(
     'ut_conversation_call',
     sources: files(
