@@ -202,7 +202,7 @@ public:
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
-                     Json::Value&& value,
+                     CommitMessage&& commitMessage,
                      const std::string& replyTo = "",
                      bool announce = true,
                      OnCommitCb&& onCommit = {},
@@ -211,7 +211,7 @@ public:
     void sendMessage(const std::string& conversationId,
                      std::string message,
                      const std::string& replyTo = "",
-                     const std::string& type = "text/plain",
+                     const std::string& type = CommitType::TEXT,
                      bool announce = true,
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});

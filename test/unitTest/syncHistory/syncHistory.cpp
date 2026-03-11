@@ -418,9 +418,9 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.messagesLoaded.size() == 4; }));
 
     // Check messages
-    CPPUNIT_ASSERT(alice2Data.messagesLoaded[0].body["body"] == "Message 3");
-    CPPUNIT_ASSERT(alice2Data.messagesLoaded[1].body["body"] == "Message 2");
-    CPPUNIT_ASSERT(alice2Data.messagesLoaded[2].body["body"] == "Message 1");
+    CPPUNIT_ASSERT(alice2Data.messagesLoaded[0].body[CommitKey::BODY] == "Message 3");
+    CPPUNIT_ASSERT(alice2Data.messagesLoaded[1].body[CommitKey::BODY] == "Message 2");
+    CPPUNIT_ASSERT(alice2Data.messagesLoaded[2].body[CommitKey::BODY] == "Message 1");
 }
 
 void
@@ -864,7 +864,7 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return alice2Data.deviceAnnounced; }));
     auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
         auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) {
-            return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body;
+            return msg.body.find(CommitKey::BODY) != msg.body.end() && msg.body.at(CommitKey::BODY) == body;
         });
         if (it != data.messages.end()) {
             return it->id;

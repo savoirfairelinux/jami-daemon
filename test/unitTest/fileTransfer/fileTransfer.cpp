@@ -783,10 +783,10 @@ FileTransferTest::testDeleteFile()
     std::string iid, tid;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
-            if (message.type == "application/data-transfer+json") {
+            if (message.type == CommitType::DATA_TRANSFER) {
                 if (accountId == aliceId) {
                     iid = message.id;
-                    tid = message.body["tid"];
+                    tid = message.body[CommitKey::TID];
                 }
             }
             cv.notify_one();
@@ -801,8 +801,8 @@ FileTransferTest::testDeleteFile()
     bool messageUpdated = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
         [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
-            if (accountId == aliceId && message.type == "application/data-transfer+json"
-                && message.body["tid"].empty()) {
+            if (accountId == aliceId && message.type == CommitType::DATA_TRANSFER
+                && message.body[CommitKey::TID].empty()) {
                 messageUpdated = true;
             }
             cv.notify_one();
