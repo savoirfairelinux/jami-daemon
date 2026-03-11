@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "55e2f693_41622b0c",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-11T19:52:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cae496ef_c91a928a",
+      "range": {
+        "startLine": 93,
+        "startChar": 3,
+        "endLine": 93,
+        "endChar": 9
+      },
+      "revId": "abb47128fffe93c30ccbdbee5181c532e20d2f2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c012b07_c2545564",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-03-10T21:19:26Z",
       "side": 1,
       "message": "I get an error here because the call to cleanup on line 56 deletes the directory created on line 28:\n```\n./setup-fake-upnp-network.sh: line 133: /tmp/jami-upnp-lab.uxXkn3/miniupnpd.conf: No such file or directory\n```",
+      "range": {
+        "startLine": 133,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 38
+      },
+      "revId": "abb47128fffe93c30ccbdbee5181c532e20d2f2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a0b28e06_19ba581f",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-11T19:52:56Z",
+      "side": 1,
+      "message": "I removed the call for `cleanup` for now.",
+      "parentUuid": "9c012b07_c2545564",
       "range": {
         "startLine": 133,
         "startChar": 0,
