@@ -17,6 +17,8 @@
 
 #include "simclient.h"
 
+#include "jamidht/commit_message.h"
+
 #undef NDEBUG
 #include <cassert>
 #include <algorithm>
@@ -132,7 +134,7 @@ SimClient::insertMessage(const SwarmMessage& message)
         assert(it != sortedIndices_.end());
         sortedIndices_.insert(it + 1, index);
     } else {
-        assert(message.type == "initial");
+        assert(message.type == CommitType::INITIAL);
         sortedIndices_.insert(sortedIndices_.begin(), index);
     }
 }

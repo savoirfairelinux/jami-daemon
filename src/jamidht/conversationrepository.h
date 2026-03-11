@@ -78,7 +78,7 @@ struct ConversationCommit
     GitAuthor author {};
     std::vector<uint8_t> signed_content {};
     std::vector<uint8_t> signature {};
-    std::string commit_msg {};
+    CommitMessage commitMsg {};
     std::string linearized_parent {};
     int64_t timestamp {0};
 };

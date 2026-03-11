@@ -716,11 +716,10 @@ ConversationTest::testReplaceWithBadCertificate()
     addAll(aliceAccount, convId);
 
     // Note: Do not use libjami::sendMessage as it will replace the invalid certificate by a valid one
-    Json::Value root;
-    root["type"] = "text/plain";
-    root["body"] = "hi";
-    auto message = json::toString(root);
-    commitInRepo(repoPath, aliceAccount, message);
+    CommitMessage message;
+    message.type = CommitType::TEXT;
+    message.body = "hi";
+    commitInRepo(repoPath, aliceAccount, message.toString());
     // now we need to sync!
     bobData.errorDetected = false;
     libjami::sendMessage(aliceId, convId, "trigger sync!"s, "");
@@ -1185,12 +1184,12 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     }
     GitTree tree = GitTree(tree_ptr);
 
-    Json::Value json;
-    json["mode"] = 1;
-    json["type"] = "initial";
+    CommitMessage message;
+    message.mode = 1;
+    message.type = CommitType::INITIAL;
 
     if (git_commit_create_buffer(
-            &to_sign, repo.get(), sig.get(), sig.get(), nullptr, json::toString(json).c_str(), tree.get(), 0, nullptr)
+            &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
         < 0) {
         JAMI_ERR("Unable to create initial buffer");
         return {};
@@ -1342,10 +1341,10 @@ ConversationTest::testPlainTextNoBadFile()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
 
     addFile(aliceAccount, convId, "BADFILE");
-    Json::Value root;
-    root["type"] = "text/plain";
-    root["body"] = "hi";
-    commit(aliceAccount, convId, root);
+    CommitMessage message;
+    message.type = CommitType::TEXT;
+    message.body = "hi";
+    commit(aliceAccount, convId, message);
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     // Check not received due to the unwanted file
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
@@ -1457,10 +1456,10 @@ ConversationTest::testETooBigFetch()
     bad.close();
 
     addAll(aliceAccount, convId);
-    Json::Value json;
-    json["body"] = "o/";
-    json["type"] = "text/plain";
-    commit(aliceAccount, convId, json);
+    CommitMessage message;
+    message.body = "o/";
+    message.type = CommitType::TEXT;
+    commit(aliceAccount, convId, message);
 
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
@@ -1477,10 +1476,10 @@ ConversationTest::testUnknownModeDetected()
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
     ConversationRepository repo(aliceAccount, convId);
-    Json::Value json;
-    json["mode"] = 1412;
-    json["type"] = "initial";
-    repo.amend(convId, json::toString(json));
+    CommitMessage message;
+    message.mode = 1412;
+    message.type = CommitType::INITIAL;
+    repo.amend(convId, message.toString());
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
@@ -1634,9 +1633,9 @@ FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
     addFile(aliceAccount, convId, "profile.vcf", vcard);
-    Json::Value root;
-    root["type"] = "application/update-profile";
-    commit(aliceAccount, convId, root);
+    CommitMessage message;
+    message.type = CommitType::UPDATE_PROFILE;
+    commit(aliceAccount, convId, message);
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
 }
@@ -1666,9 +1665,9 @@ FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
     addFile(bobAccount, convId, "profile.vcf", vcard);
-    Json::Value root;
-    root["type"] = "application/update-profile";
-    commit(bobAccount, convId, root);
+    CommitMessage message;
+    message.type = CommitType::UPDATE_PROFILE;
+    commit(bobAccount, convId, message);
     libjami::sendMessage(bobId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
 }
@@ -1711,20 +1710,23 @@ ConversationTest::testCountInteractions()
     auto convId = libjami::startConversation(aliceId);
 
     std::string msgId1 = "", msgId2 = "", msgId3 = "";
-    aliceAccount->convModule()->sendMessage(convId, "1"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
-        msgId1 = commitId;
-        cv.notify_one();
-    });
+    aliceAccount->convModule()
+        ->sendMessage(convId, "1"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+            msgId1 = commitId;
+            cv.notify_one();
+        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
-    aliceAccount->convModule()->sendMessage(convId, "2"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
-        msgId2 = commitId;
-        cv.notify_one();
-    });
+    aliceAccount->convModule()
+        ->sendMessage(convId, "2"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+            msgId2 = commitId;
+            cv.notify_one();
+        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId2.empty(); }));
-    aliceAccount->convModule()->sendMessage(convId, "3"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
-        msgId3 = commitId;
-        cv.notify_one();
-    });
+    aliceAccount->convModule()
+        ->sendMessage(convId, "3"s, "", CommitType::TEXT, true, {}, [&](bool, std::string commitId) {
+            msgId3 = commitId;
+            cv.notify_one();
+        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId3.empty(); }));
 
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, "", "", "") == 4 /* 3 + initial */);
@@ -1898,7 +1900,7 @@ ConversationTest::testSendReply()
     auto validId = bobData.messages.at(0).id;
     libjami::sendMessage(aliceId, convId, "foo"s, validId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
-    CPPUNIT_ASSERT(bobData.messages.rbegin()->body.at("reply-to") == validId);
+    CPPUNIT_ASSERT(bobData.messages.rbegin()->body.at(CommitKey::REPLY_TO) == validId);
 
     // Check if parent doesn't exists, no message is generated
     libjami::sendMessage(aliceId, convId, "foo"s, "invalid");
@@ -2150,7 +2152,7 @@ ConversationTest::testMessageEdition()
     bobMsgSize = bobData.messagesUpdated.size();
     libjami::sendMessage(aliceId, convId, "New body"s, editedId, 1);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messagesUpdated.size() == bobMsgSize + 1; }));
-    CPPUNIT_ASSERT(bobData.messagesUpdated.rbegin()->body.at("body") == "New body");
+    CPPUNIT_ASSERT(bobData.messagesUpdated.rbegin()->body.at(CommitKey::BODY) == "New body");
     // Not an existing message
     bobMsgSize = bobData.messagesUpdated.size();
     libjami::sendMessage(aliceId, convId, "New body"s, "invalidId", 1);
@@ -2159,13 +2161,12 @@ ConversationTest::testMessageEdition()
     libjami::sendMessage(aliceId, convId, "New body"s, convId, 1);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messagesUpdated.size() == bobMsgSize + 1; }));
     // Add invalid edition
-    Json::Value root;
-    root["type"] = "text/plain";
-    root["edit"] = convId;
-    root["body"] = "new";
+    CommitMessage message;
+    message.type = CommitType::TEXT;
+    message.editedId = convId;
+    message.body = "new";
     auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
-    auto message = json::toString(root);
-    commitInRepo(repoPath, aliceAccount, message);
+    commitInRepo(repoPath, aliceAccount, message.toString());
     bobData.errorDetected = false;
     libjami::sendMessage(aliceId, convId, "trigger"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
@@ -2187,8 +2188,8 @@ ConversationTest::testMessageReaction()
     auto reactId = aliceData.messages.rbegin()->id;
     libjami::sendMessage(aliceId, convId, "👋"s, reactId, 2);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.reactions.size() == 1; }));
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("react-to") == reactId);
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("body") == "👋");
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::REACT_TO) == reactId);
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::BODY) == "👋");
     auto emojiId = aliceData.reactions.rbegin()->at("id");
 
     // Remove reaction
@@ -2213,8 +2214,8 @@ ConversationTest::testMessageEditionWithReaction()
     auto reactId = aliceData.messages.rbegin()->id;
     libjami::sendMessage(aliceId, convId, "👋"s, reactId, 2);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.reactions.size() == 1; }));
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("react-to") == reactId);
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("body") == "👋");
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::REACT_TO) == reactId);
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::BODY) == "👋");
     auto emojiId = aliceData.reactions.rbegin()->at("id");
 
     // Remove base message should remove reaction
@@ -2280,8 +2281,8 @@ ConversationTest::testReactionsOnEditedMessage()
     auto reactId = aliceData.messages.rbegin()->id;
     libjami::sendMessage(aliceId, convId, "👋"s, reactId, 2);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.reactions.size() == 1; }));
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("react-to") == reactId);
-    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("body") == "👋");
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::REACT_TO) == reactId);
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at(CommitKey::BODY) == "👋");
     auto emojiId = aliceData.reactions.rbegin()->at("id");
 
     // Edit message
