@@ -80,6 +80,7 @@ struct ConversationCommit
     std::vector<uint8_t> signature {};
     CommitMessage commitMsg {};
     std::string linearized_parent {};
+    std::string authorId {};
     int64_t timestamp {0};
 };
 
