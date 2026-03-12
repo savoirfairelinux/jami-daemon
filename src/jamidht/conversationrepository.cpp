@@ -738,12 +738,7 @@ initial_commit(GitRepository& repo,
     }
     GitTree tree {tree_ptr};
 
-    CommitMessage message;
-    message.mode = static_cast<int>(mode);
-    if (mode == ConversationMode::ONE_TO_ONE) {
-        message.invited = otherMember;
-    }
-    message.type = CommitType::INITIAL;
+    auto message = CommitMessage::initial(mode, otherMember);
     git_buf to_sign = {};
     if (git_commit_create_buffer(
             &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
@@ -3193,10 +3188,7 @@ ConversationRepository::addMember(const std::string& uri)
     if (!pimpl_->add(path))
         return {};
 
-    CommitMessage message;
-    message.action = CommitAction::ADD;
-    message.uri = uri;
-    message.type = CommitType::MEMBER;
+    auto message = CommitMessage::member(CommitAction::ADD, uri);
     auto commitId = pimpl_->commit(message.toString());
     if (commitId.empty()) {
         JAMI_ERROR("Unable to commit addition of member {}", uri);
@@ -3722,10 +3714,6 @@ ConversationRepository::join()
     if (!git_add_all(repo.get())) {
         return {};
     }
-    CommitMessage message;
-    message.action = CommitAction::JOIN;
-    message.uri = uri;
-    message.type = CommitType::MEMBER;
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
@@ -3743,6 +3731,7 @@ ConversationRepository::join()
         pimpl_->saveMembers();
     }
 
+    auto message = CommitMessage::member(CommitAction::JOIN, uri);
     return pimpl_->commitMessage(message.toString());
 }
 
@@ -3800,11 +3789,6 @@ ConversationRepository::leave()
         return {};
     }
 
-    CommitMessage message;
-    message.action = CommitAction::REMOVE;
-    message.uri = pimpl_->userId_;
-    message.type = CommitType::MEMBER;
-
     {
         std::lock_guard lk(pimpl_->membersMtx_);
         pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(),
@@ -3814,6 +3798,7 @@ ConversationRepository::leave()
         pimpl_->saveMembers();
     }
 
+    auto message = CommitMessage::member(CommitAction::REMOVE, pimpl_->userId_);
     return pimpl_->commit(message.toString(), false);
 }
 
@@ -3877,9 +3862,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     if (!pimpl_->add(toAdd))
         return {};
 
-    CommitMessage message;
-    message.uri = uri;
-    message.type = CommitType::VOTE;
+    auto message = CommitMessage::vote(uri);
     return pimpl_->commitMessage(message.toString());
 }
 
@@ -3916,9 +3899,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     if (!pimpl_->add(toAdd.c_str()))
         return {};
 
-    CommitMessage message;
-    message.uri = uri;
-    message.type = CommitType::VOTE;
+    auto message = CommitMessage::vote(uri);
     return pimpl_->commitMessage(message.toString());
 }
 
@@ -4067,10 +4048,7 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
         if (!git_add_all(repo.get()))
             return {};
 
-        CommitMessage message;
-        message.action = voteType;
-        message.uri = uri;
-        message.type = CommitType::MEMBER;
+        auto message = CommitMessage::member(voteType, uri);
         return pimpl_->commitMessage(message.toString());
     }
 
@@ -4269,8 +4247,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
 
     if (!pimpl_->add("profile.vcf"))
         return {};
-    CommitMessage message;
-    message.type = CommitType::UPDATE_PROFILE;
+    auto message = CommitMessage::updateProfile();
     return pimpl_->commitMessage(message.toString());
 }
 

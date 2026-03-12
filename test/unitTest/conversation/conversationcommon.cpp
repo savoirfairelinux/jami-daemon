@@ -63,9 +63,7 @@ addVote(std::shared_ptr<JamiAccount> account,
         file.close();
     }
 
-    CommitMessage message;
-    message.uri = votedUri;
-    message.type = CommitType::VOTE;
+    auto message = CommitMessage::vote(votedUri);
     ConversationRepository cr(account, convId);
     cr.commitMessage(message.toString(), false);
 }
@@ -96,10 +94,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId,
 
     ConversationRepository cr(account, convId);
 
-    CommitMessage message;
-    message.action = CommitAction::BAN;
-    message.uri = votedUri;
-    message.type = CommitType::MEMBER;
+    auto message = CommitMessage::member(CommitAction::BAN, votedUri);
     cr.commitMessage(message.toString());
 
     libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");

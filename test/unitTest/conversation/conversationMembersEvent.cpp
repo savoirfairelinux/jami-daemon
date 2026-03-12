@@ -419,10 +419,7 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
 
     ConversationRepository cr(account, convId);
 
-    CommitMessage message;
-    message.action = CommitAction::ADD;
-    message.uri = uri;
-    message.type = CommitType::MEMBER;
+    auto message = CommitMessage::member(CommitAction::ADD, uri);
     cr.commitMessage(message.toString());
 
     libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
@@ -1105,9 +1102,7 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Add commit from invalid user
-    CommitMessage message;
-    message.type = CommitType::TEXT;
-    message.body = "hi";
+    auto message = CommitMessage::text("hi");
     commitInRepo(repoPath, carlaAccount, message.toString());
 
     libjami::sendMessage(bobId, convId, "hi"s, "");
@@ -1199,10 +1194,7 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     std::string invitedPath = repoPathCarla / "invited";
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
 
-    CommitMessage message;
-    message.action = CommitAction::JOIN;
-    message.uri = carlaUri;
-    message.type = CommitType::MEMBER;
+    auto message = CommitMessage::member(CommitAction::JOIN, carlaUri);
     ConversationRepository cr(carlaAccount, convId);
     cr.commitMessage(message.toString(), false);
 
@@ -1257,10 +1249,7 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     file << cert->toString(false);
     addAll(carlaAccount, convId);
-    CommitMessage message;
-    message.action = CommitAction::JOIN;
-    message.uri = carlaUri;
-    message.type = CommitType::MEMBER;
+    auto message = CommitMessage::member(CommitAction::JOIN, carlaUri);
     commit(carlaAccount, convId, message);
 
     // Start Carla, should merge and all messages should be there

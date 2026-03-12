@@ -716,9 +716,7 @@ ConversationTest::testReplaceWithBadCertificate()
     addAll(aliceAccount, convId);
 
     // Note: Do not use libjami::sendMessage as it will replace the invalid certificate by a valid one
-    CommitMessage message;
-    message.type = CommitType::TEXT;
-    message.body = "hi";
+    auto message = CommitMessage::text("hi");
     commitInRepo(repoPath, aliceAccount, message.toString());
     // now we need to sync!
     bobData.errorDetected = false;
@@ -1184,9 +1182,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     }
     GitTree tree = GitTree(tree_ptr);
 
-    CommitMessage message;
-    message.mode = 1;
-    message.type = CommitType::INITIAL;
+    auto message = CommitMessage::initial(ConversationMode::ADMIN_INVITES_ONLY);
 
     if (git_commit_create_buffer(
             &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
@@ -1341,9 +1337,7 @@ ConversationTest::testPlainTextNoBadFile()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
 
     addFile(aliceAccount, convId, "BADFILE");
-    CommitMessage message;
-    message.type = CommitType::TEXT;
-    message.body = "hi";
+    auto message = CommitMessage::text("hi");
     commit(aliceAccount, convId, message);
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     // Check not received due to the unwanted file
@@ -1456,9 +1450,7 @@ ConversationTest::testETooBigFetch()
     bad.close();
 
     addAll(aliceAccount, convId);
-    CommitMessage message;
-    message.body = "o/";
-    message.type = CommitType::TEXT;
+    auto message = CommitMessage::text("o/");
     commit(aliceAccount, convId, message);
 
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -1476,9 +1468,7 @@ ConversationTest::testUnknownModeDetected()
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
     ConversationRepository repo(aliceAccount, convId);
-    CommitMessage message;
-    message.mode = 1412;
-    message.type = CommitType::INITIAL;
+    auto message = CommitMessage::initial(static_cast<ConversationMode>(1412));
     repo.amend(convId, message.toString());
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
@@ -1633,8 +1623,7 @@ FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
     addFile(aliceAccount, convId, "profile.vcf", vcard);
-    CommitMessage message;
-    message.type = CommitType::UPDATE_PROFILE;
+    auto message = CommitMessage::updateProfile();
     commit(aliceAccount, convId, message);
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
@@ -1665,8 +1654,7 @@ FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
     addFile(bobAccount, convId, "profile.vcf", vcard);
-    CommitMessage message;
-    message.type = CommitType::UPDATE_PROFILE;
+    auto message = CommitMessage::updateProfile();
     commit(bobAccount, convId, message);
     libjami::sendMessage(bobId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
@@ -2158,10 +2146,7 @@ ConversationTest::testMessageEdition()
     libjami::sendMessage(aliceId, convId, "New body"s, convId, 1);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messagesUpdated.size() == bobMsgSize + 1; }));
     // Add invalid edition
-    CommitMessage message;
-    message.type = CommitType::TEXT;
-    message.editedId = convId;
-    message.body = "new";
+    auto message = CommitMessage::edit("new", convId);
     auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
     commitInRepo(repoPath, aliceAccount, message.toString());
     bobData.errorDetected = false;
