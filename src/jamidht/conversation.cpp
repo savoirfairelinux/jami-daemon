@@ -1522,13 +1522,10 @@ Conversation::hasCommit(const std::string& commitId) const
     return pimpl_->repository_->hasCommit(commitId);
 }
 
-std::optional<std::map<std::string, std::string>>
+std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
-    auto commit = pimpl_->repository_->getCommit(commitId);
-    if (commit == std::nullopt)
-        return std::nullopt;
-    return pimpl_->repository_->convCommitToMap(*commit);
+    return pimpl_->repository_->getCommit(commitId);
 }
 
 void
@@ -1873,9 +1870,8 @@ Conversation::onFileChannelRequest(const std::string& member,
 
     auto interactionId = fileId.substr(0, sep);
     auto commit = getCommit(interactionId);
-    if (commit == std::nullopt || commit->find(CommitKey::TYPE) == commit->end()
-        || commit->find(CommitKey::TID) == commit->end() || commit->find(CommitKey::SHA3SUM) == commit->end()
-        || commit->at(CommitKey::TYPE) != CommitType::DATA_TRANSFER) {
+    if (commit == std::nullopt || commit->commitMsg.tid.empty() || commit->commitMsg.sha3sum.empty()
+        || commit->commitMsg.type != CommitType::DATA_TRANSFER) {
         JAMI_WARNING("[Account {:s}] {} requested invalid file transfer commit {}",
                      pimpl_->accountId_,
                      member,
@@ -1884,7 +1880,7 @@ Conversation::onFileChannelRequest(const std::string& member,
     }
 
     path = dataTransfer()->path(fileId);
-    sha3sum = commit->at(CommitKey::SHA3SUM);
+    sha3sum = commit->commitMsg.sha3sum;
 
     return true;
 }
@@ -1897,55 +1893,48 @@ Conversation::downloadFile(const std::string& interactionId,
                            const std::string& deviceId)
 {
     auto commit = getCommit(interactionId);
-    if (commit == std::nullopt || commit->at(CommitKey::TYPE) != CommitType::DATA_TRANSFER) {
+    if (commit == std::nullopt || commit->commitMsg.type != CommitType::DATA_TRANSFER) {
         JAMI_ERROR("Commit doesn't exists or is not a file transfer {} (Conversation: {}) ", interactionId, id());
         return false;
     }
-    auto tid = commit->find(CommitKey::TID);
-    auto sha3sum = commit->find(CommitKey::SHA3SUM);
-    auto size_str = commit->find(CommitKey::TOTAL_SIZE);
+    auto tid = commit->commitMsg.tid;
+    auto sha3sum = commit->commitMsg.sha3sum;
+    auto totalSize = commit->commitMsg.totalSize;
 
-    if (tid == commit->end() || sha3sum == commit->end() || size_str == commit->end()) {
+    if (tid.empty() || sha3sum.empty() || totalSize < 0) {
         JAMI_ERROR("Invalid file transfer commit (missing tid, size or sha3)");
         return false;
     }
 
-    auto totalSize = to_int<ssize_t>(size_str->second, (ssize_t) -1);
-    if (totalSize < 0) {
-        JAMI_ERROR("Invalid file size {}", totalSize);
-        return false;
-    }
-
     // Be sure to not lock conversation
-    dht::ThreadPool().io().run(
-        [w = weak(), deviceId, fileId, interactionId, sha3sum = sha3sum->second, path, totalSize] {
-            if (auto shared = w.lock()) {
-                std::filesystem::path filePath(path);
-                if (filePath.empty()) {
-                    filePath = shared->dataTransfer()->path(fileId);
-                }
-
-                if (fileutils::size(filePath) == totalSize) {
-                    if (fileutils::sha3File(filePath) == sha3sum) {
-                        JAMI_WARNING("Ignoring request to download existing file: {}", filePath);
-                        return;
-                    }
-                }
-
-                std::filesystem::path tempFilePath(filePath);
-                tempFilePath += ".tmp";
-                auto start = fileutils::size(tempFilePath);
-                if (start < 0)
-                    start = 0;
-                size_t end = 0;
-
-                auto acc = shared->pimpl_->account_.lock();
-                if (!acc)
-                    return;
-                shared->dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
-                acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
+    dht::ThreadPool().io().run([w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize] {
+        if (auto shared = w.lock()) {
+            std::filesystem::path filePath(path);
+            if (filePath.empty()) {
+                filePath = shared->dataTransfer()->path(fileId);
             }
-        });
+
+            if (fileutils::size(filePath) == totalSize) {
+                if (fileutils::sha3File(filePath) == sha3sum) {
+                    JAMI_WARNING("Ignoring request to download existing file: {}", filePath);
+                    return;
+                }
+            }
+
+            std::filesystem::path tempFilePath(filePath);
+            tempFilePath += ".tmp";
+            auto start = fileutils::size(tempFilePath);
+            if (start < 0)
+                start = 0;
+            size_t end = 0;
+
+            auto acc = shared->pimpl_->account_.lock();
+            if (!acc)
+                return;
+            shared->dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
+            acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
+        }
+    });
     return true;
 }
 
