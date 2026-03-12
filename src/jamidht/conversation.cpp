@@ -739,14 +739,12 @@ Conversation::Impl::commitsEndedCalls()
         // the conference while still hosting it, so activeCalls
         // will not be correctly updated
         // We don't need to send notifications there, as peers will sync with presence
-        CommitMessage commitMessage;
-        commitMessage.uri = userId_;
-        commitMessage.device = deviceId_;
-        commitMessage.confId = hostedCall.first;
-        commitMessage.type = CommitType::CALL_HISTORY;
+        auto confId = hostedCall.first;
         auto now = std::chrono::system_clock::now();
-        auto nowConverted = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-        commitMessage.duration = std::to_string((nowConverted - hostedCall.second) * 1000);
+        uint64_t nowConverted = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+        auto duration = (nowConverted > hostedCall.second) ? (nowConverted - hostedCall.second) * 1000 : 0;
+        auto commitMessage = CommitMessage::conferenceHostingEnd(confId, deviceId_, userId_, duration);
+
         auto itActive = std::find_if(activeCalls_.begin(),
                                      activeCalls_.end(),
                                      [this, confId = hostedCall.first](const auto& value) {
