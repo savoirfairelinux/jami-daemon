@@ -3725,6 +3725,13 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
                         acc->convModule()->syncConversations(peerId, deviceId.toString());
                     }
                 });
+            else
+                // Connection attempt failed; notify the message engine so pending
+                // messages can be retried with a fresh connection.
+                dht::ThreadPool::io().run([w, peerId, deviceId] {
+                    if (auto acc = w.lock())
+                        acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), false);
+                });
         },
         connectionType);
 }
