@@ -4153,14 +4153,13 @@ JamiAccount::sendFile(const std::string& conversationId,
     // to send a big file
     dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
         if (auto shared = w.lock()) {
-            CommitMessage commitMessage;
             auto tid = jami::generateUID(shared->rand);
-            commitMessage.tid = std::to_string(tid);
-            commitMessage.displayName = name.empty() ? path.filename().string() : name;
-            commitMessage.totalSize = fileutils::size(path);
-            commitMessage.sha3sum = fileutils::sha3File(path);
-            commitMessage.type = CommitType::DATA_TRANSFER;
-            commitMessage.replyTo = replyTo;
+            auto displayName = name.empty() ? path.filename().string() : name;
+            auto commitMessage = CommitMessage::fileSent(displayName,
+                                                         fileutils::sha3File(path),
+                                                         tid,
+                                                         fileutils::size(path),
+                                                         replyTo);
 
             shared->convModule()
                 ->createCommit(conversationId,
