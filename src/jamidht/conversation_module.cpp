@@ -1190,10 +1190,10 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         if (conv->conversation) {
             auto commit = conv->conversation->getCommit(editedId);
             if (commit != std::nullopt) {
-                type = commit->at(CommitKey::TYPE);
+                type = commit->commitMsg.type;
                 if (type == CommitType::DATA_TRANSFER)
-                    tid = commit->at(CommitKey::TID);
-                validCommit = commit->at("author") == username_
+                    tid = commit->commitMsg.tid;
+                validCommit = commit->authorId == username_
                               && (type == CommitType::TEXT || type == CommitType::DATA_TRANSFER);
             }
         }
