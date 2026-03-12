@@ -315,7 +315,7 @@ public:
      * @param   commitId
      * @return  The commit if found
      */
-    std::optional<std::map<std::string, std::string>> getCommit(const std::string& commitId) const;
+    std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
     /**
      * Get last commit id
      * @return last commit id

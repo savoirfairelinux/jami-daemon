@@ -1118,27 +1118,21 @@ ConversationRepository::Impl::checkEdit(const std::string& userDevice, const Con
     if (userUri.empty())
         return false;
     // Check that edited commit is found, for the same author, and editable (plain/text)
-    auto commitMap = convCommitToMap(commit);
-    if (commitMap == std::nullopt) {
-        return false;
-    }
-    auto editedId = commitMap->at(CommitKey::EDIT);
+    auto editedId = commit.commitMsg.editedId;
     auto editedCommit = getCommit(editedId);
     if (editedCommit == std::nullopt) {
         JAMI_ERROR("Commit {:s} not found", editedId);
         return false;
     }
-    auto editedCommitMap = convCommitToMap(*editedCommit);
-    if (editedCommitMap == std::nullopt or editedCommitMap->at("author").empty()
-        or editedCommitMap->at("author") != commitMap->at("author") or commitMap->at("author") != userUri) {
+    if (editedCommit->authorId != commit.authorId or commit.authorId != userUri) {
         JAMI_ERROR("Edited commit {:s} got a different author ({:s})", editedId, commit.id);
         return false;
     }
-    if (editedCommitMap->at(CommitKey::TYPE) == CommitType::TEXT) {
+    if (editedCommit->commitMsg.type == CommitType::TEXT) {
         return true;
     }
-    if (editedCommitMap->at(CommitKey::TYPE) == CommitType::DATA_TRANSFER) {
-        if (editedCommitMap->find(CommitKey::TID) != editedCommitMap->end())
+    if (editedCommit->commitMsg.type == CommitType::DATA_TRANSFER) {
+        if (!editedCommit->commitMsg.tid.empty())
             return true;
     }
     JAMI_ERROR("Edited commit {:s} is not valid!", editedId);
@@ -2587,8 +2581,7 @@ ConversationRepository::Impl::initMembers()
 std::optional<std::map<std::string, std::string>>
 ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) const
 {
-    auto authorId = uriFromDevice(commit.author.email, commit.id);
-    if (authorId.empty()) {
+    if (commit.authorId.empty()) {
         JAMI_ERROR("[Account {}] [Conversation {}] Invalid author ID for commit {}", accountId_, id_, commit.id);
         return std::nullopt;
     }
@@ -2628,7 +2621,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     message["id"] = commit.id;
     message["parents"] = parents;
     message["linearizedParent"] = commit.linearized_parent;
-    message["author"] = authorId;
+    message["author"] = commit.authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
 
@@ -2681,6 +2674,7 @@ ConversationRepository::Impl::parseCommit(git_repository* repo, const git_commit
     author.name = sig->name;
     author.email = sig->email;
     convCommit.author = std::move(author);
+    convCommit.authorId = uriFromDevice(convCommit.author.email, convCommit.id);
 
     std::vector<std::string> parents;
     auto parentsCount = git_commit_parentcount(commit);
