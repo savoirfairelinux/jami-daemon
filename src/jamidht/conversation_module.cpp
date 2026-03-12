@@ -1146,10 +1146,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
-    CommitMessage msg;
-    msg.body = std::move(message);
-    msg.type = CommitType::TEXT;
-    msg.replyTo = replyTo;
+    auto msg = CommitMessage::text(std::move(message), replyTo);
     createCommit(conversationId, std::move(msg), announce, std::move(onCommit), std::move(cb));
 }
 
@@ -1211,11 +1208,10 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         // Remove file!
         auto path = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId / fileId;
         dhtnet::fileutils::remove(path, true);
+        message = CommitMessage::fileDeleted(editedId);
     } else {
-        message.body = newBody;
+        message = CommitMessage::edit(newBody, editedId);
     }
-    message.editedId = editedId;
-    message.type = type;
     createCommit(conversationId, std::move(message));
 }
 
@@ -2142,11 +2138,7 @@ ConversationModule::reactToMessage(const std::string& conversationId,
                                    const std::string& newBody,
                                    const std::string& reactToId)
 {
-    // Commit message edition
-    CommitMessage message;
-    message.body = newBody;
-    message.reactTo = reactToId;
-    message.type = CommitType::TEXT;
+    auto message = CommitMessage::reaction(newBody, reactToId);
     pimpl_->createCommit(conversationId, std::move(message));
 }
 
@@ -2157,11 +2149,7 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
     finalUri = finalUri.substr(0, uri.find("@jami.dht"));
     auto convId = getOneToOneConversation(finalUri);
     if (!convId.empty()) {
-        CommitMessage message;
-        message.to = finalUri;
-        message.type = CommitType::CALL_HISTORY;
-        message.duration = std::to_string(duration_ms);
-        message.reason = reason;
+        auto message = CommitMessage::outgoingCallEnd(finalUri, duration_ms, reason);
         pimpl_->createCommit(convId, std::move(message));
     }
 }
@@ -3121,11 +3109,7 @@ ConversationModule::hostConference(const std::string& conversationId,
         return;
     }
     // Add commit to conversation
-    CommitMessage message;
-    message.uri = pimpl_->username_;
-    message.device = pimpl_->deviceId_;
-    message.confId = conf->getConfId();
-    message.type = CommitType::CALL_HISTORY;
+    auto message = CommitMessage::conferenceHostingStart(conf->getConfId(), pimpl_->deviceId_, pimpl_->username_);
     conv->conversation->hostConference(std::move(message),
                                        [w = pimpl_->weak(), conversationId](bool ok, const std::string& commitId) {
                                            if (ok) {
@@ -3147,12 +3131,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                       conv](int duration) {
         auto shared = w.lock();
         if (shared) {
-            CommitMessage message;
-            message.uri = accountUri;
-            message.device = shared->deviceId_;
-            message.confId = confId;
-            message.type = CommitType::CALL_HISTORY;
-            message.duration = std::to_string(duration);
+            auto message = CommitMessage::conferenceHostingEnd(confId, shared->deviceId_, accountUri, duration);
 
             std::lock_guard lk(conv->mtx);
             if (!conv->conversation) {
