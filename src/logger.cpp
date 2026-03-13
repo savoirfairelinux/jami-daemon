@@ -35,6 +35,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <fstream>
+#include <functional>
 #include <string>
 #include <mutex>
 #include <thread>
@@ -461,6 +462,28 @@ public:
     MonitorLog monitorLog;
     FileLog fileLog;
 
+    // ── Extra handler (e.g. OTel log bridge) ─────────────────────────────────
+    // Protected by extraHandlerMtx_; extraHandlerActive_ is a fast gate.
+    void setExtraHandler(Logger::LogCallback cb)
+    {
+        {
+            std::lock_guard<std::mutex> lk(extraHandlerMtx_);
+            extraHandler_ = std::move(cb);
+        }
+        extraHandlerActive_.store(true, std::memory_order_release);
+        checkStatus();
+    }
+
+    void clearExtraHandler()
+    {
+        extraHandlerActive_.store(false, std::memory_order_release);
+        {
+            std::lock_guard<std::mutex> lk(extraHandlerMtx_);
+            extraHandler_ = nullptr;
+        }
+        checkStatus();
+    }
+
     void enableFileLog(const std::string& path)
     {
         fileLog.setFile(path);
@@ -507,11 +530,17 @@ public:
 
     bool isEnabled()
     {
-        return consoleLog.isEnable() || sysLog.isEnable() || monitorLog.isEnable() || fileLog.isEnable();
+        return consoleLog.isEnable() || sysLog.isEnable() || monitorLog.isEnable() || fileLog.isEnable()
+               || extraHandlerActive_.load(std::memory_order_relaxed);
     }
 
 private:
     LogDispatcher() = default;
+
+    // Extra handler state
+    std::atomic<bool>          extraHandlerActive_ {false};
+    std::mutex                 extraHandlerMtx_;
+    Logger::LogCallback        extraHandler_;
 
     void checkStatus()
     {
@@ -542,6 +571,13 @@ private:
             cv_.wait(lk, [this] { return not msgQueue_.empty() or not running_; });
             auto local = std::move(msgQueue_);
             lk.unlock();
+            // Snapshot extra handler once per batch to avoid per-message lock.
+            Logger::LogCallback extraHandlerSnap;
+            if (extraHandlerActive_.load(std::memory_order_acquire)) {
+                std::lock_guard<std::mutex> eh_lk(extraHandlerMtx_);
+                extraHandlerSnap = extraHandler_;
+            }
+
             for (auto& msg : local) {
                 if (sysLog.isEnable())
                     sysLog.consume(msg);
@@ -551,6 +587,14 @@ private:
                     consoleLog.consume(msg);
                 if (fileLog.isEnable())
                     fileLog.consume(msg);
+
+                if (extraHandlerSnap) {
+                    try {
+                        extraHandlerSnap(msg.level_, msg.file_, msg.line_, msg.payload_);
+                    } catch (...) {
+                        // Never let an extra handler crash the log thread.
+                    }
+                }
 
                 msg.payload_ = {};
                 msg.header_ = {};
@@ -641,6 +685,18 @@ Logger::write(int level, std::string_view file, unsigned line, bool linefeed, st
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, tag, std::move(message));
     LogDispatcher::instance().log(std::move(msg));
+}
+
+void
+Logger::setExtraHandler(LogCallback callback)
+{
+    LogDispatcher::instance().setExtraHandler(std::move(callback));
+}
+
+void
+Logger::clearExtraHandler()
+{
+    LogDispatcher::instance().clearExtraHandler();
 }
 
 void

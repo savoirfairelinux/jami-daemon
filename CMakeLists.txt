@@ -23,6 +23,10 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(ENABLE_OTEL           "Enable OpenTelemetry instrumentation" OFF)
+option(OTEL_USE_FETCHCONTENT  "Fetch and build OTel SDK from GitHub at configure time" OFF)
+option(WITH_OTLP_HTTP         "Enable OTLP/HTTP exporter (requires curl)" OFF)
+option(WITH_OTLP_GRPC         "Enable OTLP/gRPC exporter (requires gRPC + protobuf)" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -38,6 +42,11 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
 
 include(CTest)
+
+# When libraries come from non-standard paths (e.g. Nix store), automatically
+# embed those directories in every target's RPATH so the runtime loader finds
+# the correct SOs instead of any shadowing copies in /usr/lib.
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(JAMI_NODEJS)
     # Required for nodejs binding
@@ -265,6 +274,17 @@ if(MSVC)
     add_subdirectory("compat")
 endif()
 
+################################################################################
+# OpenTelemetry (optional) — must be resolved before add_subdirectory(src) so
+# that imported targets are visible in the top-level scope for linking.
+# The actual target_* calls happen after add_library() via JAMI_OTEL_* vars.
+################################################################################
+if(ENABLE_OTEL)
+    find_package(opentelemetry-cpp CONFIG REQUIRED)
+    set(JAMI_OTEL_COMPILE_DEFINITIONS ENABLE_OTEL)
+    set(JAMI_OTEL_LINK_LIBS ${OPENTELEMETRY_CPP_LIBRARIES})
+endif()
+
 add_subdirectory("src")
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
@@ -412,6 +432,21 @@ if (JAMI_VIDEO)
 endif()
 if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
+endif()
+
+# OpenTelemetry instrumentation (propagated from src/CMakeLists.txt)
+if(JAMI_OTEL_COMPILE_DEFINITIONS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ${JAMI_OTEL_COMPILE_DEFINITIONS})
+endif()
+if(JAMI_OTEL_LINK_LIBS)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${JAMI_OTEL_LINK_LIBS})
+    # OTel's transitive dependencies (protobuf, abseil) may inject system include
+    # paths (e.g. /usr/include) that precede contrib/. Ensure our vendored headers
+    # have higher priority.
+    if(CONTRIB_PATH AND EXISTS "${CONTRIB_PATH}/include")
+        target_include_directories(${PROJECT_NAME} SYSTEM BEFORE PRIVATE
+            "${CONTRIB_PATH}/include")
+    endif()
 endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_AAUDIO)

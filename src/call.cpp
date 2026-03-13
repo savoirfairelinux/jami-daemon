@@ -33,6 +33,13 @@
 #include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
 
+#ifdef ENABLE_OTEL
+#include "otel/otel_init.h"
+#include "otel/otel_context.h"
+#include "otel/otel_attributes.h"
+#include "call_metrics.h"
+#endif
+
 #include <system_error>
 #include <functional>
 #include <utility>
@@ -244,8 +251,69 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     // Emit client state only if changed
     auto old_client_state = getStateStr();
+
+#ifdef ENABLE_OTEL
+    // Capture pre-transition state for OTel span/metric logic below.
+    const auto otel_prev_call_state = callState_;
+    const auto otel_prev_cnx_state  = connectionState_;
+#endif
+
     callState_ = call_state;
     connectionState_ = cnx_state;
+
+#ifdef ENABLE_OTEL
+    // Only instrument master calls (parent_ == nullptr); subcalls are internal
+    // forked legs for multi-device delivery and should not produce separate spans.
+    if (parent_ == nullptr) {
+        namespace attr = jami::otel::attr;
+        using jami::metrics::getCallMetrics;
+
+        const bool wasCurrentState = (otel_prev_call_state == CallState::ACTIVE
+                                      && otel_prev_cnx_state == ConnectionState::CONNECTED);
+        const bool isNowCurrentState = (call_state == CallState::ACTIVE
+                                        && cnx_state == ConnectionState::CONNECTED);
+        const bool isNowOver  = (call_state == CallState::OVER);
+        const bool isNowError = (call_state == CallState::MERROR);
+
+        if (!wasCurrentState && isNowCurrentState) {
+            // Call just reached CURRENT state (peer answered / we answered).
+            if (callSpan_.valid())
+                callSpan_.span->AddEvent("call.answered");
+
+            // Record setup duration (construction → CURRENT) and bump active_calls.
+            const auto setup_ms = static_cast<double>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    clock::now() - callSetupStart_).count());
+            getCallMetrics().setup_duration->Record(setup_ms, {});
+
+            getCallMetrics().active_calls->Add(1);
+            callMetricsActive_ = true;
+        }
+
+        if (isNowOver) {
+            // Call ended normally.  Record duration and end the root span.
+            const auto dur_secs = static_cast<double>(getCallDuration().count()) / 1000.0;
+            callSpan_.end(/*success=*/true);
+
+            if (callMetricsActive_) {
+                getCallMetrics().active_calls->Add(-1);
+                callMetricsActive_ = false;
+                if (dur_secs > 0.0)
+                    getCallMetrics().call_duration->Record(dur_secs, {});
+            }
+        } else if (isNowError) {
+            // Call ended with a media/protocol error.
+            callSpan_.end(/*success=*/false, "call error (MERROR)");
+
+            if (callMetricsActive_) {
+                getCallMetrics().active_calls->Add(-1);
+                callMetricsActive_ = false;
+            }
+            getCallMetrics().failed_calls->Add(1);
+        }
+    }
+#endif // ENABLE_OTEL
+
     auto new_client_state = getStateStr();
 
     for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end();) {
