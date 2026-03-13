@@ -49,6 +49,7 @@ endif
 
 if get_option('tests')
     depcppunit = dependency('cppunit', version: '>= 1.12')
+    add_project_arguments('-DLIBJAMI_TEST', language: 'cpp')
 endif
 
 #################################################
