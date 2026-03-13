@@ -27,6 +27,11 @@
 #include "logger.h"
 #include "client/jami_signal.h"
 
+#ifdef ENABLE_OTEL
+#include "otel/otel_init.h"
+#include "otel/otel_log_bridge.h"
+#endif
+
 namespace libjami {
 
 static InitFlag initFlags = {};
@@ -97,6 +102,16 @@ init(enum InitFlag flags) noexcept
     }
 #endif
 
+#ifdef ENABLE_OTEL
+    // Initialise OpenTelemetry providers from environment variables and
+    // immediately install the log bridge so that all subsequent jami log
+    // records are forwarded to the OTel pipeline.
+    // initOtel() uses a call_once guard — safe to call multiple times.
+    if (jami::otel::initOtel(jami::otel::OtelConfig::fromEnvironment())) {
+        jami::otel::installOtelLogBridge();
+    }
+#endif
+
     return true;
 }
 
@@ -120,7 +135,17 @@ initialized() noexcept
 void
 fini() noexcept
 {
+    // Shutdown order:
+    //  1. Manager::finish() — daemon teardown; log records still reach OTel.
+    //  2. removeOtelLogBridge() — detach the bridge so nothing tries to emit
+    //     after the OTel providers have started tearing down.
+    //  3. shutdownOtel() — flush BatchLogRecordProcessor / BatchSpanProcessor.
+    //  4. Logger::fini() — stop jami's own log dispatcher thread.
     jami::Manager::instance().finish();
+#ifdef ENABLE_OTEL
+    jami::otel::removeOtelLogBridge();
+    jami::otel::shutdownOtel();
+#endif
     jami::Logger::fini();
 }
 

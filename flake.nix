@@ -14,6 +14,23 @@
           config.allowUnfree = true;
         };
 
+        # opentelemetry-cpp with OTLP HTTP exporter enabled.
+        # The default nixpkgs package is built without OTLP support; this override
+        # adds the cmake flags and dependencies required to send telemetry directly
+        # to Jaeger (port 4318) or any other OTLP/HTTP-compatible collector.
+        opentelemetry-cpp-otlp = pkgs.opentelemetry-cpp.overrideAttrs (old: {
+          buildInputs = old.buildInputs ++ [
+            pkgs.protobuf
+            pkgs.curl
+            pkgs.nlohmann_json
+          ];
+          cmakeFlags = (old.cmakeFlags or []) ++ [
+            "-DWITH_OTLP_HTTP=ON"
+            "-DWITH_OTLP_HTTP_COMPRESSION=OFF"
+            "-DWITH_OTLP_GRPC=OFF"
+          ];
+        });
+
         # Common build inputs for all build systems
         commonBuildInputs = with pkgs; [
           # Build tools
@@ -81,6 +98,9 @@
           llhttp
           simdutf
           
+          # OpenTelemetry C++ SDK with OTLP HTTP exporter (optional instrumentation)
+          opentelemetry-cpp-otlp
+
           # Additional dependencies
           gmp
           liburcu

@@ -33,8 +33,10 @@
 #include <opendht/logger.h>
 #include <cstdarg>
 
+#include <functional>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #ifdef __ANDROID__
 
@@ -155,6 +157,34 @@ public:
     static bool debugEnabled();
 
     static void fini();
+
+    ///
+    /// Callback type for external log sinks (e.g. OTel log bridge).
+    /// Called from the LogDispatcher background thread.
+    /// The callback MUST be non-blocking and must NOT call any JAMI_* log macro
+    /// to avoid re-entrancy. Use the thread-local re-entrancy guard in your
+    /// implementation.
+    ///
+    using LogCallback = std::function<void(int level,
+                                           std::string_view file,
+                                           unsigned line,
+                                           std::string_view message)>;
+
+    ///
+    /// Register a single extra log sink.
+    /// Replaces any previously registered sink.
+    /// Calling with an empty callback is equivalent to clearExtraHandler().
+    /// Safe to call from any thread.
+    ///
+    LIBJAMI_PUBLIC
+    static void setExtraHandler(LogCallback callback);
+
+    ///
+    /// Remove the extra log sink previously installed by setExtraHandler().
+    /// Safe to call from any thread.
+    ///
+    LIBJAMI_PUBLIC
+    static void clearExtraHandler();
 
     static Logger log(int level, const char* file, unsigned line, bool linefeed)
     {
