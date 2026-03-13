@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc41a553_50716113",
+        "filename": "contrib/src/README",
+        "patchSetId": 2
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-13T22:04:45Z",
+      "side": 1,
+      "message": "Is the convention to have 1 or 2 blank lines before a heading?",
+      "range": {
+        "startLine": 51,
+        "startChar": 0,
+        "endLine": 51,
+        "endChar": 18
+      },
+      "revId": "0e86ff46714308e167ae38fb90e81d26a398deab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32dfe462_fb7689d0",
+        "filename": "contrib/src/README",
+        "patchSetId": 2
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-13T22:04:45Z",
+      "side": 1,
+      "message": "Is the convention to use hashes (`#`) or `\u003d` and `-` for 1-line or 2-line headings, respectively?",
+      "range": {
+        "startLine": 122,
+        "startChar": 0,
+        "endLine": 123,
+        "endChar": 26
+      },
+      "revId": "0e86ff46714308e167ae38fb90e81d26a398deab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5878a12b_37c41ddd",
+        "filename": "contrib/src/update_contrib",
+        "patchSetId": 2
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-13T22:04:45Z",
+      "side": 1,
+      "message": "Should the file end with a newline?",
+      "range": {
+        "startLine": 177,
+        "startChar": 0,
+        "endLine": 177,
+        "endChar": 9
+      },
+      "revId": "0e86ff46714308e167ae38fb90e81d26a398deab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
