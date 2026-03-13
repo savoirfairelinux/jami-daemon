@@ -58,6 +58,13 @@
 
 #include "tracepoint.h"
 
+#ifdef ENABLE_OTEL
+#include "otel/otel_init.h"
+#include "otel/otel_context.h"
+#include "otel/otel_attributes.h"
+#include "call_metrics.h"
+#endif
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -104,6 +111,40 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , srtpEnabled_(account->isSrtpEnabled())
 {
     jami_tracepoint(call_start, callId.c_str());
+
+#ifdef ENABLE_OTEL
+    {
+        // Start the root call lifecycle span.
+        // SpanKind::kClient for outgoing (we are the initiator / RPC caller),
+        // SpanKind::kServer for incoming (we are the callee / RPC server).
+        const bool isOutgoing = (type == Call::CallType::OUTGOING);
+        const auto spanName   = isOutgoing ? "call.outgoing" : "call.incoming";
+        const auto spanKind   = isOutgoing
+                                    ? opentelemetry::trace::SpanKind::kClient
+                                    : opentelemetry::trace::SpanKind::kServer;
+
+        callSpan_ = jami::otel::AsyncSpan::start("jami.calls", spanName, spanKind);
+
+        if (callSpan_.valid()) {
+            namespace attr = jami::otel::attr;
+            // callId is an internal UUID — not a SIP Call-ID, not PII.
+            callSpan_.span->SetAttribute(std::string(attr::CALL_ID_HASH),
+                                         callId);
+            callSpan_.span->SetAttribute(std::string(attr::CALL_DIRECTION),
+                                         std::string(isOutgoing ? "outgoing" : "incoming"));
+            // jami.call.link_type — always "sip" for SIPCall
+            callSpan_.span->SetAttribute(std::string("jami.call.link_type"),
+                                         std::string("sip"));
+            callSpan_.span->SetAttribute(std::string("jami.call.srtp_enabled"),
+                                         srtpEnabled_);
+            callSpan_.span->SetAttribute(std::string("jami.call.ice_enabled"),
+                                         enableIce_);
+        }
+
+        // Increment the total-calls counter once at creation.
+        jami::metrics::getCallMetrics().total_calls->Add(1);
+    }
+#endif // ENABLE_OTEL
 
     if (account->getUPnPActive())
         upnp_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
