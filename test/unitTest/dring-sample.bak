@@ -1,0 +1,69 @@
+accounts:
+  []
+preferences:
+  historyLimit: 0
+  ringingTimeout: 30
+  historyMaxCalls: 20
+  md5Hash: false
+  order: ""
+  portNum: 5060
+  searchBarDisplay: true
+  zoneToneChoice: North America
+  pendingAccounts:
+    []
+voipPreferences:
+  playDtmf: true
+  playTones: true
+  pulseLength: 250
+audio:
+  alsa:
+    cardIn: 0
+    cardOut: 0
+    cardRing: 0
+    plugin: default
+    smplRate: 44100
+  alwaysRecording: false
+  audioApi: pulseaudio
+  captureMuted: false
+  playbackMuted: false
+  pulse:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  portaudio:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  recordPath: ""
+  volumeMic: 1
+  volumeSpkr: 1
+  audioProcessor: webrtc
+  automaticGainControl: true
+  voiceActivityDetection: true
+  noiseReduce: auto
+  echoCancel: auto
+video:
+  recordPreview: true
+  recordQuality: 0
+  decodingAccelerated: true
+  encodingAccelerated: false
+  conferenceResolution: 1280x720
+  devices:
+    - name: C922 Pro Stream Webcam
+      id: 046d_C922_Pro_Stream_Webcam_0E38EEDF
+      input: /dev/video0
+      video_size: 800x600
+      channel: Camera 1
+      framerate: 30
+    - name: desktop
+      id: desktop
+      input: pipewiregrab
+      video_size: 0x0
+      channel: ""
+      framerate: 30
+plugins:
+  pluginsEnabled: false
+  installedPlugins:
+    []
+  loadedPlugins:
+    []

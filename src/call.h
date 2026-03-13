@@ -38,6 +38,11 @@
 #include <list>
 #include <functional>
 
+#ifdef ENABLE_OTEL
+#include "otel/otel_context.h"
+#include "otel/otel_attributes.h"
+#endif
+
 template<typename T>
 bool
 is_uninitialized(std::weak_ptr<T> const& weak)
@@ -520,6 +525,21 @@ protected:
     std::string toUsername_ {};
 
     asio::steady_timer timeoutTimer_;
+
+#ifdef ENABLE_OTEL
+    // ── OTel call lifecycle span ──────────────────────────────────────────────
+    /// Root span for the entire call lifetime ("call.outgoing" / "call.incoming").
+    /// Started in SIPCall::SIPCall(), ended in Call::setState when OVER or MERROR.
+    jami::otel::AsyncSpan callSpan_ {};
+
+    /// True once active_calls metric has been incremented (state reached CURRENT).
+    /// Used to guard the corresponding decrement so it happens exactly once.
+    bool callMetricsActive_ {false};
+
+    /// Monotonic timestamp recorded at call construction; used to compute
+    /// setup duration (time until ACTIVE+CONNECTED).
+    time_point callSetupStart_ {clock::now()};
+#endif // ENABLE_OTEL
 };
 
 // Helpers
