@@ -1,4 +1,25 @@
 #################################################
+# DST (Deterministic Simulation Testing) library
+#################################################
+dst_library = static_library(
+    'dst',
+    sources: files(
+        'dst/dst.cpp',
+        'dst/simclient.cpp',
+    ),
+    include_directories: ['dst', '../src', libjami_includedirs],
+    dependencies: [depjami, libjami_dependencies],
+)
+
+jamidst = executable(
+    'jamidst',
+    sources: files('dst/main.cpp'),
+    include_directories: ['dst', '../src', libjami_includedirs],
+    dependencies: [depjami, libjami_dependencies],
+    link_with: dst_library,
+)
+
+#################################################
 # Unit tests
 #################################################
 ut_includedirs = ['unitTest', '../src', libjami_includedirs]
@@ -9,7 +30,10 @@ ut_library = static_library(
     sources: files('unitTest/common.cpp'),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
+    link_with: dst_library,
 )
+
+deprestinio = dependency('restinio', required: true)
 
 ut_account_archive = executable(
     'ut_account_archive',
@@ -94,21 +118,6 @@ ut_call = executable(
     link_with: ut_library,
 )
 test('call', ut_call, workdir: ut_workdir, is_parallel: false, timeout: 1800)
-
-ut_conference = executable(
-    'ut_conference',
-    sources: files('unitTest/call/conference.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library,
-)
-test(
-    'conference',
-    ut_conference,
-    workdir: ut_workdir,
-    is_parallel: false,
-    timeout: 1800,
-)
 
 ut_conversation = executable(
     'ut_conversation',
@@ -257,21 +266,6 @@ test(
     timeout: 1800,
 )
 
-ut_ice_sdp_parser = executable(
-    'ut_ice_sdp_parser',
-    sources: files('unitTest/ice/ice_sdp_parser.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library,
-)
-test(
-    'ice_sdp_parser',
-    ut_ice_sdp_parser,
-    workdir: ut_workdir,
-    is_parallel: false,
-    timeout: 1800,
-)
-
 ut_media_decoder = executable(
     'ut_media_decoder',
     sources: files('unitTest/media/test_media_decoder.cpp'),
@@ -297,51 +291,6 @@ ut_media_encoder = executable(
 test(
     'media_encoder',
     ut_media_encoder,
-    workdir: ut_workdir,
-    is_parallel: false,
-    timeout: 1800,
-)
-
-ut_media_filter = executable(
-    'ut_media_filter',
-    sources: files('unitTest/media/test_media_filter.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library,
-)
-test(
-    'media_filter',
-    ut_media_filter,
-    workdir: ut_workdir,
-    is_parallel: false,
-    timeout: 1800,
-)
-
-ut_media_frame = executable(
-    'ut_media_frame',
-    sources: files('unitTest/media/test_media_frame.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library,
-)
-test(
-    'media_frame',
-    ut_media_frame,
-    workdir: ut_workdir,
-    is_parallel: false,
-    timeout: 1800,
-)
-
-ut_media_player = executable(
-    'ut_media_player',
-    sources: files('unitTest/media/test_media_player.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library,
-)
-test(
-    'media_player',
-    ut_media_player,
     workdir: ut_workdir,
     is_parallel: false,
     timeout: 1800,
@@ -530,7 +479,6 @@ test(
     timeout: 1800,
 )
 
-# # # #
 ut_linkdevice = executable(
     'ut_linkdevice',
     sources: files('unitTest/linkdevice/linkdevice.cpp'),
@@ -545,9 +493,131 @@ test(
     is_parallel: false,
     timeout: 1200,
 )
-# # # #
 
-if conf.get('ENABLE_VIDEO')
+ut_bootstrap = executable(
+    'ut_bootstrap',
+    sources: files('unitTest/swarm/bootstrap.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'bootstrap',
+    ut_bootstrap,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_namedirectory = executable(
+    'ut_namedirectory',
+    sources: files('unitTest/namedirectory/namedirectory.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies + [deprestinio],
+    link_with: ut_library,
+)
+test(
+    'namedirectory',
+    ut_namedirectory,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_routing_table = executable(
+    'ut_routing_table',
+    sources: files('unitTest/swarm/routing_table.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'routing_table',
+    ut_routing_table,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_simulation = executable(
+    'ut_simulation',
+    sources: files('unitTest/simulation/simulation.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'simulation',
+    ut_simulation,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_sipcall = executable(
+    'ut_sipcall',
+    sources: files('unitTest/call/sipcall.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'sipcall',
+    ut_sipcall,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_swarm_conversation = executable(
+    'ut_swarm_conversation',
+    sources: files('unitTest/swarm/swarm_conversation.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'swarm_conversation',
+    ut_swarm_conversation,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_swarm_spread = executable(
+    'ut_swarm_spread',
+    sources: files('unitTest/swarm/swarm_spread.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'swarm_spread',
+    ut_swarm_spread,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_sip = executable(
+    'ut_sip',
+    sources: files(
+        'sip/sip.cpp',
+        'sip/test_SIP.cpp',
+    ),
+    include_directories: [ut_includedirs, 'sip'],
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'sip',
+    ut_sip,
+    workdir: meson.project_source_root() / 'test' / 'sip',
+    is_parallel: false,
+    timeout: 1800,
+)
+
+if get_option('plugins')
     ut_plugins = executable(
         'ut_plugins',
         sources: files('unitTest/plugins/plugins.cpp'),
@@ -558,6 +628,83 @@ if conf.get('ENABLE_VIDEO')
     test(
         'plugins',
         ut_plugins,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+endif
+
+if conf.get('ENABLE_VIDEO')
+    ut_conference = executable(
+        'ut_conference',
+        sources: files('unitTest/call/conference.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'conference',
+        ut_conference,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_ice_sdp_parser = executable(
+        'ut_ice_sdp_parser',
+        sources: files('unitTest/ice/ice_sdp_parser.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'ice_sdp_parser',
+        ut_ice_sdp_parser,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_media_filter = executable(
+        'ut_media_filter',
+        sources: files('unitTest/media/test_media_filter.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'media_filter',
+        ut_media_filter,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_media_frame = executable(
+        'ut_media_frame',
+        sources: files('unitTest/media/test_media_frame.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'media_frame',
+        ut_media_frame,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_media_player = executable(
+        'ut_media_player',
+        sources: files('unitTest/media/test_media_player.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'media_player',
+        ut_media_player,
         workdir: ut_workdir,
         is_parallel: false,
         timeout: 1800,
