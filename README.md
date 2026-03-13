@@ -71,7 +71,7 @@ make
 cd ../../
 mkdir build
 export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
-meson -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_library=static -Dinterfaces=dbus build
+meson setup -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_library=static -Dinterfaces=dbus build
 cd build
 ninja
 ninja install
