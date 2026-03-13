@@ -37,6 +37,15 @@ generateUID(std::mt19937_64& engine)
     return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(engine);
 }
 
+std::string
+getFileId(const std::string& commitId, const std::string& tid, const std::string& displayName)
+{
+    auto extension = fileutils::getFileExtension(displayName);
+    if (extension.empty())
+        return fmt::format("{}_{}", commitId, tid);
+    return fmt::format("{}_{}.{}", commitId, tid, extension);
+}
+
 FileInfo::FileInfo(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                    const std::string& fileId,
                    const std::string& interactionId,

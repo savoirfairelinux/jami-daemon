@@ -29,6 +29,7 @@
 namespace jami {
 
 libjami::DataTransferId generateUID(std::mt19937_64& engine);
+std::string getFileId(const std::string& commitId, const std::string& tid, const std::string& displayName);
 
 class Stream;
 

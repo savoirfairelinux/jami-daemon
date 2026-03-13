@@ -829,6 +829,32 @@ FileTransferTest::testDeleteFile()
     // Verify file is deleted
     CPPUNIT_ASSERT(!dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}", iid, tid)));
 
+    // Now test with a file that has an extension
+    iid.clear();
+    tid.clear();
+    messageUpdated = false;
+
+    auto sendPathWithExt = sendPath;
+    sendPathWithExt += ".txt";
+    std::ofstream sendFile2(sendPathWithExt);
+    CPPUNIT_ASSERT(sendFile2.is_open());
+    sendFile2 << std::string(64000, 'A');
+    sendFile2.close();
+
+    libjami::sendFile(aliceId, convId, sendPathWithExt, "SEND.txt", "");
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
+    CPPUNIT_ASSERT(dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}.txt", iid, tid)));
+
+    // Delete file
+    libjami::sendMessage(aliceId, convId, ""s, iid, 1);
+
+    // Verify message is updated
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageUpdated; }));
+    // Verify file is deleted
+    CPPUNIT_ASSERT(!dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}.txt", iid, tid)));
+
+    std::filesystem::remove(sendPathWithExt);
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(5s);
 }
