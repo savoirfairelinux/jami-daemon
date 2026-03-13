@@ -158,7 +158,7 @@ if conf.get('HAVE_JACK') == 1
     libjami_dependencies += depjack
 endif
 
-if conf.get('HAVE_PORTAUDIO') == 1
+if conf.get('HAVE_PORTAUDIO') == 1 and host_machine.system() == 'windows'
     libjami_sources += files('media/audio/portaudio/portaudiolayer.cpp')
     libjami_dependencies += depportaudio
 endif
