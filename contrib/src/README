@@ -117,3 +117,20 @@ Implementation note:
 			touch $@
 
 	So you really only need to set DEPS_bar.
+
+
+Updating a contrib version
+--------------------------
+
+Use the helper script to update a contrib package version, its Windows
+metadata and the checksum file in one pass:
+
+	./update_contrib opendht 3.7.5
+
+The script updates:
+ - src/<package>/rules.mak
+ - src/<package>/package.json
+ - src/<package>/SHA512SUMS
+
+The archive is downloaded from the URL template stored in package.json,
+then SHA-512 is recomputed automatically.
