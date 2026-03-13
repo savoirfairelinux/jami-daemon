@@ -1,0 +1,177 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: update_contrib <package> <version>
+
+Updates the contrib package metadata for the specified version:
+ - <package>/rules.mak
+ - <package>/package.json
+ - <package>/SHA512SUMS
+EOF
+}
+
+die() {
+    echo "$*" >&2
+    exit 1
+}
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
+}
+
+compute_sha512() {
+    local archive_path=$1
+
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 512 "$archive_path" | awk '{ print $1 }'
+        return
+    fi
+
+    die "Unable to compute SHA-512 checksum"
+}
+
+extract_json_field() {
+    local field_name=$1
+    local file_path=$2
+
+    sed -nE "s/^[[:space:]]*\"${field_name}\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\1/p" "$file_path" | head -n 1
+}
+
+extract_version_var() {
+    local rules_file=$1
+
+    sed -nE 's/^([A-Z0-9_]+_(VERSION|VER|HASH))[[:space:]]*[:+?]?=.*/\1/p' "$rules_file" | head -n 1
+}
+
+extract_archive_template() {
+    local rules_file=$1
+
+    sed -nE 's|^\$\(TARBALLS\)/([^:]+):.*|\1|p' "$rules_file" | head -n 1
+}
+
+extract_make_value() {
+    local variable_name=$1
+    local rules_file=$2
+
+    sed -nE "s/^${variable_name}[[:space:]]*[:+?]?=[[:space:]]*([^#[:space:]].*[^[:space:]]|[^#[:space:]])([[:space:]]+#.*)?$/\1/p" "$rules_file" | head -n 1
+}
+
+replace_make_value() {
+    local variable_name=$1
+    local new_value=$2
+    local rules_file=$3
+
+    UPDATE_CONTRIB_VAR_NAME="$variable_name" \
+    UPDATE_CONTRIB_NEW_VALUE="$new_value" \
+    perl -0pi -e 's/^(\Q$ENV{UPDATE_CONTRIB_VAR_NAME}\E\s*[:+?]?=\s*).*$/$1 . $ENV{UPDATE_CONTRIB_NEW_VALUE}/me' "$rules_file"
+}
+
+replace_json_version() {
+    local new_value=$1
+    local package_file=$2
+
+    UPDATE_CONTRIB_NEW_VALUE="$new_value" \
+    perl -0pi -e 's/^(\s*"version"\s*:\s*").*("\s*,?\s*)$/$1 . $ENV{UPDATE_CONTRIB_NEW_VALUE} . $2/me' "$package_file"
+}
+
+build_archive_name() {
+    local archive_template=$1
+    local version_var=$2
+    local new_rules_version=$3
+
+    local archive_name=$archive_template
+    archive_name=${archive_name//\$\($version_var\)/$new_rules_version}
+    archive_name=${archive_name//\$\{$version_var\}/$new_rules_version}
+    echo "$archive_name"
+}
+
+main() {
+    if [[ $# -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
+        usage
+        exit 0
+    fi
+
+    if [[ $# -ne 2 ]]; then
+        usage
+        exit 1
+    fi
+
+    require_command curl
+    require_command perl
+    require_command sed
+    require_command shasum
+
+    local package_name=$1
+    local new_rules_version=$2
+    local script_dir
+    script_dir=$(cd "$(dirname "$0")" && pwd)
+
+    local package_dir="$script_dir/$package_name"
+    local rules_file="$package_dir/rules.mak"
+    local package_file="$package_dir/package.json"
+    local sha_file="$package_dir/SHA512SUMS"
+
+    [[ -d "$package_dir" ]] || die "Unknown contrib package: $package_name"
+    [[ -f "$rules_file" ]] || die "Missing rules file: $rules_file"
+    [[ -f "$package_file" ]] || die "Missing package.json: $package_file"
+    [[ -f "$sha_file" ]] || die "Missing SHA512SUMS: $sha_file"
+
+    local version_var
+    version_var=$(extract_version_var "$rules_file")
+    [[ -n "$version_var" ]] || die "Unsupported rules.mak format in $rules_file: expected a *_VERSION, *_VER or *_HASH variable"
+
+    local current_rules_version
+    current_rules_version=$(extract_make_value "$version_var" "$rules_file")
+    [[ -n "$current_rules_version" ]] || die "Unable to read $version_var from $rules_file"
+
+    local current_json_version
+    current_json_version=$(extract_json_field version "$package_file")
+    [[ -n "$current_json_version" ]] || die "Unable to read version from $package_file"
+
+    local url_template
+    url_template=$(extract_json_field url "$package_file")
+    [[ -n "$url_template" ]] || die "Unable to read url from $package_file"
+    [[ "$url_template" == *"__VERSION__"* ]] || die "Unsupported package.json format in $package_file: expected url to contain __VERSION__"
+
+    local archive_template
+    archive_template=$(extract_archive_template "$rules_file")
+    [[ -n "$archive_template" ]] || die "Unsupported rules.mak format in $rules_file: expected a \\$(TARBALLS)/... target"
+
+    local new_json_version=$new_rules_version
+    if [[ "$current_json_version" == *"$current_rules_version"* ]]; then
+        new_json_version=${current_json_version/"$current_rules_version"/"$new_rules_version"}
+    fi
+
+    local download_url
+    download_url=${url_template//__VERSION__/$new_json_version}
+
+    local archive_name
+    archive_name=$(build_archive_name "$archive_template" "$version_var" "$new_rules_version")
+    [[ -n "$archive_name" ]] || die "Unable to derive archive name from $download_url"
+
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    trap "rm -rf '$temp_dir'" EXIT
+
+    local archive_path="$temp_dir/$archive_name"
+
+    echo "Downloading $download_url"
+    curl -LfsS "$download_url" -o "$archive_path"
+
+    local checksum
+    checksum=$(compute_sha512 "$archive_path")
+
+    replace_make_value "$version_var" "$new_rules_version" "$rules_file"
+    replace_json_version "$new_json_version" "$package_file"
+    printf '%s  %s\n' "$checksum" "$archive_name" > "$sha_file"
+
+    echo "Updated $package_name from $current_rules_version to $new_rules_version"
+    echo "  rules variable: $version_var"
+    echo "  package.json version: $new_json_version"
+    echo "  archive: $archive_name"
+}
+
+main "$@"
