@@ -19,6 +19,7 @@
 
 #undef NDEBUG
 #include <cassert>
+#include <algorithm>
 
 namespace jami {
 namespace test {
