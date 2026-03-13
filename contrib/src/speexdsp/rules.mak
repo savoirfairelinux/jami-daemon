@@ -1,24 +1,24 @@
 # speexdsp
 
 SPEEXDSP_VERSION := 1.2.0
-SPEEXDSP_HASH := SpeexDSP-$(SPEEXDSP_VERSION)
+SPEEXDSP_VERSION := SpeexDSP-$(SPEEXDSP_VERSION)
 PKG_CPE += cpe:2.3:a:xiph:speex:$(SPEEXDSP_VERSION):*:*:*:*:*:*:*
-SPEEXDSP_GITURL := https://github.com/xiph/speexdsp/archive/$(SPEEXDSP_HASH).tar.gz
+SPEEXDSP_GITURL := https://github.com/xiph/speexdsp/archive/$(SPEEXDSP_VERSION).tar.gz
 
 PKGS += speexdsp
 ifeq ($(call need_pkg,"speexdsp"),)
 PKGS_FOUND += speexdsp
 endif
 
-$(TARBALLS)/speexdsp-$(SPEEXDSP_HASH).tar.gz:
+$(TARBALLS)/speexdsp-$(SPEEXDSP_VERSION).tar.gz:
 	$(call download,$(SPEEXDSP_GITURL))
 
-.sum-speexdsp: speexdsp-$(SPEEXDSP_HASH).tar.gz
+.sum-speexdsp: speexdsp-$(SPEEXDSP_VERSION).tar.gz
 
-speexdsp: speexdsp-$(SPEEXDSP_HASH).tar.gz
-	rm -Rf $@ $@-$(SPEEXDSP_HASH)
-	mkdir -p $@-$(SPEEXDSP_HASH)
-	$(ZCAT) "$<" | (cd $@-$(SPEEXDSP_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
+speexdsp: speexdsp-$(SPEEXDSP_VERSION).tar.gz
+	rm -Rf $@ $@-$(SPEEXDSP_VERSION)
+	mkdir -p $@-$(SPEEXDSP_VERSION)
+	$(ZCAT) "$<" | (cd $@-$(SPEEXDSP_VERSION) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
 	$(MOVE)
 
 SPEEXDSP_CONF := --enable-resample-full-sinc-table --disable-examples
