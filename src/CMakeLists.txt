@@ -61,6 +61,18 @@ if(MSVC)
    )
 endif()
 
+################################################################################
+# OpenTelemetry source files (options and detection are in the top-level
+# CMakeLists.txt so that imported targets are in the correct scope)
+################################################################################
+if(ENABLE_OTEL)
+    list(APPEND Source_Files
+        "${CMAKE_CURRENT_SOURCE_DIR}/otel/otel_init.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/otel/otel_log_bridge.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/call_metrics.cpp"
+    )
+endif()
+
 set (Source_Files ${Source_Files} PARENT_SCOPE)
 
 add_subdirectory(client)

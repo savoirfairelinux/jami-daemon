@@ -23,6 +23,10 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(ENABLE_OTEL           "Enable OpenTelemetry instrumentation" OFF)
+option(OTEL_USE_FETCHCONTENT  "Fetch and build OTel SDK from GitHub at configure time" OFF)
+option(WITH_OTLP_HTTP         "Enable OTLP/HTTP exporter (requires curl)" OFF)
+option(WITH_OTLP_GRPC         "Enable OTLP/gRPC exporter (requires gRPC + protobuf)" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -265,6 +269,109 @@ if(MSVC)
     add_subdirectory("compat")
 endif()
 
+################################################################################
+# OpenTelemetry (optional) — must be resolved before add_subdirectory(src) so
+# that imported targets are visible in the top-level scope for linking.
+################################################################################
+if(ENABLE_OTEL)
+    list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
+    # FetchContent: download and build OTel SDK if requested
+    if(OTEL_USE_FETCHCONTENT)
+        include(FetchContent)
+        set(WITH_STL               ON  CACHE BOOL "" FORCE)
+        set(BUILD_TESTING          OFF CACHE BOOL "" FORCE)
+        set(WITH_EXAMPLES          OFF CACHE BOOL "" FORCE)
+        set(WITH_BENCHMARK         OFF CACHE BOOL "" FORCE)
+        set(WITH_FUNC_TESTS        OFF CACHE BOOL "" FORCE)
+        set(OTELCPP_MAINTAINER_MODE OFF CACHE BOOL "" FORCE)
+        set(WITH_OTLP_HTTP  ${WITH_OTLP_HTTP}  CACHE BOOL "" FORCE)
+        set(WITH_OTLP_GRPC  ${WITH_OTLP_GRPC}  CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            opentelemetry-cpp
+            GIT_REPOSITORY https://github.com/open-telemetry/opentelemetry-cpp.git
+            GIT_TAG        v1.19.0
+            GIT_SHALLOW    TRUE
+        )
+        FetchContent_MakeAvailable(opentelemetry-cpp)
+        message(STATUS "OpenTelemetry SDK fetched via FetchContent")
+    else()
+        # Use system / contrib / manually-installed OTel SDK.
+        find_package(opentelemetry-cpp REQUIRED)
+    endif()
+
+    # Create opentelemetry::* aliases. Handle three possible source names:
+    #   1. opentelemetry-cpp::X (CONFIG mode / newer FetchContent)
+    #   2. opentelemetry_X       (older FetchContent raw targets)
+    #   3. Already exists as opentelemetry::X (manual find module)
+    # Each pair: "alias_name:raw_name"
+    set(_otel_alias_map
+        "api:api"
+        "sdk:sdk"
+        "common:common"
+        "resources:resources"
+        "trace:trace"
+        "metrics:metrics"
+        "logs:logs"
+        "ostream_span_exporter:exporter_ostream_span"
+        "ostream_metrics_exporter:exporter_ostream_metrics"
+        "ostream_log_record_exporter:exporter_ostream_logs"
+        "otlp_grpc_exporter:exporter_otlp_grpc"
+        "otlp_grpc_metrics_exporter:exporter_otlp_grpc_metrics"
+        "otlp_grpc_log_record_exporter:exporter_otlp_grpc_log"
+        "otlp_http_exporter:exporter_otlp_http"
+        "otlp_http_metric_exporter:exporter_otlp_http_metric"
+        "otlp_http_log_record_exporter:exporter_otlp_http_log"
+    )
+    foreach(_pair ${_otel_alias_map})
+        string(REPLACE ":" ";" _parts "${_pair}")
+        list(GET _parts 0 _alias)
+        list(GET _parts 1 _raw)
+        if(NOT TARGET opentelemetry::${_alias})
+            if(TARGET opentelemetry-cpp::${_alias})
+                add_library(opentelemetry::${_alias} ALIAS opentelemetry-cpp::${_alias})
+            elseif(TARGET opentelemetry_${_raw})
+                add_library(opentelemetry::${_alias} ALIAS opentelemetry_${_raw})
+            endif()
+        endif()
+    endforeach()
+
+    if(NOT TARGET opentelemetry::api)
+        message(FATAL_ERROR
+            "[ENABLE_OTEL] opentelemetry::api target not found. "
+            "Set OPENTELEMETRY_CPP_ROOT or use -DOTEL_USE_FETCHCONTENT=ON.")
+    endif()
+
+    set(JAMI_OTEL_COMPILE_DEFINITIONS ENABLE_OTEL)
+    set(_otel_link_targets
+        opentelemetry::api
+        opentelemetry::sdk
+        opentelemetry::ostream_span_exporter
+        opentelemetry::ostream_metrics_exporter
+        opentelemetry::ostream_log_record_exporter
+    )
+    foreach(_exp
+            otlp_grpc_exporter otlp_grpc_metrics_exporter otlp_grpc_log_record_exporter
+            otlp_http_exporter otlp_http_metric_exporter otlp_http_log_record_exporter)
+        if(TARGET opentelemetry::${_exp})
+            list(APPEND _otel_link_targets opentelemetry::${_exp})
+            if(_exp MATCHES "grpc")
+                list(APPEND JAMI_OTEL_COMPILE_DEFINITIONS WITH_OTLP_GRPC)
+            elseif(_exp MATCHES "http")
+                list(APPEND JAMI_OTEL_COMPILE_DEFINITIONS WITH_OTLP_HTTP)
+            endif()
+        endif()
+    endforeach()
+    set(JAMI_OTEL_LINK_LIBS ${_otel_link_targets})
+    list(REMOVE_DUPLICATES JAMI_OTEL_COMPILE_DEFINITIONS)
+
+    message(STATUS "OpenTelemetry instrumentation: ENABLED (defs: ${JAMI_OTEL_COMPILE_DEFINITIONS})")
+else()
+    set(JAMI_OTEL_LINK_LIBS "")
+    set(JAMI_OTEL_COMPILE_DEFINITIONS "")
+    message(STATUS "OpenTelemetry instrumentation: DISABLED (use -DENABLE_OTEL=ON to enable)")
+endif()
+
 add_subdirectory("src")
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
@@ -412,6 +519,21 @@ if (JAMI_VIDEO)
 endif()
 if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
+endif()
+
+# OpenTelemetry instrumentation (propagated from src/CMakeLists.txt)
+if(JAMI_OTEL_COMPILE_DEFINITIONS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ${JAMI_OTEL_COMPILE_DEFINITIONS})
+endif()
+if(JAMI_OTEL_LINK_LIBS)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${JAMI_OTEL_LINK_LIBS})
+    # OTel's transitive dependencies (protobuf, abseil) may inject system include
+    # paths (e.g. /usr/include) that precede contrib/. Ensure our vendored headers
+    # have higher priority.
+    if(CONTRIB_PATH AND EXISTS "${CONTRIB_PATH}/include")
+        target_include_directories(${PROJECT_NAME} SYSTEM BEFORE PRIVATE
+            "${CONTRIB_PATH}/include")
+    endif()
 endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_AAUDIO)
