@@ -2641,11 +2641,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
         // Avoid the client to do the concatenation
         auto tid = message["tid"];
         if (not tid.empty()) {
-            auto extension = fileutils::getFileExtension(message["displayName"]);
-            if (!extension.empty())
-                message["fileId"] = fmt::format("{}_{}.{}", commit.id, tid, extension);
-            else
-                message["fileId"] = fmt::format("{}_{}", commit.id, tid);
+            message["fileId"] = getFileId(commit.id, tid, message["displayName"]);
         } else {
             message["fileId"] = "";
         }

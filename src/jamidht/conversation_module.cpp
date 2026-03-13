@@ -1193,15 +1193,16 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
 {
     // Check that editedId is a valid commit, from ourself and plain/text
     auto validCommit = false;
-    std::string type, tid;
+    std::string type, fileId;
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             auto commit = conv->conversation->getCommit(editedId);
             if (commit != std::nullopt) {
                 type = commit->at("type");
-                if (type == "application/data-transfer+json")
-                    tid = commit->at("tid");
+                if (type == "application/data-transfer+json") {
+                    fileId = getFileId(editedId, commit->at("tid"), commit->at("displayName"));
+                }
                 validCommit = commit->at("author") == username_
                               && (type == "text/plain" || type == "application/data-transfer+json");
             }
@@ -1216,8 +1217,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
     if (type == "application/data-transfer+json") {
         json["tid"] = "";
         // Remove file!
-        auto path = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId
-                    / fmt::format("{}_{}", editedId, tid);
+        auto path = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId / fileId;
         dhtnet::fileutils::remove(path, true);
     } else {
         json["body"] = newBody;
