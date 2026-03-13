@@ -1,6 +1,6 @@
 # freetype
-FREETYPE_HASH := 39ce3ac499d4cd7371031a062f410953c8ecce29
-FREETYPE_GITURL := https://gitlab.freedesktop.org/freetype/freetype/-/archive/$(FREETYPE_HASH)/freetype-$(FREETYPE_HASH).tar.gz
+FREETYPE_VERSION := 39ce3ac499d4cd7371031a062f410953c8ecce29
+FREETYPE_GITURL := https://gitlab.freedesktop.org/freetype/freetype/-/archive/$(FREETYPE_VERSION)/freetype-$(FREETYPE_VERSION).tar.gz
 
 PKG_CPE += cpe:2.3:a:freetype:freetype:2.10.1:*:*:*:*:*:*:*
 
@@ -17,12 +17,12 @@ FTCONFIG := --build="$(BUILD)"   \
             --with-png=no        \
             --with-harfbuzz=no
 
-$(TARBALLS)/freetype-$(FREETYPE_HASH).tar.gz:
+$(TARBALLS)/freetype-$(FREETYPE_VERSION).tar.gz:
 	$(call download,$(FREETYPE_GITURL))
 
-.sum-freetype: freetype-$(FREETYPE_HASH).tar.gz
+.sum-freetype: freetype-$(FREETYPE_VERSION).tar.gz
 
-freetype: freetype-$(FREETYPE_HASH).tar.gz .sum-freetype
+freetype: freetype-$(FREETYPE_VERSION).tar.gz .sum-freetype
 	$(UNPACK)
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)

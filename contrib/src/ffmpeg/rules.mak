@@ -1,6 +1,6 @@
-FFMPEG_HASH := 6.1.3
-PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:$(FFMPEG_HASH):*:*:*:*:*:*:*
-FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_HASH).tar.xz
+FFMPEG_VERSION := 6.1.3
+PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:$(FFMPEG_VERSION):*:*:*:*:*:*:*
+FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_VERSION).tar.xz
 
 PKGS+=ffmpeg
 
@@ -420,15 +420,15 @@ endif
 # expected by Qt is not the same as the one used by the daemon.
 CFLAGS += -fvisibility=hidden
 
-$(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
+$(TARBALLS)/ffmpeg-$(FFMPEG_VERSION).tar.xz:
 	$(call download,$(FFMPEG_URL))
 
-.sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
+.sum-ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
 
-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
-	rm -Rf $@ $@-$(FFMPEG_HASH)
-	mkdir -p $@-$(FFMPEG_HASH)
-	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
+ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
+	rm -Rf $@ $@-$(FFMPEG_VERSION)
+	mkdir -p $@-$(FFMPEG_VERSION)
+	(cd $@-$(FFMPEG_VERSION) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
 	$(APPLY) $(SRC)/ffmpeg/remove-mjpeg-log.patch
 	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
