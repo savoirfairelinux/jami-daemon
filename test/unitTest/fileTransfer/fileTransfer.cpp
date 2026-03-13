@@ -281,7 +281,7 @@ FileTransferTest::testConversationFileTransfer()
 
     bobMsgSize = bobData.messages.size();
     auto carlaMsgSize = carlaData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() {
         return bobData.messages.size() == bobMsgSize + 1 && carlaData.messages.size() == carlaMsgSize + 1;
@@ -323,7 +323,7 @@ FileTransferTest::testFileTransferInConversation()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     auto id = bobData.messages.rbegin()->id;
@@ -360,7 +360,7 @@ FileTransferTest::testVcfFileTransferInConversation()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     auto id = bobData.messages.rbegin()->id;
@@ -397,7 +397,7 @@ FileTransferTest::testBadSha3sumOut()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     // modifiy file
@@ -441,7 +441,7 @@ FileTransferTest::testBadSha3sumIn()
 
     aliceAccount->noSha3sumVerification(true);
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     // modifiy file
@@ -498,7 +498,7 @@ FileTransferTest::testAskToMultipleParticipants()
 
     bobMsgSize = bobData.messages.size();
     auto carlaMsgSize = carlaData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() {
         return bobData.messages.size() == bobMsgSize + 1 && carlaData.messages.size() == carlaMsgSize + 1;
@@ -543,7 +543,7 @@ FileTransferTest::testCancelInTransfer()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
@@ -588,7 +588,7 @@ FileTransferTest::testResumeTransferAfterInterruption()
 
     // Send file info
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
@@ -645,7 +645,7 @@ FileTransferTest::testDontDownloadExistingFile()
 
     // Send file info
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
@@ -680,7 +680,7 @@ FileTransferTest::testTransferInfo()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
@@ -719,7 +719,7 @@ FileTransferTest::testRemoveHardLink()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    libjami::sendFile(aliceId, convId, sendPath, std::filesystem::absolute("SEND"), "");
+    libjami::sendFile(aliceId, convId, sendPath, std::filesystem::absolute("Display name"), "");
 
     auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
@@ -754,7 +754,7 @@ FileTransferTest::testTooLarge()
     sendFile.close();
 
     auto bobMsgSize = bobData.messages.size();
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
@@ -815,7 +815,7 @@ FileTransferTest::testDeleteFile()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "Display name", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
     auto dataPath = fileutils::get_data_dir() / aliceId / "conversation_data" / convId;
@@ -835,13 +835,16 @@ FileTransferTest::testDeleteFile()
     messageUpdated = false;
 
     auto sendPathWithExt = sendPath;
-    sendPathWithExt += ".txt";
+    sendPathWithExt += ".log";
     std::ofstream sendFile2(sendPathWithExt);
     CPPUNIT_ASSERT(sendFile2.is_open());
     sendFile2 << std::string(64000, 'A');
     sendFile2.close();
 
-    libjami::sendFile(aliceId, convId, sendPathWithExt, "SEND.txt", "");
+    // Note: We intentionally use a different extension for the display name than the file path. In
+    // practice, the two will usually be the same as the default value for the display name is the
+    // file name, but they may differ.
+    libjami::sendFile(aliceId, convId, sendPathWithExt, "Display name.txt", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
     CPPUNIT_ASSERT(dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}.txt", iid, tid)));
