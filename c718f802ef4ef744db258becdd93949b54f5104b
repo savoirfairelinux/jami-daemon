@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a025c02b_4fdb4830",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-14T00:25:33Z",
+      "side": 1,
+      "message": "Follow up to the https://review.jami.net/c/jami-daemon/+/33510 patch.",
+      "revId": "c718f802ef4ef744db258becdd93949b54f5104b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
