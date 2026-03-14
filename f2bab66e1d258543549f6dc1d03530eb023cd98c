@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e6e74202_1d1147b2",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-14T21:22:00Z",
+      "side": 1,
+      "message": "Is this **OpenTelemetry**?\n\nhttps://opentelemetry.io/\n\nhttps://opentelemetry.io/docs/\n\nThank you",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 16
+      },
+      "revId": "f2bab66e1d258543549f6dc1d03530eb023cd98c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a9c2629d_6ab6f4fe",
         "filename": "src/call_metrics.cpp",
         "patchSetId": 1
