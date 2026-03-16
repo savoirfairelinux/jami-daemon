@@ -602,7 +602,7 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     if (accountid.empty())
         return;
 
-    if (base_.preferences.isAccountPending(accountid)) {
+    if (accountType != ACCOUNT_TYPE_SIP && base_.preferences.isAccountPending(accountid)) {
         JAMI_INFO("[account:%s] Removing pending account from disk", accountid.c_str());
         base_.removeAccount(accountid, true);
         cleanupAccountStorage(accountid);
@@ -2796,7 +2796,8 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     newAccount->doRegister();
 
     preferences.addAccount(newAccountID);
-    markAccountPending(newAccountID);
+    if (accountType != ACCOUNT_TYPE_SIP)
+        markAccountPending(newAccountID);
 
     emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 
