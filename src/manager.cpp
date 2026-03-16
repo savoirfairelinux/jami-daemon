@@ -2796,7 +2796,8 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     newAccount->doRegister();
 
     preferences.addAccount(newAccountID);
-    markAccountPending(newAccountID);
+    if (accountType != ACCOUNT_TYPE_SIP)
+        markAccountPending(newAccountID);
 
     emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 
