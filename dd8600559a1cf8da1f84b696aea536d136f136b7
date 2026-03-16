@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "668a3ff1_9b66bf97",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-16T19:29:59Z",
+      "side": 1,
+      "message": "I\u0027d be more explicit here about what is meant by \"the mapping\", since DHTNet actually creates multiple mappings when Jami starts:\n- One mapping is explicitly requested by the daemon with a specific port number for the DHT (in `JamiAccount::doRegister_`, relevant logs are `\"[Account {:s}] UPnP: requesting mapping for DHT port {}\"` and `\"[Account {:s}] DHT UPnP mapping changed to {:s}\"`).\n- The other mappings (12 by default: 4 TCP + 8 UDP) are created without having been explicitly requested (with random port numbers) as an optimization, to avoid later ICE negotiations being slowed down due to waiting for the router.",
+      "range": {
+        "startLine": 134,
+        "startChar": 3,
+        "endLine": 134,
+        "endChar": 43
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eef9f5ee_18fde576",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-16T19:29:59Z",
+      "side": 1,
+      "message": "If Jami is closed normally then it will destroy the mappings during shutdown. We could of course ensure the mappings still exist by forcing Jami to terminate via e.g. `kill -9`, but it looks like this isn\u0027t actually needed for the rest of the test?",
+      "range": {
+        "startLine": 142,
+        "startChar": 0,
+        "endLine": 144,
+        "endChar": 38
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc7367dc_77bbecc3",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-16T19:29:59Z",
+      "side": 1,
+      "message": "This didn\u0027t work when I tested it, Jami overwrote the \"blocker\" mapping! I\u0027m not sure at the moment if this is a problem with the test setup or a bug in DHTNet.",
+      "range": {
+        "startLine": 188,
+        "startChar": 2,
+        "endLine": 188,
+        "endChar": 72
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70735f33_14d219b4",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-16T19:29:59Z",
+      "side": 1,
+      "message": "Not necessary? On my system at least, miniupnpd automatically exits once the script terminates.",
+      "range": {
+        "startLine": 31,
+        "startChar": 4,
+        "endLine": 34,
+        "endChar": 6
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f76dbf38_01ecf433",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-16T19:29:59Z",
+      "side": 1,
+      "message": "It\u0027s fine to have a trap here for cleanup:\n```\ntrap \u0027echo; echo \"[+] Cleaning up...\"; cleanup\u0027 EXIT\n```\nSorry if my comment on the previous patchset was ambiguous. Only the explicit call to `cleanup` on the line above the trap was a problem.",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 16
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
