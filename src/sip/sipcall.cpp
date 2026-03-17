@@ -48,6 +48,7 @@
 #include <video/sinkclient.h>
 #endif
 #include "audio/ringbufferpool.h"
+#include "telemetry/calls_trace.h"
 
 #include <dhtnet/upnp/upnp_control.h>
 #include <dhtnet/ice_transport_factory.h>
@@ -807,6 +808,12 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     // Create the SDP answer
     sdp_->processIncomingOffer(mediaAttrList);
 
+    // ── OTel: sdp.answer.sent event ────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("sdp.answer.sent");
+    } catch (...) {}
+
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
         setupIceResponse();
     }
@@ -981,6 +988,16 @@ void
 SIPCall::hangup(int code)
 {
     std::lock_guard lk {callMutex_};
+
+    // ── OTel: hangup event ─────────────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_)) {
+            span->AddEvent("call.hangup", {
+                {"call.hangup_code", static_cast<int64_t>(code)},
+            });
+        }
+    } catch (...) {}
+
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -1483,6 +1500,17 @@ SIPCall::removeCall(int code)
 void
 SIPCall::onFailure(int code)
 {
+    // ── OTel: call failure event ───────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_)) {
+            span->AddEvent("call.failure", {
+                {"call.failure_code", static_cast<int64_t>(code)},
+            });
+            span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                            "SIP failure code " + std::to_string(code));
+        }
+    } catch (...) {}
+
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, code)) {
         runOnMainThread([w = weak(), code] {
             if (auto shared = w.lock()) {
@@ -1497,6 +1525,12 @@ SIPCall::onFailure(int code)
 void
 SIPCall::onBusyHere()
 {
+    // ── OTel: busy event ───────────────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("call.busy");
+    } catch (...) {}
+
     if (getCallType() == CallType::OUTGOING)
         setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED);
     else
@@ -1514,6 +1548,12 @@ SIPCall::onBusyHere()
 void
 SIPCall::onClosed()
 {
+    // ── OTel: peer hangup event ────────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("call.peer_hungup");
+    } catch (...) {}
+
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
@@ -1527,6 +1567,13 @@ void
 SIPCall::onAnswered()
 {
     JAMI_WARNING("[call:{}] onAnswered()", getCallId());
+
+    // ── OTel: call answered event ──────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("call.answered");
+    } catch (...) {}
+
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             if (shared->getConnectionState() != ConnectionState::CONNECTED) {
@@ -1681,6 +1728,13 @@ void
 SIPCall::onPeerRinging()
 {
     JAMI_DEBUG("[call:{}] Peer ringing", getCallId());
+
+    // ── OTel: peer ringing event ───────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("call.peer_ringing");
+    } catch (...) {}
+
     setState(ConnectionState::RINGING);
 }
 
@@ -2008,6 +2062,12 @@ void
 SIPCall::startAllMedia()
 {
     JAMI_DEBUG("[call:{}] Starting all media", getCallId());
+
+    // ── OTel: media started event ──────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("media.started");
+    } catch (...) {}
 
     if (not sipTransport_ or not sdp_) {
         JAMI_ERROR("[call:{}] The call is in invalid state", getCallId());
@@ -2588,6 +2648,12 @@ SIPCall::onMediaNegotiationComplete()
             std::lock_guard lk {this_->callMutex_};
             JAMI_DEBUG("[call:{}] Media negotiation complete", this_->getCallId());
 
+            // ── OTel: media negotiation complete event ─────────────────
+            try {
+                if (auto* span = jami::trace::spanFromHandle(this_->callSpan_))
+                    span->AddEvent("media.negotiation.complete");
+            } catch (...) {}
+
             // If the call has already ended, we don't need to start the media.
             if (not this_->inviteSession_ or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
                 or not this_->sdp_) {
@@ -2654,6 +2720,13 @@ void
 SIPCall::startIceMedia()
 {
     JAMI_DEBUG("[call:{}] Starting ICE", getCallId());
+
+    // ── OTel: ICE negotiation started ──────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("ice.negotiation.started");
+    } catch (...) {}
+
     auto iceMedia = getIceMedia();
     if (not iceMedia or iceMedia->isFailed()) {
         JAMI_ERROR("[call:{}] Media ICE init failed", getCallId());
@@ -2695,6 +2768,12 @@ SIPCall::onIceNegoSucceed()
     std::lock_guard lk {callMutex_};
 
     JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
+
+    // ── OTel: ICE negotiation completed ────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("ice.negotiation.completed");
+    } catch (...) {}
 
     // Check if the call is already ended, so we don't need to restart medias
     // This is typically the case in a multi-device context where one device

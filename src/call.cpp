@@ -19,6 +19,7 @@
 #include "account.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "telemetry/calls_trace.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
 #include "plugin/streamdata.h"
@@ -73,6 +74,20 @@ Call::Call(const std::shared_ptr<Account>& account, const std::string& id, Call:
     , account_(account)
     , timeoutTimer_(*Manager::instance().ioContext())
 {
+    // ── OTel: start the call lifecycle span ───────────────────────────
+    try {
+        auto tracer = jami::trace::callsTracer();
+        std::string spanName = (type == CallType::OUTGOING) ? "call.outgoing" : "call.incoming";
+        auto span = tracer->StartSpan(spanName);
+        span->SetAttribute("call.id", id_);
+        span->SetAttribute("call.type", jami::trace::callTypeStr(static_cast<uint8_t>(type_)));
+        if (auto acc = account_.lock())
+            span->SetAttribute("call.account_id", acc->getAccountID());
+        callSpan_ = jami::trace::makeSpanHandle(std::move(span));
+    } catch (const std::exception& e) {
+        JAMI_WARNING("[otel] Failed to start call span: {}", e.what());
+    } catch (...) {}
+
     addStateListener([this](Call::CallState call_state, Call::ConnectionState cnx_state, int code) {
         checkPendingIM();
         runOnMainThread([callWkPtr = weak_from_this()] {
@@ -129,6 +144,22 @@ Call::~Call() {}
 void
 Call::removeCall(int code)
 {
+    // ── OTel: finalize the call lifecycle span ───────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_)) {
+            span->SetAttribute("call.peer_uri", peerNumber_);
+            span->SetAttribute("call.duration_ms",
+                                    static_cast<int64_t>(getCallDuration().count()));
+            if (!reason_.empty())
+                span->SetAttribute("call.hangup_reason", reason_);
+            if (callState_ != CallState::MERROR && callState_ != CallState::BUSY
+                && callState_ != CallState::PEER_BUSY) {
+                span->SetStatus(opentelemetry::trace::StatusCode::kOk);
+            }
+            span->End();
+        }
+    } catch (...) {}
+
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
     setState(CallState::OVER, code);
@@ -254,6 +285,23 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
         else
             it = stateChangedListeners_.erase(it);
     }
+
+    // ── OTel: emit a state_transition event on every change ──────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_)) {
+            span->AddEvent("call.state_transition", {
+                {"call.state.from", std::string(old_client_state)},
+                {"call.state.to",   std::string(new_client_state)},
+                {"call.code",       static_cast<int64_t>(code)},
+            });
+            // Mark the span as ERROR on failure states
+            if (call_state == CallState::MERROR || call_state == CallState::BUSY
+                || call_state == CallState::PEER_BUSY) {
+                span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                                     new_client_state);
+            }
+        }
+    } catch (...) {}
 
     if (old_client_state != new_client_state) {
         if (not parent_) {

@@ -520,6 +520,10 @@ protected:
     std::string toUsername_ {};
 
     asio::steady_timer timeoutTimer_;
+
+    /// Opaque handle to the OpenTelemetry span covering the full call lifecycle.
+    /// Held as shared_ptr<void> so call.h does not pull in any OTel headers.
+    std::shared_ptr<void> callSpan_;
 };
 
 // Helpers
