@@ -20,6 +20,7 @@
 #endif
 
 #include "jamiaccount.h"
+#include "presence_manager.h"
 
 #include "logger.h"
 
@@ -152,22 +153,6 @@ setState(const std::string& accountID, const State migrationState)
 }
 
 } // namespace Migration
-
-struct JamiAccount::BuddyInfo
-{
-    /* the buddy id */
-    dht::InfoHash id;
-
-    /* number of devices connected on the DHT */
-    uint32_t devices_cnt {};
-
-    /* The disposable object to update buddy info */
-    std::future<size_t> listenToken;
-
-    BuddyInfo(dht::InfoHash id)
-        : id(id)
-    {}
-};
 
 struct JamiAccount::PendingCall
 {
@@ -326,9 +311,23 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , certStore_ {std::make_shared<dhtnet::tls::CertificateStore>(idPath_, logger_)}
     , dht_(std::make_shared<dht::DhtRunner>())
     , treatedMessages_(cachePath_ / TREATED_PATH)
+    , presenceManager_(std::make_unique<PresenceManager>(dht_))
     , connectionManager_ {}
     , nonSwarmTransferManager_()
-{}
+{
+    presenceListenerToken_ = presenceManager_->addListener([this](const std::string& uri, bool online) {
+        runOnMainThread([w = weak(), uri, online] {
+            if (auto sthis = w.lock()) {
+                if (online) {
+                    sthis->onTrackedBuddyOnline(uri);
+                    sthis->messageEngine_.onPeerOnline(uri);
+                } else {
+                    sthis->onTrackedBuddyOffline(uri);
+                }
+            }
+        });
+    });
+}
 
 JamiAccount::~JamiAccount() noexcept
 {
@@ -1750,101 +1749,49 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     }
     JAMI_LOG("[Account {:s}] {:s} presence for {:s}", getAccountID(), track ? "Track" : "Untrack", buddy_id);
 
-    auto h = dht::InfoHash(buddyUri);
-    std::unique_lock lock(buddyInfoMtx);
+    if (!presenceManager_)
+        return;
+
     if (track) {
-        auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
-        if (buddy.second) {
-            trackPresence(buddy.first->first, buddy.first->second);
-        }
+        presenceManager_->trackBuddy(buddyUri);
+        std::lock_guard lock(presenceStateMtx_);
         auto it = presenceState_.find(buddyUri);
         if (it != presenceState_.end() && it->second != PresenceState::DISCONNECTED) {
-            lock.unlock();
             emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
                                                                       buddyUri,
                                                                       static_cast<int>(it->second),
                                                                       "");
         }
     } else {
-        auto buddy = trackedBuddies_.find(h);
-        if (buddy != trackedBuddies_.end()) {
-            if (auto dht = dht_)
-                if (dht->isRunning())
-                    dht->cancelListen(h, std::move(buddy->second.listenToken));
-            trackedBuddies_.erase(buddy);
-        }
+        presenceManager_->untrackBuddy(buddyUri);
     }
-}
-
-void
-JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
-{
-    auto dht = dht_;
-    if (not dht or not dht->isRunning()) {
-        return;
-    }
-    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired) {
-        bool wasConnected, isConnected;
-        {
-            std::lock_guard lock(buddyInfoMtx);
-            auto buddy = trackedBuddies_.find(h);
-            if (buddy == trackedBuddies_.end())
-                return true;
-            wasConnected = buddy->second.devices_cnt > 0;
-            if (expired)
-                --buddy->second.devices_cnt;
-            else
-                ++buddy->second.devices_cnt;
-            isConnected = buddy->second.devices_cnt > 0;
-        }
-        // NOTE: the rest can use configurationMtx_, that can be locked during unregister so
-        // do not retrigger on dht
-        runOnMainThread([w = weak(), h, dev, expired, isConnected, wasConnected]() {
-            auto sthis = w.lock();
-            if (!sthis)
-                return;
-            if (not expired) {
-                // Retry messages every time a new device announce its presence
-                sthis->messageEngine_.onPeerOnline(h.toString());
-            }
-            if (isConnected and not wasConnected) {
-                sthis->onTrackedBuddyOnline(h);
-            } else if (not isConnected and wasConnected) {
-                sthis->onTrackedBuddyOffline(h);
-            }
-        });
-
-        return true;
-    });
 }
 
 std::map<std::string, bool>
 JamiAccount::getTrackedBuddyPresence() const
 {
-    std::lock_guard lock(buddyInfoMtx);
-    std::map<std::string, bool> presence_info;
-    for (const auto& buddy_info_p : trackedBuddies_)
-        presence_info.emplace(buddy_info_p.first.toString(), buddy_info_p.second.devices_cnt > 0);
-    return presence_info;
+    if (!presenceManager_)
+        return {};
+    return presenceManager_->getTrackedBuddyPresence();
 }
 
 void
-JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
+JamiAccount::onTrackedBuddyOnline(const std::string& contactId)
 {
-    std::string id(contactId.toString());
-    JAMI_DEBUG("[Account {:s}] Buddy {} online", getAccountID(), id);
-    auto& state = presenceState_[id];
+    JAMI_DEBUG("[Account {:s}] Buddy {} online", getAccountID(), contactId);
+    std::lock_guard lock(presenceStateMtx_);
+    auto& state = presenceState_[contactId];
     if (state < PresenceState::AVAILABLE) {
         state = PresenceState::AVAILABLE;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                                  id,
+                                                                  contactId,
                                                                   static_cast<int>(PresenceState::AVAILABLE),
                                                                   "");
     }
 
-    if (auto details = getContactInfo(id)) {
+    if (auto details = getContactInfo(contactId)) {
         if (!details->confirmed) {
-            auto convId = convModule()->getOneToOneConversation(id);
+            auto convId = convModule()->getOneToOneConversation(contactId);
             if (convId.empty())
                 return;
             // In this case, the TrustRequest was sent but never confirmed (cause the contact was
@@ -1852,7 +1799,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
             std::lock_guard lock(configurationMutex_);
             if (accountManager_) {
                 // Retrieve cached payload for trust request.
-                auto requestPath = cachePath_ / "requests" / id;
+                auto requestPath = cachePath_ / "requests" / contactId;
                 std::vector<uint8_t> payload;
                 try {
                     payload = fileutils::loadFile(requestPath);
@@ -1861,29 +1808,31 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
                 if (payload.size() >= 64000) {
                     JAMI_WARNING("[Account {:s}] Trust request for contact {:s} is too big, reset payload",
                                  getAccountID(),
-                                 id);
+                                 contactId);
                     payload.clear();
                 }
-                accountManager_->sendTrustRequest(id, convId, payload);
+                accountManager_->sendTrustRequest(contactId, convId, payload);
             }
         }
     }
 }
 
 void
-JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
+JamiAccount::onTrackedBuddyOffline(const std::string& contactId)
 {
-    auto id = contactId.toString();
-    JAMI_DEBUG("[Account {:s}] Buddy {} offline", getAccountID(), id);
-    auto& state = presenceState_[id];
+    JAMI_DEBUG("[Account {:s}] Buddy {} offline", getAccountID(), contactId);
+    std::lock_guard lock(presenceStateMtx_);
+    auto& state = presenceState_[contactId];
     if (state > PresenceState::DISCONNECTED) {
         if (state == PresenceState::CONNECTED) {
-            JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected", getAccountID(), id);
+            JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected",
+                         getAccountID(),
+                         contactId);
             return;
         }
         state = PresenceState::DISCONNECTED;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                                  id,
+                                                                  contactId,
                                                                   static_cast<int>(PresenceState::DISCONNECTED),
                                                                   "");
     }
@@ -2018,11 +1967,8 @@ JamiAccount::doRegister_()
                 });
         }
 
-        std::lock_guard lock(buddyInfoMtx);
-        for (auto& buddy : trackedBuddies_) {
-            buddy.second.devices_cnt = 0;
-            trackPresence(buddy.first, buddy.second);
-        }
+        if (presenceManager_)
+            presenceManager_->refresh();
     } catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -4370,20 +4316,23 @@ JamiAccount::askForProfile(const std::string& conversationId, const std::string&
 void
 JamiAccount::onPeerConnected(const std::string& peerId, bool connected)
 {
-    std::unique_lock lock(buddyInfoMtx);
-    auto& state = presenceState_[peerId];
-    auto it = trackedBuddies_.find(dht::InfoHash(peerId));
-    auto isOnline = it != trackedBuddies_.end() && it->second.devices_cnt > 0;
+    auto isOnline = presenceManager_ && presenceManager_->isOnline(peerId);
     auto newState = connected ? PresenceState::CONNECTED
                               : (isOnline ? PresenceState::AVAILABLE : PresenceState::DISCONNECTED);
-    if (state != newState) {
-        state = newState;
-        lock.unlock();
-        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                                  peerId,
-                                                                  static_cast<int>(newState),
-                                                                  "");
-    }
+
+    runOnMainThread([w = weak(), peerId, newState] {
+        if (auto sthis = w.lock()) {
+            std::lock_guard lock(sthis->presenceStateMtx_);
+            auto& state = sthis->presenceState_[peerId];
+            if (state != newState) {
+                state = newState;
+                emitSignal<libjami::PresenceSignal::NewBuddyNotification>(sthis->getAccountID(),
+                                                                          peerId,
+                                                                          static_cast<int>(newState),
+                                                                          "");
+            }
+        }
+    });
 }
 
 void
