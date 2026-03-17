@@ -23,6 +23,7 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(JAMI_ENABLE_OTEL_EXPORT "Enable OTLP export for internal observability" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -289,6 +290,7 @@ if(JAMI_VIDEO)
     source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 endif()
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
+source_group("Source Files\\telemetry" FILES ${Source_Files__telemetry})
 
 if(MSVC)
     source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
@@ -322,6 +324,7 @@ endif()
 if (JAMI_PLUGIN)
     list (APPEND ALL_FILES ${Source_Files__plugin})
 endif()
+list (APPEND ALL_FILES ${Source_Files__telemetry})
 if (ANDROID)
     list (APPEND ALL_FILES ${ALL_FILES}
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_impl.cpp
@@ -427,6 +430,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/telemetry;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
@@ -635,6 +639,7 @@ else()
     message("Data directory: ${JAMI_DATADIR}")
 
     find_package (yaml-cpp CONFIG REQUIRED)
+    find_package(opentelemetry-cpp CONFIG REQUIRED)
     pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
     pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
@@ -681,6 +686,12 @@ else()
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
+        opentelemetry-cpp::api
+        opentelemetry-cpp::sdk
+        opentelemetry-cpp::logs
+        opentelemetry-cpp::metrics
+        opentelemetry-cpp::trace
+        opentelemetry-cpp::in_memory_span_exporter
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -695,6 +706,10 @@ else()
         JAMI_DATADIR="${JAMI_DATADIR}"
         PJ_AUTOCONF=1
     )
+    if(JAMI_ENABLE_OTEL_EXPORT)
+      target_link_libraries(${PROJECT_NAME} PRIVATE opentelemetry-cpp::otlp_http_exporter)
+      target_compile_definitions(${PROJECT_NAME} PRIVATE JAMI_OTEL_EXPORT_ENABLED)
+    endif()
     if (BUILD_TESTING)
         target_compile_definitions(${PROJECT_NAME} PRIVATE LIBJAMI_TEST)
     endif()
@@ -1067,6 +1082,25 @@ else()
         if (JAMI_PLUGIN)
             add_test_executable(plugins test/unitTest/plugins/plugins.cpp)
         endif()
+
+        # Lightweight telemetry verification (no full daemon needed)
+        add_executable(ut_telemetry test/unitTest/telemetry/telemetry_test.cpp)
+        target_link_libraries(ut_telemetry PRIVATE
+            ${PROJECT_NAME}
+        )
+        target_include_directories(ut_telemetry PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/jami"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/telemetry"
+        )
+        target_compile_definitions(ut_telemetry PRIVATE
+            PACKAGE_VERSION="${PROJECT_VERSION}"
+            LIBJAMI_TEST
+        )
+        if(ENABLE_COVERAGE)
+            setup_target_for_coverage(ut_telemetry)
+        endif()
+        add_test(NAME telemetry COMMAND ut_telemetry)
     endif()
 
 endif()

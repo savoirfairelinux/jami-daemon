@@ -293,6 +293,36 @@ private:
 
     // Offer/Answer flag.
     SdpDirection sdpDirection_ {SdpDirection::NONE};
+
+    // OTel — opaque handle to the parent call span.
+    // Set once by SIPCall after both objects are constructed.
+    // Used to emit SDP-level trace events into the call lifecycle span without
+    // leaking OTel types into this header.
+    std::shared_ptr<void> callSpan_ {};
+
+    /// Opaque handle to the sdp.negotiation child span.
+    /// Opened at the start of createOffer() / processIncomingOffer() and
+    /// closed (ended) at the end of startNegotiation().
+    std::shared_ptr<void> sdpSpan_ {};
+
+    /// Remote caller's W3C traceparent extracted from the incoming SDP.
+    /// Non-empty only after processIncomingOffer() found an a=otel-traceparent.
+    std::string remoteTraceParent_ {};
+
+public:
+    /**
+     * Attach the parent call's OTel span handle so that SDP methods can emit
+     * trace events directly into the ongoing call lifecycle span.
+     * Must be called after both Call and Sdp are constructed (e.g. in
+     * SIPCall::SIPCall).  Safe to call with nullptr to detach.
+     */
+    void setCallSpan(std::shared_ptr<void> spanHandle) { callSpan_ = std::move(spanHandle); }
+
+    /**
+     * Return the W3C traceparent extracted from the remote SDP offer, or
+     * an empty string if none was present.
+     */
+    const std::string& remoteTraceParent() const { return remoteTraceParent_; }
 };
 
 } // namespace jami

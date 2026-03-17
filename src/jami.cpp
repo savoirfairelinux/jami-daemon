@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "logger.h"
 #include "client/jami_signal.h"
+#include "telemetry/telemetry.h"
 
 namespace libjami {
 
@@ -104,6 +105,7 @@ bool
 start(const std::filesystem::path& config_file) noexcept
 {
     try {
+        jami::telemetry::initTelemetry("jami-daemon", PACKAGE_VERSION);
         jami::Manager::instance().init(config_file, initFlags);
     } catch (...) {
         return false;
@@ -121,6 +123,11 @@ void
 fini() noexcept
 {
     jami::Manager::instance().finish();
+    try {
+        jami::telemetry::shutdownTelemetry();
+    } catch (...) {
+        // Telemetry shutdown must never throw into tear-down.
+    }
     jami::Logger::fini();
 }
 
