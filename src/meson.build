@@ -34,6 +34,7 @@ libjami_sources = files(
     'jamidht/jamiaccount_config.cpp',
     'jamidht/message_channel_handler.cpp',
     'jamidht/namedirectory.cpp',
+    'jamidht/presence_manager.cpp',
     'jamidht/server_account_manager.cpp',
     'jamidht/swarm/routing_table.cpp',
     'jamidht/swarm/swarm_channel_handler.cpp',
