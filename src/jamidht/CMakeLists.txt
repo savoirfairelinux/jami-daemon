@@ -39,6 +39,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/conversation_module.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/namedirectory.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/namedirectory.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/presence_manager.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/presence_manager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/jami_contact.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.h"
