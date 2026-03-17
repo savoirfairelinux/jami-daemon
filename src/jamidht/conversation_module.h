@@ -84,6 +84,8 @@ public:
      */
     void loadConversations();
 
+    void initPresence();
+
     void loadSingleConversation(const std::string& convId);
 
 #ifdef LIBJAMI_TEST
