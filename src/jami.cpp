@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "logger.h"
 #include "client/jami_signal.h"
+#include "telemetry/telemetry.h"
 
 namespace libjami {
 
@@ -121,6 +122,10 @@ void
 fini() noexcept
 {
     jami::Manager::instance().finish();
+    try {
+    } catch (...) {
+        // Telemetry shutdown must never throw into tear-down.
+    }
     jami::Logger::fini();
 }
 

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "telemetry/calls_trace.h"
 #include "sip/sipaccount.h"
 #include "sip/sipvoiplink.h"
 #include "string_utils.h"
@@ -394,6 +395,12 @@ Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 void
 Sdp::setLocalMediaCapabilities(MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs)
 {
+    auto span = jami::trace::startChildSpan(callSpan_, "daemon.sdp.setLocalMediaCapabilities");
+    try {
+        span->SetAttribute("media.type", type == MediaType::MEDIA_AUDIO ? "audio" : "video");
+        span->SetAttribute("media.codec_count", static_cast<int64_t>(selectedCodecs.size()));
+    } catch (...) {}
+
     switch (type) {
     case MediaType::MEDIA_AUDIO:
         audio_codec_list_ = selectedCodecs;
@@ -514,6 +521,15 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
     }
     JAMI_DEBUG("Creating SDP offer with {} media", mediaList.size());
 
+    // ── OTel: open sdp.negotiation child span ─────────────────────────
+    try {
+        if (auto* prev = jami::trace::spanFromHandle(sdpSpan_)) prev->End();
+        sdpSpan_ = jami::trace::makeSpanHandle(
+            jami::trace::startChildSpan(callSpan_, "sdp.negotiation"));
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_))
+            span->SetAttribute("sdp.direction", std::string("outgoing"));
+    } catch (...) {}
+
     createLocalSession(SdpDirection::OFFER);
 
     if (validateSession() != PJ_SUCCESS) {
@@ -536,10 +552,47 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
         JAMI_ERR("Failed to create an initial SDP negotiator");
+        try {
+            if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+                span->AddEvent("sdp.offer.failed", {
+                    {"sdp.reason", std::string("pjmedia_sdp_neg_create_w_local_offer failed")},
+                });
+                span->SetStatus(opentelemetry::trace::StatusCode::kError, "offer creation failed");
+                span->End(); sdpSpan_.reset();
+            }
+        } catch (...) {}
         return false;
     }
 
     printSession(localSession_, "Local session (initial):", sdpDirection_);
+
+    // ── OTel: SDP offer built successfully ────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+            span->AddEvent("sdp.offer.created", {
+                {"sdp.media_count",
+                 static_cast<int64_t>(localSession_->media_count)},
+            });
+        }
+    } catch (...) {}
+
+    // ── OTel: inject W3C traceparent into the SDP so the remote peer can
+    //    join the same distributed trace.  Use the sdp.negotiation span so
+    //    the callee's daemon.call.incoming is parented directly to the
+    //    offer span rather than the generic daemon.call.outgoing. ──────
+    try {
+        // Prefer sdpSpan_ (the sdp.negotiation offer span); fall back to callSpan_.
+        auto tp = jami::trace::traceParentFromHandle(sdpSpan_);
+        if (tp.empty())
+            tp = jami::trace::traceParentFromHandle(callSpan_);
+        if (!tp.empty() && localSession_) {
+            pj_str_t val;
+            pj_cstr(&val, tp.c_str());
+            auto* attr = pjmedia_sdp_attr_create(memPool_.get(),
+                                                  "otel-traceparent", &val);
+            pjmedia_sdp_session_add_attr(localSession_, attr);
+        }
+    } catch (...) {}
 
     return true;
 }
@@ -552,6 +605,28 @@ Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
         return;
     }
     remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
+
+    // ── OTel: extract W3C traceparent early so the SIPCall can reparent
+    //    its callSpan_ before any child spans are created. ────────────
+    try {
+        pj_str_t name;
+        pj_cstr(&name, "otel-traceparent");
+        auto* attr = pjmedia_sdp_attr_find(remoteSession_->attr_count,
+                                           remoteSession_->attr, &name,
+                                           nullptr);
+        if (attr && attr->value.slen > 0)
+            remoteTraceParent_.assign(attr->value.ptr,
+                                      static_cast<size_t>(attr->value.slen));
+    } catch (...) {}
+
+    // ── OTel: record that we received an SDP offer ────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("sdp.offer.received", {
+                {"sdp.media_count",
+                 static_cast<int64_t>(remoteSession_->media_count)},
+            });
+    } catch (...) {}
 }
 
 bool
@@ -561,6 +636,17 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         return false;
 
     JAMI_DEBUG("Processing received offer for [{:s}] with {:d} media", sessionName_, mediaList.size());
+
+    // Note: remoteTraceParent_ was already extracted in setReceivedOffer().
+
+    // ── OTel: open sdp.negotiation child span ─────────────────────────
+    try {
+        if (auto* prev = jami::trace::spanFromHandle(sdpSpan_)) prev->End();
+        sdpSpan_ = jami::trace::makeSpanHandle(
+            jami::trace::startChildSpan(callSpan_, "sdp.negotiation"));
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_))
+            span->SetAttribute("sdp.direction", std::string("incoming"));
+    } catch (...) {}
 
     printSession(remoteSession_, "Remote session:", SdpDirection::OFFER);
 
@@ -588,10 +674,48 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_, remoteSession_, &negotiator_)
         != PJ_SUCCESS) {
         JAMI_ERR("Failed to initialize media negotiation");
+        try {
+            if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+                span->AddEvent("sdp.answer.failed", {
+                    {"sdp.reason",
+                     std::string("pjmedia_sdp_neg_create_w_remote_offer failed")},
+                });
+                span->SetStatus(opentelemetry::trace::StatusCode::kError, "answer creation failed");
+                span->End(); sdpSpan_.reset();
+            }
+        } catch (...) {}
         return false;
     }
 
+    // ── OTel: SDP answer built successfully ───────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+            span->AddEvent("sdp.answer.created", {
+                {"sdp.media_count",
+                 static_cast<int64_t>(localSession_->media_count)},
+            });
+        }
+    } catch (...) {}
+
     return true;
+}
+
+void
+Sdp::onNegotiationDoneByPjsip()
+{
+    // No-op if startNegotiation() already closed the span.
+    try {
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+            span->AddEvent("sdp.negotiation.succeeded", {
+                {"sdp.active_media_count",
+                 static_cast<int64_t>(activeLocalSession_
+                                      ? activeLocalSession_->media_count : 0)},
+            });
+            span->SetStatus(opentelemetry::trace::StatusCode::kOk);
+            span->End();
+            sdpSpan_.reset();
+        }
+    } catch (...) {}
 }
 
 bool
@@ -612,8 +736,23 @@ Sdp::startNegotiation()
         return false;
     }
 
-    if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS) {
+    if (auto pjStatus = pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0);
+        pjStatus != PJ_SUCCESS) {
         JAMI_ERR("Failed to start media negotiation");
+        try {
+            if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+                char errbuf[PJ_ERR_MSG_SIZE] {};
+                pj_strerror(pjStatus, errbuf, sizeof(errbuf));
+                span->AddEvent("sdp.negotiation.failed", {
+                    {"sdp.pjmedia_status", static_cast<int64_t>(pjStatus)},
+                    {"sdp.pjmedia_error",  std::string(errbuf)},
+                });
+                span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                                "SDP negotiation failed: " + std::string(errbuf));
+                span->End();
+                sdpSpan_.reset();
+            }
+        } catch (...) {}
         return false;
     }
 
@@ -634,6 +773,18 @@ Sdp::startNegotiation()
     setActiveRemoteSdpSession(active_remote);
 
     printSession(active_remote, "Remote active session:", sdpDirection_);
+
+    // ── OTel: negotiation succeeded ───────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(sdpSpan_)) {
+            span->AddEvent("sdp.negotiation.succeeded", {
+                {"sdp.active_media_count",
+                 static_cast<int64_t>(active_local ? active_local->media_count : 0)},
+            });
+            span->SetStatus(opentelemetry::trace::StatusCode::kOk);
+            span->End(); sdpSpan_.reset();
+        }
+    } catch (...) {}
 
     return true;
 }
@@ -789,6 +940,15 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (not descr.codec) {
                 JAMI_ERROR("Unable to find codec {}", codec_raw);
                 descr.enabled = false;
+                // ── OTel: record every codec that cannot be matched locally.
+                try {
+                    if (auto* span = jami::trace::spanFromHandle(sdpSpan_))
+                        span->AddEvent("sdp.codec.not_found", {
+                            {"sdp.codec.name",      std::string(codec_raw)},
+                            {"sdp.codec.clockrate", static_cast<int64_t>(rtpmap.clock_rate)},
+                            {"sdp.side",            remote ? std::string("remote") : std::string("local")},
+                        });
+                } catch (...) {}
                 continue;
             }
             descr.payload_type = pj_strtoul(&rtpmap.pt);

@@ -18,6 +18,7 @@
 #include "call_factory.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccountbase.h"
+#include "telemetry/calls_trace.h"
 
 namespace jami {
 
@@ -25,10 +26,13 @@ namespace jami {
 std::string
 CallFactory::getNewCallID() const
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.callFactory.getNewCallID");
+
     std::string random_id;
     do {
         random_id = std::to_string(std::uniform_int_distribution<uint64_t>(1, JAMI_ID_MAX_VAL)(rand_));
     } while (hasCall(random_id));
+    try { span->SetAttribute("call.id", random_id); } catch (...) {}
     return random_id;
 }
 
@@ -37,6 +41,13 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                         Call::CallType type,
                         const std::vector<libjami::MediaMap>& mediaList)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.callFactory.newSipCall");
+    try {
+        span->SetAttribute("call.type", jami::trace::callTypeStr(static_cast<uint8_t>(type)));
+        span->SetAttribute("call.media_count", static_cast<int64_t>(mediaList.size()));
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     if (not allowNewCall_) {
         JAMI_WARN("Creation of new calls is not allowed");
         return {};
@@ -47,6 +58,7 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
     auto call = std::make_shared<SIPCall>(account, id, type, mediaList);
     callMaps_[call->getLinkType()].emplace(id, call);
     account->attach(call);
+    try { span->SetAttribute("call.id", id); } catch (...) {}
     return call;
 }
 

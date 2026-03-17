@@ -48,6 +48,7 @@
 #include <video/sinkclient.h>
 #endif
 #include "audio/ringbufferpool.h"
+#include "telemetry/calls_trace.h"
 
 #include <dhtnet/upnp/upnp_control.h>
 #include <dhtnet/ice_transport_factory.h>
@@ -103,10 +104,22 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
 {
+    auto ctorSpan = jami::trace::startChildSpan(callSpan_, "daemon.sipcall.SIPCall");
+    try {
+        ctorSpan->SetAttribute("call.id", callId);
+        ctorSpan->SetAttribute("call.type", jami::trace::callTypeStr(static_cast<uint8_t>(type)));
+        ctorSpan->SetAttribute("call.media_count", static_cast<int64_t>(mediaList.size()));
+    } catch (...) {}
+    opentelemetry::trace::Scope ctorScope{ctorSpan};
+
     jami_tracepoint(call_start, callId.c_str());
 
     if (account->getUPnPActive())
         upnp_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
+
+    // Wire the daemon call span into the SDP object so sdp.negotiation spans
+    // are correctly parented under daemon.call.outgoing/incoming.
+    sdp_->setCallSpan(callSpan_);
 
     setCallMediaLocal();
 
@@ -137,6 +150,48 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                mediaList.size());
 
     initMediaStreams(mediaAttrList);
+}
+
+void
+SIPCall::onCallSpanReparented()
+{
+    if (sdp_)
+        sdp_->setCallSpan(callSpan_);
+}
+
+void
+SIPCall::tryReparentFromRemoteTrace()
+{
+    // Called after processIncomingOffer() to check whether the remote SDP
+    // carried a W3C traceparent.  If so, end the current root daemon span
+    // and create a new one whose parent is the remote caller's span, so
+    // both sides appear in the same distributed trace.
+    // Only reparent once (the first offer that carries a traceparent).
+    if (traceReparented_ || !sdp_ || sdp_->remoteTraceParent().empty())
+        return;
+    try {
+        auto remoteCtx = jami::trace::parseTraceParent(sdp_->remoteTraceParent());
+        if (!remoteCtx.IsValid())
+            return;
+        traceReparented_ = true;
+        // End the old root span
+        if (auto* old = jami::trace::spanFromHandle(callSpan_))
+            old->End();
+        // Create a new span parented under the remote caller's trace.
+        // Use callsTracer() (the local/main provider) so that this span and
+        // ALL its children go through the same OTLP exporter, keeping the
+        // trace tree coherent and avoiding Jaeger "invalid parent" warnings.
+        auto span = jami::trace::startChildSpanWithRemoteContext(
+            remoteCtx, "daemon.call.incoming");
+        span->SetAttribute("call.id", getCallId());
+        span->SetAttribute("call.type",
+                           jami::trace::callTypeStr(
+                               static_cast<uint8_t>(getCallType())));
+        if (auto acc = getAccount().lock())
+            span->SetAttribute("call.account_id", acc->getAccountID());
+        callSpan_ = jami::trace::makeSpanHandle(std::move(span));
+        onCallSpanReparented();
+    } catch (...) {}
 }
 
 SIPCall::~SIPCall()
@@ -379,6 +434,8 @@ SIPCall::clearCallAVStreams()
 void
 SIPCall::setCallMediaLocal()
 {
+    auto span = jami::trace::startChildSpan(callSpan_, "daemon.sipcall.setCallMediaLocal");
+
     if (localAudioPort_ == 0
 #ifdef ENABLE_VIDEO
         || localVideoPort_ == 0
@@ -390,6 +447,8 @@ SIPCall::setCallMediaLocal()
 void
 SIPCall::generateMediaPorts()
 {
+    auto span = jami::trace::startChildSpan(callSpan_, "daemon.sipcall.generateMediaPorts");
+
     auto account = getSIPAccount();
     if (!account) {
         JAMI_ERROR("[call:{}] No account detected", getCallId());
@@ -804,8 +863,28 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         updateMediaStream(mediaAttrList[idx], idx);
     }
 
+    // ── OTel: reparent callSpan_ to the remote caller's trace BEFORE creating
+    //    any child spans (sdp.negotiation, ice.negotiation, …).  The
+    //    traceparent was already extracted in setReceivedOffer(). ────────────
+    tryReparentFromRemoteTrace();
+
+    // ── OTel: open daemon.sipcall.answer child span ──────────────────────
+    auto answerSpan = jami::trace::startChildSpan(callSpan_, "daemon.sipcall.answer");
+    try {
+        answerSpan->SetAttribute("call.id", getCallId());
+        answerSpan->SetAttribute("call.media_count",
+                                 static_cast<int64_t>(mediaAttrList.size()));
+    } catch (...) {}
+    opentelemetry::trace::Scope answerScope{answerSpan};
+
     // Create the SDP answer
     sdp_->processIncomingOffer(mediaAttrList);
+
+    // ── OTel: sdp.answer.sent event ────────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(callSpan_))
+            span->AddEvent("sdp.answer.sent");
+    } catch (...) {}
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
         setupIceResponse();
@@ -930,6 +1009,20 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     if (!updateAllMediaStreams(mediaAttrList, isRemote))
         return;
 
+    // ── OTel: reparent before creating child spans, then open answer span ─
+    tryReparentFromRemoteTrace();
+
+    auto reanswerSpan = jami::trace::startChildSpan(callSpan_,
+                                                    "daemon.sipcall.answerMediaChangeRequest");
+    try {
+        reanswerSpan->SetAttribute("call.id", getCallId());
+        reanswerSpan->SetAttribute("call.media_count",
+                                   static_cast<int64_t>(mediaAttrList.size()));
+        reanswerSpan->SetAttribute("call.remote_triggered",
+                                   static_cast<bool>(isRemote));
+    } catch (...) {}
+    opentelemetry::trace::Scope reanswerScope{reanswerSpan};
+
     if (not sdp_->processIncomingOffer(mediaAttrList)) {
         JAMI_WARNING("[call:{}] Unable to process the new offer, ignoring", getCallId());
         return;
@@ -981,6 +1074,19 @@ void
 SIPCall::hangup(int code)
 {
     std::lock_guard lk {callMutex_};
+
+    // ── OTel: hangup event ─────────────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan)) {
+            span->AddEvent("call.hangup", {
+                {"call.hangup_code", static_cast<int64_t>(code)},
+            });
+        }
+    } catch (...) {}
+
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -1483,6 +1589,22 @@ SIPCall::removeCall(int code)
 void
 SIPCall::onFailure(int code)
 {
+    // ── OTel: call failure event ───────────────────────────────────────
+    // Resolve to parent's span if this is a subcall — failure on any subcall
+    // represents the outgoing call failing from the user's perspective.
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan)) {
+            span->AddEvent("call.failure", {
+                {"call.failure_code", static_cast<int64_t>(code)},
+            });
+            span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                            "SIP failure code " + std::to_string(code));
+        }
+    } catch (...) {}
+
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, code)) {
         runOnMainThread([w = weak(), code] {
             if (auto shared = w.lock()) {
@@ -1497,6 +1619,15 @@ SIPCall::onFailure(int code)
 void
 SIPCall::onBusyHere()
 {
+    // ── OTel: busy event ───────────────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan))
+            span->AddEvent("call.busy");
+    } catch (...) {}
+
     if (getCallType() == CallType::OUTGOING)
         setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED);
     else
@@ -1514,6 +1645,15 @@ SIPCall::onBusyHere()
 void
 SIPCall::onClosed()
 {
+    // ── OTel: peer hangup event ────────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan))
+            span->AddEvent("call.peer_hungup");
+    } catch (...) {}
+
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
@@ -1527,6 +1667,16 @@ void
 SIPCall::onAnswered()
 {
     JAMI_WARNING("[call:{}] onAnswered()", getCallId());
+
+    // ── OTel: call answered event ──────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan))
+            span->AddEvent("call.answered");
+    } catch (...) {}
+
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             if (shared->getConnectionState() != ConnectionState::CONNECTED) {
@@ -1681,6 +1831,16 @@ void
 SIPCall::onPeerRinging()
 {
     JAMI_DEBUG("[call:{}] Peer ringing", getCallId());
+
+    // ── OTel: peer ringing event ───────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan))
+            span->AddEvent("call.peer_ringing");
+    } catch (...) {}
+
     setState(ConnectionState::RINGING);
 }
 
@@ -1856,6 +2016,12 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 size_t
 SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    auto span = jami::trace::startChildSpan(callSpan_, "daemon.sipcall.initMediaStreams");
+    try {
+        span->SetAttribute("media.count", static_cast<int64_t>(mediaAttrList.size()));
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
         if (mediaAttr.type_ != MEDIA_AUDIO && mediaAttr.type_ != MEDIA_VIDEO) {
@@ -1967,11 +2133,33 @@ SIPCall::setupNegotiatedMedia()
 
         if (local.enabled and not local.codec) {
             JAMI_WARNING("[call:{}] [SDP:slot#{}] Missing local codec", getCallId(), streamIdx);
+
+            // ── OTel: missing local codec ─────────────────────────────
+            try {
+                if (auto* span = jami::trace::spanFromHandle(callSpan_))
+                    span->AddEvent("media.codec.missing", {
+                        {"media.slot", static_cast<int64_t>(streamIdx)},
+                        {"media.side", std::string("local")},
+                        {"media.type", std::string(local.type == MEDIA_AUDIO ? "audio" : "video")},
+                    });
+            } catch (...) {}
+
             continue;
         }
 
         if (remote.enabled and not remote.codec) {
             JAMI_WARNING("[call:{}] [SDP:slot#{}] Missing remote codec", getCallId(), streamIdx);
+
+            // ── OTel: missing remote codec ────────────────────────────
+            try {
+                if (auto* span = jami::trace::spanFromHandle(callSpan_))
+                    span->AddEvent("media.codec.missing", {
+                        {"media.slot", static_cast<int64_t>(streamIdx)},
+                        {"media.side", std::string("remote")},
+                        {"media.type", std::string(remote.type == MEDIA_AUDIO ? "audio" : "video")},
+                    });
+            } catch (...) {}
+
             continue;
         }
 
@@ -1994,6 +2182,19 @@ SIPCall::setupNegotiatedMedia()
         // Aggregate hold info over all remote streams
         peer_hold &= remote.hold;
 
+        // ── OTel: record the negotiated codec for this stream ─────────
+        try {
+            if (auto* span = jami::trace::spanFromHandle(callSpan_)) {
+                span->AddEvent("media.codec.negotiated", {
+                    {"media.slot",         static_cast<int64_t>(streamIdx)},
+                    {"media.type",         std::string(local.type == MEDIA_AUDIO ? "audio" : "video")},
+                    {"media.codec.local",  local.codec  ? std::string(local.codec->name)  : std::string("none")},
+                    {"media.codec.remote", remote.codec ? std::string(remote.codec->name) : std::string("none")},
+                    {"media.enabled",      local.enabled and remote.enabled},
+                });
+            }
+        } catch (...) {}
+
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
     }
 
@@ -2008,6 +2209,15 @@ void
 SIPCall::startAllMedia()
 {
     JAMI_DEBUG("[call:{}] Starting all media", getCallId());
+
+    // ── OTel: media started event ──────────────────────────────────────
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan))
+            span->AddEvent("media.started");
+    } catch (...) {}
 
     if (not sipTransport_ or not sdp_) {
         JAMI_ERROR("[call:{}] The call is in invalid state", getCallId());
@@ -2588,6 +2798,16 @@ SIPCall::onMediaNegotiationComplete()
             std::lock_guard lk {this_->callMutex_};
             JAMI_DEBUG("[call:{}] Media negotiation complete", this_->getCallId());
 
+            // ── OTel: media negotiation complete event ─────────────────
+            // Resolve to parent's span if this is a subcall.
+            auto effSpan = this_->isSubcall()
+                ? (this_->parent_ ? std::dynamic_pointer_cast<SIPCall>(this_->parent_)->callSpan_ : this_->callSpan_)
+                : this_->callSpan_;
+            try {
+                if (auto* span = jami::trace::spanFromHandle(effSpan))
+                    span->AddEvent("media.negotiation.complete");
+            } catch (...) {}
+
             // If the call has already ended, we don't need to start the media.
             if (not this_->inviteSession_ or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
                 or not this_->sdp_) {
@@ -2626,6 +2846,28 @@ SIPCall::onMediaNegotiationComplete()
 void
 SIPCall::reportMediaNegotiationStatus()
 {
+    // ── OTel: media negotiation success summary ──────────────────────────
+    // Resolve to parent's span (subcalls forward media via parent)
+    auto effSpan = isSubcall()
+        ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+        : callSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(effSpan)) {
+            int audioStreams = 0;
+            int videoStreams = 0;
+            for (const auto& s : rtpStreams_) {
+                if (s.mediaAttribute_) {
+                    if (s.mediaAttribute_->type_ == MEDIA_AUDIO) audioStreams++;
+                    else if (s.mediaAttribute_->type_ == MEDIA_VIDEO) videoStreams++;
+                }
+            }
+            span->AddEvent("media.negotiation.status.reported", {
+                {"media.audio_streams", static_cast<int64_t>(audioStreams)},
+                {"media.video_streams", static_cast<int64_t>(videoStreams)},
+            });
+        }
+    } catch (...) {}
+
     // Notify using the parent Id if it's a subcall.
     auto callId = isSubcall() ? parent_->getCallId() : getCallId();
     emitSignal<libjami::CallSignal::MediaNegotiationStatus>(
@@ -2654,9 +2896,37 @@ void
 SIPCall::startIceMedia()
 {
     JAMI_DEBUG("[call:{}] Starting ICE", getCallId());
+
+    // ── OTel: resolve span owner (subcall → parent) and open ice.negotiation ─
+    // startIceMedia() can be invoked on a subcall from onInitDone, so we must
+    // always emit into the root call's ice span to keep all ICE events together.
+    auto& iceSpanRef = (isSubcall() && parent_)
+        ? std::dynamic_pointer_cast<SIPCall>(parent_)->iceSpan_
+        : iceSpan_;
+    auto& rootCallSpan = (isSubcall() && parent_)
+        ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_
+        : callSpan_;
+
+    // Open the ice.negotiation child span (close any stale one first)
+    try {
+        if (auto* prev = jami::trace::spanFromHandle(iceSpanRef)) prev->End();
+        iceSpanRef = jami::trace::makeSpanHandle(
+            jami::trace::startChildSpan(rootCallSpan, "ice.negotiation"));
+        if (auto* span = jami::trace::spanFromHandle(iceSpanRef))
+            span->AddEvent("ice.negotiation.started");
+    } catch (...) {}
+
     auto iceMedia = getIceMedia();
     if (not iceMedia or iceMedia->isFailed()) {
         JAMI_ERROR("[call:{}] Media ICE init failed", getCallId());
+
+        try {
+            if (auto* span = jami::trace::spanFromHandle(iceSpanRef))
+                span->AddEvent("ice.start.failed", {
+                    {"ice.reason", std::string(iceMedia ? "ICE transport already failed" : "No ICE transport")},
+                });
+        } catch (...) {}
+
         onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR);
         return;
     }
@@ -2678,13 +2948,58 @@ SIPCall::startIceMedia()
     if (!sdp_)
         return;
     auto rem_ice_attrs = sdp_->getIceAttributes();
+
+    // ── OTel: check remote ICE attributes before starting ──────────────
+    bool has_ufrag = !rem_ice_attrs.ufrag.empty();
+    bool has_pwd = !rem_ice_attrs.pwd.empty();
+    try {
+        if (auto* span = jami::trace::spanFromHandle(iceSpanRef)) {
+            span->AddEvent("ice.remote_attributes.check", {
+                {"ice.ufrag.present", has_ufrag},
+                {"ice.pwd.present", has_pwd},
+            });
+        }
+    } catch (...) {}
+
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         JAMI_ERROR("[call:{}] Missing remote media ICE attributes", getCallId());
+
+        try {
+            if (auto* span = jami::trace::spanFromHandle(iceSpanRef)) {
+                std::string missing;
+                if (!has_ufrag) missing += "[ufrag] ";
+                if (!has_pwd) missing += "[pwd]";
+                span->AddEvent("ice.start.failed", {
+                    {"ice.reason", std::string("Missing remote ICE credentials: " + missing)},
+                });
+            }
+        } catch (...) {}
+
         onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
         return;
     }
+
+    // ── OTel: ICE media start attempt ──────────────────────────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(iceSpanRef)) {
+            auto remote_candidates = getAllRemoteCandidates(*iceMedia);
+            span->AddEvent("ice.start.attempted", {
+                {"ice.remote_candidates", static_cast<int64_t>(remote_candidates.size())},
+                {"ice.local_candidates", static_cast<int64_t>(iceMedia->getLocalCandidates(0).size())},
+            });
+        }
+    } catch (...) {}
+
     if (not iceMedia->startIce(rem_ice_attrs, getAllRemoteCandidates(*iceMedia))) {
         JAMI_ERROR("[call:{}] ICE media failed to start", getCallId());
+
+        try {
+            if (auto* span = jami::trace::spanFromHandle(iceSpanRef))
+                span->AddEvent("ice.start.failed", {
+                    {"ice.reason", std::string("startIce returned false")},
+                });
+        } catch (...) {}
+
         onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
     }
 }
@@ -2695,6 +3010,22 @@ SIPCall::onIceNegoSucceed()
     std::lock_guard lk {callMutex_};
 
     JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
+
+    // ── OTel: ICE negotiation completed — close the ice.negotiation subspan ─
+    auto& iceSpanRef2 = (isSubcall() && parent_)
+        ? std::dynamic_pointer_cast<SIPCall>(parent_)->iceSpan_
+        : iceSpan_;
+    try {
+        if (auto* span = jami::trace::spanFromHandle(iceSpanRef2)) {
+            span->AddEvent("ice.negotiation.completed", {
+                {"ice.streams_count", static_cast<int64_t>(rtpStreams_.size())},
+                {"ice.components", static_cast<int64_t>(rtpStreams_.size() * 2)},
+            });
+            span->SetStatus(opentelemetry::trace::StatusCode::kOk);
+            span->End();
+            iceSpanRef2.reset();
+        }
+    } catch (...) {}
 
     // Check if the call is already ended, so we don't need to restart medias
     // This is typically the case in a multi-device context where one device
@@ -2910,6 +3241,19 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
     }
 
     initMediaStreams(mediaList);
+
+    // ── OTel: reparent before processIncomingOffer creates child spans ─
+    tryReparentFromRemoteTrace();
+
+    // ── OTel: open span for the 200OK offer handling ───────────────────
+    auto ok200Span = jami::trace::startChildSpan(callSpan_,
+                                                 "daemon.sipcall.receiveOfferIn200OK");
+    try {
+        ok200Span->SetAttribute("call.id", getCallId());
+        ok200Span->SetAttribute("sdp.media_count",
+                                static_cast<int64_t>(mediaList.size()));
+    } catch (...) {}
+    opentelemetry::trace::Scope ok200Scope{ok200Span};
 
     sdp_->processIncomingOffer(mediaList);
 
@@ -3298,7 +3642,32 @@ SIPCall::createIceMediaTransport(bool isReinvite)
                    fmt::ptr(mediaTransport.get()));
     } else {
         JAMI_ERROR("[call:{}] Failed to create media ICE transport", getCallId());
+
+        // ── OTel: ICE transport creation failed ────────────────────────────
+        auto effSpan = isSubcall()
+            ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+            : callSpan_;
+        try {
+            if (auto* span = jami::trace::spanFromHandle(effSpan))
+                span->AddEvent("ice.transport.create.failed", {
+                    {"ice.reinvite", isReinvite},
+                });
+        } catch (...) {}
+
         return {};
+    }
+
+    // ── OTel: ICE transport created ────────────────────────────────────
+    {
+        auto effSpan = isSubcall()
+            ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+            : callSpan_;
+        try {
+            if (auto* span = jami::trace::spanFromHandle(effSpan))
+                span->AddEvent("ice.transport.created", {
+                    {"ice.reinvite", isReinvite},
+                });
+        } catch (...) {}
     }
 
     setIceMedia(mediaTransport, isReinvite);
@@ -3320,7 +3689,33 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     auto const& iceMedia = getIceMedia();
     if (not iceMedia) {
         JAMI_ERROR("[call:{}] Invalid media ICE transport", getCallId());
+
+        // ── OTel: init failed — no transport ────────────────────────────
+        auto effSpan = isSubcall()
+            ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+            : callSpan_;
+        try {
+            if (auto* span = jami::trace::spanFromHandle(effSpan))
+                span->AddEvent("ice.transport.init.failed", {
+                    {"ice.reason", std::string("No ICE transport available")},
+                });
+        } catch (...) {}
+
         return false;
+    }
+
+    // ── OTel: ICE transport init started ────────────────────────────────
+    {
+        auto effSpan = isSubcall()
+            ? (parent_ ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_ : callSpan_)
+            : callSpan_;
+        try {
+            if (auto* span = jami::trace::spanFromHandle(effSpan))
+                span->AddEvent("ice.transport.init.started", {
+                    {"ice.master", master},
+                    {"ice.streams", static_cast<int64_t>(rtpStreams_.size())},
+                });
+        } catch (...) {}
     }
 
     auto iceOptions = options == std::nullopt ? acc->getIceOptions() : *options;
@@ -3332,7 +3727,28 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
             auto call = w.lock();
             if (cb)
                 cb(ok);
-            if (!ok or !call or !call->waitForIceInit_.exchange(false))
+            if (!call)
+                return;
+
+            // ── OTel: ICE transport init result ──────────────────────────
+            {
+                auto effSpan = call->isSubcall()
+                    ? (call->parent_ ? std::dynamic_pointer_cast<SIPCall>(call->parent_)->callSpan_ : call->callSpan_)
+                    : call->callSpan_;
+                try {
+                    if (auto* span = jami::trace::spanFromHandle(effSpan)) {
+                        if (ok) {
+                            span->AddEvent("ice.transport.init.done");
+                        } else {
+                            span->AddEvent("ice.transport.init.failed", {
+                                {"ice.reason", std::string("ICE init reported failure")},
+                            });
+                        }
+                    }
+                } catch (...) {}
+            }
+
+            if (!ok or !call->waitForIceInit_.exchange(false))
                 return;
 
             std::lock_guard lk {call->callMutex_};
@@ -3353,6 +3769,21 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
                 call = call->isSubcall() ? std::dynamic_pointer_cast<SIPCall>(call->parent_) : call;
                 if (!ok) {
                     JAMI_ERROR("[call:{}] Media ICE negotiation failed", call->getCallId());
+                    
+                    // ── OTel: ICE negotiation failed — close the ice.negotiation subspan ─
+                    try {
+                        if (auto* span = jami::trace::spanFromHandle(call->iceSpan_)) {
+                            span->AddEvent("ice.negotiation.failed", {
+                                {"ice.streams_count", static_cast<int64_t>(call->rtpStreams_.size())},
+                                {"ice.components", static_cast<int64_t>(call->rtpStreams_.size() * 2)},
+                                {"ice.reason", std::string("ICE peer negotiation failed (no common candidates or timeout)")},
+                            });
+                            span->SetStatus(opentelemetry::trace::StatusCode::kError, "ICE negotiation failed");
+                            span->End();
+                            call->iceSpan_.reset();
+                        }
+                    } catch (...) {}
+                    
                     call->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
                     return;
                 }
@@ -3414,6 +3845,9 @@ SIPCall::merge(Call& call)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setSipTransport(std::move(subcall.sipTransport_), std::move(subcall.contactHeader_));
     sdp_ = std::move(subcall.sdp_);
+    // Re-wire the SDP span handle to the parent call's span after ownership transfer.
+    if (sdp_)
+        sdp_->setCallSpan(callSpan_);
     peerHold_ = subcall.peerHold_;
     upnp_ = std::move(subcall.upnp_);
     localAudioPort_ = subcall.localAudioPort_;

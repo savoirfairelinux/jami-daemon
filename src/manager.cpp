@@ -36,6 +36,8 @@
 
 #include "call_factory.h"
 
+#include "telemetry/calls_trace.h"
+
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount_config.h"
 
@@ -563,6 +565,11 @@ Manager::ManagerPimpl::unsetCurrentCall()
 void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.manager.switchCall");
+    try {
+        span->SetAttribute("call.id", id);
+    } catch (...) {}
+
     std::lock_guard m(currentCallMutex_);
     JAMI_DBG("----- Switch current call ID to '%s' -----", not id.empty() ? id.c_str() : "none");
     currentCall_ = id;
@@ -1080,6 +1087,13 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<libjami::MediaMap>& mediaList)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.manager.outgoingCall");
+    try {
+        span->SetAttribute("call.account_id", account_id);
+        span->SetAttribute("call.to", to);
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     JAMI_DBG() << "Attempt outgoing call to '" << to << "'" << " with account '" << account_id << "'";
 
     std::shared_ptr<Call> call;
@@ -1088,6 +1102,7 @@ Manager::outgoingCall(const std::string& account_id,
         call = newOutgoingCall(trim(to), account_id, mediaList);
     } catch (const std::exception& e) {
         JAMI_ERROR("{}", e.what());
+        try { span->SetStatus(opentelemetry::trace::StatusCode::kError, e.what()); } catch (...) {}
         return {};
     }
 
@@ -1098,6 +1113,9 @@ Manager::outgoingCall(const std::string& account_id,
 
     pimpl_->switchCall(call->getCallId());
 
+    try {
+        span->SetAttribute("call.id", call->getCallId());
+    } catch (...) {}
     return call->getCallId();
 }
 
@@ -3088,6 +3106,13 @@ Manager::newOutgoingCall(std::string_view toUrl,
                          const std::string& accountId,
                          const std::vector<libjami::MediaMap>& mediaList)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.manager.newOutgoingCall");
+    try {
+        span->SetAttribute("call.account_id", accountId);
+        span->SetAttribute("call.to_url", std::string(toUrl));
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     auto account = getAccount(accountId);
     if (not account) {
         JAMI_WARNING("[account:{}] No account matches ID", accountId);

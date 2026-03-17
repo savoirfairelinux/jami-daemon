@@ -111,6 +111,11 @@ public:
     const std::string& getCallId() const { return id_; }
 
     /**
+     * Return a copy of the opaque call span handle for telemetry.
+     */
+    std::shared_ptr<void> getCallSpan() const { return callSpan_; }
+
+    /**
      * Return a reference on the conference id
      * @return call id
      */
@@ -520,6 +525,15 @@ protected:
     std::string toUsername_ {};
 
     asio::steady_timer timeoutTimer_;
+
+    /// Opaque handle to the OpenTelemetry span covering the full call lifecycle.
+    /// Held as shared_ptr<void> so call.h does not pull in any OTel headers.
+    std::shared_ptr<void> callSpan_;
+
+    /// Called after callSpan_ has been (re-)set by addSubCall() or SDP
+    /// traceparent extraction.  Subclasses override to propagate the new
+    /// handle to owned objects (e.g. Sdp).
+    virtual void onCallSpanReparented() {}
 };
 
 // Helpers

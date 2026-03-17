@@ -485,6 +485,21 @@ private:
 
     std::atomic_bool waitForIceInit_ {false};
 
+    /// Opaque handle to the ice.negotiation child span.
+    /// Opened at the start of startIceMedia() and closed in onIceNegoSucceed().
+    std::shared_ptr<void> iceSpan_ {};
+
+    /// Set once after the first successful distributed-trace re-parenting.
+    bool traceReparented_ {false};
+
+    /// Propagate a new callSpan_ to owned objects (Sdp).
+    void onCallSpanReparented() override;
+
+    /// Re-parent callSpan_ under the remote caller's trace context if
+    /// the SDP carried an a=otel-traceparent attribute.  No-op after the
+    /// first successful re-parenting or when no traceparent was present.
+    void tryReparentFromRemoteTrace();
+
     void detachAudioFromConference();
 
     std::mutex mediaStateMutex_;
