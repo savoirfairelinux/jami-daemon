@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7ee7eb0_26606751",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 1247,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-18T18:02:58Z",
+      "side": 1,
+      "message": "Doesn\u0027t compile:\n```\n/home/fsimon/jami-client-qt/daemon/src/jamidht/conversation_module.cpp:1243:28: error: ‘using element_type \u003d struct jami::SyncedConversation’ {aka ‘struct jami::SyncedConversation’} has no member named ‘getConversation’; did you mean ‘conversation’?\n 1243 |         if (auto c \u003d conv-\u003egetConversation()) {\n      |                            ^~~~~~~~~~~~~~~\n      |                            conversation\n\n```",
+      "range": {
+        "startLine": 1246,
+        "startChar": 8,
+        "endLine": 1247,
+        "endChar": 49
+      },
+      "revId": "1808d990feb8b8670e117bfa47c94b64a1c4e48b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
