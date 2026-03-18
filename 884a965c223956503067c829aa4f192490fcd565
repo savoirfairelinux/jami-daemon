@@ -21,6 +21,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "eaba2959_5ba0b9c5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1936,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-18T19:18:02Z",
+      "side": 1,
+      "message": "This may break the build on Windows (cf. https://review.jami.net/c/jami-daemon/+/31020 ).",
+      "range": {
+        "startLine": 1936,
+        "startChar": 16,
+        "endLine": 1936,
+        "endChar": 72
+      },
+      "revId": "884a965c223956503067c829aa4f192490fcd565",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8afa2d2f_8ce56f68",
         "filename": "test/unitTest/fileutils/testFileutils.cpp",
         "patchSetId": 12
