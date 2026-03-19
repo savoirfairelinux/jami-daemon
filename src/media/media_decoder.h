@@ -140,6 +140,7 @@ private:
     DeviceParams inputParams_;
     AVDictionary* options_ = nullptr;
     MediaDemuxer::CurrentState currentState_;
+    std::mutex inputCtxMutex_ {};
     std::mutex audioBufferMutex_ {};
     std::mutex videoBufferMutex_ {};
     std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>> videoBuffer_ {};
