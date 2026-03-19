@@ -16,6 +16,23 @@
       "message": "Does this patch resolve the following issues?\n\n1. https://forum.jami.net/t/no-ring-sound-at-all-on-android-8-1-vibration-only/5533\n2. https://forum.jami.net/t/extremely-low-input-mic-volume-for-the-persson-i-called-worked-fine-on-signal-and-other-apps/5535\n\nThank you",
       "revId": "fe82f443e41e5115642fa710c55d93de5ab10ab6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ce27c3b_a59a03c4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-19T23:39:45Z",
+      "side": 1,
+      "message": "!verify",
+      "revId": "fe82f443e41e5115642fa710c55d93de5ab10ab6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
