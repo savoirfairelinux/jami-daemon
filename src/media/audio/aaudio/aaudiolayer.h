@@ -19,6 +19,7 @@
 #include "audio/audiolayer.h"
 
 #include <aaudio/AAudio.h>
+#include <jni.h>
 
 #include <thread>
 #include <mutex>
@@ -32,6 +33,10 @@ class AAudioLayer : public AudioLayer {
 public:
     AAudioLayer(const AudioPreference& pref);
     ~AAudioLayer();
+
+    // Must be called from JNI_OnLoad to enable the Java AudioTrack fallback
+    // for the ringtone stream on Android API < 28.
+    static void setJavaVM(JavaVM* vm);
 
     void startStream(AudioDeviceType stream) override;
     void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
@@ -88,6 +93,15 @@ private:
     std::condition_variable loopCv_;
     std::set<AudioDeviceType> streamsToRestart_;
     bool isRunning_ {false};
+
+    bool startJavaRingStream();
+    void stopJavaRingStream();
+    void javaRingLoop();
+
+    jobject javaRingTrack_ {nullptr};   // GlobalRef to android.media.AudioTrack
+    jfloatArray javaRingBuffer_ {nullptr}; // GlobalRef, reused each write
+    std::atomic<bool> javaRingRunning_ {false};
+    std::thread javaRingThread_;
 };
 
 }
