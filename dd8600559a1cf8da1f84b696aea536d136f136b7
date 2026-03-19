@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "72737b3a_08b8c178",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-19T14:03:53Z",
+      "side": 1,
+      "message": "I discarded the original \"test #2\", as I hadn\u0027t realized the problem you are describing now is automated by the `probe-dht-from-wan.sh` script and it wasn\u0027t a good example all-in-all.",
+      "parentUuid": "668a3ff1_9b66bf97",
+      "range": {
+        "startLine": 134,
+        "startChar": 3,
+        "endLine": 134,
+        "endChar": 43
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eef9f5ee_18fde576",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-03-16T19:29:59Z",
       "side": 1,
       "message": "If Jami is closed normally then it will destroy the mappings during shutdown. We could of course ensure the mappings still exist by forcing Jami to terminate via e.g. `kill -9`, but it looks like this isn\u0027t actually needed for the rest of the test?",
+      "range": {
+        "startLine": 142,
+        "startChar": 0,
+        "endLine": 144,
+        "endChar": 38
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "623cca81_a3ebe6c4",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-19T14:03:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eef9f5ee_18fde576",
       "range": {
         "startLine": 142,
         "startChar": 0,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf283724_aca97f27",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-19T14:03:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc7367dc_77bbecc3",
+      "range": {
+        "startLine": 188,
+        "startChar": 2,
+        "endLine": 188,
+        "endChar": 72
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "70735f33_14d219b4",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7973419_e2df7321",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-19T14:03:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70735f33_14d219b4",
+      "range": {
+        "startLine": 31,
+        "startChar": 4,
+        "endLine": 34,
+        "endChar": 6
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f76dbf38_01ecf433",
@@ -106,6 +202,30 @@
       "writtenOn": "2026-03-16T19:29:59Z",
       "side": 1,
       "message": "It\u0027s fine to have a trap here for cleanup:\n```\ntrap \u0027echo; echo \"[+] Cleaning up...\"; cleanup\u0027 EXIT\n```\nSorry if my comment on the previous patchset was ambiguous. Only the explicit call to `cleanup` on the line above the trap was a problem.",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 16
+      },
+      "revId": "dd8600559a1cf8da1f84b696aea536d136f136b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40a036d3_1664a1ca",
+        "filename": "test/virtual-networking/setup-fake-upnp-network.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-19T14:03:53Z",
+      "side": 1,
+      "message": "You\u0027re absolutely right, I didn\u0027t think it through. I retested everything and also found out that IPv6 support is flimsy at best for the tools used, so that is gone too.",
+      "parentUuid": "f76dbf38_01ecf433",
       "range": {
         "startLine": 54,
         "startChar": 0,
