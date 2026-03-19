@@ -645,6 +645,7 @@ MediaDecoder::prepareDecoderContext()
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    decoderCtx_->pkt_timebase = avStream_->time_base;
     width_ = decoderCtx_->width;
     height_ = decoderCtx_->height;
     decoderCtx_->framerate = avStream_->avg_frame_rate;
