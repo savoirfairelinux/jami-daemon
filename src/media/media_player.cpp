@@ -229,17 +229,22 @@ MediaPlayer::seekToTime(int64_t time)
         playFileFromBeginning();
         return true;
     }
+
+    bool wasPaused = paused_;
+    if (!wasPaused)
+        pause(true);
+
     if (!demuxer_->seekFrame(-1, time)) {
+        if (!wasPaused)
+            pause(false);
         return false;
     }
     flushMediaBuffers();
     demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Demuxing);
 
     int64_t currentTime = av_gettime();
-    if (paused_) {
-        pauseInterval_ += currentTime - lastPausedTime_;
-        lastPausedTime_ = currentTime;
-    }
+    pauseInterval_ += currentTime - lastPausedTime_;
+    lastPausedTime_ = currentTime;
 
     startTime_ = currentTime - pauseInterval_ - time;
     if (hasAudio()) {
@@ -252,6 +257,9 @@ MediaPlayer::seekToTime(int64_t time)
         videoInput_->updateStartTime(startTime_);
     }
 #endif
+
+    if (!wasPaused)
+        pause(false);
     return true;
 }
 void
