@@ -205,6 +205,7 @@ MediaDemuxer::getDuration() const
 bool
 MediaDemuxer::seekFrame(int, int64_t timestamp)
 {
+    std::lock_guard lk(inputCtxMutex_);
     if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
         clearFrames();
         return true;
@@ -354,23 +355,28 @@ MediaDemuxer::demuxe()
             av_packet_free(&p);
     });
 
-    int ret = av_read_frame(inputCtx_, packet.get());
-    if (ret == AVERROR(EAGAIN)) {
-        return Status::Success;
-    } else if (ret == AVERROR_EOF) {
-        return Status::EndOfFile;
-    } else if (ret < 0) {
-        JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
-        return Status::ReadError;
+    bool isVideo;
+    {
+        std::lock_guard lk(inputCtxMutex_);
+        int ret = av_read_frame(inputCtx_, packet.get());
+        if (ret == AVERROR(EAGAIN)) {
+            return Status::Success;
+        } else if (ret == AVERROR_EOF) {
+            return Status::EndOfFile;
+        } else if (ret < 0) {
+            JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
+            return Status::ReadError;
+        }
+
+        auto streamIndex = packet->stream_index;
+        if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
+            return Status::Success;
+        }
+
+        isVideo = inputCtx_->streams[streamIndex]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO;
     }
 
-    auto streamIndex = packet->stream_index;
-    if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
-        return Status::Success;
-    }
-
-    AVStream* stream = inputCtx_->streams[streamIndex];
-    if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (isVideo) {
         std::lock_guard lk {videoBufferMutex_};
         videoBuffer_.push(std::move(packet));
         if (videoBuffer_.size() >= 90) {
