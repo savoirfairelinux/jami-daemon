@@ -19,6 +19,7 @@
 extern "C" {
 #include "libavcodec/jni.h"
 }
+#include "media/audio/aaudio/aaudiolayer.h"
 
 JavaVM *gJavaVM;
 const char *kjamiservicePath = "net/jami/daemon/JamiServiceJNI";
@@ -56,6 +57,11 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	}
 	gJavaVM = vm;
 	JAMI_INFO("JNI_Onload: JavaVM %p", gJavaVM);
+
+	// Provide the JVM to AAudioLayer so it can create a Java AudioTrack with
+	// STREAM_RING for the ringtone stream on Android API < 28, where
+	// AAudioStreamBuilder_setUsage is not available.
+	jami::AAudioLayer::setJavaVM(vm);
 
 	/* put instances of class object we need into cache */
     //initClassHelper(env, kManagerPath, &gManagerObject);
