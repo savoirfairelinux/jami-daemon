@@ -98,7 +98,7 @@ Call::Call(const std::shared_ptr<Account>& account, const std::string& id, Call:
         }
 
         if (!isSubcall()) {
-            if (code == static_cast<int>(std::errc::no_such_device_or_address)) {
+            if (code == PJSIP_SC_TEMPORARILY_UNAVAILABLE) {
                 reason_ = "no_device";
             }
             if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
