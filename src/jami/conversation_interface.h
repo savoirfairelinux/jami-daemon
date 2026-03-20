@@ -48,6 +48,8 @@ struct SwarmMessage
     }
 };
 
+enum class MemberEvent : int { INVALID = -1, ADD = 0, JOIN = 1, REMOVE = 2, BAN = 3, UNBAN = 4 };
+
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
 LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);

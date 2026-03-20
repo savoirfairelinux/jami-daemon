@@ -32,6 +32,9 @@ TODO Handle the following signals:
 - ConversationMemberEvent (to keep track of participants)
 - OnConversationError
  */
+
+enum class MemberRole { INVALID = -1, ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
+
 class SimClient
 {
     using SwarmMessage = libjami::SwarmMessage;
@@ -53,6 +56,9 @@ public:
                                const std::string& conversationId,
                                const SwarmMessage& message);
 
+    void setMemberRoles(const std::vector<std::map<std::string, std::string>>& members);
+    MemberRole getMemberRole(const std::string& memberId) const;
+
     std::vector<SwarmMessage> getMessages() const;
     void clearMessages();
     bool hasConsistentHistory() const;
@@ -63,7 +69,8 @@ private:
     std::string accountId_;
     std::string conversationId_;
 
-    std::map<std::string, int> lastMemberEvent_;
+    std::string adminId_;
+    std::map<std::string, MemberRole> memberRole_;
 
     std::vector<SwarmMessage> swarmMessages_;
     std::vector<size_t> sortedIndices_; // From oldest to newest message
