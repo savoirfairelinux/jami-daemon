@@ -1919,6 +1919,13 @@ ConversationModule::onTrustRequest(const std::string& uri,
 
     auto contactInfo = pimpl_->accountManager_->getContactInfo(uri);
     if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() && contactInfo->isActive()) {
+        auto oldReq = pimpl_->getRequest(conversationId);
+        if (oldReq != std::nullopt && oldReq->declined) {
+            JAMI_DEBUG("[Account {}] [Conversation {}] Ignoring trust request for already declined conversation.",
+                       pimpl_->accountId_,
+                       conversationId);
+            return;
+        }
         JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, uri, conversationId);
         lk.unlock();
         updateConvForContact(uri, contactInfo->conversationId, conversationId);
@@ -1969,6 +1976,14 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     if (isOneToOne) {
         auto contactInfo = pimpl_->accountManager_->getContactInfo(from);
         if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() && contactInfo->isActive()) {
+            auto oldReq = pimpl_->getRequest(convId);
+            if (oldReq != std::nullopt && oldReq->declined) {
+                JAMI_DEBUG(
+                    "[Account {}] [Conversation {}] Ignoring conversation request for already declined conversation.",
+                    pimpl_->accountId_,
+                    convId);
+                return;
+            }
             JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, from, convId);
             lk.unlock();
             updateConvForContact(from, contactInfo->conversationId, convId);
