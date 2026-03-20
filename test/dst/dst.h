@@ -75,6 +75,9 @@ struct RepositoryAccount
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId, conversationId);
 
         conversation = std::make_unique<Conversation>(account, conversationId);
+        auto members = conversation->getMembers(true, true, true);
+        client.setMemberRoles(members);
+
         auto messages = conversation->loadMessagesSync({});
         emitSignal<libjami::ConversationSignal::SwarmLoaded>(0, accountId, conversationId, messages);
     }
@@ -128,7 +131,8 @@ public:
     // Checkers
     bool verifyLoadConversationFromScratch();
     bool checkAppearances(const RepositoryAccount& repoAcc);
-    bool checkAppearancesForAllAccounts();
+    bool checkConversationMembers(const RepositoryAccount& repoAcc);
+    bool checkAllAccounts();
 
     // Unit testing
     UnitTest loadUnitTestConfig(const std::string& unitTestPath);
