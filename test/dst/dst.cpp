@@ -109,6 +109,15 @@ ConversationDST::setUp(int numAccountsToSimulate)
 
     // Register signal handlers
     confHandlers.clear();
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
+        [&](const std::string& accountId, const std::string& conversationId, const std::string& memberId, int event) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onConversationMemberEvent(accountId, conversationId, memberId, event);
+                    break;
+                }
+            }
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             for (auto& repoAcc : repositoryAccounts) {
