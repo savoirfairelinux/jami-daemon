@@ -36,6 +36,41 @@
 
 namespace jami {
 
+class DhtTrustRequest : public dht::EncryptedValue<DhtTrustRequest>
+{
+private:
+    using BaseClass = dht::EncryptedValue<DhtTrustRequest>;
+
+public:
+    static constexpr const dht::ValueType& TYPE = dht::TrustRequest::TYPE;
+
+    DhtTrustRequest() {}
+    DhtTrustRequest(std::string s, std::string ci = {})
+        : service(s)
+        , conversationId(ci)
+    {}
+    DhtTrustRequest(std::string s, std::string ci, const dht::Blob& d)
+        : service(s)
+        , conversationId(ci)
+        , payload(d)
+    {}
+
+    static dht::Value::Filter getFilter() { return BaseClass::getFilter(); }
+
+    virtual void unpackValue(const dht::Value& v) override
+    {
+        BaseClass::unpackValue(v);
+        id = v.id;
+    }
+
+    dht::Value::Id id {0};
+    std::string service;
+    std::string conversationId;
+    dht::Blob payload;
+    bool confirm {false};
+    MSGPACK_DEFINE_MAP(service, conversationId, payload, confirm)
+};
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
@@ -323,7 +358,11 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     }
 
     auto inboxKey = dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString());
-    dht_->listen<dht::TrustRequest>(inboxKey, [this](dht::TrustRequest&& v) {
+    dht_->listen<DhtTrustRequest>(inboxKey, [this](DhtTrustRequest&& v) {
+        if (not treatedMessages_.add(v.id)) {
+            return true;
+        }
+
         if (v.service != DHT_TYPE_NS)
             return true;
 
