@@ -173,13 +173,11 @@ private:
 
     // Events
     std::vector<Event> validatedEvents;
-    // Weightings for the event distribution (note that each weight
-    // corresponds to the exact ordering of ther ConversationEvent enum)
-    std::vector<double> repositoryEventWeights {3, 5, 1, 1};
     std::chrono::nanoseconds startTime {0};
     std::mt19937_64 gen_;
 
     float sumOfRejectionRates = 0;
+    double sumOfJoinRates = 0;
 
     // = Logging Preferences =
     // Enable these for verbose logging. You may wish to disable these if generating a large number of cycles
