@@ -27,6 +27,32 @@ namespace jami {
 namespace test {
 
 void
+SimClient::onConversationMemberEvent(const std::string& accountId,
+                                     const std::string& conversationId,
+                                     const std::string& memberId,
+                                     int event)
+{
+    assert(accountId == accountId_);
+    assert(conversationId == conversationId_);
+
+    switch (event) {
+    case 0: // ADD
+        break;
+    case 1: // JOIN
+    case 2: // REMOVE
+    case 3: // BAN
+    case 4: // UNBAN
+        assert(lastMemberEvent_.contains(memberId));
+        break;
+    default:
+        assert(false && "Invalid member event received, this is a bug!");
+        break;
+    }
+
+    lastMemberEvent_[memberId] = event;
+}
+
+void
 SimClient::onConversationReady(const std::string& accountId, const std::string& conversationId)
 {
     assert(accountId_.empty());
