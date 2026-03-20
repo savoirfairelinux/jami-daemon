@@ -425,28 +425,28 @@ public:
                     if (c.find(CommitKey::URI) != c.end() && c.find(CommitKey::ACTION) != c.end()) {
                         const auto& uri = c.at(CommitKey::URI);
                         const auto& actionStr = c.at(CommitKey::ACTION);
-                        auto action = -1;
+                        auto event = libjami::MemberEvent::INVALID;
                         if (actionStr == CommitAction::ADD)
-                            action = 0;
+                            event = libjami::MemberEvent::ADD;
                         else if (actionStr == CommitAction::JOIN)
-                            action = 1;
+                            event = libjami::MemberEvent::JOIN;
                         else if (actionStr == CommitAction::REMOVE)
-                            action = 2;
+                            event = libjami::MemberEvent::REMOVE;
                         else if (actionStr == CommitAction::BAN)
-                            action = 3;
+                            event = libjami::MemberEvent::BAN;
                         else if (actionStr == CommitAction::UNBAN)
-                            action = 4;
-                        if (actionStr == CommitAction::BAN || actionStr == CommitAction::REMOVE) {
+                            event = libjami::MemberEvent::UNBAN;
+                        if (event == libjami::MemberEvent::BAN || event == libjami::MemberEvent::REMOVE) {
                             // In this case, a potential host was removed during a call.
                             updateActiveCalls(c);
                             typers_->removeTyper(uri);
                         }
-                        if (action != -1) {
+                        if (event != libjami::MemberEvent::INVALID) {
                             announceMember = true;
                             emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(accountId_,
                                                                                              convId,
                                                                                              uri,
-                                                                                             action);
+                                                                                             static_cast<int>(event));
                         }
                     }
                 } else if (c.at(CommitKey::TYPE) == CommitType::CALL_HISTORY) {
