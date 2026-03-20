@@ -30,26 +30,38 @@ void
 SimClient::onConversationMemberEvent(const std::string& accountId,
                                      const std::string& conversationId,
                                      const std::string& memberId,
-                                     int event)
+                                     int eventCode)
 {
+    using libjami::MemberEvent;
+
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
 
+    auto event = static_cast<MemberEvent>(eventCode);
+    if (event != MemberEvent::ADD) {
+        assert(memberRole_.contains(memberId));
+    }
+
     switch (event) {
-    case 0: // ADD
+    case MemberEvent::ADD:
+        memberRole_[memberId] = MemberRole::INVITED;
         break;
-    case 1: // JOIN
-    case 2: // REMOVE
-    case 3: // BAN
-    case 4: // UNBAN
-        assert(lastMemberEvent_.contains(memberId));
+    case MemberEvent::JOIN:
+        memberRole_[memberId] = MemberRole::MEMBER;
+        break;
+    case MemberEvent::UNBAN:
+        memberRole_[memberId] = MemberRole::MEMBER;
+        break;
+    case MemberEvent::REMOVE:
+        memberRole_[memberId] = MemberRole::LEFT;
+        break;
+    case MemberEvent::BAN:
+        memberRole_[memberId] = MemberRole::BANNED;
         break;
     default:
         assert(false && "Invalid member event received, this is a bug!");
         break;
     }
-
-    lastMemberEvent_[memberId] = event;
 }
 
 void
@@ -59,6 +71,36 @@ SimClient::onConversationReady(const std::string& accountId, const std::string& 
     assert(conversationId_.empty());
     accountId_ = accountId;
     conversationId_ = conversationId;
+}
+
+void
+SimClient::setMemberRoles(const std::vector<std::map<std::string, std::string>>& members)
+{
+    assert(memberRole_.empty());
+    for (const auto& member : members) {
+        auto memberId = member.at("uri");
+        assert(!memberId.empty());
+
+        auto roleStr = member.at("role");
+        MemberRole role;
+        if (roleStr == "admin") {
+            assert(adminId_.empty());
+            adminId_ = memberId;
+            role = MemberRole::ADMIN;
+        } else if (roleStr == "member") {
+            role = MemberRole::MEMBER;
+        } else if (roleStr == "invited") {
+            role = MemberRole::INVITED;
+        } else if (roleStr == "banned") {
+            role = MemberRole::BANNED;
+        } else if (roleStr == "left") {
+            role = MemberRole::LEFT; // For one to one
+        } else {
+            assert(false && "Invalid role received");
+        }
+        memberRole_[memberId] = role;
+    }
+    assert(!adminId_.empty());
 }
 
 void
@@ -108,6 +150,16 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
     auto parentIt = std::find(sortedIndices_.begin(), sortedIndices_.end(), parentIndex);
     assert(parentIt != sortedIndices_.end());
     sortedIndices_.insert(parentIt + 1, index);
+}
+
+MemberRole
+SimClient::getMemberRole(const std::string& memberId) const
+{
+    auto it = memberRole_.find(memberId);
+    if (it == memberRole_.end()) {
+        return MemberRole::INVALID;
+    }
+    return it->second;
 }
 
 std::vector<libjami::SwarmMessage>
