@@ -32,6 +32,8 @@
 #include <filesystem>
 
 #include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/fileutils.h>
+#include "fileutils.h"
 
 namespace dht {
 class DhtRunner;
@@ -82,11 +84,13 @@ public:
     AccountManager(const std::string& accountId, const std::filesystem::path& path, const std::string& nameServer)
         : accountId_(accountId)
         , path_(path)
-        , nameDir_(NameDirectory::instance(nameServer)) {};
+        , nameDir_(NameDirectory::instance(nameServer))
+        , treatedMessages_(fileutils::get_cache_dir() / accountId / TREATED_TRUST_REQUESTS_PATH) {};
 
     virtual ~AccountManager();
 
     constexpr static const char* const DHT_TYPE_NS = "cx.ring";
+    constexpr static const char* const TREATED_TRUST_REQUESTS_PATH = "treatedTrustRequests";
 
     // Auth
 
@@ -118,8 +122,7 @@ public:
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
                                     AuthFailureCallback onFailure,
-                                    const OnChangeCallback& onChange)
-        = 0;
+                                    const OnChangeCallback& onChange) = 0;
 
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
@@ -270,8 +273,7 @@ public:
     virtual void registerName(const std::string& name,
                               std::string_view scheme,
                               const std::string& password,
-                              RegistrationCallback cb)
-        = 0;
+                              RegistrationCallback cb) = 0;
 
     dhtnet::tls::CertificateStore& certStore() const;
 
@@ -282,6 +284,7 @@ protected:
     std::unique_ptr<AccountInfo> info_;
     std::shared_ptr<dht::DhtRunner> dht_;
     std::reference_wrapper<NameDirectory> nameDir_;
+    dhtnet::fileutils::IdList treatedMessages_;
 };
 
 } // namespace jami
