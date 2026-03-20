@@ -124,7 +124,8 @@ public:
     // Checkers
     bool verifyLoadConversationFromScratch();
     bool checkAppearances(const RepositoryAccount& repoAcc);
-    bool checkAppearancesForAllAccounts();
+    bool checkConversationMembers(const RepositoryAccount& repoAcc);
+    bool checkAllAccounts();
 
     // Unit testing
     UnitTest loadUnitTestConfig(const std::string& unitTestPath);

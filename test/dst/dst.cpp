@@ -785,10 +785,13 @@ ConversationDST::resetRepositories()
 }
 
 bool
-ConversationDST::checkAppearancesForAllAccounts()
+ConversationDST::checkAllAccounts()
 {
     for (const auto& repoAcc : repositoryAccounts) {
         if (!checkAppearances(repoAcc)) {
+            return false;
+        }
+        if (!checkConversationMembers(repoAcc)) {
             return false;
         }
     }
@@ -874,6 +877,69 @@ ConversationDST::checkAppearances(const RepositoryAccount& repoAcc)
         }
     }
     return orderingCorrect;
+}
+
+bool
+ConversationDST::checkConversationMembers(const RepositoryAccount& repoAcc)
+{
+    if (!repoAcc.repository) {
+        return true;
+    }
+
+    for (const auto& member : repoAcc.repository->members()) {
+        // The client should have an event for each member in the conversation except itself.
+        int lastMemberEvent = repoAcc.client.getLastMemberEvent(member.uri);
+        if (member.uri != repoAcc.account->getUsername() && lastMemberEvent == -1) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Client doesn't have member {}\n",
+                       repoAcc.account->getDisplayName(),
+                       member.uri);
+            return false;
+        } else if (member.uri == repoAcc.account->getUsername() && lastMemberEvent != -1) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Client has an event for itself: {}\n",
+                       repoAcc.account->getDisplayName(),
+                       lastMemberEvent);
+            return false;
+        }
+
+        // Check that event is consistent with the member's role in the repository
+        bool ok = false;
+        switch (lastMemberEvent) {
+        case -1:
+            assert(member.uri == repoAcc.account->getUsername());
+            ok = member.role == MemberRole::MEMBER || member.role == MemberRole::ADMIN;
+            break;
+        case 0: // ADD
+            ok = member.role == MemberRole::INVITED;
+            break;
+        case 1: // JOIN
+            ok = member.role == MemberRole::MEMBER || member.role == MemberRole::ADMIN;
+            break;
+        case 2: // REMOVE
+            ok = member.role == MemberRole::LEFT;
+            break;
+        case 3: // BAN
+            ok = member.role == MemberRole::BANNED;
+            break;
+        case 4: // UNBAN
+            ok = member.role == MemberRole::MEMBER;
+            break;
+        default:
+            assert(false && "Invalid member event, this is a bug!");
+            break;
+        }
+        if (!ok) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Member {} has inconsistent last event ({}) and role ({})\n",
+                       repoAcc.account->getDisplayName(),
+                       member.uri,
+                       lastMemberEvent,
+                       static_cast<int>(member.role));
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -1001,7 +1067,7 @@ ConversationDST::run(uint64_t seed, unsigned maxEvents, const std::string& saveF
     displayGitLog();
 
     // Do verifications
-    bool ok = checkAppearancesForAllAccounts();
+    bool ok = checkAllAccounts();
     // Load each conversation as if it were being opened for the first time
     ok &= verifyLoadConversationFromScratch();
 

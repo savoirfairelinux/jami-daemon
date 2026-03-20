@@ -110,6 +110,16 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
     sortedIndices_.insert(parentIt + 1, index);
 }
 
+int
+SimClient::getLastMemberEvent(const std::string& memberId) const
+{
+    auto it = lastMemberEvent_.find(memberId);
+    if (it == lastMemberEvent_.end()) {
+        return -1;
+    }
+    return it->second;
+}
+
 std::vector<libjami::SwarmMessage>
 SimClient::getMessages() const
 {

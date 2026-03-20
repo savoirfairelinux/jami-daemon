@@ -53,6 +53,7 @@ public:
                                const std::string& conversationId,
                                const SwarmMessage& message);
 
+    int getLastMemberEvent(const std::string& memberId) const;
     std::vector<SwarmMessage> getMessages() const;
     void clearMessages();
     bool hasConsistentHistory() const;
