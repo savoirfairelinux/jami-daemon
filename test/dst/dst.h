@@ -33,14 +33,18 @@ namespace test {
 
 // Events to select from randomly
 enum class ConversationEvent : std::uint8_t {
+    // Primary events (generated randomly by the simulator)
     ADD_MEMBER = 0,
     SEND_MESSAGE = 1,
     CONNECT = 2,
     DISCONNECT = 3,
+
+    // Secondary events (only generated in response to other events)
     FETCH = 4,
     MERGE = 5,
     CLONE = 6
 };
+static constexpr uint8_t NUM_PRIMARY_EVENTS = 4;
 
 /**
  * A structure containing the relevant data for account and repo simulation.
@@ -173,13 +177,11 @@ private:
 
     // Events
     std::vector<Event> validatedEvents;
-    // Weightings for the event distribution (note that each weight
-    // corresponds to the exact ordering of ther ConversationEvent enum)
-    std::vector<double> repositoryEventWeights {3, 5, 1, 1};
     std::chrono::nanoseconds startTime {0};
     std::mt19937_64 gen_;
 
     float sumOfRejectionRates = 0;
+    double sumOfJoinRates = 0;
 
     // = Logging Preferences =
     // Enable these for verbose logging. You may wish to disable these if generating a large number of cycles
