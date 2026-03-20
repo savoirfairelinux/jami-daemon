@@ -533,6 +533,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.receivingAccountIndex, -1, event.timeOfOccurrence);
         }
         assert(receivingAccount.client.hasConsistentHistory());
+        assert(checkConversationMembers(receivingAccount));
         break;
     }
     case ConversationEvent::FETCH: {
@@ -571,6 +572,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
             receivingAccount.conversation->announce(commits, false);
         }
         assert(receivingAccount.client.hasConsistentHistory());
+        assert(checkConversationMembers(receivingAccount));
         break;
     }
     default:
@@ -786,10 +788,13 @@ ConversationDST::resetRepositories()
 }
 
 bool
-ConversationDST::checkAppearancesForAllAccounts()
+ConversationDST::checkAllAccounts()
 {
     for (const auto& repoAcc : repositoryAccounts) {
         if (!checkAppearances(repoAcc)) {
+            return false;
+        }
+        if (!checkConversationMembers(repoAcc)) {
             return false;
         }
     }
@@ -875,6 +880,40 @@ ConversationDST::checkAppearances(const RepositoryAccount& repoAcc)
         }
     }
     return orderingCorrect;
+}
+
+bool
+ConversationDST::checkConversationMembers(const RepositoryAccount& repoAcc)
+{
+    if (!repoAcc.repository) {
+        return true;
+    }
+
+    for (const auto& member : repoAcc.repository->members()) {
+        auto memberRole = repoAcc.client.getMemberRole(member.uri);
+        if (memberRole == MemberRole::INVALID) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Client doesn't have member {}\n",
+                       repoAcc.account->getDisplayName(),
+                       member.uri);
+            return false;
+        }
+
+        if (static_cast<int>(memberRole) != static_cast<int>(member.role)) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Role for member {} differs between client ({}) and repository ({})\n",
+                       repoAcc.account->getDisplayName(),
+                       member.uri,
+                       static_cast<int>(memberRole),
+                       static_cast<int>(member.role));
+            // The current merge algorithm does not properly handle role conflicts, which can cause
+            // the repo to end up in an inconsistent state (where e.g. a peer is already a member, but
+            // also still in the "invited" directory) and lead to a role mismatch here.
+            // TODO return false once the above issue is fixed.
+            return true;
+        }
+    }
+    return true;
 }
 
 /**
@@ -1002,7 +1041,7 @@ ConversationDST::run(uint64_t seed, unsigned maxEvents, const std::string& saveF
     displayGitLog();
 
     // Do verifications
-    bool ok = checkAppearancesForAllAccounts();
+    bool ok = checkAllAccounts();
     // Load each conversation as if it were being opened for the first time
     ok &= verifyLoadConversationFromScratch();
 

@@ -67,7 +67,7 @@ SimulationTest::runTest(const std::string& unitTestPath)
     CPPUNIT_ASSERT(dst_.setUp(unitTest.numAccounts));
 
     dst_.runUnitTest(unitTest);
-    CPPUNIT_ASSERT(dst_.checkAppearancesForAllAccounts());
+    CPPUNIT_ASSERT(dst_.checkAllAccounts());
     dst_.resetRepositories();
 }
 
