@@ -638,30 +638,32 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     numAccountsToSimulate_ = std::uniform_int_distribution<>(2, MAX_ACCOUNTS)(gen_);
     assert(numAccountsToSimulate_ <= repositoryAccounts.size());
 
-    std::uniform_int_distribution<> accountDist {0, numAccountsToSimulate_ - 1};
-    std::discrete_distribution<> repositoryEventDist {repositoryEventWeights.begin(), repositoryEventWeights.end()};
+    // Weightings for the event distribution
+    double eventWeights[] = {[static_cast<uint8_t>(ConversationEvent::ADD_MEMBER)] = 3,
+                             [static_cast<uint8_t>(ConversationEvent::SEND_MESSAGE)] = 5,
+                             [static_cast<uint8_t>(ConversationEvent::CONNECT)] = 1,
+                             [static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 1};
+    constexpr size_t numEventTypes = sizeof(eventWeights) / sizeof(eventWeights[0]);
+    std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + numEventTypes};
 
     // Indices to be used throughout iteration
     int instigatorAccountIndex, receivingAccountIndex;
 
     msgCount = 0;
 
-    // Pick a random account to initialize
-    instigatorAccountIndex = accountDist(gen_);
-    // Get the instigator's account
-    auto& instigatorAccount = repositoryAccounts[instigatorAccountIndex].account;
-
     // Create the initial conversation
-    auto repo = ConversationRepository::createConversation(instigatorAccount);
+    int latestAccountIndex = 0;
+    auto& initialAccount = repositoryAccounts[latestAccountIndex].account;
+    auto repo = ConversationRepository::createConversation(initialAccount);
     assert(repo != nullptr);
     fmt::print("Conversation ID: {}\n", repo->id());
-    repositoryAccounts[instigatorAccountIndex].createConversation(std::move(repo));
+    repositoryAccounts[latestAccountIndex].createConversation(std::move(repo));
 
     // Add the initial event
     startTime = std::chrono::nanoseconds(0);
 
     EventQueue unvalidatedEvents;
-    unvalidatedEvents.emplace(instigatorAccountIndex, instigatorAccountIndex, ConversationEvent::ADD_MEMBER, startTime);
+    unvalidatedEvents.emplace(latestAccountIndex, latestAccountIndex, ConversationEvent::ADD_MEMBER, startTime);
 
     // Generate the number of events we want to occur in the simulated conversation
     while (unvalidatedEvents.size() < maxEvents) {
@@ -669,8 +671,15 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
         ConversationEvent generatedEvent = static_cast<ConversationEvent>(repositoryEventDist(gen_));
 
         // Select an account (instigator) to perform an event on another account (receiver)
-        instigatorAccountIndex = accountDist(gen_);
-        receivingAccountIndex = accountDist(gen_);
+        int instigatorAccountIndex = std::uniform_int_distribution<>(0, latestAccountIndex)(gen_);
+        int receivingAccountIndex = instigatorAccountIndex;
+        if (generatedEvent == ConversationEvent::ADD_MEMBER) {
+            if (latestAccountIndex < numAccountsToSimulate_ - 1) {
+                receivingAccountIndex = ++latestAccountIndex;
+            } else {
+                receivingAccountIndex = std::uniform_int_distribution<>(0, latestAccountIndex)(gen_);
+            }
+        }
 
         startTime += std::chrono::milliseconds(1000);
 
@@ -708,9 +717,17 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     // Display a summary of the  sequence of events that took place.
     double rejectionRate = (static_cast<double>(invalidEventsCount) / unvalidatedEventsCount);
     sumOfRejectionRates += rejectionRate;
+
+    int accountsInConversation = 0;
+    for (const auto& repoAcc : repositoryAccounts) {
+        if (repoAcc.repository) {
+            accountsInConversation++;
+        }
+    }
+    sumOfJoinRates += static_cast<double>(accountsInConversation) / numAccountsToSimulate_;
     fmt::print("=========================== Summary ==========================\n");
     fmt::print("Random seed used: {}\n", eventSeed);
-    fmt::print("Total number of accounts simulated: {}\n", numAccountsToSimulate_);
+    fmt::print("Number of accounts in conversation: {}/{}\n", accountsInConversation, numAccountsToSimulate_);
     fmt::print("Total events generated: {}\n", unvalidatedEventsCount);
     fmt::print("Total valid events: {}\n", validatedEvents.size());
     fmt::print("Total invalid events: {}\n", invalidEventsCount);
@@ -1019,6 +1036,7 @@ ConversationDST::runCycles(unsigned numCycles, unsigned maxEvents)
 
     fmt::print("\nInvalid Events Average: {:.1f}%\n",
                (static_cast<double>(sumOfRejectionRates) / static_cast<double>(numCycles)) * 100);
+    fmt::print("Join Rate Average: {:.1f}%\n", (sumOfJoinRates / static_cast<double>(numCycles)) * 100);
     fmt::print("Passed: {} / {}\n", passCount, numCycles);
     if (!failingSeeds.empty()) {
         fmt::print("Failing seeds:\n");
