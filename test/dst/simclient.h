@@ -29,7 +29,6 @@ TODO Handle the following signals:
 - MessagesFound (for search)
 - ReactionAdded
 - ReactionRemoved
-- ConversationMemberEvent (to keep track of participants)
 - OnConversationError
  */
 class SimClient
@@ -37,6 +36,10 @@ class SimClient
     using SwarmMessage = libjami::SwarmMessage;
 
 public:
+    void onConversationMemberEvent(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& memberId,
+                                   int event);
     void onConversationReady(const std::string& accountId, const std::string& conversationId);
     void onSwarmLoaded(uint32_t id,
                        const std::string& accountId,
@@ -58,6 +61,8 @@ private:
 
     std::string accountId_;
     std::string conversationId_;
+
+    std::map<std::string, int> lastMemberEvent_;
 
     std::vector<SwarmMessage> swarmMessages_;
     std::vector<size_t> sortedIndices_; // From oldest to newest message
