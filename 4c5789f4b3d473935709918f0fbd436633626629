@@ -16,6 +16,29 @@
       "message": "!verify",
       "revId": "4c5789f4b3d473935709918f0fbd436633626629",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8896901f_7544f50a",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-23T16:00:10Z",
+      "side": 1,
+      "message": "I think this range is no longer accurate (`DHT_PORT_RANGE` doesn\u0027t seem to be used anywhere in the codebase anymore).",
+      "range": {
+        "startLine": 45,
+        "startChar": 26,
+        "endLine": 45,
+        "endChar": 67
+      },
+      "revId": "4c5789f4b3d473935709918f0fbd436633626629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
