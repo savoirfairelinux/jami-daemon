@@ -34,7 +34,10 @@ ConversationChannelHandler::connect(const DeviceId& deviceId,
                                     const std::string& /*connectionType*/,
                                     bool /*forceNewConnection*/)
 {
-    connectionManager_.connectDevice(deviceId, "git://" + deviceId.toString() + "/" + channelName, std::move(cb));
+    connectionManager_.connectDevice(deviceId,
+                                     "git://" + deviceId.toString() + "/" + channelName,
+                                     std::move(cb),
+                                     dhtnet::ConnectDeviceOptions {.uniqueName = true});
 }
 
 bool

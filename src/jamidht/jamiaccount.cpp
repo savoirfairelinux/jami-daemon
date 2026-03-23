@@ -1173,27 +1173,18 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    time_t received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -2393,9 +2384,10 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
                         cb({});
                 });
             },
-            false,
-            false,
-            type);
+            dhtnet::ConnectDeviceOptions {.noNewSocket = false,
+                                          .forceNewSocket = false,
+                                          .uniqueName = true,
+                                          .connType = type});
     });
 }
 
@@ -2418,6 +2410,8 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
         DeviceId device(deviceId);
         auto swarmUri = fmt::format("swarm://{}", convId);
         if (!shared->connectionManager_->isConnecting(device, swarmUri)) {
+            dhtnet::ConnectDeviceOptions opts;
+            opts.uniqueName = true;
             shared->connectionManager_->connectDevice(
                 device,
                 swarmUri,
@@ -2444,7 +2438,8 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
                         }
                         cb(socket);
                     });
-                });
+                },
+                opts);
         }
     });
 }
@@ -3849,6 +3844,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     dhtnet::ConnectDeviceOptions options;
     options.noNewSocket = false;
     options.forceNewSocket = forceNewConnection;
+    options.uniqueName = true;
     options.connType = connectionType;
     options.channelTimeout = 3s;
     connectionManager_->connectDevice(
