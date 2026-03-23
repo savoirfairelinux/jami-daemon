@@ -39,7 +39,10 @@ SwarmChannelHandler::connect(const DeviceId& deviceId,
     if (disableSwarmManager)
         return;
 #endif
-    connectionManager_.connectDevice(deviceId, fmt::format("swarm://{}", conversationId), cb);
+    connectionManager_.connectDevice(deviceId,
+                                     fmt::format("swarm://{}", conversationId),
+                                     cb,
+                                     dhtnet::ConnectDeviceOptions {.uniqueName = true});
 }
 
 bool

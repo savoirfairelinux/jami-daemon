@@ -76,8 +76,11 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    pimpl_->connectionManager_
-        .connectDevice(deviceId, channelName, std::move(cb), false, forceNewConnection, connectionType);
+    dhtnet::ConnectDeviceOptions opts;
+    opts.uniqueName = true;
+    opts.forceNewSocket = forceNewConnection;
+    opts.connType = connectionType;
+    pimpl_->connectionManager_.connectDevice(deviceId, channelName, std::move(cb), opts);
 }
 
 void

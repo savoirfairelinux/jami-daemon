@@ -41,7 +41,9 @@ SyncChannelHandler::connect(const DeviceId& deviceId,
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    connectionManager_.connectDevice(deviceId, channelName, std::move(cb));
+    dhtnet::ConnectDeviceOptions opts;
+    opts.uniqueName = true;
+    connectionManager_.connectDevice(deviceId, channelName, std::move(cb), opts);
 }
 
 bool
