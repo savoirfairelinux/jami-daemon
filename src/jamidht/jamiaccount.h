@@ -590,7 +590,8 @@ private:
     inline std::string getProxyConfigKey() const
     {
         const auto& conf = config();
-        return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
+        return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl
+                                  + std::to_string(conf.proxyListEnabled)).toString();
     }
 
     void scheduleAccountReady() const;
