@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "35671bb7_cd64bcfe",
+        "filename": "test/virtual-networking/fake-network-environments.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-24T15:33:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8896901f_7544f50a",
+      "range": {
+        "startLine": 45,
+        "startChar": 26,
+        "endLine": 45,
+        "endChar": 67
+      },
+      "revId": "4c5789f4b3d473935709918f0fbd436633626629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80e3ede3_1367591f",
@@ -54,6 +78,30 @@
       "writtenOn": "2026-03-23T17:45:01Z",
       "side": 1,
       "message": "Can be removed now that there is no IPv6 mode.",
+      "range": {
+        "startLine": 15,
+        "startChar": 66,
+        "endLine": 15,
+        "endChar": 77
+      },
+      "revId": "4c5789f4b3d473935709918f0fbd436633626629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c1299dd_f57b0f62",
+        "filename": "test/virtual-networking/probe-dht-from-wan.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-24T15:33:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "80e3ede3_1367591f",
       "range": {
         "startLine": 15,
         "startChar": 66,
