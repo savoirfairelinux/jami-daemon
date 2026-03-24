@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae4abb2c_f8514207",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2026-03-24T14:56:35Z",
+      "side": 1,
+      "message": "lgtm minus the minor comments, will get someone else to look at it",
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7025d604_ea772677",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2026-03-24T14:56:35Z",
+      "side": 1,
+      "message": "can easily be used",
+      "range": {
+        "startLine": 12,
+        "startChar": 38,
+        "endLine": 12,
+        "endChar": 59
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8bb6d9b0_90c7eff0",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2026-03-24T14:56:35Z",
+      "side": 1,
+      "message": "I would remove the system process terminology here as the technical term is not necesary. Would rephrase as `the daemon, which handles ...`",
+      "range": {
+        "startLine": 20,
+        "startChar": 41,
+        "endLine": 20,
+        "endChar": 61
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1de79d75_a13155ec",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2026-03-24T14:56:35Z",
+      "side": 1,
+      "message": "Would remove `system process` here as well. Would instead use \"compile `jamid` (the daemon)\"",
+      "range": {
+        "startLine": 60,
+        "startChar": 21,
+        "endLine": 60,
+        "endChar": 24
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
