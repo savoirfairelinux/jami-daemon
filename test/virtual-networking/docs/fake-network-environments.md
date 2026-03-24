@@ -139,7 +139,7 @@ Jami DHT node through the UPnP-mapped port on the router.
 2. **Run the probe from the host** (not from inside any namespace):
 
    ```bash
-   sudo bash probe-dht-from-wan.sh
+   sudo bash probes/probe-dht-from-wan.sh
    ```
 
    Without arguments, the script compares the UPnP-mapped ports (miniupnpd nft
@@ -149,7 +149,7 @@ Jami DHT node through the UPnP-mapped port on the router.
    You can also test a specific port:
 
    ```bash
-   sudo bash probe-dht-from-wan.sh 22238
+   sudo bash probes/probe-dht-from-wan.sh 22238
    ```
 
 ### PASS criteria

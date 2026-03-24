@@ -1,0 +1,64 @@
+{
+  "name": "dual-access-smoke",
+  "description": "Bring up the dual-access topology and confirm the node prefers Wi-Fi while a standby mobile-like path also exists.",
+  "topology": "dual-access",
+  "lab": "dual-access",
+  "actor_namespace": "{NODE_NS}",
+  "setup": [
+    "{root}/setup-dual-access-network.sh",
+    "--no-hold",
+    "up"
+  ],
+  "teardown": [
+    "{root}/setup-dual-access-network.sh",
+    "down"
+  ],
+  "fields": {
+    "profile_before": "wifi-home",
+    "profile_after": "mobile-standby"
+  },
+  "notes": [
+    "This is a topology smoke scenario only; it does not yet apply impairments or trigger a route handover.",
+    "A passing run confirms the harness can reproduce a preferred Wi-Fi path with a standby mobile-like path."
+  ],
+  "steps": [
+    {
+      "name": "inspect_node_routes",
+      "type": "namespace-command",
+      "namespace": "{NODE_NS}",
+      "argv": [
+        "ip",
+        "route",
+        "show"
+      ],
+      "capture": "node-routes.txt",
+      "label": "Node routes",
+      "kind": "state-dump"
+    },
+    {
+      "name": "discover_wifi_igd_from_node",
+      "type": "namespace-command",
+      "namespace": "{NODE_NS}",
+      "argv": [
+        "upnpc",
+        "-s"
+      ],
+      "capture": "node-upnpc.txt",
+      "label": "Node IGD discovery",
+      "kind": "command-output"
+    },
+    {
+      "name": "inspect_wan_addresses",
+      "type": "namespace-command",
+      "namespace": "{WAN_NS}",
+      "argv": [
+        "ip",
+        "addr",
+        "show"
+      ],
+      "capture": "wan-addresses.txt",
+      "label": "WAN addresses",
+      "kind": "state-dump"
+    }
+  ]
+}

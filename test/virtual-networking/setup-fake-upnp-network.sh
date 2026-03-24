@@ -1,132 +1,126 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/lib/upnp.sh"
+source "${SCRIPT_DIR}/topologies/single-router.sh"
+
 usage() {
-    echo "Usage: sudo $0 [up|down]"
+    echo "Usage: sudo $0 [--no-hold] [up|down]"
     echo "  up       Create the virtual network (default)"
     echo "  down     Tear down the virtual network"
+    echo "  --no-hold  Exit after setup and leave the lab running"
     exit 1
 }
 
-if [[ "${EUID}" -ne 0 ]]; then
-    echo "Error: must be run as root (or inside a container with CAP_NET_ADMIN + CAP_SYS_ADMIN)."
-    exit 1
-fi
-
 cmd="up"
+hold_open=1
 for arg in "$@"; do
     case "$arg" in
         up|down) cmd="$arg" ;;
+        --no-hold) hold_open=0 ;;
         -h|--help) usage ;;
         *) echo "Unknown argument: $arg"; usage ;;
     esac
 done
 
-# LAN
-LAN_NS="lan"
-# some UPnP libraries have trouble binding on veth-* interfaces,
-# use a more "standard" name for the LAN interface
-LAN_IFACE="eth0"
-LAN_IP="192.168.100.2"
-LAN_MULTICAST_IP="224.0.0.0"
+vnet_require_root
+vnet_require_commands ip iptables miniupnpd upnpc mktemp sysctl
 
-# Router/IGD
-RTR_NS="rtr"
-RTR_IFACE_LAN="veth-rtr-lan"
-RTR_IFACE_WAN="veth-rtr-wan"
-RTR_TO_LAN_IP="192.168.100.1"
-RTR_TO_WAN_IP="11.0.0.2"
-
-# WAN
-WAN_NS="wan"
-WAN_IFACE="veth-wan"
-WAN_IP="11.0.0.1"
+vnet_topology_single_router_defaults
 
 UUID="deadbeef-dead-beef-dead-beef-deadbeefdead"
-TMPDIR="$(mktemp -d /tmp/jami-upnp-lab.XXXXXX)"
+LAB_NAME="fake-upnp-network"
+STATE_FILE="$(vnet_state_file_path "${LAB_NAME}")"
+TMPDIR=""
+MINIUPNPD_CONFIG=""
+MINIUPNPD_PIDFILE=""
+MINIUPNPD_LOGFILE=""
+UPNPC_DISCOVERY_LOG=""
 
 cleanup() {
-    ip netns del ${LAN_NS} 2>/dev/null || true
-    ip netns del ${RTR_NS} 2>/dev/null || true
-    ip netns del ${WAN_NS} 2>/dev/null || true
-    rm -rf "${TMPDIR}" 2>/dev/null || true
+    if vnet_load_env_file "${STATE_FILE}"; then
+        :
+    fi
+
+    if [[ -n "${MINIUPNPD_PIDFILE:-}" ]]; then
+        vnet_kill_pidfile "${MINIUPNPD_PIDFILE}"
+    fi
+
+    mapfile -t topology_namespaces < <(vnet_topology_single_router_namespaces)
+    vnet_delete_namespaces "${topology_namespaces[@]}"
+    if [[ -n "${TMPDIR:-}" ]]; then
+        rm -rf "${TMPDIR}" 2>/dev/null || true
+    fi
+    rm -f "${STATE_FILE}"
 }
 
-if [[ "$cmd" == "down" ]]; then
-    # When tearing down, scan for any lab temp dirs since we don't know
-    # which one was used during setup.
-    for d in /tmp/jami-upnp-lab.*/; do
-        if [[ -f "${d}miniupnpd.pid" ]]; then
-            kill "$(cat "${d}miniupnpd.pid")" 2>/dev/null || true
-        fi
-        rm -rf "$d" 2>/dev/null || true
-    done
-    ip netns del ${LAN_NS} 2>/dev/null || true
-    ip netns del ${RTR_NS} 2>/dev/null || true
-    ip netns del ${WAN_NS} 2>/dev/null || true
+ensure_lab_not_running() {
+    if [[ -f "${STATE_FILE}" ]]; then
+        echo "Error: lab state already exists at ${STATE_FILE}. Run: sudo $0 down" >&2
+        exit 1
+    fi
+
+    mapfile -t topology_namespaces < <(vnet_topology_single_router_namespaces)
+    if ! vnet_assert_namespaces_absent "${topology_namespaces[@]}"; then
+        echo "Run: sudo $0 down" >&2
+        exit 1
+    fi
+}
+
+write_state() {
+    mapfile -t topology_vars < <(vnet_topology_single_router_state_vars)
+    vnet_write_env_file "${STATE_FILE}" \
+        LAB_NAME STATE_FILE TMPDIR UUID MINIUPNPD_CONFIG MINIUPNPD_PIDFILE \
+        MINIUPNPD_LOGFILE UPNPC_DISCOVERY_LOG "${topology_vars[@]}"
+}
+
+setup_upnp() {
+    vnet_write_miniupnpd_config \
+        "${MINIUPNPD_CONFIG}" \
+        "${RTR_IFACE_WAN}" \
+        "${RTR_IFACE_LAN}" \
+        "${UUID}" \
+        "ns-igd" \
+        "${RTR_EXT_IP}"
+
+    vnet_start_miniupnpd "${RTR_NS}" "${MINIUPNPD_CONFIG}" "${MINIUPNPD_PIDFILE}" "${MINIUPNPD_LOGFILE}"
+    vnet_wait_for_upnpc "${LAN_NS}" 10 "${UPNPC_DISCOVERY_LOG}" || true
+}
+
+if [[ "${cmd}" == "down" ]]; then
+    cleanup
     exit 0
 fi
 
+ensure_lab_not_running
+TMPDIR="$(vnet_make_state_dir "jami-upnp-lab")"
+MINIUPNPD_CONFIG="${TMPDIR}/miniupnpd.conf"
+MINIUPNPD_PIDFILE="${TMPDIR}/miniupnpd.pid"
+MINIUPNPD_LOGFILE="${TMPDIR}/miniupnpd.log"
+UPNPC_DISCOVERY_LOG="${TMPDIR}/upnpc-discovery.txt"
+write_state
+
 trap 'echo; echo "[+] Cleaning up..."; cleanup' EXIT
 
-ip netns add ${LAN_NS}
-ip netns add ${RTR_NS}
-ip netns add ${WAN_NS}
-
-ip link add ${LAN_IFACE} type veth peer name ${RTR_IFACE_LAN}
-ip link add ${WAN_IFACE} type veth peer name ${RTR_IFACE_WAN}
-
-ip link set ${LAN_IFACE} netns ${LAN_NS}
-ip link set ${RTR_IFACE_LAN} netns ${RTR_NS}
-ip link set ${WAN_IFACE} netns ${WAN_NS}
-ip link set ${RTR_IFACE_WAN} netns ${RTR_NS}
-
-ip -n ${LAN_NS} link set lo up
-ip -n ${RTR_NS} link set lo up
-
-# --- IPv4 lab (default) ---
-ip -n ${LAN_NS} addr add ${LAN_IP}/24 dev ${LAN_IFACE}
-ip -n ${LAN_NS} link set ${LAN_IFACE} up
-ip -n ${LAN_NS} route add default via ${RTR_TO_LAN_IP}
-
-ip -n ${RTR_NS} addr add ${RTR_TO_LAN_IP}/24 dev ${RTR_IFACE_LAN}
-ip -n ${RTR_NS} link set ${RTR_IFACE_LAN} up
-# Use a non-reserved "public-looking" subnet for WAN (namespaces keep it isolated)
-ip -n ${RTR_NS} addr add ${RTR_TO_WAN_IP}/24 dev ${RTR_IFACE_WAN}
-ip -n ${RTR_NS} link set ${RTR_IFACE_WAN} up
-
-ip -n ${WAN_NS} addr add ${WAN_IP}/24 dev ${WAN_IFACE}
-ip -n ${WAN_NS} link set ${WAN_IFACE} up
-ip -n ${WAN_NS} route add default via ${RTR_TO_WAN_IP}
-
-ip netns exec ${RTR_NS} sysctl -w net.ipv4.ip_forward=1 >/dev/null
-ip netns exec ${RTR_NS} iptables -t nat -A POSTROUTING -o ${RTR_IFACE_WAN} -j MASQUERADE
-ip netns exec ${RTR_NS} iptables -A FORWARD -i ${RTR_IFACE_WAN} -o ${RTR_IFACE_LAN} -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-ip netns exec ${RTR_NS} iptables -A FORWARD -i ${RTR_IFACE_LAN} -o ${RTR_IFACE_WAN} -j ACCEPT
-
-# Add multicast route for UPnP SSDP discovery
-ip -n ${LAN_NS} route add ${LAN_MULTICAST_IP}/4 dev ${LAN_IFACE}
-
-cat > "${TMPDIR}/miniupnpd.conf" <<EOF
-ext_ifname=${RTR_IFACE_WAN}
-listening_ip=${RTR_IFACE_LAN}
-enable_upnp=yes
-secure_mode=no
-system_uptime=yes
-uuid=${UUID}
-friendly_name=ns-igd
-ext_ip=${RTR_TO_WAN_IP}
-EOF
-
-ip netns exec ${RTR_NS} miniupnpd -d -f "${TMPDIR}/miniupnpd.conf" -P "${TMPDIR}/miniupnpd.pid" \
-    > "${TMPDIR}/miniupnpd.log" 2>&1 &
-sleep 1
+vnet_topology_single_router_up
+setup_upnp
 
 echo "[+] Discovery from LAN side:"
-ip netns exec ${LAN_NS} upnpc -s || true
+if [[ -s "${UPNPC_DISCOVERY_LOG}" ]]; then
+    cat "${UPNPC_DISCOVERY_LOG}"
+else
+    ip netns exec "${LAN_NS}" upnpc -s || true
+fi
 
 echo
 echo "[+] Lab is up (tmpdir: ${TMPDIR})."
 echo "[+] Namespaces will stay until you Ctrl-C or run: sudo $0 down"
 echo "[+] Try: sudo ip netns exec ${LAN_NS} sudo -u ${SUDO_USER:-$USER} -H bash -l"
-wait
+if [[ "${hold_open}" -eq 1 ]]; then
+    wait
+else
+    trap - EXIT
+    echo "[+] Leaving lab running. Tear it down with: sudo $0 down"
+fi
