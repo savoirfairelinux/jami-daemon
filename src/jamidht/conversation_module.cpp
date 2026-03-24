@@ -323,10 +323,20 @@ public:
      */
     void saveConvRequests() const { ConversationModule::saveConvRequests(accountId_, conversationsRequests_); }
     void declineOtherConversationWith(const std::string& uri);
+    bool isRemovedGroupConversation(const std::string& id) const
+    {
+        std::lock_guard lkInfos(convInfosMtx_);
+        auto it = convInfos_.find(id);
+        return it != convInfos_.end() && it->second.isRemoved() && it->second.mode != ConversationMode::ONE_TO_ONE;
+    }
+
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         // conversationsRequestsMtx_ MUST BE LOCKED
-        if (isConversation(id))
+        // Note: isRemovedGroupConversation internally acquires convInfosMtx_.
+        // Lock ordering is always conversationsRequestsMtx_ -> convInfosMtx_, which is consistent
+        // with the rest of the codebase. Do not call this while convInfosMtx_ is already held.
+        if (isConversation(id) && !isRemovedGroupConversation(id))
             return false;
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
@@ -1460,6 +1470,17 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
         addConvInfo(conv->info);
+    } else if (conv->info.isRemoved() && conv->info.mode != ConversationMode::ONE_TO_ONE
+               && request.mode() != ConversationMode::ONE_TO_ONE) {
+        JAMI_LOG("[Account {}] [Conversation {}] Re-cloning previously left conversation",
+                 accountId_,
+                 request.conversationId);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        // Note: conv->info.members is intentionally left as-is here.
+        // Any membership changes that occurred while absent (additions/removals)
+        // will be reconciled once the clone completes and the conversation syncs.
+        addConvInfo(conv->info);
     }
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
         auto sthis = w.lock();
@@ -1970,9 +1991,17 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                from);
     auto convId = req.conversationId;
 
-    // Already accepted request, do nothing
-    if (pimpl_->isConversation(convId))
-        return;
+    // Already accepted request, do nothing — unless the user previously left
+    // the group conversation and is being re-invited
+    if (pimpl_->isConversation(convId)) {
+        if (!pimpl_->isRemovedGroupConversation(convId)
+            || req.mode() == ConversationMode::ONE_TO_ONE) {
+            return;
+        }
+
+        if (pimpl_->getRequest(convId) != std::nullopt)
+            pimpl_->rmConversationRequest(convId);
+    }
     auto oldReq = pimpl_->getRequest(convId);
     if (oldReq != std::nullopt) {
         JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. "
