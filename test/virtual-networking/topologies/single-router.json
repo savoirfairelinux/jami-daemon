@@ -1,0 +1,123 @@
+{
+  "name": "single-router",
+  "description": "Baseline lab used by the original fake-UPnP setup: lan (Jami node) -> rtr (NAT + IGD) -> wan (external peer).",
+  "defaults": {
+    "LAN_NS": "lan",
+    "LAN_IFACE": "eth0",
+    "LAN_IP_CIDR": "192.168.100.2/24",
+    "LAN_GW": "192.168.100.1",
+    "LAN_MULTICAST_CIDR": "224.0.0.0/4",
+    "RTR_NS": "rtr",
+    "RTR_IFACE_LAN": "veth-rtr-lan",
+    "RTR_IFACE_WAN": "veth-rtr-wan",
+    "RTR_LAN_IP_CIDR": "192.168.100.1/24",
+    "RTR_WAN_IP_CIDR": "11.0.0.2/24",
+    "RTR_EXT_IP": "11.0.0.2",
+    "WAN_NS": "wan",
+    "WAN_IFACE": "veth-wan",
+    "WAN_IP_CIDR": "11.0.0.1/24",
+    "WAN_GW": "11.0.0.2"
+  },
+  "namespaces": [
+    "{LAN_NS}",
+    "{RTR_NS}",
+    "{WAN_NS}"
+  ],
+  "state_vars": [
+    "LAN_NS",
+    "LAN_IFACE",
+    "LAN_IP_CIDR",
+    "LAN_GW",
+    "LAN_MULTICAST_CIDR",
+    "RTR_NS",
+    "RTR_IFACE_LAN",
+    "RTR_IFACE_WAN",
+    "RTR_LAN_IP_CIDR",
+    "RTR_WAN_IP_CIDR",
+    "RTR_EXT_IP",
+    "WAN_NS",
+    "WAN_IFACE",
+    "WAN_IP_CIDR",
+    "WAN_GW"
+  ],
+  "operations": [
+    {
+      "type": "create-namespaces",
+      "namespaces": [
+        "{LAN_NS}",
+        "{RTR_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{LAN_NS}",
+      "iface_a": "{LAN_IFACE}",
+      "ns_b": "{RTR_NS}",
+      "iface_b": "{RTR_IFACE_LAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{WAN_NS}",
+      "iface_a": "{WAN_IFACE}",
+      "ns_b": "{RTR_NS}",
+      "iface_b": "{RTR_IFACE_WAN}"
+    },
+    {
+      "type": "set-loopbacks-up",
+      "namespaces": [
+        "{LAN_NS}",
+        "{RTR_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{LAN_NS}",
+      "iface": "{LAN_IFACE}",
+      "cidr": "{LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_NS}",
+      "iface": "{RTR_IFACE_LAN}",
+      "cidr": "{RTR_LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_NS}",
+      "iface": "{RTR_IFACE_WAN}",
+      "cidr": "{RTR_WAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WAN_NS}",
+      "iface": "{WAN_IFACE}",
+      "cidr": "{WAN_IP_CIDR}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{LAN_NS}",
+      "via": "{LAN_GW}",
+      "dev": "{LAN_IFACE}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{WAN_NS}",
+      "via": "{WAN_GW}",
+      "dev": "{WAN_IFACE}"
+    },
+    {
+      "type": "setup-basic-nat-router",
+      "ns": "{RTR_NS}",
+      "lan_iface": "{RTR_IFACE_LAN}",
+      "wan_iface": "{RTR_IFACE_WAN}"
+    },
+    {
+      "type": "add-device-route",
+      "ns": "{LAN_NS}",
+      "destination": "{LAN_MULTICAST_CIDR}",
+      "dev": "{LAN_IFACE}"
+    }
+  ]
+}

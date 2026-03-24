@@ -1,0 +1,204 @@
+{
+  "name": "dual-router-handover",
+  "description": "Dual-router Wi-Fi-style handover lab: one node with two routed uplinks, each behind its own NAT/IGD and public subnet.",
+  "defaults": {
+    "NODE_NS": "node",
+    "NODE_IFACE_A": "eth0",
+    "NODE_IFACE_B": "eth1",
+    "NODE_A_IP_CIDR": "192.168.10.2/24",
+    "NODE_A_GW": "192.168.10.1",
+    "NODE_B_IP_CIDR": "192.168.20.2/24",
+    "NODE_B_GW": "192.168.20.1",
+    "NODE_MULTICAST_CIDR": "224.0.0.0/4",
+    "NODE_ROUTE_A_METRIC": "100",
+    "NODE_ROUTE_B_METRIC": "200",
+    "RTR_A_NS": "rtr-a",
+    "RTR_A_IFACE_LAN": "veth-rtr-a-lan",
+    "RTR_A_IFACE_WAN": "veth-rtr-a-wan",
+    "RTR_A_LAN_IP_CIDR": "192.168.10.1/24",
+    "RTR_A_WAN_IP_CIDR": "11.0.1.2/24",
+    "RTR_A_EXT_IP": "11.0.1.2",
+    "RTR_B_NS": "rtr-b",
+    "RTR_B_IFACE_LAN": "veth-rtr-b-lan",
+    "RTR_B_IFACE_WAN": "veth-rtr-b-wan",
+    "RTR_B_LAN_IP_CIDR": "192.168.20.1/24",
+    "RTR_B_WAN_IP_CIDR": "11.0.2.2/24",
+    "RTR_B_EXT_IP": "11.0.2.2",
+    "WAN_NS": "wan",
+    "WAN_IFACE_A": "veth-wan-a",
+    "WAN_IFACE_B": "veth-wan-b",
+    "WAN_A_IP_CIDR": "11.0.1.1/24",
+    "WAN_B_IP_CIDR": "11.0.2.1/24"
+  },
+  "namespaces": [
+    "{NODE_NS}",
+    "{RTR_A_NS}",
+    "{RTR_B_NS}",
+    "{WAN_NS}"
+  ],
+  "state_vars": [
+    "NODE_NS",
+    "NODE_IFACE_A",
+    "NODE_IFACE_B",
+    "NODE_A_IP_CIDR",
+    "NODE_A_GW",
+    "NODE_B_IP_CIDR",
+    "NODE_B_GW",
+    "NODE_MULTICAST_CIDR",
+    "NODE_ROUTE_A_METRIC",
+    "NODE_ROUTE_B_METRIC",
+    "RTR_A_NS",
+    "RTR_A_IFACE_LAN",
+    "RTR_A_IFACE_WAN",
+    "RTR_A_LAN_IP_CIDR",
+    "RTR_A_WAN_IP_CIDR",
+    "RTR_A_EXT_IP",
+    "RTR_B_NS",
+    "RTR_B_IFACE_LAN",
+    "RTR_B_IFACE_WAN",
+    "RTR_B_LAN_IP_CIDR",
+    "RTR_B_WAN_IP_CIDR",
+    "RTR_B_EXT_IP",
+    "WAN_NS",
+    "WAN_IFACE_A",
+    "WAN_IFACE_B",
+    "WAN_A_IP_CIDR",
+    "WAN_B_IP_CIDR"
+  ],
+  "operations": [
+    {
+      "type": "create-namespaces",
+      "namespaces": [
+        "{NODE_NS}",
+        "{RTR_A_NS}",
+        "{RTR_B_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{NODE_NS}",
+      "iface_a": "{NODE_IFACE_A}",
+      "ns_b": "{RTR_A_NS}",
+      "iface_b": "{RTR_A_IFACE_LAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{NODE_NS}",
+      "iface_a": "{NODE_IFACE_B}",
+      "ns_b": "{RTR_B_NS}",
+      "iface_b": "{RTR_B_IFACE_LAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{WAN_NS}",
+      "iface_a": "{WAN_IFACE_A}",
+      "ns_b": "{RTR_A_NS}",
+      "iface_b": "{RTR_A_IFACE_WAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{WAN_NS}",
+      "iface_a": "{WAN_IFACE_B}",
+      "ns_b": "{RTR_B_NS}",
+      "iface_b": "{RTR_B_IFACE_WAN}"
+    },
+    {
+      "type": "set-loopbacks-up",
+      "namespaces": [
+        "{NODE_NS}",
+        "{RTR_A_NS}",
+        "{RTR_B_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{NODE_NS}",
+      "iface": "{NODE_IFACE_A}",
+      "cidr": "{NODE_A_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{NODE_NS}",
+      "iface": "{NODE_IFACE_B}",
+      "cidr": "{NODE_B_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_A_NS}",
+      "iface": "{RTR_A_IFACE_LAN}",
+      "cidr": "{RTR_A_LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_A_NS}",
+      "iface": "{RTR_A_IFACE_WAN}",
+      "cidr": "{RTR_A_WAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_B_NS}",
+      "iface": "{RTR_B_IFACE_LAN}",
+      "cidr": "{RTR_B_LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{RTR_B_NS}",
+      "iface": "{RTR_B_IFACE_WAN}",
+      "cidr": "{RTR_B_WAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WAN_NS}",
+      "iface": "{WAN_IFACE_A}",
+      "cidr": "{WAN_A_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WAN_NS}",
+      "iface": "{WAN_IFACE_B}",
+      "cidr": "{WAN_B_IP_CIDR}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{NODE_NS}",
+      "via": "{NODE_A_GW}",
+      "dev": "{NODE_IFACE_A}",
+      "metric": "{NODE_ROUTE_A_METRIC}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{NODE_NS}",
+      "via": "{NODE_B_GW}",
+      "dev": "{NODE_IFACE_B}",
+      "metric": "{NODE_ROUTE_B_METRIC}"
+    },
+    {
+      "type": "add-device-route",
+      "ns": "{NODE_NS}",
+      "destination": "{NODE_MULTICAST_CIDR}",
+      "dev": "{NODE_IFACE_A}",
+      "metric": "{NODE_ROUTE_A_METRIC}"
+    },
+    {
+      "type": "add-device-route",
+      "ns": "{NODE_NS}",
+      "destination": "{NODE_MULTICAST_CIDR}",
+      "dev": "{NODE_IFACE_B}",
+      "metric": "{NODE_ROUTE_B_METRIC}"
+    },
+    {
+      "type": "setup-basic-nat-router",
+      "ns": "{RTR_A_NS}",
+      "lan_iface": "{RTR_A_IFACE_LAN}",
+      "wan_iface": "{RTR_A_IFACE_WAN}"
+    },
+    {
+      "type": "setup-basic-nat-router",
+      "ns": "{RTR_B_NS}",
+      "lan_iface": "{RTR_B_IFACE_LAN}",
+      "wan_iface": "{RTR_B_IFACE_WAN}"
+    }
+  ]
+}

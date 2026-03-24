@@ -1,0 +1,258 @@
+I inspected the current test/virtual-networking lab and the relevant daemon, dhtnet, and opendht hooks. Short version: expand the current netns-based lab
+rather than replace it. It already matches the failure surfaces that matter to Jami: IP/interface changes, NAT/IGD changes, public-address changes,
+bootstrap/re-discovery, and degraded paths.
+
+A key finding is that the stack already exposes explicit recovery hooks: configurationmanager::connectivityChanged() in the daemon,
+JamiAccount::connectivityChanged(), dhtnet::ConnectionManager::connectivityChanged(), dhtnet::UPnPContext::connectivityChanged(), and
+opendht::DhtRunner::connectivityChanged(). That makes dynamic-network testing very feasible.
+
+1. Relevant tools, techniques, and libraries
+
+Best fit for your case now
+
+┌────────────────────────────────────────┬───────────┬────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Tool / technique                       │ Fit       │ Why                                                                                                │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ip netns, veth, routes, bridges,       │ Excellent │ This is already your base. It gives you real kernel networking with real apps.                     │
+│ nftables/iptables                      │           │                                                                                                    │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ miniupnpd + upnpc                      │ Excellent │ Best way to keep testing UPnP/IGD behavior with real discovery and real mappings.                  │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ tc netem                               │ Excellent │ Adds delay, jitter, loss, duplication, reordering, corruption, rate shaping. This is the fastest   │
+│                                        │           │ way to model wifi/mobile/satellite path quality.                                                   │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ tbf / HTB / IFB                        │ Excellent │ Useful when you want asymmetric bandwidth or ingress shaping, which matters for                    │
+│                                        │           │ mobile/satellite-like links.                                                                       │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ dnsmasq / DHCP / radvd                 │ High      │ Lets you test renumbering, DHCP churn, DNS behavior, and later IPv6/dual-stack transitions.        │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ tcpdump, ss, nft, conntrack            │ High      │ Critical for assertions and debugging. Don’t rely only on app logs.                                │
+├────────────────────────────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ selective blocking with nftables       │ High      │ Great for “UPnP unavailable”, “multicast blocked”, “DHT bootstrap blocked”, “TURN only” scenarios. │
+└────────────────────────────────────────┴───────────┴────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Higher-level frameworks worth knowing
+
+┌──────────────────┬──────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────┐
+│ Tool             │ Fit                                      │ Notes                                                                                     │
+├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ Mininet          │ Medium later                             │ Very good for bigger topologies; probably overkill for your immediate next step.          │
+├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ Containernet     │ Medium later                             │ Same idea, but with Docker containers as hosts. Great if you later containerize daemon    │
+│                  │                                          │ peers and helpers.                                                                        │
+├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ CORE             │ Medium later                             │ Real-time network emulator for real apps. Interesting if your topologies get richer.      │
+├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ ns-3             │ Low now, high only for research-grade    │ Powerful, but expensive to integrate, and usually too much for protocol-resilience        │
+│                  │ radio work                               │ testing.                                                                                  │
+└──────────────────┴──────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────┘
+
+Limited-fit / niche tools
+
+┌───────────────┬──────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Tool          │ Fit                          │ Why                                                                                            │
+├───────────────┼──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Toxiproxy     │ Limited                      │ Useful for TCP services, but your critical paths are UDP-heavy: DHT, ICE/STUN/TURN, SSDP/UPnP. │
+├───────────────┼──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Pumba         │ Limited unless containerized │ Nice if you move to Docker-based actors; otherwise not the first thing I’d adopt.              │
+├───────────────┼──────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Mahimahi      │ Niche                        │ Good for trace-driven path shaping, but less natural for multi-node NAT/IGD scenarios.         │
+└───────────────┴──────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Existing internal seams that matter most
+
+These are more important than any external framework:
+
+  - The daemon exposes connectivityChanged() and fans it out to accounts and the global UPnP context.
+  - JamiAccount::connectivityChanged() triggers conversation handling, dht_->connectivityChanged(), and connectionManager_->connectivityChanged().
+  - dhtnet::UPnPContext::connectivityChanged() debounces the event and restarts IGD discovery if the host address changed or no valid IGD remains.
+  - dhtnet::ConnectionManager::connectivityChanged() sends beacons on active sockets, which is directly relevant to path-change detection and recovery.
+  - opendht::DhtRunner::connectivityChanged() and Dht::connectivityChanged() clear public-address assumptions, refresh routing state, and restart bootstrap
+behavior when needed.
+
+That means your lab should test both network events themselves and the daemon’s response when told connectivity changed.
+
+2. How I’d organize this long term
+
+The main design idea is: model access-network transitions, not radio technologies.
+
+For the daemon, “wifi”, “mobile”, and “satellite” are mostly visible as combinations of:
+
+  - local interface/subnet change
+  - default route change
+  - router/IGD change
+  - public IP change
+  - inbound reachability change
+  - latency / jitter / loss / bandwidth change
+  - allowed services changing: UPnP yes/no, multicast yes/no, STUN/TURN yes/no
+
+That abstraction scales much better than trying to literally emulate Wi-Fi or LTE.
+
+Suggested repository structure
+
+Keep this under daemon/test/virtual-networking/, because the current lab already lives there and this area is not wired into the default test/meson.build
+suite anyway. That’s actually good: these should stay opt-in privileged integration tests at first.
+
+Suggested shape:
+
+  test/virtual-networking/
+    README.md
+    docs/
+      scenario-catalog.md
+      dependency-matrix.md
+    lib/
+      netns.sh
+      routing.sh
+      upnp.sh
+      impairments.sh
+      observe.sh
+    profiles/
+      wifi-home.yaml
+      wifi-hotel.yaml
+      mobile-cgnat.yaml
+      satellite.yaml
+    topologies/
+      single-router.sh
+      dual-access.sh
+      dual-router-handover.sh
+    scenarios/
+      upnp-static.sh
+      lan-renumber.sh
+      igd-restart.sh
+      wifi-to-wifi.sh
+      wifi-to-mobile.sh
+      mobile-to-wifi.sh
+    probes/
+      probe-upnp.sh
+      probe-dht.py
+      probe-bootstrap.sh
+      probe-call-survival.sh
+    actors/
+      launch-daemon.sh
+      launch-client-qt.sh
+      launch-peer.sh
+    run.py
+
+Languages
+
+I’d use:
+
+  - Bash for low-level networking primitives: ip, tc, nft, miniupnpd, namespaces.
+  - Python for orchestration, timelines, assertions, retries, and artifact collection.
+  - YAML or JSON for network profiles and scenario definitions.
+
+I would not try to write the whole thing in Bash once scenarios become dynamic.
+
+Separation of concerns
+
+Keep these separate:
+
+  - Topology: what namespaces and links exist.
+  - Profile: what kind of access network a link behaves like.
+  - Scenario: timeline of events.
+  - Actor: what runs in each namespace.
+  - Probe / assertion: how pass/fail is measured.
+
+That separation is what will let you grow from UPnP into TURN, DHT proxy, dual-stack, roaming, captive-ish networks, and so on.
+
+3. Effort vs automation payoff
+
+┌──────────────────────────────────────────────┬────────────┬──────────────────────────────────────────────────┬──────────────────────────────────────────┐
+│ Approach                                     │ Effort     │ Practical automation gain                        │ Recommendation                           │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Extend current Bash lab with tc, more        │ Low to     │ High                                             │ Do this now                              │
+│ routers, more probes                         │ medium     │                                                  │                                          │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Add a Python orchestrator over the Bash      │ Medium     │ Very high                                        │ Do this early                            │
+│ primitives                                   │            │                                                  │                                          │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Add profile/scenario files (yaml/json)       │ Medium     │ High                                             │ Do after 2–3 scenarios exist             │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Move to Mininet / Containernet / CORE        │ Medium to  │ Medium to high                                   │ Only when topology count or actor count  │
+│                                              │ high       │                                                  │ starts hurting                           │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Add Toxiproxy / Pumba                        │ Low to     │ Low to medium                                    │ Only for specific side cases             │
+│                                              │ medium     │                                                  │                                          │
+├──────────────────────────────────────────────┼────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
+│ Use ns-3 / EMANE / radio-grade simulation    │ Very high  │ Low near-term, high only for research-grade      │ Not a first phase                        │
+│                                              │            │ wireless questions                               │                                          │
+└──────────────────────────────────────────────┴────────────┴──────────────────────────────────────────────────┴──────────────────────────────────────────┘
+
+My recommendation is very simple:
+
+  - Phase 1: keep the current architecture and grow it.
+  - Phase 2: add orchestration and scenario definitions.
+  - Phase 3: only then decide whether Mininet/Containernet/CORE buys you enough.
+
+Jumping to ns-3 now would likely slow you down more than it helps.
+
+4. First steps I’d take
+
+First, define a scenario taxonomy
+
+I’d define scenarios by app-visible network events:
+
+  - local IP/subnet change
+  - default-route change
+  - IGD appears/disappears
+  - public IP changes
+  - inbound UDP reachable/unreachable
+  - path profile changes
+  - brief outage / flap
+  - service availability changes: UPnP, STUN, TURN, bootstrap, DHT proxy
+
+Second, preserve the current script and refactor around it
+
+Keep setup-fake-upnp-network.sh working exactly as-is, but split its logic into reusable primitives. It is a good baseline scenario.
+
+Third, build one new topology: dual access
+
+This is the most important next move.
+
+Instead of mutating one static LAN too aggressively, create a topology where the daemon namespace has two possible uplinks, for example:
+
+  - wifi0 attached to router A / IGD A
+  - cell0 attached to router B / no IGD or worse profile
+
+Then handover becomes:
+
+  - change route metrics
+  - bring one link down / up
+  - renumber interface
+  - switch NAT/public IP
+
+That is much cleaner than destroying and recreating the world mid-test.
+
+Fourth, implement these first three scenarios
+
+  1. Same-router renumberingThe daemon stays behind the same router/IGD, but its LAN address changes.This validates address-change handling without also
+introducing a new IGD.
+  2. WiFi A -> WiFi BNew subnet, new router, new IGD, new public IP.This is the cleanest “roaming between Wi-Fi networks” scenario.
+  3. WiFi -> mobile/satellite profileNew route/public IP and much worse path profile.For mobile, use moderate RTT/jitter/loss and maybe no UPnP.For
+satellite, use high RTT, lower bandwidth, burstier loss, maybe MTU quirks.
+
+Fifth, add assertions before adding more scenarios
+
+For each scenario, capture at least:
+
+  - did the daemon notice the connectivity change
+  - did UPnP mappings disappear/reappear correctly
+  - is the DHT port reachable from outside again
+  - did bootstrap/discovery recover
+  - did active peer connections survive or reconnect
+  - how long recovery took
+
+Sixth, keep these tests opt-in at first
+
+Because they need root / capabilities and are environment-sensitive, I would not put them into the default unit-test path yet. Later, put them in a
+dedicated privileged CI job or self-hosted runner.
+
+My concrete recommendation
+
+If I had to choose one direction for you: turn test/virtual-networking/ into an access-network scenario harness using Bash for plumbing and Python for
+orchestration.
+
+That gives you the best ratio of effort to real coverage, and it aligns well with the actual recovery seams already present in the daemon, dhtnet, and
+opendht.
+
+If you want, next I can turn this into a concrete file-level plan for test/virtual-networking/ with a proposed tree and the first 3 scenario specs.

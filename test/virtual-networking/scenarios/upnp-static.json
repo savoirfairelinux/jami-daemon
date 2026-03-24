@@ -1,0 +1,65 @@
+{
+  "name": "upnp-static",
+  "description": "Bring up the baseline single-router UPnP lab and verify WAN-side DHT reachability through the exported mapping.",
+  "topology": "single-router",
+  "lab": "fake-upnp-network",
+  "actor_namespace": "{LAN_NS}",
+  "requires_actor": true,
+  "actor_wait_s": 5,
+  "setup": [
+    "{root}/setup-fake-upnp-network.sh",
+    "--no-hold",
+    "up"
+  ],
+  "teardown": [
+    "{root}/setup-fake-upnp-network.sh",
+    "down"
+  ],
+  "notes": [
+    "This is the first orchestrated baseline scenario: topology setup, probe execution, teardown, and reusable summary output.",
+    "Pass --launch-command so the runner starts the daemon inside the LAN namespace as the original invoking user.",
+    "The nested probe summary is copied into the orchestrator capture set for easier review."
+  ],
+  "steps": [
+    {
+      "name": "discover_igd_from_lan",
+      "type": "namespace-command",
+      "namespace": "{LAN_NS}",
+      "argv": [
+        "upnpc",
+        "-s"
+      ],
+      "capture": "lan-upnpc.txt",
+      "label": "LAN IGD discovery",
+      "kind": "command-output"
+    },
+    {
+      "name": "probe_dht_from_wan",
+      "type": "command",
+      "argv": [
+        "{root}/probes/probe-dht-from-wan.sh",
+        "--run-id",
+        "{run_id}-probe",
+        "--artifact-root",
+        "{artifact_root}"
+      ],
+      "capture": "probe-dht-from-wan.txt",
+      "label": "WAN DHT probe output",
+      "kind": "command-output",
+      "copy_outputs": [
+        {
+          "source": "{artifact_root}/{run_id}-probe/summary.json",
+          "destination": "probe-summary.json",
+          "label": "Nested probe summary JSON",
+          "kind": "summary"
+        },
+        {
+          "source": "{artifact_root}/{run_id}-probe/summary.txt",
+          "destination": "probe-summary.txt",
+          "label": "Nested probe summary text",
+          "kind": "summary"
+        }
+      ]
+    }
+  ]
+}

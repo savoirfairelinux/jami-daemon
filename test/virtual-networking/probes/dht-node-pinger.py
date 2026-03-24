@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Ping a DHT node and report whether it is reachable.
-# Usage: python3 dht-node-pinger.py <host> <port>
+# Usage: python3 probes/dht-node-pinger.py <host> <port>
 # Exit 0 if the remote node responded, 1 otherwise.
 import sys
 

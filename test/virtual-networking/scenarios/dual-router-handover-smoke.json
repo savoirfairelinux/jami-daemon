@@ -1,0 +1,60 @@
+{
+  "name": "dual-router-handover-smoke",
+  "description": "Bring up the dual-router topology and confirm the node sees both routed uplinks and at least one discoverable IGD.",
+  "topology": "dual-router-handover",
+  "lab": "dual-router-handover",
+  "actor_namespace": "{NODE_NS}",
+  "setup": [
+    "{root}/setup-dual-router-handover-network.sh",
+    "--no-hold",
+    "up"
+  ],
+  "teardown": [
+    "{root}/setup-dual-router-handover-network.sh",
+    "down"
+  ],
+  "notes": [
+    "This is a topology smoke scenario only; it validates the reusable handover lab before route-swap automation is added.",
+    "A passing run means the dual-uplink environment is reproducible and discoverable from the node side."
+  ],
+  "steps": [
+    {
+      "name": "inspect_node_routes",
+      "type": "namespace-command",
+      "namespace": "{NODE_NS}",
+      "argv": [
+        "ip",
+        "route",
+        "show"
+      ],
+      "capture": "node-routes.txt",
+      "label": "Node routes",
+      "kind": "state-dump"
+    },
+    {
+      "name": "discover_igd_from_node",
+      "type": "namespace-command",
+      "namespace": "{NODE_NS}",
+      "argv": [
+        "upnpc",
+        "-s"
+      ],
+      "capture": "node-upnpc.txt",
+      "label": "Node IGD discovery",
+      "kind": "command-output"
+    },
+    {
+      "name": "inspect_wan_addresses",
+      "type": "namespace-command",
+      "namespace": "{WAN_NS}",
+      "argv": [
+        "ip",
+        "addr",
+        "show"
+      ],
+      "capture": "wan-addresses.txt",
+      "label": "WAN addresses",
+      "kind": "state-dump"
+    }
+  ]
+}

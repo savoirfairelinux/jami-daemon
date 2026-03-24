@@ -1,0 +1,204 @@
+{
+  "name": "dual-access",
+  "description": "Dual-access Wi-Fi/mobile lab: one node with a preferred Wi-Fi uplink plus a standby mobile-like uplink and distinct public subnets.",
+  "defaults": {
+    "NODE_NS": "node",
+    "NODE_WIFI_IFACE": "eth0",
+    "NODE_MOBILE_IFACE": "eth1",
+    "NODE_WIFI_IP_CIDR": "192.168.30.2/24",
+    "NODE_WIFI_GW": "192.168.30.1",
+    "NODE_MOBILE_IP_CIDR": "100.64.10.2/24",
+    "NODE_MOBILE_GW": "100.64.10.1",
+    "NODE_MULTICAST_CIDR": "224.0.0.0/4",
+    "NODE_WIFI_METRIC": "100",
+    "NODE_MOBILE_METRIC": "200",
+    "WIFI_RTR_NS": "wifi-rtr",
+    "WIFI_RTR_IFACE_LAN": "veth-wifi-lan",
+    "WIFI_RTR_IFACE_WAN": "veth-wifi-wan",
+    "WIFI_RTR_LAN_IP_CIDR": "192.168.30.1/24",
+    "WIFI_RTR_WAN_IP_CIDR": "11.0.10.2/24",
+    "WIFI_RTR_EXT_IP": "11.0.10.2",
+    "MOBILE_RTR_NS": "mobile-rtr",
+    "MOBILE_RTR_IFACE_LAN": "veth-mobile-lan",
+    "MOBILE_RTR_IFACE_WAN": "veth-mobile-wan",
+    "MOBILE_RTR_LAN_IP_CIDR": "100.64.10.1/24",
+    "MOBILE_RTR_WAN_IP_CIDR": "12.0.10.2/24",
+    "MOBILE_RTR_EXT_IP": "12.0.10.2",
+    "WAN_NS": "wan",
+    "WAN_IFACE_WIFI": "veth-wan-wifi",
+    "WAN_IFACE_MOBILE": "veth-wan-mobile",
+    "WAN_WIFI_IP_CIDR": "11.0.10.1/24",
+    "WAN_MOBILE_IP_CIDR": "12.0.10.1/24"
+  },
+  "namespaces": [
+    "{NODE_NS}",
+    "{WIFI_RTR_NS}",
+    "{MOBILE_RTR_NS}",
+    "{WAN_NS}"
+  ],
+  "state_vars": [
+    "NODE_NS",
+    "NODE_WIFI_IFACE",
+    "NODE_MOBILE_IFACE",
+    "NODE_WIFI_IP_CIDR",
+    "NODE_WIFI_GW",
+    "NODE_MOBILE_IP_CIDR",
+    "NODE_MOBILE_GW",
+    "NODE_MULTICAST_CIDR",
+    "NODE_WIFI_METRIC",
+    "NODE_MOBILE_METRIC",
+    "WIFI_RTR_NS",
+    "WIFI_RTR_IFACE_LAN",
+    "WIFI_RTR_IFACE_WAN",
+    "WIFI_RTR_LAN_IP_CIDR",
+    "WIFI_RTR_WAN_IP_CIDR",
+    "WIFI_RTR_EXT_IP",
+    "MOBILE_RTR_NS",
+    "MOBILE_RTR_IFACE_LAN",
+    "MOBILE_RTR_IFACE_WAN",
+    "MOBILE_RTR_LAN_IP_CIDR",
+    "MOBILE_RTR_WAN_IP_CIDR",
+    "MOBILE_RTR_EXT_IP",
+    "WAN_NS",
+    "WAN_IFACE_WIFI",
+    "WAN_IFACE_MOBILE",
+    "WAN_WIFI_IP_CIDR",
+    "WAN_MOBILE_IP_CIDR"
+  ],
+  "operations": [
+    {
+      "type": "create-namespaces",
+      "namespaces": [
+        "{NODE_NS}",
+        "{WIFI_RTR_NS}",
+        "{MOBILE_RTR_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{NODE_NS}",
+      "iface_a": "{NODE_WIFI_IFACE}",
+      "ns_b": "{WIFI_RTR_NS}",
+      "iface_b": "{WIFI_RTR_IFACE_LAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{NODE_NS}",
+      "iface_a": "{NODE_MOBILE_IFACE}",
+      "ns_b": "{MOBILE_RTR_NS}",
+      "iface_b": "{MOBILE_RTR_IFACE_LAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{WAN_NS}",
+      "iface_a": "{WAN_IFACE_WIFI}",
+      "ns_b": "{WIFI_RTR_NS}",
+      "iface_b": "{WIFI_RTR_IFACE_WAN}"
+    },
+    {
+      "type": "connect-veth",
+      "ns_a": "{WAN_NS}",
+      "iface_a": "{WAN_IFACE_MOBILE}",
+      "ns_b": "{MOBILE_RTR_NS}",
+      "iface_b": "{MOBILE_RTR_IFACE_WAN}"
+    },
+    {
+      "type": "set-loopbacks-up",
+      "namespaces": [
+        "{NODE_NS}",
+        "{WIFI_RTR_NS}",
+        "{MOBILE_RTR_NS}",
+        "{WAN_NS}"
+      ]
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{NODE_NS}",
+      "iface": "{NODE_WIFI_IFACE}",
+      "cidr": "{NODE_WIFI_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{NODE_NS}",
+      "iface": "{NODE_MOBILE_IFACE}",
+      "cidr": "{NODE_MOBILE_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WIFI_RTR_NS}",
+      "iface": "{WIFI_RTR_IFACE_LAN}",
+      "cidr": "{WIFI_RTR_LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WIFI_RTR_NS}",
+      "iface": "{WIFI_RTR_IFACE_WAN}",
+      "cidr": "{WIFI_RTR_WAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{MOBILE_RTR_NS}",
+      "iface": "{MOBILE_RTR_IFACE_LAN}",
+      "cidr": "{MOBILE_RTR_LAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{MOBILE_RTR_NS}",
+      "iface": "{MOBILE_RTR_IFACE_WAN}",
+      "cidr": "{MOBILE_RTR_WAN_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WAN_NS}",
+      "iface": "{WAN_IFACE_WIFI}",
+      "cidr": "{WAN_WIFI_IP_CIDR}"
+    },
+    {
+      "type": "configure-ipv4-interface",
+      "ns": "{WAN_NS}",
+      "iface": "{WAN_IFACE_MOBILE}",
+      "cidr": "{WAN_MOBILE_IP_CIDR}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{NODE_NS}",
+      "via": "{NODE_WIFI_GW}",
+      "dev": "{NODE_WIFI_IFACE}",
+      "metric": "{NODE_WIFI_METRIC}"
+    },
+    {
+      "type": "add-default-route",
+      "ns": "{NODE_NS}",
+      "via": "{NODE_MOBILE_GW}",
+      "dev": "{NODE_MOBILE_IFACE}",
+      "metric": "{NODE_MOBILE_METRIC}"
+    },
+    {
+      "type": "add-device-route",
+      "ns": "{NODE_NS}",
+      "destination": "{NODE_MULTICAST_CIDR}",
+      "dev": "{NODE_WIFI_IFACE}",
+      "metric": "{NODE_WIFI_METRIC}"
+    },
+    {
+      "type": "add-device-route",
+      "ns": "{NODE_NS}",
+      "destination": "{NODE_MULTICAST_CIDR}",
+      "dev": "{NODE_MOBILE_IFACE}",
+      "metric": "{NODE_MOBILE_METRIC}"
+    },
+    {
+      "type": "setup-basic-nat-router",
+      "ns": "{WIFI_RTR_NS}",
+      "lan_iface": "{WIFI_RTR_IFACE_LAN}",
+      "wan_iface": "{WIFI_RTR_IFACE_WAN}"
+    },
+    {
+      "type": "setup-basic-nat-router",
+      "ns": "{MOBILE_RTR_NS}",
+      "lan_iface": "{MOBILE_RTR_IFACE_LAN}",
+      "wan_iface": "{MOBILE_RTR_IFACE_WAN}"
+    }
+  ]
+}
