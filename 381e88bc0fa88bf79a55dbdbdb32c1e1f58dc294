@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "03645e9d_921b78d0",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-25T03:39:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7025d604_ea772677",
+      "range": {
+        "startLine": 12,
+        "startChar": 38,
+        "endLine": 12,
+        "endChar": 59
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8bb6d9b0_90c7eff0",
@@ -64,6 +88,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4908ca7_bb037df7",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-25T03:39:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8bb6d9b0_90c7eff0",
+      "range": {
+        "startLine": 20,
+        "startChar": 41,
+        "endLine": 20,
+        "endChar": 61
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1de79d75_a13155ec",
@@ -77,6 +125,30 @@
       "writtenOn": "2026-03-24T14:56:35Z",
       "side": 1,
       "message": "Would remove `system process` here as well. Would instead use \"compile `jamid` (the daemon)\"",
+      "range": {
+        "startLine": 60,
+        "startChar": 21,
+        "endLine": 60,
+        "endChar": 24
+      },
+      "revId": "381e88bc0fa88bf79a55dbdbdb32c1e1f58dc294",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b8f5d13_a1ce2322",
+        "filename": "README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-25T03:39:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1de79d75_a13155ec",
       "range": {
         "startLine": 60,
         "startChar": 21,
