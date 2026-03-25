@@ -19,7 +19,6 @@ option(JAMI_DBUS "Build the DBUS binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
 option(JAMI_VIDEO_ACCEL "Build video hardware acceleration support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
-option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
@@ -72,21 +71,6 @@ if(NOT MSVC)
         set(CONTRIB_BUILD_FLAGS -j${NPROC})
     endif()
 
-    if (BUILD_EXTRA_TOOLS)
-        set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/extras/tools/build/bin:$ENV{PATH}")
-        execute_process(
-            COMMAND ./bootstrap
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-        execute_process(
-            COMMAND make ${CONTRIB_BUILD_FLAGS}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-        execute_process(
-            COMMAND make .pkg-config
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-        execute_process(
-            COMMAND make .gas
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-    endif()
     if (JAMI_JNI)
         # Generate swig binding
         add_custom_command(
