@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc19ae01_75e9a3f6",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-25T16:51:10Z",
+      "side": 1,
+      "message": "today \u0027Agent\u0027 is ambiguous. Maybe name this BUILD_TESTING_AGENT",
+      "range": {
+        "startLine": 26,
+        "startChar": 7,
+        "endLine": 26,
+        "endChar": 19
+      },
+      "revId": "aa185cfc44105a50f87cf0883aa3bbfc0a6ef96c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
