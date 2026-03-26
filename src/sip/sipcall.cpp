@@ -2038,6 +2038,11 @@ SIPCall::startAllMedia()
                 break;
             }
             rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
+            if (not rtpStream.mediaAttribute_->enabled_) {
+                JAMI_DEBUG("[call:{}] Skipping start for disabled stream @{}", getCallId(), idx);
+                idx++;
+                continue;
+            }
             if (rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
                 rtpStream.rtpSession_->setMuted(rtpStream.remoteMediaAttribute_->muted_, RtpSession::Direction::RECV);
             }
@@ -2715,6 +2720,10 @@ SIPCall::onIceNegoSucceed()
     for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += 2) {
         // Create sockets for RTP and RTCP, and start the session.
         auto& rtpStream = rtpStreams_[idx];
+        if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
+            JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
+            continue;
+        }
         rtpStream.rtpSocket_ = newIceSocket(compId);
 
         if (not rtcpMuxEnabled_) {
