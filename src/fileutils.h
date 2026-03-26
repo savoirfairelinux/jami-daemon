@@ -128,8 +128,6 @@ bool writeArchive(const std::string& data,
                   const std::string& password = {},
                   const std::vector<uint8_t>& password_salt = {});
 
-int64_t size(const std::filesystem::path& path);
-
 std::string sha3File(const std::filesystem::path& path);
 std::string sha3sum(const std::vector<uint8_t>& buffer);
 
