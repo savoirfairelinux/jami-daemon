@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "549a04e9_3e4114a1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 771,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-26T19:57:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fbc00b41_03b45261",
+      "range": {
+        "startLine": 770,
+        "startChar": 12,
+        "endLine": 771,
+        "endChar": 60
+      },
+      "revId": "742023df4fca5b229ac5c0c27f16dcff25a050f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5c937c4c_bba565a8",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67802cf1_9500afcb",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 804,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-26T19:57:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c937c4c_bba565a8",
+      "range": {
+        "startLine": 804,
+        "startChar": 12,
+        "endLine": 804,
+        "endChar": 71
+      },
+      "revId": "742023df4fca5b229ac5c0c27f16dcff25a050f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "be88d4c3_e9732fa1",
@@ -60,6 +108,30 @@
       "writtenOn": "2026-02-27T20:37:03Z",
       "side": 1,
       "message": "If I\u0027m not mistaken, instead of doing one sample at a time, we could sample `std::max(candidates.size(), K - trackedMembers_.size())` candidates at once, which would reduce the worst-case complexity from `O(KN)` to `O(N)`.",
+      "range": {
+        "startLine": 800,
+        "startChar": 4,
+        "endLine": 818,
+        "endChar": 13
+      },
+      "revId": "742023df4fca5b229ac5c0c27f16dcff25a050f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab4f77ac_132a06c6",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 818,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-26T19:57:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be88d4c3_e9732fa1",
       "range": {
         "startLine": 800,
         "startChar": 4,

@@ -40,6 +40,30 @@
       },
       "revId": "1be62caa5d1398c17ad50b532dfaba54bf6378c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d892bdaa_356b7341",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 848,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-26T19:57:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e4b65f31_dfcc56ff",
+      "range": {
+        "startLine": 848,
+        "startChar": 101,
+        "endLine": 848,
+        "endChar": 108
+      },
+      "revId": "1be62caa5d1398c17ad50b532dfaba54bf6378c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
