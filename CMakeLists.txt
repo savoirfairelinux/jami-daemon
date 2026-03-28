@@ -816,7 +816,7 @@ else()
         string(REPLACE ";" "," _gyp_flags_str ${QUOTED_JSON_LIST})
 
         set(JAMI_LINK_LIBRARIES ${_gyp_flags_str})
-        set(JAMI_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
+        set(JAMI_LINK_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR} -L${CONTRIB_PATH}/lib")
         configure_file(
             ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp.in
             ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp

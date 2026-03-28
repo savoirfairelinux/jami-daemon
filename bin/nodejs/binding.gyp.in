@@ -8,7 +8,8 @@
         "<!@(node -e \"try{console.log(require('node-addon-api').include)}catch(e){console.log(require('path').join(require('child_process').execSync('npm root -g').toString().trim(),'node-addon-api'))}\")"
       ],
       'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ],
-      "ldflags": ["-Wl,-Bsymbolic", "-flto"],
+      "ldflags": ["-Wl,-Bsymbolic", "-flto", "-Wl,--gc-sections", "-s"],
+      'cflags': ['-O3', '-ffunction-sections', '-fdata-sections'],
       'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', @JAMI_LINK_LIBRARIES@],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions', '-fno-rtti', '-std=gnu++1y' ],
