@@ -73,5 +73,5 @@ COPY . .
 RUN mkdir -p build && \
     cd build && \
     cmake .. $cmake_args -GNinja && \
-    ninja && \
+    ninja -j$(($(nproc) > 4 ? 4 : $(nproc))) && \
     strip --strip-unneeded bin/nodejs/build/Release/jamid.node 2>/dev/null || true
