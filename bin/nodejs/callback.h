@@ -167,21 +167,16 @@ swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
 
 // Callback management
 
-void
-setCallback(const std::string& signal, napi_value func)
-{
-    auto it = callbackRefs.find(signal);
-    if (it != callbackRefs.end() && it->second) {
-        napi_delete_reference(g_env, it->second);
-        callbackRefs.erase(it);
+void setCallback(std::string signal, napi_value func) {
+    auto& ref = callbackRefs[std::move(signal)];
+    if (ref) {
+        napi_delete_reference(g_env, ref);
+        ref = nullptr;
     }
-
     napi_valuetype type;
     napi_typeof(g_env, func, &type);
     if (type == napi_function) {
-        napi_ref ref;
         napi_create_reference(g_env, func, 1, &ref);
-        callbackRefs[signal] = ref;
     }
 }
 
@@ -206,7 +201,7 @@ parseCbMap(napi_env env, napi_value callbackMap)
         napi_value value;
         napi_get_property(env, callbackMap, key, &value);
 
-        setCallback(keyStr, value);
+        setCallback(std::move(keyStr), value);
     }
 }
 
