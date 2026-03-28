@@ -80,116 +80,27 @@ namespace std {
 #include "callback.h"
 %}
 
-//typemap for passing Callbacks
-%typemap(in) v8::Local<v8::Function> {
-    $1 = v8::Local<v8::Function>::Cast($input);
-}
-
-//typemap for handling map of functions
-%typemap(in) SWIGV8_VALUE  {
-    $1 = $input;
-}
-%typemap(in) const SWIGV8_VALUE  {
-    $1 = $input;
-}
-%typemap(varin) SWIGV8_VALUE {
-  $result = $input;
-}
-%typemap(varin) const SWIGV8_VALUE {
-  $result = $input;
-}
-
-
-%inline %{
-/* some functions that need to be declared in *_wrap.cpp
- * that are not declared elsewhere in the c++ code
- */
-
-void init(const SWIGV8_VALUE& funcMap){
-    parseCbMap(funcMap);
-    uv_async_init(uv_default_loop(), &signalAsync, handlePendingSignals);
-
-    using namespace std::placeholders;
-    using std::bind;
-    using libjami::exportable_callback;
-    using libjami::ConfigurationSignal;
-    using libjami::CallSignal;
-    using libjami::ConversationSignal;
-    using libjami::PresenceSignal;
-    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
-    const std::map<std::string, SharedCallback> callEvHandlers = {
-        exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3))
-    };
-
-    const std::map<std::string, SharedCallback> configEvHandlers = {
-        exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
-        exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&accountDetailsChanged, _1, _2)),
-        exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&registrationStateChanged, _1, _2, _3, _4)),
-        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(composingStatusChanged, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::ContactAdded>(bind(&contactAdded, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ContactRemoved>(bind(&contactRemoved, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::NameRegistrationEnded>(bind(&nameRegistrationEnded, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&registeredNameFound, _1, _2, _3, _4, _5 )),
-        exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&volatileDetailsChanged, _1, _2)),
-        exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&knownDevicesChanged, _1, _2 )),
-        exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&deviceAuthStateChanged, _1, _2,_3 )),
-        exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&addDeviceStateChanged, _1, _2,_3,_4 )),
-        exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5 )),
-        exportable_callback<ConfigurationSignal::MessageSend>(bind(&logMessage, _1 )),
-        exportable_callback<ConfigurationSignal::NeedsHost>(bind(&needsHost, _1, _2 )),
-        exportable_callback<ConfigurationSignal::ActiveCallsChanged>(bind(&activeCallsChanged, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3)),
-        exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&accountProfileReceived, _1, _2, _3)),
-        //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
-        exportable_callback<ConfigurationSignal::UserSearchEnded>(bind(&userSearchEnded, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&deviceRevocationEnded, _1, _2, _3)),
-    };
-
-    const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
-        exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(bind(&dataTransferEvent, _1, _2, _3, _4, _5)),
-    };
-
-    const std::map<std::string, SharedCallback> conversationHandlers = {
-        exportable_callback<ConversationSignal::SwarmLoaded>(bind(&swarmLoaded, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&swarmMessageReceived, _1, _2, _3)),
-        exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&swarmMessageUpdated, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ReactionAdded>(bind(&reactionAdded, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::ReactionRemoved>(bind(&reactionRemoved, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::ConversationProfileUpdated>(bind(&conversationProfileUpdated, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&conversationRequestReceived, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestDeclined>(bind(&conversationRequestDeclined, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationReady>(bind(&conversationReady, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationRemoved>(bind(&conversationRemoved, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&conversationMemberEvent, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::OnConversationError>(bind(&onConversationError, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&conversationPreferencesUpdated, _1, _2, _3))
-    };
-
-    // Presence event handlers
-    const std::map<std::string, SharedCallback> presenceEvHandlers = {
-        exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&newServerSubscriptionRequest, _1 )),
-        exportable_callback<PresenceSignal::ServerError>(bind(&serverError, _1, _2, _3 )),
-        exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&newBuddyNotification, _1, _2, _3, _4 )),
-        exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&nearbyPeerNotification, _1, _2, _3, _4)),
-        exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&subscriptionStateChanged, _1, _2, _3 ))
-    };
-    
-
-    if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
-        return;
-
-    registerSignalHandlers(configEvHandlers);
-    registerSignalHandlers(callEvHandlers);
-    registerSignalHandlers(conversationHandlers);
-    registerSignalHandlers(dataTransferEvHandlers);
-    registerSignalHandlers(presenceEvHandlers);
-    libjami::start();
+/* Native init wrapper - bypasses SWIG type system to pass Napi::Value directly */
+%wrapper %{
+static Napi::Value _wrap_native_init(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    if (info.Length() < 1 || !info[0].IsObject()) {
+        Napi::Error::New(env, "init requires a callback map object").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    initJami(napi_env(env), napi_value(info[0]));
+    return env.Undefined();
 }
 %}
+
+/* Register the native init function during module initialization */
+%init %{
+do {
+  Napi::PropertyDescriptor pd = Napi::PropertyDescriptor::Function("init", _wrap_native_init);
+  NAPI_CHECK_MAYBE(exports.DefineProperties({ pd }));
+} while (0);
+%}
+
 #ifndef SWIG
 /* some bad declarations */
 #endif

@@ -3,7 +3,11 @@
     {
       "target_name": "jamid",
       "sources": [ "jami_wrapper.cpp" ],
-      'include_dirs': ['../../src/'],
+      'include_dirs': [
+        '../../src/',
+        "<!@(node -p \"require('node-addon-api').include\")"
+      ],
+      'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ],
       "ldflags": ["-Wl,-Bsymbolic"],
       'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', @JAMI_LINK_LIBRARIES@],
       'cflags!': [ '-fno-exceptions' ],

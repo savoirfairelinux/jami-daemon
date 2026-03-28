@@ -51,9 +51,9 @@ RUN apt-get update && apt-get install -y \
 # Install Node
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g node-gyp
+    npm install -g node-gyp node-addon-api
 
-# Install latest Swig (4.2)
+# Install latest Swig (>= 4.3 required for N-API support)
 WORKDIR /swig
 RUN git clone https://github.com/swig/swig.git && \
     cd swig && \

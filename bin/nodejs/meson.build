@@ -1,5 +1,5 @@
 nodejs_wrapper_target = custom_target('nodejs.wrapper',
-    command: [progswig, '-v', '-c++', '-javascript', '-node', '-o', '@OUTPUT@', '@INPUT@'],
+    command: [progswig, '-v', '-c++', '-javascript', '-napi', '-o', '@OUTPUT@', '@INPUT@'],
     input: 'nodejs_interface.i',
     output: 'nodejs_wrapper.cpp'
 )
