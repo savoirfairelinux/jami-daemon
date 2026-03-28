@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y \
     libasound2-dev \
     libdbus-1-dev \
     libexpat1-dev \
-    libfmt-dev \
     libgmp-dev \
     nettle-dev \
     libgnutls28-dev \
@@ -48,6 +47,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     yasm \
     libcppunit-dev \
+    ninja-build \
     sip-tester
 
 # Install Node
@@ -72,5 +72,5 @@ COPY . .
 # Build the daemon
 RUN mkdir -p build && \
     cd build && \
-    cmake .. $cmake_args && \
-    make -j$(nproc)
+    cmake .. $cmake_args -GNinja && \
+    ninja -j$(($(nproc) > 4 ? 4 : $(nproc)))
