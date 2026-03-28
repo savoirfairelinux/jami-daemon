@@ -1,0 +1,31 @@
+{
+  "name": "@savoirfairelinux/jami-core-darwin-arm64",
+  "version": "0.3.0",
+  "description": "Jami daemon native addon for macOS arm64",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "jamid.node",
+  "files": [
+    "jamid.node"
+  ],
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://git.jami.net/savoirfairelinux/jami-web.git",
+    "directory": "core"
+  },
+  "keywords": [
+    "jami",
+    "daemon",
+    "native",
+    "macos",
+    "arm64"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
