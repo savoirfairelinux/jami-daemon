@@ -213,6 +213,9 @@ if (BUILD_CONTRIB)
             if (IGNORE_SYSTEM_LIBS)
                 list(APPEND BOOTSTRAP_COMMAND --ignore-system-libs)
             endif()
+            if (CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+                list(APPEND BOOTSTRAP_COMMAND --enable-lto)
+            endif()
             execute_process(
                 COMMAND ${BOOTSTRAP_COMMAND}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
