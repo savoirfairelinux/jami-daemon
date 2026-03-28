@@ -756,13 +756,13 @@ else()
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/jami.pc DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
     if (JAMI_NODEJS)
-        # Build nodejs binding
+        # Build nodejs binding (N-API via SWIG)
         include (UseSWIG)
-        find_package(SWIG 4.2 COMPONENTS javascript REQUIRED)
+        find_package(SWIG 4.3 COMPONENTS javascript REQUIRED)
         file(GLOB NODEJS_INTERFACE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/*.i)
         add_custom_command(
             OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/jami_wrapper.cpp
-            COMMAND ${SWIG_EXECUTABLE} -v -c++ -javascript -node -o jami_wrapper.cpp nodejs_interface.i
+            COMMAND ${SWIG_EXECUTABLE} -v -c++ -javascript -napi -o jami_wrapper.cpp nodejs_interface.i
             DEPENDS
             ${NODEJS_INTERFACE_FILES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
@@ -813,9 +813,20 @@ else()
         )
 
         # Build nodejs binding
+        execute_process(
+            COMMAND node --version
+            OUTPUT_VARIABLE NODE_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        # Detect the host architecture for node-gyp
+        execute_process(
+            COMMAND node -p "process.arch"
+            OUTPUT_VARIABLE NODE_ARCH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
         add_custom_target(jamid
             ALL
-            COMMAND node-gyp rebuild --target=v22.4.1 --arch=arm64
+            COMMAND npx node-gyp@latest rebuild --target=${NODE_VERSION} --arch=${NODE_ARCH}
             DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/binding.gyp
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/callback.h

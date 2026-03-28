@@ -35,20 +35,21 @@ public:
 %feature("director") DataTransferCallback;
 
 %typemap(in) std::string& OUTPUT (std::string temp) {
-  if (!$input.IsEmpty()) {
-    SWIGV8_THROW_EXCEPTION(SWIGV8_STRING_NEW("array null"));
-    return;
-  }
-  if (SWIGV8_ARRAY::Cast($input)->Length()) {
-    SWIGV8_THROW_EXCEPTION(SWIGV8_STRING_NEW("Array must contain at least 1 element"));
-  }
   $1 = &temp;
 }
 %typemap(argout) std::string& OUTPUT {
-  auto value = SWIGV8_STRING_NEW(temp$argnum.c_str());
-  SWIGV8_ARRAY_SET(SWIGV8_ARRAY::Cast($input), 0, value);
+  Napi::Array arr = ($input).As<Napi::Array>();
+  arr.Set((uint32_t)0, Napi::String::New(env, temp$argnum));
 }
 %apply std::string& OUTPUT { std::string& path_out }
+
+%typemap(in) int64_t& OUTPUT (int64_t temp) {
+  $1 = &temp;
+}
+%typemap(argout) int64_t& OUTPUT {
+  Napi::Array arr = ($input).As<Napi::Array>();
+  arr.Set((uint32_t)0, Napi::Number::New(env, static_cast<double>(temp$argnum)));
+}
 %apply int64_t& OUTPUT { int64_t& total_out }
 %apply int64_t& OUTPUT { int64_t& progress_out }
 
@@ -70,7 +71,7 @@ namespace libjami {
     std::string mimetype;
   };
 
-  // Files Management 
+  // Files Management
   void sendFile(const std::string& accountId, const std::string& conversationId, const std::string& path, const std::string& displayName, const std::string& replyTo);
   uint64_t downloadFile(const std::string& accountId, const std::string& conversationId, const std::string& interactionId,const std::string& fileId, const std::string& path);
   libjami::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId);
