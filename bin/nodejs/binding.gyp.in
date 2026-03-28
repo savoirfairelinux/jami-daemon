@@ -7,10 +7,15 @@
         '../../src/',
         "<!@(node -e \"try{console.log(require('node-addon-api').include)}catch(e){console.log(require('path').join(require('child_process').execSync('npm root -g').toString().trim(),'node-addon-api'))}\")"
       ],
-      'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ],
-      "ldflags": ["-Wl,-Bsymbolic", "-flto"],
-      'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', @JAMI_LINK_LIBRARIES@],
-      'cflags!': [ '-fno-exceptions' ],
+      "defines+": [
+        "NAPI_VERSION=9",
+        'NAPI_DISABLE_CPP_EXCEPTIONS',
+        "NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED"
+      ],
+      "ldflags": ["-Wl,-Bsymbolic", "-flto", "-Wl,--gc-sections", "-s"],
+      'cflags': ['-O3', '-ffunction-sections', '-fdata-sections'],
+      'libraries': [@JAMI_LINK_DIRECTORIES@, '-ljami-core', @JAMI_LINK_LIBRARIES@],
+      'cflags!': [ '-fno-exceptions', '-fvisibility=hidden' ],
       'cflags_cc!': [ '-fno-exceptions', '-fno-rtti', '-std=gnu++1y' ],
       'cflags_cc': [ '-std=gnu++20', '-frtti', '-fexceptions', '-flto' ],
       'xcode_settings': {
@@ -23,6 +28,7 @@
         'GCC_OPTIMIZATION_LEVEL': '3',
         'OTHER_CPLUSPLUSFLAGS': ['-flto'],
         'OTHER_LDFLAGS': ['-flto', '-Wl,-x'],
+        'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
       },
       'msvs_settings': {
         'VCCLCompilerTool': { 'ExceptionHandling': 1 },
