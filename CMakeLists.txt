@@ -796,6 +796,8 @@ else()
             elseif (TARGET ${LIB})
                 get_target_property(LIB_PATH ${LIB} LOCATION)
                 list(APPEND _gyp_flags " ${LIB_PATH}")
+            elseif (IS_ABSOLUTE "${LIB}")
+                list(APPEND _gyp_flags " ${LIB}")
             elseif ("${LIB}" MATCHES "^-")
                 list(APPEND _gyp_flags " ${LIB}")
             else()
@@ -816,7 +818,7 @@ else()
         string(REPLACE ";" "," _gyp_flags_str ${QUOTED_JSON_LIST})
 
         set(JAMI_LINK_LIBRARIES ${_gyp_flags_str})
-        set(JAMI_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
+        set(JAMI_LINK_DIRECTORIES "\"-L${CMAKE_CURRENT_BINARY_DIR}\", \"-L${CONTRIB_PATH}/lib\"")
         configure_file(
             ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp.in
             ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp
@@ -834,9 +836,24 @@ else()
             OUTPUT_VARIABLE NODE_ARCH
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
+
+        set(JAMI_NODEJS_STRIP_COMMAND)
+        if (CMAKE_STRIP)
+            if (APPLE)
+                set(JAMI_NODEJS_STRIP_COMMAND
+                    COMMAND ${CMAKE_STRIP} -x ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/build/Release/jamid.node
+                )
+            elseif (UNIX)
+                set(JAMI_NODEJS_STRIP_COMMAND
+                    COMMAND ${CMAKE_STRIP} --strip-unneeded ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/build/Release/jamid.node
+                )
+            endif()
+        endif()
+
         add_custom_target(jamid
             ALL
             COMMAND npx node-gyp@latest rebuild --target=${NODE_VERSION} --arch=${NODE_ARCH}
+            ${JAMI_NODEJS_STRIP_COMMAND}
             DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/binding.gyp
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/callback.h
