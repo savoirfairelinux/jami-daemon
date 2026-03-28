@@ -1,0 +1,31 @@
+{
+  "name": "@savoirfairelinux/jami-core-linux-x64",
+  "version": "0.3.0",
+  "description": "Jami daemon native addon for Linux x64",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "jamid.node",
+  "files": [
+    "jamid.node"
+  ],
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://git.jami.net/savoirfairelinux/jami-web.git",
+    "directory": "core"
+  },
+  "keywords": [
+    "jami",
+    "daemon",
+    "native",
+    "linux",
+    "x64"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
