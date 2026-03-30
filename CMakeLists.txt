@@ -654,6 +654,7 @@ else()
     pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
     pkg_search_module (speexdsp REQUIRED IMPORTED_TARGET speexdsp)
     pkg_search_module (simdutf REQUIRED IMPORTED_TARGET simdutf)
+    pkg_search_module (openssl REQUIRED IMPORTED_TARGET openssl)
     if (JAMI_PLUGIN)
         if (APPLE)
             pkg_search_module (archive REQUIRED IMPORTED_TARGET minizip)
@@ -678,13 +679,17 @@ else()
         PkgConfig::jsoncpp
         PkgConfig::secp256k1
         PkgConfig::simdutf
+        PkgConfig::openssl
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
     target_compile_options(${PROJECT_NAME} PRIVATE
-        -fvisibility=hidden
+        # -fvisibility=hidden is only applied for static builds.  When building a
+        # shared library, internal symbols must remain visible so that test
+        # executables (and other consumers) that link the .so can resolve them.
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:-fvisibility=hidden>
         -Wall -Wextra
         -Wno-deprecated
         -Wno-deprecated-declarations
@@ -916,6 +921,7 @@ else()
             PkgConfig::git2
             PkgConfig::jsoncpp
             PkgConfig::fmt
+            PkgConfig::openssl
         )
         target_link_directories(dst_library PUBLIC ${CONTRIB_PATH}/lib)
         target_include_directories(dst_library PUBLIC
