@@ -40,17 +40,8 @@ For build instructions, required dependencies, and platform-specific notes, see
 
 # Contributing
 
-Of course we love patches. And contributions. And spring rolls.
-
-Development website and issue tracker:
- - https://git.jami.net/savoirfairelinux/
-
-Repositories are hosted on Gerrit, which are used for code review.
-It also contains the client subprojects:
- - https://review.jami.net/admin/repos/
-
-Join us and post comments, suggestions, questions, and general feedback on the Jami mailing list:
- - https://lists.gnu.org/mailman/listinfo/jami
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up the development
+environment, contribute code, and reach the community.
 
 # COPYRIGHT NOTICE
 
