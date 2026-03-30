@@ -7,8 +7,6 @@ set(PACKAGE_NAME "Jami Daemon")
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(PROJECT_LABEL "libjami")
-
 ################################################################################
 # Build options
 ################################################################################
@@ -413,6 +411,9 @@ endif()
 if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
 endif()
+if (JAMI_DBUS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SHM)
+endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_AAUDIO)
 elseif (APPLE)
@@ -635,24 +636,25 @@ else()
     message("Data directory: ${JAMI_DATADIR}")
 
     find_package (yaml-cpp CONFIG REQUIRED)
-    pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
-    pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
+    find_package (ZLIB REQUIRED)
+    pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp>=1.6.5)
+    pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt>=5.3)
     pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
-    pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
-    pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
-    pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
+    pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls>=3.6.7)
+    pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle>=3.0.0)
+    pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht>=2.1.0)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
-    pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
-    pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
+    pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2>=1.1.0)
+    pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1>=0.1)
     pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
-    pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
-    pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice)
-    pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter)
-    pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec)
-    pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
-    pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
-    pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
-    pkg_search_module (speexdsp REQUIRED IMPORTED_TARGET speexdsp)
+    pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat>=56.40.101)
+    pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice>=56.4.100)
+    pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter>=5.40.101)
+    pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec>=56.60.100)
+    pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample>=1.2.101)
+    pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale>=3.1.101)
+    pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil>=55.75.100)
+    pkg_search_module (speexdsp IMPORTED_TARGET speexdsp)
     pkg_search_module (simdutf REQUIRED IMPORTED_TARGET simdutf)
     pkg_search_module (openssl REQUIRED IMPORTED_TARGET openssl)
     if (JAMI_PLUGIN)
@@ -680,6 +682,7 @@ else()
         PkgConfig::secp256k1
         PkgConfig::simdutf
         PkgConfig::openssl
+        ZLIB::ZLIB
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
@@ -759,6 +762,44 @@ else()
         @ONLY
     )
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/jami.pc DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+    # Man page generation
+    find_program(POD2MAN pod2man)
+    if (POD2MAN AND JAMI_DBUS)
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/jamid.1
+            COMMAND ${POD2MAN} --section=1 --release=${PROJECT_VERSION}
+                --center="Jami Daemon" ${CMAKE_CURRENT_SOURCE_DIR}/man/jamid.pod
+                ${CMAKE_CURRENT_BINARY_DIR}/jamid.1
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/man/jamid.pod
+            COMMENT "Generating jamid man page"
+        )
+        add_custom_target(man ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jamid.1)
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jamid.1
+            DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+    endif()
+
+    # Metainfo XML
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(PROVIDES_CONTENT "")
+        if (JAMI_DBUS)
+            string(APPEND PROVIDES_CONTENT "  <dbus type=\"user\">cx.ring.Ring</dbus>\n")
+        endif()
+        if (NOT BUILD_SHARED_LIBS)
+            string(APPEND PROVIDES_CONTENT "  <library>libjami.a</library>")
+        else()
+            string(APPEND PROVIDES_CONTENT "  <library>libjami.so</library>")
+        endif()
+        if (NOT PROVIDES_CONTENT STREQUAL "")
+            configure_file(
+                ${CMAKE_CURRENT_SOURCE_DIR}/net.jami.daemon.metainfo.xml.in
+                ${CMAKE_CURRENT_BINARY_DIR}/net.jami.daemon.metainfo.xml
+                @ONLY
+            )
+            install(FILES ${CMAKE_CURRENT_BINARY_DIR}/net.jami.daemon.metainfo.xml
+                DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+        endif()
+    endif()
 
     if (JAMI_NODEJS)
         # Build nodejs binding
