@@ -16,6 +16,24 @@
       "message": "Keep the official header from the FSF:\nhttps://www.gnu.org/licenses/gpl-howto.html\n\n This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see \u003chttps://www.gnu.org/licenses/\u003e.",
       "revId": "d4e5eb92e6c72aef64ad98965e8daa427c1d7c81",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e49656d_a8d8be9b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2026-03-31T19:47:28Z",
+      "side": 1,
+      "message": "Sounds good - closing this commit. Will update accordingly in the client.",
+      "parentUuid": "894d2caf_a779e67f",
+      "revId": "d4e5eb92e6c72aef64ad98965e8daa427c1d7c81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
