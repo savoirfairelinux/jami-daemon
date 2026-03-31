@@ -111,7 +111,7 @@ cd build
 cmake .. \
   -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
   -DANDROID_ABI=arm64-v8a \
-  -DANDROID_API=24 \
+  -DANDROID_API=29 \
   -DBUILD_EXTRA_TOOLS=On \
   -DJAMI_JNI=On \
   -DJAMI_JNI_PACKAGEDIR=java
@@ -217,6 +217,74 @@ To pass custom CMake arguments:
 ```bash
 docker build --tag jami-daemon --build-arg cmake_args="-DJAMI_NODEJS=On" .
 ```
+
+---
+
+## Using Nix development shells
+
+The repository includes a `flake.nix` that provides reproducible development
+shells with all build dependencies pre-configured.  This works on Linux
+(x86\_64, aarch64) and macOS (x86\_64, Apple Silicon).  Install
+[Nix](https://nixos.org/download/) with flake support first.
+
+### Native development (Linux or macOS)
+
+```bash
+nix develop
+```
+
+This drops you into a shell with every library and tool needed to build the
+daemon natively.  Then follow the standard CMake or Meson steps:
+
+```bash
+mkdir build && cd build
+cmake .. -DJAMI_DBUS=On      # Linux with D-Bus
+make -j$(nproc)
+```
+
+On macOS the shell automatically includes the required Apple SDK frameworks
+(CoreAudio, AVFoundation, VideoToolbox, etc.) instead of the Linux-specific
+packages (PulseAudio, ALSA, D-Bus, V4L2, …).
+
+### Cross-compiling for Android
+
+Dedicated shells set up the Android NDK toolchain, environment variables, and
+contrib paths.  Available on x86\_64-linux and macOS hosts:
+
+| Shell | Target ABI | NDK target triple |
+|-------|-----------|-------------------|
+| `android-arm64` | `arm64-v8a` | `aarch64-linux-android` |
+| `android-armv7a` | `armeabi-v7a` | `armv7a-linux-androideabi` |
+| `android-x86_64` | `x86_64` | `x86_64-linux-android` |
+
+Enter a shell and build:
+
+```bash
+# Enter the ARM64 Android cross-compilation shell
+nix develop .#android-arm64
+
+# Build with CMake (instructions are also printed on shell entry)
+mkdir -p build && cd build
+cmake .. \
+  -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+  -DANDROID_ABI=arm64-v8a \
+  -DANDROID_PLATFORM=29 \
+  -DJAMI_JNI=On \
+  -DJAMI_JNI_PACKAGEDIR=java
+make -j$(nproc)
+```
+
+For the x86\_64 emulator target:
+
+```bash
+nix develop .#android-x86_64
+```
+
+The shells export `ANDROID_NDK`, `CC`, `CXX`, `AR`, `TOOLCHAIN`, `TARGET`, and
+all other variables needed by both the contrib build system and CMake.
+
+> **Note:** The Android SDK/NDK is an unfree package.  The flake sets
+> `allowUnfree = true` and `android_sdk.accept_license = true` automatically.
 
 ---
 
