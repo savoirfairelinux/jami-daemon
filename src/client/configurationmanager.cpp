@@ -34,6 +34,7 @@
 #include "client/jami_signal.h"
 #include "audio/ringbufferpool.h"
 #include "connectivity/security/tlsvalidator.h"
+#include "telemetry.h"
 
 #include <dhtnet/ip_utils.h>
 #include <dhtnet/upnp/upnp_context.h>
@@ -172,6 +173,12 @@ unpinCertificate(const std::string& accountId, const std::string& certId)
     if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->certStore().unpinCertificate(certId);
     return {};
+}
+
+std::string
+exportTraces(const std::string& destinationPath)
+{
+    return jami::telemetry::exportTraces(destinationPath);
 }
 
 unsigned
