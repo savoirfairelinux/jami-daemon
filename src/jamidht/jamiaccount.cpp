@@ -58,6 +58,8 @@
 #include "connectivity/utf8_utils.h"
 #include "connectivity/ip_utils.h"
 
+#include "telemetry/calls_trace.h"
+
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
 #include "plugin/chatservicesmanager.h"
@@ -398,6 +400,13 @@ JamiAccount::newIncomingCall(const std::string& from,
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.jamiAccount.newOutgoingCall");
+    try {
+        span->SetAttribute("call.to_url", std::string(toUrl));
+        span->SetAttribute("call.account_id", getAccountID());
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     auto uri = Uri(toUrl);
     if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS) {
         // NOTE: In this case newOutgoingCall can act as "resumeConference" and just attach the
@@ -426,7 +435,11 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     if (!connectionManager_)
         return {};
 
-    connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
+    auto callSpanHandle = call->getCallSpan();
+    connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri), callSpanHandle](auto&& opts) {
+        auto iceSpan = jami::trace::startChildSpan(callSpanHandle, "daemon.jamiAccount.getIceOptions.cb");
+        opentelemetry::trace::Scope iceScope{iceSpan};
+
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
                 or not call->initIceMediaTransport(true, std::forward<dhtnet::IceTransportOptions>(opts))) {
@@ -449,6 +462,12 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 void
 JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
 {
+    auto span = jami::trace::startChildSpan(call->getCallSpan(), "daemon.jamiAccount.newOutgoingCallHelper");
+    try {
+        span->SetAttribute("call.peer", uri.authority());
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     JAMI_LOG("[Account {}] Calling peer {}", getAccountID(), uri.authority());
     try {
         startOutgoingCall(call, uri.authority());
@@ -655,6 +674,8 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
+    auto span = jami::trace::startChildSpan(mainCall->getCallSpan(), "daemon.jamiAccount.createSubCall");
+
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
     return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
@@ -662,6 +683,13 @@ JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
+    auto span = jami::trace::startChildSpan(call->getCallSpan(), "daemon.jamiAccount.startOutgoingCall");
+    try {
+        span->SetAttribute("call.to_uri", toUri);
+        span->SetAttribute("call.id", call->getCallId());
+    } catch (...) {}
+    opentelemetry::trace::Scope scope{span};
+
     if (not accountManager_ or not dht_) {
         call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
         return;
@@ -697,8 +725,16 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     call->addSubCall(*dummyCall);
     dummyCall->setIceMedia(call->getIceMedia());
-    auto sendRequest = [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
+    auto callSpanHandle = call->getCallSpan();
+    auto sendRequest = [this, wCall, toUri, dummyCall = std::move(dummyCall), callSpanHandle](const DeviceId& deviceId,
                                                                               bool eraseDummy) {
+        auto sendSpan = jami::trace::startChildSpan(callSpanHandle, "daemon.jamiAccount.sendRequest");
+        try {
+            sendSpan->SetAttribute("device.id", deviceId.toString());
+            sendSpan->SetAttribute("call.erase_dummy", eraseDummy);
+        } catch (...) {}
+        opentelemetry::trace::Scope sendScope{sendSpan};
+
         if (eraseDummy) {
             // Mark the temp call as failed to stop the main call if necessary
             if (dummyCall)

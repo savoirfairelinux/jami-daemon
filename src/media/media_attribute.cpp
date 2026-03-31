@@ -19,6 +19,7 @@
 #include "jami/media_const.h"
 #include "logger.h"
 #include "string_utils.h"
+#include "telemetry/calls_trace.h"
 
 namespace jami {
 
@@ -57,6 +58,12 @@ MediaAttribute::MediaAttribute(const libjami::MediaMap& mediaMap, bool secure)
 std::vector<MediaAttribute>
 MediaAttribute::buildMediaAttributesList(const std::vector<libjami::MediaMap>& mediaList, bool secure)
 {
+    auto span = jami::trace::callsTracer()->StartSpan("daemon.mediaAttribute.buildMediaAttributesList");
+    try {
+        span->SetAttribute("media.count", static_cast<int64_t>(mediaList.size()));
+        span->SetAttribute("media.secure", secure);
+    } catch (...) {}
+
     std::vector<MediaAttribute> mediaAttrList;
     mediaAttrList.reserve(mediaList.size());
 

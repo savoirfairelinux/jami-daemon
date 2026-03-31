@@ -1076,6 +1076,11 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
         Sdp::printSession(remoteSDP, "Remote active session:", sdp.getSdpDirection());
     }
 
+    // ── OTel: close the sdp.negotiation span now that PJSIP has finished
+    //    the offer/answer exchange.  For re-invites where startNegotiation()
+    //    was already called by Jami code this is a no-op (span already null).
+    sdp.onNegotiationDoneByPjsip();
+
     call->onMediaNegotiationComplete();
 }
 

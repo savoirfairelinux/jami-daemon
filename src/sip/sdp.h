@@ -293,6 +293,34 @@ private:
 
     // Offer/Answer flag.
     SdpDirection sdpDirection_ {SdpDirection::NONE};
+
+    // OTel — opaque handle to the parent call span.
+    std::shared_ptr<void> callSpan_ {};
+
+    /// Opaque handle to the sdp.negotiation child span.
+    std::shared_ptr<void> sdpSpan_ {};
+
+    /// Remote caller's W3C traceparent extracted from the incoming SDP.
+    std::string remoteTraceParent_ {};
+
+public:
+    /**
+     * Attach the parent call's OTel span handle so that SDP methods can emit
+     * trace events directly into the ongoing call lifecycle span.
+     */
+    void setCallSpan(std::shared_ptr<void> spanHandle) { callSpan_ = std::move(spanHandle); }
+
+    /**
+     * Close the sdp.negotiation span when PJSIP has already performed the
+     * offer/answer negotiation internally.
+     */
+    void onNegotiationDoneByPjsip();
+
+    /**
+     * Return the W3C traceparent extracted from the remote SDP offer, or
+     * an empty string if none was present.
+     */
+    const std::string& remoteTraceParent() const { return remoteTraceParent_; }
 };
 
 } // namespace jami
