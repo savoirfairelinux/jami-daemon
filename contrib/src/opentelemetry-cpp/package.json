@@ -1,0 +1,17 @@
+{
+    "name": "opentelemetry-cpp",
+    "version": "v1.19.0",
+    "url": "https://github.com/open-telemetry/opentelemetry-cpp/archive/__VERSION__.tar.gz",
+    "use_cmake": true,
+    "defines": [
+        "CMAKE_CXX_STANDARD=20",
+        "BUILD_SHARED_LIBS=OFF",
+        "BUILD_TESTING=OFF",
+        "WITH_OTLP_HTTP=ON",
+        "WITH_OTLP_GRPC=OFF",
+        "WITH_PROMETHEUS=OFF",
+        "WITH_EXAMPLES=OFF",
+        "WITH_FUNC_TESTS=OFF",
+        "OPENTELEMETRY_INSTALL=ON"
+    ]
+}

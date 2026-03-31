@@ -1,0 +1,34 @@
+{
+    "name": "curl",
+    "version": "8.12.1",
+    "cpe": "cpe:2.3:a:haxx:libcurl:8.12.1:*:*:*:*:*:*:*",
+    "url": "https://curl.se/download/curl-__VERSION__.tar.gz",
+    "use_cmake": true,
+    "deps": [
+        "libressl"
+    ],
+    "defines": [
+        "BUILD_SHARED_LIBS=OFF",
+        "BUILD_CURL_EXE=OFF",
+        "BUILD_TESTING=OFF",
+        "CURL_USE_OPENSSL=ON",
+        "CURL_USE_GNUTLS=OFF",
+        "CURL_USE_LIBSSH2=OFF",
+        "CURL_USE_LIBPSL=OFF",
+        "CURL_DISABLE_LDAP=ON",
+        "CURL_DISABLE_LDAPS=ON",
+        "CURL_DISABLE_DICT=ON",
+        "CURL_DISABLE_FILE=ON",
+        "CURL_DISABLE_FTP=ON",
+        "CURL_DISABLE_GOPHER=ON",
+        "CURL_DISABLE_IMAP=ON",
+        "CURL_DISABLE_MQTT=ON",
+        "CURL_DISABLE_POP3=ON",
+        "CURL_DISABLE_RTSP=ON",
+        "CURL_DISABLE_SMB=ON",
+        "CURL_DISABLE_SMTP=ON",
+        "CURL_DISABLE_TELNET=ON",
+        "CURL_DISABLE_TFTP=ON",
+        "CURL_DISABLE_VERBOSE_STRINGS=OFF"
+    ]
+}

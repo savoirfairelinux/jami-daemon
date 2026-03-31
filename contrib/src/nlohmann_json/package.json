@@ -1,0 +1,11 @@
+{
+    "name": "nlohmann_json",
+    "version": "3.11.3",
+    "url": "https://github.com/nlohmann/json/archive/v__VERSION__.tar.gz",
+    "use_cmake": true,
+    "defines": [
+        "JSON_BuildTests=OFF",
+        "JSON_Install=ON",
+        "JSON_MultipleHeaders=OFF"
+    ]
+}
