@@ -72,6 +72,7 @@ LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
                                  const std::string& scheme = {},
                                  const std::string& password = {});
+LIBJAMI_PUBLIC std::string exportTraces(const std::string& destinationPath = {});
 LIBJAMI_PUBLIC bool revokeDevice(const std::string& accountId,
                                  const std::string& deviceId,
                                  const std::string& scheme = {},

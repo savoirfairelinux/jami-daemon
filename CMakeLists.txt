@@ -64,6 +64,11 @@ if(NOT MSVC)
     endif()
     set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
 
+    # Make contrib visible to all find_package() calls, including those in subdirectories.
+    list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+    list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
+
     include(ProcessorCount)
     ProcessorCount(NPROC)
     if(NOT NPROC EQUAL 0)
@@ -287,6 +292,7 @@ if(JAMI_VIDEO)
     source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 endif()
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
+source_group("Source Files\\telemetry" FILES ${Source_Files__telemetry})
 
 if(MSVC)
     source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
@@ -320,6 +326,7 @@ endif()
 if (JAMI_PLUGIN)
     list (APPEND ALL_FILES ${Source_Files__plugin})
 endif()
+list (APPEND ALL_FILES ${Source_Files__telemetry})
 if (ANDROID)
     list (APPEND ALL_FILES ${ALL_FILES}
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_impl.cpp
@@ -428,6 +435,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/telemetry;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
@@ -627,9 +635,6 @@ if(MSVC)
 else()
     include (GNUInstallDirs)
     message("Contrib path: ${CONTRIB_PATH}")
-    list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
-    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
-    list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
     if (NOT JAMI_DATADIR)
         set(JAMI_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/jami")
     endif()
@@ -684,6 +689,7 @@ else()
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
+        jami-telemetry-deps
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
     target_compile_options(${PROJECT_NAME} PRIVATE

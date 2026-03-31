@@ -1,0 +1,361 @@
+# .gitlab-ci.yml
+---
+# ---------------------------------------------------------------------------
+# Jami Daemon – GitLab CI
+#
+# Runner requirements:
+#   Linux  (tag: nix-local)  — Nix multi-user with flakes enabled
+#   macOS  (tag: macOS)      — Nix + Xcode command-line tools
+#   iOS    (tag: ios)        — Xcode with iOS SDK (runs on macOS runner)
+#
+# Each nix-based job enters a devShell via `nix develop --command` so the
+# shellHook configures env vars, contrib paths, and cross-files automatically.
+# iOS jobs use Xcode directly without Nix.
+# ---------------------------------------------------------------------------
+
+default:
+  tags:
+    - nix-local          # <-- targets your local runner (see setup below)
+  interruptible: true
+
+# ---------------------------------------------------------------------------
+# Stages
+# ---------------------------------------------------------------------------
+stages:
+  - contribs
+  - build
+
+# ---------------------------------------------------------------------------
+# Reusable YAML anchors
+# ---------------------------------------------------------------------------
+.cmake-native: &cmake-native
+  cmake -S . -B build-cmake
+  -DBUILD_TESTING=ON
+  && cmake --build build-cmake -- -j$(nproc)
+
+.meson-native: &meson-native
+  meson setup build-meson
+  && ninja -C build-meson -j$(nproc)
+
+# ---------------------------------------------------------------------------
+# Contrib builds
+# ---------------------------------------------------------------------------
+contribs:native:
+  stage: contribs
+  cache:
+    key: contribs-native-otel
+    paths:
+      - contrib/x86_64-unknown-linux-gnu/
+  script:
+    - |
+      nix develop -i --command bash -exc '
+        if [ ! -d "contrib/x86_64-unknown-linux-gnu" ]; then
+          mkdir -p contrib/build-native
+          cd contrib/build-native
+          ../bootstrap
+          make JAMI_ENABLE_OTEL_EXPORT=1 -j$(nproc)
+        else
+          echo "Contribs already present, skipping build."
+        fi
+      '
+  artifacts:
+    paths:
+      - contrib/x86_64-unknown-linux-gnu/
+    expire_in: 1 day
+
+contribs:android-arm64:
+  stage: contribs
+  cache:
+    key: contribs-android-arm64-otel
+    paths:
+      - contrib/aarch64-linux-android/
+  script:
+    - |
+      nix develop .#android-arm64 -i --command bash -exc '
+        if [ ! -d "contrib/aarch64-linux-android" ]; then
+          export JAMI_ENABLE_OTEL_EXPORT=1
+          mkdir -p contrib/build-aarch64-linux-android
+          cd contrib/build-aarch64-linux-android
+          ../bootstrap --build=x86_64-pc-linux-gnu --host="$TARGET"
+          make JAMI_ENABLE_OTEL_EXPORT=1 -j$(nproc)  
+        else
+          echo "Contribs already present, skipping build."
+        fi
+      '
+  artifacts:
+    paths:
+      - contrib/aarch64-linux-android/
+    expire_in: 1 day
+
+contribs:android-armv7a:
+  stage: contribs
+  cache:
+    key: contribs-android-armv7a-otel
+    paths:
+      - contrib/armv7a-linux-androideabi/
+  script:
+    - |
+      nix develop .#android-armv7a -i --command bash -exc '
+        if [ ! -d "contrib/armv7a-linux-androideabi" ]; then
+          export JAMI_ENABLE_OTEL_EXPORT=1
+          mkdir -p contrib/build-armv7a-linux-androideabi
+          cd contrib/build-armv7a-linux-androideabi
+          ../bootstrap --build=x86_64-pc-linux-gnu --host="$TARGET"
+          make JAMI_ENABLE_OTEL_EXPORT=1 -j$(nproc) 
+        else
+          echo "Contribs already present, skipping build."
+        fi
+      '
+  artifacts:
+    paths:
+      - contrib/armv7a-linux-androideabi/
+    expire_in: 1 day
+
+# ---------------------------------------------------------------------------
+# Native x86_64 – default shell
+# ---------------------------------------------------------------------------
+native:cmake:
+  stage: build
+  needs: [contribs:native]
+  script:
+    - |
+      nix develop -i --command bash -exc '
+        cmake -S . -B build-cmake \
+          -DBUILD_CONTRIB=OFF \
+          -DBUILD_TESTING=ON \
+          -DJAMI_ENABLE_OTEL_EXPORT=On
+        cmake --build build-cmake -- -j$(nproc) 
+      '
+
+native:meson:
+  stage: build
+  needs: [contribs:native]
+  script:
+    - |
+      nix develop -i --command bash -exc '
+        meson setup build-meson -Dotel_export=true
+        ninja -C build-meson -j$(nproc)
+      '
+
+# ---------------------------------------------------------------------------
+# Android arm64-v8a
+# ---------------------------------------------------------------------------
+android-arm64:cmake:
+  stage: build
+  needs: [contribs:android-arm64]
+  script:
+    - |
+      nix develop .#android-arm64 -i --command bash -exc '
+        cmake -S . -B build-cmake \
+          -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM="$ANDROID_API" \
+          -DJAMI_JNI=On \
+          -DJAMI_JNI_PACKAGEDIR=java \
+          -DBUILD_CONTRIB=OFF \
+          -DBUILD_TESTING=OFF \
+          -DJAMI_ENABLE_OTEL_EXPORT=On
+        cmake --build build-cmake -- -j$(nproc) 
+      '
+
+
+# ---------------------------------------------------------------------------
+# Android armeabi-v7a
+# ---------------------------------------------------------------------------
+android-armv7a:cmake:
+  stage: build
+  needs: [contribs:android-armv7a]
+  script:
+    - |
+      nix develop .#android-armv7a -i --command bash -exc '
+        cmake -S . -B build-cmake \
+          -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI=armeabi-v7a \
+          -DANDROID_PLATFORM="$ANDROID_API" \
+          -DJAMI_JNI=On \
+          -DJAMI_JNI_PACKAGEDIR=java \
+          -DBUILD_CONTRIB=OFF \
+          -DBUILD_TESTING=OFF \
+          -DJAMI_ENABLE_OTEL_EXPORT=On
+        cmake --build build-cmake -- -j$(nproc) 
+      '
+
+
+# ===========================================================================
+# macOS (native build via Nix)
+# ===========================================================================
+contribs:macos:
+  stage: contribs
+  tags:
+    - macOS
+  cache:
+    key: contribs-macos-native
+    paths:
+      - contrib/native-build/
+      - contrib/*-apple-darwin*/
+  script:
+    - |
+      nix develop -i --command bash -exc '
+        TRIPLE=$(cc -dumpmachine)
+        CONTRIB_DIR="contrib/$TRIPLE"
+        if [ -d "$CONTRIB_DIR/lib" ]; then
+          echo "Contribs already present at $CONTRIB_DIR — skipping."
+        else
+          mkdir -p contrib/native-build
+          cd contrib/native-build
+          ../bootstrap --prefix="$(pwd)/../$TRIPLE"
+          make -j$(sysctl -n hw.ncpu)
+        fi
+      '
+  artifacts:
+    paths:
+      - contrib/*/
+    expire_in: 1 day
+
+macos:cmake:
+  stage: build
+  tags:
+    - macOS
+  needs: [contribs:macos]
+  script:
+    - |
+      nix develop -i --command bash -exc '
+        cmake -S . -B build-cmake \
+          -DBUILD_CONTRIB=OFF \
+          -DBUILD_TESTING=OFF
+        cmake --build build-cmake -- -j$(sysctl -n hw.ncpu)
+      '
+
+# ===========================================================================
+# iOS – arm64 device  (cross-compiled on macOS runner)
+# ===========================================================================
+contribs:ios-device:
+  stage: contribs
+  tags:
+    - ios
+  cache:
+    key: contribs-ios-device-arm64
+    paths:
+      - contrib/arm64-iPhoneOS/
+  script:
+    - |
+      nix develop .#ios-device --command bash -exc '
+        set -e
+        CONTRIB_FOLDER="$(pwd)/contrib/$BUILD_DIR"
+
+        if [ -d "$CONTRIB_FOLDER/lib" ]; then
+          echo "Contribs present at $CONTRIB_FOLDER — skipping."
+          exit 0
+        fi
+
+        mkdir -p "contrib/native-$BUILD_DIR"
+        cd "contrib/native-$BUILD_DIR"
+        ../bootstrap \
+          --host="$HOST" \
+          --disable-libav --disable-plugin --disable-libarchive \
+          --enable-ffmpeg \
+          --prefix="$CONTRIB_FOLDER"
+        make fetch
+        make -j$(sysctl -n hw.ncpu)
+      '
+  artifacts:
+    paths:
+      - contrib/arm64-iPhoneOS/
+    expire_in: 1 day
+
+ios-device:cmake:
+  stage: build
+  tags:
+    - ios
+  needs: [contribs:ios-device]
+  script:
+    - |
+      nix develop .#ios-device --command bash -exc '
+        set -e
+        CONTRIB_FOLDER="$(pwd)/contrib/$BUILD_DIR"
+        NPROC=$(sysctl -n hw.ncpu)
+
+        cmake -S . -B "build-ios-$BUILD_DIR" \
+          -DCMAKE_SYSTEM_NAME=iOS \
+          -DCMAKE_OSX_SYSROOT="$SDKROOT" \
+          -DCMAKE_OSX_ARCHITECTURES=arm64 \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET="$MIN_IOS_VERSION" \
+          -DCMAKE_INSTALL_PREFIX="$(pwd)/install-$BUILD_DIR" \
+          -DCMAKE_C_FLAGS="-miphoneos-version-min=$MIN_IOS_VERSION" \
+          -DCMAKE_CXX_FLAGS="-miphoneos-version-min=$MIN_IOS_VERSION" \
+          -DCMAKE_FIND_ROOT_PATH="$CONTRIB_FOLDER" \
+          -DCMAKE_PREFIX_PATH="$CONTRIB_FOLDER" \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTING=OFF \
+          -DJAMI_DBUS=OFF \
+          -DJAMI_PLUGIN=OFF \
+          -DBUILD_CONTRIB=OFF
+        cmake --build "build-ios-$BUILD_DIR" --parallel "$NPROC"
+      '
+
+# ===========================================================================
+# iOS – arm64 simulator  (cross-compiled on macOS runner)
+# ===========================================================================
+contribs:ios-simulator:
+  stage: contribs
+  tags:
+    - ios
+  cache:
+    key: contribs-ios-simulator-arm64
+    paths:
+      - contrib/arm64-iPhoneSimulator/
+  script:
+    - |
+      nix develop .#ios-simulator --command bash -exc '
+        set -e
+        CONTRIB_FOLDER="$(pwd)/contrib/$BUILD_DIR"
+
+        if [ -d "$CONTRIB_FOLDER/lib" ]; then
+          echo "Contribs present at $CONTRIB_FOLDER — skipping."
+          exit 0
+        fi
+
+        mkdir -p "contrib/native-$BUILD_DIR"
+        cd "contrib/native-$BUILD_DIR"
+        ../bootstrap \
+          --host="$HOST" \
+          --disable-libav --disable-plugin --disable-libarchive \
+          --enable-ffmpeg \
+          --prefix="$CONTRIB_FOLDER"
+        make fetch
+        make -j$(sysctl -n hw.ncpu)
+      '
+  artifacts:
+    paths:
+      - contrib/arm64-iPhoneSimulator/
+    expire_in: 1 day
+
+ios-simulator:cmake:
+  stage: build
+  tags:
+    - ios
+  needs: [contribs:ios-simulator]
+  script:
+    - |
+      nix develop .#ios-simulator --command bash -exc '
+        set -e
+        CONTRIB_FOLDER="$(pwd)/contrib/$BUILD_DIR"
+        NPROC=$(sysctl -n hw.ncpu)
+
+        cmake -S . -B "build-ios-$BUILD_DIR" \
+          -DCMAKE_SYSTEM_NAME=iOS \
+          -DCMAKE_OSX_SYSROOT="$SDKROOT" \
+          -DCMAKE_OSX_ARCHITECTURES=arm64 \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET="$MIN_IOS_VERSION" \
+          -DCMAKE_INSTALL_PREFIX="$(pwd)/install-$BUILD_DIR" \
+          -DCMAKE_C_FLAGS="-mios-simulator-version-min=$MIN_IOS_VERSION" \
+          -DCMAKE_CXX_FLAGS="-mios-simulator-version-min=$MIN_IOS_VERSION" \
+          -DCMAKE_FIND_ROOT_PATH="$CONTRIB_FOLDER" \
+          -DCMAKE_PREFIX_PATH="$CONTRIB_FOLDER" \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTING=OFF \
+          -DJAMI_DBUS=OFF \
+          -DJAMI_PLUGIN=OFF \
+          -DBUILD_CONTRIB=OFF
+        cmake --build "build-ios-$BUILD_DIR" --parallel "$NPROC"
+      '

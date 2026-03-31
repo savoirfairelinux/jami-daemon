@@ -164,6 +164,11 @@ if conf.get('HAVE_PORTAUDIO') == 1 and host_machine.system() == 'windows'
     libjami_dependencies += depportaudio
 endif
 
+if conf.get('HAVE_AAUDIO') == 1
+    libjami_sources += files('media/audio/aaudio/aaudiolayer.cpp')
+    libjami_dependencies += depaaudio
+endif
+
 if conf.get('HAVE_COREAUDIO') == 1
     if meson.get_compiler('cpp').compiles(
         '''#import <TargetConditionals.h>
@@ -275,6 +280,11 @@ if conf.get('ENABLE_TRACEPOINTS')
     libjami_sources += files('jami/tracepoint.c')
     libjami_dependencies += deplttngust
 endif
+
+subdir('telemetry')
+libjami_sources += telemetry_sources
+libjami_includedirs = [libjami_includedirs, telemetry_incdirs]
+libjami_dependencies += telemetry_deps
 
 # https://ffmpeg.org/platform.html#Advanced-linking-configuration
 libjami_linkargs = meson.get_compiler('cpp').get_supported_link_arguments('-Wl,-Bsymbolic')
