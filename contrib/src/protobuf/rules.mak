@@ -10,7 +10,7 @@ PROTOBUF_CONF = -DBUILD_SHARED_LIBS=OFF \
 	-Dprotobuf_BUILD_TESTS=OFF \
 	-Dprotobuf_BUILD_EXAMPLES=OFF \
 	-Dprotobuf_WITH_ZLIB=OFF \
-	-Dprotobuf_INSTALL_CMAKEDIR=lib/cmake/protobuf
+	-DCMAKE_INSTALL_CMAKEDIR=lib/cmake/protobuf
 
 # When cross-compiling, only build the runtime library for the target.
 # The host protoc binary comes from the nix development shell.

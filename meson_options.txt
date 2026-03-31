@@ -19,3 +19,5 @@ option('speex_ap', type: 'feature', value: 'auto', description: 'Enable support 
 option('natpmp_prefix', type: 'string', value: '', description: 'Override a system directory to search for the library "natpmp"')
 option('tests', type: 'boolean', value: false, description: 'Build tests')
 option('tracepoints', type: 'boolean', value: false, description: 'Enable tracepoints')
+option('otel', type: 'boolean', value: true, description: 'Enable OpenTelemetry tracing')
+option('otel_export', type: 'boolean', value: false, description: 'Enable OTLP HTTP export for OpenTelemetry')
