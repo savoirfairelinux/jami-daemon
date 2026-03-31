@@ -1,0 +1,13 @@
+{
+    "name": "protobuf",
+    "version": "v3.21.12",
+    "url": "https://github.com/protocolbuffers/protobuf/archive/__VERSION__.tar.gz",
+    "use_cmake": true,
+    "defines": [
+        "BUILD_SHARED_LIBS=OFF",
+        "protobuf_BUILD_TESTS=OFF",
+        "protobuf_BUILD_EXAMPLES=OFF",
+        "protobuf_WITH_ZLIB=OFF",
+        "protobuf_BUILD_CMAKEDIR=lib/cmake/protobuf"
+    ]
+}

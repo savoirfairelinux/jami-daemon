@@ -30,6 +30,7 @@ finds via pkg-config.
 - libgit2
 - speexdsp
 - libupnp
+- opentelemetry-cpp
 - libnatpmp
 - webrtc-audio-processing 0.3.x *(optional — echo cancellation)*
 - restinio *(required only with `BUILD_TESTING=ON` for namedirectory tests)*
