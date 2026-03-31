@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d11e707d_5babe27e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-31T19:47:30Z",
+      "side": 1,
+      "message": "The whole point of visibility\u003dhidden is to not export hidden symbols in shared libs. It has no effects on static libs.\n\nTo my knowledge, Jami doesn\u0027t depend directly on OpenSSL. Dependencies using OpenSSL are supposed to expose them as dependencies through pkg-config files, causing cmake to link them properly.",
+      "revId": "af23ec588decd63df4b07bc5710464cece7c77a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
