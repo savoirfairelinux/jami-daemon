@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2684fa58_dfcc1691",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 2341,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-31T18:22:27Z",
+      "side": 1,
+      "message": "Log an error if `memberUri` is empty? Or are there cases where it\u0027s actually expected to be empty?",
+      "range": {
+        "startLine": 2341,
+        "startChar": 4,
+        "endLine": 2341,
+        "endChar": 27
+      },
+      "revId": "435958acc19509d85eced98ec8d8a15a5e110916",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
