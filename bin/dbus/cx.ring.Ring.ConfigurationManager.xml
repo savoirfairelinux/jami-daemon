@@ -186,6 +186,18 @@
             </arg>
         </method>
 
+        <method name="exportTraces" tp:name-for-bindings="exportTraces">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Export the daemon trace ring buffer to a local JSON file.
+               If the destination path is empty, the daemon chooses a cache file path.
+            </tp:docstring>
+            <arg type="s" name="destinationPath" direction="in">
+            </arg>
+            <arg type="s" name="exportedPath" direction="out">
+            </arg>
+        </method>
+
         <signal name="deviceAuthStateChanged" tp:name-for-bindings="deviceAuthStateChanged">
             <tp:docstring>
                Notify clients when the device authentication state changed. During the import-account process.

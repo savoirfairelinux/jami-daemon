@@ -1,3 +1,6 @@
 This directory holds all the documentation files. This documentation
 is made available online on the jami.net website, as well as in other
 documentation areas.
+
+Relevant documents:
+- telemetry-architecture.md: proposed OpenTelemetry subsystem split, public API, and concurrency model.

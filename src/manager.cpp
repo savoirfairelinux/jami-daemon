@@ -27,6 +27,7 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "jami.h"
+#include "telemetry.h"
 #include "media_attribute.h"
 #include "account.h"
 #include "string_utils.h"
@@ -735,6 +736,15 @@ Manager::setAutoAnswer(bool enable)
 void
 Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 {
+    const auto localDeviceIdPath = jami::fileutils::get_data_dir() / "local_device_id";
+    const bool localDeviceIdExisted = std::filesystem::exists(localDeviceIdPath);
+    const auto localDeviceId = fileutils::getOrCreateLocalDeviceId();
+
+    jami::telemetry::initTelemetry("jami-daemon", PACKAGE_VERSION, localDeviceId);
+    jami::telemetry::recordTrace("daemon.startup");
+    jami::telemetry::recordTrace("daemon.device_id.ready",
+                                 {{"jami.device_id_state", localDeviceIdExisted ? "loaded" : "created"}});
+
     // FIXME: this is no good
     initialized = true;
 
@@ -774,7 +784,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     setGnuTlsLogLevel();
     dhtLogLevel = getDhtLogLevel();
     dhtnetLogLevel = getDhtnetLogLevel();
-    pimpl_->upnpContext_->setMappingLabel("JAMI-" + fileutils::getOrCreateLocalDeviceId());
+    pimpl_->upnpContext_->setMappingLabel("JAMI-" + localDeviceId);
 
     JAMI_LOG("Using PJSIP version: {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
     JAMI_LOG("Using GnuTLS version: {:s}", gnutls_check_version(nullptr));
@@ -939,6 +949,8 @@ Manager::finish() noexcept
 #if defined _MSC_VER
         gnutls_global_deinit();
 #endif
+
+        jami::telemetry::shutdownTelemetry();
 
     } catch (const VoipLinkException& err) {
         JAMI_ERROR("[voip] {}", err.what());

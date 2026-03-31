@@ -85,6 +85,11 @@ public:
         return libjami::exportToFile(accountID, destinationPath, scheme, password);
     }
 
+    auto exportTraces(const std::string& destinationPath) -> decltype(libjami::exportTraces(destinationPath))
+    {
+        return libjami::exportTraces(destinationPath);
+    }
+
     auto provideAccountAuthentication(const std::string& accountID,
                                       const std::string& credentialsFromUser,
                                       const std::string& scheme)
