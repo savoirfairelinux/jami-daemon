@@ -688,7 +688,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
         // network...
         // ... we can increase
         if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
-            newBitrate *= static_cast<int>(std::lround(1.0f - rtcpi->packetLoss / 150.0f));
+            newBitrate = static_cast<int>(std::lround(newBitrate * (1.0f - rtcpi->packetLoss / 150.0f)));
             histoLoss_.clear();
             lastMediaRestart_ = now;
             JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from "
@@ -709,12 +709,12 @@ VideoRtpSession::delayProcessing(int br)
 {
     int newBitrate = static_cast<int>(videoBitrateInfo_.videoBitrateCurrent);
     if (br == 0x6803)
-        newBitrate *= static_cast<int>(std::lround(0.85f));
+        newBitrate = static_cast<int>(std::lround(newBitrate * 0.85f));
     else if (br == 0x7378) {
         auto now = clock::now();
         auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBitrateDecrease);
         auto increaseCoefficient = std::min(static_cast<float>(msSinceLastDecrease.count()) / 600000.0f + 1.0f, 1.05f);
-        newBitrate *= static_cast<int>(increaseCoefficient);
+        newBitrate = static_cast<int>(std::lround(newBitrate * increaseCoefficient));
     } else
         return;
 
