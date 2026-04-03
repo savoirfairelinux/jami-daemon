@@ -73,6 +73,7 @@ RUN add-apt-repository universe && \
 RUN apt-get install -y python3 python3-pip python3-setuptools \
                        python3-wheel pipx
 RUN pipx install meson
+RUN pipx ensurepath
 
 RUN ls -la /usr/include/c++/8/charconv
 
