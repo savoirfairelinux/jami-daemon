@@ -1058,7 +1058,14 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", static_cast<int64_t>(val), AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "videotoolbox"sv) {
-        av_opt_set_int(encoderCtx, "b", static_cast<int64_t>(val), AV_OPT_SEARCH_CHILDREN);
+        auto bitrate = static_cast<int64_t>(br * 1000);
+        av_opt_set_int(encoderCtx, "b", bitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", bitrate * 3 / 2, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", bitrate / 2, AV_OPT_SEARCH_CHILDREN);
+        // Low-latency: maps to kVTCompressionPropertyKey_RealTime
+        av_opt_set_int(encoderCtx->priv_data, "realtime", 1, 0);
+        JAMI_DBG("[BandwidthAdapt] VideoToolbox config: bitrate=%lld gop=%d",
+                 static_cast<long long>(bitrate), encoderCtx->gop_size);
     } else if (accel_->getName() == "qsv"sv) {
         // Use Video Conferencing Mode
         av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
