@@ -104,7 +104,7 @@ static std::list<HardwareAPI> apiListEnc = {
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
      {{"default", DeviceState::NOT_TESTED}},
-     false},
+     true},
     // Disable temporarily QSVENC
     // {"qsv",
     // AV_HWDEVICE_TYPE_QSV,
