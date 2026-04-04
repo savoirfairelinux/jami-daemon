@@ -1,0 +1,62 @@
+--- a/libavcodec/videotoolboxenc.c
++++ b/libavcodec/videotoolboxenc.c
+@@ -276,6 +276,7 @@
+     int max_slice_bytes;
+     int power_efficient;
+     int max_ref_frames;
++    int64_t last_bit_rate;
+ } VTEncContext;
+
+ static int vtenc_populate_extradata(AVCodecContext   *avctx,
+@@ -2611,6 +2612,51 @@
+ {
+     VTEncContext *vtctx = avctx->priv_data;
+     bool get_frame;
++
++    /* Dynamic bitrate: update VT session if avctx->bit_rate changed */
++    if (avctx->bit_rate > 0 && avctx->bit_rate != vtctx->last_bit_rate
++        && vtctx->session && !vtctx->constant_bit_rate) {
++        SInt32 new_bit_rate = (SInt32)avctx->bit_rate;
++        CFNumberRef bit_rate_num = CFNumberCreate(kCFAllocatorDefault,
++                                                  kCFNumberSInt32Type,
++                                                  &new_bit_rate);
++        if (bit_rate_num) {
++            OSStatus vt_status = VTSessionSetProperty(vtctx->session,
++                                    kVTCompressionPropertyKey_AverageBitRate,
++                                    bit_rate_num);
++            CFRelease(bit_rate_num);
++            if (vt_status == noErr) {
++                vtctx->last_bit_rate = avctx->bit_rate;
++
++                /* Also update DataRateLimits - this is the hard cap that
++                 * prevents the encoder from actually producing more data.
++                 * Allow 1.5x burst over 1 second for keyframes. */
++                int64_t limit_bytes = (int64_t)new_bit_rate * 3 / (8 * 2);
++                int64_t one_second = 1;
++                CFNumberRef bytes_num = CFNumberCreate(kCFAllocatorDefault,
++                                                       kCFNumberSInt64Type,
++                                                       &limit_bytes);
++                CFNumberRef sec_num = CFNumberCreate(kCFAllocatorDefault,
++                                                      kCFNumberSInt64Type,
++                                                      &one_second);
++                if (bytes_num && sec_num) {
++                    const void *nums[2] = { bytes_num, sec_num };
++                    CFArrayRef limits = CFArrayCreate(kCFAllocatorDefault,
++                                                      nums, 2,
++                                                      &kCFTypeArrayCallBacks);
++                    if (limits) {
++                        VTSessionSetProperty(vtctx->session,
++                            kVTCompressionPropertyKey_DataRateLimits,
++                            limits);
++                        CFRelease(limits);
++                    }
++                }
++                if (bytes_num) CFRelease(bytes_num);
++                if (sec_num) CFRelease(sec_num);
++            }
++        }
++    }
++
+     int status;
+     CMSampleBufferRef buf = NULL;
+     ExtraSEI *sei = NULL;

@@ -435,6 +435,7 @@ ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
+	$(APPLY) $(SRC)/ffmpeg/videotoolbox-dynamic-bitrate.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 	$(APPLY) $(SRC)/ffmpeg/pipewiregrab-source-filter.patch
 	$(UPDATE_AUTOCONFIG)
