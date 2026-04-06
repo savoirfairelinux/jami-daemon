@@ -85,7 +85,7 @@ CongestionControl::parseREMB(const rtcpREMBHeader& packet)
     bool shift_overflow = (bitrate_bps >> packet.br_exp) != packet.br_mantis;
     if (shift_overflow) {
         JAMI_ERR("Invalid remb bitrate value : %u*2^%u", packet.br_mantis, packet.br_exp);
-        return false;
+        return 0;
     }
     return bitrate_bps;
 }

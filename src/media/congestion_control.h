@@ -57,10 +57,10 @@ private:
 
     float last_thresh_y_ {2.0f};
 
-    unsigned overuse_counter_;
+    unsigned overuse_counter_ {0};
     time_point t0_overuse {time_point::min()};
 
-    BandwidthUsage last_state_;
+    BandwidthUsage last_state_ {bwNormal};
 };
 
 } // namespace jami
