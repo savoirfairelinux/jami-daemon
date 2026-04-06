@@ -683,14 +683,14 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
 {
     // Keep only last packet of each frame
     if (not marker) {
-        return 0;
+        return false;
     }
 
     // 1st frame
     if (lastSendTS_ == 0.0f) {
         lastSendTS_ = sendTS;
         lastReceiveTS_ = std::chrono::steady_clock::now();
-        return 0;
+        return false;
     }
 
     int32_t deltaS = static_cast<int32_t>((sendTS - lastSendTS_) * 1000); // milliseconds
