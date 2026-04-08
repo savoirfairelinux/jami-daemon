@@ -37,6 +37,7 @@
 #include "call_factory.h"
 
 #include "telemetry/calls_trace.h"
+#include "telemetry/push_trace.h"
 
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount_config.h"
@@ -1908,6 +1909,34 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         return;
     }
 
+    // ── OTel: reparent the call span under the pending push trace ────
+    try {
+        if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+            auto pushSpan = jamiAcc->consumePendingPushSpan();
+            if (pushSpan) {
+                // End the original call span that was created without a
+                // parent in Call::Call(), then create a new one as a child
+                // of the push-notification root span.
+                if (auto* old = jami::trace::spanFromHandle(call.getCallSpan()))
+                    old->End();
+                auto child = jami::trace::startChildSpan(pushSpan, "daemon.call.incoming");
+                if (auto* sp = child.get()) {
+                    sp->SetAttribute("call.id", call.getCallId());
+                    sp->SetAttribute("call.account_id", accountId);
+                }
+                // Re-set the call span handle via the public setter
+                // (callSpan_ is protected; use the addSubCall-style
+                //  reparenting pattern through a direct write).
+                call.setCallSpan(jami::trace::makeSpanHandle(std::move(child)));
+
+                // Keep the push root span alive: store it as an event on
+                // the new call span so the whole trace is connected.
+                if (auto* sp = jami::trace::spanFromHandle(call.getCallSpan()))
+                    sp->AddEvent("push.trace.linked");
+            }
+        }
+    } catch (...) {}
+
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
 }
@@ -2586,6 +2615,40 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
 
     JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
+
+    // ── OTel: annotate the call span with signal emission ────────────
+    try {
+        if (auto* span = jami::trace::spanFromHandle(incomCall.getCallSpan())) {
+            span->AddEvent("daemon.manager.incomingCall.signal_emitted", {
+                {"call.id",    incomCallId},
+                {"call.peer",  incomCall.getPeerNumber()},
+                {"call.media_count", static_cast<int64_t>(mediaList.size())},
+            });
+            // Produce traceparent that the JNI/Android side can retrieve.
+            auto tp = jami::trace::traceParentFromHandle(incomCall.getCallSpan());
+            if (!tp.empty())
+                span->SetAttribute("call.traceparent", tp);
+        }
+    } catch (...) {}
+
+    // ── OTel: end daemon.call.incoming now (call delivered to client) ─
+    // Start daemon.call.lifecycle as a child so it tracks the active call
+    // phase without blocking daemon.call.incoming from exporting quickly.
+    // Android's getCallTraceparent() is called after emitSignal, so it will
+    // receive lifecycle's traceparent and parent its spans there.
+    try {
+        auto incomingHandle = incomCall.getCallSpan();
+        if (auto* incoming = jami::trace::spanFromHandle(incomingHandle)) {
+            incoming->SetStatus(opentelemetry::trace::StatusCode::kOk);
+            incoming->End();
+            auto lifecycle = jami::trace::startChildSpan(incomingHandle, "daemon.call.lifecycle");
+            if (auto* lc = lifecycle.get()) {
+                lc->SetAttribute("call.id", incomCallId);
+                lc->SetAttribute("call.account_id", accountId);
+            }
+            incomCall.setCallSpan(jami::trace::makeSpanHandle(std::move(lifecycle)));
+        }
+    } catch (...) {}
 
     emitSignal<libjami::CallSignal::IncomingCall>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
 

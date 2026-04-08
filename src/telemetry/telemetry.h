@@ -65,5 +65,15 @@ void shutdownTelemetry();
  */
 std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanData>> drainSpans();
 
+/**
+ * Wake the background OTLP export thread so that spans buffered during a
+ * network outage are flushed immediately rather than waiting for the next
+ * periodic retry tick.
+ *
+ * Safe to call from any thread.  No-op when JAMI_OTEL_EXPORT_ENABLED is
+ * not defined or before initTelemetry() is called.
+ */
+void scheduleFlush() noexcept;
+
 } // namespace telemetry
 } // namespace jami

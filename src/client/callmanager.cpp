@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "telemetry/calls_trace.h"
 
 namespace libjami {
 
@@ -375,6 +376,18 @@ getCallList(const std::string& accountId)
     else if (const auto account = jami::Manager::instance().getAccount(accountId))
         return account->getCallList();
     JAMI_WARN("Unknown account: %s", accountId.c_str());
+    return {};
+}
+
+std::string
+getCallTraceparent(const std::string& accountId, const std::string& callId)
+{
+    try {
+        if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+            if (auto call = account->getCall(callId))
+                return jami::trace::traceParentFromHandle(call->getCallSpan());
+        }
+    } catch (...) {}
     return {};
 }
 

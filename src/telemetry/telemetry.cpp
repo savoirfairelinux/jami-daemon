@@ -39,6 +39,7 @@
 #include <opentelemetry/exporters/otlp/otlp_http_exporter.h>
 #include <opentelemetry/exporters/otlp/otlp_http_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_exporter_options.h>
+#include "retry_span_exporter.h"
 #endif
 
 #include <cstdlib>
@@ -63,6 +64,11 @@ std::shared_ptr<memory_exp::InMemorySpanData> g_inMemoryData;
 trace_sdk::TracerProvider* g_sdkProvider {nullptr};
 
 bool g_initialized {false};
+
+#ifdef JAMI_OTEL_EXPORT_ENABLED
+/// Raw pointer to the retry exporter so scheduleFlush() can wake it.
+jami::telemetry::RetryingSpanExporter* g_retryExporter {nullptr};
+#endif
 
 } // anonymous namespace
 
@@ -90,8 +96,10 @@ initTelemetry(const std::string& serviceName, const std::string& version)
         std::vector<std::unique_ptr<trace_sdk::SpanProcessor>> processors;
 
         // Chain 1: InMemory + Simple  (always active)
+        // Use a large buffer so spans generated during network outages survive
+        // long enough for the retry thread to forward them.
         {
-            auto exporter = memory_exp::InMemorySpanExporterFactory::Create(g_inMemoryData);
+            auto exporter = memory_exp::InMemorySpanExporterFactory::Create(g_inMemoryData, 4096);
             auto processor = trace_sdk::SimpleSpanProcessorFactory::Create(std::move(exporter));
             processors.push_back(std::move(processor));
         }
@@ -102,8 +110,10 @@ initTelemetry(const std::string& serviceName, const std::string& version)
             namespace otlp = opentelemetry::exporter::otlp;
 
             otlp::OtlpHttpExporterOptions opts;
-            // Default endpoint; overridden at runtime if env var is set.
-            opts.url = "http://localhost:4318/v1/traces";
+            // Default endpoint — same IP as JamiApplicationFirebase so the
+            // daemon does not rely on `adb reverse tcp:4318 tcp:4318`.
+            // Override at runtime by setting OTEL_EXPORTER_OTLP_ENDPOINT.
+            opts.url = "http://192.168.49.117:4318/v1/traces";
             const char* envEndpoint = std::getenv("OTEL_EXPORTER_OTLP_ENDPOINT");
             if (envEndpoint && envEndpoint[0] != '\0') {
                 std::string ep(envEndpoint);
@@ -112,8 +122,16 @@ initTelemetry(const std::string& serviceName, const std::string& version)
                     ep += "/v1/traces";
                 opts.url = ep;
             }
+            // set console_debug = true to print raw HTTP status to logcat
 
-            auto exporter = otlp::OtlpHttpExporterFactory::Create(opts);
+            auto otlpExporter = otlp::OtlpHttpExporterFactory::Create(opts);
+            // Wrap with retry logic so spans buffered during network outages
+            // are re-attempted every ~15 s instead of being silently dropped.
+            // Pass the endpoint URL so the exporter can TCP-probe reachability.
+            auto retryPtr = std::make_unique<RetryingSpanExporter>(
+                std::move(otlpExporter), opts.url);
+            g_retryExporter = retryPtr.get();
+            auto exporter   = std::move(retryPtr);
 
             trace_sdk::BatchSpanProcessorOptions bspOpts;
             bspOpts.max_queue_size        = 2048;
@@ -184,6 +202,9 @@ shutdownTelemetry()
     g_sdkProvider  = nullptr;
     g_inMemoryData.reset();
     g_initialized  = false;
+#ifdef JAMI_OTEL_EXPORT_ENABLED
+    g_retryExporter = nullptr;
+#endif
     JAMI_LOG("[otel] Telemetry shut down");
 }
 
@@ -194,6 +215,16 @@ drainSpans()
     if (g_inMemoryData)
         return g_inMemoryData->GetSpans();
     return {};
+}
+
+void
+scheduleFlush() noexcept
+{
+#ifdef JAMI_OTEL_EXPORT_ENABLED
+    std::lock_guard lk {g_telemetryMutex};
+    if (g_retryExporter)
+        g_retryExporter->notifyNetworkAvailable();
+#endif
 }
 
 } // namespace telemetry

@@ -76,6 +76,7 @@ bool transfer(const std::string& accountId, const std::string& callId, const std
 bool attendedTransfer(const std::string& accountId, const std::string& transferID, const std::string& targetID);
 std::map<std::string, std::string> getCallDetails(const std::string& accountId, const std::string& callId);
 std::vector<std::string> getCallList(const std::string& accountId);
+std::string getCallTraceparent(const std::string& accountId, const std::string& callId);
 
 /* Conference related methods */
 bool joinParticipant(const std::string& accountId, const std::string& sel_callId, const std::string& account2Id, const std::string& drag_callId);

@@ -116,6 +116,16 @@ public:
     std::shared_ptr<void> getCallSpan() const { return callSpan_; }
 
     /**
+     * Replace the opaque call span handle (e.g. to reparent the call
+     * under a push-notification trace).  Calls onCallSpanReparented()
+     * so that subclasses can propagate the new handle.
+     */
+    void setCallSpan(std::shared_ptr<void> span) {
+        callSpan_ = std::move(span);
+        onCallSpanReparented();
+    }
+
+    /**
      * Return a reference on the conference id
      * @return call id
      */

@@ -16,6 +16,7 @@ if get_option('otel')
     telemetry_sources = files(
         'telemetry.cpp',
         'remote_tracer.cpp',
+        'retry_span_exporter.cpp',
     )
     telemetry_incdirs = [include_directories('.')]
 

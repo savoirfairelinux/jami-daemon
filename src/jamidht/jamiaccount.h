@@ -372,6 +372,17 @@ public:
      */
     void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+    /**
+     * Store a push-notification span so that the incoming Call created
+     * asynchronously by the DHT layer can be parented under the same trace.
+     */
+    void storePendingPushSpan(std::shared_ptr<void> span);
+
+    /**
+     * Consume (move out) the pending push span.  Returns nullptr if none.
+     */
+    std::shared_ptr<void> consumePendingPushSpan();
+
     std::string getUserUri() const override;
 
     /**
@@ -893,6 +904,11 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     std::mutex rdvMtx_;
+
+    /// Pending push-notification span (set by pushNotificationReceived,
+    /// consumed by Call::Call to parent the incoming call under the push trace).
+    std::mutex pushTraceMtx_;
+    std::shared_ptr<void> pendingPushSpan_;
 
     int dhtBoundPort_ {0};
 

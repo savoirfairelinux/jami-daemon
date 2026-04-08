@@ -59,6 +59,8 @@
 #include "connectivity/ip_utils.h"
 
 #include "telemetry/calls_trace.h"
+#include "telemetry/push_trace.h"
+#include "telemetry/telemetry.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -387,13 +389,35 @@ JamiAccount::newIncomingCall(const std::string& from,
         auto call = Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING, mediaList);
         call->setPeerUri(JAMI_URI_PREFIX + from);
         call->setPeerNumber(from);
-
         call->setSipTransport(sipTransp, getContactHeader(sipTransp));
+
+        // ── OTel: annotate the call span with SIP layer context ───────────────
+        // Getting here means ICE + TLS + DHT channel + SIP transport are all
+        // up and the INVITE has arrived.  Manager::incomingCall() is next.
+        try {
+            if (auto* span = jami::trace::spanFromHandle(call->getCallSpan())) {
+                span->AddEvent("daemon.sip.incoming_call_created", {
+                    {"call.from", from},
+                    {"call.media_count", static_cast<int64_t>(mediaList.size())},
+                });
+            }
+        } catch (...) {}
 
         return call;
     }
 
     JAMI_ERR("newIncomingCall: unable to find matching call for %s", from.c_str());
+    // ── OTel: no SIP transport — call cannot be created ────────────────
+    try {
+        auto tracer = jami::trace::callsTracer();
+        auto span = tracer->StartSpan("daemon.sip.incoming_call_no_transport");
+        span->SetAttribute("account.id", getAccountID());
+        span->SetAttribute("call.from", from);
+        span->SetAttribute("call.media_count", static_cast<int64_t>(mediaList.size()));
+        span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                        "newIncomingCall: no SIP transport available");
+        span->End();
+    } catch (...) {}
     return nullptr;
 }
 
@@ -2110,6 +2134,24 @@ JamiAccount::initDhtContext()
             break;
         }
 
+        // ── OTel: emit a stand-alone instant span on every DHT status change ──
+        // This is a root span (no push parent) so it appears in the service
+        // timeline and lets us see exactly when the DHT goes
+        // Disconnected → Connecting → Connected.
+        try {
+            auto tracer = jami::trace::callsTracer();
+            auto span = tracer->StartSpan("daemon.dht.node_status_changed");
+            span->SetAttribute("account.id", getAccountID());
+            span->SetAttribute("dht.status.ipv4", std::string(dht::statusToStr(s4)));
+            span->SetAttribute("dht.status.ipv6", std::string(dht::statusToStr(s6)));
+            span->SetAttribute("dht.status.effective", std::string(dht::statusToStr(newStatus)));
+            span->SetAttribute("dht.registration_state",
+                               Account::mapStateNumberToString(state));
+            if (newStatus == dht::NodeStatus::Disconnected)
+                span->SetStatus(opentelemetry::trace::StatusCode::kError, "DHT disconnected");
+            span->End();
+        } catch (...) {}
+
         setRegistrationState(state);
     };
 
@@ -2181,6 +2223,19 @@ JamiAccount::onAccountDeviceAnnounced()
 bool
 JamiAccount::onICERequest(const DeviceId& deviceId)
 {
+    // ── OTel: record every ICE negotiation attempt from a peer ───────────────
+    // This fires when the connection manager wants to establish an ICE
+    // session toward a specific remote device.  Seeing this span means the
+    // push notification reached the DHT and the peer signalled its presence.
+    auto ice_span = jami::trace::makeSpanHandle(
+        jami::trace::callsTracer()->StartSpan("daemon.dht.ice_request"));
+    try {
+        if (auto* s = jami::trace::spanFromHandle(ice_span)) {
+            s->SetAttribute("account.id", getAccountID());
+            s->SetAttribute("device.id", deviceId.toString());
+        }
+    } catch (...) {}
+
     std::promise<bool> accept;
     std::future<bool> fut = accept.get_future();
     accountManager_->findCertificate(deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
@@ -2199,6 +2254,16 @@ JamiAccount::onICERequest(const DeviceId& deviceId)
     });
     fut.wait();
     auto result = fut.get();
+    try {
+        if (auto* s = jami::trace::spanFromHandle(ice_span)) {
+            s->SetAttribute("ice_request.accepted", result);
+            if (!result) {
+                s->AddEvent("ice_request.rejected");
+                s->SetStatus(opentelemetry::trace::StatusCode::kError, "ICE request rejected — cert not trusted or not found");
+            }
+            s->End();
+        }
+    } catch (...) {}
     return result;
 }
 
@@ -2210,19 +2275,42 @@ JamiAccount::onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& c
     if (this->config().turnEnabled && turnCache_) {
         auto addr = turnCache_->getResolvedTurn();
         if (addr == std::nullopt) {
-            // If TURN is enabled, but no TURN cached, there can be a temporary
-            // resolution error to solve. Sometimes, a connectivity change is not
-            // enough, so even if this case is really rare, it should be easy to avoid.
             turnCache_->refresh();
         }
     }
 
     auto uri = Uri(name);
-    std::shared_lock lk(connManagerMtx_);
-    auto itHandler = channelHandlers_.find(uri.scheme());
-    if (itHandler != channelHandlers_.end() && itHandler->second)
-        return itHandler->second->onRequest(cert, name);
-    return name == "sip";
+    bool result = false;
+    {
+        std::shared_lock lk(connManagerMtx_);
+        auto itHandler = channelHandlers_.find(uri.scheme());
+        if (itHandler != channelHandlers_.end() && itHandler->second)
+            result = itHandler->second->onRequest(cert, name);
+        else
+            result = (name == "sip");
+    }
+
+    // ── OTel: record every channel request (sip, git://, sync, etc.) ───────
+    // "sip" means a call is being established; any rejection here means
+    // the call will never reach the SIP/call layer.
+    try {
+        auto tracer = jami::trace::callsTracer();
+        auto span = tracer->StartSpan("daemon.dht.channel_request");
+        span->SetAttribute("account.id", getAccountID());
+        span->SetAttribute("device.id", cert->getLongId().toString());
+        span->SetAttribute("channel.name", name);
+        span->SetAttribute("channel.scheme", std::string(Uri(name).scheme() == Uri::Scheme::SIP ? "sip"
+                                                                                                 : name.substr(0, name.find(':'))));
+        span->SetAttribute("channel_request.accepted", result);
+        if (!result) {
+            span->AddEvent("channel_request.rejected");
+            span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                            "Channel request rejected for: " + name);
+        }
+        span->End();
+    } catch (...) {}
+
+    return result;
 }
 
 void
@@ -2610,6 +2698,21 @@ JamiAccount::connectivityChanged()
         return;
     }
     JAMI_WARNING("[{}] connectivityChanged", getAccountID());
+
+    // ── OTel: instant span so we can see when Android signals network recovery ──
+    try {
+        auto tracer = jami::trace::callsTracer();
+        auto span = tracer->StartSpan("daemon.dht.android_connectivity_changed");
+        span->SetAttribute("account.id", getAccountID());
+        span->SetAttribute("dht.registration_state",
+                           Account::mapStateNumberToString(registrationState_));
+        span->SetAttribute("dht.running", dht_ && dht_->isRunning());
+        span->End();
+    } catch (...) {}
+
+    // Wake the telemetry retry thread immediately — connectivity may have
+    // been restored and buffered spans can now be exported.
+    jami::telemetry::scheduleFlush();
 
     if (auto* cm = convModule())
         cm->connectivityChanged();
@@ -3383,16 +3486,86 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
     return false;
 }
 
+// ── OTel helper: PushNotificationResult → human-readable string ──────
+static const char*
+pushNotifResultName(dht::PushNotificationResult r)
+{
+    switch (r) {
+    case dht::PushNotificationResult::PutRefresh:           return "PutRefresh";
+    case dht::PushNotificationResult::ListenRefresh:        return "ListenRefresh";
+    case dht::PushNotificationResult::Values:               return "Values";
+    case dht::PushNotificationResult::ValuesExpired:        return "ValuesExpired";
+    case dht::PushNotificationResult::IgnoredWrongSession:  return "IgnoredWrongSession";
+    case dht::PushNotificationResult::IgnoredNoOp:          return "IgnoredNoOp";
+    case dht::PushNotificationResult::IgnoredStopped:       return "IgnoredStopped";
+    case dht::PushNotificationResult::IgnoredDisabled:      return "IgnoredDisabled";
+    case dht::PushNotificationResult::Error:                return "Error";
+    default:                                                return "Unknown";
+    }
+}
+
 /**
  * To be called by clients with relevant data when a push notification is received.
  */
 void
 JamiAccount::pushNotificationReceived(const std::string& /*from*/, const std::map<std::string, std::string>& data)
 {
+    // ── OTel: child span for the DHT forwarding step ──────────────────
+    std::shared_ptr<void> dhtSpan;
+    try {
+        std::lock_guard lk{pushTraceMtx_};
+        dhtSpan = jami::trace::makeSpanHandle(
+            jami::trace::startChildSpan(pendingPushSpan_, "daemon.push.account.dht_forward"));
+        if (auto* span = jami::trace::spanFromHandle(dhtSpan)) {
+            span->SetAttribute("account.id", getAccountID());
+            // Snapshot DHT state at the moment the push arrives so we can
+            // correlate "no daemon span" with "DHT was already down".
+            const bool dhtRunning = dht_ && dht_->isRunning();
+            span->SetAttribute("dht.running", dhtRunning);
+            span->SetAttribute("dht.proxy_enabled", config().proxyEnabled);
+            span->SetAttribute("dht.proxy_server", proxyServerCached_);
+            span->SetAttribute("dht.registration_state",
+                               Account::mapStateNumberToString(registrationState_));
+            if (!dhtRunning)
+                span->AddEvent("push.dht_not_running");
+        }
+    } catch (...) {}
+
     auto ret_future = dht_->pushNotificationReceived(data);
-    dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
-        JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) ret_future.get());
+    dht::ThreadPool::computation().run([id = getAccountID(),
+                                        ret_future = ret_future.share(),
+                                        dhtSpan = std::move(dhtSpan)] {
+        auto result = ret_future.get();
+        JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) result);
+        // End the DHT span once the future resolves.
+        try {
+            if (auto* span = jami::trace::spanFromHandle(dhtSpan)) {
+                span->SetAttribute("push.dht_result", static_cast<int64_t>(result));
+                span->SetAttribute("push.dht_result_name", pushNotifResultName(result));
+                // Anything >= IgnoredWrongSession means the push was not acted on.
+                if (result >= dht::PushNotificationResult::IgnoredWrongSession) {
+                    span->AddEvent("push.dht_ignored_or_error");
+                    span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                                    std::string("push not acted on: ") + pushNotifResultName(result));
+                }
+                span->End();
+            }
+        } catch (...) {}
     });
+}
+
+void
+JamiAccount::storePendingPushSpan(std::shared_ptr<void> span)
+{
+    std::lock_guard lk{pushTraceMtx_};
+    pendingPushSpan_ = std::move(span);
+}
+
+std::shared_ptr<void>
+JamiAccount::consumePendingPushSpan()
+{
+    std::lock_guard lk{pushTraceMtx_};
+    return std::move(pendingPushSpan_);
 }
 
 std::string
@@ -3850,6 +4023,21 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
             auto shared = w.lock();
             if (!shared)
                 return;
+            // ── OTel: SIP channel request got no answer from the DHT ──────
+            // This happens when the remote device is offline, the DHT proxy
+            // could not reach it, or the network stack was killed before
+            // the ICE exchange completed.  This is the decisive failure
+            // point for a missed call in the no-network scenario.
+            try {
+                auto tracer = jami::trace::callsTracer();
+                auto span = tracer->StartSpan("daemon.sip.connection_timed_out");
+                span->SetAttribute("account.id", shared->getAccountID());
+                span->SetAttribute("device.id", id.second.toString());
+                span->SetAttribute("peer.id", id.first);
+                span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                                "connectDevice timed out — no DHT response for SIP channel");
+                span->End();
+            } catch (...) {}
             // If this is triggered, this means that the
             // connectDevice didn't get any response from the DHT.
             // Stop searching pending call.
@@ -4005,11 +4193,35 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(shared(), socket, std::move(onShutdown));
     if (!sip_tr) {
         JAMI_ERROR("No channeled transport found");
+        // ── OTel: SIP transport creation failed despite having a channel ────
+        try {
+            auto tracer = jami::trace::callsTracer();
+            auto span = tracer->StartSpan("daemon.sip.transport_creation_failed");
+            span->SetAttribute("account.id", getAccountID());
+            span->SetAttribute("device.id", deviceId.toString());
+            span->SetAttribute("peer.id", peerId);
+            span->SetStatus(opentelemetry::trace::StatusCode::kError,
+                            "getChanneledTransport returned null — transport broker unavailable");
+            span->End();
+        } catch (...) {}
         return;
     }
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARNING("[Account {:s}] [device {}] New SIP channel opened", getAccountID(), deviceId);
+
+    // ── OTel: SIP transport established ───────────────────────────────────────
+    // Getting here means ICE, TLS, and channel setup all succeeded.
+    // A SIP INVITE can now be sent/received over this transport.
+    try {
+        auto tracer = jami::trace::callsTracer();
+        auto span = tracer->StartSpan("daemon.sip.transport_ready");
+        span->SetAttribute("account.id", getAccountID());
+        span->SetAttribute("device.id", deviceId.toString());
+        span->SetAttribute("peer.id", peerId);
+        span->End();
+    } catch (...) {}
+
     lk.unlock();
 
     // Retry messages

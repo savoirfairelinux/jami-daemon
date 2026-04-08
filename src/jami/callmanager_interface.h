@@ -56,6 +56,15 @@ LIBJAMI_PUBLIC std::map<std::string, std::string> getCallDetails(const std::stri
                                                                  const std::string& callId);
 LIBJAMI_PUBLIC std::vector<std::string> getCallList(const std::string& accountId);
 
+/**
+ * Return the W3C traceparent string for a live call's telemetry span.
+ * Returns an empty string if the call does not exist or has no active span.
+ * Used by the JNI/Android layer to continue a distributed trace across the
+ * process boundary after receiving the IncomingCall signal.
+ */
+LIBJAMI_PUBLIC std::string getCallTraceparent(const std::string& accountId,
+                                              const std::string& callId);
+
 /* APIs that supports an arbitrary number of media */
 LIBJAMI_PUBLIC bool acceptWithMedia(const std::string& accountId,
                                     const std::string& callId,

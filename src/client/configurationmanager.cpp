@@ -34,6 +34,7 @@
 #include "client/jami_signal.h"
 #include "audio/ringbufferpool.h"
 #include "connectivity/security/tlsvalidator.h"
+#include "telemetry/push_trace.h"
 
 #include <dhtnet/ip_utils.h>
 #include <dhtnet/upnp/upnp_context.h>
@@ -1142,11 +1143,25 @@ setPushNotificationConfig(const std::map<std::string, std::string>& data)
 void
 pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
+    // ── OTel: root span for the push-notification flow ───────────────
+    std::shared_ptr<void> pushSpan;
+    try {
+        pushSpan = jami::trace::startPushRootSpan(data);
+        if (auto* span = jami::trace::spanFromHandle(pushSpan)) {
+            span->SetAttribute("push.from", from);
+            span->AddEvent("daemon.push.configmanager.dispatch");
+        }
+    } catch (...) {}
+
     try {
         auto it = data.find("to");
         if (it != data.end()) {
-            if (auto account = jami::Manager::instance().getAccount<JamiAccount>(it->second))
+            if (auto account = jami::Manager::instance().getAccount<JamiAccount>(it->second)) {
+                // Store the push span so the incoming Call can be parented
+                // under the same trace when it is created asynchronously.
+                account->storePendingPushSpan(pushSpan);
                 account->pushNotificationReceived(from, data);
+            }
         }
 #if defined(__ANDROID__) || defined(ANDROID) || defined(__Apple__)
         else {
@@ -1157,6 +1172,10 @@ pushNotificationReceived(const std::string& from, const std::map<std::string, st
 #endif
     } catch (const std::exception& e) {
         JAMI_ERR("Error processing push notification: %s", e.what());
+        try {
+            if (auto* span = jami::trace::spanFromHandle(pushSpan))
+                span->SetStatus(opentelemetry::trace::StatusCode::kError, e.what());
+        } catch (...) {}
     }
 }
 

@@ -5,14 +5,16 @@ nodejs_wrapper_target = custom_target('nodejs.wrapper',
 )
 
 nodejs_makefile_target = custom_target('nodejs.makefile',
-    command: [prognodegyp, 'configure', '--target=v14.16.1', '--arch=x64'],
-    output: 'build/Makefile',
+    command: ['sh', '-c',
+              prognodegyp.full_path() + ' configure --target=v14.16.1 --arch=x64 && touch @OUTPUT@'],
+    output: 'nodejs_makefile.stamp',
     depends: nodejs_wrapper_target
 )
 
 nodejs_node_target = custom_target('nodejs.node',
-    command: [prognodegyp, 'build'],
-    output: 'build/Release/obj.target/jami.node',
+    command: ['sh', '-c',
+              prognodegyp.full_path() + ' build && touch @OUTPUT@'],
+    output: 'nodejs_node.stamp',
     depends: nodejs_makefile_target,
     build_by_default: true
 )

@@ -91,7 +91,7 @@ remoteTracerProvider()
             namespace otlp = opentelemetry::exporter::otlp;
 
             otlp::OtlpHttpExporterOptions opts;
-            opts.url = "http://localhost:4318/v1/traces";
+            opts.url = "http://192.168.49.117:4318/v1/traces";
             const char* envEndpoint = std::getenv("OTEL_EXPORTER_OTLP_ENDPOINT");
             if (envEndpoint && envEndpoint[0] != '\0') {
                 std::string ep(envEndpoint);
