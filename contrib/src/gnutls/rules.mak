@@ -45,6 +45,13 @@ GNUTLS_CONF := \
 
 ifdef HAVE_MACOSX
 	GNUTLS_CONF += --without-brotli
+ifeq ($(ARCH),x86_64)
+	# Disable hardware acceleration to avoid duplicate GHASH/CLMUL
+    # symbols between GnuTLS and OpenSSL in static builds.
+    # Could increase CPU usage during heavy TLS operations
+    # (e.g. swarm history sync, file transfers).
+	GNUTLS_CONF += --disable-hardware-acceleration
+endif
 endif
 
 ifdef HAVE_IOS
