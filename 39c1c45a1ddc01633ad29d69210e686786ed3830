@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bbaaa80_c858569e",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-04-09T13:55:59Z",
+      "side": 1,
+      "message": "I think it\u0027s best to avoid disabling hardware accel. Also, which change introduced this and how?",
+      "range": {
+        "startLine": 49,
+        "startChar": 0,
+        "endLine": 53,
+        "endChar": 47
+      },
+      "revId": "39c1c45a1ddc01633ad29d69210e686786ed3830",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
