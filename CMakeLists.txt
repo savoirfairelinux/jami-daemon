@@ -719,6 +719,13 @@ else()
     endif()
     if (JAMI_PLUGIN)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
+        if (APPLE)
+            # minizip's pkg-config metadata can miss zstd when built statically.
+            # Link it explicitly to avoid unresolved ZSTD_* symbols at final app link.
+            if (EXISTS "${CONTRIB_PATH}/lib/libzstd.a")
+                target_link_libraries(${PROJECT_NAME} PUBLIC "${CONTRIB_PATH}/lib/libzstd.a")
+            endif()
+        endif()
     endif()
     if (webrtcap_FOUND)
         target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
