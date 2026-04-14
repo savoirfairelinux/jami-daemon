@@ -695,6 +695,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
 
+    if (!dummyCall) {
+        call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
+        return;
+    }
+
     call->addSubCall(*dummyCall);
     dummyCall->setIceMedia(call->getIceMedia());
     auto sendRequest = [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
@@ -1179,19 +1184,18 @@ AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
     return AccountManager::OnChangeCallback {
-        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
-        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
-        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            onConversationRequestAccepted(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
+                                             [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+                                             [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
-
 void
 JamiAccount::onContactAdded(const std::string& uri, bool confirmed)
 {
