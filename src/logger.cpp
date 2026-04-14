@@ -21,6 +21,7 @@
 #include <ctime>
 
 #include "client/jami_signal.h"
+#include "telemetry/otel_log_handler.h"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -180,55 +181,29 @@ formatPrintfArgs(const char* format, va_list ap)
     return ret;
 }
 
-struct Logger::Msg
-{
-    Msg() = delete;
+// ── Logger::Msg constructors (defined out-of-line; struct declared in logger.h)
 
-    Msg(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message)
-        : file_(stripDirName(file))
-        , line_(line)
-        , tag_(tag)
-        , payload_(std::move(message))
-        , level_(level)
-        , linefeed_(linefeed)
-        , header_(formatHeader(file_, line_))
-    {}
+Logger::Msg::Msg(int level, std::string_view file, unsigned line, bool linefeed,
+                 std::string_view tag, std::string&& message)
+    : file_(stripDirName(file))
+    , line_(line)
+    , tag_(tag)
+    , payload_(std::move(message))
+    , level_(level)
+    , linefeed_(linefeed)
+    , header_(formatHeader(file_, line_))
+{}
 
-    Msg(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, const char* fmt, va_list ap)
-        : file_(stripDirName(file))
-        , line_(line)
-        , tag_(tag)
-        , payload_(formatPrintfArgs(fmt, ap))
-        , level_(level)
-        , linefeed_(linefeed)
-        , header_(formatHeader(file_, line_))
-    {}
-
-    Msg(Msg&& other) = default;
-    Msg& operator=(Msg&& other) = default;
-
-    std::string_view file_;
-    unsigned line_;
-    std::string_view tag_;
-    std::string payload_;
-    int level_;
-    bool linefeed_;
-    std::string header_;
-};
-
-class Logger::Handler
-{
-public:
-    virtual ~Handler() = default;
-
-    virtual void consume(const Msg& msg) = 0;
-
-    virtual void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
-    bool isEnable() { return enabled_.load(std::memory_order_relaxed); }
-
-protected:
-    std::atomic_bool enabled_ {false};
-};
+Logger::Msg::Msg(int level, std::string_view file, unsigned line, bool linefeed,
+                 std::string_view tag, const char* fmt, va_list ap)
+    : file_(stripDirName(file))
+    , line_(line)
+    , tag_(tag)
+    , payload_(formatPrintfArgs(fmt, ap))
+    , level_(level)
+    , linefeed_(linefeed)
+    , header_(formatHeader(file_, line_))
+{}
 
 class ConsoleLog final : public Logger::Handler
 {
@@ -460,6 +435,7 @@ public:
     SysLog sysLog;
     MonitorLog monitorLog;
     FileLog fileLog;
+    OTelLogHandler otelLog;
 
     void enableFileLog(const std::string& path)
     {
@@ -505,9 +481,16 @@ public:
         checkStatus();
     }
 
+    void enableOTelLog(bool en)
+    {
+        otelLog.enable(en);
+        checkStatus();
+    }
+
     bool isEnabled()
     {
-        return consoleLog.isEnable() || sysLog.isEnable() || monitorLog.isEnable() || fileLog.isEnable();
+        return consoleLog.isEnable() || sysLog.isEnable() || monitorLog.isEnable()
+               || fileLog.isEnable() || otelLog.isEnable();
     }
 
 private:
@@ -551,6 +534,8 @@ private:
                     consoleLog.consume(msg);
                 if (fileLog.isEnable())
                     fileLog.consume(msg);
+                if (otelLog.isEnable())
+                    otelLog.consume(msg);
 
                 msg.payload_ = {};
                 msg.header_ = {};
@@ -591,6 +576,12 @@ void
 Logger::setFileLog(const std::string& path)
 {
     LogDispatcher::instance().enableFileLog(path);
+}
+
+void
+Logger::setOTelLog(bool en)
+{
+    LogDispatcher::instance().enableOTelLog(en);
 }
 
 LIBJAMI_PUBLIC void

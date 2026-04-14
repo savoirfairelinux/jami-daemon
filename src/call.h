@@ -112,15 +112,21 @@ public:
 
     /**
      * Return a copy of the opaque call span handle for telemetry.
+     * Thread-safe: protected by callMutex_.
      */
-    std::shared_ptr<void> getCallSpan() const { return callSpan_; }
+    std::shared_ptr<void> getCallSpan() const {
+        std::lock_guard lk{callMutex_};
+        return callSpan_;
+    }
 
     /**
      * Replace the opaque call span handle (e.g. to reparent the call
      * under a push-notification trace).  Calls onCallSpanReparented()
      * so that subclasses can propagate the new handle.
+     * Thread-safe: protected by callMutex_.
      */
     void setCallSpan(std::shared_ptr<void> span) {
+        std::lock_guard lk{callMutex_};
         callSpan_ = std::move(span);
         onCallSpanReparented();
     }

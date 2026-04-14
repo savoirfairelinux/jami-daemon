@@ -153,16 +153,34 @@ main()
     ASSERT_TRUE(foundOutgoing, "Found a span named 'call.outgoing'");
     ASSERT_TRUE(foundIncoming, "Found a span named 'call.incoming'");
 
-    // ── 4. Second drain should be empty ────────────────────────────────
-    auto spans2 = jami::telemetry::drainSpans();
-    ASSERT_TRUE(spans2.empty(), "Second drain is empty (destructive read)");
+    // ── 4. Non-destructive snapshot ────────────────────────────────────
+    // Re-create spans so the buffer is not empty for snapshot test
+    {
+        auto tracer = jami::trace::callsTracer();
+        auto span = tracer->StartSpan("call.snapshot_test");
+        span->End();
+    }
+    auto snapshots = jami::telemetry::snapshotSpans();
+    ASSERT_TRUE(!snapshots.empty(), "snapshotSpans() returns non-empty");
+    auto count1 = jami::telemetry::spanCount();
+    ASSERT_TRUE(count1 > 0, "spanCount() > 0 after snapshot (non-destructive)");
 
-    // ── 5. Shutdown ────────────────────────────────────────────────────
+    // ── 5. Export to JSON file ─────────────────────────────────────────
+    bool exported = jami::telemetry::exportSpansToFile("/tmp/jami_test_spans.json");
+    ASSERT_TRUE(exported, "exportSpansToFile() succeeds");
+
+    // ── 6. Drain should clear the buffer ───────────────────────────────
+    auto spans2 = jami::telemetry::drainSpans();
+    ASSERT_TRUE(!spans2.empty(), "drain after snapshot is non-empty");
+    auto spans3 = jami::telemetry::drainSpans();
+    ASSERT_TRUE(spans3.empty(), "Second drain is empty (destructive read)");
+
+    // ── 7. Shutdown ────────────────────────────────────────────────────
     jami::telemetry::shutdownTelemetry();
 
     // After shutdown, drainSpans should return empty (no crash)
-    auto spans3 = jami::telemetry::drainSpans();
-    ASSERT_TRUE(spans3.empty(), "drainSpans() after shutdown returns empty");
+    auto spans4 = jami::telemetry::drainSpans();
+    ASSERT_TRUE(spans4.empty(), "drainSpans() after shutdown returns empty");
 
     // After shutdown, tracer should be noop (no crash)
     {

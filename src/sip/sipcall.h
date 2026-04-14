@@ -489,7 +489,7 @@ private:
     std::shared_ptr<void> iceSpan_ {};
 
     /// Set once after the first successful distributed-trace re-parenting.
-    bool traceReparented_ {false};
+    std::atomic_bool traceReparented_ {false};
 
     /// Propagate a new callSpan_ to owned objects (Sdp).
     void onCallSpanReparented() override;

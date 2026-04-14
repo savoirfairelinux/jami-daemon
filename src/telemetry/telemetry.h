@@ -29,6 +29,7 @@
 #include <opentelemetry/nostd/shared_ptr.h>
 #include <opentelemetry/sdk/trace/span_data.h>
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,7 +56,7 @@ void initTelemetry(const std::string& serviceName, const std::string& version);
 void shutdownTelemetry();
 
 /**
- * Drain all spans captured by the in-memory exporter since the last drain.
+ * Drain all spans captured by the in-memory ring buffer since the last drain.
  *
  * This is a destructive read — the internal buffer is cleared.  Useful for
  * unit tests that want to assert span names/attributes.
@@ -64,6 +65,27 @@ void shutdownTelemetry();
  *         has not been initialized.
  */
 std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanData>> drainSpans();
+
+/**
+ * Non-destructive snapshot of all spans in the in-memory ring buffer.
+ * The buffer is not modified.
+ *
+ * @return Vector of SpanData copies, or empty if telemetry not initialized.
+ */
+std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanData>> snapshotSpans();
+
+/**
+ * Export the current ring buffer contents to a JSON file at @p path.
+ * Creates or overwrites the file.
+ *
+ * @return true on success, false if telemetry is not initialized or I/O fails.
+ */
+bool exportSpansToFile(const std::string& path);
+
+/**
+ * Return the number of spans currently held in the ring buffer.
+ */
+std::size_t spanCount();
 
 /**
  * Wake the background OTLP export thread so that spans buffered during a

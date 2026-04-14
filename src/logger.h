@@ -33,6 +33,7 @@
 #include <opendht/logger.h>
 #include <cstdarg>
 
+#include <atomic>
 #include <sstream>
 #include <string>
 
@@ -80,7 +81,43 @@ class Logger
 {
 public:
     class Handler;
-    struct Msg;
+
+    /// Immutable log message passed to Handler::consume().
+    /// Data members are public for handler access; construction is done
+    /// by Logger::vlog() and Logger::write() in logger.cpp.
+    struct Msg
+    {
+        std::string_view file_;
+        unsigned line_ {0};
+        std::string_view tag_;
+        std::string payload_;
+        int level_ {0};
+        bool linefeed_ {true};
+        std::string header_;
+
+        Msg() = delete;
+        // Rich constructors defined in logger.cpp (they need internal helpers).
+        Msg(int level, std::string_view file, unsigned line, bool linefeed,
+            std::string_view tag, std::string&& message);
+        Msg(int level, std::string_view file, unsigned line, bool linefeed,
+            std::string_view tag, const char* fmt, va_list ap);
+
+        Msg(Msg&& other) = default;
+        Msg& operator=(Msg&& other) = default;
+    };
+
+    /// Base class for log output handlers.  Handlers run on the
+    /// LogDispatcher's background thread — implement consume() accordingly.
+    class Handler
+    {
+    public:
+        virtual ~Handler() = default;
+        virtual void consume(const Msg& msg) = 0;
+        virtual void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
+        bool isEnable() { return enabled_.load(std::memory_order_relaxed); }
+    protected:
+        std::atomic_bool enabled_ {false};
+    };
 
     Logger(int level, const char* file, unsigned line, bool linefeed)
         : level_ {level}
@@ -150,6 +187,7 @@ public:
     static void setSysLog(bool enable);
     static void setMonitorLog(bool enable);
     static void setFileLog(const std::string& path);
+    static void setOTelLog(bool enable);
 
     static void setDebugMode(bool enable);
     static bool debugEnabled();

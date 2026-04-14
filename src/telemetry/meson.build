@@ -17,6 +17,8 @@ if get_option('otel')
         'telemetry.cpp',
         'remote_tracer.cpp',
         'retry_span_exporter.cpp',
+        'ring_buffer_span_exporter.cpp',
+        'otel_log_handler.cpp',
     )
     telemetry_incdirs = [include_directories('.')]
 

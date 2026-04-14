@@ -162,26 +162,34 @@ SIPCall::onCallSpanReparented()
 void
 SIPCall::tryReparentFromRemoteTrace()
 {
-    if (traceReparented_ || !sdp_ || sdp_->remoteTraceParent().empty())
+    if (traceReparented_.exchange(true) || !sdp_ || sdp_->remoteTraceParent().empty()) {
+        traceReparented_.store(false);
         return;
+    }
     try {
         auto remoteCtx = jami::trace::parseTraceParent(sdp_->remoteTraceParent());
-        if (!remoteCtx.IsValid())
+        if (!remoteCtx.IsValid()) {
+            traceReparented_.store(false);
             return;
-        traceReparented_ = true;
-        if (auto* old = jami::trace::spanFromHandle(callSpan_))
-            old->End();
-        auto span = jami::trace::startChildSpanWithRemoteContext(
-            remoteCtx, "daemon.call.incoming");
-        span->SetAttribute("call.id", getCallId());
-        span->SetAttribute("call.type",
-                           jami::trace::callTypeStr(
-                               static_cast<uint8_t>(getCallType())));
-        if (auto acc = getAccount().lock())
-            span->SetAttribute("call.account_id", acc->getAccountID());
-        callSpan_ = jami::trace::makeSpanHandle(std::move(span));
-        onCallSpanReparented();
-    } catch (...) {}
+        }
+        {
+            std::lock_guard lk{callMutex_};
+            if (auto* old = jami::trace::spanFromHandle(callSpan_))
+                old->End();
+            auto span = jami::trace::startChildSpanWithRemoteContext(
+                remoteCtx, "daemon.call.incoming");
+            span->SetAttribute("call.id", getCallId());
+            span->SetAttribute("call.type",
+                               jami::trace::callTypeStr(
+                                   static_cast<uint8_t>(getCallType())));
+            if (auto acc = getAccount().lock())
+                span->SetAttribute("call.account_id", acc->getAccountID());
+            callSpan_ = jami::trace::makeSpanHandle(std::move(span));
+            onCallSpanReparented();
+        }
+    } catch (...) {
+        traceReparented_.store(false);
+    }
 }
 
 SIPCall::~SIPCall()
@@ -2802,19 +2810,22 @@ SIPCall::startIceMedia()
     JAMI_DEBUG("[call:{}] Starting ICE", getCallId());
 
     // ── OTel: open ice.negotiation child span ───────────────────────────────
-    auto& iceSpanRef = (isSubcall() && parent_)
-        ? std::dynamic_pointer_cast<SIPCall>(parent_)->iceSpan_
-        : iceSpan_;
-    auto& rootCallSpan = (isSubcall() && parent_)
-        ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_
-        : callSpan_;
-    try {
-        if (auto* prev = jami::trace::spanFromHandle(iceSpanRef)) prev->End();
-        iceSpanRef = jami::trace::makeSpanHandle(
-            jami::trace::startChildSpan(rootCallSpan, "ice.negotiation"));
-        if (auto* span = jami::trace::spanFromHandle(iceSpanRef))
-            span->AddEvent("ice.negotiation.started");
-    } catch (...) {}
+    {
+        std::lock_guard lk{callMutex_};
+        auto& iceSpanRef = (isSubcall() && parent_)
+            ? std::dynamic_pointer_cast<SIPCall>(parent_)->iceSpan_
+            : iceSpan_;
+        auto& rootCallSpan = (isSubcall() && parent_)
+            ? std::dynamic_pointer_cast<SIPCall>(parent_)->callSpan_
+            : callSpan_;
+        try {
+            if (auto* prev = jami::trace::spanFromHandle(iceSpanRef)) prev->End();
+            iceSpanRef = jami::trace::makeSpanHandle(
+                jami::trace::startChildSpan(rootCallSpan, "ice.negotiation"));
+            if (auto* span = jami::trace::spanFromHandle(iceSpanRef))
+                span->AddEvent("ice.negotiation.started");
+        } catch (...) {}
+    }
 
     auto iceMedia = getIceMedia();
     if (not iceMedia or iceMedia->isFailed()) {
