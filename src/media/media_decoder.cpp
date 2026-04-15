@@ -159,11 +159,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
         av_dict_set(&options_, "draw_mouse", "1", 0);
         av_dict_set(&options_, "is_area", std::to_string(params.is_area).c_str(), 0);
 
-#if defined(__APPLE__) && TARGET_OS_MAC
-        input = params.name;
-#else
         input = params.input;
-#endif
 
         JAMI_LOG("Attempting to open input {} with format {}, pixel format {}, size {}x{}, rate {}",
                  input,
