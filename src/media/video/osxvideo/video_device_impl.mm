@@ -139,6 +139,19 @@ VideoDeviceImpl::getDeviceParams() const
     params.pixel_format = "nv12";
     params.width = current_size_.first;
     params.height = current_size_.second;
+    // ffmpeg's avfoundation demuxer parses the input URL as
+    // `video_name:audio_name` splitting on the first colon, so device names
+    // containing a colon (e.g. "USB Camera VID:1133 PID:2085") cannot be
+    // resolved by name. Build the URL as "<index>:none" using this device's
+    // position in the same AVCaptureDevice list ffmpeg enumerates.
+    NSArray<AVCaptureDevice*>* videoDevices =
+        [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    for (NSUInteger i = 0; i < [videoDevices count]; ++i) {
+        if ([[[videoDevices objectAtIndex:i] uniqueID] isEqualToString:[avDevice_ uniqueID]]) {
+            params.input = std::to_string(i) + ":none";
+            break;
+        }
+    }
     return params;
 }
 
