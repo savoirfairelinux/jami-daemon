@@ -242,6 +242,11 @@ FFMPEGCONF += --enable-libfreetype
 DEPS_ffmpeg += freetype
 endif
 
+ifdef WITH_HARFBUZZ
+FFMPEGCONF += --enable-libharfbuzz
+DEPS_ffmpeg += harfbuzz
+endif
+
 #platform specific options
 
 ifdef HAVE_WIN32
