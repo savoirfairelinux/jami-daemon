@@ -1,0 +1,7 @@
+{
+    "name": "harfbuzz",
+    "version": "8.4.0",
+    "cpe": "cpe:2.3:a:harfbuzz:harfbuzz:8.4.0:*:*:*:*:*:*:*",
+    "url": "https://github.com/harfbuzz/harfbuzz/releases/download/__VERSION__/harfbuzz-__VERSION__.tar.xz",
+    "use_cmake": false
+}
