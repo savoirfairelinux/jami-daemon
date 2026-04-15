@@ -139,6 +139,27 @@ VideoDeviceImpl::getDeviceParams() const
     params.pixel_format = "nv12";
     params.width = current_size_.first;
     params.height = current_size_.second;
+    // ffmpeg's avfoundation demuxer parses the input URL as `video:audio`,
+    // so names containing a colon (e.g. "USB Camera VID:1133 PID:2085")
+    // cannot be resolved by name. Use "<index>:none" where the index matches
+    // ffmpeg's enumeration; "none" is for "no device", e.g.
+    // `ffmpeg -f avfoundation -pixel_format bgr0 -i "default:none" out.avi`.
+    // https://ffmpeg.org/ffmpeg-devices.html#avfoundation
+    NSArray<AVCaptureDevice*>* videoDevices =
+        [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    bool found = false;
+    for (NSUInteger i = 0; i < [videoDevices count]; ++i) {
+        if ([[[videoDevices objectAtIndex:i] uniqueID] isEqualToString:[avDevice_ uniqueID]]) {
+            params.input = std::to_string(i) + ":none";
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        JAMI_WARN("avfoundation device %s not found in enumeration; falling back to index 0",
+                  [[avDevice_ uniqueID] UTF8String]);
+        params.input = "0:none";
+    }
     return params;
 }
 
