@@ -46,6 +46,30 @@
       },
       "revId": "32efed587137b1eaacab5027874ee5b7345f04b0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "90385300_9c09c97f",
+        "filename": "src/media/video/osxvideo/video_device_impl.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-04-16T17:58:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "83660c37_ff83efa8",
+      "range": {
+        "startLine": 163,
+        "startChar": 26,
+        "endLine": 163,
+        "endChar": 30
+      },
+      "revId": "32efed587137b1eaacab5027874ee5b7345f04b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
