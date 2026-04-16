@@ -82,6 +82,7 @@ private:
     void testInvalidJoin();
     void testInvalidFile();
     void testMergeWithInvalidFile();
+    void testCloneFailureDoesNotWipeExistingConversation();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -106,6 +107,7 @@ private:
     CPPUNIT_TEST(testInvalidJoin);               // Passes
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
+    CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1114,6 +1116,72 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
     CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+void
+ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
+{
+    // Regression test: a failed clone must NOT wipe an already-present
+    // conversation directory at the destination. Previously
+    // ConversationRepository::cloneConversation() unconditionally removed
+    // the target directory before attempting the clone, which meant any
+    // clone failure (network error, oversized pack, invalid remote, failed
+    // validation, ...) resulted in permanent loss of the previously-valid
+    // local conversation - opening the door to later syncing an empty
+    // conversation on top of peers.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    // Create a real, valid conversation locally.
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                          / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Record the head so we can verify the original history survives the
+    // failed clone attempt.
+    const auto originalHead = repository->getHead();
+    CPPUNIT_ASSERT(!originalHead.empty());
+
+    // Drop a sentinel file inside the repo workdir; it must still be there
+    // after the failed clone.
+    const auto sentinel = repoPath / "sentinel.precious";
+    {
+        std::ofstream(sentinel) << "do-not-delete";
+    }
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(sentinel));
+
+    // Release the repository handle so libgit2 isn't holding the workdir
+    // open while we trigger the clone path.
+    repository.reset();
+
+    // Force clone to resolve to a local file:// URL that does not exist so
+    // git_clone() fails fast without needing any network or peer setup.
+    const bool savedFlag = ConversationRepository::FETCH_FROM_LOCAL_REPOS;
+    ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
+
+    auto [clonedRepo, commits] = ConversationRepository::cloneConversation(
+        aliceAccount, "device-that-does-not-exist", convId);
+
+    ConversationRepository::FETCH_FROM_LOCAL_REPOS = savedFlag;
+
+    // Clone MUST have failed - the source does not exist.
+    CPPUNIT_ASSERT(clonedRepo == nullptr);
+    CPPUNIT_ASSERT(commits.empty());
+
+    // The pre-existing conversation directory, the sentinel file, and the
+    // original git history MUST still be intact. This is the behaviour the
+    // fix guarantees; without it, the directory and its contents are gone.
+    CPPUNIT_ASSERT_MESSAGE("Pre-existing conversation directory was wiped by a failed clone",
+                           std::filesystem::is_directory(repoPath));
+    CPPUNIT_ASSERT_MESSAGE("Sentinel file inside the pre-existing conversation was wiped",
+                           std::filesystem::is_regular_file(sentinel));
+
+    // Re-open the repository and confirm the git head is unchanged.
+    auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
+    CPPUNIT_ASSERT(reopened != nullptr);
+    CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
 }
 
 } // namespace test
