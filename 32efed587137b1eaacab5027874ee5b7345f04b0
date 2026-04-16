@@ -22,6 +22,30 @@
       },
       "revId": "32efed587137b1eaacab5027874ee5b7345f04b0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83660c37_ff83efa8",
+        "filename": "src/media/video/osxvideo/video_device_impl.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-04-16T17:34:32Z",
+      "side": 1,
+      "message": "For no audio, like in example `ffmpeg -f avfoundation -pixel_format bgr0 -i \"default:none\" out.avi` from https://ffmpeg.org/ffmpeg-devices.html#avfoundation",
+      "parentUuid": "1de65f62_fd562da4",
+      "range": {
+        "startLine": 163,
+        "startChar": 26,
+        "endLine": 163,
+        "endChar": 30
+      },
+      "revId": "32efed587137b1eaacab5027874ee5b7345f04b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
