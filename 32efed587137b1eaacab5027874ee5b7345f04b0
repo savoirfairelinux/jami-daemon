@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1de65f62_fd562da4",
+        "filename": "src/media/video/osxvideo/video_device_impl.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-04-16T17:10:11Z",
+      "side": 1,
+      "message": "why \"none\"?",
+      "range": {
+        "startLine": 163,
+        "startChar": 26,
+        "endLine": 163,
+        "endChar": 30
+      },
+      "revId": "32efed587137b1eaacab5027874ee5b7345f04b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
