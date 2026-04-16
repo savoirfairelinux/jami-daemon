@@ -2789,6 +2789,13 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
     auto path = conversationsPath / conversationId;
+    // Clone into a temporary sibling directory and only atomically swap it
+    // into place once the clone has succeeded and been validated. This
+    // guarantees that a failing clone (network error, oversized pack, bad
+    // remote, failed commit validation, ...) cannot destroy a pre-existing
+    // local conversation at `path`.
+    const auto tmpClonePath = conversationsPath / (conversationId + ".clone.tmp");
+    const auto backupPath = conversationsPath / (conversationId + ".bak.tmp");
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 #ifdef LIBJAMI_TEST
     if (FETCH_FROM_LOCAL_REPOS) {
@@ -2797,15 +2804,19 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     }
 #endif
 
-    git_clone_options clone_options;
-    git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
-    git_fetch_options_init(&clone_options.fetch_opts, GIT_FETCH_OPTIONS_VERSION);
-    clone_options.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
-        // Uncomment to get advancment
-        // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
-        //     stats->received_bytes/1024);
-        // If a pack is more than 256Mb, it's anormal.
+    // Scrub any leftover temp artifacts from a previous crashed attempt.
+    // These paths are distinct from the real `path`, so this cannot touch
+    // an in-use conversation.
+    std::error_code ec;
+    if (std::filesystem::exists(tmpClonePath, ec))
+        dhtnet::fileutils::removeAll(tmpClonePath, true);
+    if (std::filesystem::exists(backupPath, ec))
+        dhtnet::fileutils::removeAll(backupPath, true);
+
+    git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+    opts.fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
+    opts.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
+        // If a pack is more than MAX_FETCH_SIZE, it's abnormal.
         if (stats->received_bytes > MAX_FETCH_SIZE) {
             JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
                        stats->received_bytes,
@@ -2816,25 +2827,14 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
         return 0;
     };
 
-    if (std::filesystem::is_directory(path)) {
-        // If a crash occurs during a previous clone, just in case
-        JAMI_WARNING("[Account {}] [Conversation {}] Removing non empty directory {}",
-                     account->getAccountID(),
-                     conversationId,
-                     path);
-        if (dhtnet::fileutils::removeAll(path, true) != 0)
-            return {};
-    }
-
-    JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {}",
+    JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {} (staging {})",
                account->getAccountID(),
                conversationId,
                url,
-               path);
+               path,
+               tmpClonePath);
     git_repository* rep = nullptr;
-    git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
-    opts.fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
-    if (auto err = git_clone(&rep, url.c_str(), path.string().c_str(), &opts)) {
+    if (auto err = git_clone(&rep, url.c_str(), tmpClonePath.string().c_str(), &opts)) {
         if (const git_error* gerr = giterr_last())
             JAMI_ERROR("[Account {}] [Conversation {}] Error when retrieving remote conversation: {:s} {}",
                        account->getAccountID(),
@@ -2846,19 +2846,82 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                        account->getAccountID(),
                        conversationId,
                        err);
+        // Failed clone: scrub any partial staging dir and leave the
+        // pre-existing conversation at `path` (if any) untouched.
+        if (std::filesystem::exists(tmpClonePath, ec))
+            dhtnet::fileutils::removeAll(tmpClonePath, true);
         return {};
     }
     git_repository_free(rep);
+
+    // Clone succeeded in the staging location. Move any pre-existing
+    // directory aside (as a backup we can roll back to) before swapping
+    // the new contents into place.
+    bool hadBackup = false;
+    if (std::filesystem::exists(path, ec)) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Replacing pre-existing directory {}",
+                     account->getAccountID(),
+                     conversationId,
+                     path);
+        std::filesystem::rename(path, backupPath, ec);
+        if (ec) {
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to move existing directory aside: {}. "
+                       "Aborting clone to preserve existing data.",
+                       account->getAccountID(),
+                       conversationId,
+                       ec.message());
+            dhtnet::fileutils::removeAll(tmpClonePath, true);
+            return {};
+        }
+        hadBackup = true;
+    }
+    std::filesystem::rename(tmpClonePath, path, ec);
+    if (ec) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to move cloned directory into place: {}",
+                   account->getAccountID(),
+                   conversationId,
+                   ec.message());
+        dhtnet::fileutils::removeAll(tmpClonePath, true);
+        if (hadBackup) {
+            std::error_code restoreEc;
+            std::filesystem::rename(backupPath, path, restoreEc);
+            if (restoreEc)
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to restore backup: {}",
+                           account->getAccountID(),
+                           conversationId,
+                           restoreEc.message());
+        }
+        return {};
+    }
+
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
     repo->pinCertificates(true); // need to load certificates to validate unknown members
     auto [commitsToValidate, valid] = repo->validClone();
     if (!valid) {
+        // Invalid clone: erase it and, if we had a previous valid
+        // conversation, restore it so the caller sees a rollback rather
+        // than data loss.
         repo->erase();
+        repo.reset();
+        if (hadBackup) {
+            std::error_code restoreEc;
+            std::filesystem::rename(backupPath, path, restoreEc);
+            if (restoreEc)
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to restore previous data: {}",
+                           account->getAccountID(),
+                           conversationId,
+                           restoreEc.message());
+        }
         JAMI_ERROR("[Account {}] [Conversation {}] An error occurred while validating remote conversation.",
                    account->getAccountID(),
                    conversationId);
         return {};
     }
+
+    // Success: discard the backup.
+    if (hadBackup && std::filesystem::exists(backupPath, ec))
+        dhtnet::fileutils::removeAll(backupPath, true);
+
     JAMI_LOG("[Account {}] [Conversation {}] New conversation cloned in {}",
              account->getAccountID(),
              conversationId,
