@@ -72,11 +72,7 @@ MediaEncoder::~MediaEncoder()
         }
         for (auto* encoderCtx : encoders_) {
             if (encoderCtx) {
-#ifndef _MSC_VER
                 avcodec_free_context(&encoderCtx);
-#else
-                avcodec_close(encoderCtx);
-#endif
             }
         }
         avformat_free_context(outputCtx_);
@@ -345,7 +341,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         if (scaledFrameBufferSize_ < 0)
             throw MediaEncoderException(
                 ("Unable to compute buffer size: " + libav_utils::getError(scaledFrameBufferSize_)).c_str());
-        else if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
+        else if (scaledFrameBufferSize_ == 0)
             throw MediaEncoderException("buffer too small");
 
         scaledFrameBuffer_.resize(scaledFrameBufferSize_);
@@ -437,10 +433,10 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
 
     if (is_keyframe) {
         avframe->pict_type = AV_PICTURE_TYPE_I;
-        avframe->key_frame = 1;
+        avframe->flags |= AV_FRAME_FLAG_KEY;
     } else {
         avframe->pict_type = AV_PICTURE_TYPE_NONE;
-        avframe->key_frame = 0;
+        avframe->flags &= ~AV_FRAME_FLAG_KEY;
     }
 
     return encode(avframe, currentStreamIdx_);
@@ -678,7 +674,7 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     // From RFC3984:
     // If no profile-level-id is present, the Baseline Profile without
     // additional constraints at Level 1 MUST be implied.
-    ctx->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
+    ctx->profile = AV_PROFILE_H264_CONSTRAINED_BASELINE;
     ctx->level = 0x0d;
     // ctx->level = 0x0d; // => 13 aka 1.3
     if (parameters.empty())
@@ -704,17 +700,17 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     const unsigned char profile_iop = ((result >> 8) & 0xff); // xx80xx -> 80
     ctx->level = result & 0xff;                               // xxxx0d -> 0d
     switch (profile_idc) {
-    case FF_PROFILE_H264_BASELINE:
+    case AV_PROFILE_H264_BASELINE:
         // check constraint_set_1_flag
         if ((profile_iop & 0x40) >> 6)
-            ctx->profile |= FF_PROFILE_H264_CONSTRAINED;
+            ctx->profile |= AV_PROFILE_H264_CONSTRAINED;
         break;
-    case FF_PROFILE_H264_HIGH_10:
-    case FF_PROFILE_H264_HIGH_422:
-    case FF_PROFILE_H264_HIGH_444_PREDICTIVE:
+    case AV_PROFILE_H264_HIGH_10:
+    case AV_PROFILE_H264_HIGH_422:
+    case AV_PROFILE_H264_HIGH_444_PREDICTIVE:
         // check constraint_set_3_flag
         if ((profile_iop & 0x10) >> 4)
-            ctx->profile |= FF_PROFILE_H264_INTRA;
+            ctx->profile |= AV_PROFILE_H264_INTRA;
         break;
     default:
         JAMI_DBG("Unrecognized H264 profile byte");
@@ -831,7 +827,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_HEVC) {
-        encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+        encoderCtx->profile = AV_PROFILE_HEVC_MAIN;
         forcePresetX2645(encoderCtx);
         initH265(encoderCtx, br);
         av_opt_set_int(encoderCtx, "b_ref_mode", 0, AV_OPT_SEARCH_CHILDREN);
@@ -1093,14 +1089,12 @@ MediaEncoder::stopEncoder()
     flush();
     for (auto it = encoders_.begin(); it != encoders_.end(); it++) {
         if ((*it)->codec_type == AVMEDIA_TYPE_VIDEO) {
+            auto* encoderCtx = *it;
             encoders_.erase(it);
-            break;
+            avcodec_free_context(&encoderCtx);
+            return;
         }
     }
-    AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
-    avcodec_close(encoderCtx);
-    avcodec_free_context(&encoderCtx);
-    av_free(encoderCtx);
 }
 
 bool
@@ -1199,7 +1193,7 @@ MediaEncoder::testH265Accel()
             framerate.den = 1;
             encoderCtx->time_base = av_inv_q(framerate);
             encoderCtx->pix_fmt = accel->getFormat();
-            encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+            encoderCtx->profile = AV_PROFILE_HEVC_MAIN;
             encoderCtx->opaque = accel.get();
 
             auto br = static_cast<int64_t>(SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
@@ -1335,11 +1329,7 @@ MediaEncoder::resetStreams(int width, int height)
         if (outputCtx_) {
             for (auto* encoderCtx : encoders_) {
                 if (encoderCtx) {
-#ifndef _MSC_VER
                     avcodec_free_context(&encoderCtx);
-#else
-                    avcodec_close(encoderCtx);
-#endif
                 }
             }
             encoders_.clear();
