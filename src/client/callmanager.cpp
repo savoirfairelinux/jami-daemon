@@ -30,6 +30,8 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 
+#include <opendht/thread_pool.h>
+
 namespace libjami {
 
 void
@@ -78,7 +80,12 @@ requestMediaChange(const std::string& accountId,
             });
             return true;
         } else if (auto conf = account->getConference(callId)) {
-            return conf->requestMediaChange(mediaList);
+            dht::ThreadPool::io().run([accountId, callId, mediaList] {
+                if (auto account = jami::Manager::instance().getAccount(accountId))
+                    if (auto conf = account->getConference(callId))
+                        conf->requestMediaChange(mediaList);
+            });
+            return true;
         }
     }
     return false;
@@ -93,13 +100,29 @@ refuse(const std::string& accountId, const std::string& callId)
 bool
 accept(const std::string& accountId, const std::string& callId)
 {
-    return jami::Manager::instance().acceptCall(accountId, callId);
+    if (auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (account->getCall(callId)) {
+            dht::ThreadPool::io().run([accountId, callId] {
+                jami::Manager::instance().acceptCall(accountId, callId);
+            });
+            return true;
+        }
+    }
+    return false;
 }
 
 bool
 acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<libjami::MediaMap>& mediaList)
 {
-    return jami::Manager::instance().acceptCall(accountId, callId, mediaList);
+    if (auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (account->getCall(callId)) {
+            dht::ThreadPool::io().run([accountId, callId, mediaList] {
+                jami::Manager::instance().acceptCall(accountId, callId, mediaList);
+            });
+            return true;
+        }
+    }
+    return false;
 }
 
 bool
