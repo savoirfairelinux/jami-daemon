@@ -366,7 +366,7 @@ SocketPair::createIOContext(const uint16_t mtu)
         mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
         true,
         [](void* sp, uint8_t* buf, int len) { return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
-        [](void* sp, uint8_t* buf, int len) { return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
+        [](void* sp, const uint8_t* buf, int len) { return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
         0,
         reinterpret_cast<void*>(this));
 }
@@ -557,7 +557,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 }
 
 int
-SocketPair::writeData(uint8_t* buf, int buf_size)
+SocketPair::writeData(const uint8_t* buf, int buf_size)
 {
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
 
@@ -595,7 +595,7 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 }
 
 int
-SocketPair::writeCallback(uint8_t* buf, int buf_size)
+SocketPair::writeCallback(const uint8_t* buf, int buf_size)
 {
     if (noWrite_)
         return 0;
@@ -623,7 +623,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // check if we're sending an RR, if so, detect packet loss
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
-        auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
+        auto* header = reinterpret_cast<const rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
@@ -635,7 +635,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 
     if (buf[1] == 200) // Sender Report
     {
-        auto* header = reinterpret_cast<rtcpSRHeader*>(buf);
+        auto* header = reinterpret_cast<const rtcpSRHeader*>(buf);
         ts_LSB = Swap4Bytes(header->timestampLSB);
         ts_MSB = Swap4Bytes(header->timestampMSB);
 
