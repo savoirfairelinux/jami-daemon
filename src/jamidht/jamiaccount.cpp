@@ -1960,6 +1960,8 @@ JamiAccount::doRegister_()
         connectionManager_->onICERequest([this](const DeviceId& deviceId) { return onICERequest(deviceId); });
         connectionManager_->onChannelRequest([this](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                     const std::string& name) { return onChannelRequest(cert, name); });
+        connectionManager_->onNewDeviceConnection(
+            [this](const std::shared_ptr<dht::crypto::Certificate>& cert) { onNewDeviceConnection(cert); });
         connectionManager_->onConnectionReady(
             [this](const DeviceId& deviceId, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> channel) {
                 onConnectionReady(deviceId, name, std::move(channel));
@@ -2105,7 +2107,7 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
         if (accountManager_->getInfo()->deviceId == deviceId)
             return;
 
-        dht::ThreadPool::io().run([w = weak(), deviceId, crt] {
+        dht::ThreadPool::io().run([w = weak(), crt] {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -2113,19 +2115,12 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
             shared->initConnectionManager();
             lk.unlock();
             std::shared_lock slk(shared->connManagerMtx_);
-            // NOTE: connectionManager_ and channelHandlers_ get initialized at the
-            // same time and are both protected by connManagerMtx_, so this check
-            // ensures that the access to channelHandlers_ below is valid.
             if (!shared->connectionManager_)
                 return;
+            // Initiate a message connection to create the first TCP link.
+            // Once established, onNewDeviceConnection will set up sync and
+            // swarm channels.
             shared->requestMessageConnection(shared->getUsername(), crt->getLongId(), "sync");
-            if (!shared->syncModule()->isConnected(crt->getLongId())) {
-                shared->channelHandlers_[Uri::Scheme::SYNC]
-                    ->connect(crt->getLongId(),
-                              "",
-                              [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
-                                 const DeviceId& /*deviceId*/) {});
-            }
         });
     }
 }
@@ -2143,6 +2138,50 @@ JamiAccount::onAccountDeviceAnnounced()
         });
         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
     }
+}
+
+void
+JamiAccount::onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificate>& cert)
+{
+    if (!cert || !cert->issuer)
+        return;
+
+    dht::ThreadPool::io().run([w = weak(), cert] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+
+        const auto peerId = cert->issuer->getId().toString();
+        const auto deviceId = cert->getLongId();
+        if (shared->accountManager()->getCertificateStatus(peerId)
+            == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+            return;
+        }
+
+        const auto isSyncDevice = jami::Manager::instance().syncOnRegister && peerId == shared->getUsername();
+        shared->requestMessageConnection(peerId, deviceId, isSyncDevice ? "sync" : "");
+
+        if (isSyncDevice) {
+            auto* sm = shared->syncModule();
+            if (sm && !sm->isConnected(deviceId)) {
+                std::shared_lock lk(shared->connManagerMtx_);
+                if (!shared->connectionManager_)
+                    return;
+
+                auto it = shared->channelHandlers_.find(Uri::Scheme::SYNC);
+                if (it != shared->channelHandlers_.end() && it->second)
+                    it->second->connect(deviceId,
+                                        "",
+                                        [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
+                                           const DeviceId& /*deviceId*/) {});
+            }
+        }
+
+        // Notify the DRT in all conversations where this peer is a member,
+        // so it can decide whether to open a swarm channel over the new connection.
+        if (auto* cm = shared->convModule())
+            cm->addKnownDevice(peerId, deviceId);
+    });
 }
 
 bool
@@ -2311,7 +2350,8 @@ void
 JamiAccount::onConversationNeedSocket(const std::string& convId,
                                       const std::string& deviceId,
                                       ChannelCb&& cb,
-                                      const std::string& type)
+                                      const std::string& type,
+                                      bool /*noNewSocket*/)
 {
     dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::move(cb), type] {
         auto shared = w.lock();
@@ -2356,12 +2396,10 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
 }
 
 void
-JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
-                                           const std::string& deviceId,
-                                           ChannelCb&& cb,
-                                           const std::string& type)
+JamiAccount::onConversationNeedSwarmSocket(
+    const std::string& convId, const std::string& deviceId, ChannelCb&& cb, const std::string& type, bool noNewSocket)
 {
-    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<ChannelCb&&>(cb), type] {
+    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<ChannelCb&&>(cb), type, noNewSocket] {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -2373,35 +2411,37 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
         }
         DeviceId device(deviceId);
         auto swarmUri = fmt::format("swarm://{}", convId);
-        if (!shared->connectionManager_->isConnecting(device, swarmUri)) {
-            shared->connectionManager_->connectDevice(
-                device,
-                swarmUri,
-                [w,
-                 cb = std::move(cb),
-                 wam = std::weak_ptr(shared->accountManager())](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                                const DeviceId& deviceId) {
-                    dht::ThreadPool::io().run([w, wam, cb = std::move(cb), socket = std::move(socket), deviceId] {
-                        if (socket) {
-                            auto shared = w.lock();
-                            auto am = wam.lock();
-                            auto remoteCert = socket->peerCertificate();
-                            if (!remoteCert || !remoteCert->issuer) {
-                                cb(nullptr);
-                                return;
-                            }
-                            auto uri = remoteCert->issuer->getId().toString();
-                            if (!shared || !am
-                                || am->getCertificateStatus(uri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
-                                cb(nullptr);
-                                return;
-                            }
-                            shared->requestMessageConnection(uri, deviceId, "");
+        dhtnet::ConnectDeviceOptions opts;
+        opts.connType = type;
+        opts.noNewSocket = noNewSocket;
+        opts.uniqueName = true;
+        shared->connectionManager_->connectDevice(
+            device,
+            swarmUri,
+            [w,
+             cb = std::move(cb),
+             wam = std::weak_ptr(shared->accountManager())](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                            const DeviceId&) {
+                dht::ThreadPool::io().run([w, wam, cb = std::move(cb), socket = std::move(socket)] {
+                    if (socket) {
+                        auto shared = w.lock();
+                        auto am = wam.lock();
+                        auto remoteCert = socket->peerCertificate();
+                        if (!remoteCert || !remoteCert->issuer) {
+                            cb(nullptr);
+                            return;
                         }
-                        cb(socket);
-                    });
+                        auto uri = remoteCert->issuer->getId().toString();
+                        if (!shared || !am
+                            || am->getCertificateStatus(uri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                            cb(nullptr);
+                            return;
+                        }
+                    }
+                    cb(socket);
                 });
-        }
+            },
+            opts);
     });
 }
 
@@ -2441,11 +2481,15 @@ JamiAccount::convModule(bool noCreation)
             [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
                 return conversationSendMessage(uri, device, msg, token);
             },
-            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
-                onConversationNeedSocket(convId, deviceId, std::forward<decltype(cb)>(cb), connectionType);
+            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType, bool noNewSocket) {
+                onConversationNeedSocket(convId, deviceId, std::forward<decltype(cb)>(cb), connectionType, noNewSocket);
             },
-            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
-                onConversationNeedSwarmSocket(convId, deviceId, std::forward<decltype(cb)>(cb), connectionType);
+            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType, bool noNewSocket) {
+                onConversationNeedSwarmSocket(convId,
+                                              deviceId,
+                                              std::forward<decltype(cb)>(cb),
+                                              connectionType,
+                                              noNewSocket);
             },
             [this](const auto& convId, const auto& from) { conversationOneToOneReceive(convId, from); },
             autoLoadConversations_);
@@ -3772,16 +3816,6 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    if (jami::Manager::instance().syncOnRegister) {
-        if (peerId == getUsername()) {
-            if (!syncModule()->isConnected(deviceId))
-                channelHandlers_[Uri::Scheme::SYNC]->connect(deviceId,
-                                                             "",
-                                                             [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
-                                                                const DeviceId& /*deviceId*/) {});
-        }
-    }
-
     JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}", getAccountID(), peerId, deviceId);
 
     // If a connection already exists or is in progress, no need to do this
@@ -3809,6 +3843,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     options.forceNewSocket = forceNewConnection;
     options.connType = connectionType;
     options.channelTimeout = 3s;
+    options.uniqueName = true;
     connectionManager_->connectDevice(
         deviceId,
         "sip",
