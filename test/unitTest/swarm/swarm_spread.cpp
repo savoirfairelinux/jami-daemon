@@ -239,7 +239,9 @@ SwarmMessageSpread::updateHops(int hops)
 void
 SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
-    sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId, auto&& onSocket) {
+    sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
+                                                                      auto&& onSocket,
+                                                                      bool /*noNewSocket*/) {
         dht::ThreadPool::io().run([this, wsm = std::move(wsm), nodeId, onSocket = std::move(onSocket)] {
             auto sm = wsm.lock();
             if (!sm)

@@ -58,7 +58,8 @@ struct SyncMsg
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
-using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&, bool noNewSocket)>;
 using SengMsgCb
     = std::function<uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
@@ -498,6 +499,14 @@ public:
      * @param socket
      */
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
+    /**
+     * Notify conversations that a new device is connected.
+     * This allows the DRT to decide whether to open a swarm channel.
+     * @param peerUri   The URI of the peer who owns the device
+     * @param deviceId  The device that connected
+     */
+    void addKnownDevice(const std::string& peerUri, const DeviceId& deviceId);
+
     /**
      * Triggers a bucket maintainance for DRTs
      */
