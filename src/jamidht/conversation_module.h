@@ -499,6 +499,14 @@ public:
      */
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
     /**
+     * Notify conversations that a new device is connected.
+     * This allows the DRT to decide whether to open a swarm channel.
+     * @param peerUri   The URI of the peer who owns the device
+     * @param deviceId  The device that connected
+     */
+    void addKnownDevice(const std::string& peerUri, const DeviceId& deviceId);
+
+    /**
      * Triggers a bucket maintainance for DRTs
      */
     void connectivityChanged();

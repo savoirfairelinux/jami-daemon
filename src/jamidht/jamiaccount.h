@@ -660,6 +660,7 @@ private:
     void onAccountDeviceAnnounced();
     bool onICERequest(const DeviceId& deviceId);
     bool onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name);
+    void onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificate>& cert);
     void onConnectionReady(const DeviceId& deviceId,
                            const std::string& name,
                            std::shared_ptr<dhtnet::ChannelSocket> channel);

@@ -3315,6 +3315,16 @@ ConversationModule::addSwarmChannel(const std::string& conversationId, std::shar
 }
 
 void
+ConversationModule::addKnownDevice(const std::string& peerUri, const DeviceId& deviceId)
+{
+    std::vector<DeviceId> devices {deviceId};
+    for (const auto& conv : pimpl_->getConversations()) {
+        if (conv->isMember(peerUri))
+            conv->addKnownDevices(devices, peerUri);
+    }
+}
+
+void
 ConversationModule::connectivityChanged()
 {
     for (const auto& conv : pimpl_->getConversations())
