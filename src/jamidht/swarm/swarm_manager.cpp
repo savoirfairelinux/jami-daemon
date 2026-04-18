@@ -302,37 +302,54 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
 }
 
 void
-SwarmManager::tryConnect(const NodeId& nodeId)
+SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
 {
     if (needSocketCb_)
-        needSocketCb_(nodeId.toString(),
-                      [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
-                          auto shared = w.lock();
-                          if (!shared || shared->isShutdown_)
-                              return true;
-                          if (socket) {
-                              shared->addChannel(socket);
-                              return true;
-                          }
-                          std::unique_lock lk(shared->mutex);
-                          auto bucket = shared->routing_table.findBucket(nodeId);
-                          bucket->removeConnectingNode(nodeId);
-                          bucket->addKnownNode(nodeId);
-                          bucket = shared->routing_table.findBucket(shared->getId());
-                          if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty()
-                              && shared->onConnectionChanged_) {
-                              lk.unlock();
-                              JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
-                              shared->onConnectionChanged_(false);
-                          }
-                          return true;
-                      });
+        needSocketCb_(
+            nodeId.toString(),
+            [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
+                auto shared = w.lock();
+                if (!shared || shared->isShutdown_)
+                    return true;
+                if (socket) {
+                    shared->addChannel(socket);
+                    return true;
+                }
+                std::unique_lock lk(shared->mutex);
+                auto bucket = shared->routing_table.findBucket(nodeId);
+                bucket->removeConnectingNode(nodeId);
+                bucket->addKnownNode(nodeId);
+                bucket = shared->routing_table.findBucket(shared->getId());
+                if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty() && shared->onConnectionChanged_) {
+                    lk.unlock();
+                    JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
+                    shared->onConnectionChanged_(false);
+                }
+                return true;
+            },
+            noNewSocket);
 }
 
 void
 SwarmManager::removeNodeInternal(const NodeId& nodeId)
 {
     routing_table.removeNode(nodeId);
+}
+
+void
+SwarmManager::connectNode(const NodeId& nodeId)
+{
+    {
+        std::lock_guard lock(mutex);
+        if (isShutdown_)
+            return;
+        if (isConnectedWith(nodeId))
+            return;
+        addKnownNode(nodeId);
+        if (!routing_table.addConnectingNode(nodeId))
+            return;
+    }
+    tryConnect(nodeId, true);
 }
 
 std::vector<NodeId>

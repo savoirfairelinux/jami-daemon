@@ -248,7 +248,8 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
     }
 
     sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
-                                                                      auto&& onSocket) mutable {
+                                                                      auto&& onSocket,
+                                                                      bool /*noNewSocket*/) mutable {
         asio::post(*Manager::instance().ioContext(), [this, wsm, nodeId, onSocket = std::move(onSocket)] {
             auto sm = wsm.lock();
             if (!sm || sm->isShutdown())
@@ -504,7 +505,7 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
         cv.notify_one();
         return false;
     });
-    sm1->needSocketCb_ = [&](const auto& n, auto) {
+    sm1->needSocketCb_ = [&](const auto& n, auto, bool) {
         std::lock_guard<std::mutex> lk(mutex);
         needSocketNodes.emplace_back(n);
         cv.notify_one();

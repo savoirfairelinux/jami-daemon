@@ -28,7 +28,7 @@ using namespace swarm_protocol;
 class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
     using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocketInterface>&)>;
-    using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&)>;
+    using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&, bool noNewSocket)>;
     using ToConnectCb = std::function<bool(const NodeId&)>;
     using OnConnectionChanged = std::function<void(bool ok)>;
 
@@ -169,11 +169,12 @@ public:
     void maintainBuckets(const std::set<NodeId>& toConnect = {});
 
     /**
-     * Check if we're connected with a specific device
-     * @param deviceId
-     * @return true if connected, false if not
+     * Proactively connect to a node, bypassing bucket capacity checks.
+     * The node is registered as known and a connection is attempted with
+     * noNewSocket=true (reuses an existing transport).
+     * @param nodeId
      */
-    bool isConnectedWith(const NodeId& deviceId);
+    void connectNode(const NodeId& nodeId);
 
     /**
      * Check if swarm manager is shutdown
@@ -182,6 +183,13 @@ public:
     bool isShutdown() { return isShutdown_; };
 
 private:
+    /**
+     * Check if we're connected with a specific device
+     * @param deviceId
+     * @return true if connected, false if not
+     */
+    bool isConnectedWith(const NodeId& deviceId);
+
     /**
      * Add node to the known_nodes list
      * @param nodeId
@@ -231,10 +239,11 @@ private:
                          NodeId node = {});
 
     /**
-     * Try to establich connexion with specific node
+     * Try to establish connection with specific node
      * @param nodeId
+     * @param noNewSocket  If true, reuse an existing transport (no new ICE negotiation)
      */
-    void tryConnect(const NodeId& nodeId);
+    void tryConnect(const NodeId& nodeId, bool noNewSocket = false);
 
     /**
      * Remove node from routing table
