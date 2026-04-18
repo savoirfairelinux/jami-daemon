@@ -86,23 +86,41 @@ void
 SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel)
 {
     // JAMI_WARNING("[SwarmManager {}] addChannel! with {}", fmt::ptr(this), channel->deviceId().to_view());
-    if (channel) {
-        auto emit = false;
-        {
-            std::lock_guard lock(mutex);
-            emit = routing_table.findBucket(getId())->isEmpty();
-            auto bucket = routing_table.findBucket(channel->deviceId());
-            if (routing_table.addNode(channel, bucket)) {
-                std::error_code ec;
-                resetNodeExpiry(ec, channel, id_);
+    if (!channel)
+        return;
+    bool wasEmpty = false;
+    std::shared_ptr<dhtnet::ChannelSocketInterface> oldChannel;
+    {
+        std::lock_guard lock(mutex);
+        wasEmpty = routing_table.findBucket(getId())->isEmpty();
+        auto bucket = routing_table.findBucket(channel->deviceId());
+        if (!routing_table.addNode(channel, bucket)) {
+            // Node already exists — replace its socket with the new (likely
+            // fresher) channel. The old one may be stale (e.g. peer changed
+            // network).
+            auto& nodes = bucket->getNodes();
+            auto it = nodes.find(channel->deviceId());
+            if (it != nodes.end()) {
+                oldChannel = std::exchange(it->second.socket, channel);
             }
         }
-        receiveMessage(channel);
-        if (emit && onConnectionChanged_) {
-            // If it's the first channel we add, we're now connected!
-            JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
-            onConnectionChanged_(true);
-        }
+        std::error_code ec;
+        resetNodeExpiry(ec, channel, id_);
+    }
+    // Shut down the replaced (old) channel outside the lock.
+    // If the old channel is the same object (e.g. uniqueName returned the
+    // existing channel), skip the shutdown to avoid destroying the live socket.
+    if (oldChannel && oldChannel != channel) {
+        JAMI_DEBUG("[SwarmManager {}] Replacing stale channel for device {}",
+                   fmt::ptr(this),
+                   channel->deviceId().to_view());
+        dht::ThreadPool::io().run([oldChannel] { oldChannel->shutdown(); });
+    }
+    receiveMessage(channel);
+    if (wasEmpty && onConnectionChanged_) {
+        // If it's the first channel we add, we're now connected!
+        JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
+        onConnectionChanged_(true);
     }
 }
 
