@@ -160,7 +160,8 @@ using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 using DeviceId = dht::PkId;
 using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
-using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&, bool noNewSocket)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -204,6 +205,13 @@ public:
      * @param memberUri
      */
     void addKnownDevices(const std::vector<DeviceId>& devices, const std::string& memberUri);
+
+    /**
+     * Proactively connect a device in the swarm, bypassing DRT bucket checks.
+     * Used when a TCP link to the device already exists.
+     * @param deviceId
+     */
+    void connectNode(const DeviceId& deviceId);
 
     /**
      * Refresh active calls.
@@ -553,12 +561,6 @@ public:
      * Stop SwarmManager, bootstrap and gitSockets
      */
     void shutdownConnections();
-    /**
-     * Used to avoid multiple connections, we just check if we got a swarm channel with a specific
-     * device
-     * @param deviceId
-     */
-    bool hasSwarmChannel(const std::string& deviceId);
 
     /**
      * If we change from one network to one another, we will need to update the state of the connections

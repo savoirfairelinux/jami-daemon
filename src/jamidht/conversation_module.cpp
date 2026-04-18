@@ -550,7 +550,8 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                 }
                 return false;
             },
-            MIME_TYPE_GIT);
+            MIME_TYPE_GIT,
+            false);
 
         JAMI_LOG("[Account {}] [Conversation {}] [device {}] Requesting device", accountId_, conv->info.id, deviceId);
         conv->info.members.emplace(username_);
@@ -728,7 +729,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     commitId);
                 return true;
             },
-            "");
+            "",
+            false);
     } else {
         if (oldReq != std::nullopt)
             return;
@@ -1380,7 +1382,8 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
             }
             return false;
         },
-        MIME_TYPE_GIT);
+        MIME_TYPE_GIT,
+        false);
 }
 
 void
@@ -3312,6 +3315,14 @@ void
 ConversationModule::addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     pimpl_->withConversation(conversationId, [&](auto& conv) { conv.addSwarmChannel(std::move(channel)); });
+}
+
+void
+ConversationModule::addKnownDevice(const std::string& peerUri, const DeviceId& deviceId)
+{
+    for (const auto& conv : pimpl_->getConversations())
+        if (conv->isMember(peerUri))
+            conv->connectNode(deviceId);
 }
 
 void
