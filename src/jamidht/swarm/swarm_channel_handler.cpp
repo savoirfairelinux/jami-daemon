@@ -32,14 +32,21 @@ void
 SwarmChannelHandler::connect(const DeviceId& deviceId,
                              const std::string& conversationId,
                              ConnectCb&& cb,
-                             const std::string& /*connectionType*/,
-                             bool /*forceNewConnection*/)
+                             const std::string& connectionType,
+                             bool forceNewConnection)
 {
 #ifdef LIBJAMI_TEST
     if (disableSwarmManager)
         return;
 #endif
-    connectionManager_.connectDevice(deviceId, fmt::format("swarm://{}", conversationId), cb);
+    dhtnet::ConnectDeviceOptions opts;
+    opts.forceNewSocket = forceNewConnection;
+    opts.uniqueName = true;
+    opts.connType = connectionType;
+    connectionManager_.connectDevice(deviceId,
+                                     fmt::format("swarm://{}", conversationId),
+                                     std::move(cb),
+                                     opts);
 }
 
 bool
@@ -55,13 +62,30 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
 
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
-    if (auto acc = account_.lock())
-        if (auto* convModule = acc->convModule(true)) {
-            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
-            return res;
-        }
-    return false;
+    auto* convModule = acc->convModule(true);
+    if (!convModule) {
+        JAMI_ERROR("[Account {}] Received swarm channel request for '{}' but conversation module is unavailable",
+                   acc->getAccountID(),
+                   name);
+        return false;
+    }
+    auto issuerUri = cert->issuer->getId().toString();
+    if (convModule->isBanned(conversationId, issuerUri)) {
+        JAMI_WARNING("[Account {}] Received swarm channel request for '{}' but user {} is banned",
+                     acc->getAccountID(),
+                     name,
+                     issuerUri);
+        return false;
+    }
+    auto deviceUri = cert->getLongId().toString();
+    if (convModule->isBanned(conversationId, deviceUri)) {
+        JAMI_WARNING("[Account {}] Received swarm channel request for '{}' but device {} is banned",
+                     acc->getAccountID(),
+                     name,
+                     deviceUri);
+        return false;
+    }
+    return true;
 }
 
 void
