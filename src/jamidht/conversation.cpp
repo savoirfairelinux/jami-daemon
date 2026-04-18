@@ -2400,6 +2400,12 @@ Conversation::addKnownDevices(const std::vector<DeviceId>& devices, const std::s
     pimpl_->swarmManager_->setKnownNodes(devices);
 }
 
+void
+Conversation::connectNode(const DeviceId& deviceId)
+{
+    pimpl_->swarmManager_->connectNode(deviceId);
+}
+
 std::vector<std::string>
 Conversation::commitsEndedCalls()
 {
@@ -2425,8 +2431,8 @@ Conversation::onMembersChanged(OnMembersChanged&& cb)
 void
 Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
-    pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket), w = weak()](const std::string& deviceId,
-                                                                                            ChannelCb&& cb) {
+    pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
+                                            w = weak()](const std::string& deviceId, ChannelCb&& cb, bool noNewSocket) {
         if (auto sthis = w.lock()) {
             auto wrappedCb = [cb = std::move(cb), w, deviceId](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
                 if (auto sthis = w.lock()) {
@@ -2446,7 +2452,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
                 }
                 return cb(socket);
             };
-            needSocket(sthis->id(), deviceId, std::move(wrappedCb), "application/im-gitmessage-id");
+            needSocket(sthis->id(), deviceId, std::move(wrappedCb), "application/im-gitmessage-id", noNewSocket);
         }
     };
 }
