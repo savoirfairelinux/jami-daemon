@@ -157,6 +157,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     jami_tracepoint(call_start, callId.c_str());
 
     sdp_->setSecureMediaKeyExchange(account->getSrtpKeyExchange());
+    sdp_->enableRtcpMux(account->isRtcpMuxEnabled());
     initializeDtlsSrtpIdentity(account, dtlsCertificate_, dtlsPrivateKey_, *sdp_);
 
     if (account->getUPnPActive())
