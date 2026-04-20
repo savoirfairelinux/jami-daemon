@@ -272,16 +272,21 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             accel_ = std::make_unique<video::HardwareAccel>(it); // save accel
             // Init codec need accel_ to init encoderCtx accelerated
             encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.bitrate);
+            if (!encoderCtx) {
+                accel_.reset();
+                continue;
+            }
             encoderCtx->opaque = accel_.get();
+            auto linkableHW = linkableHW_;
             // Check if pixel format from encoder match pixel format from decoder frame context
             // if it mismatch, it means that we are using two different hardware API (nvenc and
             // vaapi for example) in this case we don't want link the APIs
             if (framesCtx) {
                 auto* hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
                 if (encoderCtx->pix_fmt != hw->format)
-                    linkableHW_ = false;
+                    linkableHW = false;
             }
-            auto ret = accel_->initAPI(linkableHW_, framesCtx);
+            auto ret = accel_->initAPI(linkableHW, framesCtx);
             if (ret < 0) {
                 accel_.reset();
                 encoderCtx = nullptr;
@@ -787,6 +792,10 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         if (enableAccel_) {
             if (accel_) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
+                if (!outputCodec_) {
+                    JAMI_DBG() << "Hardware encoder '" << accel_->getCodecName() << "' is unavailable";
+                    return nullptr;
+                }
             }
         } else {
             JAMI_WARN() << "Hardware encoding disabled";
@@ -1192,8 +1201,17 @@ MediaEncoder::testH265Accel()
             accel = std::make_unique<video::HardwareAccel>(it); // save accel
             // Init codec need accel to init encoderCtx accelerated
             const auto* outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
+            if (!outputCodec) {
+                JAMI_DBG() << "Hardware encoder '" << accel->getCodecName() << "' is unavailable";
+                accel.reset();
+                continue;
+            }
 
             AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
+            if (!encoderCtx) {
+                accel.reset();
+                continue;
+            }
             encoderCtx->thread_count = static_cast<int>(std::min(std::thread::hardware_concurrency(), 16u));
             encoderCtx->width = 1280;
             encoderCtx->height = 720;
