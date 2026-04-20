@@ -23,6 +23,7 @@
 
 #include "audio_receive_thread.h"
 #include "audio_sender.h"
+#include "dtls_srtp.h"
 #include "socket_pair.h"
 #include "media_recorder.h"
 #include "media_encoder.h"
@@ -205,6 +206,9 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     }
 
     try {
+        bool hasDtlsSrtp = false;
+        DtlsSrtpContext dtlsSrtp {};
+
         if (rtp_sock and rtcp_sock) {
             if (send_.addr) {
                 rtp_sock->setDefaultRemoteAddress(send_.addr);
@@ -215,12 +219,30 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                 rtcp_sock->setDefaultRemoteAddress(rtcpAddr);
             }
 
+            if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
+                dtlsSrtp = negotiateDtlsSrtp(*rtp_sock,
+                                            receive_.dtls_setup,
+                                            send_.dtls_fingerprint_type,
+                                            send_.dtls_fingerprint,
+                                            dtlsCertificate_,
+                                            dtlsPrivateKey_);
+                hasDtlsSrtp = true;
+            }
+
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
         } else {
+            if (send_.key_exchange == KeyExchangeProtocol::DTLS || receive_.key_exchange == KeyExchangeProtocol::DTLS)
+                throw std::runtime_error("DTLS-SRTP currently requires ICE media sockets");
+
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
         }
 
-        if (send_.crypto and receive_.crypto) {
+        if (hasDtlsSrtp) {
+            socketPair_->createSRTP(dtlsSrtp.suite.c_str(),
+                                    dtlsSrtp.outboundKeyInfo.c_str(),
+                                    dtlsSrtp.suite.c_str(),
+                                    dtlsSrtp.inboundKeyInfo.c_str());
+        } else if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
                                     receive_.crypto.getSrtpKeyInfo().c_str(),
                                     send_.crypto.getCryptoSuite().c_str(),
