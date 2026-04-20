@@ -20,10 +20,14 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <filesystem>
 #include <string>
 
 #include "callmanager_interface.h"
+#include "fileutils.h"
 #include "manager.h"
+#include "media/dtls_srtp.h"
+#include <opendht/crypto.h>
 #include "sip/sipaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -37,6 +41,73 @@ using namespace libjami::Call;
 
 namespace jami {
 namespace test {
+
+namespace {
+
+std::filesystem::path
+repoRoot()
+{
+    return std::filesystem::path(__FILE__).parent_path().parent_path().parent_path().parent_path();
+}
+
+std::filesystem::path
+aliceCertificatePath()
+{
+    return repoRoot() / "tools" / "asterisk" / "keys" / "testphone1.crt";
+}
+
+std::filesystem::path
+alicePrivateKeyPath()
+{
+    return repoRoot() / "tools" / "asterisk" / "keys" / "testphone1.key";
+}
+
+std::filesystem::path
+bobCertificatePath()
+{
+    return repoRoot() / "tools" / "asterisk" / "keys" / "asterisk.crt";
+}
+
+std::filesystem::path
+bobPrivateKeyPath()
+{
+    return repoRoot() / "tools" / "asterisk" / "keys" / "asterisk.key";
+}
+
+std::vector<std::string>
+getSdpAttributes(const pjmedia_sdp_session* session, std::string_view attributeName)
+{
+    std::vector<std::string> attributes;
+    if (not session or session->media_count == 0)
+        return attributes;
+
+    auto* media = session->media[0];
+    for (unsigned i = 0; i < media->attr_count; ++i) {
+        auto* attribute = media->attr[i];
+        if (attributeName == std::string_view(attribute->name.ptr, attribute->name.slen))
+            attributes.emplace_back(attribute->value.ptr, attribute->value.slen);
+    }
+
+    return attributes;
+}
+
+std::string
+getMediaTransport(const pjmedia_sdp_session* session)
+{
+    if (not session or session->media_count == 0)
+        return {};
+
+    return {session->media[0]->desc.transport.ptr,
+            static_cast<size_t>(session->media[0]->desc.transport.slen)};
+}
+
+std::string
+getFingerprintForCertificate(const std::filesystem::path& certificatePath)
+{
+    return getDtlsFingerprint(dht::crypto::Certificate(fileutils::loadFile(certificatePath.string())));
+}
+
+} // namespace
 
 struct CallData
 {
@@ -83,10 +154,14 @@ private:
     // Test cases.
     void audio_video_srtp_enabled_test();
     void advertises_aes256_with_aes128_fallback_test();
+    void advertises_dtls_srtp_with_fingerprint_test();
+    void audio_dtls_srtp_enabled_test();
 
     CPPUNIT_TEST_SUITE(SipSrtpTest);
     CPPUNIT_TEST(audio_video_srtp_enabled_test);
     CPPUNIT_TEST(advertises_aes256_with_aes128_fallback_test);
+    CPPUNIT_TEST(advertises_dtls_srtp_with_fingerprint_test);
+    CPPUNIT_TEST(audio_dtls_srtp_enabled_test);
 
     CPPUNIT_TEST_SUITE_END();
 
@@ -105,6 +180,9 @@ private:
     void audio_video_call(std::vector<MediaAttribute> offer,
                           std::vector<MediaAttribute> answer,
                           bool validateMedia = true);
+    static void configureDtlsSrtpAccount(const std::string& accountId,
+                                         const std::filesystem::path& certificateFile,
+                                         const std::filesystem::path& privateKeyFile);
     static void configureTest(CallData& bob, CallData& alice);
     static std::string getUserAlias(const std::string& callId);
     static std::vector<std::string> getCryptoAttributes(const pjmedia_sdp_session* session);
@@ -391,18 +469,25 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
 std::vector<std::string>
 SipSrtpTest::getCryptoAttributes(const pjmedia_sdp_session* session)
 {
-    std::vector<std::string> crypto;
-    if (not session or session->media_count == 0)
-        return crypto;
+    return getSdpAttributes(session, "crypto");
+}
 
-    auto* media = session->media[0];
-    for (unsigned i = 0; i < media->attr_count; ++i) {
-        auto* attribute = media->attr[i];
-        if (pj_stricmp2(&attribute->name, "crypto") == 0)
-            crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
-    }
+void
+SipSrtpTest::configureDtlsSrtpAccount(const std::string& accountId,
+                                      const std::filesystem::path& certificateFile,
+                                      const std::filesystem::path& privateKeyFile)
+{
+    auto details = libjami::getAccountDetails(accountId);
+    details[ConfProperties::SRTP::ENABLED] = "true";
+    details[ConfProperties::SRTP::KEY_EXCHANGE] = "dtls";
+    details[ConfProperties::TLS::CERTIFICATE_FILE] = certificateFile.string();
+    details[ConfProperties::TLS::PRIVATE_KEY_FILE] = privateKeyFile.string();
+    details[ConfProperties::TLS::PASSWORD] = {};
+    libjami::setAccountDetails(accountId, details);
 
-    return crypto;
+    auto account = Manager::instance().getAccount<SIPAccount>(accountId);
+    CPPUNIT_ASSERT(account);
+    account->enableIceForMedia(true);
 }
 
 void
@@ -596,6 +681,115 @@ SipSrtpTest::advertises_aes256_with_aes128_fallback_test()
 
     libjami::hangUp(bobData_.accountId_, bobData_.callId_);
     CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+}
+
+void
+SipSrtpTest::advertises_dtls_srtp_with_fingerprint_test()
+{
+    configureDtlsSrtpAccount(aliceData_.accountId_, aliceCertificatePath(), alicePrivateKeyPath());
+    configureDtlsSrtpAccount(bobData_.accountId_, bobCertificatePath(), bobPrivateKeyPath());
+    configureTest(aliceData_, bobData_);
+
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    CPPUNIT_ASSERT(aliceAcc->isSrtpEnabled());
+    CPPUNIT_ASSERT(bobAcc->isSrtpEnabled());
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, aliceAcc->getSrtpKeyExchange());
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, bobAcc->getSrtpKeyExchange());
+
+    std::vector<MediaAttribute> offer;
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    offer.emplace_back(audio);
+
+    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
+                                                     "127.0.0.1:" + std::to_string(bobData_.listeningPort_),
+                                                     MediaAttribute::mediaAttributesToMediaMaps(offer));
+
+    CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceData_.callId_));
+    CPPUNIT_ASSERT(aliceCall);
+
+    const auto aliceLocalSdp = aliceCall->getSDP().getLocalSdpSession();
+    CPPUNIT_ASSERT(getCryptoAttributes(aliceLocalSdp).empty());
+    CPPUNIT_ASSERT_EQUAL(std::string("UDP/TLS/RTP/SAVP"), getMediaTransport(aliceLocalSdp));
+
+    const auto offeredFingerprints = getSdpAttributes(aliceLocalSdp, "fingerprint");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), offeredFingerprints.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-256 ") + getFingerprintForCertificate(aliceCertificatePath()),
+                         offeredFingerprints[0]);
+
+    const auto offeredSetup = getSdpAttributes(aliceLocalSdp, "setup");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), offeredSetup.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("actpass"), offeredSetup[0]);
+
+    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::RINGING));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCall::name));
+
+    libjami::acceptWithMedia(bobData_.accountId_, bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(offer));
+
+    CPPUNIT_ASSERT(waitForSignal(bobData_,
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
+    CPPUNIT_ASSERT(waitForSignal(aliceData_,
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(bobData_.callId_));
+    CPPUNIT_ASSERT(bobCall);
+
+    const auto aliceSlots = aliceCall->getSDP().getMediaSlots();
+    const auto bobSlots = bobCall->getSDP().getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), aliceSlots.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(1), bobSlots.size());
+
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, aliceSlots[0].first.key_exchange);
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, aliceSlots[0].second.key_exchange);
+    CPPUNIT_ASSERT_EQUAL(MediaTransport::UDP_TLS_RTP_SAVP, aliceSlots[0].first.transport);
+    CPPUNIT_ASSERT_EQUAL(MediaTransport::UDP_TLS_RTP_SAVP, aliceSlots[0].second.transport);
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-256"), aliceSlots[0].first.dtls_fingerprint_type);
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-256"), aliceSlots[0].second.dtls_fingerprint_type);
+    CPPUNIT_ASSERT_EQUAL(getFingerprintForCertificate(aliceCertificatePath()), aliceSlots[0].first.dtls_fingerprint);
+    CPPUNIT_ASSERT_EQUAL(getFingerprintForCertificate(bobCertificatePath()), aliceSlots[0].second.dtls_fingerprint);
+
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, bobSlots[0].first.key_exchange);
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, bobSlots[0].second.key_exchange);
+    CPPUNIT_ASSERT_EQUAL(MediaTransport::UDP_TLS_RTP_SAVP, bobSlots[0].first.transport);
+    CPPUNIT_ASSERT_EQUAL(MediaTransport::UDP_TLS_RTP_SAVP, bobSlots[0].second.transport);
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-256"), bobSlots[0].first.dtls_fingerprint_type);
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-256"), bobSlots[0].second.dtls_fingerprint_type);
+    CPPUNIT_ASSERT_EQUAL(getFingerprintForCertificate(bobCertificatePath()), bobSlots[0].first.dtls_fingerprint);
+    CPPUNIT_ASSERT_EQUAL(getFingerprintForCertificate(aliceCertificatePath()), bobSlots[0].second.dtls_fingerprint);
+
+    libjami::hangUp(bobData_.accountId_, bobData_.callId_);
+    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+}
+
+void
+SipSrtpTest::audio_dtls_srtp_enabled_test()
+{
+    configureDtlsSrtpAccount(aliceData_.accountId_, aliceCertificatePath(), alicePrivateKeyPath());
+    configureDtlsSrtpAccount(bobData_.accountId_, bobCertificatePath(), bobPrivateKeyPath());
+
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    CPPUNIT_ASSERT(aliceAcc->isSrtpEnabled());
+    CPPUNIT_ASSERT(bobAcc->isSrtpEnabled());
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, aliceAcc->getSrtpKeyExchange());
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, bobAcc->getSrtpKeyExchange());
+
+    std::vector<MediaAttribute> offer;
+    std::vector<MediaAttribute> answer;
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    offer.emplace_back(audio);
+    answer.emplace_back(audio);
+
+    audio_video_call(offer, answer);
 }
 
 } // namespace test
