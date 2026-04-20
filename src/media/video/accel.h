@@ -87,6 +87,15 @@ public:
     AVPixelFormat getFormat() const { return format_; };
 
     /**
+     * @brief Hardware device type.
+     */
+    AVHWDeviceType getDeviceType() const { return hwType_; };
+
+    const char* getDeviceTypeName() const;
+
+    const char* getFormatName() const;
+
+    /**
      * @brief Software format.
      *
      * For encoding it is the format expected by the hardware. For decoding
