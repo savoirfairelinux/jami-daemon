@@ -80,6 +80,9 @@ public:
         localDtlsFingerprint_ = std::move(fingerprint);
     }
 
+    void enableRtcpMux(bool enable) { rtcpMuxEnabled_ = enable; }
+    bool isRtcpMuxEnabled() const { return rtcpMuxEnabled_; }
+
     /**
      *  Read accessor. Get the local passive sdp session information before negotiation
      *
@@ -260,6 +263,7 @@ private:
     void addSdesAttribute(pjmedia_sdp_media* media, const std::vector<std::string>& crypto);
 
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
+    void addRTCPMuxAttribute(pjmedia_sdp_media* med);
 
     std::shared_ptr<SystemCodecInfo> findCodecByPayload(const unsigned payloadType);
     std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName, const unsigned clockrate = 0) const;
@@ -308,6 +312,7 @@ private:
     KeyExchangeProtocol secureMediaKeyExchange_ {KeyExchangeProtocol::NONE};
     std::string localDtlsFingerprintHash_ {};
     std::string localDtlsFingerprint_ {};
+    bool rtcpMuxEnabled_ {false};
 };
 
 } // namespace jami
