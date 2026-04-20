@@ -50,11 +50,13 @@ public:
 
     void initCodecConfig();
 
+    void applyCodecPreferences(bool enableAcceleration);
+
 private:
     /* available audio & video codec  */
     std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList_;
 
-    bool setActiveH265();
+    bool setActiveH265(bool enableAcceleration);
     void checkInstalledCodecs();
 };
 

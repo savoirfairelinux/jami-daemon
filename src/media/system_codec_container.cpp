@@ -35,12 +35,10 @@ decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = get
 
 SystemCodecContainer::SystemCodecContainer()
 {
-    initCodecConfig();
 }
 
 SystemCodecContainer::~SystemCodecContainer()
 {
-    // TODO
 }
 
 void
@@ -179,17 +177,30 @@ SystemCodecContainer::initCodecConfig()
                                                1,
                                                0),
     };
-    setActiveH265();
+}
+
+void
+SystemCodecContainer::applyCodecPreferences(bool enableAcceleration)
+{
+    initCodecConfig();
+    setActiveH265(enableAcceleration);
     checkInstalledCodecs();
 }
 
 bool
-SystemCodecContainer::setActiveH265()
+SystemCodecContainer::setActiveH265(bool enableAcceleration)
 {
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     removeCodecByName("H265");
     return false;
 #endif
+
+#if defined(ENABLE_VIDEO) && defined(ENABLE_HWACCEL)
+    if (not enableAcceleration) {
+        JAMI_WARNING("Accelerated H265/HEVC codec disabled by preference.");
+        removeCodecByName("H265");
+        return false;
+    }
 
     auto apiName = MediaEncoder::testH265Accel();
     if (apiName != "") {
@@ -199,6 +210,9 @@ SystemCodecContainer::setActiveH265()
         JAMI_WARNING("Unable to find a usable accelerated H265/HEVC codec, disabling.");
         removeCodecByName("H265");
     }
+#else
+    removeCodecByName("H265");
+#endif
     return false;
 }
 

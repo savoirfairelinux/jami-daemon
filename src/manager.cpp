@@ -28,6 +28,7 @@
 #include "gittransport.h"
 #include "jami.h"
 #include "media_attribute.h"
+#include "media/system_codec_container.h"
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
@@ -2878,6 +2879,12 @@ Manager::loadAccountMap(const YAML::Node& node)
         JAMI_ERROR("[config] Preferences unserialize unknown exception");
         ++errorCount;
     }
+
+#ifdef ENABLE_VIDEO
+    getSystemCodecContainer()->applyCodecPreferences(videoPreferences.getEncodingAccelerated());
+#else
+    getSystemCodecContainer()->applyCodecPreferences(false);
+#endif
 
     // load saved preferences for IP2IP account from configuration file
     const auto& accountList = node["accounts"];

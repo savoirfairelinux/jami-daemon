@@ -75,7 +75,7 @@ new file mode 100644
 index 0000000000..44d64b1eac
 --- /dev/null
 +++ b/libavfilter/vsrc_pipewiregrab.c
-@@ -0,0 +1,1377 @@
+@@ -0,0 +1,1378 @@
 +/*
 + * PipeWire input grabber (ScreenCast)
 + * Copyright (C) 2024-2026 Savoir-faire Linux, Inc.
@@ -117,6 +117,7 @@ index 0000000000..44d64b1eac
 +#include <sys/mman.h>
 +#include <sys/queue.h>
 +
++#include "libavutil/mem.h"
 +#include "libavutil/internal.h"
 +#include "libavutil/mathematics.h"
 +#include "libavutil/opt.h"
@@ -129,7 +130,6 @@ index 0000000000..44d64b1eac
 +#include "avfilter.h"
 +#include "filters.h"
 +#include "formats.h"
-+#include "internal.h"
 +#include "video.h"
 +
 +#include <pipewire/pipewire.h>
@@ -1352,6 +1352,7 @@ index 0000000000..44d64b1eac
 +static int pipewiregrab_config_props(AVFilterLink *outlink)
 +{
 +    AVFrame *frame;
++    FilterLink *l = ff_filter_link(outlink);
 +    PipewireGrabContext *pw_ctx = outlink->src->priv;
 +
 +    AVRational time_base = av_inv_q(pw_ctx->framerate);
@@ -1361,7 +1362,7 @@ index 0000000000..44d64b1eac
 +    outlink->w = pw_ctx->width;
 +    outlink->h = pw_ctx->height;
 +    outlink->time_base = AV_TIME_BASE_Q;
-+    outlink->frame_rate = pw_ctx->framerate;
++    l->frame_rate = pw_ctx->framerate;
 +
 +    frame = ff_get_video_buffer(outlink, pw_ctx->width, pw_ctx->height);
 +    if (!frame)
