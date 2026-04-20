@@ -171,32 +171,42 @@ udp_socket_create(int family, int port)
     return udp_fd;
 }
 
-SocketPair::SocketPair(const char* uri, int localPort)
+SocketPair::SocketPair(const dhtnet::IpAddr& rtpDestAddr,
+                       const dhtnet::IpAddr& rtcpDestAddr,
+                       int localRtpPort,
+                       int localRtcpPort,
+                       bool rtcpMux)
+    : rtcpMux_(rtcpMux)
 {
-    openSockets(uri, localPort);
+    openSockets(rtpDestAddr, rtcpDestAddr, localRtpPort, localRtcpPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                       std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                       bool rtcpMux)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
+    , rtcpMux_(rtcpMux)
 {
-    JAMI_LOG("[{}] Creating instance using ICE sockets for comp {} and {}",
+    JAMI_LOG("[{}] Creating instance using ICE sockets for comp {} and {} (rtcp-mux={})",
              fmt::ptr(this),
-             rtp_sock_->getCompId(),
-             rtcp_sock_->getCompId());
+             rtp_sock_ ? rtp_sock_->getCompId() : -1,
+             rtcp_sock_ ? rtcp_sock_->getCompId() : -1,
+             rtcpMux_ ? "yes" : "no");
 
-    rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard l(dataBuffMutex_);
-        rtpDataBuff_.emplace_back(buf, buf + len);
-        cv_.notify_one();
-        return len;
-    });
-    rtcp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard l(dataBuffMutex_);
-        rtcpDataBuff_.emplace_back(buf, buf + len);
-        cv_.notify_one();
-        return len;
-    });
+    if (rtp_sock_) {
+        rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
+            queuePacket(std::vector<uint8_t>(buf, buf + len), rtcpMux_ && isRtcpPacket(buf, len));
+            return len;
+        });
+    }
+
+    if (rtcp_sock_) {
+        rtcp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
+            queuePacket(std::vector<uint8_t>(buf, buf + len), !rtcpMux_ || isRtcpPacket(buf, len));
+            return len;
+        });
+    }
 }
 
 SocketPair::~SocketPair()
@@ -281,6 +291,23 @@ SocketPair::createSRTP(const char* out_suite, const char* out_key, const char* i
 }
 
 void
+SocketPair::queuePacket(std::vector<uint8_t>&& packet, bool isRtcp)
+{
+    std::lock_guard l(dataBuffMutex_);
+    if (isRtcp)
+        rtcpDataBuff_.emplace_back(std::move(packet));
+    else
+        rtpDataBuff_.emplace_back(std::move(packet));
+    cv_.notify_one();
+}
+
+bool
+SocketPair::isRtcpPacket(const uint8_t* buf, size_t len)
+{
+    return len > 1 && RTP_PT_IS_RTCP(buf[1]);
+}
+
+void
 SocketPair::interrupt()
 {
     JAMI_WARNING("[{}] Interrupting RTP sockets", fmt::ptr(this));
@@ -318,38 +345,34 @@ SocketPair::closeSockets()
 }
 
 void
-SocketPair::openSockets(const char* uri, int local_rtp_port)
+SocketPair::openSockets(const dhtnet::IpAddr& rtpDestAddr,
+                        const dhtnet::IpAddr& rtcpDestAddr,
+                        int local_rtp_port,
+                        int local_rtcp_port)
 {
-    JAMI_LOG("[{}] Creating rtp socket for uri {} on port {}", fmt::ptr(this), uri, local_rtp_port);
+    rtpDestAddr_ = rtpDestAddr;
+    rtcpDestAddr_ = rtcpDestAddr;
 
-    char hostname[256];
-    char path[1024];
-    int dst_rtp_port;
+    JAMI_LOG("Creating RTP sockets for remote({},{}) local({},{}) (rtcp-mux={})",
+             rtpDestAddr_.toString(true),
+             rtcpDestAddr_.toString(true),
+             local_rtp_port,
+             local_rtcp_port,
+             rtcpMux_ ? "yes" : "no");
 
-    av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &dst_rtp_port, path, sizeof(path), uri);
-
-    const int local_rtcp_port = local_rtp_port + 1;
-    const int dst_rtcp_port = dst_rtp_port + 1;
-
-    rtpDestAddr_ = dhtnet::IpAddr {hostname};
-    rtpDestAddr_.setPort(dst_rtp_port);
-    rtcpDestAddr_ = dhtnet::IpAddr {hostname};
-    rtcpDestAddr_.setPort(dst_rtcp_port);
-
-    // Open local sockets (RTP/RTCP)
     if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1
-        or (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
+        or (!rtcpMux_ && (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1)) {
         closeSockets();
         JAMI_ERROR("[{}] Sockets creation failed", fmt::ptr(this));
         throw std::runtime_error("Sockets creation failed");
     }
 
     JAMI_WARNING("SocketPair: local({},{}) / {}({},{})",
-                 local_rtp_port,
-                 local_rtcp_port,
-                 hostname,
-                 dst_rtp_port,
-                 dst_rtcp_port);
+              local_rtp_port,
+              rtcpMux_ ? local_rtp_port : local_rtcp_port,
+              rtpDestAddr_.toString(false),
+              rtpDestAddr_.getPort(),
+              rtcpMux_ ? rtpDestAddr_.getPort() : rtcpDestAddr_.getPort());
 }
 
 MediaIOHandle*
@@ -387,15 +410,22 @@ SocketPair::waitForData()
                 return 0;
             }
 
-            // work with system socket
-            struct pollfd p[2] = {{rtpHandle_, POLLIN, 0}, {rtcpHandle_, POLLIN, 0}};
-            ret = poll(p, 2, NET_POLL_TIMEOUT);
-            if (ret > 0) {
-                ret = 0;
-                if (p[0].revents & POLLIN)
-                    ret |= static_cast<int>(DataType::RTP);
-                if (p[1].revents & POLLIN)
-                    ret |= static_cast<int>(DataType::RTCP);
+            if (rtcpMux_) {
+                struct pollfd p[1] = {{rtpHandle_, POLLIN, 0}};
+                ret = poll(p, 1, NET_POLL_TIMEOUT);
+                if (ret > 0 && (p[0].revents & POLLIN))
+                    ret = static_cast<int>(DataType::RTP) | static_cast<int>(DataType::RTCP);
+            } else {
+                // work with system socket
+                struct pollfd p[2] = {{rtpHandle_, POLLIN, 0}, {rtcpHandle_, POLLIN, 0}};
+                ret = poll(p, 2, NET_POLL_TIMEOUT);
+                if (ret > 0) {
+                    ret = 0;
+                    if (p[0].revents & POLLIN)
+                        ret |= static_cast<int>(DataType::RTP);
+                    if (p[1].revents & POLLIN)
+                        ret |= static_cast<int>(DataType::RTCP);
+                }
             }
         } while (!ret or (ret < 0 and errno == EAGAIN));
 
@@ -419,8 +449,43 @@ SocketPair::waitForData()
 }
 
 int
+SocketPair::queueMuxedSocketData()
+{
+    std::array<uint8_t, RTP_MAX_PACKET_LENGTH> packet;
+    struct sockaddr_storage from;
+    socklen_t from_len = sizeof(from);
+    auto received = recvfrom(rtpHandle_,
+                             reinterpret_cast<char*>(packet.data()),
+                             packet.size(),
+                             0,
+                             reinterpret_cast<struct sockaddr*>(&from),
+                             &from_len);
+    if (received <= 0)
+        return static_cast<int>(received);
+
+    const auto len = static_cast<size_t>(received);
+    queuePacket(std::vector<uint8_t>(packet.begin(), packet.begin() + len), isRtcpPacket(packet.data(), len));
+    return static_cast<int>(len);
+}
+
+int
 SocketPair::readRtpData(void* buf, int buf_size)
 {
+    if (rtcpMux_ && rtpHandle_ >= 0) {
+        std::unique_lock lk(dataBuffMutex_);
+        if (not rtpDataBuff_.empty()) {
+            auto pkt = std::move(rtpDataBuff_.front());
+            rtpDataBuff_.pop_front();
+            lk.unlock();
+            int pkt_size = static_cast<int>(pkt.size());
+            int len = std::min(pkt_size, buf_size);
+            std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
+            return len;
+        }
+
+        return 0;
+    }
+
     // handle system socket
     if (rtpHandle_ >= 0) {
         struct sockaddr_storage from;
@@ -451,6 +516,21 @@ SocketPair::readRtpData(void* buf, int buf_size)
 int
 SocketPair::readRtcpData(void* buf, int buf_size)
 {
+    if (rtcpMux_ && rtpHandle_ >= 0) {
+        std::unique_lock lk(dataBuffMutex_);
+        if (not rtcpDataBuff_.empty()) {
+            auto pkt = std::move(rtcpDataBuff_.front());
+            rtcpDataBuff_.pop_front();
+            lk.unlock();
+            int pkt_size = static_cast<int>(pkt.size());
+            int len = std::min(pkt_size, buf_size);
+            std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
+            return len;
+        }
+
+        return 0;
+    }
+
     // handle system socket
     if (rtcpHandle_ >= 0) {
         struct sockaddr_storage from;
@@ -484,6 +564,12 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     auto datatype = waitForData();
     if (datatype < 0)
         return datatype;
+
+    if (rtcpMux_ && rtpHandle_ >= 0 && rtpDataBuff_.empty() && rtcpDataBuff_.empty()) {
+        auto queued = queueMuxedSocketData();
+        if (queued < 0)
+            return queued;
+    }
 
     int len = 0;
     bool fromRTCP = false;
@@ -567,7 +653,10 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         int fd;
         dhtnet::IpAddr* dest_addr;
 
-        if (isRTCP) {
+        if (rtcpMux_) {
+            fd = rtpHandle_;
+            dest_addr = &rtpDestAddr_;
+        } else if (isRTCP) {
             fd = rtcpHandle_;
             dest_addr = &rtcpDestAddr_;
         } else {
@@ -589,10 +678,13 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         return buf_size;
 
     // IceSocket
-    if (isRTCP)
-        return static_cast<int>(rtcp_sock_->send(buf, buf_size));
-    else
+    if (rtcpMux_ || !isRTCP)
         return static_cast<int>(rtp_sock_->send(buf, buf_size));
+
+    if (rtcp_sock_)
+        return static_cast<int>(rtcp_sock_->send(buf, buf_size));
+
+    return static_cast<int>(rtp_sock_->send(buf, buf_size));
 }
 
 int
