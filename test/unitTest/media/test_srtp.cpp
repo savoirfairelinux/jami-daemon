@@ -319,7 +319,10 @@ SrtpTest::rejectedSrtpDoesNotCloseSocket()
     for (unsigned attempt = 0; attempt < 32 && !receiver; ++attempt) {
         port = 49152 + 2 * attempt;
         try {
-            receiver = std::make_unique<SocketPair>("rtp://127.0.0.1:9", port);
+            receiver = std::make_unique<SocketPair>(dhtnet::IpAddr {"127.0.0.1:9"},
+                                                    dhtnet::IpAddr {"127.0.0.1:10"},
+                                                    port,
+                                                    port + 1);
         } catch (const std::runtime_error& e) {
             bindError = e.what();
         }
