@@ -225,7 +225,8 @@ private:
     // Get the crypto materials
     static std::vector<std::string> getCrypto(pjmedia_sdp_media* media);
 
-    pjmedia_sdp_attr* generateSdesAttribute();
+    pjmedia_sdp_attr* generateSdesAttribute(std::string_view tag, std::string_view cryptoSuite);
+    std::vector<pjmedia_sdp_attr*> generateSdesOfferAttributes();
 
     void setTelephoneEventRtpmap(pjmedia_sdp_media* med);
 
@@ -245,7 +246,7 @@ private:
      * @param media The media to add the srtp attribute to
      * @throw SdpException
      */
-    void addSdesAttribute(const std::vector<std::string>& crypto);
+    void addSdesAttribute(pjmedia_sdp_media* media, const std::vector<std::string>& crypto);
 
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
 
