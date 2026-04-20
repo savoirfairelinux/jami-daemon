@@ -41,6 +41,36 @@
 
 namespace jami {
 
+#ifdef ENABLE_HWACCEL
+namespace {
+
+bool
+decoderSupportsHardwareAccel(const AVCodec* decoder, const video::HardwareAccel& accel)
+{
+    if (!decoder)
+        return false;
+
+    constexpr auto supportedMethods = AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX
+                                      | AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX;
+
+    for (int index = 0;; ++index) {
+        const auto* config = avcodec_get_hw_config(decoder, index);
+        if (!config)
+            break;
+        if (config->pix_fmt != accel.getFormat())
+            continue;
+        if (config->device_type != accel.getDeviceType())
+            continue;
+        if (config->methods & supportedMethods)
+            return true;
+    }
+
+    return false;
+}
+
+} // namespace
+#endif
+
 // maximum number of packets the jitter buffer can queue
 const unsigned jitterBufferMaxSize_ {1500};
 // maximum time a packet can be queued
@@ -568,13 +598,22 @@ MediaDecoder::setupStream()
                                                              CODEC_DECODER);
         for (const auto& it : APIs) {
             accel_ = std::make_unique<video::HardwareAccel>(it); // save accel
-            auto ret = accel_->initAPI(false, nullptr);
-            if (ret < 0) {
+            if (!decoderSupportsHardwareAccel(inputDecoder_, *accel_)) {
+                JAMI_DBG("Skipping hardware decoder for %s with %s: decoder '%s' exposes no matching FFmpeg hw config",
+                         avcodec_get_name(avStream_->codecpar->codec_id),
+                         it.getName().c_str(),
+                         inputDecoder_->name);
                 accel_.reset();
                 continue;
             }
             if (prepareDecoderContext() < 0)
                 return -1; // failed
+            auto ret = accel_->initAPI(false, nullptr);
+            if (ret < 0) {
+                avcodec_free_context(&decoderCtx_);
+                accel_.reset();
+                continue;
+            }
             accel_->setDetails(decoderCtx_);
             decoderCtx_->opaque = accel_.get();
             decoderCtx_->pix_fmt = accel_->getFormat();
@@ -589,13 +628,18 @@ MediaDecoder::setupStream()
                 continue;
             } else {
                 // Codec opened successfully.
-                JAMI_WARN("Using hardware decoding for %s with %s",
-                          avcodec_get_name(decoderCtx_->codec_id),
-                          it.getName().c_str());
+                JAMI_WARNING("Using hardware decoding for {} with {} (device type: {}, pixel format: {})",
+                             avcodec_get_name(decoderCtx_->codec_id),
+                             it.getName(),
+                             it.getDeviceTypeName(),
+                             it.getFormatName());
                 break;
             }
         }
     }
+
+    if (!decoderCtx_ && prepareDecoderContext() < 0)
+        return -1;
 #endif
 
     JAMI_LOG("Using {} ({}) decoder for {}",
@@ -626,6 +670,8 @@ MediaDecoder::setupStream()
 int
 MediaDecoder::prepareDecoderContext()
 {
+    avcodec_free_context(&decoderCtx_);
+
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         JAMI_ERROR("Unsupported codec");
