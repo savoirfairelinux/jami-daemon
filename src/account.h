@@ -396,6 +396,13 @@ public:
     // once the  backward compatibility is no more required.
     bool isIceCompIdRfc5245Compliant() const { return iceCompIdRfc5245Compliant_; }
     void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
+
+    // Enable/disable advertisement of RTCP multiplexing support (RFC 5761).
+    // Step 1 only offers the capability and keeps the legacy split transport
+    // paths available for backward compatibility.
+    bool isRtcpMuxEnabled() const { return rtcpMuxEnabled_; }
+    void enableRtcpMux(bool enable) { rtcpMuxEnabled_ = enable; }
+
     void enableAutoLoadConversations(bool enable) { autoLoadConversations_ = enable; }
 
     std::shared_ptr<Call> getCall(const std::string& callId) const { return callSet_.getCall(callId); }
@@ -495,6 +502,7 @@ protected:
 
     bool iceForMediaEnabled_ {true};
     bool iceCompIdRfc5245Compliant_ {false};
+    bool rtcpMuxEnabled_ {false};
     /**
      * Auto load conversations when creatinf convModule()
      */
