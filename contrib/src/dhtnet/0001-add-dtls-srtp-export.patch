@@ -1,0 +1,117 @@
+diff --git a/include/tls_session.h b/include/tls_session.h
+index 2f2b1df..8aa9ef1 100644
+--- a/include/tls_session.h
++++ b/include/tls_session.h
+@@ -27,9 +27,10 @@
+ #include <future>
+ #include <chrono>
+ #include <vector>
+ #include <array>
++#include <optional>
+ 
+ namespace dht {
+ namespace crypto {
+ struct Certificate;
+ struct PrivateKey;
+@@ -48,7 +49,16 @@ enum class TlsSessionState {
+ using clock = std::chrono::steady_clock;
+ using duration = clock::duration;
+ 
++struct TlsSrtpKeyMaterial
++{
++    gnutls_srtp_profile_t profile {};
++    std::vector<uint8_t> client_key {};
++    std::vector<uint8_t> client_salt {};
++    std::vector<uint8_t> server_key {};
++    std::vector<uint8_t> server_salt {};
++};
++
+ struct TlsParams
+ {
+      // User CA list for session credentials
+      std::string ca_list;
+@@ -70,4 +80,7 @@ struct TlsParams
+      std::shared_ptr<asio::io_context> io_context;
+ 
+      std::shared_ptr<Logger> logger;
++
++    // DTLS-SRTP protection profiles (see RFC 5764), e.g. "SRTP_AES128_CM_HMAC_SHA1_80"
++    std::string srtp_profiles;
+ };
+@@ -128,6 +141,8 @@ public:
+ 
+      const std::shared_ptr<dht::log::Logger>& logger() const;
+ 
++    std::optional<TlsSrtpKeyMaterial> srtpKeyMaterial() const;
++
+ private:
+      class TlsSessionImpl;
+      std::unique_ptr<TlsSessionImpl> pimpl_;
+diff --git a/src/security/tls_session.cpp b/src/security/tls_session.cpp
+index 4e3ca22..4f6f184 100644
+--- a/src/security/tls_session.cpp
++++ b/src/security/tls_session.cpp
+@@ -592,7 +592,19 @@ TlsSession::TlsSessionImpl::commonSessionInit()
+         }
+     }
+ 
++    if (!params_.srtp_profiles.empty()) {
++        const char* err_pos = nullptr;
++        ret = gnutls_srtp_set_profile_direct(session_, params_.srtp_profiles.c_str(), &err_pos);
++        if (ret != GNUTLS_E_SUCCESS) {
++            if (params_.logger)
++                params_.logger->e("[TLS] DTLS-SRTP profile set failed near '%s': %s",
++                                  err_pos ? err_pos : "",
++                                  gnutls_strerror(ret));
++            return false;
++        }
++    }
++
+     // Add certificate credentials
+     ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
+     if (ret != GNUTLS_E_SUCCESS) {
+         if (params_.logger)
+@@ -1725,6 +1737,43 @@ TlsSession::logger() const
+ {
+     return pimpl_->params_.logger;
+ }
+ 
++std::optional<TlsSrtpKeyMaterial>
++TlsSession::srtpKeyMaterial() const
++{
++    if (!pimpl_ || pimpl_->state_ != TlsSessionState::ESTABLISHED)
++        return std::nullopt;
++
++    std::lock_guard lk(pimpl_->sessionReadMutex_);
++    if (!pimpl_->session_)
++        return std::nullopt;
++
++    gnutls_srtp_profile_t profile {};
++    if (gnutls_srtp_get_selected_profile(pimpl_->session_, &profile) != GNUTLS_E_SUCCESS)
++        return std::nullopt;
++
++    std::array<uint8_t, 256> key_material {};
++    gnutls_datum_t client_key {};
++    gnutls_datum_t client_salt {};
++    gnutls_datum_t server_key {};
++    gnutls_datum_t server_salt {};
++    if (gnutls_srtp_get_keys(pimpl_->session_,
++                             key_material.data(),
++                             key_material.size(),
++                             &client_key,
++                             &client_salt,
++                             &server_key,
++                             &server_salt)
++        != GNUTLS_E_SUCCESS) {
++        return std::nullopt;
++    }
++
++    return TlsSrtpKeyMaterial {profile,
++                               {client_key.data, client_key.data + client_key.size},
++                               {client_salt.data, client_salt.data + client_salt.size},
++                               {server_key.data, server_key.data + server_key.size},
++                               {server_salt.data, server_salt.data + server_salt.size}};
++}
++
+ } // namespace tls
+ } // namespace dhtnet

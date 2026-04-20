@@ -18,7 +18,9 @@
         "BUILD_EXAMPLE=0",
         "CMAKE_CXX_STANDARD=20"
     ],
-    "patches": [],
+    "patches": [
+        "0001-add-dtls-srtp-export.patch"
+    ],
     "win_patches": [],
     "project_paths": [],
     "with_env": "",
