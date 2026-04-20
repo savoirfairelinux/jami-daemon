@@ -209,13 +209,14 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     try {
         bool hasDtlsSrtp = false;
         DtlsSrtpContext dtlsSrtp {};
+        const auto rtcpMux = isRtcpMuxNegotiated();
 
         if (rtp_sock and rtcp_sock) {
             if (send_.addr) {
                 rtp_sock->setDefaultRemoteAddress(send_.addr);
             }
 
-            auto& rtcpAddr = send_.rtcp_addr ? send_.rtcp_addr : send_.addr;
+            auto rtcpAddr = getRemoteRtcpAddr();
             if (rtcpAddr) {
                 rtcp_sock->setDefaultRemoteAddress(rtcpAddr);
             }
@@ -231,12 +232,16 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                 hasDtlsSrtp = true;
             }
 
-            socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+            socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux));
         } else {
             if (send_.key_exchange == KeyExchangeProtocol::DTLS || receive_.key_exchange == KeyExchangeProtocol::DTLS)
                 throw std::runtime_error("DTLS-SRTP currently requires ICE media sockets");
 
-            socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
+            socketPair_.reset(new SocketPair(send_.addr,
+                                             getRemoteRtcpAddr(),
+                                             receive_.addr.getPort(),
+                                             getLocalRtcpPort(),
+                                             rtcpMux));
         }
 
         if (hasDtlsSrtp) {
