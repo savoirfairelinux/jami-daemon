@@ -24,6 +24,7 @@
 #include "logger.h"
 #include "sdp.h"
 #include "manager.h"
+#include "fileutils.h"
 #include "string_utils.h"
 
 #include "connectivity/sip_utils.h"
@@ -32,6 +33,7 @@
 #include "jami/account_const.h"
 #include "jami/call_const.h"
 #include "jami/media_const.h"
+#include "media/dtls_srtp.h"
 #include "client/jami_signal.h"
 #include "pjsip-ua/sip_inv.h"
 #include "video/video_mixer.h"
@@ -94,6 +96,38 @@ static constexpr auto MULTIAUDIO_REQUIRED_VERSION_STR = "13.11.0"sv;
 static const std::vector<unsigned> MULTIAUDIO_REQUIRED_VERSION
     = split_string_to_unsigned(MULTIAUDIO_REQUIRED_VERSION_STR, '.');
 
+void
+initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
+                           std::shared_ptr<dht::crypto::Certificate>& certificate,
+                           std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
+                           Sdp& sdp)
+{
+    if (!account || account->getSrtpKeyExchange() != KeyExchangeProtocol::DTLS)
+        return;
+
+    auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
+    if (!sipAccount) {
+        JAMI_WARNING("[account:{}] DTLS-SRTP requires a SIP account identity", account->getAccountID());
+        return;
+    }
+
+    const auto& config = sipAccount->config();
+    if (config.tlsCertificateFile.empty() || config.tlsPrivateKeyFile.empty()) {
+        JAMI_WARNING("[account:{}] DTLS-SRTP requires TLS.certificateFile and TLS.privateKeyFile",
+                     sipAccount->getAccountID());
+        return;
+    }
+
+    try {
+        certificate = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(config.tlsCertificateFile));
+        privateKey = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(config.tlsPrivateKeyFile),
+                                                               config.tlsPassword);
+        sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[account:{}] Unable to load DTLS-SRTP identity: {}", sipAccount->getAccountID(), e.what());
+    }
+}
+
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
@@ -104,6 +138,9 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , srtpEnabled_(account->isSrtpEnabled())
 {
     jami_tracepoint(call_start, callId.c_str());
+
+    sdp_->setSecureMediaKeyExchange(account->getSrtpKeyExchange());
+    initializeDtlsSrtpIdentity(account, dtlsCertificate_, dtlsPrivateKey_, *sdp_);
 
     if (account->getUPnPActive())
         upnp_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
@@ -209,6 +246,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     // Configure the media stream
     auto new_mtu = sipTransport_->getTlsMtu();
     rtpSession->setMtu(new_mtu);
+    rtpSession->setDtlsSrtpIdentity(dtlsCertificate_, dtlsPrivateKey_);
     rtpSession->updateMedia(remoteMedia, localMedia);
 
     // Mute/un-mute media
@@ -1975,19 +2013,35 @@ SIPCall::setupNegotiatedMedia()
             continue;
         }
 
-        if (isSrtpEnabled() and local.enabled and not local.crypto) {
-            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no local crypto attributes. "
-                         "Ignoring the media",
+        const auto localSecureReady = (local.key_exchange == KeyExchangeProtocol::SDES && static_cast<bool>(local.crypto))
+                                      || (local.key_exchange == KeyExchangeProtocol::DTLS
+                                          && !local.dtls_fingerprint.empty());
+        const auto remoteSecureReady = (remote.key_exchange == KeyExchangeProtocol::SDES && static_cast<bool>(remote.crypto))
+                                       || (remote.key_exchange == KeyExchangeProtocol::DTLS
+                                           && !remote.dtls_fingerprint.empty());
+
+        if (isSrtpEnabled() and local.enabled and not localSecureReady) {
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no usable local {} parameters. Ignoring the media",
                          getCallId(),
-                         streamIdx);
+                         streamIdx,
+                         sip_utils::getKeyExchangeName(local.key_exchange));
             continue;
         }
 
-        if (isSrtpEnabled() and remote.enabled and not remote.crypto) {
-            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no crypto remote attributes. "
-                         "Ignoring the media",
+        if (isSrtpEnabled() and remote.enabled and not remoteSecureReady) {
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no usable remote {} parameters. Ignoring the media",
                          getCallId(),
-                         streamIdx);
+                         streamIdx,
+                         sip_utils::getKeyExchangeName(remote.key_exchange));
+            continue;
+        }
+
+        if (isSrtpEnabled() and local.enabled and remote.enabled and local.key_exchange != remote.key_exchange) {
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Mismatched SRTP key exchange methods (local={}, remote={}). Ignoring the media",
+                         getCallId(),
+                         streamIdx,
+                         sip_utils::getKeyExchangeName(local.key_exchange),
+                         sip_utils::getKeyExchangeName(remote.key_exchange));
             continue;
         }
 
