@@ -1,7 +1,7 @@
 {
     "name": "ffmpeg",
-    "version": "6.0.1",
-    "cpe": "cpe:2.3:a:ffmpeg:ffmpeg:6.0.1:*:*:*:*:*:*:*",
+    "version": "8.1",
+    "cpe": "cpe:2.3:a:ffmpeg:ffmpeg:8.1:*:*:*:*:*:*:*",
     "url": "https://ffmpeg.org/releases/ffmpeg-__VERSION__.tar.xz",
     "deps": [
         "vpx",
@@ -20,10 +20,9 @@
         "windows-configure-ffnvcodec.patch",
         "windows-dxgi-support.patch"
     ],
-    "win_patches": [
-    ],
+    "win_patches": [],
     "project_paths": [],
-    "with_env" : "",
+    "with_env": "",
     "host_vars": {
         "min_sdk_version": "10.0.26100.0"
     },
