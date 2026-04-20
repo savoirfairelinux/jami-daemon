@@ -101,6 +101,32 @@ protected:
     std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
+
+    bool isRtcpMuxNegotiated() const { return send_.rtcp_mux && receive_.rtcp_mux; }
+
+    dhtnet::IpAddr getRemoteRtcpAddr() const
+    {
+        if (isRtcpMuxNegotiated())
+            return send_.addr;
+
+        if (send_.rtcp_addr)
+            return send_.rtcp_addr;
+
+        auto addr = send_.addr;
+        addr.setPort(send_.addr.getPort() + 1);
+        return addr;
+    }
+
+    uint16_t getLocalRtcpPort() const
+    {
+        if (isRtcpMuxNegotiated())
+            return receive_.addr.getPort();
+
+        if (receive_.rtcp_addr)
+            return receive_.rtcp_addr.getPort();
+
+        return receive_.addr.getPort() + 1;
+    }
 };
 
 } // namespace jami
