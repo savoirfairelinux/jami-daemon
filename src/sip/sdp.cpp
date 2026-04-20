@@ -53,6 +53,12 @@ static std::map<MediaDirection, const char*> DIRECTION_STR {{MediaDirection::SEN
                                                             {MediaDirection::RECVONLY, "recvonly"},
                                                             {MediaDirection::INACTIVE, "inactive"}};
 
+static bool
+hasRtcpMuxAttribute(const pjmedia_sdp_media* media)
+{
+    return media and pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp-mux", nullptr) != nullptr;
+}
+
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , publishedIpAddr_()
@@ -509,6 +515,9 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
+    if (mediaAttr.enabled_ and rtcpMuxEnabled_)
+        addRTCPMuxAttribute(med);
+
     char const* direction = mediaDirection(mediaAttr);
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
@@ -556,6 +565,15 @@ Sdp::addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port)
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), addr.pjPtr());
     if (attr)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
+}
+
+void
+Sdp::addRTCPMuxAttribute(pjmedia_sdp_media* med)
+{
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "rtcp-mux", nullptr))
+        != PJ_SUCCESS) {
+        throw SdpException("Unable to add rtcp-mux attribute to media");
+    }
 }
 
 void
@@ -995,16 +1013,30 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         }
         descr.addr = std::string_view(conn->addr.ptr, conn->addr.slen);
         descr.addr.setPort(media->desc.port);
+        descr.rtcp_mux = hasRtcpMuxAttribute(media);
 
-        // Get the "rtcp" address from the SDP if present. Otherwise,
-        // infere it from endpoint (RTP) address.
-        auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp", NULL);
-        if (attr) {
-            pjmedia_sdp_rtcp_attr rtcp;
-            auto status = pjmedia_sdp_attr_get_rtcp(attr, &rtcp);
-            if (status == PJ_SUCCESS && rtcp.addr.slen) {
-                descr.rtcp_addr = std::string_view(rtcp.addr.ptr, rtcp.addr.slen);
-                descr.rtcp_addr.setPort(rtcp.port);
+        if (descr.rtcp_mux) {
+            descr.rtcp_addr = descr.addr;
+        } else {
+            // Get the "rtcp" address from the SDP if present. Otherwise,
+            // infer it from the RTP endpoint address using RTP+1.
+            auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp", NULL);
+            if (attr) {
+                pjmedia_sdp_rtcp_attr rtcp;
+                auto status = pjmedia_sdp_attr_get_rtcp(attr, &rtcp);
+                if (status == PJ_SUCCESS) {
+                    if (rtcp.addr.slen) {
+                        descr.rtcp_addr = std::string_view(rtcp.addr.ptr, rtcp.addr.slen);
+                    } else {
+                        descr.rtcp_addr = descr.addr;
+                    }
+                    descr.rtcp_addr.setPort(rtcp.port);
+                }
+            }
+
+            if (!descr.rtcp_addr) {
+                descr.rtcp_addr = descr.addr;
+                descr.rtcp_addr.setPort(descr.addr.getPort() + 1);
             }
         }
 

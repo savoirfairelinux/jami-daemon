@@ -241,6 +241,9 @@ struct MediaDescription
     /** RTCP socket address */
     dhtnet::IpAddr rtcp_addr {};
 
+    /** RTCP is multiplexed on the RTP socket */
+    bool rtcp_mux {false};
+
     /** RTP */
     std::shared_ptr<SystemCodecInfo> codec {};
     unsigned payload_type {};
