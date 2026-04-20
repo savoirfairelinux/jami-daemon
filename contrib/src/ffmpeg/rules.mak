@@ -1,4 +1,4 @@
-FFMPEG_VERSION := 6.1.3
+FFMPEG_VERSION := 8.1
 PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:$(FFMPEG_VERSION):*:*:*:*:*:*:*
 FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_VERSION).tar.xz
 
@@ -18,8 +18,7 @@ FFMPEGCONF += \
 	--enable-swscale \
 	--enable-bsfs \
 	--disable-filters \
-	--disable-programs \
-	--disable-postproc
+	--disable-programs
 
 ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
