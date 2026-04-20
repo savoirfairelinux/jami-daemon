@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cctype>
 
 namespace jami {
 
@@ -141,6 +142,113 @@ buildCryptoPrefix(const CryptoAttribute& crypto)
     return crypto.getTag() + " " + crypto.getCryptoSuite() + " ";
 }
 
+bool
+isDtlsTransport(MediaTransport transport)
+{
+    return transport == MediaTransport::UDP_TLS_RTP_SAVP || transport == MediaTransport::UDP_TLS_RTP_SAVPF;
+}
+
+DtlsSetup
+parseDtlsSetup(std::string_view value)
+{
+    if (value == "actpass")
+        return DtlsSetup::ACTPASS;
+    if (value == "active")
+        return DtlsSetup::ACTIVE;
+    if (value == "passive")
+        return DtlsSetup::PASSIVE;
+    return DtlsSetup::NONE;
+}
+
+const char*
+dtlsSetupName(DtlsSetup setup)
+{
+    switch (setup) {
+    case DtlsSetup::ACTPASS:
+        return "actpass";
+    case DtlsSetup::ACTIVE:
+        return "active";
+    case DtlsSetup::PASSIVE:
+        return "passive";
+    default:
+        return nullptr;
+    }
+}
+
+DtlsSetup
+negotiateLocalDtlsSetup(DtlsSetup localSetup, DtlsSetup remoteSetup)
+{
+    if (localSetup != DtlsSetup::ACTPASS)
+        return localSetup;
+    if (remoteSetup == DtlsSetup::ACTIVE)
+        return DtlsSetup::PASSIVE;
+    if (remoteSetup == DtlsSetup::PASSIVE || remoteSetup == DtlsSetup::ACTPASS || remoteSetup == DtlsSetup::NONE)
+        return DtlsSetup::ACTIVE;
+    return DtlsSetup::NONE;
+}
+
+std::pair<std::string, std::string>
+getDtlsFingerprint(const pjmedia_sdp_session* session, unsigned mediaIndex)
+{
+    if (not session)
+        return {};
+
+    const auto parseFingerprint = [](const pjmedia_sdp_attr* attribute) {
+        if (not attribute || pj_stricmp2(&attribute->name, "fingerprint") != 0)
+            return std::pair<std::string, std::string> {};
+
+        const std::string value(attribute->value.ptr, attribute->value.slen);
+        const auto separator = value.find(' ');
+        if (separator == std::string::npos)
+            return std::pair<std::string, std::string> {};
+
+        return std::pair<std::string, std::string> {value.substr(0, separator), value.substr(separator + 1)};
+    };
+
+    if (mediaIndex < session->media_count) {
+        auto* media = session->media[mediaIndex];
+        for (unsigned i = 0; i < media->attr_count; ++i) {
+            if (auto parsed = parseFingerprint(media->attr[i]); not parsed.second.empty())
+                return parsed;
+        }
+    }
+
+    for (unsigned i = 0; i < session->attr_count; ++i) {
+        if (auto parsed = parseFingerprint(session->attr[i]); not parsed.second.empty())
+            return parsed;
+    }
+
+    return {};
+}
+
+DtlsSetup
+getDtlsSetup(const pjmedia_sdp_session* session, unsigned mediaIndex)
+{
+    if (not session)
+        return DtlsSetup::NONE;
+
+    const auto parseSetupAttribute = [](const pjmedia_sdp_attr* attribute) {
+        if (not attribute || pj_stricmp2(&attribute->name, "setup") != 0)
+            return DtlsSetup::NONE;
+        return parseDtlsSetup(std::string_view(attribute->value.ptr, attribute->value.slen));
+    };
+
+    if (mediaIndex < session->media_count) {
+        auto* media = session->media[mediaIndex];
+        for (unsigned i = 0; i < media->attr_count; ++i) {
+            if (const auto setup = parseSetupAttribute(media->attr[i]); setup != DtlsSetup::NONE)
+                return setup;
+        }
+    }
+
+    for (unsigned i = 0; i < session->attr_count; ++i) {
+        if (const auto setup = parseSetupAttribute(session->attr[i]); setup != DtlsSetup::NONE)
+            return setup;
+    }
+
+    return DtlsSetup::NONE;
+}
+
 } // namespace
 
 void
@@ -186,6 +294,39 @@ Sdp::generateSdesOfferAttributes()
         attrs.emplace_back(generateSdesAttribute(std::to_string(i + 1), SDES_OFFER_CRYPTO_SUITES[i]));
 
     return attrs;
+}
+
+pjmedia_sdp_attr*
+Sdp::generateDtlsFingerprintAttribute()
+{
+    if (localDtlsFingerprint_.empty())
+        throw SdpException("Missing DTLS fingerprint");
+
+    const auto value = localDtlsFingerprintHash_ + " " + localDtlsFingerprint_;
+    pj_str_t pjValue {sip_utils::CONST_PJ_STR(value)};
+    return pjmedia_sdp_attr_create(memPool_.get(), "fingerprint", &pjValue);
+}
+
+pjmedia_sdp_attr*
+Sdp::generateDtlsSetupAttribute(DtlsSetup setup)
+{
+    if (const auto* setupName = dtlsSetupName(setup)) {
+        const std::string_view setupValue {setupName};
+        pj_str_t pjValue {sip_utils::CONST_PJ_STR(setupValue)};
+        return pjmedia_sdp_attr_create(memPool_.get(), "setup", &pjValue);
+    }
+
+    throw SdpException("Invalid DTLS setup attribute");
+}
+
+void
+Sdp::addDtlsAttributes(pjmedia_sdp_media* media, DtlsSetup setup)
+{
+    if (pjmedia_sdp_media_add_attr(media, generateDtlsFingerprintAttribute()) != PJ_SUCCESS)
+        throw SdpException("Unable to add DTLS fingerprint attribute to media");
+
+    if (pjmedia_sdp_media_add_attr(media, generateDtlsSetupAttribute(setup)) != PJ_SUCCESS)
+        throw SdpException("Unable to add DTLS setup attribute to media");
 }
 
 char const*
@@ -244,6 +385,10 @@ Sdp::getMediaTransport(pjmedia_sdp_media* media)
 {
     if (pj_stricmp2(&media->desc.transport, "RTP/SAVP") == 0)
         return MediaTransport::RTP_SAVP;
+    else if (pj_stricmp2(&media->desc.transport, "UDP/TLS/RTP/SAVP") == 0)
+        return MediaTransport::UDP_TLS_RTP_SAVP;
+    else if (pj_stricmp2(&media->desc.transport, "UDP/TLS/RTP/SAVPF") == 0)
+        return MediaTransport::UDP_TLS_RTP_SAVPF;
     else if (pj_stricmp2(&media->desc.transport, "RTP/AVP") == 0)
         return MediaTransport::RTP_AVP;
 
@@ -292,7 +437,13 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->desc.port_count = 1;
 
     // Set the transport protocol of the media
-    med->desc.transport = secure ? sip_utils::CONST_PJ_STR("RTP/SAVP") : sip_utils::CONST_PJ_STR("RTP/AVP");
+    if (secure) {
+        med->desc.transport = secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS
+                                  ? sip_utils::CONST_PJ_STR("UDP/TLS/RTP/SAVP")
+                                  : sip_utils::CONST_PJ_STR("RTP/SAVP");
+    } else {
+        med->desc.transport = sip_utils::CONST_PJ_STR("RTP/AVP");
+    }
 
     unsigned dynamic_payload = 96;
 
@@ -369,9 +520,13 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
     if (secure and sdpDirection_ == SdpDirection::OFFER) {
-        for (auto* attr : generateSdesOfferAttributes()) {
-            if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
-                throw SdpException("Unable to add sdes attribute to media");
+        if (secureMediaKeyExchange_ == KeyExchangeProtocol::SDES) {
+            for (auto* attr : generateSdesOfferAttributes()) {
+                if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
+                    throw SdpException("Unable to add sdes attribute to media");
+            }
+        } else if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
+            addDtlsAttributes(med, DtlsSetup::ACTPASS);
         }
     }
 
@@ -635,14 +790,26 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         auto* localMedia = localSession_->media[i];
         auto* remoteMedia = remoteSession_->media[i];
 
-        if (getMediaTransport(localMedia) != MediaTransport::RTP_SAVP)
+        const auto localTransport = getMediaTransport(localMedia);
+        const auto remoteTransport = getMediaTransport(remoteMedia);
+
+        if (localTransport == MediaTransport::RTP_SAVP) {
+            const auto crypto = getCrypto(remoteMedia);
+            if (crypto.empty())
+                continue;
+
+            addSdesAttribute(localMedia, crypto);
+            continue;
+        }
+
+        if (not isDtlsTransport(localTransport) || not isDtlsTransport(remoteTransport))
             continue;
 
-        const auto crypto = getCrypto(remoteMedia);
-        if (crypto.empty())
+        const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
+        if (remoteFingerprint.second.empty())
             continue;
 
-        addSdesAttribute(localMedia, crypto);
+        addDtlsAttributes(localMedia, negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
     }
 
     printSession(localSession_, "Local session:\n", sdpDirection_);
@@ -835,6 +1002,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                                                nullptr);
 
         descr.direction_ = getMediaDirection(media);
+        descr.transport = getMediaTransport(media);
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
@@ -875,6 +1043,18 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
 
+        if (isDtlsTransport(descr.transport)) {
+            descr.key_exchange = KeyExchangeProtocol::DTLS;
+            auto [fingerprintType, fingerprint] = getDtlsFingerprint(session, i);
+            descr.dtls_fingerprint_type = std::move(fingerprintType);
+            descr.dtls_fingerprint = std::move(fingerprint);
+            descr.dtls_setup = getDtlsSetup(session, i);
+            if (not remote and session == activeLocalSession_ and activeRemoteSession_ and i < activeRemoteSession_->media_count) {
+                descr.dtls_setup = negotiateLocalDtlsSetup(descr.dtls_setup, getDtlsSetup(activeRemoteSession_, i));
+            }
+            continue;
+        }
+
         // get crypto info
         std::vector<std::string> crypto;
         for (unsigned j = 0; j < media->attr_count; j++) {
@@ -892,12 +1072,15 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                     crypto.end(),
                     [&cryptoPrefix](const auto& item) { return item.rfind(cryptoPrefix, 0) == 0; });
                 if (matchingLocalCrypto != crypto.end()) {
+                    descr.key_exchange = KeyExchangeProtocol::SDES;
                     descr.crypto = SdesNegotiator::negotiate(std::vector<std::string> {*matchingLocalCrypto});
                     continue;
                 }
             }
         }
 
+        if (not crypto.empty())
+            descr.key_exchange = KeyExchangeProtocol::SDES;
         descr.crypto = SdesNegotiator::negotiate(crypto);
     }
     return ret;
@@ -1099,9 +1282,9 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
             JAMI_WARNING("Media#{} is unable to determine transport type!", idx);
         }
 
-        // A media is secure if the transport is of type RTP/SAVP
-        // and the crypto materials are present.
-        mediaAttr.secure_ = transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty();
+        const auto dtlsFingerprint = getDtlsFingerprint(sdpSession, idx);
+        mediaAttr.secure_ = (transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty())
+                    || (isDtlsTransport(transp) and not dtlsFingerprint.second.empty());
 
         if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
             mediaAttr.label_ = "audio_" + std::to_string(audioIdx++);
