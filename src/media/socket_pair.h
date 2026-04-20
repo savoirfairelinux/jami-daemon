@@ -129,8 +129,14 @@ typedef struct
 class SocketPair
 {
 public:
-    SocketPair(const char* uri, int localPort);
-    SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock);
+    SocketPair(const dhtnet::IpAddr& rtpDestAddr,
+               const dhtnet::IpAddr& rtcpDestAddr,
+               int localRtpPort,
+               int localRtcpPort,
+               bool rtcpMux = false);
+    SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+               std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+               bool rtcpMux = false);
     ~SocketPair();
 
     void interrupt();
@@ -144,7 +150,10 @@ public:
 
     MediaIOHandle* createIOContext(const uint16_t mtu);
 
-    void openSockets(const char* uri, int localPort);
+    void openSockets(const dhtnet::IpAddr& rtpDestAddr,
+                     const dhtnet::IpAddr& rtcpDestAddr,
+                     int localRtpPort,
+                     int localRtcpPort);
     void closeSockets();
 
     /*
@@ -190,8 +199,11 @@ private:
     int writeCallback(uint8_t* buf, int buf_size);
 
     int waitForData();
+    int queueMuxedSocketData();
     int readRtpData(void* buf, int buf_size);
     int readRtcpData(void* buf, int buf_size);
+    void queuePacket(std::vector<uint8_t>&& packet, bool isRtcp);
+    static bool isRtcpPacket(const uint8_t* buf, size_t len);
     void saveRtcpRRPacket(uint8_t* buf, size_t len);
     void saveRtcpREMBPacket(uint8_t* buf, size_t len);
 
@@ -207,6 +219,7 @@ private:
     int rtcpHandle_ {-1};
     dhtnet::IpAddr rtpDestAddr_;
     dhtnet::IpAddr rtcpDestAddr_;
+    bool rtcpMux_ {false};
     std::atomic_bool interrupted_ {false};
     // Read operations are blocking. This will allow unblocking the
     // receiver thread if the peer stops/mutes the media (RTP)
