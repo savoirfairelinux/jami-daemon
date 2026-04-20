@@ -47,6 +47,15 @@ static std::list<HardwareAPI> apiListDec = {
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG},
      {{"default", DeviceState::NOT_TESTED}, {"1", DeviceState::NOT_TESTED}, {"2", DeviceState::NOT_TESTED}},
      false},
+#ifndef __APPLE__
+    {"vulkan",
+     AV_HWDEVICE_TYPE_VULKAN,
+     AV_PIX_FMT_VULKAN,
+     AV_PIX_FMT_NV12,
+     {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP9, AV_CODEC_ID_AV1},
+     {{"default", DeviceState::NOT_TESTED}},
+     false},
+#endif
     {"vaapi",
      AV_HWDEVICE_TYPE_VAAPI,
      AV_PIX_FMT_VAAPI,
@@ -88,6 +97,15 @@ static std::list<HardwareAPI> apiListEnc = {
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
      {{"default", DeviceState::NOT_TESTED}, {"1", DeviceState::NOT_TESTED}, {"2", DeviceState::NOT_TESTED}},
      true},
+#ifndef __APPLE__
+    {"vulkan",
+     AV_HWDEVICE_TYPE_VULKAN,
+     AV_PIX_FMT_VULKAN,
+     AV_PIX_FMT_NV12,
+     {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
+     {{"default", DeviceState::NOT_TESTED}},
+     false},
+#endif
     {"vaapi",
      AV_HWDEVICE_TYPE_VAAPI,
      AV_PIX_FMT_VAAPI,
@@ -137,6 +155,22 @@ HardwareAccel::~HardwareAccel()
         av_buffer_unref(&deviceCtx_);
     if (framesCtx_)
         av_buffer_unref(&framesCtx_);
+}
+
+const char*
+HardwareAccel::getDeviceTypeName() const
+{
+    if (const auto* name = av_hwdevice_get_type_name(hwType_))
+        return name;
+    return "unknown";
+}
+
+const char*
+HardwareAccel::getFormatName() const
+{
+    if (const auto* name = av_get_pix_fmt_name(format_))
+        return name;
+    return "unknown";
 }
 
 static AVPixelFormat
