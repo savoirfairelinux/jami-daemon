@@ -72,6 +72,14 @@ public:
      */
     void setLocalMediaCapabilities(MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs);
 
+    void setSecureMediaKeyExchange(KeyExchangeProtocol protocol) { secureMediaKeyExchange_ = protocol; }
+
+    void setLocalDtlsFingerprint(std::string hash, std::string fingerprint)
+    {
+        localDtlsFingerprintHash_ = std::move(hash);
+        localDtlsFingerprint_ = std::move(fingerprint);
+    }
+
     /**
      *  Read accessor. Get the local passive sdp session information before negotiation
      *
@@ -227,6 +235,9 @@ private:
 
     pjmedia_sdp_attr* generateSdesAttribute(std::string_view tag, std::string_view cryptoSuite);
     std::vector<pjmedia_sdp_attr*> generateSdesOfferAttributes();
+    pjmedia_sdp_attr* generateDtlsFingerprintAttribute();
+    pjmedia_sdp_attr* generateDtlsSetupAttribute(DtlsSetup setup);
+    void addDtlsAttributes(pjmedia_sdp_media* media, DtlsSetup setup);
 
     void setTelephoneEventRtpmap(pjmedia_sdp_media* med);
 
@@ -294,6 +305,9 @@ private:
 
     // Offer/Answer flag.
     SdpDirection sdpDirection_ {SdpDirection::NONE};
+    KeyExchangeProtocol secureMediaKeyExchange_ {KeyExchangeProtocol::NONE};
+    std::string localDtlsFingerprintHash_ {};
+    std::string localDtlsFingerprint_ {};
 };
 
 } // namespace jami
