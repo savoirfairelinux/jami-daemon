@@ -397,22 +397,6 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
-    if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
-        auto ret = inputCtx_->iformat->read_header(inputCtx_);
-        if (ret == AVERROR_EXTERNAL) {
-            JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
-            return Status::ReadError;
-        }
-        auto* codecpar = inputCtx_->streams[0]->codecpar;
-        if (baseHeight_ != codecpar->height || baseWidth_ != codecpar->width) {
-            baseHeight_ = codecpar->height;
-            baseWidth_ = codecpar->width;
-            inputParams_.height = ((baseHeight_ >> 3) << 3);
-            inputParams_.width = ((baseWidth_ >> 3) << 3);
-            return Status::RestartRequired;
-        }
-    }
-
     libjami::PacketBuffer packet(av_packet_alloc());
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
@@ -442,6 +426,18 @@ MediaDemuxer::decode()
                                      : (media == AVMediaType::AVMEDIA_TYPE_VIDEO ? "VIDEO" : "UNSUPPORTED");
         JAMI_ERR("Unable to read [%s] frame: %s\n", type, libav_utils::getError(ret).c_str());
         return Status::ReadError;
+    }
+
+    if ((inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") && inputCtx_->nb_streams > 0
+        && inputCtx_->streams[0] && inputCtx_->streams[0]->codecpar) {
+        auto* codecpar = inputCtx_->streams[0]->codecpar;
+        if (baseHeight_ != codecpar->height || baseWidth_ != codecpar->width) {
+            baseHeight_ = codecpar->height;
+            baseWidth_ = codecpar->width;
+            inputParams_.height = ((baseHeight_ >> 3) << 3);
+            inputParams_.width = ((baseWidth_ >> 3) << 3);
+            return Status::RestartRequired;
+        }
     }
 
     auto streamIndex = packet->stream_index;
