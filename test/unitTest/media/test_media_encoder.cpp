@@ -147,7 +147,7 @@ struct RtpPacketCollector
 {
     std::vector<uint32_t> timestamps;
 
-    static int write(void* opaque, uint8_t* buf, int buf_size)
+    static int write(void* opaque, const uint8_t* buf, int buf_size)
     {
         auto* collector = static_cast<RtpPacketCollector*>(opaque);
         if (buf_size >= 12 && (buf[0] >> 6) == 2) {
