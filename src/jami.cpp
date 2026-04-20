@@ -105,7 +105,8 @@ start(const std::filesystem::path& config_file) noexcept
 {
     try {
         jami::Manager::instance().init(config_file, initFlags);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Failed to start jami: {}", e.what());
         return false;
     }
     return true;
