@@ -86,6 +86,36 @@ test(
     timeout: 1800,
 )
 
+ut_srtp = executable(
+    'ut_srtp',
+    sources: files('unitTest/media/test_srtp.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'srtp',
+    ut_srtp,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_sdes_negotiator = executable(
+    'ut_sdes_negotiator',
+    sources: files('unitTest/sip/sdes_negotiator.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'sdes_negotiator',
+    ut_sdes_negotiator,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),

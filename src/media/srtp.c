@@ -31,6 +31,42 @@
 
 #include "connectivity/security/memory.h"
 
+struct SRTPCryptoSuite {
+    const char *name;
+    int master_key_size;
+    int master_salt_size;
+    int session_key_size;
+    int rtp_hmac_size;
+    int rtcp_hmac_size;
+};
+
+static const struct SRTPCryptoSuite ff_srtp_suites[] = {
+    {"AES_CM_128_HMAC_SHA1_80", 16, SRTP_MASTER_SALT_SIZE, 16, 10, 10},
+    {"SRTP_AES128_CM_HMAC_SHA1_80", 16, SRTP_MASTER_SALT_SIZE, 16, 10, 10},
+    {"AES_CM_128_HMAC_SHA1_32", 16, SRTP_MASTER_SALT_SIZE, 16, 4, 10},
+    {"SRTP_AES128_CM_HMAC_SHA1_32", 16, SRTP_MASTER_SALT_SIZE, 16, 4, 10},
+    {"AES_256_CM_HMAC_SHA1_80", 32, SRTP_MASTER_SALT_SIZE, 32, 10, 10},
+    {"AES_256_CM_HMAC_SHA1_32", 32, SRTP_MASTER_SALT_SIZE, 32, 4, 10},
+};
+
+static const struct SRTPCryptoSuite*
+ff_srtp_get_suite(const char *suite)
+{
+    size_t i;
+
+    for (i = 0; i < FF_ARRAY_ELEMS(ff_srtp_suites); ++i)
+        if (!strcmp(suite, ff_srtp_suites[i].name))
+            return &ff_srtp_suites[i];
+
+    return NULL;
+}
+
+static int
+ff_srtp_get_key_bits(int key_size)
+{
+    return key_size > 0 ? key_size * 8 : 128;
+}
+
 void ff_srtp_free(struct SRTPContext *s)
 {
     uint8_t zero_buffer[32] = {0}; // WARNING: must be long enough to handle any key length
@@ -43,7 +79,7 @@ void ff_srtp_free(struct SRTPContext *s)
     // aes and hmac have an opaque pointer type.
     // No API to safely erase them, so just re-init with "dummy keys" to sanitize them
     if (s->aes) {
-        av_aes_init(s->aes, zero_buffer, 128, 0);
+        av_aes_init(s->aes, zero_buffer, ff_srtp_get_key_bits(s->session_key_size), 0);
         av_freep((void*)&s->aes);
     }
     if (s->hmac) {
@@ -80,26 +116,28 @@ static void derive_key(struct AVAES *aes, const uint8_t *salt, int label,
 int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
                        const char *params)
 {
-    uint8_t buf[30];
+    uint8_t buf[SRTP_MAX_MASTER_KEY_SIZE + SRTP_MASTER_SALT_SIZE];
+    const struct SRTPCryptoSuite *suite_def;
+    int expected_params_size;
 
     ff_srtp_free(s);
 
-    // RFC 4568
-    if (!strcmp(suite, "AES_CM_128_HMAC_SHA1_80") ||
-        !strcmp(suite, "SRTP_AES128_CM_HMAC_SHA1_80")) {
-        s->rtp_hmac_size = s->rtcp_hmac_size = 10;
-    } else if (!strcmp(suite, "AES_CM_128_HMAC_SHA1_32")) {
-        s->rtp_hmac_size = s->rtcp_hmac_size = 4;
-    } else if (!strcmp(suite, "SRTP_AES128_CM_HMAC_SHA1_32")) {
-        // RFC 5764 section 4.1.2
-        s->rtp_hmac_size  = 4;
-        s->rtcp_hmac_size = 10;
-    } else {
+    // RFC 4568 and RFC 6188.
+    suite_def = ff_srtp_get_suite(suite);
+    if (!suite_def) {
         av_log(NULL, AV_LOG_WARNING, "SRTP Crypto suite %s not supported\n",
                                      suite);
         return AVERROR(EINVAL);
     }
-    if (av_base64_decode(buf, params, sizeof(buf)) != sizeof(buf)) {
+
+    s->rtp_hmac_size = suite_def->rtp_hmac_size;
+    s->rtcp_hmac_size = suite_def->rtcp_hmac_size;
+    s->master_key_size = suite_def->master_key_size;
+    s->master_salt_size = suite_def->master_salt_size;
+    s->session_key_size = suite_def->session_key_size;
+
+    expected_params_size = s->master_key_size + s->master_salt_size;
+    if (av_base64_decode(buf, params, sizeof(buf)) != expected_params_size) {
         av_log(NULL, AV_LOG_WARNING, "Incorrect amount of SRTP params\n");
         jami_secure_memzero(buf, sizeof(buf));
         return AVERROR(EINVAL);
@@ -107,20 +145,23 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
     // MKI and lifetime not handled yet
     s->aes  = av_aes_alloc();
     s->hmac = av_hmac_alloc(AV_HMAC_SHA1);
-    if (!s->aes || !s->hmac)
+    if (!s->aes || !s->hmac) {
+        jami_secure_memzero(buf, sizeof(buf));
+        ff_srtp_free(s);
         return AVERROR(ENOMEM);
-    memcpy(s->master_key, buf, 16);
-    memcpy(s->master_salt, buf + 16, 14);
+    }
+    memcpy(s->master_key, buf, s->master_key_size);
+    memcpy(s->master_salt, buf + s->master_key_size, s->master_salt_size);
     jami_secure_memzero(buf, sizeof(buf));
 
-    // RFC 3711
-    av_aes_init(s->aes, s->master_key, 128, 0);
+    // RFC 3711 and RFC 6188.
+    av_aes_init(s->aes, s->master_key, ff_srtp_get_key_bits(s->master_key_size), 0);
 
-    derive_key(s->aes, s->master_salt, 0x00, s->rtp_key, sizeof(s->rtp_key));
+    derive_key(s->aes, s->master_salt, 0x00, s->rtp_key, s->session_key_size);
     derive_key(s->aes, s->master_salt, 0x02, s->rtp_salt, sizeof(s->rtp_salt));
     derive_key(s->aes, s->master_salt, 0x01, s->rtp_auth, sizeof(s->rtp_auth));
 
-    derive_key(s->aes, s->master_salt, 0x03, s->rtcp_key, sizeof(s->rtcp_key));
+    derive_key(s->aes, s->master_salt, 0x03, s->rtcp_key, s->session_key_size);
     derive_key(s->aes, s->master_salt, 0x05, s->rtcp_salt, sizeof(s->rtcp_salt));
     derive_key(s->aes, s->master_salt, 0x04, s->rtcp_auth, sizeof(s->rtcp_auth));
     return 0;
@@ -252,7 +293,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
     }
 
     create_iv(iv, rtcp ? s->rtcp_salt : s->rtp_salt, index, ssrc);
-    av_aes_init(s->aes, rtcp ? s->rtcp_key : s->rtp_key, 128, 0);
+    av_aes_init(s->aes, rtcp ? s->rtcp_key : s->rtp_key, ff_srtp_get_key_bits(s->session_key_size), 0);
     encrypt_counter(s->aes, iv, buf, len);
 
     return 0;
@@ -325,7 +366,7 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
     }
 
     create_iv(iv, rtcp ? s->rtcp_salt : s->rtp_salt, index, ssrc);
-    av_aes_init(s->aes, rtcp ? s->rtcp_key : s->rtp_key, 128, 0);
+    av_aes_init(s->aes, rtcp ? s->rtcp_key : s->rtp_key, ff_srtp_get_key_bits(s->session_key_size), 0);
     encrypt_counter(s->aes, iv, buf, len);
 
     if (rtcp) {
