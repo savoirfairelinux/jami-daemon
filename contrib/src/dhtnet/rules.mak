@@ -25,6 +25,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/dhtnet/0001-add-dtls-srtp-export.patch
 	$(MOVE)
 
 CMAKE_PKGS += dhtnet
