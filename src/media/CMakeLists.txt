@@ -8,6 +8,8 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/decoder_finder.h"
+   "${CMAKE_CURRENT_SOURCE_DIR}/dtls_srtp.cpp"
+   "${CMAKE_CURRENT_SOURCE_DIR}/dtls_srtp.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/libav_deps.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/libav_utils.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/libav_utils.h"
