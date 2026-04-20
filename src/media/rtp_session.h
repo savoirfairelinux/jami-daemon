@@ -24,6 +24,13 @@
 #include <memory>
 #include <mutex>
 
+namespace dht {
+namespace crypto {
+struct Certificate;
+struct PrivateKey;
+} // namespace crypto
+} // namespace dht
+
 namespace jami {
 
 class MediaRecorder;
@@ -59,6 +66,12 @@ public:
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
+    void setDtlsSrtpIdentity(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                             const std::shared_ptr<dht::crypto::PrivateKey>& key)
+    {
+        dtlsCertificate_ = cert;
+        dtlsPrivateKey_ = key;
+    }
 
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;
@@ -80,6 +93,8 @@ protected:
     uint16_t mtu_;
     std::shared_ptr<MediaRecorder> recorder_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
+    std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 };

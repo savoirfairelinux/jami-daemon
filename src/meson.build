@@ -66,6 +66,7 @@ libjami_sources = files(
     'media/audio/sound/tonelist.cpp',
     'media/audio/tonecontrol.cpp',
     'media/congestion_control.cpp',
+    'media/dtls_srtp.cpp',
     'media/libav_utils.cpp',
     'media/localrecorder.cpp',
     'media/localrecordermanager.cpp',
