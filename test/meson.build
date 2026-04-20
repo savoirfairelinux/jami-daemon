@@ -131,6 +131,21 @@ test(
     timeout: 1800,
 )
 
+ut_rtcp_mux = executable(
+    'ut_rtcp_mux',
+    sources: files('unitTest/sip/rtcp_mux.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'rtcp_mux',
+    ut_rtcp_mux,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),
