@@ -110,13 +110,24 @@ as_view(const pj_str_t& str) noexcept
 static constexpr const char*
 getKeyExchangeName(KeyExchangeProtocol kx)
 {
-    return kx == KeyExchangeProtocol::SDES ? "sdes" : "";
+    switch (kx) {
+    case KeyExchangeProtocol::SDES:
+        return "sdes";
+    case KeyExchangeProtocol::DTLS:
+        return "dtls";
+    default:
+        return "";
+    }
 }
 
 static inline KeyExchangeProtocol
 getKeyExchangeProtocol(std::string_view name)
 {
-    return name == "sdes"sv ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
+    if (name == "sdes"sv)
+        return KeyExchangeProtocol::SDES;
+    if (name == "dtls"sv)
+        return KeyExchangeProtocol::DTLS;
+    return KeyExchangeProtocol::NONE;
 }
 
 /**

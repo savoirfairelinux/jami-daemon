@@ -55,6 +55,13 @@ class Controller;
 }
 } // namespace dhtnet
 
+namespace dht {
+namespace crypto {
+struct Certificate;
+struct PrivateKey;
+} // namespace crypto
+} // namespace dht
+
 namespace jami {
 
 class Sdp;
@@ -457,6 +464,8 @@ private:
     std::string contactHeader_ {};
 
     std::shared_ptr<dhtnet::upnp::Controller> upnp_;
+    std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
+    std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
 
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};

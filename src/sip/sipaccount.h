@@ -400,6 +400,7 @@ public:
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
     bool isSrtpEnabled() const override { return config().srtpKeyExchange != KeyExchangeProtocol::NONE; }
+    KeyExchangeProtocol getSrtpKeyExchange() const override { return config().srtpKeyExchange; }
 
     bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
     bool setPushNotificationConfig(const std::map<std::string, std::string>& data) override;
