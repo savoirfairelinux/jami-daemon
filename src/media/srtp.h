@@ -27,16 +27,26 @@
 struct AVAES;
 struct AVHMAC;
 
+enum {
+    SRTP_MAX_MASTER_KEY_SIZE = 32,
+    SRTP_MASTER_SALT_SIZE = 14,
+    SRTP_MAX_SESSION_KEY_SIZE = 32,
+    SRTP_AUTH_KEY_SIZE = 20,
+};
+
 struct SRTPContext
 {
     struct AVAES* aes;
     struct AVHMAC* hmac;
     int rtp_hmac_size, rtcp_hmac_size;
-    uint8_t master_key[16];
-    uint8_t master_salt[14];
-    uint8_t rtp_key[16], rtcp_key[16];
-    uint8_t rtp_salt[14], rtcp_salt[14];
-    uint8_t rtp_auth[20], rtcp_auth[20];
+    int master_key_size;
+    int master_salt_size;
+    int session_key_size;
+    uint8_t master_key[SRTP_MAX_MASTER_KEY_SIZE];
+    uint8_t master_salt[SRTP_MASTER_SALT_SIZE];
+    uint8_t rtp_key[SRTP_MAX_SESSION_KEY_SIZE], rtcp_key[SRTP_MAX_SESSION_KEY_SIZE];
+    uint8_t rtp_salt[SRTP_MASTER_SALT_SIZE], rtcp_salt[SRTP_MASTER_SALT_SIZE];
+    uint8_t rtp_auth[SRTP_AUTH_KEY_SIZE], rtcp_auth[SRTP_AUTH_KEY_SIZE];
     int seq_largest, seq_initialized;
     uint32_t roc;
 

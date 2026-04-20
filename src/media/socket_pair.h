@@ -153,7 +153,9 @@ public:
        AES_CM_128_HMAC_SHA1_80
        SRTP_AES128_CM_HMAC_SHA1_80
        AES_CM_128_HMAC_SHA1_32
-       SRTP_AES128_CM_HMAC_SHA1_3
+         SRTP_AES128_CM_HMAC_SHA1_32
+         AES_256_CM_HMAC_SHA1_80
+         AES_256_CM_HMAC_SHA1_32
 
        Example (unsecure) usage:
        createSRTP("AES_CM_128_HMAC_SHA1_80",
