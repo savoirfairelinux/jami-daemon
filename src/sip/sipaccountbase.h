@@ -152,6 +152,8 @@ public:
 
     virtual bool isSrtpEnabled() const = 0;
 
+    virtual KeyExchangeProtocol getSrtpKeyExchange() const { return KeyExchangeProtocol::NONE; }
+
     virtual std::string getToUri(const std::string& username) const = 0;
 
     /**
