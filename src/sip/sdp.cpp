@@ -36,6 +36,7 @@
 #include <opendht/rng.h>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 
 namespace jami {
@@ -118,6 +119,30 @@ randomFill(std::vector<uint8_t>& dest)
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }
 
+namespace {
+
+constexpr std::array<std::string_view, 2> SDES_OFFER_CRYPTO_SUITES {
+    "AES_256_CM_HMAC_SHA1_80",
+    "AES_CM_128_HMAC_SHA1_80",
+};
+
+const CryptoSuiteDefinition*
+findCryptoSuiteDefinition(std::string_view cryptoSuite)
+{
+    const auto it = std::find_if(CryptoSuites.begin(),
+                                 CryptoSuites.end(),
+                                 [cryptoSuite](const auto& suite) { return suite.name == cryptoSuite; });
+    return it != CryptoSuites.end() ? &*it : nullptr;
+}
+
+std::string
+buildCryptoPrefix(const CryptoAttribute& crypto)
+{
+    return crypto.getTag() + " " + crypto.getCryptoSuite() + " ";
+}
+
+} // namespace
+
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
@@ -135,18 +160,32 @@ Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session* sdp)
 }
 
 pjmedia_sdp_attr*
-Sdp::generateSdesAttribute()
+Sdp::generateSdesAttribute(std::string_view tag, std::string_view cryptoSuite)
 {
-    static constexpr const unsigned cryptoSuite = 0;
+    const auto* suite = findCryptoSuiteDefinition(cryptoSuite);
+    if (not suite)
+        throw SdpException("Unsupported SRTP crypto suite");
+
     std::vector<uint8_t> keyAndSalt;
-    keyAndSalt.resize(jami::CryptoSuites[cryptoSuite].masterKeyLength / 8
-                      + jami::CryptoSuites[cryptoSuite].masterSaltLength / 8);
-    // generate keys
+    keyAndSalt.resize(suite->masterKeyLength / 8 + suite->masterSaltLength / 8);
     randomFill(keyAndSalt);
 
-    std::string crypto_attr = "1 "s + jami::CryptoSuites[cryptoSuite].name + " inline:" + base64::encode(keyAndSalt);
+    std::string crypto_attr = std::string(tag) + " " + std::string(cryptoSuite) + " inline:"
+                            + base64::encode(keyAndSalt);
     pj_str_t val {sip_utils::CONST_PJ_STR(crypto_attr)};
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
+}
+
+std::vector<pjmedia_sdp_attr*>
+Sdp::generateSdesOfferAttributes()
+{
+    std::vector<pjmedia_sdp_attr*> attrs;
+    attrs.reserve(SDES_OFFER_CRYPTO_SUITES.size());
+
+    for (size_t i = 0; i < SDES_OFFER_CRYPTO_SUITES.size(); ++i)
+        attrs.emplace_back(generateSdesAttribute(std::to_string(i + 1), SDES_OFFER_CRYPTO_SUITES[i]));
+
+    return attrs;
 }
 
 char const*
@@ -329,12 +368,26 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
-    if (secure) {
-        if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
-            throw SdpException("Unable to add sdes attribute to media");
+    if (secure and sdpDirection_ == SdpDirection::OFFER) {
+        for (auto* attr : generateSdesOfferAttributes()) {
+            if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
+                throw SdpException("Unable to add sdes attribute to media");
+        }
     }
 
     return med;
+}
+
+void
+Sdp::addSdesAttribute(pjmedia_sdp_media* media, const std::vector<std::string>& crypto)
+{
+    const auto selected = SdesNegotiator::negotiate(crypto);
+    if (not selected)
+        throw SdpException("Unable to negotiate sdes attribute for media");
+
+    auto* attr = generateSdesAttribute(selected.getTag(), selected.getCryptoSuite());
+    if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
+        throw SdpException("Unable to add sdes attribute to media");
 }
 
 void
@@ -578,6 +631,20 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         }
     }
 
+    for (unsigned i = 0; i < localSession_->media_count and i < remoteSession_->media_count; ++i) {
+        auto* localMedia = localSession_->media[i];
+        auto* remoteMedia = remoteSession_->media[i];
+
+        if (getMediaTransport(localMedia) != MediaTransport::RTP_SAVP)
+            continue;
+
+        const auto crypto = getCrypto(remoteMedia);
+        if (crypto.empty())
+            continue;
+
+        addSdesAttribute(localMedia, crypto);
+    }
+
     printSession(localSession_, "Local session:\n", sdpDirection_);
 
     if (validateSession() != PJ_SUCCESS) {
@@ -815,6 +882,22 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
+        if (not remote and session == activeLocalSession_ and activeRemoteSession_ and i < activeRemoteSession_->media_count) {
+            const auto remoteCrypto = getCrypto(activeRemoteSession_->media[i]);
+            const auto selectedRemoteCrypto = SdesNegotiator::negotiate(remoteCrypto);
+            if (selectedRemoteCrypto) {
+                const auto cryptoPrefix = buildCryptoPrefix(selectedRemoteCrypto);
+                const auto matchingLocalCrypto = std::find_if(
+                    crypto.begin(),
+                    crypto.end(),
+                    [&cryptoPrefix](const auto& item) { return item.rfind(cryptoPrefix, 0) == 0; });
+                if (matchingLocalCrypto != crypto.end()) {
+                    descr.crypto = SdesNegotiator::negotiate(std::vector<std::string> {*matchingLocalCrypto});
+                    continue;
+                }
+            }
+        }
+
         descr.crypto = SdesNegotiator::negotiate(crypto);
     }
     return ret;
