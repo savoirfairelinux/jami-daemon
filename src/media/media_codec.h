@@ -32,7 +32,7 @@
 
 namespace jami {
 
-enum class KeyExchangeProtocol : uint8_t { NONE, SDES };
+enum class KeyExchangeProtocol : uint8_t { NONE, SDES, DTLS };
 
 enum CodecType : uint8_t {
     CODEC_NONE = 0, // indicates that no codec is used or defined
@@ -216,10 +216,12 @@ private:
 // Possible values for media direction attribute.
 enum class MediaDirection : uint8_t { SENDRECV, SENDONLY, RECVONLY, INACTIVE };
 
+enum class DtlsSetup : uint8_t { NONE, ACTPASS, ACTIVE, PASSIVE };
+
 // Possible values for media transport attribute. 'UNKNOWN' means that the
 // was not set, or not found when parsing. Useful to detect errors when
 // parsing the SDP.
-enum class MediaTransport : uint8_t { RTP_AVP, RTP_SAVP, UNKNOWN };
+enum class MediaTransport : uint8_t { RTP_AVP, RTP_SAVP, UDP_TLS_RTP_SAVP, UDP_TLS_RTP_SAVPF, UNKNOWN };
 
 /**
  * MediaDescription
@@ -256,6 +258,11 @@ struct MediaDescription
     bool linkableHW {false};
 
     /** Crypto parameters */
+    KeyExchangeProtocol key_exchange {KeyExchangeProtocol::NONE};
+    MediaTransport transport {MediaTransport::UNKNOWN};
     CryptoAttribute crypto {};
+    DtlsSetup dtls_setup {DtlsSetup::NONE};
+    std::string dtls_fingerprint_type {};
+    std::string dtls_fingerprint {};
 };
 } // namespace jami
