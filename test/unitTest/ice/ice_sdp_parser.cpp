@@ -65,6 +65,7 @@ struct CallData
     std::condition_variable cv_ {};
     std::mutex mtx_;
     bool compliancyEnabled_ {false};
+    bool rtcpMuxEnabled_ {false};
 };
 
 // Used to register a MediaFrame observer to RTP session in order
@@ -139,10 +140,12 @@ private:
     // Test cases.
     void call_with_rfc5245_compliancy_disabled();
     void call_with_rfc5245_compliancy_enabled();
+    void call_with_rtcp_mux_enabled();
 
     CPPUNIT_TEST_SUITE(IceSdpParsingTest);
     CPPUNIT_TEST(call_with_rfc5245_compliancy_disabled);
     CPPUNIT_TEST(call_with_rfc5245_compliancy_enabled);
+    CPPUNIT_TEST(call_with_rtcp_mux_enabled);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -420,6 +423,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
         account->setLocalPort(aliceData.listeningPort_);
         account->enableIceCompIdRfc5245Compliance(aliceData.compliancyEnabled_);
+        account->enableRtcpMux(aliceData.rtcpMuxEnabled_);
     }
 
     {
@@ -429,6 +433,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
         account->setLocalPort(bobData.listeningPort_);
         account->enableIceCompIdRfc5245Compliance(bobData.compliancyEnabled_);
+        account->enableRtcpMux(bobData.rtcpMuxEnabled_);
     }
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
@@ -540,6 +545,13 @@ IceSdpParsingTest::test_call()
     auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceData_.callId_));
     CPPUNIT_ASSERT(call);
 
+    auto mediaSlots = call->getSDP().getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(MEDIA_COUNT), mediaSlots.size());
+    for (const auto& [local, remote] : mediaSlots) {
+        CPPUNIT_ASSERT_EQUAL(aliceData_.rtcpMuxEnabled_, local.rtcp_mux);
+        CPPUNIT_ASSERT_EQUAL(bobData_.rtcpMuxEnabled_, remote.rtcp_mux);
+    }
+
     auto rtpList = call->getRtpSessionList();
     CPPUNIT_ASSERT(rtpList.size() == offer.size());
 
@@ -582,6 +594,7 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_disabled()
     JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = false;
+    aliceData_.rtcpMuxEnabled_ = bobData_.rtcpMuxEnabled_ = false;
     test_call();
 }
 
@@ -591,6 +604,17 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_enabled()
     JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = true;
+    aliceData_.rtcpMuxEnabled_ = bobData_.rtcpMuxEnabled_ = false;
+    test_call();
+}
+
+void
+IceSdpParsingTest::call_with_rtcp_mux_enabled()
+{
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
+
+    aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = false;
+    aliceData_.rtcpMuxEnabled_ = bobData_.rtcpMuxEnabled_ = true;
     test_call();
 }
 
