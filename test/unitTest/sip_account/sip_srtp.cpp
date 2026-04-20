@@ -82,9 +82,11 @@ public:
 private:
     // Test cases.
     void audio_video_srtp_enabled_test();
+    void advertises_aes256_with_aes128_fallback_test();
 
     CPPUNIT_TEST_SUITE(SipSrtpTest);
     CPPUNIT_TEST(audio_video_srtp_enabled_test);
+    CPPUNIT_TEST(advertises_aes256_with_aes128_fallback_test);
 
     CPPUNIT_TEST_SUITE_END();
 
@@ -105,6 +107,7 @@ private:
                           bool validateMedia = true);
     static void configureTest(CallData& bob, CallData& alice);
     static std::string getUserAlias(const std::string& callId);
+    static std::vector<std::string> getCryptoAttributes(const pjmedia_sdp_session* session);
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal a like the StateChange signal.
     static bool waitForSignal(CallData& callData, const std::string& signal, const std::string& expectedEvent = {});
@@ -385,6 +388,23 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
     libjami::registerSignalHandlers(signalHandlers);
 }
 
+std::vector<std::string>
+SipSrtpTest::getCryptoAttributes(const pjmedia_sdp_session* session)
+{
+    std::vector<std::string> crypto;
+    if (not session or session->media_count == 0)
+        return crypto;
+
+    auto* media = session->media[0];
+    for (unsigned i = 0; i < media->attr_count; ++i) {
+        auto* attribute = media->attr[i];
+        if (pj_stricmp2(&attribute->name, "crypto") == 0)
+            crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
+    }
+
+    return crypto;
+}
+
 void
 SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<MediaAttribute> answer, bool validateMedia)
 {
@@ -517,6 +537,67 @@ SipSrtpTest::audio_video_srtp_enabled_test()
 
     // Run the scenario
     audio_video_call(offer, answer);
+}
+
+void
+SipSrtpTest::advertises_aes256_with_aes128_fallback_test()
+{
+    configureTest(aliceData_, bobData_);
+
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    CPPUNIT_ASSERT(aliceAcc->isSrtpEnabled());
+    CPPUNIT_ASSERT(bobAcc->isSrtpEnabled());
+
+    std::vector<MediaAttribute> offer;
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    offer.emplace_back(audio);
+
+    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
+                                                     "127.0.0.1:" + std::to_string(bobData_.listeningPort_),
+                                                     MediaAttribute::mediaAttributesToMediaMaps(offer));
+
+    CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceData_.callId_));
+    CPPUNIT_ASSERT(aliceCall);
+
+    const auto offeredCrypto = getCryptoAttributes(aliceCall->getSDP().getLocalSdpSession());
+    CPPUNIT_ASSERT_EQUAL(size_t(2), offeredCrypto.size());
+    CPPUNIT_ASSERT(offeredCrypto[0].rfind("1 AES_256_CM_HMAC_SHA1_80 inline:", 0) == 0);
+    CPPUNIT_ASSERT(offeredCrypto[1].rfind("2 AES_CM_128_HMAC_SHA1_80 inline:", 0) == 0);
+
+    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::RINGING));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCall::name));
+
+    libjami::acceptWithMedia(bobData_.accountId_, bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(offer));
+
+    CPPUNIT_ASSERT(waitForSignal(bobData_,
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
+    CPPUNIT_ASSERT(waitForSignal(aliceData_,
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(bobData_.callId_));
+    CPPUNIT_ASSERT(bobCall);
+
+    const auto aliceSlots = aliceCall->getSDP().getMediaSlots();
+    const auto bobSlots = bobCall->getSDP().getMediaSlots();
+
+    CPPUNIT_ASSERT_EQUAL(size_t(1), aliceSlots.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(1), bobSlots.size());
+
+    CPPUNIT_ASSERT_EQUAL(std::string("AES_256_CM_HMAC_SHA1_80"), aliceSlots[0].first.crypto.getCryptoSuite());
+    CPPUNIT_ASSERT_EQUAL(std::string("AES_256_CM_HMAC_SHA1_80"), aliceSlots[0].second.crypto.getCryptoSuite());
+    CPPUNIT_ASSERT_EQUAL(std::string("AES_256_CM_HMAC_SHA1_80"), bobSlots[0].first.crypto.getCryptoSuite());
+    CPPUNIT_ASSERT_EQUAL(std::string("AES_256_CM_HMAC_SHA1_80"), bobSlots[0].second.crypto.getCryptoSuite());
+
+    libjami::hangUp(bobData_.accountId_, bobData_.callId_);
+    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 }
 
 } // namespace test
