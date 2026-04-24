@@ -3353,6 +3353,11 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
 void
 JamiAccount::pushNotificationReceived(const std::string& /*from*/, const std::map<std::string, std::string>& data)
 {
+    auto it = data.find("reconnect");
+    if (it != data.end() && it->second == "1") {
+        JAMI_WARNING("[Account {:s}] pushNotificationReceived: triggering connectivityChanged before processing", getAccountID());
+        dht_->connectivityChanged();
+    }
     auto ret_future = dht_->pushNotificationReceived(data);
     dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
         JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) ret_future.get());
