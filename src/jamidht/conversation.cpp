@@ -2368,20 +2368,15 @@ Conversation::announce(const std::string& commitId, bool commitFromSelf)
 #endif
 
 void
-Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices)
+Conversation::bootstrap(std::function<void()> onBootstrapped)
 {
     std::lock_guard lock(pimpl_->bootstrapMtx_);
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
-    // Here, we bootstrap the DRT with devices who already wrote in the conversation
-    // If it works, the callback onConnectionChanged will be called with ok=true
-    pimpl_->bootstrapCb_ = std::move(onBootstrapped);
-    std::vector<DeviceId> devices = knownDevices;
-    JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
 
-    if (!devices.empty()) {
-        pimpl_->swarmManager_->setKnownNodes(devices);
-    }
+    // Start presence-based bootstrap monitoring
+    // If a connection is established, the callback onConnectionChanged will be called with ok=true
+    pimpl_->bootstrapCb_ = std::move(onBootstrapped);
 
     pimpl_->monitorConnection(weak_from_this());
 
