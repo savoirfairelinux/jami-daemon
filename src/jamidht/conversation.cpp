@@ -2400,7 +2400,7 @@ Conversation::announce(const std::string& commitId, bool commitFromSelf)
 #endif
 
 void
-Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices)
+Conversation::bootstrap(std::function<void()> onBootstrapped)
 {
     std::lock_guard lock(pimpl_->bootstrapMtx_);
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
@@ -2410,16 +2410,9 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     // not pass any device list here: candidates are injected as members get
     // online, through addKnownDevices() with devices reported by the
     // PresenceManager (i.e. announced on the DHT), and rotated on connection
-    // failure. The knownDevices parameter remains for callers/tests that
-    // already hold a list of live devices.
+    // failure.
     // If a connection succeeds, onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstrapped);
-    std::vector<DeviceId> devices = knownDevices;
-    JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
-
-    if (!devices.empty()) {
-        pimpl_->swarmManager_->setKnownNodes(devices);
-    }
 
     pimpl_->monitorConnection(weak_from_this());
 
