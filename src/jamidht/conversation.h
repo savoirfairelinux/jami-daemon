@@ -193,9 +193,8 @@ public:
     /**
      * Bootstrap swarm manager to other peers
      * @param onBootstrapped     Callback called when connection is established successfully
-     * @param knownDevices       List of account's known devices
      */
-    void bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices = {});
+    void bootstrap(std::function<void()> onBootstrapped);
 
     /**
      * Add known devices to the swarm manager
