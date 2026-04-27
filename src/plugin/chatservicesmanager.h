@@ -18,7 +18,11 @@
 
 #include "noncopyable.h"
 #include "chathandler.h"
+#include "pluginloader.h"
 #include "pluginpreferencesutils.h"
+
+#include <mutex>
+#include <set>
 
 namespace jami {
 
@@ -62,6 +66,17 @@ public:
      * @param message
      */
     void publishMessage(const pluginMessagePtr& message);
+
+    /**
+     * @brief Calls transformSwarmMessages on every loaded ChatHandler, allowing plugins to
+     * modify message bodies in-place before SwarmLoaded is emitted to the client.
+     * @param messages  mutable message vector (bodies may be replaced)
+     * @param accountId
+     * @param conversationId
+     */
+    void transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                const std::string& accountId,
+                                const std::string& conversationId);
 
     /**
      * @brief If an account is unregistered or a contact is erased, we clear all chat subjects
@@ -109,6 +124,12 @@ public:
 
 private:
     /**
+     * @brief Returns the set of {accountId, conversationId} pairs where at least one
+     * ChatHandler from the given plugin is currently enabled (toggled or always-on).
+     * Used by global body-overwrite services to scope their effect to the calling plugin.
+     */
+    std::set<std::pair<std::string, std::string>> getEnabledConversationsForPlugin(const DLPlugin* plugin) const;
+    /**
      * @brief Exposes ChatHandlers' life cycle managers services to the main API.
      * @param pluginManager
      */
@@ -125,6 +146,8 @@ private:
                            const std::string& accountId,
                            const std::string& peerId,
                            const bool toggle);
+
+    mutable std::mutex mtx_;
 
     // Components that a plugin can register through registerChatHandler service.
     // These objects can then be activated with toggleChatHandler.

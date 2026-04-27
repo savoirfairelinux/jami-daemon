@@ -94,3 +94,18 @@ struct JamiMessage
     bool isSwarm {false};
     bool fromHistory {false};
 };
+
+/**
+ * @struct MessageBodyOverwriteUpdate
+ * @brief Payload for the updateMessageBodyOverwrite plugin service.
+ * The plugin fills this and calls invokeService("updateMessageBodyOverwrite", &update)
+ * to push a completed bodyOverwrite into quickAccess and trigger SwarmMessageUpdated.
+ */
+struct MessageBodyOverwriteUpdate
+{
+    std::string accountId;
+    std::string conversationId;
+    std::string messageId;
+    std::string bodyOverwrite;
+    // To update a historical edition's overwrite, set messageId to the edition commit's id.
+};
