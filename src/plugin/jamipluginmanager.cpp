@@ -21,6 +21,7 @@
 #include "archiver.h"
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 #include "jami/plugin_manager_interface.h"
 // NOLINTNEXTLINE
 #include "store_ca_crt.cpp"
@@ -529,6 +530,18 @@ JamiPluginManager::registerServices()
     };
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
+
+    // getAccountUri returns the Jami URI (username) for a given account UUID.
+    // data must point to a std::pair<std::string, std::string> where
+    // first = accountId (input) and second = uri (output).
+    pm_.registerService("getAccountUri", [](const DLPlugin* /*plugin*/, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return FAILURE;
+        if (auto acc = Manager::instance().getAccount<JamiAccount>(p->first))
+            p->second = acc->getUsername();
+        return SUCCESS;
+    });
 }
 
 #ifdef LIBJAMI_TEST

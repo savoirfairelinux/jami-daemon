@@ -25,6 +25,9 @@
 #include "jamidht/jamiaccount.h"
 #include "jamidht/presence_manager.h"
 #include "manager.h"
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#endif
 #include "sip/sipcall.h"
 #include "vcard.h"
 #include "json_utils.h"
@@ -2270,9 +2273,19 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
+            auto convWeak = std::weak_ptr<Conversation>(conv->conversation);
             conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
+                [accountId = pimpl_->accountId_, conversationId, id, convWeak](auto&& messages) {
+#ifdef ENABLE_PLUGIN
+                    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    if (pluginChatManager.hasHandlers())
+                        pluginChatManager.transformSwarmMessages(messages, accountId, conversationId);
+#endif
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
+#ifdef ENABLE_PLUGIN
+                    if (auto convPtr = convWeak.lock())
+                        convPtr->bodyOverwritePreCachedMessages();
+#endif
                 },
                 options);
             return id;
@@ -2295,9 +2308,19 @@ ConversationModule::loadSwarmUntil(const std::string& conversationId,
             options.from = fromMessage;
             options.to = toMessage;
             options.includeTo = true;
+            auto convWeak = std::weak_ptr<Conversation>(conv->conversation);
             conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
+                [accountId = pimpl_->accountId_, conversationId, id, convWeak](auto&& messages) {
+#ifdef ENABLE_PLUGIN
+                    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    if (pluginChatManager.hasHandlers())
+                        pluginChatManager.transformSwarmMessages(messages, accountId, conversationId);
+#endif
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
+#ifdef ENABLE_PLUGIN
+                    if (auto convPtr = convWeak.lock())
+                        convPtr->bodyOverwritePreCachedMessages();
+#endif
                 },
                 options);
             return id;

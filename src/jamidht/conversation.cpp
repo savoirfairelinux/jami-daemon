@@ -452,6 +452,24 @@ public:
                     auto cm = std::make_shared<JamiMessage>(accountId_, convId, c.at("author") != userId_, c, false);
                     cm->isSwarm = true;
                     pluginChatManager.publishMessage(std::move(cm));
+
+                    // Load the body overwrite of text messages: store result in pluginData so the
+                    // original body is preserved and the UI can show the overwrite.
+                    // SwarmMessageReceived was already emitted with the original body;
+                    // we update via SwarmMessageUpdated — no new commit, no loop.
+                    if (c.at("type") == "text/plain") {
+                        auto it = loadedHistory_.quickAccess.find(c.at("id"));
+                        if (it != loadedHistory_.quickAccess.end()) {
+                            auto& sharedMsg = it->second;
+                            std::vector single {*sharedMsg};
+                            pluginChatManager.transformSwarmMessages(single, accountId_, convId);
+                            const auto& bodyOverwriteIt = single[0].pluginData.find("bodyOverwrite");
+                            if (bodyOverwriteIt != single[0].pluginData.end()) {
+                                sharedMsg->pluginData["bodyOverwrite"] = bodyOverwriteIt->second;
+                                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, *sharedMsg);
+                            }
+                        }
+                    }
                 }
 #endif
             }
@@ -587,6 +605,12 @@ public:
     const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
     std::vector<libjami::SwarmMessage> loadMessages(const LogOptions& options, History* optHistory = nullptr);
+    void bodyOverwritePreCachedMessages();
+    void reloadBodyOverwriteMessages();
+    void updateMessageBodyOverwrite(const std::string& messageId,
+                                  const std::string& bodyOverwrite,
+                                  const std::string& pluginDataKey = "bodyOverwrite");
+    void clearBodyOverwrites();
     void pull(const std::string& deviceId);
 
     // Avoid multiple fetch/merges at the same time.
@@ -1184,6 +1208,31 @@ Conversation::Impl::handleEdition(History& history,
                 // Remove reactions
                 if (sharedCommit->body.at(toReplace).empty())
                     it->second->reactions.clear();
+#ifdef ENABLE_PLUGIN
+                // Re-load the body overwrite of the edited message.  Clear any stale previous overwrite first
+                // (main body + all previous-edition overwrites) so transformSwarmMessages
+                // re-enqueues this message and all its editions.
+                if (it->second->type == "text/plain") {
+                    for (auto jt = it->second->pluginData.begin();
+                         jt != it->second->pluginData.end();) {
+                        if (jt->first.rfind("bodyOverwrite", 0) == 0)
+                            jt = it->second->pluginData.erase(jt);
+                        else
+                            ++jt;
+                    }
+                    auto& pluginChatManager
+                        = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    if (pluginChatManager.hasHandlers()) {
+                        std::vector<libjami::SwarmMessage> single {*it->second};
+                        pluginChatManager.transformSwarmMessages(single, accountId_, repository_->id());
+                        // Copy any bodyOverwrite resolved synchronously from cache.
+                        for (const auto& [key, val] : single[0].pluginData) {
+                            if (key.rfind("bodyOverwrite", 0) == 0 && !val.empty())
+                                it->second->pluginData[key] = val;
+                        }
+                    }
+                }
+#endif
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *it->second);
             }
         }
@@ -1782,6 +1831,160 @@ Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
             cb(std::move(result));
         }
     });
+}
+
+void
+Conversation::Impl::bodyOverwritePreCachedMessages()
+{
+#ifdef ENABLE_PLUGIN
+    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+    if (!pluginChatManager.hasHandlers())
+        return;
+
+    const auto convId = repository_->id();
+
+    // Collect text messages that are missing at least one overwrite key.
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> toOverwrite;
+    {
+        std::lock_guard lk(loadedHistory_.mutex);
+        for (auto& [id, msg] : loadedHistory_.quickAccess) {
+            if (msg->type != "text/plain")
+                continue;
+            // Missing main overwrite?
+            bool needsWork = msg->pluginData.find("bodyOverwrite") == msg->pluginData.end();
+            // Missing any edition overwrite?
+            if (!needsWork) {
+                for (std::size_t i = 0; i < msg->editions.size(); ++i) {
+                    if (msg->pluginData.find("bodyOverwrite_e" + std::to_string(i))
+                        == msg->pluginData.end()) {
+                        needsWork = true;
+                        break;
+                    }
+                }
+            }
+            if (needsWork)
+                toOverwrite.push_back(msg);
+        }
+    }
+
+    for (auto& sharedMsg : toOverwrite) {
+        std::vector<libjami::SwarmMessage> single {*sharedMsg};
+        pluginChatManager.transformSwarmMessages(single, accountId_, convId);
+
+        // Copy any overwrite keys that were synchronously resolved from cache.
+        bool anySyncSet = false;
+        for (const auto& [key, val] : single[0].pluginData) {
+            if (key.rfind("bodyOverwrite", 0) == 0 && !val.empty())
+                anySyncSet = true;
+        }
+        if (!anySyncSet)
+            continue;
+
+        libjami::SwarmMessage copy;
+        {
+            std::lock_guard writeLk(loadedHistory_.mutex);
+            for (const auto& [key, val] : single[0].pluginData) {
+                if (key.rfind("bodyOverwrite", 0) == 0 && !val.empty())
+                    sharedMsg->pluginData[key] = val;
+            }
+            copy = *sharedMsg;
+        }
+        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, copy);
+    }
+#endif
+}
+
+void
+Conversation::bodyOverwritePreCachedMessages()
+{
+    pimpl_->bodyOverwritePreCachedMessages();
+}
+
+void
+Conversation::Impl::reloadBodyOverwriteMessages()
+{
+#ifdef ENABLE_PLUGIN
+    // Clear all bodyOverwrite* entries so bodyOverwritePreCachedMessages() reload all body overwrites.
+    {
+        std::lock_guard lk(loadedHistory_.mutex);
+        for (auto& [id, msg] : loadedHistory_.quickAccess) {
+            for (auto it = msg->pluginData.begin(); it != msg->pluginData.end();) {
+                if (it->first.rfind("bodyOverwrite", 0) == 0)
+                    it = msg->pluginData.erase(it);
+                else
+                    ++it;
+            }
+        }
+    }
+    bodyOverwritePreCachedMessages();
+#endif
+}
+
+void
+Conversation::reloadBodyOverwriteMessages()
+{
+    pimpl_->reloadBodyOverwriteMessages();
+}
+
+void
+Conversation::Impl::updateMessageBodyOverwrite(const std::string& messageId,
+                                              const std::string& bodyOverwrite,
+                                              const std::string& pluginDataKey)
+{
+#ifdef ENABLE_PLUGIN
+    auto convId = repository_->id();
+    libjami::SwarmMessage copy;
+    {
+        std::lock_guard lk(loadedHistory_.mutex);
+        auto it = loadedHistory_.quickAccess.find(messageId);
+        if (it == loadedHistory_.quickAccess.end())
+            return;
+        it->second->pluginData[pluginDataKey] = bodyOverwrite;
+        copy = *it->second;
+    }
+    emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, copy);
+#endif
+}
+
+void
+Conversation::updateMessageBodyOverwrite(const std::string& messageId,
+                                        const std::string& bodyOverwrite,
+                                        const std::string& pluginDataKey)
+{
+    pimpl_->updateMessageBodyOverwrite(messageId, bodyOverwrite, pluginDataKey);
+}
+
+void
+Conversation::Impl::clearBodyOverwrites()
+{
+#ifdef ENABLE_PLUGIN
+    auto convId = repository_->id();
+    std::vector<libjami::SwarmMessage> updated;
+    {
+        std::lock_guard lk(loadedHistory_.mutex);
+        for (auto& [id, msg] : loadedHistory_.quickAccess) {
+            bool erased = false;
+            for (auto it = msg->pluginData.begin(); it != msg->pluginData.end();) {
+                if (it->first.rfind("bodyOverwrite", 0) == 0) {
+                    it = msg->pluginData.erase(it);
+                    erased = true;
+                } else {
+                    ++it;
+                }
+            }
+            if (erased)
+                updated.push_back(*msg);
+        }
+    }
+    for (const auto& msg : updated)
+        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, msg);
+#endif
+}
+
+void
+Conversation::clearBodyOverwrites()
+{
+    pimpl_->clearBodyOverwrites();
 }
 
 void
