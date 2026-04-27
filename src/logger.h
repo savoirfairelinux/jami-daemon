@@ -92,6 +92,7 @@ dhtLevel(dht::log::LogLevel level)
 LIBJAMI_PUBLIC
 void write(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message);
 
+#ifdef OPENDHT_HAS_SOURCE_LOC
 inline void
 writeDht(dht::log::source_loc loc, dht::log::LogLevel level, std::string_view tag, std::string&& message)
 {
@@ -103,6 +104,15 @@ dhtLogger(const std::string& tag = {})
 {
     return std::make_shared<dht::Logger>(&Logger::writeDht, tag);
 }
+#else
+inline std::shared_ptr<dht::log::Logger>
+dhtLogger(const std::string& tag = {})
+{
+    return std::make_shared<dht::Logger>([t = tag](dht::log::LogLevel level, std::string&& message) {
+        write(dhtLevel(level), {}, 0, true, t, std::move(message));
+    });
+}
+#endif
 
 void setConsoleLog(bool enable);
 void setSysLog(bool enable);

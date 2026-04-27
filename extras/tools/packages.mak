@@ -39,3 +39,6 @@ SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
 GETTEXT_VERSION=0.21
 GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
+
+MESON_VERSION=1.3.2
+MESON_URL=https://files.pythonhosted.org/packages/source/m/meson/meson-$(MESON_VERSION).tar.gz
