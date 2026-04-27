@@ -21,6 +21,7 @@
 #include "archiver.h"
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 #include "jami/plugin_manager_interface.h"
 // NOLINTNEXTLINE
 #include "store_ca_crt.cpp"
@@ -529,6 +530,56 @@ JamiPluginManager::registerServices()
     };
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
+
+    // getAccountUri returns the Jami URI (username) for a given account UUID.
+    // data must point to a std::pair<std::string, std::string> where
+    // first = accountId (input) and second = uri (output).
+    pm_.registerService("getAccountUri", [](const DLPlugin* /*plugin*/, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return FAILURE;
+        if (auto acc = Manager::instance().getAccount<JamiAccount>(p->first))
+            p->second = acc->getUsername();
+        return SUCCESS;
+    });
+
+    // getAccountIds returns all account IDs known to the daemon.
+    // data must point to a std::vector<std::string>.
+    pm_.registerService("getAccountIds", [](const DLPlugin* /*plugin*/, void* data) {
+        auto* p = static_cast<std::vector<std::string>*>(data);
+        if (!p)
+            return FAILURE;
+        *p = Manager::instance().getAccountList();
+        return SUCCESS;
+    });
+
+    // setPluginAccPreference writes a single per-account preference to disk without
+    // triggering handler callbacks.  Used by plugins to sync the UI display of account
+    // preferences when a global setting changes, without creating in-memory overrides.
+    // data must point to std::tuple<std::string,std::string,std::string>: {accountId, key, value}.
+    pm_.registerService("setPluginAccPreference", [](const DLPlugin* plugin, void* data) {
+        using T = std::tuple<std::string, std::string, std::string>;
+        auto* p = static_cast<T*>(data);
+        if (!p)
+            return FAILURE;
+        const auto& [accountId, key, value] = *p;
+        const auto rootPath = PluginUtils::getRootPathFromSoPath(plugin->getPath());
+
+        // The key must exist in this account's effective preferences map.
+        const auto prefsMap = PluginPreferencesUtils::getPreferencesValuesMap(rootPath, accountId);
+        if (prefsMap.find(key) == prefsMap.end())
+            return FAILURE;
+
+        auto userPrefs = PluginPreferencesUtils::getUserPreferencesValuesMap(rootPath, accountId);
+        userPrefs[key] = value;
+        const auto valuesFile = PluginPreferencesUtils::valuesFilePath(rootPath, accountId);
+        std::lock_guard guard(dhtnet::fileutils::getFileLock(valuesFile));
+        if (std::ofstream fs(valuesFile, std::ios::binary); fs.good()) {
+            msgpack::pack(fs, userPrefs);
+            return SUCCESS;
+        }
+        return FAILURE;
+    });
 }
 
 #ifdef LIBJAMI_TEST
