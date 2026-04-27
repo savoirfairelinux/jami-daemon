@@ -64,6 +64,17 @@ public:
     void publishMessage(const pluginMessagePtr& message);
 
     /**
+     * @brief Calls transformSwarmMessages on every loaded ChatHandler, allowing plugins to
+     * modify message bodies in-place before SwarmLoaded is emitted to the client.
+     * @param messages  mutable message vector (bodies may be replaced)
+     * @param accountId
+     * @param conversationId
+     */
+    void transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                const std::string& accountId,
+                                const std::string& conversationId);
+
+    /**
      * @brief If an account is unregistered or a contact is erased, we clear all chat subjects
      * related to that accountId or to the accountId, peerId pair.
      * @param accountId

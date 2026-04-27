@@ -310,6 +310,12 @@ public:
      * @param options   The log options
      */
     void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
+    void bodyOverwritePreCachedMessages();
+    void reloadBodyOverwriteMessages();
+    void updateMessageBodyOverwrite(const std::string& messageId,
+                                  const std::string& bodyOverwrite,
+                                  const std::string& pluginDataKey = "bodyOverwrite");
+    void clearBodyOverwrites();
     /**
      * Clear all cached messages
      */
