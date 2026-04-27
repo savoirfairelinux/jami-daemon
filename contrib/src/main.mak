@@ -85,7 +85,11 @@ else
 PKG_CONFIG ?= pkg-config
 endif
 
+ifndef HAVE_CROSS_COMPILE
+PKG_CONFIG_PATH := $(PREFIX)/lib/pkgconfig:$(PREFIX)/lib/$(HOST)/pkgconfig:$(PKG_CONFIG_PATH):/usr/lib/$(HOST)/pkgconfig:/usr/share/pkgconfig
+else
 PKG_CONFIG_PATH := $(PREFIX)/lib/pkgconfig:$(PREFIX)/lib/$(HOST)/pkgconfig:$(PKG_CONFIG_PATH)
+endif
 export PKG_CONFIG_PATH
 
 ifdef HAVE_CROSS_COMPILE

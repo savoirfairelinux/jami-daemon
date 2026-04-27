@@ -17,10 +17,14 @@
 
 #include "chatservicesmanager.h"
 #include "pluginmanager.h"
+#include "streamdata.h"
+#include "jamidht/commit_message.h"
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation.h"
 #include "fileutils.h"
+#include "jami/conversation_interface.h"
 
 namespace jami {
 
@@ -41,12 +45,30 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 
         if (!ptr)
             return -1;
-        handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
+        const auto handlerName = ptr->getChatHandlerDetails().at("name");
+        auto* rawPtr = ptr.get();
+        handlersNameMap_[handlerName] = (uintptr_t) rawPtr;
         std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
         // Adding preference that tells us to automatically activate a ChatHandler.
-        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"),
-                                                           ptr->id().substr(0, found));
+        PluginPreferencesUtils::addAlwaysHandlerPreference(handlerName, ptr->id().substr(0, found));
         chatHandlers_.emplace_back(std::move(ptr));
+
+        // Re-activate this handler for every conversation that had it enabled before
+        // the plugin was (re)loaded.  The daemon persists allowDenyList_ to disk, so
+        // after a reinstall the UI correctly shows the handler as attached — but the
+        // handler's own in-memory state is fresh and notifyChatSubject was never called,
+        // so no translations would occur until the next real-time message triggered it.
+        for (auto& [key, allowDenySet] : allowDenyList_) {
+            const auto it = allowDenySet.find(handlerName);
+            if (it == allowDenySet.end() || !it->second)
+                continue;
+            auto connection = key; // copy: notifyChatSubject takes non-const ref
+            auto& subject = chatSubjects_.emplace(key, std::make_shared<PublishObservable<pluginMessagePtr>>())
+                                .first->second;
+            rawPtr->notifyChatSubject(connection, subject);
+            chatHandlerToggled_[key].insert((uintptr_t) rawPtr);
+        }
+
         return 0;
     };
 
@@ -99,8 +121,155 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
         return 0;
     };
 
+    // reloadBodyOverwriteConversations: called by a plugin when its configuration changes.
+    // Clears all cached BodyOverwrite and re-runs transformSwarmMessages on every loaded
+    // conversation so the UI receives SwarmMessageUpdated with fresh plugin output.
+    auto reloadBodyOverwriteConversations = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->reloadBodyOverwriteMessages();
+                }
+            }
+        }
+        return 0;
+    };
+
+    // updateMessageBodyOverwrite: called by a plugin when a background BodyOverwrite completes.
+    // Writes the BodyOverwrite into the message's pluginData and emits SwarmMessageUpdated so
+    // the UI shows the BodyOverwritten text without blocking Jami's IO thread.
+    auto updateMessageBodyOverwrite = [](const DLPlugin*, void* data) {
+        auto* upd = static_cast<MessageBodyOverwriteUpdate*>(data);
+        if (!upd)
+            return -1;
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != upd->accountId)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(upd->conversationId))
+                    conv->updateMessageBodyOverwrite(upd->messageId, upd->bodyOverwrite);
+            }
+            break;
+        }
+        return 0;
+    };
+
+    // clearSwarmBodyOverwrite: called by a plugin on detach/deactivate.
+    // Removes all pluginData["bodyOverwrite"] entries from loaded messages and emits
+    // SwarmMessageUpdated for each, so the UI reverts to original message text.
+    auto clearSwarmBodyOverwrite = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->clearBodyOverwrites();
+                }
+            }
+        }
+        return 0;
+    };
+
+    // bodyOverwriteLoadedConversations: called by a plugin on attach/reactivate.
+    // Runs loadMissingBodyOverwrites on every loaded conversation without clearing
+    // existing BodyOverwrites, so the plugin can re-queue unBodyOverwritten messages.
+    auto bodyOverwriteLoadedConversations = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->loadMissingBodyOverwrites();
+                }
+            }
+        }
+        return 0;
+    };
+
+    // editMessage: allows a plugin to edit an existing swarm message.
+    // Payload: JamiMessage with accountId, peerId=conversationId,
+    //          data["edit"]=originalMessageId, data["body"]=newBody.
+    auto editMessageService = [](const DLPlugin*, void* data) {
+        auto* cm = static_cast<JamiMessage*>(data);
+        if (!cm)
+            return -1;
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(cm->accountId)) {
+            try {
+                const auto bodyIt = cm->data.find(CommitKey::BODY);
+                const auto editIt = cm->data.find(CommitKey::EDIT);
+                if (bodyIt != cm->data.end() && editIt != cm->data.end())
+                    acc->convModule()->editMessage(cm->peerId, bodyIt->second, editIt->second);
+            } catch (const std::exception& e) {
+                JAMI_XERR("Exception during plugin editMessage: %s", e.what());
+            }
+        }
+        return 0;
+    };
+
+    // clearSwarmBodyOverwriteConversation: scoped variant of clearSwarmBodyOverwrite.
+    // data: std::pair<std::string,std::string>* {accountId, conversationId}
+    auto clearSwarmBodyOverwriteConversation = [](const DLPlugin*, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return 0;
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != p->first)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(p->second))
+                    conv->clearBodyOverwrites();
+            }
+            break;
+        }
+        return 0;
+    };
+
+    // bodyOverwriteLoadedConversation: scoped variant of bodyOverwriteLoadedConversations.
+    // data: std::pair<std::string,std::string>* {accountId, conversationId}
+    auto bodyOverwriteLoadedConversation = [](const DLPlugin*, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return 0;
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != p->first)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(p->second))
+                    conv->loadMissingBodyOverwrites();
+            }
+            break;
+        }
+        return 0;
+    };
+
     // Services are registered to the PluginManager.
     pluginManager.registerService("sendTextMessage", sendTextMessage);
+    pluginManager.registerService("editMessage", editMessageService);
+    pluginManager.registerService("reloadBodyOverwriteConversations", reloadBodyOverwriteConversations);
+    pluginManager.registerService("updateMessageBodyOverwrite", updateMessageBodyOverwrite);
+    pluginManager.registerService("clearSwarmBodyOverwrite", clearSwarmBodyOverwrite);
+    pluginManager.registerService("bodyOverwriteLoadedConversations", bodyOverwriteLoadedConversations);
+    pluginManager.registerService("clearSwarmBodyOverwriteConversation", clearSwarmBodyOverwriteConversation);
+    pluginManager.registerService("bodyOverwriteLoadedConversation", bodyOverwriteLoadedConversation);
+}
+
+void
+ChatServicesManager::transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                            const std::string& accountId,
+                                            const std::string& conversationId)
+{
+    std::pair<std::string, std::string> key(accountId, conversationId);
+    const auto toggledIt = chatHandlerToggled_.find(key);
+    const auto allowIt = allowDenyList_.find(key);
+    for (auto& handler : chatHandlers_) {
+        const auto handlerName = handler->getChatHandlerDetails().at("name");
+        const bool toggled = toggledIt != chatHandlerToggled_.end()
+                             && toggledIt->second.count((uintptr_t) handler.get());
+        const bool allowed = allowIt != allowDenyList_.end()
+                             && allowIt->second.count(handlerName)
+                             && allowIt->second.at(handlerName);
+        if (toggled || allowed)
+            handler->transformSwarmMessages(messages, accountId, conversationId);
+    }
 }
 
 bool
@@ -130,7 +299,11 @@ ChatServicesManager::publishMessage(const pluginMessagePtr& message)
     auto& handlers = chatHandlerToggled_[mPair];
     auto& chatAllowDenySet = allowDenyList_[mPair];
 
-    // Search for activation flag.
+    // First pass: activate any handlers that need it and ensure the subject exists.
+    // All handlers share one subject per {accountId, peerId} pair — publishing inside
+    // the loop would notify every subscriber once per active handler, causing double
+    // (or more) delivery when multiple plugins are attached to the same conversation.
+    bool shouldPublish = false;
     for (auto& chatHandler : chatHandlers_) {
         std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
@@ -149,15 +322,22 @@ ChatServicesManager::publishMessage(const pluginMessagePtr& message)
             auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
                                 .first->second;
             if (!toggled) {
-                // If activation is expected, and not yet performed, we perform activation
+                // If activation is expected, and not yet performed, we perform activation.
+                // notifyChatSubject attaches the handler's subscriber to the subject so
+                // it is already registered before the single publish below.
                 handlers.insert((uintptr_t) chatHandler.get());
                 chatHandler->notifyChatSubject(mPair, subject);
                 chatAllowDenySet[chatHandlerName] = true;
                 PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
             }
-            // Finally we feed Chat subject with the message.
-            subject->publish(message);
+            shouldPublish = true;
         }
+    }
+
+    // Second pass: publish once — all subscribers on the shared subject receive it exactly once.
+    if (shouldPublish) {
+        if (const auto subjectIt = chatSubjects_.find(mPair); subjectIt != chatSubjects_.end())
+            subjectIt->second->publish(message);
     }
 }
 
