@@ -695,6 +695,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
 
+    if (!dummyCall) {
+        call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
+        return;
+    }
+
     call->addSubCall(*dummyCall);
     dummyCall->setIceMedia(call->getIceMedia());
     auto sendRequest = [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
