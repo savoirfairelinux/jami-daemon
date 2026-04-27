@@ -18,8 +18,10 @@
 
 #include "observer.h"
 #include "streamdata.h"
+#include "jami/conversation_interface.h"
 #include <string>
 #include <map>
+#include <vector>
 
 namespace jami {
 
@@ -69,6 +71,15 @@ public:
      * @return True if preference can be changed through setPreferenceAttribute method.
      */
     virtual bool preferenceMapHasKey(const std::string& key) = 0;
+
+    /**
+     * @brief Called by ChatServicesManager before SwarmLoaded is emitted, allowing plugins
+     * to modify message bodies in-place (e.g. translate them).
+     * Default implementation is a no-op.
+     */
+    virtual void transformSwarmMessages(std::vector<libjami::SwarmMessage>& /*messages*/,
+                                        const std::string& /*accountId*/,
+                                        const std::string& /*conversationId*/) {}
 
     /**
      * @brief Returns the dataPath of the plugin that created this ChatHandler.

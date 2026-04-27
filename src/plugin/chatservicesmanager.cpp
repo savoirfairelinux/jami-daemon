@@ -17,10 +17,13 @@
 
 #include "chatservicesmanager.h"
 #include "pluginmanager.h"
+#include "streamdata.h"
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation.h"
 #include "fileutils.h"
+#include "jami/conversation_interface.h"
 
 namespace jami {
 
@@ -99,8 +102,83 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
         return 0;
     };
 
+    // reloadBodyOverwriteConversations: called by a plugin after its target language changes.
+    // Clears all cached BodyOverwrite and re-runs transformSwarmMessages on every loaded
+    // conversation so the UI receives SwarmMessageUpdated with the new language.
+    auto reloadBodyOverwriteConversations = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->reloadBodyOverwriteMessages();
+                }
+            }
+        }
+        return 0;
+    };
+
+    // updateMessageBodyOverwrite: called by a plugin when a background BodyOverwrite completes.
+    // Writes the BodyOverwrite into the message's pluginData and emits SwarmMessageUpdated so
+    // the UI shows the BodyOverwritten text without blocking Jami's IO thread.
+    auto updateMessageBodyOverwrite = [](const DLPlugin*, void* data) {
+        auto* upd = static_cast<MessageBodyOverwriteUpdate*>(data);
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != upd->accountId)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(upd->conversationId))
+                    conv->updateMessageBodyOverwrite(upd->messageId, upd->bodyOverwrite, upd->pluginDataKey);
+            }
+            break;
+        }
+        return 0;
+    };
+
+    // clearSwarmBodyOverwrite: called by a plugin on detach/deactivate.
+    // Removes all pluginData["bodyOverwrite"] entries from loaded messages and emits
+    // SwarmMessageUpdated for each, so the UI reverts to original message text.
+    auto clearSwarmBodyOverwrite = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->clearBodyOverwrites();
+                }
+            }
+        }
+        return 0;
+    };
+
+    // bodyOverwriteLoadedConversations: called by a plugin on attach/reactivate.
+    // Runs bodyOverwritePreCachedMessages on every loaded conversation without clearing
+    // existing BodyOverwrites, so the plugin can re-queue unBodyOverwritten messages.
+    auto bodyOverwriteLoadedConversations = [](const DLPlugin*, void*) {
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (auto* convMod = account->convModule()) {
+                for (const auto& convId : convMod->getConversations()) {
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->bodyOverwritePreCachedMessages();
+                }
+            }
+        }
+        return 0;
+    };
+
     // Services are registered to the PluginManager.
     pluginManager.registerService("sendTextMessage", sendTextMessage);
+    pluginManager.registerService("reloadBodyOverwriteConversations", reloadBodyOverwriteConversations);
+    pluginManager.registerService("updateMessageBodyOverwrite", updateMessageBodyOverwrite);
+    pluginManager.registerService("clearSwarmBodyOverwrite", clearSwarmBodyOverwrite);
+    pluginManager.registerService("bodyOverwriteLoadedConversations", bodyOverwriteLoadedConversations);
+}
+
+void
+ChatServicesManager::transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                            const std::string& accountId,
+                                            const std::string& conversationId)
+{
+    for (auto& handler : chatHandlers_)
+        handler->transformSwarmMessages(messages, accountId, conversationId);
 }
 
 bool
