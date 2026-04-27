@@ -1,15 +1,15 @@
 ---
- whisper.vcxproj | 83 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 83 insertions(+)
+ whisper.vcxproj | 106 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 106 insertions(+)
  create mode 100644 whisper.vcxproj
 
 diff --git a/whisper.vcxproj b/whisper.vcxproj
 new file mode 100644
-index 0000000..9cbfdb7
+index 0000000..0000000
 --- /dev/null
 +++ b/whisper.vcxproj
-@@ -0,0 +1,83 @@
-+﻿<?xml version="1.0" encoding="utf-8"?>
+@@ -0,0 +1,106 @@
++<?xml version="1.0" encoding="utf-8"?>
 +<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 +  <PropertyGroup>
 +    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
@@ -50,7 +50,7 @@ index 0000000..9cbfdb7
 +  </PropertyGroup>
 +  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
 +    <ClCompile>
-+      <AdditionalIncludeDirectories>$(ProjectDir).;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
 +      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
 +      <ExceptionHandling>Sync</ExceptionHandling>
@@ -65,13 +65,14 @@ index 0000000..9cbfdb7
 +      <ObjectFileName>$(IntDir)</ObjectFileName>
 +      <DebugInformationFormat>
 +      </DebugInformationFormat>
++      <LanguageStandard>stdcpp17</LanguageStandard>
 +    </ClCompile>
 +    <ResourceCompile>
 +      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-+      <AdditionalIncludeDirectories>$(ProjectDir).;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +    </ResourceCompile>
 +    <Midl>
-+      <AdditionalIncludeDirectories>$(ProjectDir).;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
 +      <HeaderFileName>%(Filename).h</HeaderFileName>
 +      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -83,14 +84,36 @@ index 0000000..9cbfdb7
 +    </Lib>
 +  </ItemDefinitionGroup>
 +  <ItemGroup>
-+    <ClInclude Include="ggml.h" />
-+    <ClCompile Include="ggml.c" />
-+    <ClInclude Include="whisper.h" />
-+    <ClCompile Include="whisper.cpp" />
++    <!-- whisper -->
++    <ClInclude Include="include\whisper.h" />
++    <ClCompile Include="src\whisper.cpp" />
++    <!-- ggml core -->
++    <ClInclude Include="ggml\include\ggml.h" />
++    <ClInclude Include="ggml\include\ggml-alloc.h" />
++    <ClInclude Include="ggml\include\ggml-backend.h" />
++    <ClCompile Include="ggml\src\ggml.c" />
++    <ClCompile Include="ggml\src\ggml.cpp" />
++    <ClCompile Include="ggml\src\ggml-alloc.c" />
++    <ClCompile Include="ggml\src\ggml-backend.cpp" />
++    <ClCompile Include="ggml\src\ggml-backend-reg.cpp" />
++    <ClCompile Include="ggml\src\ggml-opt.cpp" />
++    <ClCompile Include="ggml\src\ggml-quants.c" />
++    <ClCompile Include="ggml\src\ggml-threading.cpp" />
++    <ClCompile Include="ggml\src\gguf.cpp" />
++    <!-- ggml cpu backend -->
++    <ClCompile Include="ggml\src\ggml-cpu\ggml-cpu.c" />
++    <ClCompile Include="ggml\src\ggml-cpu\ggml-cpu.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\ops.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\binary-ops.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\unary-ops.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\traits.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\repack.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\vec.cpp" />
++    <ClCompile Include="ggml\src\ggml-cpu\quants.c" />
 +  </ItemGroup>
 +  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 +  <ImportGroup Label="ExtensionTargets">
 +  </ImportGroup>
 +</Project>
--- 
+--
 2.37.1.windows.1

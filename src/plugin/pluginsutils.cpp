@@ -69,7 +69,9 @@ namespace PluginUtils {
 const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
 // SO_REGEX is used to find libraries during the plugin jpl uncompressing
 // lib/ABI/libplugin.SO
-const std::regex SO_REGEX(DIR_SEPARATOR_STR_ESC "(.*)" DIR_SEPARATOR_STR_ESC "([a-zA-Z0-9]+.(dylib|so|dll|lib).*)");
+static const char SO_PATTERN[] = DIR_SEPARATOR_STR_ESC "(.*)" DIR_SEPARATOR_STR_ESC
+                                                       "([a-zA-Z0-9_]+.(dylib|so|dll|lib).*)";
+const std::regex SO_REGEX(SO_PATTERN);
 
 std::filesystem::path
 manifestPath(const std::filesystem::path& rootPath)
