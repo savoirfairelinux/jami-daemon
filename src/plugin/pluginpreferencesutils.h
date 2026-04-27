@@ -104,6 +104,21 @@ public:
                                                                       const std::string& accountId = "");
 
     /**
+     * @brief Atomically reads, modifies, and writes a single user preference value.
+     * The read and write are performed under the same file lock, preventing a
+     * concurrent read-modify-write from a second thread from being silently lost.
+     * @param rootPath
+     * @param accountId
+     * @param key  preference key to update
+     * @param value  new value to store
+     * @return True if the value was successfully written.
+     */
+    static bool setUserPreferenceValue(const std::filesystem::path& rootPath,
+                                       const std::string& accountId,
+                                       const std::string& key,
+                                       const std::string& value);
+
+    /**
      * @brief Resets all preferences values to their defaultValues
      * by erasing all data saved in preferences.msgpack.
      * @param rootPath
