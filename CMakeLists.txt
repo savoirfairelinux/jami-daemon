@@ -228,9 +228,13 @@ if (BUILD_CONTRIB)
             COMMAND python ${SCRIPTS_DIR}/winmake.py
             WORKING_DIRECTORY ${SCRIPTS_DIR}
             RESULT_VARIABLE BUILD_RESULT
+            OUTPUT_VARIABLE BUILD_OUTPUT
+            ERROR_VARIABLE BUILD_ERROR
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
         )
         if (BUILD_RESULT)
-            message(FATAL_ERROR "Contrib build failed.")
+            message(FATAL_ERROR "Contrib build failed.\n${BUILD_OUTPUT}\n${BUILD_ERROR}")
         else()
             message(STATUS "Contrib build successful.")
         endif()
@@ -648,6 +652,7 @@ else()
     pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
     pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice)
     pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter)
+    pkg_search_module (harfbuzz IMPORTED_TARGET harfbuzz)
     pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec)
     pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
     pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
@@ -662,6 +667,9 @@ else()
         endif()
     endif()
 
+    if (harfbuzz_FOUND)
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::harfbuzz)
+    endif()
     target_link_libraries(${PROJECT_NAME} PRIVATE
         PkgConfig::dhtnet
         PkgConfig::opendht
