@@ -36,6 +36,9 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
     std::map<std::string, int32_t> status;
+    // Extra attributes written by plugins (e.g. {"translation": "..."}).
+    // Never stored to git — local display only.
+    std::map<std::string, std::string> pluginData;
 
     void fromMapStringString(const std::map<std::string, std::string>& commit)
     {

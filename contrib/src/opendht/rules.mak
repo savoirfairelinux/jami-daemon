@@ -3,7 +3,7 @@ OPENDHT_VERSION := 4.0.2
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/v$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
-ifeq ($(call need_pkg,'opendht >= 3.6.0'),)
+ifeq ($(call need_pkg,'opendht >= 4.0.0'),)
 PKGS_FOUND += opendht
 endif
 
