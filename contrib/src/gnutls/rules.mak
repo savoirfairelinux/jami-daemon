@@ -29,6 +29,7 @@ endif
 
 GNUTLS_CONF := \
     --enable-heartbeat-support \
+	--enable-dtls-srtp-support \
 	--disable-gtk-doc \
 	--without-p11-kit \
 	--disable-cxx \
