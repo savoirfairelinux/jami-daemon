@@ -42,7 +42,8 @@ public:
                 SocketPair& socketPair,
                 const uint16_t seqVal,
                 uint16_t mtu,
-                bool allowHwAccel = true);
+                bool allowHwAccel = true,
+                bool videoPassthrough = false);
 
     ~VideoSender() {};
 
