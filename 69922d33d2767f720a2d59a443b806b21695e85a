@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5318247_e5ba7a4a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2154,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-04-28T14:39:59Z",
+      "side": 1,
+      "message": "use std::filesystem API",
+      "range": {
+        "startLine": 2154,
+        "startChar": 16,
+        "endLine": 2154,
+        "endChar": 31
+      },
+      "revId": "69922d33d2767f720a2d59a443b806b21695e85a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
