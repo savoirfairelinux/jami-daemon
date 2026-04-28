@@ -2,6 +2,10 @@ ASIO_VERSION := asio-1-36-0
 PKG_CPE += cpe:2.3:a:*:asio:1.36.0:*:*:*:*:*:*:*
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
+ifeq ($(call need_pkg,'asio >= 1.30'),)
+PKGS_FOUND += asio
+endif
+
 $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 	$(call download,$(ASIO_URL))
 
