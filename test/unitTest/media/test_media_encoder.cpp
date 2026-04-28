@@ -28,6 +28,8 @@
 
 #include "../../test_runner.h"
 
+#include <array>
+
 namespace jami {
 namespace test {
 
@@ -41,9 +43,11 @@ public:
 
 private:
     void testMultiStream();
+    void testPassthroughRtpTimestampsStayMonotonic();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
+    CPPUNIT_TEST(testPassthroughRtpTimestampsStayMonotonic);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -137,6 +141,47 @@ getAudioFrame(int sampleRate, int nbSamples, int nbChannels)
     return frame;
 }
 
+namespace {
+
+struct RtpPacketCollector
+{
+    std::vector<uint32_t> timestamps;
+
+    static int write(void* opaque, uint8_t* buf, int buf_size)
+    {
+        auto* collector = static_cast<RtpPacketCollector*>(opaque);
+        if (buf_size >= 12 && (buf[0] >> 6) == 2) {
+            uint8_t payloadType = buf[1] & 0x7f;
+            if (payloadType < 200 || payloadType > 204) {
+                collector->timestamps.emplace_back((uint32_t(buf[4]) << 24) | (uint32_t(buf[5]) << 16)
+                                                   | (uint32_t(buf[6]) << 8) | uint32_t(buf[7]));
+            }
+        }
+        return buf_size;
+    }
+};
+
+libjami::PacketBuffer
+getPassthroughPacket(int64_t pts)
+{
+    auto* packet = av_packet_alloc();
+    if (!packet)
+        return {};
+    if (av_new_packet(packet, 8) < 0) {
+        av_packet_free(&packet);
+        return {};
+    }
+
+    static constexpr std::array<uint8_t, 8> payload {0x10, 0x00, 0x00, 0x9d, 0x01, 0x2a, 0x00, 0x00};
+    std::copy(payload.begin(), payload.end(), packet->data);
+    packet->pts = pts;
+    packet->dts = pts;
+    packet->flags |= AV_PKT_FLAG_KEY;
+    return libjami::PacketBuffer(packet);
+}
+
+} // namespace
+
 void
 MediaEncoderTest::testMultiStream()
 {
@@ -182,6 +227,44 @@ MediaEncoderTest::testMultiStream()
             av_frame_free(&video);
         }
         CPPUNIT_ASSERT(encoder_->flush() >= 0);
+    } catch (const MediaEncoderException& e) {
+        CPPUNIT_FAIL(e.what());
+    }
+}
+
+void
+MediaEncoderTest::testPassthroughRtpTimestampsStayMonotonic()
+{
+    const constexpr int width = 320;
+    const constexpr int height = 240;
+    auto vp8Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
+        getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
+    CPPUNIT_ASSERT(vp8Codec);
+
+    auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
+    RtpPacketCollector collector;
+    auto ioHandle = std::make_unique<MediaIOHandle>(1500, true, nullptr, &RtpPacketCollector::write, nullptr, &collector);
+
+    try {
+        encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
+        encoder_->setOptions(v);
+        CPPUNIT_ASSERT(encoder_->addStream(*vp8Codec) >= 0);
+        encoder_->setIOContext(ioHandle->getContext());
+        encoder_->setVideoPassthrough(true);
+
+        auto firstPacket = getPassthroughPacket(1000);
+        CPPUNIT_ASSERT(firstPacket);
+        CPPUNIT_ASSERT(encoder_->send(*firstPacket));
+        CPPUNIT_ASSERT(!collector.timestamps.empty());
+        auto firstTimestamp = collector.timestamps.back();
+
+        auto secondPacket = getPassthroughPacket(1);
+        CPPUNIT_ASSERT(secondPacket);
+        CPPUNIT_ASSERT(encoder_->send(*secondPacket));
+        CPPUNIT_ASSERT(collector.timestamps.size() >= 2);
+        auto secondTimestamp = collector.timestamps.back();
+
+        CPPUNIT_ASSERT(secondTimestamp > firstTimestamp);
     } catch (const MediaEncoderException& e) {
         CPPUNIT_FAIL(e.what());
     }

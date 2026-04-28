@@ -32,6 +32,7 @@
 
 extern "C" {
 #include <libavutil/parseutils.h>
+#include <libavutil/time.h>
 }
 
 #include <algorithm>
@@ -168,6 +169,19 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
                                                 filename.c_str());
     if (result < 0)
         JAMI_ERR() << "Unable to open " << filename << ": " << libav_utils::getError(-result);
+}
+
+void
+MediaEncoder::setVideoPassthrough(bool passthrough)
+{
+    videoPassthrough_ = passthrough;
+    if (!passthrough) {
+        passthroughVideoStartUs_ = 0;
+        passthroughVideoLastPts_ = 0;
+        passthroughVideoClockStarted_ = false;
+        passthroughVideoLastPtsValid_ = false;
+        passthroughVideoTimestampContext_ = nullptr;
+    }
 }
 
 int
@@ -536,18 +550,61 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()
         and static_cast<unsigned int>(streamIdx) < outputCtx_->nb_streams) {
         auto* encoderCtx = encoders_[streamIdx];
+        auto* stream = outputCtx_->streams[streamIdx];
+        const bool isPassthroughVideo = videoPassthrough_ && stream
+                                        && stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO;
         pkt.stream_index = streamIdx;
-        if (pkt.pts != AV_NOPTS_VALUE)
-            pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base, outputCtx_->streams[streamIdx]->time_base);
-        if (pkt.dts != AV_NOPTS_VALUE)
-            pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base, outputCtx_->streams[streamIdx]->time_base);
+        if (!isPassthroughVideo and pkt.pts != AV_NOPTS_VALUE)
+            pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base, stream->time_base);
+        if (!isPassthroughVideo and pkt.dts != AV_NOPTS_VALUE)
+            pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base, stream->time_base);
     }
+
+    if (videoPassthrough_)
+        updatePassthroughVideoTimestamp(pkt);
+
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
         JAMI_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
     }
     return ret >= 0;
+}
+
+void
+MediaEncoder::updatePassthroughVideoTimestamp(AVPacket& pkt)
+{
+    if (!outputCtx_ || pkt.stream_index < 0 || static_cast<unsigned int>(pkt.stream_index) >= outputCtx_->nb_streams)
+        return;
+
+    auto* stream = outputCtx_->streams[pkt.stream_index];
+    if (!stream || stream->codecpar->codec_type != AVMEDIA_TYPE_VIDEO)
+        return;
+
+    if (passthroughVideoTimestampContext_ != outputCtx_) {
+        passthroughVideoTimestampContext_ = outputCtx_;
+        passthroughVideoStartUs_ = 0;
+        passthroughVideoLastPts_ = 0;
+        passthroughVideoClockStarted_ = false;
+        passthroughVideoLastPtsValid_ = false;
+    }
+
+    const auto nowUs = av_gettime_relative();
+    if (!passthroughVideoClockStarted_) {
+        passthroughVideoStartUs_ = nowUs;
+        passthroughVideoClockStarted_ = true;
+    }
+
+    auto pts = av_rescale_q(nowUs - passthroughVideoStartUs_, AVRational {1, AV_TIME_BASE}, stream->time_base);
+    if (passthroughVideoLastPtsValid_ && pts <= passthroughVideoLastPts_)
+        pts = passthroughVideoLastPts_ + 1;
+
+    passthroughVideoLastPts_ = pts;
+    passthroughVideoLastPtsValid_ = true;
+    pkt.pts = pts;
+    pkt.dts = pts;
+    if (pkt.duration <= 0)
+        pkt.duration = 1;
 }
 
 int
