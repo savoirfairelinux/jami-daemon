@@ -68,6 +68,7 @@ public:
     MediaEncoder();
     ~MediaEncoder();
 
+    void setVideoPassthrough(bool passthrough);
     void openOutput(const std::string& filename, const std::string& format = "");
     void setMetadata(const std::string& title, const std::string& description);
     void setOptions(const MediaStream& opts);
@@ -138,6 +139,7 @@ private:
     bool isDynBitrateSupported(AVCodecID codecid);
     bool isDynPacketLossSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+    void updatePassthroughVideoTimestamp(AVPacket& pkt);
 #ifdef ENABLE_VIDEO
     int getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_ptr<VideoFrame>& output);
     std::shared_ptr<VideoFrame> getUnlinkedHWFrame(const VideoFrame& input);
@@ -157,6 +159,12 @@ private:
     bool linkableHW_ {false};
     RateMode mode_ {RateMode::CRF_CONSTRAINED};
     bool fecEnabled_ {false};
+    bool videoPassthrough_ {false};
+    int64_t passthroughVideoStartUs_ = 0;
+    int64_t passthroughVideoLastPts_ = 0;
+    bool passthroughVideoClockStarted_ {false};
+    bool passthroughVideoLastPtsValid_ {false};
+    AVFormatContext* passthroughVideoTimestampContext_ = nullptr;
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
