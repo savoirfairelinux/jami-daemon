@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1dc95a0b_0eb94d69",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-04-28T15:38:12Z",
+      "side": 1,
+      "message": "passthrough",
+      "range": {
+        "startLine": 7,
+        "startChar": 11,
+        "endLine": 7,
+        "endChar": 21
+      },
+      "revId": "c984d12437b5e15a1086de7b75fbd839d1cfa25f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "38fe6e2d_a7aa1217",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 405,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-04-28T15:38:12Z",
+      "side": 1,
+      "message": "I think it\u0027d be worth adding a comment explaining the purpose of this check.",
+      "range": {
+        "startLine": 405,
+        "startChar": 4,
+        "endLine": 405,
+        "endChar": 37
+      },
+      "revId": "c984d12437b5e15a1086de7b75fbd839d1cfa25f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
