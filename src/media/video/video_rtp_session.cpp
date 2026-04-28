@@ -192,7 +192,14 @@ VideoRtpSession::startSender()
                                                static_cast<rational<int>>(localVideoParams_.framerate))
                                  : videoMixer_->getStream("Video Sender");
             sender_.reset(
-                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
+                new VideoSender(getRemoteRtpUri(),
+                                ms,
+                                send_,
+                                *socketPair_,
+                                initSeqVal_ + 1,
+                                mtu_,
+                                allowHwAccel,
+                                localVideoParams_.passthrough));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
