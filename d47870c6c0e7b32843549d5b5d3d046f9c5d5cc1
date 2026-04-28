@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "af0249d3_372465dc",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 641,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-04-28T13:19:54Z",
+      "side": 1,
+      "message": "No, passthrough is used as-is in signal processing",
+      "parentUuid": "578984da_d28662ee",
+      "range": {
+        "startLine": 641,
+        "startChar": 14,
+        "endLine": 641,
+        "endChar": 25
+      },
+      "revId": "d47870c6c0e7b32843549d5b5d3d046f9c5d5cc1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1d775c8d_1189fad1",
@@ -73,6 +97,30 @@
       "writtenOn": "2026-01-23T10:34:13Z",
       "side": 1,
       "message": "Should the letter be capitalized after a hyphen? That is, `pass-through`?\n\nShould `passthrough_` be `passThrough_`?",
+      "range": {
+        "startLine": 217,
+        "startChar": 9,
+        "endLine": 217,
+        "endChar": 21
+      },
+      "revId": "d47870c6c0e7b32843549d5b5d3d046f9c5d5cc1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed9cdc55_c3e274de",
+        "filename": "src/media/media_decoder.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-04-28T13:19:54Z",
+      "side": 1,
+      "message": "No, passthrough is used as-is in signal processing",
+      "parentUuid": "6eabecbf_022c9db1",
       "range": {
         "startLine": 217,
         "startChar": 9,
