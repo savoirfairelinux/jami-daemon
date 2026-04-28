@@ -37,7 +37,8 @@ VideoSender::VideoSender(const std::string& dest,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
                          uint16_t mtu,
-                         bool enableHwAccel)
+                         bool enableHwAccel,
+                         bool videoPassthrough)
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
@@ -51,6 +52,7 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->addStream(*args.codec);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
+    videoEncoder_->setVideoPassthrough(videoPassthrough);
 }
 
 void
