@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5170b57_e83c9efa",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 37
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-04-28T14:26:57Z",
+      "side": 1,
+      "message": "bool ?",
+      "range": {
+        "startLine": 39,
+        "startChar": 4,
+        "endLine": 39,
+        "endChar": 15
+      },
+      "revId": "de21734a647cc692050f57c1f5f55658c8c0695f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35a5c1cb_174a11b5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 37
+      },
+      "lineNbr": 1109,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-04-28T14:26:57Z",
+      "side": 1,
+      "message": "error log, remove assert ?",
+      "range": {
+        "startLine": 1109,
+        "startChar": 16,
+        "endLine": 1109,
+        "endChar": 30
+      },
+      "revId": "de21734a647cc692050f57c1f5f55658c8c0695f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
