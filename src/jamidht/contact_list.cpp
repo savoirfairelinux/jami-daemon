@@ -194,9 +194,10 @@ ContactList::getContactInfo(const dht::InfoHash& h) const
     return c->second;
 }
 
-const std::map<dht::InfoHash, Contact>&
+std::map<dht::InfoHash, Contact>
 ContactList::getContacts() const
 {
+    std::lock_guard lk(mutex_);
     return contacts_;
 }
 

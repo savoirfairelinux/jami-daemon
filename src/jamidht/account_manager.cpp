@@ -573,12 +573,12 @@ AccountManager::getContacts(bool includeRemoved) const
         JAMI_ERROR("[Account {}] getContacts(): account not loaded", accountId_);
         return {};
     }
-    const auto& contacts = info_->contacts->getContacts();
+    auto contacts = info_->contacts->getContacts();
     std::map<dht::InfoHash, Contact> ret;
-    for (const auto& c : contacts) {
+    for (auto& c : contacts) {
         if (!c.second.isActive() && !includeRemoved && !c.second.isBanned())
             continue;
-        ret.emplace(c.first, c.second);
+        ret.emplace(c.first, std::move(c.second));
     }
     return ret;
 }

@@ -94,7 +94,7 @@ public:
 
     VerifyResult isValidAccountDevice(const crypto::Certificate& crt) const { return accountTrust_.verify(crt); }
 
-    const std::map<dht::InfoHash, Contact>& getContacts() const;
+    std::map<dht::InfoHash, Contact> getContacts() const;
     void setContacts(const std::map<dht::InfoHash, Contact>&);
     void updateContact(const dht::InfoHash&, const Contact&, bool emit = true);
 

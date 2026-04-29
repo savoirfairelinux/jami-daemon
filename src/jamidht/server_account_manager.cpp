@@ -501,7 +501,8 @@ ServerAccountManager::syncDevices()
 
     JAMI_WARNING("[Account {}] [Auth] syncContacts {}", accountId_, urlContacts);
     Json::Value jsonContacts(Json::arrayValue);
-    for (const auto& contact : info_->contacts->getContacts()) {
+    const auto contacts = info_->contacts->getContacts();
+    for (const auto& contact : contacts) {
         auto jsonContact = contact.second.toJson();
         jsonContact["uri"] = contact.first.toString();
         jsonContacts.append(std::move(jsonContact));
