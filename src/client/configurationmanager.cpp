@@ -545,7 +545,7 @@ getAccountList()
 std::vector<unsigned>
 getCodecList()
 {
-    std::vector<unsigned> list {jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
+    std::vector<unsigned> list {jami::Manager::instance().getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
     if (list.empty())
         jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
