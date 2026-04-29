@@ -383,6 +383,14 @@ JamiAccount::newIncomingCall(const std::string& from,
     JAMI_DEBUG("New incoming call from {:s} with {:d} media", from, mediaList.size());
 
     if (sipTransp) {
+        if (auto cert = sipTransp->getTlsInfos().peerCert) {
+            dht::InfoHash peer_account_id;
+            if (!accountManager_->onPeerCertificate(cert, config().dhtPublicInCalls, peer_account_id)) {
+                JAMI_WARNING("[Account {}] Rejecting incoming call from unauthorized peer {}", getAccountID(), from);
+                return nullptr;
+            }
+        }
+
         auto call = Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING, mediaList);
         call->setPeerUri(JAMI_URI_PREFIX + from);
         call->setPeerNumber(from);
