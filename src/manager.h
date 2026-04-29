@@ -59,6 +59,7 @@ class AudioLoop;
 class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
+class SystemCodecContainer;
 
 /** Manager (controller) of daemon */
 // TODO LIBJAMI_PUBLIC only if tests
@@ -132,6 +133,11 @@ public:
                                                                       const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId,
                                                                    const std::string& connectionId);
+
+    /**
+     * Accessor to the system codec container.
+     */
+    std::shared_ptr<SystemCodecContainer> getSystemCodecContainer() const;
 
     /**
      * Accessor to audiodriver.
