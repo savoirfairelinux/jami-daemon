@@ -31,8 +31,6 @@
 
 namespace jami {
 
-decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
-
 SystemCodecContainer::SystemCodecContainer()
 {
 }

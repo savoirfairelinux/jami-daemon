@@ -465,7 +465,7 @@ MediaRecorder::initRecord()
         encoder_->setOptions(audioStream);
 
         auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
+            Manager::instance().getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
         if (audioIdx_ < 0) {
             JAMI_ERR() << "Failed to add audio stream to encoder";
@@ -492,7 +492,7 @@ MediaRecorder::initRecord()
         encoder_->setOptions(args);
 
         auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
+            Manager::instance().getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
         if (videoIdx_ < 0) {
             JAMI_ERR() << "Failed to add video stream to encoder";

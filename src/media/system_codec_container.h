@@ -18,17 +18,12 @@
 #pragma once
 
 #include "media_codec.h"
-#include "global_instance.h"
 
 #include <string>
 #include <vector>
 #include <memory>
 
 namespace jami {
-
-class SystemCodecContainer;
-
-extern decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer;
 
 class SystemCodecContainer
 {
