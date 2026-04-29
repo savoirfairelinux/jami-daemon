@@ -12,7 +12,7 @@
       'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', @JAMI_LINK_LIBRARIES@],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions', '-fno-rtti', '-std=gnu++1y' ],
-      'cflags_cc': [ '-std=gnu++17', '-frtti', '-fexceptions' ],
+      'cflags_cc': [ '-std=gnu++20', '-frtti', '-fexceptions' ],
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'GCC_ENABLE_CPP_RTTI': 'YES',

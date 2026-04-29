@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y \
     libx264-dev \
     libyaml-cpp-dev \
     libhttp-parser-dev \
+    libargon2-dev \
     libwebrtc-audio-processing-dev \
     libsecp256k1-dev \
     guile-3.0-dev \
@@ -53,6 +54,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g node-gyp node-addon-api
+ENV NODE_PATH=/usr/lib/node_modules
 
 # Install latest Swig (>= 4.3 required for N-API support)
 WORKDIR /swig
