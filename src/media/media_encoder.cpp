@@ -206,7 +206,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 int
 MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 {
-    const auto codecInfo = getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
+    const auto codecInfo = Manager::instance().getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
     if (codecInfo)
         return initStream(*codecInfo, framesCtx);
     else

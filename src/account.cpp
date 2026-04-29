@@ -64,7 +64,7 @@ const std::string Account::DEFAULT_USER_AGENT = Account::getDefaultUserAgent();
 Account::Account(const std::string& accountId)
     : rand(Manager::instance().getSeededRandomEngine())
     , accountID_(accountId)
-    , systemCodecContainer_(getSystemCodecContainer())
+    , systemCodecContainer_(Manager::instance().getSystemCodecContainer())
     , idPath_(fileutils::get_data_dir() / accountId)
 {
     // Initialize the codec order, used when creating a new account
@@ -259,13 +259,13 @@ Account::mapStateNumberToString(RegistrationState state)
 std::vector<unsigned>
 Account::getDefaultCodecsId()
 {
-    return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
+    return Manager::instance().getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
 }
 
 std::map<std::string, std::string>
 Account::getDefaultCodecDetails(const unsigned& codecId)
 {
-    auto codec = jami::getSystemCodecContainer()->searchCodecById(codecId, jami::MEDIA_ALL);
+    auto codec = Manager::instance().getSystemCodecContainer()->searchCodecById(codecId, jami::MEDIA_ALL);
     if (codec) {
         if (codec->mediaType & jami::MEDIA_AUDIO) {
             auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(codec);
