@@ -969,6 +969,15 @@ JamiAccount::saveConfig() const
     }
 }
 
+bool
+JamiAccount::needToReconnect(const std::map<std::string, std::string>& details) const
+{
+    if (!config().dhtPublicInCalls)
+        return false;
+    auto it = details.find(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS);
+    return it != details.end() && it->second != TRUE_STR;
+}
+
 void
 JamiAccount::loadConfig()
 {

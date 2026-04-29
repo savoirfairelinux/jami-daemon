@@ -119,6 +119,7 @@ public:
     }
 
     void loadConfig() override;
+    bool needToReconnect(const std::map<std::string, std::string>& details) const override;
 
     /**
      * Constructor
