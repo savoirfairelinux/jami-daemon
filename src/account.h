@@ -169,6 +169,8 @@ public:
      */
     virtual void doUnregister(bool forceShutdownConnections = false) = 0;
 
+    virtual bool needToReconnect(const std::map<std::string, std::string>&) const { return false; }
+
     RegistrationState getRegistrationState() const { return registrationState_; }
 
     /**
