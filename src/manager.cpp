@@ -405,6 +405,8 @@ struct Manager::ManagerPimpl
 
     std::mutex gitTransportsMtx_ {};
     std::map<git_smart_subtransport*, std::unique_ptr<P2PSubTransport>> gitTransports_ {};
+
+    std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -2880,10 +2882,11 @@ Manager::loadAccountMap(const YAML::Node& node)
         ++errorCount;
     }
 
+    pimpl_->systemCodecContainer_ = std::make_shared<SystemCodecContainer>();
 #ifdef ENABLE_VIDEO
-    getSystemCodecContainer()->init(videoPreferences.getEncodingAccelerated());
+    pimpl_->systemCodecContainer_->init(videoPreferences.getEncodingAccelerated());
 #else
-    getSystemCodecContainer()->init(false);
+    pimpl_->systemCodecContainer_->init(false);
 #endif
 
     // load saved preferences for IP2IP account from configuration file
@@ -3082,6 +3085,12 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
             }
         }
     }
+}
+
+std::shared_ptr<SystemCodecContainer>
+Manager::getSystemCodecContainer() const
+{
+    return pimpl_->systemCodecContainer_;
 }
 
 std::shared_ptr<AudioLayer>
