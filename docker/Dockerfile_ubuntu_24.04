@@ -20,6 +20,7 @@ RUN add-apt-repository universe && \
         automake \
         autopoint \
         cmake \
+        meson \
         dpkg-dev \
         libdbus-1-dev \
         libupnp-dev \
@@ -73,11 +74,6 @@ RUN add-apt-repository universe && \
         libcppunit-dev \
         libarchive-dev \
         ninja-build
-
-RUN apt-get install -y python3 python3-pip python3-setuptools \
-                       python3-wheel pipx
-RUN pipx install meson
-RUN pipx ensurepath
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \

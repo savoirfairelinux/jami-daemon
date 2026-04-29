@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS jami-daemon
+FROM ubuntu:24.04 AS jami-daemon
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG cmake_args
@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     bison \
     build-essential \
     cmake \
+    meson \
     curl \
     git \
     libarchive-dev \
