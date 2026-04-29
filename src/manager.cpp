@@ -2742,7 +2742,8 @@ Manager::setAccountDetails(const std::string& accountID, const std::map<std::str
         return;
 
     // Unregister before modifying any account information
-    account->doUnregister();
+    auto needToReconnect = account->needToReconnect(details);
+    account->doUnregister(needToReconnect);
 
     account->setAccountDetails(details);
 
