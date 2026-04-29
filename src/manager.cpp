@@ -2735,11 +2735,18 @@ Manager::setAccountDetails(const std::string& accountID, const std::map<std::str
     }
 
     // Ignore if nothing has changed
-    if (details == account->getAccountDetails())
+    auto oldDetails = account->getAccountDetails();
+    if (details == oldDetails)
         return;
 
+    auto oldPublicInCalls = oldDetails.find("DHT.PublicInCalls");
+    auto newPublicInCalls = details.find("DHT.PublicInCalls");
+    bool wasPublicInCalls = oldPublicInCalls == oldDetails.end() || oldPublicInCalls->second == TRUE_STR;
+    bool isPublicInCalls = newPublicInCalls == details.end() || newPublicInCalls->second == TRUE_STR;
+    bool publicInCallsDisabled = wasPublicInCalls && !isPublicInCalls;
+
     // Unregister before modifying any account information
-    account->doUnregister();
+    account->doUnregister(publicInCallsDisabled);
 
     account->setAccountDetails(details);
 
