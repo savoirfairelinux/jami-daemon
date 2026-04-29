@@ -26,6 +26,7 @@ libjami_sources = files(
     'jamidht/conversation_channel_handler.cpp',
     'jamidht/conversation_module.cpp',
     'jamidht/conversationrepository.cpp',
+    'jamidht/commit_message.cpp',
     'jamidht/eth/libdevcore/CommonData.cpp',
     'jamidht/eth/libdevcore/SHA3.cpp',
     'jamidht/eth/libdevcrypto/Common.cpp',
