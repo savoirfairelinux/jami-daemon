@@ -89,6 +89,11 @@ getSignalHandlers()
         exported_callback<libjami::ConfigurationSignal::HardwareEncodingChanged>(),
         exported_callback<libjami::ConfigurationSignal::MessageSend>(),
 
+        /* Service-exposure */
+        exported_callback<libjami::ServiceSignal::PeerServicesReceived>(),
+        exported_callback<libjami::ServiceSignal::TunnelOpened>(),
+        exported_callback<libjami::ServiceSignal::TunnelClosed>(),
+
         /* Presence */
         exported_callback<libjami::PresenceSignal::NewServerSubscriptionRequest>(),
         exported_callback<libjami::PresenceSignal::NearbyPeerNotification>(),
