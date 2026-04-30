@@ -416,10 +416,16 @@ serviceRecordToMap(const jami::ServiceRecord& r)
     m["localPort"] = std::to_string(r.localPort);
     m["enabled"] = r.enabled ? "true" : "false";
     switch (r.policy) {
-    case jami::AccessPolicy::PUBLIC: m["policy"] = "public"; break;
-    case jami::AccessPolicy::SPECIFIC_CONTACTS: m["policy"] = "specific"; break;
+    case jami::AccessPolicy::PUBLIC:
+        m["policy"] = "public";
+        break;
+    case jami::AccessPolicy::SPECIFIC_CONTACTS:
+        m["policy"] = "specific";
+        break;
     case jami::AccessPolicy::CONTACTS_ONLY:
-    default: m["policy"] = "contacts"; break;
+    default:
+        m["policy"] = "contacts";
+        break;
     }
     std::string allowed;
     for (size_t i = 0; i < r.allowedContacts.size(); ++i) {
@@ -449,7 +455,8 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
     if (!portStr.empty()) {
         try {
             r.localPort = static_cast<uint16_t>(std::stoi(portStr));
-        } catch (...) {}
+        } catch (...) {
+        }
     }
     auto pol = get("policy", "contacts");
     if (pol == "public")
@@ -486,8 +493,7 @@ addExposedService(const std::string& accountId, const std::map<std::string, std:
 }
 
 bool
-updateExposedService(const std::string& accountId,
-                     const std::map<std::string, std::string>& details)
+updateExposedService(const std::string& accountId, const std::map<std::string, std::string>& details)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->serviceManager().updateService(mapToServiceRecord(details));
