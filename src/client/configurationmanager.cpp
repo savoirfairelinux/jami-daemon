@@ -489,16 +489,25 @@ bool
 updateExposedService(const std::string& accountId,
                      const std::map<std::string, std::string>& details)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->serviceManager().updateService(mapToServiceRecord(details));
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        auto rec = mapToServiceRecord(details);
+        // Tear down any active inbound tunnels first; if the update changes
+        // the local target (host/port) or disables the service, existing
+        // peer connections must be severed. A new connection from a peer
+        // will pick up the updated record.
+        acc->closeServerTunnelsForService(rec.id);
+        return acc->serviceManager().updateService(rec);
+    }
     return false;
 }
 
 bool
 removeExposedService(const std::string& accountId, const std::string& serviceId)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        acc->closeServerTunnelsForService(serviceId);
         return acc->serviceManager().removeService(serviceId);
+    }
     return false;
 }
 

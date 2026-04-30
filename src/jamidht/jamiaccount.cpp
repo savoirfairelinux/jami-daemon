@@ -3020,6 +3020,10 @@ JamiAccount::finalizeSvcQuery(uint32_t requestId,
                               int status,
                               const std::string& servicesJson)
 {
+    JAMI_LOG("[Account {}] queryPeerServices req={} -> finalizeSvcQuery status={}",
+             getAccountID(),
+             requestId,
+             status);
     std::shared_ptr<PendingSvcQuery> q;
     {
         std::lock_guard lk(pendingSvcQueriesMtx_);
@@ -3065,6 +3069,11 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
     static std::atomic<uint32_t> sQueryCounter {0};
     const auto requestId = ++sQueryCounter;
 
+    JAMI_LOG("[Account {}] queryPeerServices req={} peer={}",
+             getAccountID(),
+             requestId,
+             peerUri);
+
     auto state = std::make_shared<PendingSvcQuery>();
     state->requestId = requestId;
     state->peerUri = peerUri;
@@ -3093,6 +3102,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
     auto wself = weak();
     handler->setOnResponse(
         [wself](const std::string& peerAccountUri,
+                const std::string& peerDeviceId,
                 const std::vector<svc_protocol::SvcInfo>& services) {
             auto self = wself.lock();
             if (!self)
@@ -3108,8 +3118,12 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                         self->pendingSvcQueriesByPeer_.erase(it);
                 }
             }
-            if (reqId == 0)
+            if (reqId == 0) {
+                JAMI_DEBUG("[Account {}] svc-disc response with no pending query for peer={}",
+                           self->getAccountID(),
+                           peerAccountUri);
                 return;
+            }
             Json::Value arr(Json::arrayValue);
             for (const auto& s : services) {
                 Json::Value v(Json::objectValue);
@@ -3117,6 +3131,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                 v["name"] = s.name;
                 v["description"] = s.description;
                 v["proto"] = s.proto;
+                v["device"] = peerDeviceId;
                 arr.append(v);
             }
             self->finalizeSvcQuery(reqId, static_cast<int>(PSStatus::OK), json::toString(arr));
@@ -3158,7 +3173,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
             h->connect(dev->getLongId(),
                        svc_protocol::kDiscoveryChannelName,
                        [wself, requestId](std::shared_ptr<dhtnet::ChannelSocket> sock,
-                                          const DeviceId&) {
+                                          const DeviceId& devId) {
                            auto self = wself.lock();
                            if (!self)
                                return;
@@ -3257,6 +3272,16 @@ JamiAccount::closeServiceTunnel(const std::string& tunnelId)
     if (!handler)
         return false;
     return handler->closeTunnel(tunnelId);
+}
+
+void
+JamiAccount::closeServerTunnelsForService(const std::string& serviceId)
+{
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(
+        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    if (!handler)
+        return;
+    handler->closeServerChannelsForService(serviceId);
 }
 
 std::vector<std::map<std::string, std::string>>

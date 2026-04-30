@@ -176,6 +176,13 @@ ServiceManager::addService(ServiceRecord rec)
     auto id = rec.id;
     services_[id] = std::move(rec);
     saveLocked();
+    const auto& stored = services_[id];
+    JAMI_LOG("[ServiceManager] added service id={} name=\"{}\" target={}:{} enabled={}",
+             id,
+             stored.name,
+             stored.localHost,
+             stored.localPort,
+             stored.enabled);
     return id;
 }
 
@@ -188,8 +195,20 @@ ServiceManager::updateService(const ServiceRecord& rec)
     auto it = services_.find(rec.id);
     if (it == services_.end())
         return false;
+    bool wasEnabled = it->second.enabled;
     it->second = rec;
     saveLocked();
+    if (wasEnabled != rec.enabled)
+        JAMI_LOG("[ServiceManager] service id={} name=\"{}\" {}",
+                 rec.id,
+                 rec.name,
+                 rec.enabled ? "enabled" : "disabled");
+    else
+        JAMI_LOG("[ServiceManager] updated service id={} name=\"{}\" target={}:{}",
+                 rec.id,
+                 rec.name,
+                 rec.localHost,
+                 rec.localPort);
     return true;
 }
 
@@ -198,8 +217,10 @@ ServiceManager::removeService(const std::string& id)
 {
     std::unique_lock lk(mutex_);
     auto erased = services_.erase(id) > 0;
-    if (erased)
+    if (erased) {
         saveLocked();
+        JAMI_LOG("[ServiceManager] removed service id={}", id);
+    }
     return erased;
 }
 

@@ -114,6 +114,11 @@ public:
     /// tunnel with this id was found.
     bool closeTunnel(const std::string& tunnelId);
 
+    /// Server-side: shutdown every active tunnel channel currently serving
+    /// `serviceId`. Used when the local service is removed or disabled so
+    /// that already-established connections from peers are torn down.
+    void closeServerChannelsForService(const std::string& serviceId);
+
     /// Snapshot of currently-active client tunnels.
     std::vector<Tunnel> activeTunnels() const;
 
@@ -131,6 +136,16 @@ private:
                std::shared_ptr<asio::ip::tcp::socket> tcp);
     void relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket> channel,
                            std::shared_ptr<asio::ip::tcp::socket> tcp);
+    /// Track an active per-connection client-side relay so closeTunnel can
+    /// tear it down.
+    void trackClientConnection(const std::shared_ptr<ClientTunnel>& tunnel,
+                               const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                               const std::shared_ptr<asio::ip::tcp::socket>& tcp);
+    /// Track an active server-side channel for `serviceId` and the local
+    /// TCP socket relaying it.
+    void trackServerChannel(const std::string& serviceId,
+                            const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                            const std::shared_ptr<asio::ip::tcp::socket>& tcp);
 
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
@@ -138,6 +153,14 @@ private:
 
     mutable std::mutex mtx_;
     std::map<std::string, std::shared_ptr<ClientTunnel>> tunnels_;
+    /// Active server-side channels grouped by serviceId, with the local TCP
+    /// peer they're relaying to. Entries are removed on channel shutdown.
+    struct ServerConn
+    {
+        std::weak_ptr<dhtnet::ChannelSocket> channel;
+        std::weak_ptr<asio::ip::tcp::socket> tcp;
+    };
+    std::map<std::string, std::vector<ServerConn>> serverChannels_;
 };
 
 } // namespace jami
