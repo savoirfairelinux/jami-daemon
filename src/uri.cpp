@@ -47,6 +47,10 @@ Uri::Uri(std::string_view uri)
             scheme_ = Uri::Scheme::MESSAGE;
         else if (scheme_str == "auth")
             scheme_ = Uri::Scheme::AUTH;
+        else if (scheme_str == "svcdisc")
+            scheme_ = Uri::Scheme::SVC_DISCOVERY;
+        else if (scheme_str == "svc")
+            scheme_ = Uri::Scheme::SVC_TUNNEL;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;
         authority_ = uri.substr(posSep + 1);
@@ -95,6 +99,10 @@ Uri::schemeToString() const
         return "msg"sv;
     case Uri::Scheme::AUTH:
         return "auth"sv;
+    case Uri::Scheme::SVC_DISCOVERY:
+        return "svcdisc"sv;
+    case Uri::Scheme::SVC_TUNNEL:
+        return "svc"sv;
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:
