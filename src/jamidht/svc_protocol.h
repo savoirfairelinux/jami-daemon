@@ -48,7 +48,8 @@ struct SvcInfo
     std::string name;
     std::string description;
     std::string proto;       ///< "tcp" in v1
-    MSGPACK_DEFINE_MAP(id, name, description, proto)
+    std::string scheme;      ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
+    MSGPACK_DEFINE_MAP(id, name, description, proto, scheme)
 };
 
 /// Request sent by the client over `svcdisc://query`.

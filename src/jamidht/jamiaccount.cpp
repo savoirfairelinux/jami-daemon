@@ -3131,6 +3131,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                 v["name"] = s.name;
                 v["description"] = s.description;
                 v["proto"] = s.proto;
+                v["scheme"] = s.scheme;
                 v["device"] = peerDeviceId;
                 arr.append(v);
             }
