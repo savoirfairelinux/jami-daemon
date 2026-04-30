@@ -46,6 +46,30 @@
       },
       "revId": "69922d33d2767f720a2d59a443b806b21695e85a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5ac3ad9_d768666d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2154,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-04-30T15:45:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d5318247_e5ba7a4a",
+      "range": {
+        "startLine": 2154,
+        "startChar": 16,
+        "endLine": 2154,
+        "endChar": 31
+      },
+      "revId": "69922d33d2767f720a2d59a443b806b21695e85a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
