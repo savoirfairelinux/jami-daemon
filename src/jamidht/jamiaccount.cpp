@@ -2995,22 +2995,101 @@ JamiAccount::isConfirmedContact(const std::string& peerAccountUri) const
     return info && info->isActive() && info->confirmed;
 }
 
+// ----------------------------------------------------------------------------
+// Service-exposure: peer discovery & tunnel orchestration.
+// ----------------------------------------------------------------------------
+
+/// Hard upper bound on how long we keep a discovery query alive before
+/// reporting it as Timeout. Chosen well above the worst-case observed
+/// channel-handshake latency on slow links.
+static constexpr std::chrono::seconds SVC_DISCOVERY_DEADLINE {25};
+
+struct JamiAccount::PendingSvcQuery
+{
+    uint32_t requestId {0};
+    std::string peerUri;
+    std::unique_ptr<asio::steady_timer> deadline;
+    unsigned pendingConnects {0};
+    bool discoveryEnded {false};
+    bool sawSuccessfulConnect {false};
+    bool emitted {false};
+};
+
+void
+JamiAccount::finalizeSvcQuery(uint32_t requestId,
+                              int status,
+                              const std::string& servicesJson)
+{
+    std::shared_ptr<PendingSvcQuery> q;
+    {
+        std::lock_guard lk(pendingSvcQueriesMtx_);
+        auto it = pendingSvcQueries_.find(requestId);
+        if (it == pendingSvcQueries_.end())
+            return;
+        q = it->second;
+        if (q->emitted)
+            return;
+        q->emitted = true;
+        pendingSvcQueries_.erase(it);
+        // Best-effort removal from the per-peer FIFO; the response-router
+        // already pops on a successful match, but we may be terminating
+        // ahead of any response (no devices, timeout, ...).
+        auto pit = pendingSvcQueriesByPeer_.find(q->peerUri);
+        if (pit != pendingSvcQueriesByPeer_.end()) {
+            auto& dq = pit->second;
+            for (auto dit = dq.begin(); dit != dq.end(); ++dit) {
+                if (*dit == requestId) {
+                    dq.erase(dit);
+                    break;
+                }
+            }
+            if (dq.empty())
+                pendingSvcQueriesByPeer_.erase(pit);
+        }
+    }
+    if (q->deadline) {
+        q->deadline->cancel();
+    }
+    emitSignal<libjami::ServiceSignal::PeerServicesReceived>(requestId,
+                                                             getAccountID(),
+                                                             q->peerUri,
+                                                             status,
+                                                             servicesJson);
+}
+
 uint32_t
 JamiAccount::queryPeerServices(const std::string& peerUri)
 {
+    using PSStatus = libjami::ServiceSignal::PeerServicesStatus;
+
     static std::atomic<uint32_t> sQueryCounter {0};
     const auto requestId = ++sQueryCounter;
 
-    if (!accountManager_ || !connectionManager_)
+    auto state = std::make_shared<PendingSvcQuery>();
+    state->requestId = requestId;
+    state->peerUri = peerUri;
+    {
+        std::lock_guard lk(pendingSvcQueriesMtx_);
+        pendingSvcQueries_.emplace(requestId, state);
+        pendingSvcQueriesByPeer_[peerUri].push_back(requestId);
+    }
+
+    if (!accountManager_ || !connectionManager_) {
+        finalizeSvcQuery(requestId, static_cast<int>(PSStatus::InternalError), "[]");
         return requestId;
+    }
 
     auto* handler = static_cast<SvcDiscoveryChannelHandler*>(
         channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
-    if (!handler)
+    if (!handler) {
+        finalizeSvcQuery(requestId, static_cast<int>(PSStatus::InternalError), "[]");
         return requestId;
+    }
 
     // Install (or re-install, idempotent for our purposes) the response router
-    // that translates discovery responses into the libjami signal.
+    // that translates discovery responses into the libjami signal. The first
+    // peer-device response per pending request id wins; subsequent ones are
+    // dropped silently.
     auto wself = weak();
     handler->setOnResponse(
         [wself](const std::string& peerAccountUri,
@@ -3018,18 +3097,19 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
             auto self = wself.lock();
             if (!self)
                 return;
-            // Look up the most recent matching request (oldest pending wins).
             uint32_t reqId = 0;
             {
                 std::lock_guard lk(self->pendingSvcQueriesMtx_);
-                auto it = self->pendingSvcQueries_.find(peerAccountUri);
-                if (it != self->pendingSvcQueries_.end() && !it->second.empty()) {
+                auto it = self->pendingSvcQueriesByPeer_.find(peerAccountUri);
+                if (it != self->pendingSvcQueriesByPeer_.end() && !it->second.empty()) {
                     reqId = it->second.front();
                     it->second.pop_front();
                     if (it->second.empty())
-                        self->pendingSvcQueries_.erase(it);
+                        self->pendingSvcQueriesByPeer_.erase(it);
                 }
             }
+            if (reqId == 0)
+                return;
             Json::Value arr(Json::arrayValue);
             for (const auto& s : services) {
                 Json::Value v(Json::objectValue);
@@ -3039,30 +3119,99 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                 v["proto"] = s.proto;
                 arr.append(v);
             }
-            emitSignal<libjami::ServiceSignal::PeerServicesReceived>(
-                reqId,
-                self->getAccountID(),
-                peerAccountUri,
-                json::toString(arr));
+            self->finalizeSvcQuery(reqId, static_cast<int>(PSStatus::OK), json::toString(arr));
         });
-    {
-        std::lock_guard lk(pendingSvcQueriesMtx_);
-        pendingSvcQueries_[peerUri].push_back(requestId);
-    }
+
+    // Arm the deadline before kicking off any I/O so we still report a
+    // terminal status if the device lookup or connection attempts hang.
+    state->deadline = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(),
+                                                            SVC_DISCOVERY_DEADLINE);
+    state->deadline->async_wait([wself, requestId](const asio::error_code& ec) {
+        if (ec)
+            return; // cancelled
+        auto self = wself.lock();
+        if (!self)
+            return;
+        self->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::Timeout), "[]");
+    });
 
     accountManager_->forEachDevice(
         dht::InfoHash(peerUri),
-        [w = weak()](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-            auto self = w.lock();
+        [wself, requestId](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+            auto self = wself.lock();
             if (!self)
                 return;
-            auto* h = static_cast<SvcDiscoveryChannelHandler*>(
-                self->channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+            std::shared_ptr<PendingSvcQuery> st;
+            SvcDiscoveryChannelHandler* h = nullptr;
+            {
+                std::lock_guard lk(self->pendingSvcQueriesMtx_);
+                auto it = self->pendingSvcQueries_.find(requestId);
+                if (it == self->pendingSvcQueries_.end())
+                    return; // already terminated
+                st = it->second;
+                ++st->pendingConnects;
+                h = static_cast<SvcDiscoveryChannelHandler*>(
+                    self->channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+            }
             if (!h)
                 return;
             h->connect(dev->getLongId(),
                        svc_protocol::kDiscoveryChannelName,
-                       [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
+                       [wself, requestId](std::shared_ptr<dhtnet::ChannelSocket> sock,
+                                          const DeviceId&) {
+                           auto self = wself.lock();
+                           if (!self)
+                               return;
+                           bool emitUnreachable = false;
+                           {
+                               std::lock_guard lk(self->pendingSvcQueriesMtx_);
+                               auto it = self->pendingSvcQueries_.find(requestId);
+                               if (it == self->pendingSvcQueries_.end())
+                                   return; // already terminated (success/timeout/etc.)
+                               auto& st = *it->second;
+                               if (st.pendingConnects > 0)
+                                   --st.pendingConnects;
+                               if (sock)
+                                   st.sawSuccessfulConnect = true;
+                               // Only declare Unreachable once discovery has
+                               // finished AND every connect has come back
+                               // without ever yielding a working channel.
+                               if (st.discoveryEnded && st.pendingConnects == 0
+                                   && !st.sawSuccessfulConnect && !st.emitted) {
+                                   emitUnreachable = true;
+                               }
+                           }
+                           if (emitUnreachable)
+                               self->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::Unreachable), "[]");
+                       });
+        },
+        [wself, requestId](bool ok) {
+            auto self = wself.lock();
+            if (!self)
+                return;
+            bool emitNoDevices = false;
+            bool emitUnreachable = false;
+            {
+                std::lock_guard lk(self->pendingSvcQueriesMtx_);
+                auto it = self->pendingSvcQueries_.find(requestId);
+                if (it == self->pendingSvcQueries_.end())
+                    return;
+                auto& st = *it->second;
+                st.discoveryEnded = true;
+                if (!ok && st.pendingConnects == 0 && !st.emitted) {
+                    emitNoDevices = true;
+                } else if (ok && st.pendingConnects == 0 && !st.sawSuccessfulConnect
+                           && !st.emitted) {
+                    // Edge case: forEachDevice claimed a device existed but
+                    // every connect callback already came back empty before
+                    // the end-callback fired.
+                    emitUnreachable = true;
+                }
+            }
+            if (emitNoDevices)
+                self->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::NoDevices), "[]");
+            else if (emitUnreachable)
+                self->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::Unreachable), "[]");
         });
 
     return requestId;
