@@ -412,6 +412,7 @@ serviceRecordToMap(const jami::ServiceRecord& r)
     m["id"] = r.id;
     m["name"] = r.name;
     m["description"] = r.description;
+    m["scheme"] = r.scheme;
     m["localHost"] = r.localHost;
     m["localPort"] = std::to_string(r.localPort);
     m["enabled"] = r.enabled ? "true" : "false";
@@ -442,6 +443,7 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
     r.id = get("id");
     r.name = get("name");
     r.description = get("description");
+    r.scheme = get("scheme");
     auto host = get("localHost");
     if (!host.empty())
         r.localHost = host;
