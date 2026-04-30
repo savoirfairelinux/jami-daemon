@@ -784,10 +784,23 @@ private:
 
     std::unique_ptr<class ServiceManager> serviceManager_;
 
-    /// Pending discovery requests: peer URI -> FIFO of request ids awaiting
-    /// a `PeerServicesReceived` signal. Protected by pendingSvcQueriesMtx_.
+    /// Per-request state for an in-flight queryPeerServices() call. Defined
+    /// out-of-line in jamiaccount.cpp so callers don't need to pull in asio
+    /// just to compile this header.
+    struct PendingSvcQuery;
+
+    /// Emit the terminal `PeerServicesReceived` signal for `requestId` with
+    /// the given status (matching `libjami::ServiceSignal::PeerServicesStatus`)
+    /// and JSON payload, then drop the request from the pending tables.
+    /// Idempotent — subsequent calls for the same id are no-ops.
+    void finalizeSvcQuery(uint32_t requestId, int status, const std::string& servicesJson);
+
     mutable std::mutex pendingSvcQueriesMtx_;
-    std::map<std::string, std::deque<uint32_t>> pendingSvcQueries_;
+    std::map<uint32_t, std::shared_ptr<PendingSvcQuery>> pendingSvcQueries_;
+    /// Reverse index used by the discovery channel handler's response
+    /// callback (which only knows the peer URI) to find which request id a
+    /// reply belongs to. FIFO per peer.
+    std::map<std::string, std::deque<uint32_t>> pendingSvcQueriesByPeer_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::shared_ptr<AccountManager> accountManager_;
