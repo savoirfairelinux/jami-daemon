@@ -38,6 +38,9 @@
 #include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
+#include "service_manager.h"
+#include "svc_discovery_channel_handler.h"
+#include "svc_tunnel_channel_handler.h"
 #include "jami/media_const.h"
 
 #include "sip/sdp.h"
@@ -2985,6 +2988,151 @@ JamiAccount::getContactInfo(const std::string& uri) const
     return accountManager_ ? accountManager_->getContactInfo(uri) : std::nullopt;
 }
 
+bool
+JamiAccount::isConfirmedContact(const std::string& peerAccountUri) const
+{
+    auto info = getContactInfo(peerAccountUri);
+    return info && info->isActive() && info->confirmed;
+}
+
+uint32_t
+JamiAccount::queryPeerServices(const std::string& peerUri)
+{
+    static std::atomic<uint32_t> sQueryCounter {0};
+    const auto requestId = ++sQueryCounter;
+
+    if (!accountManager_ || !connectionManager_)
+        return requestId;
+
+    auto* handler = static_cast<SvcDiscoveryChannelHandler*>(
+        channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+    if (!handler)
+        return requestId;
+
+    // Install (or re-install, idempotent for our purposes) the response router
+    // that translates discovery responses into the libjami signal.
+    auto wself = weak();
+    handler->setOnResponse(
+        [wself](const std::string& peerAccountUri,
+                const std::vector<svc_protocol::SvcInfo>& services) {
+            auto self = wself.lock();
+            if (!self)
+                return;
+            // Look up the most recent matching request (oldest pending wins).
+            uint32_t reqId = 0;
+            {
+                std::lock_guard lk(self->pendingSvcQueriesMtx_);
+                auto it = self->pendingSvcQueries_.find(peerAccountUri);
+                if (it != self->pendingSvcQueries_.end() && !it->second.empty()) {
+                    reqId = it->second.front();
+                    it->second.pop_front();
+                    if (it->second.empty())
+                        self->pendingSvcQueries_.erase(it);
+                }
+            }
+            Json::Value arr(Json::arrayValue);
+            for (const auto& s : services) {
+                Json::Value v(Json::objectValue);
+                v["id"] = s.id;
+                v["name"] = s.name;
+                v["description"] = s.description;
+                v["proto"] = s.proto;
+                arr.append(v);
+            }
+            emitSignal<libjami::ServiceSignal::PeerServicesReceived>(
+                reqId,
+                self->getAccountID(),
+                peerAccountUri,
+                json::toString(arr));
+        });
+    {
+        std::lock_guard lk(pendingSvcQueriesMtx_);
+        pendingSvcQueries_[peerUri].push_back(requestId);
+    }
+
+    accountManager_->forEachDevice(
+        dht::InfoHash(peerUri),
+        [w = weak()](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+            auto self = w.lock();
+            if (!self)
+                return;
+            auto* h = static_cast<SvcDiscoveryChannelHandler*>(
+                self->channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+            if (!h)
+                return;
+            h->connect(dev->getLongId(),
+                       svc_protocol::kDiscoveryChannelName,
+                       [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
+        });
+
+    return requestId;
+}
+
+std::string
+JamiAccount::openServiceTunnel(const std::string& peerUri,
+                               const std::string& deviceId,
+                               const std::string& serviceId,
+                               const std::string& serviceName,
+                               uint16_t localPort)
+{
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(
+        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    if (!handler)
+        return {};
+    DeviceId dev;
+    try {
+        dev = DeviceId(deviceId);
+    } catch (...) {
+        return {};
+    }
+    auto accId = getAccountID();
+    return handler->openTunnel(
+        peerUri,
+        dev,
+        serviceId,
+        serviceName,
+        localPort,
+        [accId](const std::string& tunnelId, uint16_t port) {
+            emitSignal<libjami::ServiceSignal::TunnelOpened>(accId, tunnelId, port);
+        },
+        [accId](const std::string& tunnelId, const std::string& reason) {
+            emitSignal<libjami::ServiceSignal::TunnelClosed>(accId, tunnelId, reason);
+        });
+}
+
+bool
+JamiAccount::closeServiceTunnel(const std::string& tunnelId)
+{
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(
+        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    if (!handler)
+        return false;
+    return handler->closeTunnel(tunnelId);
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getActiveServiceTunnels() const
+{
+    auto it = channelHandlers_.find(Uri::Scheme::SVC_TUNNEL);
+    if (it == channelHandlers_.end())
+        return {};
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(it->second.get());
+    if (!handler)
+        return {};
+    auto tunnels = handler->activeTunnels();
+    std::vector<std::map<std::string, std::string>> out;
+    out.reserve(tunnels.size());
+    for (auto& t : tunnels) {
+        out.push_back({{"id", t.id},
+                       {"peerUri", t.peerUri},
+                       {"deviceId", t.peerDevice},
+                       {"serviceId", t.serviceId},
+                       {"serviceName", t.serviceName},
+                       {"localPort", std::to_string(t.localPort)}});
+    }
+    return out;
+}
+
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getContacts(bool includeRemoved) const
 {
@@ -4417,6 +4565,15 @@ JamiAccount::initConnectionManager()
                 });
             });
         channelHandlers_[Uri::Scheme::AUTH] = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
+
+        if (!serviceManager_)
+            serviceManager_ = std::make_unique<ServiceManager>(idPath_);
+        channelHandlers_[Uri::Scheme::SVC_DISCOVERY]
+            = std::make_unique<SvcDiscoveryChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::SVC_TUNNEL]
+            = std::make_unique<SvcTunnelChannelHandler>(shared(),
+                                                        *connectionManager_.get(),
+                                                        Manager::instance().ioContext());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
