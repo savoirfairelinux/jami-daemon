@@ -479,14 +479,21 @@ struct ArchiveAccountManager::AddDeviceContext : public DeviceContextBase
 bool
 ArchiveAccountManager::provideAccountAuthentication(const std::string& key, const std::string& scheme)
 {
-    if (scheme != fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD) {
+    // Verify that the scheme provided is supported
+    if (scheme != fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD && scheme != fileutils::ARCHIVE_AUTH_SCHEME_NONE) {
         JAMI_ERROR("[LinkDevice] Unsupported account authentication scheme attempted.");
         return false;
     }
+
     auto ctx = authCtx_;
     if (!ctx) {
         JAMI_WARNING("[LinkDevice] No auth context found.");
         return false;
+    }
+
+    // Check that the scheme provided in matches the expected on
+    if (scheme != ctx->linkDevCtx->authScheme) {
+        JAMI_WARNING("[LinkDevice] Expected scheme \"{}\", but provided scheme is \"{}\"", ctx->linkDevCtx->authScheme, scheme);
     }
 
     if (ctx->linkDevCtx->state != AuthDecodingState::AUTH) {
@@ -705,6 +712,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 if (ctx->linkDevCtx->state == AuthDecodingState::HANDSHAKE) {
                     auto peerCert = ctx->linkDevCtx->channel->peerCertificate();
                     auto authScheme = toRecv.at(PayloadKey::authScheme);
+                    ctx->linkDevCtx->authScheme = authScheme;
                     ctx->linkDevCtx->authEnabled = authScheme != fileutils::ARCHIVE_AUTH_SCHEME_NONE;
 
                     JAMI_DEBUG("[LinkDevice] NEW: Auth scheme from payload is '{}'", authScheme);
