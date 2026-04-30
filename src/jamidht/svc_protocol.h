@@ -64,8 +64,11 @@ struct SvcDiscResponse
 {
     uint8_t v {kMaxVersion};
     std::string type {MsgType::kServiceList};
+    /// Long device id of the responder, so the requester can target the
+    /// exact device when opening a tunnel without a separate lookup.
+    std::string device;
     std::vector<SvcInfo> services;
-    MSGPACK_DEFINE_MAP(v, type, services)
+    MSGPACK_DEFINE_MAP(v, type, device, services)
 };
 
 /// Application-level error response.
