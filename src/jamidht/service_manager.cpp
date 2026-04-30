@@ -57,6 +57,7 @@ toJson(const ServiceRecord& r)
     v["id"] = r.id;
     v["name"] = r.name;
     v["description"] = r.description;
+    v["scheme"] = r.scheme;
     v["localHost"] = r.localHost;
     v["localPort"] = static_cast<Json::UInt>(r.localPort);
     v["policy"] = policyToString(r.policy);
@@ -76,6 +77,7 @@ fromJson(const Json::Value& v, ServiceRecord& r)
     r.id = v.get("id", "").asString();
     r.name = v.get("name", "").asString();
     r.description = v.get("description", "").asString();
+    r.scheme = v.get("scheme", "").asString();
     r.localHost = v.get("localHost", "127.0.0.1").asString();
     r.localPort = static_cast<uint16_t>(v.get("localPort", 0).asUInt());
     r.policy = policyFromString(v.get("policy", "contacts").asString());
