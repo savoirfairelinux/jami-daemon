@@ -66,6 +66,8 @@ svc_protocol::SvcDiscResponse
 SvcDiscoveryChannelHandler::buildResponse(JamiAccount& account, const std::string& peerAccountUri)
 {
     svc_protocol::SvcDiscResponse out;
+    if (const auto& id = account.identity().first)
+        out.device = id->getPublicKey().getLongId().toString();
     auto checker = [&account](const std::string& uri) { return account.isConfirmedContact(uri); };
     auto visible = account.serviceManager().getVisibleServices(peerAccountUri, checker);
     out.services.reserve(visible.size());
@@ -119,7 +121,8 @@ SvcDiscoveryChannelHandler::connect(const DeviceId& deviceId,
                 if (cert && cert->issuer)
                     peerAccountUri = cert->issuer->getId().toString();
                 installReader(socket, peerAccountUri);
-                sendMsg(socket, svc_protocol::SvcDiscQuery{});
+                if (!sendMsg(socket, svc_protocol::SvcDiscQuery{}))
+                    JAMI_WARNING("[SvcDiscovery] failed to send SvcDiscQuery to {}", peerAccountUri);
             }
             if (*userCb)
                 (*userCb)(socket, dev);
@@ -208,7 +211,11 @@ SvcDiscoveryChannelHandler::installReader(const std::shared_ptr<dhtnet::ChannelS
                     continue;
                 }
                 auto resp = SvcDiscoveryChannelHandler::buildResponse(*acc, peerAccountUri);
-                sendMsg(sock, resp);
+                JAMI_LOG("[SvcDiscovery] returning {} service(s) to peer={}",
+                         resp.services.size(),
+                         peerAccountUri);
+                if (!sendMsg(sock, resp))
+                    JAMI_WARNING("[SvcDiscovery] failed to send SvcDiscResponse to {}", peerAccountUri);
             } else if (type == svc_protocol::MsgType::kServiceList) {
                 svc_protocol::SvcDiscResponse resp;
                 try {
@@ -223,7 +230,11 @@ SvcDiscoveryChannelHandler::installReader(const std::shared_ptr<dhtnet::ChannelS
                     cb = state->responseCb;
                 }
                 if (cb)
-                    cb(peerAccountUri, resp.services);
+                    cb(peerAccountUri, resp.device, resp.services);
+                else
+                    JAMI_WARNING("[SvcDiscovery] no responseCb set; dropping {} services from {}",
+                                 resp.services.size(),
+                                 peerAccountUri);
             } else if (type == svc_protocol::MsgType::kVersionMismatch
                        || type == svc_protocol::MsgType::kError) {
                 ResponseCb cb;
@@ -232,7 +243,7 @@ SvcDiscoveryChannelHandler::installReader(const std::shared_ptr<dhtnet::ChannelS
                     cb = state->responseCb;
                 }
                 if (cb)
-                    cb(peerAccountUri, {});
+                    cb(peerAccountUri, std::string{}, {});
             } else {
                 JAMI_WARNING("[SvcDiscovery] unknown message type '{}'", type);
             }
