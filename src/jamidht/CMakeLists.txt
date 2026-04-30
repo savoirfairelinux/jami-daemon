@@ -54,6 +54,13 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/typers.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/auth_channel_handler.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/auth_channel_handler.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/service_manager.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/service_manager.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/svc_protocol.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/svc_discovery_channel_handler.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/svc_discovery_channel_handler.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/svc_tunnel_channel_handler.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/svc_tunnel_channel_handler.cpp"
 )
 
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
