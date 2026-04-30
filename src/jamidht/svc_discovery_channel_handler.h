@@ -45,8 +45,11 @@ class SvcDiscoveryChannelHandler : public ChannelHandlerInterface
 {
 public:
     /// Callback delivered to a client when a discovery response arrives.
-    /// `services` is empty on error or version mismatch.
+    /// `services` is empty on error or version mismatch. `peerDeviceId` is
+    /// the long device id of the responder, or empty if the response did
+    /// not carry one (older peers / error paths).
     using ResponseCb = std::function<void(const std::string& peerAccountUri,
+                                          const std::string& peerDeviceId,
                                           const std::vector<svc_protocol::SvcInfo>& services)>;
 
     SvcDiscoveryChannelHandler(const std::shared_ptr<JamiAccount>& acc,
