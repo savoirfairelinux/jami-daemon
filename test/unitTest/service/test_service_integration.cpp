@@ -220,17 +220,20 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
 
     // --- Wire up the service-discovery + tunnel signals we care about ---
     std::atomic<uint32_t> receivedReqId {0};
+    std::atomic<int> receivedStatus {-1};
     std::string receivedJson;
     std::string receivedPeer;
     handlers_.insert(libjami::exportable_callback<libjami::ServiceSignal::PeerServicesReceived>(
         [&](uint32_t requestId,
             const std::string& accountId,
             const std::string& peerId,
+            int status,
             const std::string& servicesJson) {
             if (accountId != bobId)
                 return;
             std::lock_guard lk(mtx_);
             receivedReqId = requestId;
+            receivedStatus = status;
             receivedJson = servicesJson;
             receivedPeer = peerId;
             cv_.notify_all();
@@ -281,6 +284,8 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
         CPPUNIT_ASSERT(cv_.wait_for(lk, 60s, [&] { return receivedReqId == reqId; }));
     }
     CPPUNIT_ASSERT_EQUAL(aliceUri, receivedPeer);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK),
+                         receivedStatus.load());
     CPPUNIT_ASSERT(receivedJson.find(serviceId) != std::string::npos);
     CPPUNIT_ASSERT(receivedJson.find("\"name\":\"echo\"") != std::string::npos);
 
