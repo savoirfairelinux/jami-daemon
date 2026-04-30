@@ -46,6 +46,7 @@ struct ServiceRecord
     std::string id;                                ///< RFC 4122 v4 UUID
     std::string name;                              ///< Human-readable name
     std::string description;                       ///< Optional description
+    std::string scheme;                            ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
     std::string localHost {"127.0.0.1"};           ///< Local TCP host
     uint16_t localPort {0};                        ///< Local TCP port
     AccessPolicy policy {AccessPolicy::CONTACTS_ONLY};
