@@ -1186,27 +1186,18 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    time_t received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -3062,14 +3053,9 @@ struct JamiAccount::PendingSvcQuery
 };
 
 void
-JamiAccount::finalizeSvcQuery(uint32_t requestId,
-                              int status,
-                              const std::string& servicesJson)
+JamiAccount::finalizeSvcQuery(uint32_t requestId, int status, const std::string& servicesJson)
 {
-    JAMI_LOG("[Account {}] queryPeerServices req={} -> finalizeSvcQuery status={}",
-             getAccountID(),
-             requestId,
-             status);
+    JAMI_LOG("[Account {}] queryPeerServices req={} -> finalizeSvcQuery status={}", getAccountID(), requestId, status);
     std::shared_ptr<PendingSvcQuery> q;
     {
         std::lock_guard lk(pendingSvcQueriesMtx_);
@@ -3100,11 +3086,7 @@ JamiAccount::finalizeSvcQuery(uint32_t requestId,
     if (q->deadline) {
         q->deadline->cancel();
     }
-    emitSignal<libjami::ServiceSignal::PeerServicesReceived>(requestId,
-                                                             getAccountID(),
-                                                             q->peerUri,
-                                                             status,
-                                                             servicesJson);
+    emitSignal<libjami::ServiceSignal::PeerServicesReceived>(requestId, getAccountID(), q->peerUri, status, servicesJson);
 }
 
 uint32_t
@@ -3115,10 +3097,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
     static std::atomic<uint32_t> sQueryCounter {0};
     const auto requestId = ++sQueryCounter;
 
-    JAMI_LOG("[Account {}] queryPeerServices req={} peer={}",
-             getAccountID(),
-             requestId,
-             peerUri);
+    JAMI_LOG("[Account {}] queryPeerServices req={} peer={}", getAccountID(), requestId, peerUri);
 
     auto state = std::make_shared<PendingSvcQuery>();
     state->requestId = requestId;
@@ -3134,8 +3113,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
         return requestId;
     }
 
-    auto* handler = static_cast<SvcDiscoveryChannelHandler*>(
-        channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+    auto* handler = static_cast<SvcDiscoveryChannelHandler*>(channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
     if (!handler) {
         finalizeSvcQuery(requestId, static_cast<int>(PSStatus::InternalError), "[]");
         return requestId;
@@ -3146,47 +3124,46 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
     // peer-device response per pending request id wins; subsequent ones are
     // dropped silently.
     auto wself = weak();
-    handler->setOnResponse(
-        [wself](const std::string& peerAccountUri,
-                const std::string& peerDeviceId,
-                const std::vector<svc_protocol::SvcInfo>& services) {
-            auto self = wself.lock();
-            if (!self)
-                return;
-            uint32_t reqId = 0;
-            {
-                std::lock_guard lk(self->pendingSvcQueriesMtx_);
-                auto it = self->pendingSvcQueriesByPeer_.find(peerAccountUri);
-                if (it != self->pendingSvcQueriesByPeer_.end() && !it->second.empty()) {
-                    reqId = it->second.front();
-                    it->second.pop_front();
-                    if (it->second.empty())
-                        self->pendingSvcQueriesByPeer_.erase(it);
-                }
+    handler->setOnResponse([wself](const std::string& peerAccountUri,
+                                   const std::string& peerDeviceId,
+                                   const std::vector<svc_protocol::SvcInfo>& services) {
+        auto self = wself.lock();
+        if (!self)
+            return;
+        uint32_t reqId = 0;
+        {
+            std::lock_guard lk(self->pendingSvcQueriesMtx_);
+            auto it = self->pendingSvcQueriesByPeer_.find(peerAccountUri);
+            if (it != self->pendingSvcQueriesByPeer_.end() && !it->second.empty()) {
+                reqId = it->second.front();
+                it->second.pop_front();
+                if (it->second.empty())
+                    self->pendingSvcQueriesByPeer_.erase(it);
             }
-            if (reqId == 0) {
-                JAMI_DEBUG("[Account {}] svc-disc response with no pending query for peer={}",
-                           self->getAccountID(),
-                           peerAccountUri);
-                return;
-            }
-            Json::Value arr(Json::arrayValue);
-            for (const auto& s : services) {
-                Json::Value v(Json::objectValue);
-                v["id"] = s.id;
-                v["name"] = s.name;
-                v["description"] = s.description;
-                v["proto"] = s.proto;
-                v["device"] = peerDeviceId;
-                arr.append(v);
-            }
-            self->finalizeSvcQuery(reqId, static_cast<int>(PSStatus::OK), json::toString(arr));
-        });
+        }
+        if (reqId == 0) {
+            JAMI_DEBUG("[Account {}] svc-disc response with no pending query for peer={}",
+                       self->getAccountID(),
+                       peerAccountUri);
+            return;
+        }
+        Json::Value arr(Json::arrayValue);
+        for (const auto& s : services) {
+            Json::Value v(Json::objectValue);
+            v["id"] = s.id;
+            v["name"] = s.name;
+            v["description"] = s.description;
+            v["proto"] = s.proto;
+            v["scheme"] = s.scheme;
+            v["device"] = peerDeviceId;
+            arr.append(v);
+        }
+        self->finalizeSvcQuery(reqId, static_cast<int>(PSStatus::OK), json::toString(arr));
+    });
 
     // Arm the deadline before kicking off any I/O so we still report a
     // terminal status if the device lookup or connection attempts hang.
-    state->deadline = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(),
-                                                            SVC_DISCOVERY_DEADLINE);
+    state->deadline = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(), SVC_DISCOVERY_DEADLINE);
     state->deadline->async_wait([wself, requestId](const asio::error_code& ec) {
         if (ec)
             return; // cancelled
@@ -3211,15 +3188,13 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                     return; // already terminated
                 st = it->second;
                 ++st->pendingConnects;
-                h = static_cast<SvcDiscoveryChannelHandler*>(
-                    self->channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
+                h = static_cast<SvcDiscoveryChannelHandler*>(self->channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get());
             }
             if (!h)
                 return;
             h->connect(dev->getLongId(),
                        svc_protocol::kDiscoveryChannelName,
-                       [wself, requestId](std::shared_ptr<dhtnet::ChannelSocket> sock,
-                                          const DeviceId& devId) {
+                       [wself, requestId](std::shared_ptr<dhtnet::ChannelSocket> sock, const DeviceId& devId) {
                            auto self = wself.lock();
                            if (!self)
                                return;
@@ -3237,8 +3212,8 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                                // Only declare Unreachable once discovery has
                                // finished AND every connect has come back
                                // without ever yielding a working channel.
-                               if (st.discoveryEnded && st.pendingConnects == 0
-                                   && !st.sawSuccessfulConnect && !st.emitted) {
+                               if (st.discoveryEnded && st.pendingConnects == 0 && !st.sawSuccessfulConnect
+                                   && !st.emitted) {
                                    emitUnreachable = true;
                                }
                            }
@@ -3261,8 +3236,7 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
                 st.discoveryEnded = true;
                 if (!ok && st.pendingConnects == 0 && !st.emitted) {
                     emitNoDevices = true;
-                } else if (ok && st.pendingConnects == 0 && !st.sawSuccessfulConnect
-                           && !st.emitted) {
+                } else if (ok && st.pendingConnects == 0 && !st.sawSuccessfulConnect && !st.emitted) {
                     // Edge case: forEachDevice claimed a device existed but
                     // every connect callback already came back empty before
                     // the end-callback fired.
@@ -3285,8 +3259,7 @@ JamiAccount::openServiceTunnel(const std::string& peerUri,
                                const std::string& serviceName,
                                uint16_t localPort)
 {
-    auto* handler = static_cast<SvcTunnelChannelHandler*>(
-        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
     if (!handler)
         return {};
     DeviceId dev;
@@ -3313,8 +3286,7 @@ JamiAccount::openServiceTunnel(const std::string& peerUri,
 bool
 JamiAccount::closeServiceTunnel(const std::string& tunnelId)
 {
-    auto* handler = static_cast<SvcTunnelChannelHandler*>(
-        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
     if (!handler)
         return false;
     return handler->closeTunnel(tunnelId);
@@ -3323,8 +3295,7 @@ JamiAccount::closeServiceTunnel(const std::string& tunnelId)
 void
 JamiAccount::closeServerTunnelsForService(const std::string& serviceId)
 {
-    auto* handler = static_cast<SvcTunnelChannelHandler*>(
-        channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
+    auto* handler = static_cast<SvcTunnelChannelHandler*>(channelHandlers_[Uri::Scheme::SVC_TUNNEL].get());
     if (!handler)
         return;
     handler->closeServerChannelsForService(serviceId);
