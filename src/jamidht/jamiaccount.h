@@ -595,6 +595,11 @@ public:
     /// Close a tunnel previously created with openServiceTunnel.
     bool closeServiceTunnel(const std::string& tunnelId);
 
+    /// Server-side: shutdown every active inbound tunnel currently serving
+    /// `serviceId`. Called when a local exposed service is removed or
+    /// disabled so that already-established peer connections are torn down.
+    void closeServerTunnelsForService(const std::string& serviceId);
+
     /// Snapshot of currently active client tunnels for this account.
     std::vector<std::map<std::string, std::string>> getActiveServiceTunnels() const;
     /**
