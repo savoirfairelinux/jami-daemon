@@ -57,6 +57,7 @@
 #include <future>
 #include <list>
 #include <map>
+#include <deque>
 #include <optional>
 #include <vector>
 #include <filesystem>
@@ -565,6 +566,37 @@ public:
 #endif
 
     dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
+
+    /// Returns true if `peerAccountUri` is a confirmed (active, non-banned)
+    /// contact of this account.
+    bool isConfirmedContact(const std::string& peerAccountUri) const;
+
+    class ServiceManager& serviceManager() { return *serviceManager_; }
+    const class ServiceManager& serviceManager() const { return *serviceManager_; }
+
+    /* Service-exposure high-level API. Implemented in jamiaccount.cpp. */
+
+    /// Send a discovery query to every known device of `peerUri` and return a
+    /// monotonically-increasing request id. Responses are delivered through the
+    /// `libjami::ServiceSignal::PeerServicesReceived` signal with this id as
+    /// first argument.
+    uint32_t queryPeerServices(const std::string& peerUri);
+
+    /// Open a TCP-tunnel listener on 127.0.0.1:`localPort` (0 = pick a free
+    /// port) that forwards each accepted connection to `serviceId` on
+    /// `peerUri`'s `deviceId`. Returns a tunnel id, or an empty string on
+    /// failure. `serviceName` is purely informational.
+    std::string openServiceTunnel(const std::string& peerUri,
+                                  const std::string& deviceId,
+                                  const std::string& serviceId,
+                                  const std::string& serviceName,
+                                  uint16_t localPort);
+
+    /// Close a tunnel previously created with openServiceTunnel.
+    bool closeServiceTunnel(const std::string& tunnelId);
+
+    /// Snapshot of currently active client tunnels for this account.
+    std::vector<std::map<std::string, std::string>> getActiveServiceTunnels() const;
     /**
      * Check if a Device is connected
      * @param deviceId
@@ -749,6 +781,13 @@ private:
 
     std::shared_ptr<dht::Logger> logger_;
     std::shared_ptr<dhtnet::tls::CertificateStore> certStore_;
+
+    std::unique_ptr<class ServiceManager> serviceManager_;
+
+    /// Pending discovery requests: peer URI -> FIFO of request ids awaiting
+    /// a `PeerServicesReceived` signal. Protected by pendingSvcQueriesMtx_.
+    mutable std::mutex pendingSvcQueriesMtx_;
+    std::map<std::string, std::deque<uint32_t>> pendingSvcQueries_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::shared_ptr<AccountManager> accountManager_;
