@@ -25,6 +25,7 @@
 #include "fileutils.h"
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/service_manager.h"
 #include "sip/sipaccount_config.h"
 #include "jamidht/jamiaccount_config.h"
 #include "audio/audiolayer.h"
@@ -398,6 +399,156 @@ getKnownRingDevices(const std::string& accountId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->getKnownDevices();
+    return {};
+}
+
+/* Local-service exposure */
+
+namespace {
+std::map<std::string, std::string>
+serviceRecordToMap(const jami::ServiceRecord& r)
+{
+    std::map<std::string, std::string> m;
+    m["id"] = r.id;
+    m["name"] = r.name;
+    m["description"] = r.description;
+    m["localHost"] = r.localHost;
+    m["localPort"] = std::to_string(r.localPort);
+    m["enabled"] = r.enabled ? "true" : "false";
+    switch (r.policy) {
+    case jami::AccessPolicy::PUBLIC: m["policy"] = "public"; break;
+    case jami::AccessPolicy::SPECIFIC_CONTACTS: m["policy"] = "specific"; break;
+    case jami::AccessPolicy::CONTACTS_ONLY:
+    default: m["policy"] = "contacts"; break;
+    }
+    std::string allowed;
+    for (size_t i = 0; i < r.allowedContacts.size(); ++i) {
+        if (i)
+            allowed.push_back(',');
+        allowed += r.allowedContacts[i];
+    }
+    m["allowedContacts"] = std::move(allowed);
+    return m;
+}
+
+jami::ServiceRecord
+mapToServiceRecord(const std::map<std::string, std::string>& m)
+{
+    jami::ServiceRecord r;
+    auto get = [&](const char* k, const std::string& def = {}) {
+        auto it = m.find(k);
+        return it == m.end() ? def : it->second;
+    };
+    r.id = get("id");
+    r.name = get("name");
+    r.description = get("description");
+    auto host = get("localHost");
+    if (!host.empty())
+        r.localHost = host;
+    auto portStr = get("localPort");
+    if (!portStr.empty()) {
+        try {
+            r.localPort = static_cast<uint16_t>(std::stoi(portStr));
+        } catch (...) {}
+    }
+    auto pol = get("policy", "contacts");
+    if (pol == "public")
+        r.policy = jami::AccessPolicy::PUBLIC;
+    else if (pol == "specific")
+        r.policy = jami::AccessPolicy::SPECIFIC_CONTACTS;
+    else
+        r.policy = jami::AccessPolicy::CONTACTS_ONLY;
+    auto allowed = get("allowedContacts");
+    if (!allowed.empty()) {
+        size_t start = 0;
+        while (start <= allowed.size()) {
+            auto end = allowed.find(',', start);
+            auto piece = allowed.substr(start, end - start);
+            if (!piece.empty())
+                r.allowedContacts.push_back(std::move(piece));
+            if (end == std::string::npos)
+                break;
+            start = end + 1;
+        }
+    }
+    auto en = get("enabled", "true");
+    r.enabled = (en == "true" || en == "1");
+    return r;
+}
+} // namespace
+
+std::string
+addExposedService(const std::string& accountId, const std::map<std::string, std::string>& details)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->serviceManager().addService(mapToServiceRecord(details));
+    return {};
+}
+
+bool
+updateExposedService(const std::string& accountId,
+                     const std::map<std::string, std::string>& details)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->serviceManager().updateService(mapToServiceRecord(details));
+    return false;
+}
+
+bool
+removeExposedService(const std::string& accountId, const std::string& serviceId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->serviceManager().removeService(serviceId);
+    return false;
+}
+
+std::vector<std::map<std::string, std::string>>
+getExposedServices(const std::string& accountId)
+{
+    std::vector<std::map<std::string, std::string>> out;
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        auto recs = acc->serviceManager().getServices();
+        out.reserve(recs.size());
+        for (auto& r : recs)
+            out.push_back(serviceRecordToMap(r));
+    }
+    return out;
+}
+
+uint32_t
+queryPeerServices(const std::string& accountId, const std::string& peerUri)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->queryPeerServices(peerUri);
+    return 0;
+}
+
+std::string
+openServiceTunnel(const std::string& accountId,
+                  const std::string& peerUri,
+                  const std::string& deviceId,
+                  const std::string& serviceId,
+                  const std::string& serviceName,
+                  uint16_t localPort)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->openServiceTunnel(peerUri, deviceId, serviceId, serviceName, localPort);
+    return {};
+}
+
+bool
+closeServiceTunnel(const std::string& accountId, const std::string& tunnelId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->closeServiceTunnel(tunnelId);
+    return false;
+}
+
+std::vector<std::map<std::string, std::string>>
+getActiveTunnels(const std::string& accountId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->getActiveServiceTunnels();
     return {};
 }
 
