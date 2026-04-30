@@ -39,6 +39,8 @@ public:
         SYNC,          // Start with "sync:"
         MESSAGE,       // Start with "msg:"
         AUTH,          // Start with "auth:"
+        SVC_DISCOVERY, // Start with "svcdisc:"
+        SVC_TUNNEL,    // Start with "svc:"
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
