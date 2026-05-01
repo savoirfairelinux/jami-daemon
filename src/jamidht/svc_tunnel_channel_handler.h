@@ -150,6 +150,7 @@ private:
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
     std::shared_ptr<asio::io_context> io_;
+    std::mt19937_64 rng_;
 
     mutable std::mutex mtx_;
     std::map<std::string, std::shared_ptr<ClientTunnel>> tunnels_;

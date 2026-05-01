@@ -35,9 +35,12 @@ const char*
 policyToString(AccessPolicy p)
 {
     switch (p) {
-    case AccessPolicy::CONTACTS_ONLY:    return "contacts";
-    case AccessPolicy::SPECIFIC_CONTACTS: return "specific";
-    case AccessPolicy::PUBLIC:           return "public";
+    case AccessPolicy::CONTACTS_ONLY:
+        return "contacts";
+    case AccessPolicy::SPECIFIC_CONTACTS:
+        return "specific";
+    case AccessPolicy::PUBLIC:
+        return "public";
     }
     return "contacts";
 }
@@ -45,8 +48,10 @@ policyToString(AccessPolicy p)
 AccessPolicy
 policyFromString(const std::string& s)
 {
-    if (s == "specific") return AccessPolicy::SPECIFIC_CONTACTS;
-    if (s == "public")   return AccessPolicy::PUBLIC;
+    if (s == "specific")
+        return AccessPolicy::SPECIFIC_CONTACTS;
+    if (s == "public")
+        return AccessPolicy::PUBLIC;
     return AccessPolicy::CONTACTS_ONLY;
 }
 
@@ -55,11 +60,13 @@ toJson(const ServiceRecord& r)
 {
     Json::Value v(Json::objectValue);
     v["id"] = r.id;
+    v["type"] = r.type;
     v["name"] = r.name;
     v["description"] = r.description;
     v["scheme"] = r.scheme;
     v["localHost"] = r.localHost;
     v["localPort"] = static_cast<Json::UInt>(r.localPort);
+    v["directory"] = r.directory;
     v["policy"] = policyToString(r.policy);
     Json::Value allowed(Json::arrayValue);
     for (const auto& a : r.allowedContacts)
@@ -75,11 +82,15 @@ fromJson(const Json::Value& v, ServiceRecord& r)
     if (!v.isObject())
         return false;
     r.id = v.get("id", "").asString();
+    r.type = v.get("type", "custom").asString();
+    if (r.type.empty())
+        r.type = "custom";
     r.name = v.get("name", "").asString();
     r.description = v.get("description", "").asString();
     r.scheme = v.get("scheme", "").asString();
-    r.localHost = v.get("localHost", "127.0.0.1").asString();
+    r.localHost = v.get("localHost", "localhost").asString();
     r.localPort = static_cast<uint16_t>(v.get("localPort", 0).asUInt());
+    r.directory = v.get("directory", "").asString();
     r.policy = policyFromString(v.get("policy", "contacts").asString());
     r.allowedContacts.clear();
     if (v.isMember("allowedContacts") && v["allowedContacts"].isArray()) {
@@ -93,10 +104,9 @@ fromJson(const Json::Value& v, ServiceRecord& r)
 } // namespace
 
 std::string
-generateServiceUuid()
+generateServiceUuid(std::mt19937_64& rng)
 {
-    // RFC 4122 v4 UUID using thread-local std::mt19937_64 seeded from std::random_device.
-    static thread_local std::mt19937_64 rng {std::random_device {}()};
+    // RFC 4122 v4 UUID.
     std::uniform_int_distribution<uint64_t> dist;
     uint64_t a = dist(rng);
     uint64_t b = dist(rng);
@@ -168,12 +178,12 @@ ServiceManager::saveLocked() const
 }
 
 std::string
-ServiceManager::addService(ServiceRecord rec)
+ServiceManager::addService(ServiceRecord rec, std::mt19937_64& rng)
 {
     if (rec.name.empty() || rec.localPort == 0)
         return {};
     if (rec.id.empty())
-        rec.id = generateServiceUuid();
+        rec.id = generateServiceUuid(rng);
     std::unique_lock lk(mutex_);
     auto id = rec.id;
     services_[id] = std::move(rec);
@@ -279,8 +289,7 @@ ServiceManager::isAuthorized(const std::string& serviceId,
 }
 
 std::vector<ServiceRecord>
-ServiceManager::getVisibleServices(const std::string& peerAccountUri,
-                                   const ContactChecker& isContact) const
+ServiceManager::getVisibleServices(const std::string& peerAccountUri, const ContactChecker& isContact) const
 {
     std::shared_lock lk(mutex_);
     std::vector<ServiceRecord> out;
