@@ -39,16 +39,18 @@ enum class AccessPolicy : uint8_t {
 /**
  * Stable description of a service that the host wishes to expose to peers
  * through Jami. The service is reachable on the host at localHost:localPort
- * (typically 127.0.0.1) and is identified to remote peers by an opaque UUID.
+ * and is identified to remote peers by an opaque UUID.
  */
 struct ServiceRecord
 {
     std::string id;                                ///< RFC 4122 v4 UUID
+    std::string type {"custom"};                  ///< "custom" or "embedded"
     std::string name;                              ///< Human-readable name
     std::string description;                       ///< Optional description
     std::string scheme;                            ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
-    std::string localHost {"127.0.0.1"};           ///< Local TCP host
+    std::string localHost {"localhost"};           ///< Local TCP host
     uint16_t localPort {0};                        ///< Local TCP port
+    std::string directory;                         ///< Directory served by embedded HTTP services
     AccessPolicy policy {AccessPolicy::CONTACTS_ONLY};
     std::vector<std::string> allowedContacts;      ///< Account URIs (used when policy == SPECIFIC_CONTACTS)
     bool enabled {true};
