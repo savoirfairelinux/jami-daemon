@@ -80,7 +80,10 @@ AlsaLayer::run()
 bool
 AlsaLayer::openDevice(snd_pcm_t** pcm, const std::string& dev, snd_pcm_stream_t stream, AudioFormat& format)
 {
-    JAMI_LOG("Alsa: Opening {} device '{}'", (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback", dev);
+    JAMI_DEBUG("Alsa: Opening {} device '{}' with format {}",
+               (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback",
+               dev,
+               format.toString());
 
     static const int MAX_RETRIES = 10; // times of 100ms
     int err, tries = 0;
@@ -305,13 +308,13 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_t* hwparams;
     snd_pcm_hw_params_alloca(&hwparams);
 
-    const unsigned RING_ALSA_PERIOD_SIZE = 160;
-    const unsigned RING_ALSA_NB_PERIOD = 8;
-    const unsigned RING_ALSA_BUFFER_SIZE = RING_ALSA_PERIOD_SIZE * RING_ALSA_NB_PERIOD;
+    constexpr unsigned ALSA_PERIOD_SIZE = 160;
+    constexpr unsigned ALSA_NB_PERIOD = 8;
+    constexpr unsigned ALSA_BUFFER_SIZE = ALSA_PERIOD_SIZE * ALSA_NB_PERIOD;
 
-    snd_pcm_uframes_t period_size = RING_ALSA_PERIOD_SIZE;
-    snd_pcm_uframes_t buffer_size = RING_ALSA_BUFFER_SIZE;
-    unsigned int periods = RING_ALSA_NB_PERIOD;
+    snd_pcm_uframes_t period_size = ALSA_PERIOD_SIZE;
+    snd_pcm_uframes_t buffer_size = ALSA_BUFFER_SIZE;
+    unsigned int periods = ALSA_NB_PERIOD;
 
     snd_pcm_uframes_t period_size_min = 0;
     snd_pcm_uframes_t period_size_max = 0;
@@ -351,8 +354,8 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_get_buffer_size_max(hwparams, &buffer_size_max);
     snd_pcm_hw_params_get_period_size_min(hwparams, &period_size_min, nullptr);
     snd_pcm_hw_params_get_period_size_max(hwparams, &period_size_max, nullptr);
-    JAMI_LOG("Buffer size range from {} to {}", buffer_size_min, buffer_size_max);
-    JAMI_LOG("Period size range from {} to {}", period_size_min, period_size_max);
+    JAMI_DEBUG("Buffer size range from {} to {}", buffer_size_min, buffer_size_max);
+    JAMI_DEBUG("Period size range from {} to {}", period_size_min, period_size_max);
     buffer_size = buffer_size > buffer_size_max ? buffer_size_max : buffer_size;
     buffer_size = buffer_size < buffer_size_min ? buffer_size_min : buffer_size;
     period_size = period_size > period_size_max ? period_size_max : period_size;
@@ -367,8 +370,8 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_get_period_size(hwparams, &period_size, nullptr);
     snd_pcm_hw_params_get_rate(hwparams, &format.sample_rate, nullptr);
     snd_pcm_hw_params_get_channels(hwparams, &format.nb_channels);
-    JAMI_LOG("Was set period_size = {}", period_size);
-    JAMI_LOG("Was set buffer_size = {}", buffer_size);
+    JAMI_DEBUG("ALSA period_size = {}", period_size);
+    JAMI_DEBUG("ALSA buffer_size = {}", buffer_size);
 
     if (2 * period_size > buffer_size) {
         JAMI_ERROR("buffer to small, unable to use");
@@ -377,9 +380,9 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
 
 #undef HW
 
-    JAMI_LOG("{} using format {}",
-             (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-             format.toString());
+    JAMI_DEBUG("{} using format {}",
+               (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
+               format.toString());
 
     snd_pcm_sw_params_t* swparams = nullptr;
     snd_pcm_sw_params_alloca(&swparams);
@@ -432,8 +435,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
 
         if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0) {
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
-                JAMI_ERROR(
-                    "Writing in state SND_PCM_STATE_SETUP, should be SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
+                JAMI_ERROR("Writing in state SND_PCM_STATE_SETUP, should be SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
                 int error = snd_pcm_prepare(handle);
 
                 if (error < 0) {
@@ -501,7 +503,7 @@ std::string
 AlsaLayer::buildDeviceTopo(const std::string& plugin, int card)
 {
     if (plugin == PCM_DEFAULT)
-        return plugin;
+        return fmt::format("plughw:{},0", card);
 
     return fmt::format("{}:{}", plugin, card);
 }
@@ -573,18 +575,16 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 int err;
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARNING("Unable to get info for {} {}: {}",
-                                 getCapture ? "capture device" : "playback device",
+                    JAMI_WARNING("Unable to get info for {} device {}: {}",
+                                 getCapture ? "capture" : "playback",
                                  name,
                                  snd_strerror(err));
                 } else {
-                    JAMI_LOG("card {} : {} [{}]",
-                             numCard,
-                             snd_ctl_card_info_get_id(info),
-                             snd_ctl_card_info_get_name(info));
-                    std::string description = snd_ctl_card_info_get_name(info);
-                    description.append(" - ");
-                    description.append(snd_pcm_info_get_name(pcminfo));
+                    auto description = fmt::format("{} - {} [{}]",
+                                                   snd_ctl_card_info_get_name(info),
+                                                   snd_pcm_info_get_name(pcminfo),
+                                                   snd_pcm_info_get_name(pcminfo));
+                    JAMI_DEBUG("card {} : {} [{}]", name, description, getCapture ? "capture" : "playback");
 
                     // The number of the sound card is associated with a string description
                     audioDevice.emplace_back(numCard, std::move(description));
@@ -659,7 +659,7 @@ AlsaLayer::capture()
 
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
     if (toGetFrames < 0)
-        JAMI_ERROR("Audio: Mic error: {}", snd_strerror(toGetFrames));
+        JAMI_ERROR("ALSA: Mic error: {}", snd_strerror(toGetFrames));
     if (toGetFrames <= 0)
         return;
 
@@ -703,20 +703,57 @@ AlsaLayer::ringtone()
     }
 }
 
+// Translate an ALSA card number back to its 0-based position in the device list.
+static int
+cardToListIndex(const std::vector<HwIDPair>& cards, int cardNum)
+{
+    for (int i = 0; i < static_cast<int>(cards.size()); ++i)
+        if (cards[i].first == cardNum)
+            return i;
+    return 0;
+}
+
+int
+AlsaLayer::getIndexCapture() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(true), indexIn_);
+}
+
+int
+AlsaLayer::getIndexPlayback() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(false), indexOut_);
+}
+
+int
+AlsaLayer::getIndexRingtone() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(false), indexRing_);
+}
+
 void
 AlsaLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
+    // 'index' is a list position in getCaptureDeviceList() / getPlaybackDeviceList(),
+    // but the preference stores the actual ALSA card number. Translate here.
+    auto toCardNum = [&](bool capture) -> int {
+        auto cards = getAudioDeviceIndexMap(capture);
+        if (index >= 0 && index < static_cast<int>(cards.size()))
+            return cards[index].first;
+        return 0;
+    };
+
     switch (type) {
     case AudioDeviceType::PLAYBACK:
-        preference.setAlsaCardout(index);
+        preference.setAlsaCardout(toCardNum(false));
         break;
 
     case AudioDeviceType::CAPTURE:
-        preference.setAlsaCardin(index);
+        preference.setAlsaCardin(toCardNum(true));
         break;
 
     case AudioDeviceType::RINGTONE:
-        preference.setAlsaCardRingtone(index);
+        preference.setAlsaCardRingtone(toCardNum(false));
         break;
 
     default:
