@@ -80,7 +80,7 @@ AlsaLayer::run()
 bool
 AlsaLayer::openDevice(snd_pcm_t** pcm, const std::string& dev, snd_pcm_stream_t stream, AudioFormat& format)
 {
-    JAMI_DBG("Alsa: Opening %s device '%s'", (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback", dev.c_str());
+    JAMI_DBG("Alsa: Opening %s device '%s' with format %s", (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback", dev.c_str(), format.toString().c_str());
 
     static const int MAX_RETRIES = 10; // times of 100ms
     int err, tries = 0;
@@ -501,7 +501,7 @@ std::string
 AlsaLayer::buildDeviceTopo(const std::string& plugin, int card)
 {
     if (plugin == PCM_DEFAULT)
-        return plugin;
+        return fmt::format("plughw:{},0", card);
 
     return fmt::format("{}:{}", plugin, card);
 }
@@ -578,13 +578,14 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
                               name.c_str(),
                               snd_strerror(err));
                 } else {
-                    JAMI_DBG("card %i : %s [%s]",
-                             numCard,
-                             snd_ctl_card_info_get_id(info),
-                             snd_ctl_card_info_get_name(info));
                     std::string description = snd_ctl_card_info_get_name(info);
                     description.append(" - ");
                     description.append(snd_pcm_info_get_name(pcminfo));
+                    JAMI_DBG("card %i : %s [%s] - %s",
+                             numCard,
+                             snd_ctl_card_info_get_id(info),
+                             snd_ctl_card_info_get_name(info),
+                             snd_pcm_info_get_name(pcminfo));
 
                     // The number of the sound card is associated with a string description
                     audioDevice.emplace_back(numCard, std::move(description));
@@ -703,20 +704,56 @@ AlsaLayer::ringtone()
     }
 }
 
-void
-AlsaLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
+// Translate an ALSA card number back to its 0-based position in the device list.
+static int
+cardToListIndex(const std::vector<HwIDPair>& cards, int cardNum)
 {
+    for (int i = 0; i < static_cast<int>(cards.size()); ++i)
+        if (cards[i].first == cardNum)
+            return i;
+    return 0;
+}
+
+int
+AlsaLayer::getIndexCapture() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(true), indexIn_);
+}
+
+int
+AlsaLayer::getIndexPlayback() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(false), indexOut_);
+}
+
+int
+AlsaLayer::getIndexRingtone() const
+{
+    return cardToListIndex(getAudioDeviceIndexMap(false), indexRing_);
+}
+
+void
+AlsaLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type){
+    // 'index' is a list position in getCaptureDeviceList() / getPlaybackDeviceList(),
+    // but the preference stores the actual ALSA card number. Translate here.
+    auto toCardNum = [&](bool capture) -> int {
+        auto cards = getAudioDeviceIndexMap(capture);
+        if (index >= 0 && index < static_cast<int>(cards.size()))
+            return cards[index].first;
+        return index;
+    };
+
     switch (type) {
     case AudioDeviceType::PLAYBACK:
-        preference.setAlsaCardout(index);
+        preference.setAlsaCardout(toCardNum(false));
         break;
 
     case AudioDeviceType::CAPTURE:
-        preference.setAlsaCardin(index);
+        preference.setAlsaCardin(toCardNum(true));
         break;
 
     case AudioDeviceType::RINGTONE:
-        preference.setAlsaCardRingtone(index);
+        preference.setAlsaCardRingtone(toCardNum(false));
         break;
 
     default:
