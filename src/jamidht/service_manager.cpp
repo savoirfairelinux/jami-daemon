@@ -55,11 +55,13 @@ toJson(const ServiceRecord& r)
 {
     Json::Value v(Json::objectValue);
     v["id"] = r.id;
+    v["type"] = r.type;
     v["name"] = r.name;
     v["description"] = r.description;
     v["scheme"] = r.scheme;
     v["localHost"] = r.localHost;
     v["localPort"] = static_cast<Json::UInt>(r.localPort);
+    v["directory"] = r.directory;
     v["policy"] = policyToString(r.policy);
     Json::Value allowed(Json::arrayValue);
     for (const auto& a : r.allowedContacts)
@@ -75,11 +77,15 @@ fromJson(const Json::Value& v, ServiceRecord& r)
     if (!v.isObject())
         return false;
     r.id = v.get("id", "").asString();
+    r.type = v.get("type", "custom").asString();
+    if (r.type.empty())
+        r.type = "custom";
     r.name = v.get("name", "").asString();
     r.description = v.get("description", "").asString();
     r.scheme = v.get("scheme", "").asString();
-    r.localHost = v.get("localHost", "127.0.0.1").asString();
+    r.localHost = v.get("localHost", "localhost").asString();
     r.localPort = static_cast<uint16_t>(v.get("localPort", 0).asUInt());
+    r.directory = v.get("directory", "").asString();
     r.policy = policyFromString(v.get("policy", "contacts").asString());
     r.allowedContacts.clear();
     if (v.isMember("allowedContacts") && v["allowedContacts"].isArray()) {
