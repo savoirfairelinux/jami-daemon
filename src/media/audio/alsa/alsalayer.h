@@ -116,21 +116,21 @@ public:
      * @return int The index of the card used for capture
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexCapture() const { return indexIn_; }
+    virtual int getIndexCapture() const;
 
     /**
      * Get the index of the audio card for playback
      * @return int The index of the card used for playback
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexPlayback() const { return indexOut_; }
+    virtual int getIndexPlayback() const;
 
     /**
      * Get the index of the audio card for ringtone (could be differnet from playback)
      * @return int The index of the card used for ringtone
      *                 0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexRingtone() const { return indexRing_; }
+    virtual int getIndexRingtone() const;
 
     void run();
 
