@@ -21,6 +21,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <random>
 #include <shared_mutex>
 #include <string>
 #include <vector>
@@ -31,26 +32,28 @@ namespace jami {
  * Access control policy for an exposed service.
  */
 enum class AccessPolicy : uint8_t {
-    CONTACTS_ONLY = 0,  ///< Any confirmed contact of the host account
-    SPECIFIC_CONTACTS,  ///< Only account URIs explicitly listed in allowedContacts
-    PUBLIC,             ///< Any peer with a valid Jami certificate
+    CONTACTS_ONLY = 0, ///< Any confirmed contact of the host account
+    SPECIFIC_CONTACTS, ///< Only account URIs explicitly listed in allowedContacts
+    PUBLIC,            ///< Any peer with a valid Jami certificate
 };
 
 /**
  * Stable description of a service that the host wishes to expose to peers
  * through Jami. The service is reachable on the host at localHost:localPort
- * (typically 127.0.0.1) and is identified to remote peers by an opaque UUID.
+ * and is identified to remote peers by an opaque UUID.
  */
 struct ServiceRecord
 {
-    std::string id;                                ///< RFC 4122 v4 UUID
-    std::string name;                              ///< Human-readable name
-    std::string description;                       ///< Optional description
-    std::string scheme;                            ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
-    std::string localHost {"127.0.0.1"};           ///< Local TCP host
-    uint16_t localPort {0};                        ///< Local TCP port
+    std::string id;                      ///< RFC 4122 v4 UUID
+    std::string type {"custom"};         ///< "custom" or "embedded"
+    std::string name;                    ///< Human-readable name
+    std::string description;             ///< Optional description
+    std::string scheme;                  ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
+    std::string localHost {"localhost"}; ///< Local TCP host
+    uint16_t localPort {0};              ///< Local TCP port
+    std::string directory;               ///< Directory served by embedded HTTP services
     AccessPolicy policy {AccessPolicy::CONTACTS_ONLY};
-    std::vector<std::string> allowedContacts;      ///< Account URIs (used when policy == SPECIFIC_CONTACTS)
+    std::vector<std::string> allowedContacts; ///< Account URIs (used when policy == SPECIFIC_CONTACTS)
     bool enabled {true};
 };
 
@@ -82,7 +85,7 @@ public:
      * assigned to the record. Returns the assigned service id, or an empty
      * string if the record is invalid (e.g. localPort == 0 or empty name).
      */
-    std::string addService(ServiceRecord rec);
+    std::string addService(ServiceRecord rec, std::mt19937_64& rng);
 
     /**
      * Update an existing service in-place. The record's `id` must match an
@@ -136,7 +139,7 @@ private:
     std::map<std::string, ServiceRecord> services_;
 };
 
-/// Generate an RFC 4122 v4 UUID using std::random_device.
-std::string generateServiceUuid();
+/// Generate an RFC 4122 v4 UUID using the supplied random engine.
+std::string generateServiceUuid(std::mt19937_64& rng);
 
 } // namespace jami

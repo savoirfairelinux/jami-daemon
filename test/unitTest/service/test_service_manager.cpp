@@ -52,6 +52,7 @@ public:
 
 private:
     std::filesystem::path tmpDir_;
+    std::mt19937_64 rng_ {std::random_device {}()};
 
     static ServiceRecord makeRec(const std::string& name = "web", uint16_t port = 8080)
     {
@@ -67,6 +68,7 @@ private:
     void uri_scheme_test();
     void add_get_remove_test();
     void add_invalid_record_test();
+    void default_host_test();
     void update_test();
     void persistence_test();
     void auth_public_test();
@@ -86,6 +88,7 @@ private:
     CPPUNIT_TEST(uri_scheme_test);
     CPPUNIT_TEST(add_get_remove_test);
     CPPUNIT_TEST(add_invalid_record_test);
+    CPPUNIT_TEST(default_host_test);
     CPPUNIT_TEST(update_test);
     CPPUNIT_TEST(persistence_test);
     CPPUNIT_TEST(auth_public_test);
@@ -106,13 +109,13 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ServiceManagerTest, ServiceManagerTest::na
 void
 ServiceManagerTest::uuid_format_test()
 {
-    auto u = generateServiceUuid();
+    auto u = generateServiceUuid(rng_);
     CPPUNIT_ASSERT_EQUAL(size_t {36}, u.size());
     CPPUNIT_ASSERT_EQUAL('-', u[8]);
     CPPUNIT_ASSERT_EQUAL('-', u[13]);
     CPPUNIT_ASSERT_EQUAL('-', u[18]);
     CPPUNIT_ASSERT_EQUAL('-', u[23]);
-    CPPUNIT_ASSERT_EQUAL('4', u[14]); // version 4
+    CPPUNIT_ASSERT_EQUAL('4', u[14]);                                             // version 4
     CPPUNIT_ASSERT(u[19] == '8' || u[19] == '9' || u[19] == 'a' || u[19] == 'b'); // variant
 }
 
@@ -121,7 +124,7 @@ ServiceManagerTest::uuid_uniqueness_test()
 {
     std::set<std::string> seen;
     for (int i = 0; i < 1000; ++i)
-        seen.insert(generateServiceUuid());
+        seen.insert(generateServiceUuid(rng_));
     CPPUNIT_ASSERT_EQUAL(size_t {1000}, seen.size());
 }
 
@@ -147,7 +150,7 @@ ServiceManagerTest::add_get_remove_test()
     ServiceManager m(tmpDir_);
     CPPUNIT_ASSERT(m.getServices().empty());
 
-    auto id = m.addService(makeRec("web", 8080));
+    auto id = m.addService(makeRec("web", 8080), rng_);
     CPPUNIT_ASSERT(!id.empty());
     CPPUNIT_ASSERT_EQUAL(size_t {36}, id.size()); // UUID length
 
@@ -171,18 +174,34 @@ ServiceManagerTest::add_invalid_record_test()
     ServiceManager m(tmpDir_);
     // Missing name
     auto r1 = makeRec("", 8080);
-    CPPUNIT_ASSERT(m.addService(r1).empty());
+    CPPUNIT_ASSERT(m.addService(r1, rng_).empty());
     // Missing port
     auto r2 = makeRec("web", 0);
-    CPPUNIT_ASSERT(m.addService(r2).empty());
+    CPPUNIT_ASSERT(m.addService(r2, rng_).empty());
     CPPUNIT_ASSERT(m.getServices().empty());
+}
+
+void
+ServiceManagerTest::default_host_test()
+{
+    ServiceManager manager(tmpDir_);
+    ServiceRecord record;
+    record.name = "web";
+    record.localPort = 8080;
+
+    auto serviceId = manager.addService(record, rng_);
+    CPPUNIT_ASSERT(!serviceId.empty());
+
+    auto fetched = manager.getService(serviceId);
+    CPPUNIT_ASSERT(fetched.has_value());
+    CPPUNIT_ASSERT_EQUAL(std::string("localhost"), fetched->localHost);
 }
 
 void
 ServiceManagerTest::update_test()
 {
     ServiceManager m(tmpDir_);
-    auto id = m.addService(makeRec("web", 8080));
+    auto id = m.addService(makeRec("web", 8080), rng_);
     auto rec = *m.getService(id);
     rec.name = "renamed";
     rec.localPort = 9090;
@@ -196,7 +215,7 @@ ServiceManagerTest::update_test()
 
     // Update with bogus id fails.
     ServiceRecord bogus = rec;
-    bogus.id = generateServiceUuid();
+    bogus.id = generateServiceUuid(rng_);
     CPPUNIT_ASSERT(!m.updateService(bogus));
 }
 
@@ -206,11 +225,15 @@ ServiceManagerTest::persistence_test()
     std::string id;
     {
         ServiceManager m(tmpDir_);
-        id = m.addService(makeRec("game", 27015));
+        id = m.addService(makeRec("game", 27015), rng_);
         auto rec = *m.getService(id);
         rec.policy = AccessPolicy::SPECIFIC_CONTACTS;
         rec.allowedContacts = {"alice", "bob"};
         rec.description = "Counter-Strike";
+        rec.type = "embedded";
+        rec.scheme = "http";
+        rec.localHost = "localhost";
+        rec.directory = tmpDir_.string();
         m.updateService(rec);
     }
     // Reopen and verify everything is restored.
@@ -222,6 +245,10 @@ ServiceManagerTest::persistence_test()
         CPPUNIT_ASSERT_EQUAL(id, r.id);
         CPPUNIT_ASSERT_EQUAL(std::string("game"), r.name);
         CPPUNIT_ASSERT_EQUAL(std::string("Counter-Strike"), r.description);
+        CPPUNIT_ASSERT_EQUAL(std::string("embedded"), r.type);
+        CPPUNIT_ASSERT_EQUAL(std::string("http"), r.scheme);
+        CPPUNIT_ASSERT_EQUAL(std::string("localhost"), r.localHost);
+        CPPUNIT_ASSERT_EQUAL(tmpDir_.string(), r.directory);
         CPPUNIT_ASSERT_EQUAL(uint16_t {27015}, r.localPort);
         CPPUNIT_ASSERT(r.policy == AccessPolicy::SPECIFIC_CONTACTS);
         CPPUNIT_ASSERT_EQUAL(size_t {2}, r.allowedContacts.size());
@@ -234,8 +261,10 @@ ServiceManagerTest::auth_public_test()
     ServiceManager m(tmpDir_);
     auto rec = makeRec();
     rec.policy = AccessPolicy::PUBLIC;
-    auto id = m.addService(rec);
-    auto contactChecker = [](const std::string&) { return false; };
+    auto id = m.addService(rec, rng_);
+    auto contactChecker = [](const std::string&) {
+        return false;
+    };
     CPPUNIT_ASSERT(m.isAuthorized(id, "anyone", contactChecker));
     CPPUNIT_ASSERT(m.isAuthorized(id, "", contactChecker));
 }
@@ -246,8 +275,10 @@ ServiceManagerTest::auth_contacts_only_test()
     ServiceManager m(tmpDir_);
     auto rec = makeRec();
     rec.policy = AccessPolicy::CONTACTS_ONLY;
-    auto id = m.addService(rec);
-    auto contactChecker = [](const std::string& uri) { return uri == "alice"; };
+    auto id = m.addService(rec, rng_);
+    auto contactChecker = [](const std::string& uri) {
+        return uri == "alice";
+    };
     CPPUNIT_ASSERT(m.isAuthorized(id, "alice", contactChecker));
     CPPUNIT_ASSERT(!m.isAuthorized(id, "bob", contactChecker));
     CPPUNIT_ASSERT(!m.isAuthorized(id, "alice", nullptr));
@@ -260,8 +291,10 @@ ServiceManagerTest::auth_specific_contacts_test()
     auto rec = makeRec();
     rec.policy = AccessPolicy::SPECIFIC_CONTACTS;
     rec.allowedContacts = {"alice", "carol"};
-    auto id = m.addService(rec);
-    auto contactChecker = [](const std::string&) { return true; }; // doesn't matter
+    auto id = m.addService(rec, rng_);
+    auto contactChecker = [](const std::string&) {
+        return true;
+    }; // doesn't matter
     CPPUNIT_ASSERT(m.isAuthorized(id, "alice", contactChecker));
     CPPUNIT_ASSERT(m.isAuthorized(id, "carol", contactChecker));
     CPPUNIT_ASSERT(!m.isAuthorized(id, "bob", contactChecker));
@@ -274,8 +307,10 @@ ServiceManagerTest::auth_disabled_test()
     auto rec = makeRec();
     rec.policy = AccessPolicy::PUBLIC;
     rec.enabled = false;
-    auto id = m.addService(rec);
-    auto contactChecker = [](const std::string&) { return true; };
+    auto id = m.addService(rec, rng_);
+    auto contactChecker = [](const std::string&) {
+        return true;
+    };
     CPPUNIT_ASSERT(!m.isAuthorized(id, "alice", contactChecker));
     CPPUNIT_ASSERT(!m.isAuthorized("nonexistent", "alice", contactChecker));
 }
@@ -286,23 +321,25 @@ ServiceManagerTest::visible_services_test()
     ServiceManager m(tmpDir_);
     auto pub = makeRec("pub", 80);
     pub.policy = AccessPolicy::PUBLIC;
-    m.addService(pub);
+    m.addService(pub, rng_);
 
     auto contactsOnly = makeRec("priv", 81);
     contactsOnly.policy = AccessPolicy::CONTACTS_ONLY;
-    m.addService(contactsOnly);
+    m.addService(contactsOnly, rng_);
 
     auto specific = makeRec("alice-only", 82);
     specific.policy = AccessPolicy::SPECIFIC_CONTACTS;
     specific.allowedContacts = {"alice"};
-    m.addService(specific);
+    m.addService(specific, rng_);
 
     auto disabled = makeRec("off", 83);
     disabled.policy = AccessPolicy::PUBLIC;
     disabled.enabled = false;
-    m.addService(disabled);
+    m.addService(disabled, rng_);
 
-    auto bobIsContact = [](const std::string& u) { return u == "bob"; };
+    auto bobIsContact = [](const std::string& u) {
+        return u == "bob";
+    };
     auto bobVisible = m.getVisibleServices("bob", bobIsContact);
     CPPUNIT_ASSERT_EQUAL(size_t {2}, bobVisible.size());
 
@@ -317,7 +354,8 @@ ServiceManagerTest::visible_services_test()
 // --- Wire protocol -----------------------------------------------------------
 
 template<typename T>
-static msgpack::object_handle pack_unpack(const T& src)
+static msgpack::object_handle
+pack_unpack(const T& src)
 {
     msgpack::sbuffer buf;
     msgpack::pack(buf, src);
@@ -339,8 +377,8 @@ void
 ServiceManagerTest::protocol_response_roundtrip_test()
 {
     svc_protocol::SvcDiscResponse resp;
-    resp.services.push_back({"id-a", "web",  "the web", "tcp"});
-    resp.services.push_back({"id-b", "game", "",        "tcp"});
+    resp.services.push_back({"id-a", "web", "the web", "tcp", "http"});
+    resp.services.push_back({"id-b", "game", "", "tcp", "ssh"});
     auto oh = pack_unpack(resp);
 
     svc_protocol::SvcDiscResponse decoded;
@@ -351,15 +389,17 @@ ServiceManagerTest::protocol_response_roundtrip_test()
     CPPUNIT_ASSERT_EQUAL(std::string("web"), decoded.services[0].name);
     CPPUNIT_ASSERT_EQUAL(std::string("the web"), decoded.services[0].description);
     CPPUNIT_ASSERT_EQUAL(std::string("tcp"), decoded.services[0].proto);
+    CPPUNIT_ASSERT_EQUAL(std::string("http"), decoded.services[0].scheme);
     CPPUNIT_ASSERT_EQUAL(std::string("game"), decoded.services[1].name);
     CPPUNIT_ASSERT(decoded.services[1].description.empty());
+    CPPUNIT_ASSERT_EQUAL(std::string("ssh"), decoded.services[1].scheme);
 }
 
 void
 ServiceManagerTest::protocol_peek_type_test()
 {
     {
-        auto oh = pack_unpack(svc_protocol::SvcDiscQuery{});
+        auto oh = pack_unpack(svc_protocol::SvcDiscQuery {});
         CPPUNIT_ASSERT_EQUAL(std::string("query"), svc_protocol::peekType(oh.get()));
     }
     {
@@ -370,7 +410,7 @@ ServiceManagerTest::protocol_peek_type_test()
         CPPUNIT_ASSERT_EQUAL(std::string("error"), svc_protocol::peekType(oh.get()));
     }
     {
-        auto oh = pack_unpack(svc_protocol::SvcDiscResponse{});
+        auto oh = pack_unpack(svc_protocol::SvcDiscResponse {});
         CPPUNIT_ASSERT_EQUAL(std::string("service_list"), svc_protocol::peekType(oh.get()));
     }
 }

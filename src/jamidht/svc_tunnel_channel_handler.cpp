@@ -63,6 +63,7 @@ SvcTunnelChannelHandler::SvcTunnelChannelHandler(const std::shared_ptr<JamiAccou
     , account_(acc)
     , connectionManager_(cm)
     , io_(std::move(io))
+    , rng_(dht::crypto::getDerivedRandomEngine(acc->rand))
 {}
 
 SvcTunnelChannelHandler::~SvcTunnelChannelHandler()
@@ -314,7 +315,7 @@ SvcTunnelChannelHandler::openTunnel(std::string peerUri,
         return {};
 
     auto t = std::make_shared<ClientTunnel>();
-    t->id = generateServiceUuid();
+    t->id = generateServiceUuid(rng_);
     t->peerUri = std::move(peerUri);
     t->peerDevice = peerDevice;
     t->serviceId = std::move(serviceId);
