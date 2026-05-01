@@ -67,6 +67,7 @@ private:
     void uri_scheme_test();
     void add_get_remove_test();
     void add_invalid_record_test();
+    void default_host_test();
     void update_test();
     void persistence_test();
     void auth_public_test();
@@ -86,6 +87,7 @@ private:
     CPPUNIT_TEST(uri_scheme_test);
     CPPUNIT_TEST(add_get_remove_test);
     CPPUNIT_TEST(add_invalid_record_test);
+    CPPUNIT_TEST(default_host_test);
     CPPUNIT_TEST(update_test);
     CPPUNIT_TEST(persistence_test);
     CPPUNIT_TEST(auth_public_test);
@@ -179,6 +181,22 @@ ServiceManagerTest::add_invalid_record_test()
 }
 
 void
+ServiceManagerTest::default_host_test()
+{
+    ServiceManager manager(tmpDir_);
+    ServiceRecord record;
+    record.name = "web";
+    record.localPort = 8080;
+
+    auto serviceId = manager.addService(record);
+    CPPUNIT_ASSERT(!serviceId.empty());
+
+    auto fetched = manager.getService(serviceId);
+    CPPUNIT_ASSERT(fetched.has_value());
+    CPPUNIT_ASSERT_EQUAL(std::string("localhost"), fetched->localHost);
+}
+
+void
 ServiceManagerTest::update_test()
 {
     ServiceManager m(tmpDir_);
@@ -211,6 +229,10 @@ ServiceManagerTest::persistence_test()
         rec.policy = AccessPolicy::SPECIFIC_CONTACTS;
         rec.allowedContacts = {"alice", "bob"};
         rec.description = "Counter-Strike";
+        rec.type = "embedded";
+        rec.scheme = "http";
+        rec.localHost = "localhost";
+        rec.directory = tmpDir_.string();
         m.updateService(rec);
     }
     // Reopen and verify everything is restored.
@@ -222,6 +244,10 @@ ServiceManagerTest::persistence_test()
         CPPUNIT_ASSERT_EQUAL(id, r.id);
         CPPUNIT_ASSERT_EQUAL(std::string("game"), r.name);
         CPPUNIT_ASSERT_EQUAL(std::string("Counter-Strike"), r.description);
+        CPPUNIT_ASSERT_EQUAL(std::string("embedded"), r.type);
+        CPPUNIT_ASSERT_EQUAL(std::string("http"), r.scheme);
+        CPPUNIT_ASSERT_EQUAL(std::string("localhost"), r.localHost);
+        CPPUNIT_ASSERT_EQUAL(tmpDir_.string(), r.directory);
         CPPUNIT_ASSERT_EQUAL(uint16_t {27015}, r.localPort);
         CPPUNIT_ASSERT(r.policy == AccessPolicy::SPECIFIC_CONTACTS);
         CPPUNIT_ASSERT_EQUAL(size_t {2}, r.allowedContacts.size());
@@ -339,8 +365,8 @@ void
 ServiceManagerTest::protocol_response_roundtrip_test()
 {
     svc_protocol::SvcDiscResponse resp;
-    resp.services.push_back({"id-a", "web",  "the web", "tcp"});
-    resp.services.push_back({"id-b", "game", "",        "tcp"});
+    resp.services.push_back({"id-a", "web",  "the web", "tcp", "http"});
+    resp.services.push_back({"id-b", "game", "",        "tcp", "ssh"});
     auto oh = pack_unpack(resp);
 
     svc_protocol::SvcDiscResponse decoded;
@@ -351,8 +377,10 @@ ServiceManagerTest::protocol_response_roundtrip_test()
     CPPUNIT_ASSERT_EQUAL(std::string("web"), decoded.services[0].name);
     CPPUNIT_ASSERT_EQUAL(std::string("the web"), decoded.services[0].description);
     CPPUNIT_ASSERT_EQUAL(std::string("tcp"), decoded.services[0].proto);
+    CPPUNIT_ASSERT_EQUAL(std::string("http"), decoded.services[0].scheme);
     CPPUNIT_ASSERT_EQUAL(std::string("game"), decoded.services[1].name);
     CPPUNIT_ASSERT(decoded.services[1].description.empty());
+    CPPUNIT_ASSERT_EQUAL(std::string("ssh"), decoded.services[1].scheme);
 }
 
 void

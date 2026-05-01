@@ -573,6 +573,7 @@ public:
 
     class ServiceManager& serviceManager() { return *serviceManager_; }
     const class ServiceManager& serviceManager() const { return *serviceManager_; }
+    bool hasServiceManager() const { return serviceManager_ != nullptr; }
 
     /* Service-exposure high-level API. Implemented in jamiaccount.cpp. */
 
