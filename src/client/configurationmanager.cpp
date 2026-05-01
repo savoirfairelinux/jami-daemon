@@ -410,11 +410,13 @@ serviceRecordToMap(const jami::ServiceRecord& r)
 {
     std::map<std::string, std::string> m;
     m["id"] = r.id;
+    m["type"] = r.type;
     m["name"] = r.name;
     m["description"] = r.description;
     m["scheme"] = r.scheme;
     m["localHost"] = r.localHost;
     m["localPort"] = std::to_string(r.localPort);
+    m["directory"] = r.directory;
     m["enabled"] = r.enabled ? "true" : "false";
     switch (r.policy) {
     case jami::AccessPolicy::PUBLIC: m["policy"] = "public"; break;
@@ -441,6 +443,9 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
         return it == m.end() ? def : it->second;
     };
     r.id = get("id");
+    r.type = get("type", "custom");
+    if (r.type.empty())
+        r.type = "custom";
     r.name = get("name");
     r.description = get("description");
     r.scheme = get("scheme");
@@ -453,6 +458,7 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
             r.localPort = static_cast<uint16_t>(std::stoi(portStr));
         } catch (...) {}
     }
+    r.directory = get("directory");
     auto pol = get("policy", "contacts");
     if (pol == "public")
         r.policy = jami::AccessPolicy::PUBLIC;
@@ -482,7 +488,7 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
 std::string
 addExposedService(const std::string& accountId, const std::map<std::string, std::string>& details)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager())
         return acc->serviceManager().addService(mapToServiceRecord(details));
     return {};
 }
@@ -491,7 +497,7 @@ bool
 updateExposedService(const std::string& accountId,
                      const std::map<std::string, std::string>& details)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {
         auto rec = mapToServiceRecord(details);
         // Tear down any active inbound tunnels first; if the update changes
         // the local target (host/port) or disables the service, existing
@@ -506,7 +512,7 @@ updateExposedService(const std::string& accountId,
 bool
 removeExposedService(const std::string& accountId, const std::string& serviceId)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {
         acc->closeServerTunnelsForService(serviceId);
         return acc->serviceManager().removeService(serviceId);
     }
@@ -517,7 +523,7 @@ std::vector<std::map<std::string, std::string>>
 getExposedServices(const std::string& accountId)
 {
     std::vector<std::map<std::string, std::string>> out;
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {
         auto recs = acc->serviceManager().getServices();
         out.reserve(recs.size());
         for (auto& r : recs)
