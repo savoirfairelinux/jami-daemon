@@ -51,22 +51,9 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
 
     if (auto acc = account_.lock()) {
         if (auto convModule = acc->convModule(true)) {
-            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            if (!res) {
-                JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned",
-                             acc->getAccountID(),
-                             name,
-                             cert->issuer->getId().toString());
-            } else {
-                res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
-                if (!res) {
-                    JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but device {} is banned",
-                                 acc->getAccountID(),
-                                 name,
-                                 cert->getLongId().toString());
-                }
-            }
-            return res;
+            const auto issuerUri = cert->issuer->getId().toString();
+            const auto deviceId = cert->getLongId().toString();
+            return convModule->isPeerAuthorized(conversationId, issuerUri, deviceId, true);
         } else {
             JAMI_ERROR("Received ConversationChannel request but conversation module is unavailable");
         }

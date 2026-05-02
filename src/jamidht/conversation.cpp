@@ -531,7 +531,7 @@ public:
 
     std::vector<std::map<std::string, std::string>> getTrackedMembers() const;
 
-    std::string_view bannedType(const std::string& uri) const
+    std::string_view memberBanType(const std::string& uri) const
     {
         auto crt = fmt::format("{}.crt", uri);
         auto bannedMember = repoPath_ / MemberPath::BANNED / MemberPath::MEMBERS / crt;
@@ -543,10 +543,14 @@ public:
         auto bannedInvited = repoPath_ / MemberPath::BANNED / MemberPath::INVITED / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
-        auto bannedDevice = repoPath_ / MemberPath::BANNED / MemberPath::DEVICES / crt;
-        if (std::filesystem::is_regular_file(bannedDevice))
-            return "devices"sv;
         return {};
+    }
+
+    bool isDeviceBanned(const std::string& deviceId) const
+    {
+        auto crt = fmt::format("{}.crt", deviceId);
+        auto bannedDevice = repoPath_ / MemberPath::BANNED / MemberPath::DEVICES / crt;
+        return std::filesystem::is_regular_file(bannedDevice);
     }
 
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const
@@ -568,6 +572,8 @@ public:
         if (deviceSockets != gitSocketList_.end())
             gitSocketList_.erase(deviceSockets);
     }
+
+    void disconnectFromDevice(const DeviceId& deviceId);
 
     /**
      * Remove all git sockets and all DRT nodes associated with the given peer.
@@ -894,24 +900,45 @@ Conversation::Impl::isAdmin() const
 }
 
 void
+Conversation::Impl::disconnectFromDevice(const DeviceId& deviceId)
+{
+    swarmManager_->deleteNode({deviceId});
+
+    std::shared_ptr<dhtnet::ChannelSocket> socket;
+    {
+        std::lock_guard lk(gitSocketMtx_);
+        if (auto it = gitSocketList_.find(deviceId); it != gitSocketList_.end()) {
+            socket = std::move(it->second);
+            gitSocketList_.erase(it);
+        }
+    }
+    if (socket)
+        socket->shutdown();
+}
+
+void
 Conversation::Impl::disconnectFromPeer(const std::string& peerUri)
 {
-    // Remove nodes from swarmManager
+    std::set<DeviceId> devicesToRemove;
+
     const auto nodes = swarmManager_->getAllNodes();
-    std::vector<NodeId> toRemove;
     for (const auto node : nodes)
         if (peerUri == repository_->uriFromDevice(node.toString()))
-            toRemove.emplace_back(node);
-    swarmManager_->deleteNode(toRemove);
+            devicesToRemove.emplace(node);
 
-    // Remove git sockets with this member
-    std::lock_guard lk(gitSocketMtx_);
-    for (auto it = gitSocketList_.begin(); it != gitSocketList_.end();) {
-        if (peerUri == repository_->uriFromDevice(it->first.toString()))
-            it = gitSocketList_.erase(it);
-        else
-            ++it;
+    {
+        std::lock_guard lk(gitSocketMtx_);
+        for (const auto& [deviceId, socket] : gitSocketList_) {
+            auto cert = socket ? socket->peerCertificate() : nullptr;
+            if ((cert && cert->issuer && cert->issuer->getId().toString() == peerUri)
+                || peerUri == repository_->uriFromDevice(deviceId.toString())) {
+                devicesToRemove.emplace(deviceId);
+            }
+        }
     }
+
+    for (const auto& deviceId : devicesToRemove)
+        disconnectFromDevice(deviceId);
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1459,12 +1486,12 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         cb(false, "");
         return;
     }
-    if (isBanned(contactUri)) {
+    if (isMemberBanned(contactUri)) {
         if (pimpl_->isAdmin()) {
             dht::ThreadPool::io().run([w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
                 if (auto sthis = w.lock()) {
                     auto members = sthis->pimpl_->repository_->members();
-                    auto type = sthis->pimpl_->bannedType(contactUri);
+                    auto type = sthis->pimpl_->memberBanType(contactUri);
                     if (type.empty()) {
                         cb(false, {});
                         return;
@@ -1639,7 +1666,10 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                     commits.emplace_back(resolveCommit);
                     lastId = resolveCommit;
                     JAMI_WARNING("Vote solved for {}. {} banned", contactUri, isDevice ? "Device" : "Member");
-                    sthis->pimpl_->disconnectFromPeer(contactUri);
+                    if (isDevice)
+                        sthis->pimpl_->disconnectFromDevice(DeviceId(contactUri));
+                    else
+                        sthis->pimpl_->disconnectFromPeer(contactUri);
                 }
 
                 sthis->pimpl_->announce(commits, true);
@@ -1725,9 +1755,21 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
 }
 
 bool
-Conversation::isBanned(const std::string& uri) const
+Conversation::isMemberBanned(const std::string& uri) const
 {
-    return !pimpl_->bannedType(uri).empty();
+    return !pimpl_->memberBanType(uri).empty();
+}
+
+bool
+Conversation::isDeviceBanned(const std::string& deviceId) const
+{
+    return pimpl_->isDeviceBanned(deviceId);
+}
+
+bool
+Conversation::isPeerAuthorized(const std::string& uri, const std::string& deviceId, bool includeInvited) const
+{
+    return !isMemberBanned(uri) && !isDeviceBanned(deviceId) && isMember(uri, includeInvited);
 }
 
 void
