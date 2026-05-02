@@ -102,10 +102,10 @@ void
 strErr()
 {
 #ifdef __GLIBC__
-    JAMI_ERR("%m");
+    JAMI_ERROR("{}", strerror(errno));
 #else
     char buf[1000];
-    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
+    JAMI_ERROR("{}", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
 #endif
 }
 
