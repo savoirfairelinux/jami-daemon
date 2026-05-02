@@ -24,7 +24,7 @@ namespace video {
 std::unique_ptr<MediaFilter>
 getTransposeFilter(int rotation, std::string inputName, int width, int height, int format, bool rescale)
 {
-    JAMI_WARN("Rotation set to %d", rotation);
+    JAMI_WARNING("Rotation set to {}", rotation);
     if (rotation == 0) {
         return {};
     }
@@ -68,7 +68,7 @@ getTransposeFilter(int rotation, std::string inputName, int width, int height, i
     std::unique_ptr<MediaFilter> filter(new MediaFilter);
     auto ret = filter->initialize(ss.str(), msv);
     if (ret < 0) {
-        JAMI_ERR() << "filter init fail";
+        JAMI_ERROR("filter init fail");
         return {};
     }
     return filter;

@@ -38,7 +38,7 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                         const std::vector<libjami::MediaMap>& mediaList)
 {
     if (not allowNewCall_) {
-        JAMI_WARN("Creation of new calls is not allowed");
+        JAMI_WARNING("Creation of new calls is not allowed");
         return {};
     }
 
@@ -62,10 +62,10 @@ CallFactory::removeCall(Call& call)
     std::lock_guard lk(callMapsMutex_);
 
     const auto& id = call.getCallId();
-    JAMI_DBG("Removing call %s", id.c_str());
+    JAMI_LOG("Removing call {}", id);
     auto& map = callMaps_.at(call.getLinkType());
     map.erase(id);
-    JAMI_DBG("Remaining %zu call", map.size());
+    JAMI_LOG("Remaining {} call", map.size());
 }
 
 void
@@ -76,7 +76,7 @@ CallFactory::removeCall(const std::string& id)
     if (auto call = getCall(id)) {
         removeCall(*call);
     } else
-        JAMI_ERR("No call with ID %s", id.c_str());
+        JAMI_ERROR("No call with ID {}", id);
 }
 
 bool

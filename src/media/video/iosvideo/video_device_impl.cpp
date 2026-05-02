@@ -82,15 +82,15 @@ VideoDeviceImpl::selectFormat()
             }
         }
         if (f == ios_formats.end())
-            JAMI_WARN("Video: No format matching %s", fmt.c_str());
+            JAMI_WARNING("Video: No format matching {}", fmt);
     }
 
     if (best != UINT_MAX) {
         fmt_ = &ios_formats[best];
-        JAMI_DBG("Video: picked format %s", fmt_->name.c_str());
+        JAMI_LOG("Video: picked format {}", fmt_->name);
     } else {
         fmt_ = &ios_formats[0];
-        JAMI_ERR("Video: Unable to find a known format to use");
+        JAMI_ERROR("Video: Unable to find a known format to use");
     }
 }
 

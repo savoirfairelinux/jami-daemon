@@ -94,7 +94,7 @@ RingBuffer::getLength(const std::string& ringbufferId) const
 void
 RingBuffer::debug()
 {
-    JAMI_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
+    JAMI_LOG("Start={}; End={}; BufferSize={}", getSmallestReadOffset(), endPos_, buffer_.size());
 }
 
 size_t

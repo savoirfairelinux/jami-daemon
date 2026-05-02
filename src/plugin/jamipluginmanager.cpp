@@ -139,7 +139,7 @@ JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath
         }
         return oldCert->getPublicKey() == newCert->getPublicKey();
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
     return true;
@@ -304,7 +304,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             }
             libjami::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
         }
     }
     return r;
@@ -349,7 +349,7 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
         return status;
 
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
 #endif
@@ -380,7 +380,7 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 
         return status;
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
 #endif
@@ -463,7 +463,7 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
         try {
             msgpack::pack(fs, pluginUserPreferencesMap);
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
             if (force) {
                 loadPlugin(rootPath.string());
             }
