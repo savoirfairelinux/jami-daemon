@@ -97,7 +97,7 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     if ((ret = avfilter_graph_config(graph_, nullptr)) < 0)
         return fail("Failed to configure filter graph", ret);
 
-    JAMI_DBG() << "Filter graph initialized with: " << desc_;
+    JAMI_LOG("Filter graph initialized with: {}", desc_);
     initialized_ = true;
     return 0;
 }
@@ -218,7 +218,7 @@ MediaFilter::readOutput()
     } else if (err == AVERROR(EAGAIN)) {
         // no data available right now, try again
     } else if (err == AVERROR_EOF) {
-        JAMI_WARN() << "Filters have reached EOF, no more frames will be output";
+        JAMI_WARNING("Filters have reached EOF, no more frames will be output");
     } else {
         fail("Error occurred while pulling from filter graph", err);
     }
@@ -231,7 +231,7 @@ MediaFilter::flush()
     for (size_t i = 0; i < inputs_.size(); ++i) {
         int ret = av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
         if (ret < 0) {
-            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
+            JAMI_ERROR("Failed to flush filter '{}': {}", inputParams_[i].name, libav_utils::getError(ret));
         }
     }
 }
@@ -322,7 +322,7 @@ MediaFilter::reinitialize()
     clean();
     auto ret = initialize(desc, params);
     if (ret >= 0)
-        JAMI_DBG() << "Filter graph reinitialized";
+        JAMI_LOG("Filter graph reinitialized");
     return ret;
 }
 
@@ -330,7 +330,7 @@ int
 MediaFilter::fail(std::string_view msg, int err) const
 {
     if (!msg.empty())
-        JAMI_ERR() << msg << ": " << libav_utils::getError(err);
+        JAMI_ERROR("{}: {}", msg, libav_utils::getError(err));
     return err;
 }
 

@@ -101,7 +101,7 @@ MediaPlayerTest::tearDown()
 void
 MediaPlayerTest::testCreate()
 {
-    JAMI_INFO("Start testCreate");
+    JAMI_LOG("Start testCreate");
     playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
@@ -112,13 +112,13 @@ MediaPlayerTest::testCreate()
     CPPUNIT_ASSERT(video_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
-    JAMI_INFO("End testCreate");
+    JAMI_LOG("End testCreate");
 }
 
 void
 MediaPlayerTest::testJPG()
 {
-    JAMI_INFO("Start testJpg");
+    JAMI_LOG("Start testJpg");
     playerId1_ = jami::createMediaPlayer("./media/data/jami.jpg");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
@@ -128,13 +128,13 @@ MediaPlayerTest::testJPG()
     CPPUNIT_ASSERT(video_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
-    JAMI_INFO("End testJpg");
+    JAMI_LOG("End testJpg");
 }
 
 void
 MediaPlayerTest::testAudioFile()
 {
-    JAMI_INFO("Start testAudioFile");
+    JAMI_LOG("Start testAudioFile");
     playerId1_ = jami::createMediaPlayer("./media/data/test.mp3");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
@@ -144,7 +144,7 @@ MediaPlayerTest::testAudioFile()
     CPPUNIT_ASSERT(audio_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
-    JAMI_INFO("End testAudioFile");
+    JAMI_LOG("End testAudioFile");
 }
 
 void
@@ -153,12 +153,12 @@ MediaPlayerTest::testPause()
     playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
-    JAMI_INFO("Start testPause");
+    JAMI_LOG("Start testPause");
     // should start paused
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     mediaPlayer->pause(false);
     CPPUNIT_ASSERT(!mediaPlayer->isPaused());
-    JAMI_INFO("End testPause");
+    JAMI_LOG("End testPause");
 }
 
 bool
@@ -170,7 +170,7 @@ MediaPlayerTest::isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t mar
 void
 MediaPlayerTest::testSeekWhilePaused()
 {
-    JAMI_INFO("Start testSeekWhilePaused");
+    JAMI_LOG("Start testSeekWhilePaused");
     playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
@@ -193,13 +193,13 @@ MediaPlayerTest::testSeekWhilePaused()
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 1));
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
-    JAMI_INFO("End testSeekWhilePaused");
+    JAMI_LOG("End testSeekWhilePaused");
 }
 
 void
 MediaPlayerTest::testSeekWhilePlaying()
 {
-    JAMI_INFO("Start testSeekWhilePlaying");
+    JAMI_LOG("Start testSeekWhilePlaying");
     playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
@@ -221,7 +221,7 @@ MediaPlayerTest::testSeekWhilePlaying()
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
-    JAMI_INFO("End testSeekWhilePlaying");
+    JAMI_LOG("End testSeekWhilePlaying");
 }
 
 } // namespace test

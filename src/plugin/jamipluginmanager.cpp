@@ -139,7 +139,7 @@ JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath
         }
         return oldCert->getPublicKey() == newCert->getPublicKey();
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
     return true;
@@ -304,7 +304,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             }
             libjami::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
         }
     }
     return r;
@@ -319,10 +319,10 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
         if (detailsIt != pluginDetailsMap_.end()) {
             bool loaded = pm_.checkLoadedPlugin(rootPath);
             if (loaded) {
-                JAMI_INFO() << "PLUGIN: unloading before uninstall.";
+                JAMI_LOG("PLUGIN: unloading before uninstall.");
                 bool status = libjami::unloadPlugin(rootPath);
                 if (!status) {
-                    JAMI_INFO() << "PLUGIN: unable to unload, not performing uninstall.";
+                    JAMI_LOG("PLUGIN: unable to unload, not performing uninstall.");
                     return FAILURE;
                 }
             }
@@ -333,7 +333,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
         }
         return std::filesystem::remove_all(rootPath, ec) ? SUCCESS : FAILURE;
     } else {
-        JAMI_INFO() << "PLUGIN: not installed.";
+        JAMI_LOG("PLUGIN: not installed.");
         return FAILURE;
     }
 }
@@ -344,12 +344,12 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
 #ifdef ENABLE_PLUGIN
     try {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
-        JAMI_INFO() << "PLUGIN: load status - " << status;
+        JAMI_LOG("PLUGIN: load status - {}", status);
 
         return status;
 
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
 #endif
@@ -376,11 +376,11 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 #ifdef ENABLE_PLUGIN
     try {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
-        JAMI_INFO() << "PLUGIN: unload status - " << status;
+        JAMI_LOG("PLUGIN: unload status - {}", status);
 
         return status;
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return false;
     }
 #endif
@@ -463,7 +463,7 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
         try {
             msgpack::pack(fs, pluginUserPreferencesMap);
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
             if (force) {
                 loadPlugin(rootPath.string());
             }

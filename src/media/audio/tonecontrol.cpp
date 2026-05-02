@@ -52,7 +52,7 @@ ToneControl::setSampleRate(unsigned rate, AVSampleFormat sampleFormat)
     try {
         audioFile_.reset(new AudioFile(path, sampleRate_, sampleFormat));
     } catch (const AudioFileException& e) {
-        JAMI_WARN("Audio file error: %s", e.what());
+        JAMI_WARNING("Audio file error: {}", e.what());
     }
 }
 
@@ -85,7 +85,7 @@ ToneControl::setAudioFile(const std::string& file)
     try {
         audioFile_.reset(new AudioFile(file, sampleRate_, sampleFormat_));
     } catch (const AudioFileException& e) {
-        JAMI_WARN("Audio file error: %s", e.what());
+        JAMI_WARNING("Audio file error: {}", e.what());
     }
 
     return static_cast<bool>(audioFile_);

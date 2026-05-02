@@ -23,7 +23,7 @@
 
 #define checkErr(err) \
     if (err) { \
-        JAMI_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
+        JAMI_ERROR("CoreAudio Error: {}", static_cast<long>(err)); \
     }
 
 /**

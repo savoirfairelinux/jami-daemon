@@ -116,7 +116,7 @@ public:
     AVStream* getStream(unsigned stream)
     {
         if (stream >= inputCtx_->nb_streams) {
-            JAMI_ERR("Stream index is out of range: %u", stream);
+            JAMI_ERROR("Stream index is out of range: {}", stream);
             return {};
         }
         return inputCtx_->streams[stream];

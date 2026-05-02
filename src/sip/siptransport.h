@@ -56,7 +56,7 @@ struct TlsListener
     {}
     virtual ~TlsListener()
     {
-        JAMI_DBG("Destroying listener");
+        JAMI_LOG("Destroying listener");
         listener->destroy(listener);
     }
     pjsip_tpfactory* get() { return listener; }

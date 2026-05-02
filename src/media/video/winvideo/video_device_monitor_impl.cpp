@@ -141,7 +141,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
         if (!registerDeviceInterfaceToHwnd(hWnd, &hDeviceNotify)) {
-            JAMI_ERR() << "Cannot register for device change notifications";
+            JAMI_ERROR("Cannot register for device change notifications");
             SendMessage(hWnd, WM_DESTROY, 0, 0);
         }
     } break;
@@ -153,7 +153,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
             PDEV_BROADCAST_DEVICEINTERFACE_A pbdi = (PDEV_BROADCAST_DEVICEINTERFACE_A) lParam;
             auto unique_name = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
-                JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                JAMI_LOG("{}{}", unique_name, ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged"));
                 if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         auto captureDeviceList = pThis->enumerateVideoInputDevices();
@@ -226,7 +226,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
-        JAMI_ERR() << "Unable to enumerate webcams";
+        JAMI_ERROR("Unable to enumerate webcams");
         return {};
     }
 
@@ -237,7 +237,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     }
     pDevEnum->Release();
     if (FAILED(hr) || pEnum == nullptr) {
-        JAMI_ERR() << "No webcam found";
+        JAMI_ERROR("No webcam found");
         return {};
     }
 
