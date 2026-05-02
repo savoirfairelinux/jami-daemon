@@ -139,7 +139,7 @@ std::string
 expand_path(const std::string& path)
 {
 #if defined __ANDROID__ || defined _MSC_VER || defined WIN32 || defined __APPLE__
-    JAMI_ERR("Path expansion not implemented, returning original");
+    JAMI_ERROR("Path expansion not implemented, returning original");
     return path;
 #else
 
@@ -150,20 +150,19 @@ expand_path(const std::string& path)
 
     switch (ret) {
     case WRDE_BADCHAR:
-        JAMI_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
-                 "(, ), {, }.");
+        JAMI_ERROR("Illegal occurrence of newline or one of |, &, ;, <, >, (, ), {{, }}.");
         return result;
     case WRDE_BADVAL:
-        JAMI_ERR("An undefined shell variable was referenced");
+        JAMI_ERROR("An undefined shell variable was referenced");
         return result;
     case WRDE_CMDSUB:
-        JAMI_ERR("Command substitution occurred");
+        JAMI_ERROR("Command substitution occurred");
         return result;
     case WRDE_SYNTAX:
-        JAMI_ERR("Shell syntax error");
+        JAMI_ERROR("Shell syntax error");
         return result;
     case WRDE_NOSPACE:
-        JAMI_ERR("Out of memory.");
+        JAMI_ERROR("Out of memory.");
         // This is the only error where we must call wordfree
         break;
     default:
@@ -610,7 +609,7 @@ get_config_dir([[maybe_unused]] const char* pkg)
     if (!dhtnet::fileutils::recursive_mkdir(configdir, 0700)) {
         // If directory creation failed
         if (errno != EEXIST)
-            JAMI_DBG("Unable to create directory: %s!", configdir.c_str());
+            JAMI_LOG("Unable to create directory: {}!", configdir);
     }
     return configdir;
 }
@@ -632,13 +631,13 @@ eraseFile_win32(const std::string& path, bool dosync)
     SetFileAttributesA(path.c_str(), GetFileAttributesA(path.c_str()) & ~FILE_ATTRIBUTE_READONLY);
     HANDLE h = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
-        JAMI_WARN("Unable to open file %s for erasing.", path.c_str());
+        JAMI_WARNING("Unable to open file {} for erasing.", path);
         return false;
     }
 
     LARGE_INTEGER size;
     if (!GetFileSizeEx(h, &size)) {
-        JAMI_WARN("Unable to erase file %s: GetFileSizeEx() failed.", path.c_str());
+        JAMI_WARNING("Unable to erase file {}: GetFileSizeEx() failed.", path);
         CloseHandle(h);
         return false;
     }
@@ -655,7 +654,7 @@ eraseFile_win32(const std::string& path, bool dosync)
     try {
         buffer = new char[ERASE_BLOCK];
     } catch (std::bad_alloc& ba) {
-        JAMI_WARN("Unable to allocate buffer for erasing %s.", path.c_str());
+        JAMI_WARNING("Unable to allocate buffer for erasing {}.", path);
         CloseHandle(h);
         return false;
     }
@@ -691,7 +690,7 @@ eraseFile_posix(const std::string& path, bool dosync)
 {
     struct stat st;
     if (stat(path.c_str(), &st) == -1) {
-        JAMI_WARN("Unable to erase file %s: fstat() failed.", path.c_str());
+        JAMI_WARNING("Unable to erase file {}: fstat() failed.", path);
         return false;
     }
     // Remove read-only flag if possible
@@ -699,7 +698,7 @@ eraseFile_posix(const std::string& path, bool dosync)
 
     int fd = open(path.c_str(), O_WRONLY);
     if (fd == -1) {
-        JAMI_WARN("Unable to open file %s for erasing.", path.c_str());
+        JAMI_WARNING("Unable to open file {} for erasing.", path);
         return false;
     }
 

@@ -119,7 +119,7 @@ SIPCallTest::testCall()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
                                                           libjami::Media::MediaAttributeValue::AUDIO},
@@ -133,7 +133,7 @@ SIPCallTest::testCall()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived.load(); }));
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));

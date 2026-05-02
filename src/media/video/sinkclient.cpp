@@ -92,7 +92,7 @@ private:
     void unMapShmArea() noexcept
     {
         if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-            JAMI_ERR("[ShmHolder:%s] munmap(%zu) failed with errno %d", openedName_.c_str(), areaSize_, errno);
+            JAMI_ERROR("[ShmHolder:{}] munmap({}) failed with errno {}", openedName_, areaSize_, errno);
         }
     }
 
@@ -138,7 +138,7 @@ ShmHolder::ShmHolder(const std::string& name)
     if (::sem_init(&area_->frameGenMutex, 1, 0) < 0)
         shmFailedWithErrno("sem_init(frameGenMutex)");
 
-    JAMI_DBG("[ShmHolder:%s] New holder created", openedName_.c_str());
+    JAMI_LOG("[ShmHolder:{}] New holder created", openedName_);
 }
 
 ShmHolder::~ShmHolder()
@@ -171,12 +171,12 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    JAMI_DBG("[ShmHolder:%s] New size: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
+    JAMI_LOG("[ShmHolder:{}] New size: f={}, a={}", openedName_, frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
-        JAMI_ERR("[ShmHolder:%s] ftruncate(%zu) failed with errno %d", openedName_.c_str(), areaSize, errno);
+        JAMI_ERROR("[ShmHolder:{}] ftruncate({}) failed with errno {}", openedName_, areaSize, errno);
         return false;
     }
 
@@ -184,7 +184,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
-        JAMI_ERR("[ShmHolder:%s] mmap(%zu) failed with errno %d", openedName_.c_str(), areaSize, errno);
+        JAMI_ERROR("[ShmHolder:{}] mmap({}) failed with errno {}", openedName_, areaSize, errno);
         return false;
     }
 
@@ -216,11 +216,11 @@ ShmHolder::renderFrame(const VideoFrame& src) noexcept
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        JAMI_ERR("[ShmHolder:%s] Unable to resize area size: %dx%d, format: %d",
-                 openedName_.c_str(),
-                 width,
-                 height,
-                 format);
+        JAMI_ERROR("[ShmHolder:{}] Unable to resize area size: {}x{}, format: {}",
+                   openedName_,
+                   width,
+                   height,
+                   av_get_pix_fmt_name(format));
         return;
     }
 
@@ -258,9 +258,9 @@ SinkClient::start() noexcept
             if (envvar) // Do not use SHM if set
                 return true;
             shm_ = std::make_shared<ShmHolder>();
-            JAMI_DBG("[Sink:%p] Shared memory [%s] created", this, openedName().c_str());
+            JAMI_LOG("[Sink:{}] Shared memory [{}] created", fmt::ptr(this), openedName());
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("[Sink:%p] Failed to create shared memory: %s", this, e.what());
+            JAMI_ERROR("[Sink:{}] Failed to create shared memory: {}", fmt::ptr(this), e.what());
         }
     }
 
@@ -309,7 +309,7 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     , lastFrameDebug_(std::chrono::steady_clock::now())
 #endif
 {
-    JAMI_DBG("[Sink:%p] Sink [%s] created", this, getId().c_str());
+    JAMI_LOG("[Sink:{}] Sink [{}] created", fmt::ptr(this), getId());
 }
 
 libjami::FrameBuffer
@@ -331,7 +331,7 @@ SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p),
                                                             AV_PIX_FMT_NV12);
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
+                JAMI_ERROR("[Sink:{}] Transfer to hardware acceleration memory failed: {}", fmt::ptr(this), e.what());
                 return {};
             }
             if (not frame)
@@ -370,7 +370,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
+            JAMI_ERROR("[Sink:{}] Transfer to hardware acceleration memory failed: {}", fmt::ptr(this), e.what());
             return {};
         }
     } else
@@ -463,11 +463,11 @@ SinkClient::setFrameSize(int width, int height)
     width_ = width;
     height_ = height;
     if (width > 0 and height > 0) {
-        JAMI_DBG("[Sink:%p] Started - size=%dx%d, mixer=%s", this, width, height, mixer_ ? "Yes" : "No");
+        JAMI_LOG("[Sink:{}] Started - size={}x{}, mixer={}", fmt::ptr(this), width, height, mixer_ ? "Yes" : "No");
         emitSignal<libjami::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        JAMI_DBG("[Sink:%p] Stopped - size=%dx%d, mixer=%s", this, width, height, mixer_ ? "Yes" : "No");
+        JAMI_LOG("[Sink:{}] Stopped - size={}x{}, mixer={}", fmt::ptr(this), width, height, mixer_ ? "Yes" : "No");
         emitSignal<libjami::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
@@ -477,7 +477,7 @@ void
 SinkClient::setCrop(int x, int y, int w, int h)
 {
     if (x != crop_.x || y != crop_.y || w != crop_.w || h != crop_.h) {
-        JAMI_DBG("[Sink:%p] Change crop to [%dx%d at (%d, %d)]", this, w, h, x, y);
+        JAMI_LOG("[Sink:{}] Change crop to [{}x{} at ({}, {})]", fmt::ptr(this), w, h, x, y);
     }
     crop_.x = x;
     crop_.y = y;

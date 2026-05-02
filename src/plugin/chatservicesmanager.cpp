@@ -93,7 +93,7 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
                 else
                     jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
             } catch (const std::exception& e) {
-                JAMI_ERR("Exception during text message sending: %s", e.what());
+                JAMI_ERROR("Exception during text message sending: {}", e.what());
             }
         }
         return 0;
