@@ -56,7 +56,7 @@ ConfProtocolParser::parse()
         if (version == 1) {
             parseV1();
         } else {
-            JAMI_WARN() << "Unsupported protocol version " << version;
+            JAMI_WARNING("Unsupported protocol version {}", version);
         }
     } else {
         parseV0();
@@ -68,7 +68,7 @@ ConfProtocolParser::parseV0()
 {
     if (!checkAuthorization_ || !raiseHandUri_ || !setLayout_ || !setActiveParticipant_ || !muteParticipant_
         || !kickParticipant_) {
-        JAMI_ERR() << "Missing methods for ConfProtocolParser";
+        JAMI_ERROR("Missing methods for ConfProtocolParser");
         return;
     }
     // Check if all lambdas set
@@ -108,7 +108,7 @@ ConfProtocolParser::parseV1()
 {
     if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_ || !muteStreamAudio_
         || !setActiveStream_) {
-        JAMI_ERR() << "Missing methods for ConfProtocolParser";
+        JAMI_ERROR("Missing methods for ConfProtocolParser");
         return;
     }
 

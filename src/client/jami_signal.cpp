@@ -161,7 +161,7 @@ registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapp
     for (auto& item : handlers) {
         auto iter = handlers_.find(item.first);
         if (iter == handlers_.end()) {
-            JAMI_ERR("Signal %s not supported", item.first.c_str());
+            JAMI_ERROR("Signal {} not supported", item.first);
             continue;
         }
         iter->second = item.second;

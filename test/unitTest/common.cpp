@@ -72,7 +72,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono:
             }
         }));
 
-    JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
+    JAMI_LOG("Waiting for {} account to be announced...", to_be_announced);
 
     libjami::registerSignalHandlers(confHandlers);
 
@@ -88,7 +88,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono:
 
     libjami::unregisterSignalHandlers();
 
-    JAMI_DBG("%zu account announced!", to_be_announced);
+    JAMI_LOG("{} account announced!", to_be_announced);
 }
 
 void
@@ -100,7 +100,7 @@ wait_for_announcement_of(const std::string& accountId, std::chrono::seconds time
 void
 wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::seconds timeout)
 {
-    JAMI_INFO("Removing %zu accounts...", accounts.size());
+    JAMI_LOG("Removing %zu accounts...", accounts.size());
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;

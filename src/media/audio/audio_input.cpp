@@ -161,10 +161,10 @@ AudioInput::readFromFile()
         createDecoder();
         break;
     case MediaDemuxer::Status::ReadError:
-        JAMI_ERR() << "Failed to decode frame";
+        JAMI_ERROR("Failed to decode frame");
         break;
     case MediaDemuxer::Status::ReadBufferOverflow:
-        JAMI_ERR() << "Read buffer overflow detected";
+        JAMI_ERROR("Read buffer overflow detected");
         break;
     case MediaDemuxer::Status::FallBack:
     case MediaDemuxer::Status::RestartRequired:
@@ -308,7 +308,7 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     // sets devOpts_'s sample rate and number of channels
     if (!createDecoder()) {
-        JAMI_WARN() << "Unable to decode audio from file, switching back to default device";
+        JAMI_WARNING("Unable to decode audio from file, switching back to default device");
         return initDevice("");
     }
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
@@ -423,13 +423,13 @@ AudioInput::createDecoder()
                                   this);
 
     if (decoder->openInput(devOpts_) < 0) {
-        JAMI_ERR() << "Unable to open input '" << devOpts_.input << "'";
+        JAMI_ERROR("Unable to open input '{}'", devOpts_.input);
         foundDevOpts(devOpts_);
         return false;
     }
 
     if (decoder->setupAudio() < 0) {
-        JAMI_ERR() << "Unable to setup decoder for '" << devOpts_.input << "'";
+        JAMI_ERROR("Unable to setup decoder for '{}'", devOpts_.input);
         foundDevOpts(devOpts_);
         return false;
     }
@@ -437,7 +437,7 @@ AudioInput::createDecoder()
     auto ms = decoder->getStream(devOpts_.input);
     devOpts_.channel = ms.nbChannels;
     devOpts_.framerate = ms.sampleRate;
-    JAMI_DBG() << "Created audio decoder: " << ms;
+    JAMI_LOG("Created audio decoder: {}", ms);
 
     decoder_ = std::move(decoder);
     foundDevOpts(devOpts_);
@@ -459,7 +459,7 @@ AudioInput::setFormat(const AudioFormat& fmt)
 void
 AudioInput::setMuted(bool isMuted)
 {
-    JAMI_WARN("Audio Input muted [%s]", isMuted ? "YES" : "NO");
+    JAMI_WARNING("Audio Input muted [{}]", isMuted ? "YES" : "NO");
     muteState_ = isMuted;
 }
 
