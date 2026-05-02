@@ -58,10 +58,10 @@ bool
 Bucket::removeNode(const NodeId& nodeId)
 {
     auto node = nodes.find(nodeId);
-    auto isMobile = node->second.isMobile_;
     if (node == nodes.end())
         return false;
-    nodes.erase(nodeId);
+    auto isMobile = node->second.isMobile_;
+    nodes.erase(node);
     if (isMobile) {
         addMobileNode(nodeId);
     } else {
