@@ -108,7 +108,7 @@ struct MediaStream
                 break;
             }
         } else {
-            JAMI_WARN() << "Attempting to get stream info from null codec context";
+            JAMI_WARNING("Attempting to get stream info from null codec context");
         }
     }
 
@@ -170,3 +170,6 @@ operator<<(std::ostream& os, const MediaStream& ms)
 }
 
 }; // namespace jami
+
+template<>
+struct fmt::formatter<jami::MediaStream> : fmt::ostream_formatter {};

@@ -90,7 +90,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
-    JAMI_DBG("[mixer:%s] New instance created", id_.c_str());
+    JAMI_LOG("[mixer:{}] New instance created", id_);
 }
 
 VideoMixer::~VideoMixer()
@@ -100,7 +100,7 @@ VideoMixer::~VideoMixer()
 
     loop_.join();
 
-    JAMI_DBG("[mixer:%s] Instance destroyed", id_.c_str());
+    JAMI_LOG("[mixer:{}] Instance destroyed", id_);
 }
 
 void
@@ -172,7 +172,7 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
 {
     if (!frame)
         return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    JAMI_LOG("Attaching video with streamId {}", streamId);
     {
         std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
@@ -189,7 +189,7 @@ VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
     std::unique_lock lk(videoToStreamInfoMtx_);
     auto it = videoToStreamInfo_.find(frame);
     if (it != videoToStreamInfo_.end()) {
-        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
+        JAMI_LOG("Detaching video of call {}", it->second.callId);
         detach = true;
         // Handle the case where the current shown source leave the conference
         // Note, do not call resetActiveStream() to avoid multiple updates
@@ -210,7 +210,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->render_frame = std::make_shared<VideoFrame>();
     src->source = ob;
-    JAMI_DBG("Add new source [%p]", src.get());
+    JAMI_LOG("Add new source [{}]", fmt::ptr(src.get()));
     sources_.emplace_back(std::move(src));
     JAMI_DEBUG("Total sources: {:d}", sources_.size());
     updateLayout();
@@ -223,7 +223,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            JAMI_DBG("Remove source [%p]", x.get());
+            JAMI_LOG("Remove source [{}]", fmt::ptr(x.get()));
             sources_.remove(x);
             JAMI_DEBUG("Total sources: {:d}", sources_.size());
             updateLayout();
@@ -246,7 +246,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::share
                                                             AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[mixer:%s] Accel failure: %s", id_.c_str(), e.what());
+                JAMI_ERROR("[mixer:{}] Accel failure: {}", id_, e.what());
                 return;
             }
 #else
@@ -274,7 +274,7 @@ VideoMixer::process()
     try {
         output.reserve(format_, width_, height_);
     } catch (const std::bad_alloc& e) {
-        JAMI_ERR("[mixer:%s] VideoFrame::allocBuffer() failed", id_.c_str());
+        JAMI_ERROR("[mixer:{}] VideoFrame::allocBuffer() failed", id_);
         return;
     }
 
@@ -357,7 +357,7 @@ VideoMixer::process()
                     if (fooInput)
                         successfullyRendered |= render_frame(output, fooInput, x);
                     else
-                        JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
+                        JAMI_WARNING("[mixer:{}] Nothing to render for {}", id_, fmt::ptr(x->source));
                 }
 
                 x->hasVideo = !blackFrame && successfullyRendered;
@@ -540,12 +540,12 @@ VideoMixer::startSink()
     stopSink();
 
     if (width_ == 0 or height_ == 0) {
-        JAMI_WARN("[mixer:%s] MX: unable to start with zero-sized output", id_.c_str());
+        JAMI_WARNING("[mixer:{}] MX: unable to start with zero-sized output", id_);
         return;
     }
 
     if (not sink_->start()) {
-        JAMI_ERR("[mixer:%s] MX: sink startup failed", id_.c_str());
+        JAMI_ERROR("[mixer:{}] MX: sink startup failed", id_);
         return;
     }
 
