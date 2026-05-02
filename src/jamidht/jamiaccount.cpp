@@ -2256,25 +2256,35 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
         } else if (name.find("git://") == 0) {
             auto sep = name.find_last_of('/');
             auto conversationId = name.substr(sep + 1);
-            auto remoteDevice = name.substr(6, sep - 6);
+            auto targetDevice = name.substr(6, sep - 6);
+            auto remoteDevice = deviceId.toString();
 
             if (channel->isInitiator()) {
-                // Check if wanted remote is our side (git://remoteDevice/conversationId)
+                // Check if wanted remote is our side (git://targetDevice/conversationId)
                 return;
             }
 
-            // Check if pull from banned device
-            if (convModule()->isBanned(conversationId, remoteDevice)) {
-                JAMI_WARNING("[Account {:s}] [Conversation {}] Git server requested, but the "
-                             "device is unauthorized ({:s}) ",
+            if (targetDevice != currentDeviceId()) {
+                JAMI_WARNING(
+                    "[Account {:s}] [Conversation {}] Git server requested for device {}, but this is not ours.",
+                    getAccountID(),
+                    conversationId,
+                    targetDevice);
+                channel->shutdown();
+                return;
+            }
+
+            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
+                JAMI_WARNING("[Account {:s}] [Conversation {}] Git server requested, but peer {}/{} is not authorized",
                              getAccountID(),
                              conversationId,
+                             peerId,
                              remoteDevice);
                 channel->shutdown();
                 return;
             }
 
-            auto sock = convModule()->gitSocket(deviceId.toString(), conversationId);
+            auto sock = convModule()->gitSocket(remoteDevice, conversationId);
             if (sock == channel) {
                 // The onConnectionReady is already used as client (for retrieving messages)
                 // So it's not the server socket
@@ -2283,13 +2293,13 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
             JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
                      accountID_,
                      conversationId,
-                     deviceId.toString());
+                     remoteDevice);
             auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
             syncCnt_.fetch_add(1);
-            gs->setOnFetched([w = weak(), conversationId, deviceId](const std::string& commit) {
-                dht::ThreadPool::computation().run([w, conversationId, deviceId, commit]() {
+            gs->setOnFetched([w = weak(), conversationId, remoteDevice](const std::string& commit) {
+                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit]() {
                     if (auto shared = w.lock()) {
-                        shared->convModule()->setFetched(conversationId, deviceId.toString(), commit);
+                        shared->convModule()->setFetched(conversationId, remoteDevice, commit);
                         if (shared->syncCnt_.fetch_sub(1) == 1) {
                             emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
                         }
@@ -2363,10 +2373,19 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
         if (!shared)
             return;
         if (auto socket = shared->convModule()->gitSocket(deviceId, convId)) {
+            auto remoteCert = socket->peerCertificate();
+            if (!remoteCert || !remoteCert->issuer
+                || !shared->convModule()->isPeerAuthorized(convId,
+                                                           remoteCert->issuer->getId().toString(),
+                                                           socket->deviceId().toString(),
+                                                           true)) {
+                socket->shutdown();
+                shared->convModule()->removeGitSocket(socket->deviceId().toString(), convId);
+                cb({});
+                return;
+            }
             if (!cb(socket))
                 socket->shutdown();
-            else
-                cb({});
             return;
         }
         std::shared_lock lkCM(shared->connManagerMtx_);
@@ -2379,20 +2398,34 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
         shared->connectionManager_->connectDevice(
             DeviceId(deviceId),
             fmt::format("git://{}/{}", deviceId, convId),
-            [w, cb = std::move(cb), convId](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
-                dht::ThreadPool::io().run([w, cb = std::move(cb), socket = std::move(socket), convId] {
-                    if (socket) {
-                        socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
-                            dht::ThreadPool::io().run([w, deviceId, convId] {
-                                if (auto shared = w.lock())
-                                    shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+            [w, cb = std::move(cb), convId, requestedDeviceId = deviceId](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                                          const DeviceId&) {
+                dht::ThreadPool::io().run(
+                    [w, cb = std::move(cb), socket = std::move(socket), convId, requestedDeviceId] {
+                        if (socket) {
+                            auto shared = w.lock();
+                            auto remoteCert = socket->peerCertificate();
+                            auto remoteDeviceId = socket->deviceId().toString();
+                            if (!shared || !remoteCert || !remoteCert->issuer || remoteDeviceId != requestedDeviceId
+                                || !shared->convModule()->isPeerAuthorized(convId,
+                                                                           remoteCert->issuer->getId().toString(),
+                                                                           remoteDeviceId,
+                                                                           true)) {
+                                socket->shutdown();
+                                cb({});
+                                return;
+                            }
+                            socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
+                                dht::ThreadPool::io().run([w, deviceId, convId] {
+                                    if (auto shared = w.lock())
+                                        shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                                });
                             });
-                        });
-                        if (!cb(socket))
-                            socket->shutdown();
-                    } else
-                        cb({});
-                });
+                            if (!cb(socket))
+                                socket->shutdown();
+                        } else
+                            cb({});
+                    });
             },
             false,
             false,
@@ -2413,7 +2446,7 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
             return;
         auto* cm = shared->convModule();
         std::shared_lock lkCM(shared->connManagerMtx_);
-        if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
+        if (!shared->connectionManager_ || !cm || cm->isDeviceBanned(convId, deviceId)) {
             asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
             return;
         }

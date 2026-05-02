@@ -656,12 +656,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             JAMI_WARNING("[Account {}] [Conversation {}] conversaton is being removed", accountId_, conversationId);
             return;
         }
-        if (!conv->conversation->isMember(peer, true)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] {} is not a member", accountId_, conversationId, peer);
-            return;
-        }
-        if (conv->conversation->isBanned(deviceId)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] device {} is banned", accountId_, conversationId, deviceId);
+        if (!conv->conversation->isPeerAuthorized(peer, deviceId, true)) {
+            JAMI_WARNING("[Account {}] [Conversation {}] device {} is not authorized for {}",
+                         accountId_,
+                         conversationId,
+                         deviceId,
+                         peer);
             return;
         }
 
@@ -2757,7 +2757,7 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 }
 
 bool
-ConversationModule::isBanned(const std::string& convId, const std::string& uri) const
+ConversationModule::isMemberBanned(const std::string& convId, const std::string& uri) const
 {
     dhtnet::tls::TrustStore::PermissionStatus status;
     {
@@ -2769,11 +2769,59 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
         if (!conv->conversation)
             return true;
         if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
-            return conv->conversation->isBanned(uri);
+            return conv->conversation->isMemberBanned(uri);
         // If 1:1 we check the certificate status
         return status == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
     }
     return true;
+}
+
+bool
+ConversationModule::isDeviceBanned(const std::string& convId, const std::string& deviceId) const
+{
+    dhtnet::tls::TrustStore::PermissionStatus status;
+    {
+        std::lock_guard lk(pimpl_->conversationsMtx_);
+        status = pimpl_->accountManager_->getCertificateStatus(deviceId);
+    }
+    if (auto conv = pimpl_->getConversation(convId)) {
+        std::lock_guard lk(conv->mtx);
+        if (!conv->conversation)
+            return true;
+        if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
+            return conv->conversation->isDeviceBanned(deviceId);
+        return status == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
+    }
+    return true;
+}
+
+bool
+ConversationModule::isPeerAuthorized(const std::string& convId,
+                                     const std::string& uri,
+                                     const std::string& deviceId,
+                                     bool includeInvited) const
+{
+    dhtnet::tls::TrustStore::PermissionStatus memberStatus;
+    dhtnet::tls::TrustStore::PermissionStatus deviceStatus;
+    {
+        std::lock_guard lk(pimpl_->conversationsMtx_);
+        memberStatus = pimpl_->accountManager_->getCertificateStatus(uri);
+        deviceStatus = pimpl_->accountManager_->getCertificateStatus(deviceId);
+    }
+    if (memberStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED
+        || deviceStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+        return false;
+    }
+    if (auto conv = pimpl_->getConversation(convId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation)
+            return conv->conversation->isPeerAuthorized(uri, deviceId, includeInvited);
+        if (!includeInvited)
+            return false;
+        return !conv->info.isRemoved() && conv->info.members.find(uri) != conv->info.members.end();
+    }
+
+    return false;
 }
 
 void
