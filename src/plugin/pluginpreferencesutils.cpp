@@ -146,8 +146,7 @@ PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, co
                 }
             }
         } else {
-            JAMI_ERR() << "PluginPreferencesParser:: Failed to parse preferences.json for plugin: "
-                       << preferenceFilePath;
+            JAMI_ERROR("PluginPreferencesParser:: Failed to parse preferences.json for plugin: {}", preferenceFilePath);
         }
     }
 
@@ -182,7 +181,7 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path&
                 msgpack::object deserialized = oh.get();
                 deserialized.convert(rmap);
             } catch (const std::exception& e) {
-                JAMI_ERR() << e.what();
+                JAMI_ERROR("{}", e.what());
             }
         }
     }
@@ -235,7 +234,7 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath, c
         msgpack::pack(fs, pluginPreferencesMap);
     } catch (const std::exception& e) {
         returnValue = false;
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
     }
 
     return returnValue;
@@ -253,7 +252,7 @@ PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
     try {
         msgpack::pack(fs, list);
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
     }
 }
 
@@ -284,7 +283,7 @@ PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
                 msgpack::object deserialized = oh.get();
                 deserialized.convert(list);
             } catch (const std::exception& e) {
-                JAMI_ERR() << e.what();
+                JAMI_ERROR("{}", e.what());
             }
         }
     }

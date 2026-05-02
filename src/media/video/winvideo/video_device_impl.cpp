@@ -122,7 +122,7 @@ VideoDeviceImpl::setup()
     }
     pDevEnum->Release();
     if (FAILED(hr) || pEnum == nullptr) {
-        JAMI_ERR() << "No webcam found";
+        JAMI_ERROR("No webcam found");
         return;
     }
 
@@ -301,7 +301,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
         if (pmt != nullptr) {
             ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = (FrameRate(1e7) / params.framerate).real();
             if (FAILED(cInterface->streamConf_->SetFormat(pmt))) {
-                JAMI_ERR("Unable to set settings.");
+                JAMI_ERROR("Unable to set settings.");
             }
         }
     }
