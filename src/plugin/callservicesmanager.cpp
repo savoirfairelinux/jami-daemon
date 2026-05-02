@@ -151,7 +151,7 @@ CallServicesManager::toggleCallMediaHandler(const std::string& mediaHandlerId,
     try {
         toggleCallMediaHandler(std::stoull(mediaHandlerId), callId, toggle);
     } catch (const std::exception& e) {
-        JAMI_ERR("Error toggling media handler: %s", e.what());
+        JAMI_ERROR("Error toggling media handler: {}", e.what());
     }
 }
 

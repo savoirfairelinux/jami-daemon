@@ -59,7 +59,7 @@ constexpr double LOGREG_PARAM_B_HEVC {-5.};
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
 {
-    JAMI_DBG("[%p] New instance created", this);
+    JAMI_LOG("[{}] New instance created", fmt::ptr(this));
 }
 
 MediaEncoder::~MediaEncoder()
@@ -83,14 +83,14 @@ MediaEncoder::~MediaEncoder()
     }
     av_dict_free(&options_);
 
-    JAMI_DBG("[%p] Instance destroyed", this);
+    JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
 }
 
 void
 MediaEncoder::setOptions(const MediaStream& opts)
 {
     if (!opts.isValid()) {
-        JAMI_ERR() << "Invalid options";
+        JAMI_ERROR("Invalid options");
         return;
     }
 
@@ -121,7 +121,7 @@ MediaEncoder::setOptions(const MediaDescription& args)
                                   args.payload_type,
                                   AV_OPT_SEARCH_CHILDREN)
                    < 0))
-        JAMI_ERR() << "Failed to set payload type: " << libav_utils::getError(ret);
+        JAMI_ERROR("Failed to set payload type: {}", libav_utils::getError(ret));
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
@@ -167,7 +167,7 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
                                                 format.empty() ? nullptr : format.c_str(),
                                                 filename.c_str());
     if (result < 0)
-        JAMI_ERR() << "Unable to open " << filename << ": " << libav_utils::getError(-result);
+        JAMI_ERROR("Unable to open {}: {}", filename, libav_utils::getError(-result));
 }
 
 int
@@ -182,11 +182,11 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
     auto* stream = avformat_new_stream(outputCtx_, outputCodec_);
 
     if (stream == nullptr) {
-        JAMI_ERR("[%p] Failed to create coding instance for %s", this, systemCodecInfo.name.c_str());
+        JAMI_ERROR("[{}] Failed to create coding instance for {}", fmt::ptr(this), systemCodecInfo.name);
         return -1;
     }
 
-    JAMI_DBG("[%p] Created new coding instance for %s @ index %d", this, systemCodecInfo.name.c_str(), stream->index);
+    JAMI_LOG("[{}] Created new coding instance for {} @ index {}", fmt::ptr(this), systemCodecInfo.name, stream->index);
     // Only init audio now, video will be intialized when
     // encoding the first frame.
     if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
@@ -216,11 +216,7 @@ MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 int
 MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
-    JAMI_DBG("[%p] Initializing stream: codec type %d, name %s, lib %s",
-             this,
-             systemCodecInfo.codecType,
-             systemCodecInfo.name.c_str(),
-             systemCodecInfo.libName.c_str());
+    JAMI_LOG("[{}] Initializing stream: codec type {}, name {}, lib {}", fmt::ptr(this), static_cast<unsigned>(systemCodecInfo.codecType), systemCodecInfo.name, systemCodecInfo.libName);
 
     std::lock_guard lk(encMutex_);
 
@@ -229,7 +225,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 
     // Must already have codec instance(s)
     if (outputCtx_->nb_streams == 0) {
-        JAMI_ERR("[%p] Unable to init, output context has no coding sessions!", this);
+        JAMI_ERROR("[{}] Unable to init, output context has no coding sessions!", fmt::ptr(this));
         throw MediaEncoderException("Unable to init, output context has no coding sessions!");
     }
 
@@ -258,9 +254,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 
     if (stream == nullptr) {
-        JAMI_ERR("[%p] Unable to init, output context has no coding sessions for %s",
-                 this,
-                 systemCodecInfo.name.c_str());
+        JAMI_ERROR("[{}] Unable to init, output context has no coding sessions for {}", fmt::ptr(this), systemCodecInfo.name);
         throw MediaEncoderException("Unable to allocate stream");
     }
 
@@ -294,18 +288,14 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             accel_->setDetails(encoderCtx);
             if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
                 // Failed to open codec
-                JAMI_WARN("Fail to open hardware encoder %s with %s ",
-                          avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
-                          it.getName().c_str());
+                JAMI_WARNING("Fail to open hardware encoder {} with {} ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName());
                 avcodec_free_context(&encoderCtx);
                 encoderCtx = nullptr;
                 accel_ = nullptr;
                 continue;
             } else {
                 // Succeed to open codec
-                JAMI_WARN("Using hardware encoding for %s with %s ",
-                          avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
-                          it.getName().c_str());
+                JAMI_WARNING("Using hardware encoding for {} with {} ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName());
                 encoders_.emplace_back(encoderCtx);
                 break;
             }
@@ -314,8 +304,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #endif
 
     if (!encoderCtx) {
-        JAMI_WARN("Not using hardware encoding for %s",
-                  avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
+        JAMI_WARNING("Not using hardware encoding for {}", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
         encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.bitrate);
         readConfig(encoderCtx);
         encoders_.emplace_back(encoderCtx);
@@ -386,7 +375,7 @@ MediaEncoder::startIO()
     if (!outputCtx_->pb)
         openIOContext();
     if (avformat_write_header(outputCtx_, options_ ? &options_ : nullptr)) {
-        JAMI_ERR("Unable to write header for output file... check codec parameters");
+        JAMI_ERROR("Unable to write header for output file... check codec parameters");
         throw MediaEncoderException("Failed to write output file header");
     }
 
@@ -426,7 +415,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     std::shared_ptr<VideoFrame> output;
 #ifdef ENABLE_HWACCEL
     if (getHWFrame(input, output) < 0) {
-        JAMI_ERR("Fail to get hardware frame");
+        JAMI_ERROR("Fail to get hardware frame");
         return -1;
     }
 #else
@@ -434,7 +423,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
 #endif // ENABLE_HWACCEL
 
     if (!output) {
-        JAMI_ERR("Fail to get frame");
+        JAMI_ERROR("Fail to get frame");
         return -1;
     }
     auto* avframe = output->pointer();
@@ -510,7 +499,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         if (ret == AVERROR(EAGAIN))
             break;
         if (ret < 0 && ret != AVERROR_EOF) { // we still want to write our frame on EOF
-            JAMI_ERR() << "Failed to encode frame: " << libav_utils::getError(ret);
+            JAMI_ERROR("Failed to encode frame: {}", libav_utils::getError(ret));
             return ret;
         }
 
@@ -545,7 +534,7 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
-        JAMI_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
+        JAMI_ERROR("av_write_frame failed: {}", libav_utils::getError(ret));
     }
     return ret >= 0;
 }
@@ -556,7 +545,7 @@ MediaEncoder::flush()
     int ret = 0;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
         if (encode(nullptr, static_cast<int>(i)) < 0) {
-            JAMI_ERR() << "Unable to flush stream #" << i;
+            JAMI_ERROR("Unable to flush stream #{}", i);
             ret |= 1 << i; // provide a way for caller to know which streams failed
         }
     }
@@ -581,7 +570,7 @@ MediaEncoder::print_sdp()
         result += "\n"sv;
     }
 #ifdef DEBUG_SDP
-    JAMI_DBG("Sending SDP:\n%s", result.c_str());
+    JAMI_LOG("Sending SDP:\n{}", result);
 #endif
     return result;
 }
@@ -594,7 +583,7 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
     const auto* encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
     encoderCtx->thread_count = std::min(static_cast<int>(std::thread::hardware_concurrency()), is_video ? 16 : 4);
-    JAMI_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
+    JAMI_LOG("[{}] Using {} threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {
         // resolution must be a multiple of two
@@ -640,14 +629,14 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
         encoderCtx->time_base = AVRational {1, encoderCtx->sample_rate};
         if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
             audioOpts_.nbChannels = std::clamp(audioOpts_.nbChannels, 1, 2);
-            JAMI_ERR() << "[" << encoderName << "] Clamping invalid channel count: " << audioOpts_.nbChannels;
+            JAMI_ERROR("[{}] Clamping invalid channel count: {}", encoderName, audioOpts_.nbChannels);
         }
         av_channel_layout_default(&encoderCtx->ch_layout, audioOpts_.nbChannels);
         if (audioOpts_.frameSize) {
             encoderCtx->frame_size = audioOpts_.frameSize;
-            JAMI_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;
+            JAMI_LOG("[{}] Frame size {}", encoderName, encoderCtx->frame_size);
         } else {
-            JAMI_WARN() << "[" << encoderName << "] Frame size not set";
+            JAMI_WARNING("[{}] Frame size not set", encoderName);
         }
     }
 
@@ -660,11 +649,11 @@ MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
 #ifdef ENABLE_HWACCEL
     if (accel_ && accel_->getName() == "nvenc") {
         if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set preset to 'fast'");
+            JAMI_WARNING("Failed to set preset to 'fast'");
         if (av_opt_set(encoderCtx, "level", "auto", AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set level to 'auto'");
+            JAMI_WARNING("Failed to set level to 'auto'");
         if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set zerolatency to '1'");
+            JAMI_WARNING("Failed to set zerolatency to '1'");
     } else
 #endif
     {
@@ -674,10 +663,10 @@ MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
         const char* speedPreset = "veryfast";
 #endif
         if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set preset '%s'", speedPreset);
+            JAMI_WARNING("Failed to set preset '{}'", speedPreset);
         const char* tune = "zerolatency";
         if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set tune '%s'", tune);
+            JAMI_WARNING("Failed to set tune '{}'", tune);
     }
 }
 
@@ -726,12 +715,9 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
             ctx->profile |= FF_PROFILE_H264_INTRA;
         break;
     default:
-        JAMI_DBG("Unrecognized H264 profile byte");
+        JAMI_LOG("Unrecognized H264 profile byte");
     }
-    JAMI_DBG("Using profile %s (%x) and level %d",
-             avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile),
-             ctx->profile,
-             ctx->level);
+    JAMI_LOG("Using profile {} ({:x}) and level {}", avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile), ctx->profile, ctx->level);
 }
 
 #ifdef ENABLE_HWACCEL
@@ -791,9 +777,13 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         if (enableAccel_) {
             if (accel_) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
+                if (!outputCodec_) {
+                    JAMI_LOG("Hardware encoder '{}' is unavailable", accel_->getCodecName());
+                    return nullptr;
+                }
             }
         } else {
-            JAMI_WARN() << "Hardware encoding disabled";
+            JAMI_WARNING("Hardware encoding disabled");
         }
     }
 #endif
@@ -1142,29 +1132,29 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
     std::string name = encoderCtx->codec->name;
     std::error_code ec;
     if (std::filesystem::is_regular_file(path, ec)) {
-        JAMI_WARN("encoder.json file found, default settings will be erased");
+        JAMI_WARNING("encoder.json file found, default settings will be erased");
         try {
             Json::Value root;
             std::ifstream file(path);
             file >> root;
             if (!root.isObject()) {
-                JAMI_ERR() << "Invalid encoder configuration: root is not an object";
+                JAMI_ERROR("Invalid encoder configuration: root is not an object");
                 return;
             }
             const auto& config = root[name];
             if (config.isNull()) {
-                JAMI_WARN() << "Encoder '" << name << "' not found in configuration file";
+                JAMI_WARNING("Encoder '{}' not found in configuration file", name);
                 return;
             }
             if (!config.isObject()) {
-                JAMI_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
+                JAMI_ERROR("Invalid encoder configuration: '{}' is not an object", name);
                 return;
             }
             for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
                 const Json::Value& v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
                     || !v.isConvertibleTo(Json::ValueType::stringValue)) {
-                    JAMI_ERR() << "Invalid configuration for '" << name << "'";
+                    JAMI_ERROR("Invalid configuration for '{}'", name);
                     return;
                 }
                 const auto& key = it.key().asString();
@@ -1174,12 +1164,11 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
                                      value.c_str(),
                                      AV_OPT_SEARCH_CHILDREN);
                 if (ret < 0) {
-                    JAMI_ERR() << "Failed to set option " << key << " in " << name
-                               << " context: " << libav_utils::getError(ret) << "\n";
+                    JAMI_ERROR("Failed to set option {} in {} context: {}", key, name, libav_utils::getError(ret));
                 }
             }
         } catch (const Json::Exception& e) {
-            JAMI_ERR() << "Failed to load encoder configuration file: " << e.what();
+            JAMI_ERROR("Failed to load encoder configuration file: {}", e.what());
         }
     }
 }
@@ -1198,6 +1187,11 @@ MediaEncoder::testH265Accel()
             accel = std::make_unique<video::HardwareAccel>(it); // save accel
             // Init codec need accel to init encoderCtx accelerated
             const auto* outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
+            if (!outputCodec) {
+                JAMI_LOG("Hardware encoder '{}' is unavailable", accel->getCodecName());
+                accel.reset();
+                continue;
+            }
 
             AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
             encoderCtx->thread_count = static_cast<int>(std::min(std::thread::hardware_concurrency(), 16u));
@@ -1228,7 +1222,7 @@ MediaEncoder::testH265Accel()
             accel->setDetails(encoderCtx);
             if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0) {
                 // Failed to open codec
-                JAMI_WARN("Fail to open hardware encoder H265 with %s ", it.getName().c_str());
+                JAMI_WARNING("Fail to open hardware encoder H265 with {} ", it.getName());
                 avcodec_free_context(&encoderCtx);
                 encoderCtx = nullptr;
                 accel = nullptr;
@@ -1287,7 +1281,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_p
         output = getScaledSWFrame(*input.get());
 #endif
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("Accel failure: %s", e.what());
+        JAMI_ERROR("Accel failure: {}", e.what());
         return -1;
     }
 
