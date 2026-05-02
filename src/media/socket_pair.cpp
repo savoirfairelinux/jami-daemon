@@ -147,22 +147,22 @@ udp_socket_create(int family, int port)
 #endif
 
     if (udp_fd < 0) {
-        JAMI_ERR("socket() failed");
+        JAMI_ERROR("socket() failed");
         strErr();
         return -1;
     }
 
     auto bind_addr = dhtnet::ip_utils::getAnyHostAddr(family);
     if (not bind_addr.isIpv4() and not bind_addr.isIpv6()) {
-        JAMI_ERR("No IPv4/IPv6 host found for family %u", family);
+        JAMI_ERROR("No IPv4/IPv6 host found for family {}", family);
         close(udp_fd);
         return -1;
     }
 
     bind_addr.setPort(port);
-    JAMI_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
+    JAMI_LOG("use local address: {}", bind_addr.toString(true, true));
     if (::bind(udp_fd, bind_addr, bind_addr.getLength()) < 0) {
-        JAMI_ERR("bind() failed");
+        JAMI_ERROR("bind() failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -185,25 +185,41 @@ SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
              rtp_sock_->getCompId(),
              rtcp_sock_->getCompId());
 
-    rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard l(dataBuffMutex_);
-        rtpDataBuff_.emplace_back(buf, buf + len);
-        cv_.notify_one();
-        return len;
-    });
-    rtcp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard l(dataBuffMutex_);
-        rtcpDataBuff_.emplace_back(buf, buf + len);
-        cv_.notify_one();
-        return len;
-    });
+    JAMI_LOG("[{}] Creating shared ICE socket context for comp {} and {} (rtcp-mux={})", fmt::ptr(bundleContext.get()), bundleContext->rtp_sock_ ? bundleContext->rtp_sock_->getCompId() : -1, bundleContext->rtcp_sock_ ? bundleContext->rtcp_sock_->getCompId() : -1, rtcpMux ? "yes" : "no");
+
+    bundleContext->installCallbacks(bundleContext);
+    return bundleContext;
+}
+
+SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                       std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                       bool rtcpMux)
+    : packetState_(std::make_shared<PacketState>())
+    , rtcpMux_(rtcpMux)
+{
+    bundleContext_ = createBundleContext(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux_);
+    bundleContext_->registerSubscriber(packetState_);
+}
+
+SocketPair::SocketPair(const std::shared_ptr<BundleContext>& bundleContext,
+                       bool rtcpMux,
+                       std::optional<unsigned> rtpPayloadType)
+    : packetState_(std::make_shared<PacketState>())
+    , bundleContext_(bundleContext)
+    , rtcpMux_(rtcpMux)
+{
+    if (!bundleContext_)
+        throw std::runtime_error("Missing shared ICE socket context");
+
+    packetState_->rtpPayloadType = rtpPayloadType;
+    bundleContext_->registerSubscriber(packetState_);
 }
 
 SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
-    JAMI_DBG("[%p] Instance destroyed", this);
+    JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
 }
 
 bool
@@ -283,22 +299,18 @@ SocketPair::createSRTP(const char* out_suite, const char* out_key, const char* i
 void
 SocketPair::interrupt()
 {
-    JAMI_WARN("[%p] Interrupting RTP sockets", this);
-    interrupted_ = true;
-    if (rtp_sock_)
-        rtp_sock_->setOnRecv(nullptr);
-    if (rtcp_sock_)
-        rtcp_sock_->setOnRecv(nullptr);
-    cv_.notify_all();
+    JAMI_WARNING("[{}] Interrupting RTP sockets", fmt::ptr(this));
+    packetState_->interrupted = true;
+    packetState_->cv.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
 }
 
 void
 SocketPair::setReadBlockingMode(bool block)
 {
-    JAMI_DBG("[%p] Read operations in blocking mode [%s]", this, block ? "YES" : "NO");
-    readBlockingMode_ = block;
-    cv_.notify_all();
+    JAMI_LOG("[{}] Read operations in blocking mode [{}]", fmt::ptr(this), block ? "YES" : "NO");
+    packetState_->readBlockingMode = block;
+    packetState_->cv.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
 }
 
@@ -331,25 +343,26 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     const int local_rtcp_port = local_rtp_port + 1;
     const int dst_rtcp_port = dst_rtp_port + 1;
 
-    rtpDestAddr_ = dhtnet::IpAddr {hostname};
-    rtpDestAddr_.setPort(dst_rtp_port);
-    rtcpDestAddr_ = dhtnet::IpAddr {hostname};
-    rtcpDestAddr_.setPort(dst_rtcp_port);
+void
+SocketPair::openSockets(const dhtnet::IpAddr& rtpDestAddr,
+                        const dhtnet::IpAddr& rtcpDestAddr,
+                        int local_rtp_port,
+                        int local_rtcp_port)
+{
+    rtpDestAddr_ = rtpDestAddr;
+    rtcpDestAddr_ = rtcpDestAddr;
+
+    JAMI_LOG("Creating RTP sockets for remote{{{},{}}} local{{{},{}}} (rtcp-mux={})", rtpDestAddr_.toString(true), rtcpDestAddr_.toString(true), local_rtp_port, local_rtcp_port, rtcpMux_ ? "yes" : "no");
 
     // Open local sockets (RTP/RTCP)
     if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1
         or (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
         closeSockets();
-        JAMI_ERR("[%p] Sockets creation failed", this);
+        JAMI_ERROR("[{}] Sockets creation failed", fmt::ptr(this));
         throw std::runtime_error("Sockets creation failed");
     }
 
-    JAMI_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
-              local_rtp_port,
-              local_rtcp_port,
-              hostname,
-              dst_rtp_port,
-              dst_rtcp_port);
+    JAMI_WARNING("SocketPair: local{{{},{}}} / {}{{{},{}}}", local_rtp_port, rtcpMux_ ? local_rtp_port : local_rtcp_port, rtpDestAddr_.toString(false), rtpDestAddr_.getPort(), rtcpMux_ ? rtpDestAddr_.getPort() : rtcpDestAddr_.getPort());
 }
 
 MediaIOHandle*
@@ -506,7 +519,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             else if (header->pt == 200) {
                 // not used yet
             } else {
-                JAMI_DBG("Unable to read RTCP: unknown packet type %u", header->pt);
+                unsigned pt = header->pt;
+                JAMI_LOG("Unable to read RTCP: unknown packet type {}", pt);
             }
             fromRTCP = true;
         }
@@ -547,7 +561,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             packetLossCallback_();
         lastSeqNumIn_ = buf[2] << 8 | buf[3];
         if (err < 0)
-            JAMI_WARN("decrypt error %d", err);
+            JAMI_WARNING("decrypt error {}", err);
     }
 
     if (len != 0)
@@ -613,7 +627,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
                                    srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
         if (buf_size < 0) {
-            JAMI_WARN("encrypt error %d", buf_size);
+            JAMI_WARNING("encrypt error {}", buf_size);
             return buf_size;
         }
 
@@ -678,6 +692,24 @@ SocketPair::setRtpDelayCallback(std::function<void(int, int)> cb)
     rtpDelayCallback_ = std::move(cb);
 }
 
+void
+SocketPair::setBundleMidExtension(std::string localMid,
+                                  std::optional<unsigned> localMidExtId,
+                                  std::string remoteMid,
+                                  std::optional<unsigned> remoteMidExtId)
+{
+    localRtpMid_ = std::move(localMid);
+    localRtpMidExtId_ = (localMidExtId && *localMidExtId != 0) ? localMidExtId : std::nullopt;
+    if (localRtpMid_.size() > 16) {
+        JAMI_WARNING("Ignoring MID RTP extension for oversized local MID {}", localRtpMid_);
+        localRtpMidExtId_.reset();
+    }
+
+    std::lock_guard lk(packetState_->dataBuffMutex);
+    packetState_->remoteMid = std::move(remoteMid);
+    packetState_->rtpMidExtId = (remoteMidExtId && *remoteMidExtId != 0) ? remoteMidExtId : std::nullopt;
+}
+
 bool
 SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaT)
 {
@@ -732,7 +764,7 @@ SocketPair::lastSeqValOut()
 {
     if (srtpContext_)
         return srtpContext_->srtp_out.seq_largest;
-    JAMI_ERR("SRTP context not found.");
+    JAMI_ERROR("SRTP context not found.");
     return 0;
 }
 

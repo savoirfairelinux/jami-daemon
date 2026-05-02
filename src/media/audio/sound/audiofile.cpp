@@ -38,7 +38,7 @@ void
 AudioFile::onBufferFinish()
 {
     if (buffer_->sample_rate == 0) {
-        JAMI_ERR("Error unable to update playback slider, sampling rate is 0");
+        JAMI_ERROR("Error unable to update playback slider, sampling rate is 0");
         return;
     }
 

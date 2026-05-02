@@ -30,28 +30,28 @@ using sip_utils::CONST_PJ_STR;
 void
 PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub* sub, UNUSED pjsip_event* event)
 {
-    JAMI_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    JAMI_ERROR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
     return;
 
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
 
     if (!rdata) {
-        JAMI_DBG("Presence_subscription_server estate has changed but no rdata.");
+        JAMI_LOG("Presence_subscription_server estate has changed but no rdata.");
         return;
     }
 
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        JAMI_ERR("Unable to find account IP2IP");
+        JAMI_ERROR("Unable to find account IP2IP");
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        JAMI_ERR("Presence not initialized");
+        JAMI_ERROR("Presence not initialized");
         return;
     }
 
@@ -59,8 +59,7 @@ PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub* sub, UNUSED pjsip_eve
     PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
 
     if (presSubServer) {
-        JAMI_DBG("Presence_subscription_server to %s is %s",
-              presSubServer->remote_, pjsip_evsub_get_state_name(sub));
+        JAMI_LOG("Presence_subscription_server to {} is {}", presSubServer->remote_, pjsip_evsub_get_state_name(sub));
         pjsip_evsub_state state;
 
         state = pjsip_evsub_get_state(sub);
@@ -85,7 +84,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data* rdata)
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)
         return PJ_FALSE;
 
-    JAMI_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    JAMI_ERROR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
     return PJ_FALSE;
 }
 
@@ -144,7 +143,7 @@ void
 PresSubServer::approve(bool flag)
 {
     approved_ = flag;
-    JAMI_DBG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
+    JAMI_LOG("Approve Presence_subscription_server for {}: {}.", remote_, flag ? "true" : "false");
     // attach the real status data
     pjsip_pres_set_status(sub_, pres_->getStatus());
 }
@@ -159,7 +158,7 @@ PresSubServer::notify()
      * the user accepted the request.
      */
     if ((pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_ACTIVE) && (approved_)) {
-        JAMI_DBG("Notifying %s.", remote_);
+        JAMI_LOG("Notifying {}.", remote_);
 
         pjsip_tx_data* tdata;
         pjsip_pres_set_status(sub_, pres_->getStatus());
@@ -169,7 +168,7 @@ PresSubServer::notify()
             pres_->fillDoc(tdata, NULL);
             pjsip_pres_send_request(sub_, tdata);
         } else {
-            JAMI_WARN("Unable to create/send NOTIFY");
+            JAMI_WARNING("Unable to create/send NOTIFY");
             pjsip_pres_terminate(sub_, PJ_FALSE);
         }
     }

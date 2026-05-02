@@ -52,10 +52,7 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
                 &speex_echo_state_destroy)
     , procBuffer(std::make_unique<AudioFrame>(format.withSampleFormat(AV_SAMPLE_FMT_S16P), frameSize_))
 {
-    JAMI_DBG("[speex-dsp] SpeexAudioProcessor, frame size = %d (=%d ms), channels = %d",
-             frameSize,
-             frameDurationMs_,
-             format_.nb_channels);
+    JAMI_LOG("[speex-dsp] SpeexAudioProcessor, frame size = {} (={} ms), channels = {}", frameSize, frameDurationMs_, format_.nb_channels);
     // set up speex echo state
     speex_echo_ctl(echoState.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
 
@@ -98,7 +95,7 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
 void
 SpeexAudioProcessor::enableEchoCancel(bool enabled)
 {
-    JAMI_DBG("[speex-dsp] enableEchoCancel %d", enabled);
+    JAMI_LOG("[speex-dsp] enableEchoCancel {}", enabled);
     // need to set member variable so we know to do it in getProcessed
     shouldAEC = enabled;
 
@@ -122,7 +119,7 @@ SpeexAudioProcessor::enableEchoCancel(bool enabled)
 void
 SpeexAudioProcessor::enableNoiseSuppression(bool enabled)
 {
-    JAMI_DBG("[speex-dsp] enableNoiseSuppression %d", enabled);
+    JAMI_LOG("[speex-dsp] enableNoiseSuppression {}", enabled);
     spx_int32_t speexSetValue = (spx_int32_t) enabled;
 
     // for each preprocessor
@@ -137,7 +134,7 @@ SpeexAudioProcessor::enableNoiseSuppression(bool enabled)
 void
 SpeexAudioProcessor::enableAutomaticGainControl(bool enabled)
 {
-    JAMI_DBG("[speex-dsp] enableAutomaticGainControl %d", enabled);
+    JAMI_LOG("[speex-dsp] enableAutomaticGainControl {}", enabled);
     spx_int32_t speexSetValue = (spx_int32_t) enabled;
 
     // for each preprocessor
@@ -150,7 +147,7 @@ SpeexAudioProcessor::enableAutomaticGainControl(bool enabled)
 void
 SpeexAudioProcessor::enableVoiceActivityDetection(bool enabled)
 {
-    JAMI_DBG("[speex-dsp] enableVoiceActivityDetection %d", enabled);
+    JAMI_LOG("[speex-dsp] enableVoiceActivityDetection {}", enabled);
 
     shouldDetectVoice = enabled;
 

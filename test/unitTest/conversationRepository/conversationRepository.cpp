@@ -259,7 +259,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     git_signature* sig_ptr = nullptr;
     // Sign commit's buffer
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.to_c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERR("Unable to create a commit signature.");
+        JAMI_ERROR("Unable to create a commit signature.");
         return {};
     }
     GitSignature sig {sig_ptr};
@@ -267,13 +267,13 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     // Retrieve current HEAD
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERR("Unable to get reference for HEAD");
+        JAMI_ERROR("Unable to get reference for HEAD");
         return {};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
-        JAMI_ERR("Unable to look up HEAD commit");
+        JAMI_ERROR("Unable to look up HEAD commit");
         return {};
     }
     GitCommit head_commit {head_ptr};
@@ -281,20 +281,20 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     // Retrieve current index
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERR("Unable to open repository index");
+        JAMI_ERROR("Unable to open repository index");
         return {};
     }
     GitIndex index {index_ptr};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERR("Unable to write initial tree from index");
+        JAMI_ERROR("Unable to write initial tree from index");
         return {};
     }
 
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERR("Unable to look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
         return {};
     }
     GitTree tree = GitTree(tree_ptr);
@@ -309,7 +309,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     if (git_commit_create_buffer(
             &to_sign, repo, sig.get(), sig.get(), nullptr, commit_msg.c_str(), tree.get(), 1, &head_ref[0])
         < 0) {
-        JAMI_ERR("Unable to create commit buffer");
+        JAMI_ERROR("Unable to create commit buffer");
         return {};
     }
 
@@ -318,7 +318,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     auto signed_buf = account->identity().first->sign(to_sign_vec);
     std::string signed_str = base64::encode(signed_buf);
     if (git_commit_create_with_signature(&commit_id, repo, to_sign.ptr, signed_str.c_str(), "signature") < 0) {
-        JAMI_ERR("Unable to sign commit");
+        JAMI_ERROR("Unable to sign commit");
         return {};
     }
 
@@ -329,7 +329,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         git_reference* ref_ptr = nullptr;
         std::string branch_name = "refs/heads/" + branch;
         if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr) < 0) {
-            JAMI_WARN("Unable to move commit to main");
+            JAMI_WARNING("Unable to move commit to main");
         }
         git_reference_free(ref_ptr);
     }
@@ -355,13 +355,13 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
     // Get current HEAD (parent 1)
     git_oid head_oid;
     if (git_reference_name_to_id(&head_oid, repo, "HEAD") < 0) {
-        JAMI_ERR("Unable to get HEAD commit");
+        JAMI_ERROR("Unable to get HEAD commit");
         return "";
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo, &head_oid) < 0) {
-        JAMI_ERR("Unable to look up HEAD commit");
+        JAMI_ERROR("Unable to look up HEAD commit");
         return "";
     }
 
@@ -370,13 +370,13 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
     // Get wanted commit (parent 2)
     git_oid wanted_oid;
     if (git_oid_fromstr(&wanted_oid, wanted_ref.c_str()) < 0) {
-        JAMI_ERR("Unable to get wanted commit");
+        JAMI_ERROR("Unable to get wanted commit");
         return "";
     }
 
     git_commit* wanted_ptr = nullptr;
     if (git_commit_lookup(&wanted_ptr, repo, &wanted_oid) < 0) {
-        JAMI_ERR("Unable to look up wanted commit");
+        JAMI_ERROR("Unable to look up wanted commit");
         return "";
     }
     GitCommit wanted_commit {wanted_ptr};
@@ -384,19 +384,19 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
     // Get current index and tree (same as addCommit)
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERR("Unable to get repository index");
+        JAMI_ERROR("Unable to get repository index");
         return {};
     }
     GitIndex index {index_ptr};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERR("Unable to write tree from index");
+        JAMI_ERROR("Unable to write tree from index");
         return {};
     }
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERR("Unable to look up tree");
+        JAMI_ERROR("Unable to look up tree");
         return {};
     }
     GitTree tree = GitTree(tree_ptr);
@@ -432,7 +432,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
         // Move to main branch
         git_reference* ref_ptr = nullptr;
         if (git_reference_create(&ref_ptr, repo, "refs/heads/main", &commit_id, true, nullptr) < 0) {
-            JAMI_WARN("Unable to move commit to main");
+            JAMI_WARNING("Unable to move commit to main");
             return {};
         }
         git_reference_free(ref_ptr);

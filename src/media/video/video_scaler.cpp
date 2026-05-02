@@ -58,7 +58,7 @@ VideoScaler::scale(const AVFrame* input_frame, AVFrame* output_frame)
                                 NULL,
                                 NULL);
     if (!ctx_) {
-        JAMI_ERR("Unable to create a scaler context");
+        JAMI_ERROR("Unable to create a scaler context");
         return;
     }
 
@@ -119,7 +119,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
 
     // buffer overflow checks
     if ((xoff + dest_width > (unsigned) output_frame->width) || (yoff + dest_height > (unsigned) output_frame->height)) {
-        JAMI_ERR("Unable to scale video");
+        JAMI_ERROR("Unable to scale video");
         return;
     }
 
@@ -135,7 +135,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
                                 NULL,
                                 NULL);
     if (!ctx_) {
-        JAMI_ERR("Unable to create a scaler context");
+        JAMI_ERROR("Unable to create a scaler context");
         return;
     }
 

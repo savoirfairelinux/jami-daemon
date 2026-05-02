@@ -216,7 +216,7 @@ SipBasicCallTest::getAccountId(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist anymore!", callId);
         return {};
     }
 
@@ -226,7 +226,7 @@ SipBasicCallTest::getAccountId(const std::string& callId)
         return account->getAccountID();
     }
 
-    JAMI_WARN("Account owning the call [%s] does not exist anymore!", callId.c_str());
+    JAMI_WARNING("Account owning the call [{}] does not exist anymore!", callId);
     return {};
 }
 
@@ -234,7 +234,7 @@ std::string
 SipBasicCallTest::getUserAlias(const std::string& accountId)
 {
     if (accountId.empty()) {
-        JAMI_WARN("No account ID is empty");
+        JAMI_WARNING("No account ID is empty");
         return {};
     }
 
@@ -245,7 +245,7 @@ SipBasicCallTest::getUserAlias(const std::string& accountId)
     if (ret != callDataMap_.end())
         return ret->first;
 
-    JAMI_WARN("No matching test account %s", accountId.c_str());
+    JAMI_WARNING("No matching test account {}", accountId);
     return {};
 }
 
@@ -264,7 +264,7 @@ SipBasicCallTest::onIncomingCall(const std::string& accountId,
               mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -306,13 +306,13 @@ SipBasicCallTest::onMediaNegotiationStatus(const std::string& callId, const std:
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
@@ -364,7 +364,7 @@ SipBasicCallTest::waitForSignal(CallData& callData, const std::string& expectedS
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 

@@ -269,7 +269,7 @@ AutoAnswerMediaNegoTest::getUserAlias(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return {};
     }
 
@@ -358,10 +358,7 @@ AutoAnswerMediaNegoTest::validateMediaDirection(std::vector<MediaDescription> de
         auto negotiated = inferNegotiatedDirection(local, remote);
 
         if (descrList[idx].direction_ != negotiated) {
-            JAMI_WARN("Media [%lu] direction mismatch: expected %i - found %i",
-                      idx,
-                      static_cast<int>(negotiated),
-                      static_cast<int>(descrList[idx].direction_));
+            JAMI_WARNING("Media [{}] direction mismatch: expected {} - found {}", idx, static_cast<int>(negotiated), static_cast<int>(descrList[idx].direction_));
             return false;
         }
     }
@@ -384,7 +381,7 @@ AutoAnswerMediaNegoTest::onIncomingCall(const std::string& accountId,
               mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -411,7 +408,7 @@ AutoAnswerMediaNegoTest::onMediaChangeRequested(const std::string& accountId,
               mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -433,13 +430,13 @@ AutoAnswerMediaNegoTest::onCallStateChange(const std::string& accountId UNUSED,
 
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
@@ -468,13 +465,13 @@ AutoAnswerMediaNegoTest::onVideoMuted(const std::string& callId, bool muted, Cal
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
@@ -503,13 +500,13 @@ AutoAnswerMediaNegoTest::onMediaNegotiationStatus(const std::string& callId,
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
@@ -563,7 +560,7 @@ AutoAnswerMediaNegoTest::waitForSignal(CallData& callData,
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 

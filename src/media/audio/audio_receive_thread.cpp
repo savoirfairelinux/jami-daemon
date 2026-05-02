@@ -66,21 +66,21 @@ AudioReceiveThread::setup()
     args_.sdp_flags = "custom_io";
 
     if (stream_.str().empty()) {
-        JAMI_ERR("No SDP loaded");
+        JAMI_ERROR("No SDP loaded");
         return false;
     }
 
     audioDecoder_->setIOContext(sdpContext_.get());
     audioDecoder_->setFEC(true);
     if (audioDecoder_->openInput(args_)) {
-        JAMI_ERR("Unable to open input \"%s\"", SDP_FILENAME);
+        JAMI_ERROR("Unable to open input \"{}\"", SDP_FILENAME);
         return false;
     }
 
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
     if (audioDecoder_->setupAudio()) {
-        JAMI_ERR("decoder IO startup failed");
+        JAMI_ERROR("decoder IO startup failed");
         return false;
     }
 

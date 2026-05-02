@@ -214,16 +214,32 @@ IceSdpParsingTest::getUserAlias(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         return {};
     }
 
     auto const& account = call->getAccount().lock();
-    if (not account) {
+    if (account)
+        return account->getAccountID();
+
+    JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
+    return {};
+}
+
+std::string
+IceSdpParsingTest::getUserAlias(const std::string& accountId)
+{
+    if (accountId.empty()) {
+        JAMI_WARNING("No account ID is empty");
         return {};
     }
 
-    return account->getAccountDetails()[ConfProperties::ALIAS];
+    auto account = Manager::instance().getAccount<SIPAccount>(accountId);
+    if (account)
+        return account->getAccountDetails()[ConfProperties::ALIAS];
+
+    JAMI_WARNING("No matching test account {}", accountId);
+    return {};
 }
 
 void
@@ -246,7 +262,7 @@ IceSdpParsingTest::onIncomingCall(const std::string& accountId,
     // needed to check if the call exists. This is the most straightforward and
     // reliable way to do it until we add a new API (like hasCall(id)).
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -300,13 +316,13 @@ IceSdpParsingTest::onMediaNegotiationStatus(const std::string& callId, const std
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
@@ -356,7 +372,7 @@ IceSdpParsingTest::waitForSignal(CallData& callData, const std::string& expected
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 
