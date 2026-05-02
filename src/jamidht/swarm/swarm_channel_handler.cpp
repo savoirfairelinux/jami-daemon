@@ -55,13 +55,17 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
 
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
-    if (auto acc = account_.lock())
-        if (auto* convModule = acc->convModule(true)) {
-            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
-            return res;
-        }
-    return false;
+    auto* convModule = acc->convModule(true);
+    if (!convModule) {
+        JAMI_ERROR("[Account {}] Received swarm channel request for '{}' but conversation module is unavailable",
+                   acc->getAccountID(),
+                   name);
+        return false;
+    }
+    auto issuerUri = cert->issuer->getId().toString();
+    auto deviceUri = cert->getLongId().toString();
+
+    return convModule->isPeerAuthorized(conversationId, issuerUri, deviceUri, true);
 }
 
 void

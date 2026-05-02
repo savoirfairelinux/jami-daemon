@@ -51,22 +51,29 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
 
     if (auto acc = account_.lock()) {
         if (auto convModule = acc->convModule(true)) {
-            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            if (!res) {
-                JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned",
-                             acc->getAccountID(),
-                             name,
-                             cert->issuer->getId().toString());
-            } else {
-                res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
-                if (!res) {
+            const auto issuerUri = cert->issuer->getId().toString();
+            const auto deviceId = cert->getLongId().toString();
+            if (!convModule->isPeerAuthorized(conversationId, issuerUri, deviceId, true)) {
+                if (convModule->isMemberBanned(conversationId, issuerUri)) {
+                    JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned",
+                                 acc->getAccountID(),
+                                 name,
+                                 issuerUri);
+                } else if (convModule->isDeviceBanned(conversationId, deviceId)) {
                     JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but device {} is banned",
                                  acc->getAccountID(),
                                  name,
-                                 cert->getLongId().toString());
+                                 deviceId);
+                } else {
+                    JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' from unauthorized peer {}/{}",
+                                 acc->getAccountID(),
+                                 name,
+                                 issuerUri,
+                                 deviceId);
                 }
+                return false;
             }
-            return res;
+            return true;
         } else {
             JAMI_ERROR("Received ConversationChannel request but conversation module is unavailable");
         }
