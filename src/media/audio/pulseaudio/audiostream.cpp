@@ -69,7 +69,7 @@ AudioStream::AudioStream(pa_context* c,
 
     audiostream_ = pa_stream_new_with_proplist(c, desc, &sample_spec, &infos.channel_map, ec ? pl.get() : nullptr);
     if (!audiostream_) {
-        JAMI_ERR("%s: pa_stream_new() failed : %s", desc, pa_strerror(pa_context_errno(c)));
+        JAMI_ERROR("{}: pa_stream_new() failed : {}", desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Unable to create stream\n");
     }
 
@@ -153,7 +153,7 @@ AudioStream::stop()
 {
     if (not audiostream_)
         return;
-    JAMI_DBG("Destroying stream with device %s", pa_stream_get_device_name(audiostream_));
+    JAMI_LOG("Destroying stream with device {}", pa_stream_get_device_name(audiostream_));
     if (pa_stream_get_state(audiostream_) == PA_STREAM_CREATING) {
         disconnectStream(audiostream_);
         pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void*) { destroyStream(s); }, nullptr);
@@ -179,7 +179,7 @@ AudioStream::moved(pa_stream* s)
         // check for echo cancel
         const char* name = pa_stream_get_device_name(s);
         if (!name) {
-            JAMI_ERR("[audiostream] moved() unable to get audio stream device");
+            JAMI_ERROR("[audiostream] moved() unable to get audio stream device");
             return;
         }
 
@@ -228,31 +228,31 @@ AudioStream::stateChanged(pa_stream* s)
 
     switch (pa_stream_get_state(s)) {
     case PA_STREAM_CREATING:
-        JAMI_DBG("Stream is creating…");
+        JAMI_LOG("Stream is creating…");
         break;
 
     case PA_STREAM_TERMINATED:
-        JAMI_DBG("Stream is terminating…");
+        JAMI_LOG("Stream is terminating…");
         break;
 
     case PA_STREAM_READY:
-        JAMI_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
-        // JAMI_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-        // JAMI_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-        // JAMI_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
-        // JAMI_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-        // JAMI_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
-        // JAMI_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+        JAMI_LOG("Stream successfully created, connected to {}", pa_stream_get_device_name(s));
+        // JAMI_DEBUG("maxlength {}", pa_stream_get_buffer_attr(s)->maxlength);
+        // JAMI_DEBUG("tlength {}", pa_stream_get_buffer_attr(s)->tlength);
+        // JAMI_DEBUG("prebuf {}", pa_stream_get_buffer_attr(s)->prebuf);
+        // JAMI_DEBUG("minreq {}", pa_stream_get_buffer_attr(s)->minreq);
+        // JAMI_DEBUG("fragsize {}", pa_stream_get_buffer_attr(s)->fragsize);
+        // JAMI_DEBUG("samplespec {}", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
         onReady_();
         break;
 
     case PA_STREAM_UNCONNECTED:
-        JAMI_DBG("Stream unconnected");
+        JAMI_LOG("Stream unconnected");
         break;
 
     case PA_STREAM_FAILED:
     default:
-        JAMI_ERR("Stream failure: %s", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+        JAMI_ERROR("Stream failure: {}", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
         break;
     }
 }

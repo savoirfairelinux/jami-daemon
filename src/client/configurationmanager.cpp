@@ -90,7 +90,7 @@ validateCertificate(const std::string& accountId, const std::string& certificate
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
             return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedChecks();
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Certificate loading failed: %s", e.what());
+        JAMI_WARNING("Certificate loading failed: {}", e.what());
     }
     return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
 }
@@ -106,7 +106,7 @@ validateCertificatePath(const std::string& accountId,
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
             return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Certificate loading failed: %s", e.what());
+        JAMI_WARNING("Certificate loading failed: {}", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
     return {};
@@ -119,7 +119,7 @@ getCertificateDetails(const std::string& accountId, const std::string& certifica
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
             return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedDetails();
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Certificate loading failed: %s", e.what());
+        JAMI_WARNING("Certificate loading failed: {}", e.what());
     }
     return {};
 }
@@ -138,7 +138,7 @@ getCertificateDetailsPath(const std::string& accountId,
             return validator.getSerializedDetails();
         }
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Certificate loading failed: %s", e.what());
+        JAMI_WARNING("Certificate loading failed: {}", e.what());
     }
     return {};
 }
@@ -562,7 +562,7 @@ getSupportedCiphers(const std::string& accountId)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId))
         return SIPAccount::getSupportedTlsCiphers();
-    JAMI_ERR("SIP account %s doesn't exist", accountId.c_str());
+    JAMI_ERROR("SIP account {} doesn't exist", accountId);
     return {};
 }
 
@@ -571,13 +571,13 @@ setCodecDetails(const std::string& accountId, const unsigned& codecId, const std
 {
     auto acc = jami::Manager::instance().getAccount(accountId);
     if (!acc) {
-        JAMI_ERR("Unable to find account %s. Unable to set codec details", accountId.c_str());
+        JAMI_ERROR("Unable to find account {}. Unable to set codec details", accountId);
         return false;
     }
 
     auto codec = acc->searchCodecById(codecId, jami::MEDIA_ALL);
     if (!codec) {
-        JAMI_ERR("Unable to find codec %d", codecId);
+        JAMI_ERROR("Unable to find codec {}", codecId);
         return false;
     }
     try {
@@ -592,10 +592,10 @@ setCodecDetails(const std::string& accountId, const unsigned& codecId, const std
         if (codec->mediaType & jami::MEDIA_VIDEO) {
             if (auto foundCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(codec)) {
                 foundCodec->setCodecSpecifications(details);
-                JAMI_WARN("parameters for %s changed ", foundCodec->name.c_str());
+                JAMI_WARNING("parameters for {} changed ", foundCodec->name);
                 if (auto call = jami::Manager::instance().getCurrentCall()) {
                     if (call->getVideoCodec() == foundCodec) {
-                        JAMI_WARN("%s running. Need to restart encoding", foundCodec->name.c_str());
+                        JAMI_WARNING("{} running. Need to restart encoding", foundCodec->name);
                         call->restartMediaSender();
                     }
                 }
@@ -604,7 +604,7 @@ setCodecDetails(const std::string& accountId, const unsigned& codecId, const std
             }
         }
     } catch (const std::exception& e) {
-        JAMI_ERR("Unable to set codec specifications: %s", e.what());
+        JAMI_ERROR("Unable to set codec specifications: {}", e.what());
     }
 
     return false;
@@ -615,7 +615,7 @@ getCodecDetails(const std::string& accountId, const unsigned& codecId)
 {
     auto acc = jami::Manager::instance().getAccount(accountId);
     if (!acc) {
-        JAMI_ERR("Unable to find account %s return default codec details", accountId.c_str());
+        JAMI_ERROR("Unable to find account {} return default codec details", accountId);
         return jami::Account::getDefaultCodecDetails(codecId);
     }
 
@@ -642,7 +642,7 @@ getActiveCodecList(const std::string& accountId)
 {
     if (auto acc = jami::Manager::instance().getAccount(accountId))
         return acc->getActiveCodecs();
-    JAMI_ERR("Unable to find account %s, returning default", accountId.c_str());
+    JAMI_ERROR("Unable to find account {}, returning default", accountId);
     return jami::Account::getDefaultCodecsId();
 }
 
@@ -653,7 +653,7 @@ setActiveCodecList(const std::string& accountId, const std::vector<unsigned>& li
         acc->setActiveCodecs(list);
         jami::Manager::instance().saveConfig(acc);
     } else {
-        JAMI_ERR("Unable to find account %s", accountId.c_str());
+        JAMI_ERROR("Unable to find account {}", accountId);
     }
 }
 
@@ -721,7 +721,7 @@ std::string
 getCurrentAudioOutputPlugin()
 {
     auto plugin = jami::Manager::instance().getCurrentAudioOutputPlugin();
-    JAMI_DBG("Get audio plugin %s", plugin.c_str());
+    JAMI_LOG("Get audio plugin {}", plugin);
     return plugin;
 }
 
@@ -881,7 +881,7 @@ void
 setVolume(const std::string& device, double value)
 {
     if (auto audiolayer = jami::Manager::instance().getAudioDriver()) {
-        JAMI_DBG("set volume for %s: %f", device.c_str(), value);
+        JAMI_LOG("set volume for {}: {}", device, value);
 
         if (device == "speaker")
             audiolayer->setPlaybackGain(value);
@@ -890,7 +890,7 @@ setVolume(const std::string& device, double value)
 
         jami::emitSignal<ConfigurationSignal::VolumeChanged>(device, value);
     } else {
-        JAMI_ERR("Audio layer not valid while updating volume");
+        JAMI_ERROR("Audio layer not valid while updating volume");
     }
 }
 
@@ -904,7 +904,7 @@ getVolume(const std::string& device)
             return audiolayer->getCaptureGain();
     }
 
-    JAMI_ERR("Audio layer not valid while updating volume");
+    JAMI_ERROR("Audio layer not valid while updating volume");
     return 0.0;
 }
 
@@ -928,7 +928,7 @@ isCaptureMuted()
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->isCaptureMuted();
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return false;
 }
 
@@ -938,7 +938,7 @@ muteCapture(bool mute)
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->muteCapture(mute);
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return;
 }
 
@@ -948,7 +948,7 @@ isPlaybackMuted()
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->isPlaybackMuted();
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return false;
 }
 
@@ -958,7 +958,7 @@ mutePlayback(bool mute)
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->mutePlayback(mute);
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return;
 }
 
@@ -968,7 +968,7 @@ isRingtoneMuted()
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->isRingtoneMuted();
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return false;
 }
 
@@ -978,7 +978,7 @@ muteRingtone(bool mute)
     if (auto audiolayer = jami::Manager::instance().getAudioDriver())
         return audiolayer->muteRingtone(mute);
 
-    JAMI_ERR("Audio layer not valid");
+    JAMI_ERROR("Audio layer not valid");
     return;
 }
 
@@ -1030,14 +1030,14 @@ setCredentials(const std::string& accountId, const std::vector<std::map<std::str
 void
 connectivityChanged()
 {
-    JAMI_WARN("received connectivity changed - attempting to re-connect enabled accounts");
+    JAMI_WARNING("received connectivity changed - attempting to re-connect enabled accounts");
 
     // reset the UPnP context
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     try {
         jami::Manager::instance().upnpContext()->connectivityChanged();
     } catch (std::runtime_error& e) {
-        JAMI_ERR("UPnP context error: %s", e.what());
+        JAMI_ERROR("UPnP context error: {}", e.what());
     }
 #endif
 
@@ -1156,7 +1156,7 @@ pushNotificationReceived(const std::string& from, const std::map<std::string, st
         }
 #endif
     } catch (const std::exception& e) {
-        JAMI_ERR("Error processing push notification: %s", e.what());
+        JAMI_ERROR("Error processing push notification: {}", e.what());
     }
 }
 

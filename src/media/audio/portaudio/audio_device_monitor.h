@@ -92,7 +92,7 @@ public:
                                     CLSCTX_ALL,
                                     __uuidof(IMMDeviceEnumerator),
                                     (void**) &deviceEnumerator_))) {
-            JAMI_ERR("Failed to create device enumerator");
+            JAMI_ERROR("Failed to create device enumerator");
         } else {
             // Fill our list of active devices (render + capture)
             enumerateDevices();
@@ -109,7 +109,7 @@ public:
     void setDeviceEventCallback(DeviceEventCallback callback)
     {
         if (!deviceEnumerator_) {
-            JAMI_ERR("Device enumerator not initialized");
+            JAMI_ERROR("Device enumerator not initialized");
             return;
         }
 
@@ -200,7 +200,7 @@ public:
             if (var.vt == VT_BLOB) {
                 auto* pWaveFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(var.blob.pBlobData);
                 UINT sampleRate = pWaveFormat->Format.nSamplesPerSec;
-                JAMI_DBG("Sample rate changed to %u", sampleRate);
+                JAMI_LOG("Sample rate changed to {}", sampleRate);
                 std::string friendlyName = GetFriendlyNameFromIMMDeviceId(deviceEnumerator_, deviceId);
                 deviceEventCallback_(friendlyName, DeviceEventType::PropertyChanged);
             }
@@ -242,12 +242,12 @@ private:
         UINT deviceCount = 0;
 
         if (FAILED(deviceEnumerator_->EnumAudioEndpoints(flow, DEVICE_STATE_ACTIVE, &devices))) {
-            JAMI_ERR("Failed to enumerate devices");
+            JAMI_ERROR("Failed to enumerate devices");
             return;
         }
 
         if (FAILED(devices->GetCount(&deviceCount))) {
-            JAMI_ERR("Failed to get device count");
+            JAMI_ERROR("Failed to get device count");
             return;
         }
 

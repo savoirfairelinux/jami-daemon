@@ -388,7 +388,7 @@ TransferManager::cancel(const std::string& fileId)
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW != pimpl_->waitingIds_.end()) {
         pimpl_->waitingIds_.erase(itW);
-        JAMI_DBG() << "Cancel " << fileId;
+        JAMI_LOG("Cancel {}", fileId);
         pimpl_->saveWaiting();
     }
     auto itC = pimpl_->incomings_.find(fileId);
