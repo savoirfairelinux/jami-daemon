@@ -96,7 +96,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                     framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m),
                                                                                 AV_PIX_FMT_NV12);
                 } catch (const std::runtime_error& e) {
-                    JAMI_ERR("Accel failure: %s", e.what());
+                    JAMI_ERROR("Accel failure: {}", e.what());
                     return;
                 }
             } else
@@ -240,7 +240,7 @@ MediaRecorder::startRecording()
 #endif // ENABLE_VIDEO
                     }
                 } catch (const MediaEncoderException& e) {
-                    JAMI_ERR() << "Failed to record frame: " << e.what();
+                    JAMI_ERROR("Failed to record frame: {}", e.what());
                 }
             }
             rec->flush();
@@ -257,7 +257,7 @@ MediaRecorder::stopRecording()
     interrupted_ = true;
     cv_.notify_all();
     if (isRecording_) {
-        JAMI_DBG() << "Stop recording '" << getPath() << "'";
+        JAMI_LOG("Stop recording '{}'", getPath());
         isRecording_ = false;
         {
             std::lock_guard lk(mutexStreamSetup_);
@@ -278,11 +278,11 @@ MediaRecorder::addStream(const MediaStream& ms)
     {
         std::lock_guard lk(mutexStreamSetup_);
         if (audioOnly_ && ms.isVideo) {
-            JAMI_ERR() << "Attempting to add video stream to audio only recording";
+            JAMI_ERROR("Attempting to add video stream to audio only recording");
             return nullptr;
         }
         if (ms.format < 0 || ms.name.empty()) {
-            JAMI_ERR() << "Attempting to add invalid stream to recording";
+            JAMI_ERROR("Attempting to add invalid stream to recording");
             return nullptr;
         }
 
@@ -378,7 +378,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
                 clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
                                                                    static_cast<AVPixelFormat>(ms.format));
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("Accel failure: %s", e.what());
+                JAMI_ERROR("Accel failure: {}", e.what());
                 return;
             }
         } else {
@@ -468,7 +468,7 @@ MediaRecorder::initRecord()
             Manager::instance().getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
         if (audioIdx_ < 0) {
-            JAMI_ERR() << "Failed to add audio stream to encoder";
+            JAMI_ERROR("Failed to add audio stream to encoder");
             return -1;
         }
     }
@@ -495,7 +495,7 @@ MediaRecorder::initRecord()
             Manager::instance().getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
         if (videoIdx_ < 0) {
-            JAMI_ERR() << "Failed to add video stream to encoder";
+            JAMI_ERROR("Failed to add video stream to encoder");
             return -1;
         }
     }
@@ -503,7 +503,7 @@ MediaRecorder::initRecord()
 
     encoder_->setIOContext(nullptr);
 
-    JAMI_DBG() << "Recording initialized";
+    JAMI_LOG("Recording initialized");
     return 0;
 }
 
@@ -535,7 +535,7 @@ MediaRecorder::setupVideoOutput()
     int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
     case 0: {
-        JAMI_WARN() << "Attempting to record a video stream but none is valid";
+        JAMI_WARNING("Attempting to record a video stream but none is valid");
         return;
     }
     case 1: {
@@ -547,7 +547,7 @@ MediaRecorder::setupVideoOutput()
         else if (mixer.isValid())
             inputStream = mixer;
         else {
-            JAMI_ERR("Attempting to record a stream but none is valid");
+            JAMI_ERROR("Attempting to record a stream but none is valid");
             break;
         }
 
@@ -558,13 +558,13 @@ MediaRecorder::setupVideoOutput()
         ret = videoFilter_->initialize(buildVideoFilter({peer}, local), {peer, local});
         break;
     default:
-        JAMI_ERR() << "Recording more than 2 video streams is not supported";
+        JAMI_ERROR("Recording more than 2 video streams is not supported");
         break;
     }
 
 #ifdef ENABLE_VIDEO
     if (ret < 0) {
-        JAMI_ERR() << "Failed to initialize video filter";
+        JAMI_ERROR("Failed to initialize video filter");
     }
 
     // setup output filter
@@ -590,7 +590,7 @@ MediaRecorder::setupVideoOutput()
     ret = outputVideoFilter_->initialize(f.str(), {secondaryFilter});
 
     if (ret < 0) {
-        JAMI_ERR() << "Failed to initialize output video filter";
+        JAMI_ERROR("Failed to initialize output video filter");
     }
 
 #endif
@@ -624,7 +624,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
         v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h" << ", format=pix_fmts=yuv420p";
     } break;
     default:
-        JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";
+        JAMI_ERROR("Video recordings with more than 2 video streams are not supported");
         break;
     }
 
@@ -641,7 +641,7 @@ MediaRecorder::setupAudioOutput()
     int ret = -1;
 
     if (streams_.empty()) {
-        JAMI_WARN() << "Attempting to record a audio stream but none is valid";
+        JAMI_WARNING("Attempting to record a audio stream but none is valid");
         return;
     }
 
@@ -654,7 +654,7 @@ MediaRecorder::setupAudioOutput()
     ret = audioFilter_->initialize(buildAudioFilter(peers), peers);
 
     if (ret < 0) {
-        JAMI_ERR() << "Failed to initialize audio filter";
+        JAMI_ERROR("Failed to initialize audio filter");
         return;
     }
 

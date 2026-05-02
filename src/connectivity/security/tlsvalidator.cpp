@@ -269,11 +269,11 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
     } catch (const dht::crypto::DecryptError& d) {
         // If we encounter a DecryptError, it means the private key exists and is encrypted,
         // otherwise we would get some other exception.
-        JAMI_WARN("decryption error: %s", d.what());
+        JAMI_WARNING("decryption error: {}", d.what());
         privateKeyFound_ = true;
         privateKeyPassword_ = true;
     } catch (const std::exception& e) {
-        JAMI_WARN("creation failed: %s", e.what());
+        JAMI_WARNING("creation failed: {}", e.what());
     }
 }
 
@@ -464,7 +464,7 @@ TlsValidator::compareToCa()
     auto root_cas = certStore_.getTrustedCertificates();
     auto err = gnutls_x509_trust_list_add_cas(trust, root_cas.data(), root_cas.size(), 0);
     if (err)
-        JAMI_WARN("gnutls_x509_trust_list_add_cas failed: %s", gnutls_strerror(err));
+        JAMI_WARNING("gnutls_x509_trust_list_add_cas failed: {}", gnutls_strerror(err));
 
     if (not caListPath_.empty()) {
         if (std::filesystem::is_directory(caListPath_))
@@ -487,7 +487,7 @@ TlsValidator::compareToCa()
     gnutls_x509_trust_list_deinit(trust, true);
 
     if (err) {
-        JAMI_WARN("gnutls_x509_trust_list_verify_crt2 failed: %s", gnutls_strerror(err));
+        JAMI_WARNING("gnutls_x509_trust_list_verify_crt2 failed: {}", gnutls_strerror(err));
         return GNUTLS_CERT_SIGNER_NOT_FOUND;
     }
 
@@ -524,14 +524,14 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     struct timeval tv;
 
     if (!host.size() || !port) {
-        JAMI_ERR("Wrong parameters used - host %s, port %d.", host.c_str(), port);
+        JAMI_ERROR("Wrong parameters used - host {}, port {}.", host, port);
         return res;
     }
 
     /* Create the socket. */
     sockfd = socket (PF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        JAMI_ERR("Unable to create socket.");
+        JAMI_ERROR("Unable to create socket.");
         return res;
     }
     /* Set non-blocking so we can dected timeouts. */
@@ -548,7 +548,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     name.sin_port = htons(port);
     hostinfo = gethostbyname(host.c_str());
     if (hostinfo == nullptr) {
-        JAMI_ERR("Unknown host %s.", host.c_str());
+        JAMI_ERROR("Unknown host {}.", host);
         goto out;
     }
     name.sin_addr = *(struct in_addr *)hostinfo->h_addr;
@@ -564,8 +564,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                 tv.tv_usec = 0;
                 err = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
                 if (err < 0 && errno != EINTR) {
-                    JAMI_ERR("Unable to connect to hostname %s at port %d",
-                          host.c_str(), port);
+                    JAMI_ERROR("Unable to connect to hostname {} at port {}", host, port);
                     goto out;
                 } else if (err > 0) {
                     /* Select returned, if so_error is clean we are ready. */
@@ -574,17 +573,17 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                     getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
                     if (so_error) {
-                        JAMI_ERR("Connection delayed.");
+                        JAMI_ERROR("Connection delayed.");
                         goto out;
                     }
                     break;  // exit do-while loop
                 } else {
-                    JAMI_ERR("Connection timeout.");
+                    JAMI_ERROR("Connection timeout.");
                     goto out;
                 }
             } while(1);
         } else {
-            JAMI_ERR("Unable to connect to hostname %s at port %d", host.c_str(), port);
+            JAMI_ERROR("Unable to connect to hostname {} at port {}", host, port);
             goto out;
         }
     }
@@ -599,7 +598,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Disable Nagle algorithm that slows down the SSL handshake. */
     err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     if (err < 0) {
-        JAMI_ERR("Unable to set TCP_NODELAY.");
+        JAMI_ERROR("Unable to set TCP_NODELAY.");
         goto out;
     }
 
@@ -607,33 +606,33 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Load the trusted CA certificates. */
     err = gnutls_certificate_allocate_credentials(&cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to allocate credentials - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to allocate credentials - {}", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_certificate_set_x509_system_trust(cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to load credentials.");
+        JAMI_ERROR("Unable to load credentials.");
         goto out;
     }
 
     /* Create the session object. */
     err = gnutls_init(&session, GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to init session -%s\n", gnutls_strerror(err));
+        JAMI_ERROR("Unable to init session -{}", gnutls_strerror(err));
         goto out;
     }
 
     /* Configure the cipher preferences. The default set should be good enough. */
     err = gnutls_priority_set_direct(session, "NORMAL", &errptr);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
+        JAMI_ERROR("Unable to set up ciphers - {} ({})", gnutls_strerror(err), errptr);
         goto out;
     }
 
     /* Install the trusted certificates. */
     err = gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set up credentials - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to set up credentials - {}", gnutls_strerror(err));
         goto out;
     }
 
@@ -641,28 +640,28 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
     err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host.c_str(), host.size());
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set server name - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to set server name - {}", gnutls_strerror(err));
         goto out;
     }
 
     /* Establish the connection. */
     err = gnutls_handshake(session);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Handshake failed - %s", gnutls_strerror(err));
+        JAMI_ERROR("Handshake failed - {}", gnutls_strerror(err));
         goto out;
     }
     /* Obtain the server certificate chain. The server certificate
      * itself is stored in the first element of the array. */
     certs = gnutls_certificate_get_peers(session, &certslen);
     if (certs == nullptr || certslen == 0) {
-        JAMI_ERR("Unable to obtain peer certificate - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to obtain peer certificate - {}", gnutls_strerror(err));
         goto out;
     }
 
     /* Validate the certificate chain. */
     err = gnutls_certificate_verify_peers2(session, &status);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to verify the certificate chain - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to verify the certificate chain - {}", gnutls_strerror(err));
         goto out;
     }
     if (status != 0) {
@@ -674,11 +673,11 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
         err = -1;
 #endif
         if (err == 0) {
-            JAMI_ERR("Certificate validation failed - %s\n", msg.data);
+            JAMI_ERROR("Certificate validation failed - {}", msg.data);
             gnutls_free(msg.data);
             goto out;
         } else {
-            JAMI_ERR("Certificate validation failed with code 0x%x.", status);
+            JAMI_ERROR("Certificate validation failed with code 0x{:x}.", status);
             goto out;
         }
     }
@@ -690,7 +689,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
 
     err = gnutls_x509_crt_init(&cert);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to init certificate - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to init certificate - {}", gnutls_strerror(err));
         goto out;
     }
 
@@ -699,13 +698,13 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to read peer certificate - %s", gnutls_strerror(err));
+        JAMI_ERROR("Unable to read peer certificate - {}", gnutls_strerror(err));
         goto out;
     }
     /* Finally check if the hostnames match. */
     err = gnutls_x509_crt_check_hostname(cert, host.c_str());
     if (err == 0) {
-        JAMI_ERR("Hostname %s does not match certificate.", host.c_str());
+        JAMI_ERROR("Hostname {} does not match certificate.", host);
         goto out;
     }
 
@@ -713,16 +712,16 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host.c_str());
     err = gnutls_record_send(session, buf, strlen(buf));
     if (err < 0) {
-        JAMI_ERR("Send failed - %s", gnutls_strerror(err));
+        JAMI_ERROR("Send failed - {}", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_record_recv(session, buf, sizeof(buf));
     if (err < 0) {
-        JAMI_ERR("Recv failed - %s", gnutls_strerror(err));
+        JAMI_ERROR("Recv failed - {}", gnutls_strerror(err));
         goto out;
     }
 
-    JAMI_DBG("Hostname %s seems to point to a valid server.", host.c_str());
+    JAMI_LOG("Hostname {} seems to point to a valid server.", host);
     res = 0;
 out:
     if (session) {
@@ -753,7 +752,7 @@ TlsValidator::hasPrivateKey()
         return CheckResult(CheckValues::FAILED, e.what());
     }
 
-    JAMI_DBG("Key from %s seems valid.", certificatePath_.c_str());
+    JAMI_LOG("Key from {} seems valid.", certificatePath_);
     return CheckResult(CheckValues::PASSED, "");
 }
 

@@ -265,13 +265,13 @@ VideoV4l2Size::readFrameRates(int fd, unsigned int pixel_format)
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
         addRate(fallback_rate);
-        JAMI_ERR("Unable to query frame interval for size");
+        JAMI_ERROR("Unable to query frame interval for size");
         return;
     }
 
     if (frmival.type != V4L2_FRMIVAL_TYPE_DISCRETE) {
         addRate(fallback_rate);
-        JAMI_ERR("Continuous and stepwise Frame Intervals are not supported");
+        JAMI_ERROR("Continuous and stepwise Frame Intervals are not supported");
         return;
     }
 
@@ -350,7 +350,7 @@ VideoV4l2Channel::readSizes(int fd, unsigned int pixelformat)
 
     if (frmsize.type != V4L2_FRMSIZE_TYPE_DISCRETE) {
         // We do not take care of V4L2_FRMSIZE_TYPE_CONTINUOUS or V4L2_FRMSIZE_TYPE_STEPWISE
-        JAMI_ERR("Continuous Frame sizes not supported");
+        JAMI_ERROR("Continuous Frame sizes not supported");
         return pixelformat;
     }
 

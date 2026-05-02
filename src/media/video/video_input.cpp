@@ -95,7 +95,7 @@ void
 VideoInput::switchDevice()
 {
     if (switchPending_.exchange(false)) {
-        JAMI_DBG("Switching input to '%s'", decOpts_.input.c_str());
+        JAMI_LOG("Switching input to '{}'", decOpts_.input);
         if (decOpts_.input.empty()) {
             capturing_ = false;
             return;
@@ -149,14 +149,14 @@ bool
 VideoInput::setup()
 {
     if (not attach(sink_.get())) {
-        JAMI_ERR("attach sink failed");
+        JAMI_ERROR("attach sink failed");
         return false;
     }
 
     if (!sink_->start())
-        JAMI_ERR("start sink failed");
+        JAMI_ERROR("start sink failed");
 
-    JAMI_DBG("VideoInput ready to capture");
+    JAMI_LOG("VideoInput ready to capture");
 
     return true;
 }
@@ -192,7 +192,7 @@ VideoInput::cleanup()
 {
     deleteDecoder(); // do it first to let a chance to last frame to be displayed
     stopSink();
-    JAMI_DBG("VideoInput closed");
+    JAMI_LOG("VideoInput closed");
 }
 
 bool
@@ -207,7 +207,7 @@ VideoInput::captureFrame()
         createDecoder();
         return static_cast<bool>(decoder_);
     case MediaDemuxer::Status::ReadError:
-        JAMI_ERR() << "Failed to decode frame";
+        JAMI_ERROR("Failed to decode frame");
         return false;
     default:
         return true;
@@ -251,7 +251,7 @@ VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemux
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
-        JAMI_WARN("Unable to determine pixel format, using default");
+        JAMI_WARNING("Unable to determine pixel format, using default");
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
@@ -305,7 +305,7 @@ VideoInput::createDecoder()
         int ret = decoder->openInput(decOpts_);
         ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
-            JAMI_ERR("Unable to open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
+            JAMI_ERROR("Unable to open input \"{}\" with status {}", decOpts_.input, ret);
             foundDecOpts(decOpts_);
             return;
         } else if (-ret == EBUSY) {
@@ -326,14 +326,14 @@ VideoInput::createDecoder()
 
     /* Data available, finish the decoding */
     if (decoder->setupVideo() < 0) {
-        JAMI_ERR("decoder IO startup failed");
+        JAMI_ERROR("decoder IO startup failed");
         foundDecOpts(decOpts_);
         return;
     }
 
     auto ret = decoder->decode(); // Populate AVCodecContext fields
     if (ret == MediaDemuxer::Status::ReadError) {
-        JAMI_INFO() << "Decoder error";
+        JAMI_LOG("Decoder error");
         return;
     }
 
@@ -344,15 +344,11 @@ VideoInput::createDecoder()
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
-        JAMI_WARN("Unable to determine pixel format, using default");
+        JAMI_WARNING("Unable to determine pixel format, using default");
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
-    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
-             decOpts_.width,
-             decOpts_.height,
-             decOpts_.framerate.real(),
-             decOpts_.pixel_format.c_str());
+    JAMI_LOG("created decoder with video params : size={}X{}, fps={} pix={}", decOpts_.width, decOpts_.height, decOpts_.framerate.real(), decOpts_.pixel_format);
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
 
@@ -612,7 +608,7 @@ VideoInput::initFile(const std::string& path)
 
     /* File exists? */
     if (access(path.c_str(), R_OK) != 0) {
-        JAMI_ERR("file '%s' unavailable\n", path.c_str());
+        JAMI_ERROR("file '{}' unavailable", path);
         return false;
     }
 
@@ -638,7 +634,7 @@ VideoInput::initFile(const std::string& path)
         decOpts_.format = "image2";
         decOpts_.framerate = 1;
     } else {
-        JAMI_WARN("Guessing file type for %s", path.c_str());
+        JAMI_WARNING("Guessing file type for {}", path);
     }
 
     return false;
@@ -654,10 +650,10 @@ VideoInput::restart()
 std::shared_future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
-    JAMI_DBG("MRL: '%s'", resource.c_str());
+    JAMI_LOG("MRL: '{}'", resource);
 
     if (switchPending_.exchange(true)) {
-        JAMI_ERR("Video switch already requested");
+        JAMI_ERROR("Video switch already requested");
         return {};
     }
 
