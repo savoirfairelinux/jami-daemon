@@ -46,19 +46,19 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id, bool useSink, cons
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
 {
-    JAMI_DBG("[%p] Instance created", this);
+    JAMI_LOG("[{}] Instance created", fmt::ptr(this));
 }
 
 VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
-    JAMI_DBG("[%p] Instance destroyed", this);
+    JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
 }
 
 void
 VideoReceiveThread::startLoop()
 {
-    JAMI_DBG("[%p] Starting receiver’s loop", this);
+    JAMI_LOG("[{}] Starting receiver’s loop", fmt::ptr(this));
     loop_.start();
 }
 
@@ -67,10 +67,10 @@ VideoReceiveThread::stopLoop()
 {
     if (loop_.isStopping())
         return;
-    JAMI_DBG("[%p] Stopping receiver’s loop and waiting for the thread to exit…", this);
+    JAMI_LOG("[{}] Stopping receiver’s loop and waiting for the thread to exit…", fmt::ptr(this));
     loop_.stop();
     loop_.join();
-    JAMI_DBG("[%p] Receiver’s thread exited", this);
+    JAMI_LOG("[{}] Receiver’s thread exited", fmt::ptr(this));
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -78,7 +78,7 @@ VideoReceiveThread::stopLoop()
 bool
 VideoReceiveThread::setup()
 {
-    JAMI_DBG("[%p] Setting up video receiver", this);
+    JAMI_LOG("[{}] Setting up video receiver", fmt::ptr(this));
 
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         libav_utils::AVBufferPtr displayMatrix;
@@ -123,7 +123,7 @@ VideoReceiveThread::setup()
         args_.sdp_flags = "custom_io";
 
         if (stream_.str().empty()) {
-            JAMI_ERR("No SDP loaded");
+            JAMI_ERROR("No SDP loaded");
             return false;
         }
 
@@ -133,7 +133,7 @@ VideoReceiveThread::setup()
     args_.disable_dts_probe_delay = true;
 
     if (videoDecoder_->openInput(args_)) {
-        JAMI_ERR("Unable to open input \"%s\"", args_.input.c_str());
+        JAMI_ERROR("Unable to open input \"{}\"", args_.input);
         return false;
     }
 
@@ -149,7 +149,7 @@ VideoReceiveThread::setup()
 void
 VideoReceiveThread::cleanup()
 {
-    JAMI_DBG("[%p] Stopping receiver", this);
+    JAMI_LOG("[{}] Stopping receiver", fmt::ptr(this));
 
     detach(sink_.get());
     sink_->stop();
@@ -226,15 +226,15 @@ VideoReceiveThread::configureVideoOutput()
 {
     assert(not isVideoConfigured_);
 
-    JAMI_DBG("[%p] Configuring video output", this);
+    JAMI_LOG("[{}] Configuring video output", fmt::ptr(this));
 
     if (not loop_.isRunning()) {
-        JAMI_WARN("[%p] Unable to configure video output, the loop is not running!", this);
+        JAMI_WARNING("[{}] Unable to configure video output, the loop is not running!", fmt::ptr(this));
         return false;
     }
 
     if (videoDecoder_->setupVideo() < 0) {
-        JAMI_ERR("Decoder IO startup failed");
+        JAMI_ERROR("Decoder IO startup failed");
         stopLoop();
         return false;
     }
@@ -246,7 +246,7 @@ VideoReceiveThread::configureVideoOutput()
     }
 
     if (not sink_->start()) {
-        JAMI_ERR("RX: sink startup failed");
+        JAMI_ERROR("RX: sink startup failed");
         stopLoop();
         return false;
     }
@@ -263,7 +263,7 @@ VideoReceiveThread::configureVideoOutput()
 void
 VideoReceiveThread::stopSink()
 {
-    JAMI_DBG("[%p] Stopping sink", this);
+    JAMI_LOG("[{}] Stopping sink", fmt::ptr(this));
 
     if (!loop_.isRunning())
         return;
@@ -275,7 +275,7 @@ VideoReceiveThread::stopSink()
 void
 VideoReceiveThread::startSink()
 {
-    JAMI_DBG("[%p] Starting sink", this);
+    JAMI_LOG("[{}] Starting sink", fmt::ptr(this));
 
     if (!loop_.isRunning())
         return;

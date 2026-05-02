@@ -37,7 +37,7 @@ WebViewServicesManager::getWebViewHandlerPointer(const std::string& pluginId)
     auto it = handlersIdMap.find(pluginId);
     // check if handler with specified pluginId does not exist
     if (it == handlersIdMap.end()) {
-        JAMI_ERR("handler with pluginId %s was not found!", pluginId.c_str());
+        JAMI_ERROR("handler with pluginId {} was not found!", pluginId);
         return nullptr;
     }
 
@@ -56,7 +56,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 
         // make sure pointer is valid
         if (!ptr) {
-            JAMI_ERR("Attempting to register a webview handler with invalid pointer!");
+            JAMI_ERROR("Attempting to register a webview handler with invalid pointer!");
             return -1;
         }
 
@@ -77,7 +77,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 
         // make sure pointer is valid
         if (!ptr) {
-            JAMI_ERR("Attempting to unregister a webview handler with invalid pointer!");
+            JAMI_ERROR("Attempting to unregister a webview handler with invalid pointer!");
             return false;
         }
 
