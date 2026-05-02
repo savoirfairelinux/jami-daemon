@@ -162,7 +162,7 @@ parseManifestFile(const std::filesystem::path& manifestFilePath, const std::stri
             const auto& traduction = parseManifestTranslation(rootPath, file);
             return checkManifestValidity(std::vector<uint8_t>(traduction.begin(), traduction.end()));
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
         }
     }
     return {};
@@ -206,7 +206,7 @@ readPluginManifestFromArchive(const std::string& jplPath)
     try {
         return checkManifestValidity(archiver::readFileFromArchive(jplPath, "manifest.json"));
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
     }
     return {};
 }
@@ -219,7 +219,7 @@ readPluginCertificate(const std::string& rootPath, const std::string& pluginId)
         auto cert = fileutils::loadFile(certPath);
         return std::make_unique<dht::crypto::Certificate>(cert);
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
     }
     return {};
 }
@@ -236,7 +236,7 @@ readPluginCertificateFromArchive(const std::string& jplPath)
         }
         return std::make_unique<dht::crypto::Certificate>(archiver::readFileFromArchive(jplPath, name + ".crt"));
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return {};
     }
 }
@@ -251,7 +251,7 @@ readPluginSignatureFromArchive(const std::string& jplPath)
         msgpack::object obj = oh.get();
         return obj.as<std::map<std::string, std::vector<uint8_t>>>();
     } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return {};
     }
 }
@@ -286,7 +286,7 @@ getLanguage()
     if (auto* envLang = std::getenv("JAMI_LANG"))
         lang = envLang;
     else
-        JAMI_INFO() << "Error getting JAMI_LANG env, attempting to get system language";
+        JAMI_LOG("Error getting JAMI_LANG env, attempting to get system language");
     // If language preference is empty, try to get from the system.
     if (lang.empty()) {
 #ifdef WIN32

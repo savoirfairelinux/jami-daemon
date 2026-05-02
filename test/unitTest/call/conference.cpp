@@ -307,7 +307,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
         mediaList.emplace_back(mediaAttribute);
     }
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     {
         std::unique_lock lk {mtx};
@@ -319,7 +319,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
     }
 
-    JAMI_INFO("Start call between Alice and Carla");
+    JAMI_LOG("Start call between Alice and Carla");
     auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
     {
         std::unique_lock lk {mtx};
@@ -331,7 +331,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
     }
 
-    JAMI_INFO("Start conference");
+    JAMI_LOG("Start conference");
     confChanged = false;
     Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
     // ConfChanged is the signal emitted when the 2 calls will be added to the conference
@@ -344,7 +344,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     }
 
     if (addDavi) {
-        JAMI_INFO("Start call between Alice and Davi");
+        JAMI_LOG("Start call between Alice and Davi");
         auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, mediaList);
         {
             std::unique_lock lk {mtx};
@@ -366,7 +366,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 void
 ConferenceTest::hangupConference()
 {
-    JAMI_INFO("Stop conference");
+    JAMI_LOG("Stop conference");
     Manager::instance().hangupConference(aliceId, confId);
     std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(
@@ -411,7 +411,7 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
 
     startConference();
 
-    JAMI_INFO("Play with mute from the moderator");
+    JAMI_LOG("Play with mute from the moderator");
     libjami::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, true);
     {
         std::unique_lock lk {mtx};
@@ -438,7 +438,7 @@ ConferenceTest::testUnauthorizedMute()
 
     startConference();
 
-    JAMI_INFO("Play with mute from unauthorized");
+    JAMI_LOG("Play with mute from unauthorized");
     libjami::muteStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
     {
         std::unique_lock lk {mtx};
@@ -461,7 +461,7 @@ ConferenceTest::testAudioVideoMutedStates()
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     auto call1Id = libjami::placeCallWithMedia(aliceId, bobUri, {});
     {
         std::unique_lock lk {mtx};
@@ -476,7 +476,7 @@ ConferenceTest::testAudioVideoMutedStates()
     call1->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
     call1->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
-    JAMI_INFO("Start call between Alice and Carla");
+    JAMI_LOG("Start call between Alice and Carla");
     auto call2Id = libjami::placeCallWithMedia(aliceId, carlaUri, {});
     {
         std::unique_lock lk {mtx};
@@ -492,7 +492,7 @@ ConferenceTest::testAudioVideoMutedStates()
     call2->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
     call2->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
-    JAMI_INFO("Start conference");
+    JAMI_LOG("Start conference");
     Manager::instance().joinParticipant(aliceId, call1Id, aliceId, call2Id);
     {
         std::unique_lock lk {mtx};
@@ -533,7 +533,7 @@ ConferenceTest::testMuteStatusAfterAdd()
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     {
         std::unique_lock lk {mtx};
@@ -545,7 +545,7 @@ ConferenceTest::testMuteStatusAfterAdd()
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
     }
 
-    JAMI_INFO("Start call between Alice and Carla");
+    JAMI_LOG("Start call between Alice and Carla");
     auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
     {
         std::unique_lock lk {mtx};
@@ -557,13 +557,13 @@ ConferenceTest::testMuteStatusAfterAdd()
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
     }
 
-    JAMI_INFO("Start conference");
+    JAMI_LOG("Start conference");
     Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
     }
-    JAMI_INFO("Add Davi");
+    JAMI_LOG("Add Davi");
     auto call3 = libjami::placeCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
@@ -612,7 +612,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     auto dm = jami::getVideoDeviceMonitor();
     if (dm && !dm->getDeviceList().empty()) {
-        JAMI_INFO() << "Check sinks if video device available.";
+        JAMI_LOG("Check sinks if video device available.");
         std::unique_lock lk {mtx};
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
@@ -625,7 +625,7 @@ ConferenceTest::testCreateParticipantsSinks()
             }
         }
     } else {
-        JAMI_INFO() << "Check sinks if no video device available.";
+        JAMI_LOG("Check sinks if no video device available.");
         std::unique_lock lk {mtx};
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
@@ -779,7 +779,7 @@ ConferenceTest::testHandsUp()
 
     startConference(false, true);
 
-    JAMI_INFO("Play with raise hand");
+    JAMI_LOG("Play with raise hand");
     libjami::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
     {
         std::unique_lock lk {mtx};
@@ -898,7 +898,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
 
     startConference();
 
-    JAMI_INFO("Play with raise hand");
+    JAMI_LOG("Play with raise hand");
     libjami::raiseHand(aliceId, confId, bobUri, bobCall.device, true);
     {
         std::unique_lock lk {mtx};
@@ -910,7 +910,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand; }));
     }
-    JAMI_INFO("Start call between Alice and Davi");
+    JAMI_LOG("Start call between Alice and Davi");
     auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
@@ -1189,7 +1189,7 @@ ConferenceTest::testPropagateRecording()
 
     startConference();
 
-    JAMI_INFO("Play with recording state");
+    JAMI_LOG("Play with recording state");
     libjami::toggleRecording(bobId, bobCall.callId);
     {
         std::unique_lock lk {mtx};
@@ -1316,7 +1316,7 @@ ConferenceTest::testRemoveConferenceInOneOne()
     registerSignalHandlers();
     startConference();
     // Here it's 1:1 calls we merged, so we can close the conference
-    JAMI_INFO("Hangup Bob");
+    JAMI_LOG("Hangup Bob");
     Manager::instance().hangupCall(bobId, bobCall.callId);
     {
         std::unique_lock lk {mtx};

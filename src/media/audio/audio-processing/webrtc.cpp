@@ -138,7 +138,7 @@ WebRTCAudioProcessor::getProcessed()
     // process reverse in place
     float** playData = (float**) playback->pointer()->extended_data;
     if (apm->ProcessReverseStream(playData, sc, sc, playData) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] ProcessReverseStream failed");
+        JAMI_ERROR("[webrtc-ap] ProcessReverseStream failed");
     }
 
     // process deinterleaved float recorded data
@@ -146,18 +146,18 @@ WebRTCAudioProcessor::getProcessed()
     // (it MUST be called prior to ProcessStream)
     // delay = (t_render - t_analyze) + (t_process - t_capture)
     if (apm->set_stream_delay_ms(0) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] set_stream_delay_ms failed");
+        JAMI_ERROR("[webrtc-ap] set_stream_delay_ms failed");
     }
 
     if (apm->gain_control()->set_stream_analog_level(analogLevel_) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] set_stream_analog_level failed");
+        JAMI_ERROR("[webrtc-ap] set_stream_analog_level failed");
     }
     apm->echo_cancellation()->set_stream_drift_samples(driftSamples);
 
     // process in place
     float** recData = (float**) record->pointer()->extended_data;
     if (apm->ProcessStream(recData, sc, sc, recData) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] ProcessStream failed");
+        JAMI_ERROR("[webrtc-ap] ProcessStream failed");
     }
 
     analogLevel_ = apm->gain_control()->stream_analog_level();

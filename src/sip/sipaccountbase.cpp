@@ -64,23 +64,17 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_dialog** dlg,
                                             pjsip_inv_session** inv)
 {
-    JAMI_DBG("Creating SIP dialog: \n"
-             "From: %s\n"
-             "Contact: %s\n"
-             "To: %s\n",
-             from->ptr,
-             contact->ptr,
-             to->ptr);
+    JAMI_LOG("Creating SIP dialog: \nFrom: {}\nContact: {}\nTo: {}", from->ptr, contact->ptr, to->ptr);
 
     if (target) {
-        JAMI_DBG("Target: %s", target->ptr);
+        JAMI_LOG("Target: {}", target->ptr);
     } else {
-        JAMI_DBG("No target provided, using 'to' as target");
+        JAMI_LOG("No target provided, using 'to' as target");
     }
 
     auto status = pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s %d", to->ptr, status);
+        JAMI_ERROR("Unable to create SIP dialogs for user agent client when calling {} {}", to->ptr, status);
         return false;
     }
 
@@ -97,7 +91,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
         if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
-            JAMI_ERR("Unable to create invite session for user agent client");
+            JAMI_ERROR("Unable to create invite session for user agent client");
             return false;
         }
     }

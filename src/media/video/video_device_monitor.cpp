@@ -139,7 +139,7 @@ VideoDeviceMonitor::setDeviceOrientation(const std::string& id, int angle)
     if (itd != devices_.cend()) {
         itd->setOrientation(angle);
     } else {
-        JAMI_WARN("Unable to find device %s to set orientation %d", id.c_str(), angle);
+        JAMI_WARNING("Unable to find device {} to set orientation {}", id, angle);
     }
 }
 
@@ -207,7 +207,7 @@ VideoDeviceMonitor::addDevice(const string& id, const std::vector<std::map<std::
 
         devices_.emplace_back(std::move(dev));
     } catch (const std::exception& e) {
-        JAMI_ERR("Failed to add device %s: %s", id.c_str(), e.what());
+        JAMI_ERROR("Failed to add device {}: {}", id, e.what());
         return false;
     }
     notify();

@@ -96,15 +96,15 @@ VideoDeviceImpl::selectFormat()
             }
         }
         if (f == and_formats.end())
-            JAMI_WARN("AndroidVideo: No format matching %d", fmt);
+            JAMI_WARNING("AndroidVideo: No format matching {}", fmt);
     }
 
     if (best != UINT_MAX) {
         fmt_ = &and_formats[best];
-        JAMI_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
+        JAMI_LOG("AndroidVideo: picked format {}", fmt_->name);
     } else {
         fmt_ = &and_formats[0];
-        JAMI_ERR("AndroidVideo: Unable to find a known format to use");
+        JAMI_ERROR("AndroidVideo: Unable to find a known format to use");
     }
 }
 
