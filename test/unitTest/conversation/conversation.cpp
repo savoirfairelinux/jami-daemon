@@ -1093,7 +1093,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
     if (git_repository_init_ext(&repo_ptr, repoPath.c_str(), &opts) < 0) {
-        JAMI_ERR("Unable to create a git repository in %s", repoPath.c_str());
+        JAMI_ERROR("Unable to create a git repository in {}", repoPath);
     }
     GitRepository repo {std::move(repo_ptr)};
 
@@ -1113,7 +1113,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     auto deviceCert = cert->toString(false);
     auto parentCert = cert->issuer;
     if (!parentCert) {
-        JAMI_ERR("Parent cert is null!");
+        JAMI_ERROR("Parent cert is null!");
     }
 
     // /admins
@@ -1126,20 +1126,20 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     file.close();
 
     if (!dhtnet::fileutils::recursive_mkdir(devicesPath, 0700)) {
-        JAMI_ERR("Error when creating %s. Abort create conversations", devicesPath.c_str());
+        JAMI_ERROR("Error when creating {}. Abort create conversations", devicesPath);
     }
 
     // /devices
     auto devicePath = devicesPath / fmt::format("{}.crt", cert->getLongId());
     file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERR("Unable to write data to %s", devicePath.c_str());
+        JAMI_ERROR("Unable to write data to {}", devicePath);
     }
     file << (fakeCert.empty() ? deviceCert : fakeCert);
     file.close();
 
     if (!dhtnet::fileutils::recursive_mkdir(crlsPath, 0700)) {
-        JAMI_ERR("Error when creating %s. Abort create conversations", crlsPath.c_str());
+        JAMI_ERROR("Error when creating {}. Abort create conversations", crlsPath);
     }
 
     if (fakeCert.empty()) {
@@ -1150,7 +1150,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 
     addAll(account, "tmp");
 
-    JAMI_INFO("Initial files added in %s", repoPath.c_str());
+    JAMI_LOG("Initial files added in {}", repoPath);
 
     std::string name = account->getDisplayName();
     if (name.empty())
@@ -1164,21 +1164,21 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 
     // Sign commit's buffer
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERR("Unable to create a commit signature.");
+        JAMI_ERROR("Unable to create a commit signature.");
     }
     GitSignature sig {sig_ptr};
 
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERR("Unable to open repository index");
+        JAMI_ERROR("Unable to open repository index");
     }
     GitIndex index {index_ptr};
 
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERR("Unable to write initial tree from index");
+        JAMI_ERROR("Unable to write initial tree from index");
     }
 
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0) {
-        JAMI_ERR("Unable to look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
     }
     GitTree tree = GitTree(tree_ptr);
 
@@ -1187,7 +1187,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     if (git_commit_create_buffer(
             &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
         < 0) {
-        JAMI_ERR("Unable to create initial buffer");
+        JAMI_ERROR("Unable to create initial buffer");
         return {};
     }
 
@@ -1197,7 +1197,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 
     // git commit -S
     if (git_commit_create_with_signature(&commit_id, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
-        JAMI_ERR("Unable to sign initial commit");
+        JAMI_ERROR("Unable to sign initial commit");
         return {};
     }
 

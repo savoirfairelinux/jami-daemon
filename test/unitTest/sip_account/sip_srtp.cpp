@@ -139,7 +139,7 @@ SipSrtpTest::setUp()
     details[ConfProperties::SRTP::KEY_EXCHANGE] = "sdes";
     bobData_.accountId_ = Manager::instance().addAccount(details);
 
-    JAMI_INFO("Initialize accounts ...");
+    JAMI_LOG("Initialize accounts ...");
     auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 }
@@ -147,7 +147,7 @@ SipSrtpTest::setUp()
 void
 SipSrtpTest::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
+    JAMI_LOG("Remove created accounts...");
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -177,7 +177,7 @@ SipSrtpTest::getUserAlias(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return {};
     }
 
@@ -197,11 +197,11 @@ SipSrtpTest::onIncomingCall(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCall::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              mediaList.size());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]",
+             libjami::CallSignal::IncomingCall::name,
+             callData.alias_,
+             callId,
+             mediaList.size());
 
     // NOTE.
     // We shouldn't access shared_ptr<Call> as this event is supposed to mimic
@@ -209,7 +209,7 @@ SipSrtpTest::onIncomingCall(const std::string& accountId,
     // needed to check if the call exists. This is the most straightforward and
     // reliable way to do it until we add a new API (like hasCall(id)).
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -229,21 +229,21 @@ SipSrtpTest::onCallStateChange(const std::string&,
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::StateChange::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              state.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::StateChange::name,
+             callData.alias_,
+             callId,
+             state);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -264,21 +264,21 @@ SipSrtpTest::onMediaNegotiationStatus(const std::string& callId, const std::stri
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::MediaNegotiationStatus::name,
-              account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
-              call->getCallId().c_str(),
-              event.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::MediaNegotiationStatus::name,
+             account->getAccountDetails()[ConfProperties::ALIAS],
+             call->getCallId(),
+             event);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -302,7 +302,7 @@ SipSrtpTest::waitForSignal(CallData& callData, const std::string& expectedSignal
     if (not expectedEvent.empty())
         sigEvent += "::" + expectedEvent;
 
-    JAMI_INFO("[%s] is waiting for [%s] signal/event", callData.alias_.c_str(), sigEvent.c_str());
+    JAMI_LOG("[{}] is waiting for [{}] signal/event", callData.alias_, sigEvent);
 
     auto res = callData.cv_.wait_for(lock, TIME_OUT, [&] {
         // Search for the expected signal in list of received signals.
@@ -322,12 +322,12 @@ SipSrtpTest::waitForSignal(CallData& callData, const std::string& expectedSignal
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
-        JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
+        JAMI_LOG("[{}] currently has the following signals:", callData.alias_);
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "Signal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_LOG("Signal [{}{}]", sig.name_, (sig.event_.empty() ? "" : ("::" + sig.event_)));
         }
     }
 
@@ -388,11 +388,11 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
 void
 SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<MediaAttribute> answer, bool validateMedia)
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     configureTest(aliceData_, bobData_);
 
-    JAMI_INFO("=== Start a call and validate ===");
+    JAMI_LOG("=== Start a call and validate ===");
 
     std::string bobUri = "127.0.0.1:" + std::to_string(bobData_.listeningPort_);
 
@@ -402,9 +402,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
 
     CPPUNIT_ASSERT(not aliceData_.callId_.empty());
 
-    JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData_.accountId_.c_str(),
-              bobData_.accountId_.c_str());
+    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData_.accountId_, bobData_.accountId_);
 
     // Give it some time to ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -426,7 +424,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+    JAMI_LOG("BOB answered the call [{}]", bobData_.callId_);
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
@@ -469,12 +467,12 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
     libjami::hangUp(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
-    JAMI_INFO("Call terminated on both sides");
+    JAMI_LOG("Call terminated on both sides");
 }
 
 void

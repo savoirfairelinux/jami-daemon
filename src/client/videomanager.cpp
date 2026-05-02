@@ -190,7 +190,7 @@ AudioFrame::calcRMS() const
         }
     } else {
         // Should not happen
-        JAMI_ERR() << "Unsupported format for getting volume level: " << av_get_sample_fmt_name(fmt);
+        JAMI_ERROR("Unsupported format for getting volume level: {}", av_get_sample_fmt_name(fmt));
         return 0.0;
     }
     // divide by the number of multi-byte samples
@@ -386,7 +386,7 @@ getDefaultDevice()
 void
 setDefaultDevice(const std::string& deviceId)
 {
-    JAMI_DBG("Setting default device to %s", deviceId.c_str());
+    JAMI_LOG("Setting default device to {}", deviceId);
     if (auto* vm = jami::Manager::instance().getVideoManager()) {
         if (vm->videoDeviceMonitor.setDefaultDevice(deviceId))
             jami::Manager::instance().saveConfig();
@@ -502,7 +502,7 @@ stopLocalRecorder(const std::string& filepath)
 {
     jami::LocalRecorder* rec = jami::LocalRecorderManager::instance().getRecorderByPath(filepath);
     if (!rec) {
-        JAMI_WARN("Unable to stop non existing local recorder.");
+        JAMI_WARNING("Unable to stop non existing local recorder.");
         return;
     }
 
@@ -518,7 +518,7 @@ registerSinkTarget(const std::string& sinkId, SinkTarget target)
         sink->registerTarget(std::move(target));
         return true;
     } else
-        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+        JAMI_WARNING("No sink found for id '{}'", sinkId);
 #endif
     return false;
 }
@@ -531,7 +531,7 @@ startShmSink(const std::string& sinkId, bool value)
     if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
         sink->enableShm(value);
     else
-        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+        JAMI_WARNING("No sink found for id '{}'", sinkId);
 #endif
 }
 #endif
@@ -619,7 +619,7 @@ void
 setDecodingAccelerated(bool state)
 {
 #ifdef ENABLE_HWACCEL
-    JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
+    JAMI_LOG("{} hardware acceleration", (state ? "Enabling" : "Disabling"));
     if (jami::Manager::instance().videoPreferences.setDecodingAccelerated(state))
         jami::Manager::instance().saveConfig();
 #endif
@@ -639,7 +639,7 @@ void
 setEncodingAccelerated(bool state)
 {
 #ifdef ENABLE_HWACCEL
-    JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
+    JAMI_LOG("{} hardware acceleration", (state ? "Enabling" : "Disabling"));
     if (jami::Manager::instance().videoPreferences.setEncodingAccelerated(state))
         jami::Manager::instance().saveConfig();
     else

@@ -167,7 +167,7 @@ Preferences::verifyAccountOrder(const std::vector<std::string>& accountIDs)
             if (find(accountIDs.begin(), accountIDs.end(), token) != accountIDs.end())
                 tokens.push_back(token);
             else {
-                JAMI_DBG("Dropping nonexistent account %s", token.c_str());
+                JAMI_LOG("Dropping nonexistent account {}", token);
                 drop = true;
             }
             token.clear();
@@ -262,7 +262,7 @@ Preferences::unserialize(const YAML::Node& in)
             try {
                 pendingAccountIds_.insert(entry.as<std::string>());
             } catch (const YAML::Exception& e) {
-                JAMI_WARN("[config] Unable to read pending account id: %s", e.what());
+                JAMI_WARNING("[config] Unable to read pending account id: {}", e.what());
             }
         }
     }
@@ -324,7 +324,7 @@ static void
 checkSoundCard(int& card, AudioDeviceType type)
 {
     if (not AlsaLayer::soundCardIndexExists(card, type)) {
-        JAMI_WARN(" Card with index %d doesn't exist or is unusable.", card);
+        JAMI_WARNING(" Card with index {} doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
@@ -344,7 +344,7 @@ AudioPreference::createAudioLayer()
                 throw std::runtime_error("Error running jack_lsp: " + std::to_string(ret));
             return new JackLayer(*this);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("%s", e.what());
+            JAMI_ERROR("{}", e.what());
 #if HAVE_PULSE
             audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
@@ -366,7 +366,7 @@ AudioPreference::createAudioLayer()
         try {
             return new PulseLayer(*this);
         } catch (const std::runtime_error& e) {
-            JAMI_WARN("Unable to create pulseaudio layer, falling back to ALSA");
+            JAMI_WARNING("Unable to create pulseaudio layer, falling back to ALSA");
         }
     }
 
@@ -387,7 +387,7 @@ AudioPreference::createAudioLayer()
     try {
         return new CoreLayer(*this);
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Unable to create coreaudio layer. There will be no sound.");
+        JAMI_WARNING("Unable to create coreaudio layer. There will be no sound.");
     }
     return NULL;
 #endif
@@ -397,13 +397,13 @@ AudioPreference::createAudioLayer()
     try {
         return new PortAudioLayer(*this);
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Unable to create PortAudio layer. There will be no sound.");
+        JAMI_WARNING("Unable to create PortAudio layer. There will be no sound.");
     }
     return nullptr;
 #endif
 #endif // HAVE_AAUDIO
 
-    JAMI_WARN("No audio layer provided");
+    JAMI_WARNING("No audio layer provided");
     return nullptr;
 }
 
@@ -487,7 +487,7 @@ AudioPreference::setRecordPath(const std::string& r)
         recordpath_ = path;
         return true;
     } else {
-        JAMI_ERR("%s is not writable, unable to be the recording path", path.c_str());
+        JAMI_ERROR("{} is not writable, unable to be the recording path", path);
         return false;
     }
 }

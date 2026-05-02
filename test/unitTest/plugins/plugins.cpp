@@ -158,11 +158,11 @@ PluginsTest::onIncomingCall(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCall::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              mediaList.size());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]",
+             libjami::CallSignal::IncomingCall::name,
+             callData.alias_,
+             callId,
+             mediaList.size());
 
     // NOTE.
     // We shouldn't access shared_ptr<Call> as this event is supposed to mimic
@@ -170,7 +170,7 @@ PluginsTest::onIncomingCall(const std::string& accountId,
     // needed to check if the call exists. This is the most straightforward and
     // reliable way to do it until we add a new API (like hasCall(id)).
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -188,11 +188,11 @@ PluginsTest::onCallStateChange(const std::string& accountId,
                                const std::string& state,
                                CallData& callData)
 {
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::StateChange::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              state.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::StateChange::name,
+             callData.alias_,
+             callId,
+             state);
 
     CPPUNIT_ASSERT(accountId == callData.accountId_);
 
@@ -560,7 +560,7 @@ PluginsTest::waitForSignal(CallData& callData, const std::string& expectedSignal
     if (not expectedEvent.empty())
         sigEvent += "::" + expectedEvent;
 
-    JAMI_INFO("[%s] is waiting for [%s] signal/event", callData.alias_.c_str(), sigEvent.c_str());
+    JAMI_LOG("[{}] is waiting for [{}] signal/event", callData.alias_, sigEvent);
 
     auto res = callData.cv_.wait_for(lock, TIME_OUT, [&] {
         // Search for the expected signal in list of received signals.
@@ -580,12 +580,12 @@ PluginsTest::waitForSignal(CallData& callData, const std::string& expectedSignal
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
-        JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
+        JAMI_LOG("[{}] currently has the following signals:", callData.alias_);
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "\tSignal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_LOG("\tSignal [{}{}]", sig.name_, (sig.event_.empty() ? "" : ("::" + sig.event_)));
         }
     }
 
@@ -618,7 +618,7 @@ PluginsTest::testCall()
     answer.emplace_back(MediaAttribute(defaultAudio));
     answer.emplace_back(MediaAttribute(defaultVideo));
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
                                                     bobData.userName_,
                                                     MediaAttribute::mediaAttributesToMediaMaps(request));
@@ -629,9 +629,7 @@ PluginsTest::testCall()
 
     aliceData.callId_ = aliceCall->getCallId();
 
-    JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData.accountId_.c_str(),
-              bobData.accountId_.c_str());
+    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData.accountId_, bobData.accountId_);
 
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
@@ -648,7 +646,7 @@ PluginsTest::testCall()
                                        libjami::CallSignal::StateChange::name,
                                        libjami::Call::StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData.callId_.c_str());
+    JAMI_LOG("BOB answered the call [{}]", bobData.callId_);
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
     auto mediaHandlers = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlers();
@@ -677,7 +675,7 @@ PluginsTest::testCall()
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
     // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
     libjami::hangUp(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
@@ -685,7 +683,7 @@ PluginsTest::testCall()
                                        libjami::CallSignal::StateChange::name,
                                        libjami::Call::StateEvent::HUNGUP));
 
-    JAMI_INFO("Call terminated on both sides");
+    JAMI_LOG("Call terminated on both sides");
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
 }
 

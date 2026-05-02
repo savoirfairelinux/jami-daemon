@@ -33,12 +33,12 @@ ThreadLoop::mainloop(std::thread::id& tid,
                 process();
             cleanup();
         } else {
-            JAMI_ERR("setup failed");
+            JAMI_ERROR("setup failed");
         }
     } catch (const ThreadLoopException& e) {
-        JAMI_ERR("[threadloop:%p] ThreadLoopException: %s", this, e.what());
+        JAMI_ERROR("[threadloop:{}] ThreadLoopException: {}", fmt::ptr(this), e.what());
     } catch (const std::exception& e) {
-        JAMI_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
+        JAMI_ERROR("[threadloop:{}] Unwaited exception: {}", fmt::ptr(this), e.what());
     }
     stop();
 }
@@ -55,7 +55,7 @@ ThreadLoop::ThreadLoop(const std::function<bool()>& setup,
 ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {
-        JAMI_ERR("join() should be explicitly called in owner's destructor");
+        JAMI_ERROR("join() should be explicitly called in owner's destructor");
         join();
     }
 }
@@ -66,13 +66,13 @@ ThreadLoop::start()
     const auto s = state_.load();
 
     if (s == ThreadState::RUNNING) {
-        JAMI_ERR("already started");
+        JAMI_ERROR("already started");
         return;
     }
 
     // stop pending but not processed by thread yet?
     if (s == ThreadState::STOPPING and thread_.joinable()) {
-        JAMI_DBG("stop pending");
+        JAMI_LOG("stop pending");
         thread_.join();
     }
 

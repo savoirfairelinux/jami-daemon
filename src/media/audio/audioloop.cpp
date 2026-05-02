@@ -49,7 +49,7 @@ void
 AudioLoop::getNext(AVFrame* output, bool mute)
 {
     if (!buffer_) {
-        JAMI_ERR("buffer is NULL");
+        JAMI_ERROR("buffer is NULL");
         return;
     }
 
@@ -59,7 +59,7 @@ AudioLoop::getNext(AVFrame* output, bool mute)
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
-        JAMI_ERR("Audio loop size is 0");
+        JAMI_ERROR("Audio loop size is 0");
         av_samples_set_silence(output->data,
                                0,
                                output->nb_samples,
@@ -67,7 +67,7 @@ AudioLoop::getNext(AVFrame* output, bool mute)
                                format_.sampleFormat);
         return;
     } else if (pos >= buf_samples) {
-        JAMI_ERR("Invalid loop position %zu", pos);
+        JAMI_ERROR("Invalid loop position {}", pos);
         return;
     }
 

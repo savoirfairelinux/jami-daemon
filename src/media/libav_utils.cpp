@@ -266,7 +266,7 @@ fillWithBlack(AVFrame* frame)
         linesizes[i] = frame->linesize[i];
     int ret = av_image_fill_black(frame->data, linesizes, format, frame->color_range, frame->width, frame->height);
     if (ret < 0) {
-        JAMI_ERR() << "Failed to blacken frame";
+        JAMI_ERROR("Failed to blacken frame");
     }
 }
 
@@ -279,7 +279,7 @@ fillWithSilence(AVFrame* frame)
                                      frame->ch_layout.nb_channels,
                                      (AVSampleFormat) frame->format);
     if (ret < 0)
-        JAMI_ERR() << "Failed to fill frame with silence";
+        JAMI_ERROR("Failed to fill frame with silence");
 }
 
 AudioFormat
