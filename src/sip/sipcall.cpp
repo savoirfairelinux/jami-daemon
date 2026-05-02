@@ -2697,44 +2697,67 @@ SIPCall::startIceMedia()
 void
 SIPCall::onIceNegoSucceed()
 {
-    std::lock_guard lk {callMutex_};
+    {
+        std::lock_guard lk {callMutex_};
 
-    JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
+        JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
 
-    // Check if the call is already ended, so we don't need to restart medias
-    // This is typically the case in a multi-device context where one device
-    // can stop a call. So do not start medias
-    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
-        JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
-        return;
+        // Check if the call is already ended, so we don't need to restart medias
+        // This is typically the case in a multi-device context where one device
+        // can stop a call. So do not start medias
+        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
+            JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
+            return;
+        }
+
+        // Update the negotiated media.
+        setupNegotiatedMedia();
+
+        // If this callback is for a re-invite session then update
+        // the ICE media transport.
+        if (isIceEnabled())
+            switchToIceReinviteIfNeeded();
+
+        for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += 2) {
+            // Create sockets for RTP and RTCP, and start the session.
+            auto& rtpStream = rtpStreams_[idx];
+            if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
+                JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
+                continue;
+            }
+            rtpStream.rtpSocket_ = newIceSocket(compId);
+
+            if (not rtcpMuxEnabled_) {
+                rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
+            }
+        }
     }
 
-    // Update the negotiated media.
-    setupNegotiatedMedia();
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto call = w.lock()) {
+            {
+                std::lock_guard lk {call->callMutex_};
+                call->stopAllMedia();
+            }
 
-    // If this callback is for a re-invite session then update
-    // the ICE media transport.
-    if (isIceEnabled())
-        switchToIceReinviteIfNeeded();
+            runOnMainThread([w] {
+                if (auto call = w.lock()) {
+                    std::lock_guard lk {call->callMutex_};
 
-    for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += 2) {
-        // Create sockets for RTP and RTCP, and start the session.
-        auto& rtpStream = rtpStreams_[idx];
-        if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
-            JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
-            continue;
+                    if (not call->inviteSession_
+                        or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+                        or not call->sdp_) {
+                        JAMI_DEBUG("[call:{}] Skipping media restart after ICE, call is no longer valid",
+                                   call->getCallId());
+                        return;
+                    }
+
+                    call->startAllMedia();
+                    call->reportMediaNegotiationStatus();
+                }
+            });
         }
-        rtpStream.rtpSocket_ = newIceSocket(compId);
-
-        if (not rtcpMuxEnabled_) {
-            rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
-        }
-    }
-
-    // Start/Restart the media using the new transport
-    stopAllMedia();
-    startAllMedia();
-    reportMediaNegotiationStatus();
+    });
 }
 
 bool
