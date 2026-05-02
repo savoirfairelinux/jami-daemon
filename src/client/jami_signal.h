@@ -73,7 +73,7 @@ emitSignal(Args... args)
             cb(args...);
             jami_tracepoint(emit_signal_end_callback);
         } catch (std::exception& e) {
-            JAMI_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());
+            JAMI_ERROR("Exception during emit signal {}:\n{}", Ts::name, e.what());
         }
     }
 

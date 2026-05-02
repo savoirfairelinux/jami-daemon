@@ -189,7 +189,7 @@ AutoAnswerMediaNegoTestSip::setUp()
     details[ConfProperties::UPNP_ENABLED] = "false";
     bobData_.accountId_ = Manager::instance().addAccount(details);
 
-    JAMI_INFO("Initialize accounts ...");
+    JAMI_LOG("Initialize accounts ...");
     auto aliceAccount = Manager::instance().getAccount<Account>(aliceData_.accountId_);
     auto bobAccount = Manager::instance().getAccount<Account>(bobData_.accountId_);
 }
@@ -197,7 +197,7 @@ AutoAnswerMediaNegoTestSip::setUp()
 void
 AutoAnswerMediaNegoTestSip::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
+    JAMI_LOG("Remove created accounts...");
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -248,7 +248,7 @@ AutoAnswerMediaNegoTestJami::setUp()
     aliceData_.accountId_ = actors["alice"];
     bobData_.accountId_ = actors["bob"];
 
-    JAMI_INFO("Initialize account...");
+    JAMI_LOG("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<Account>(aliceData_.accountId_);
     auto bobAccount = Manager::instance().getAccount<Account>(bobData_.accountId_);
     auto details = bobAccount->getAccountDetails();
@@ -269,7 +269,7 @@ AutoAnswerMediaNegoTest::getUserAlias(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return {};
     }
 
@@ -358,10 +358,7 @@ AutoAnswerMediaNegoTest::validateMediaDirection(std::vector<MediaDescription> de
         auto negotiated = inferNegotiatedDirection(local, remote);
 
         if (descrList[idx].direction_ != negotiated) {
-            JAMI_WARN("Media [%lu] direction mismatch: expected %i - found %i",
-                      idx,
-                      static_cast<int>(negotiated),
-                      static_cast<int>(descrList[idx].direction_));
+            JAMI_WARNING("Media [{}] direction mismatch: expected {} - found {}", idx, static_cast<int>(negotiated), static_cast<int>(descrList[idx].direction_));
             return false;
         }
     }
@@ -377,14 +374,13 @@ AutoAnswerMediaNegoTest::onIncomingCall(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCall::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}u]", libjami::CallSignal::IncomingCall::name,
+              callData.alias_,
+              callId,
               mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -404,14 +400,13 @@ AutoAnswerMediaNegoTest::onMediaChangeRequested(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::MediaChangeRequested::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}u]", libjami::CallSignal::MediaChangeRequested::name,
+              callData.alias_,
+              callId,
               mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -433,21 +428,20 @@ AutoAnswerMediaNegoTest::onCallStateChange(const std::string& accountId UNUSED,
 
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::StateChange::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              state.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]", libjami::CallSignal::StateChange::name,
+              callData.alias_,
+              callId,
+              state);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -468,20 +462,19 @@ AutoAnswerMediaNegoTest::onVideoMuted(const std::string& callId, bool muted, Cal
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist anymore!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::VideoMuted::name,
-              account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
-              call->getCallId().c_str(),
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]", libjami::CallSignal::VideoMuted::name,
+              account->getAccountDetails()[ConfProperties::ALIAS],
+              call->getCallId(),
               muted ? "Mute" : "Un-mute");
 
     if (account->getAccountID() != callData.accountId_)
@@ -503,21 +496,20 @@ AutoAnswerMediaNegoTest::onMediaNegotiationStatus(const std::string& callId,
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call with ID [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::MediaNegotiationStatus::name,
-              account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
-              call->getCallId().c_str(),
-              event.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]", libjami::CallSignal::MediaNegotiationStatus::name,
+              account->getAccountDetails()[ConfProperties::ALIAS],
+              call->getCallId(),
+              event);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -543,7 +535,7 @@ AutoAnswerMediaNegoTest::waitForSignal(CallData& callData,
     if (not expectedEvent.empty())
         sigEvent += "::" + expectedEvent;
 
-    JAMI_INFO("[%s] is waiting for [%s] signal/event", callData.alias_.c_str(), sigEvent.c_str());
+    JAMI_LOG("[{}] is waiting for [{}] signal/event", callData.alias_, sigEvent);
 
     auto res = callData.cv_.wait_for(lock, TIME_OUT, [&] {
         // Search for the expected signal in list of received signals.
@@ -563,12 +555,12 @@ AutoAnswerMediaNegoTest::waitForSignal(CallData& callData,
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
-        JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
+        JAMI_LOG("[{}] currently has the following signals:", callData.alias_);
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "Signal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_LOG("Signal [{}{}]", sig.name_, (sig.event_.empty() ? "" : ("::" + sig.event_)));
         }
     }
 
@@ -654,7 +646,7 @@ AutoAnswerMediaNegoTest::configureScenario()
 void
 AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData, const TestScenario& scenario)
 {
-    JAMI_INFO("=== Start a call and validate ===");
+    JAMI_LOG("=== Start a call and validate ===");
 
     // The media count of the offer and answer must match (RFC-3264).
     auto mediaCount = scenario.offer_.size();
@@ -668,9 +660,8 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
 
     CPPUNIT_ASSERT(aliceCall);
 
-    JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData.accountId_.c_str(),
-              bobData.accountId_.c_str());
+    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData.accountId_,
+              bobData.accountId_);
 
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
@@ -685,7 +676,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData.callId_.c_str());
+    JAMI_LOG("BOB answered the call [{}]", bobData.callId_);
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT_EQUAL(true,
@@ -734,7 +725,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    JAMI_INFO("=== Request Media Change and validate ===");
+    JAMI_LOG("=== Request Media Change and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
         libjami::requestMediaChange(aliceData.accountId_, aliceData.callId_, mediaList);
@@ -793,18 +784,18 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
     libjami::hangUp(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
-    JAMI_INFO("Call terminated on both sides");
+    JAMI_LOG("Call terminated on both sides");
 }
 
 void
 AutoAnswerMediaNegoTest::audio_and_video_then_caller_mute_video()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     configureScenario();
 
@@ -840,13 +831,13 @@ AutoAnswerMediaNegoTest::audio_and_video_then_caller_mute_video()
 
     libjami::unregisterSignalHandlers();
 
-    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+    JAMI_LOG("=== End test {} ===", __FUNCTION__);
 }
 
 void
 AutoAnswerMediaNegoTest::audio_only_then_caller_add_video()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     configureScenario();
 
@@ -876,13 +867,13 @@ AutoAnswerMediaNegoTest::audio_only_then_caller_add_video()
 
     libjami::unregisterSignalHandlers();
 
-    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+    JAMI_LOG("=== End test {} ===", __FUNCTION__);
 }
 
 void
 AutoAnswerMediaNegoTest::audio_and_video_then_caller_mute_audio()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     configureScenario();
 
@@ -919,13 +910,13 @@ AutoAnswerMediaNegoTest::audio_and_video_then_caller_mute_audio()
 
     libjami::unregisterSignalHandlers();
 
-    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+    JAMI_LOG("=== End test {} ===", __FUNCTION__);
 }
 
 void
 AutoAnswerMediaNegoTest::audio_and_video_then_change_video_source()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     configureScenario();
 
@@ -963,7 +954,7 @@ AutoAnswerMediaNegoTest::audio_and_video_then_change_video_source()
 
     libjami::unregisterSignalHandlers();
 
-    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+    JAMI_LOG("=== End test {} ===", __FUNCTION__);
 }
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestSip, AutoAnswerMediaNegoTestSip::name());

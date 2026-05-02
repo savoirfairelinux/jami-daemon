@@ -90,7 +90,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     const auto* iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
-        JAMI_WARN("Unable to find format \"%s\"", params.format.c_str());
+        JAMI_WARNING("Unable to find format \"{}\"", params.format);
 
     std::string input;
 
@@ -251,7 +251,7 @@ MediaDemuxer::selectStream(AVMediaType type)
         auto* st = inputCtx_->streams[sti];
         auto disposition = st->disposition;
         if (disposition & AV_DISPOSITION_ATTACHED_PIC) {
-            JAMI_DBG("Skipping attached picture stream");
+            JAMI_LOG("Skipping attached picture stream");
             sti = -1;
         }
     }
@@ -360,7 +360,7 @@ MediaDemuxer::demuxe()
         } else if (ret == AVERROR_EOF) {
             return Status::EndOfFile;
         } else if (ret < 0) {
-            JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
+            JAMI_ERROR("Unable to read frame: {}", libav_utils::getError(ret));
             return Status::ReadError;
         }
 
@@ -400,7 +400,7 @@ MediaDemuxer::decode()
     if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
-            JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
+            JAMI_ERROR("Unable to read frame: {}\n", libav_utils::getError(ret));
             return Status::ReadError;
         }
         auto* codecpar = inputCtx_->streams[0]->codecpar;
@@ -440,7 +440,7 @@ MediaDemuxer::decode()
         const auto* const type = media == AVMediaType::AVMEDIA_TYPE_AUDIO
                                      ? "AUDIO"
                                      : (media == AVMediaType::AVMEDIA_TYPE_VIDEO ? "VIDEO" : "UNSUPPORTED");
-        JAMI_ERR("Unable to read [%s] frame: %s\n", type, libav_utils::getError(ret).c_str());
+        JAMI_ERROR("Unable to read [{}] frame: {}", type, libav_utils::getError(ret));
         return Status::ReadError;
     }
 
@@ -539,12 +539,12 @@ MediaDecoder::setup(AVMediaType type)
     demuxer_->findStreamInfo(type == AVMEDIA_TYPE_VIDEO);
     auto stream = demuxer_->selectStream(type);
     if (stream < 0) {
-        JAMI_ERR("No stream found for type %i", static_cast<int>(type));
+        JAMI_ERROR("No stream found for type {}", static_cast<int>(type));
         return -1;
     }
     avStream_ = demuxer_->getStream(stream);
     if (avStream_ == nullptr) {
-        JAMI_ERR("No stream found at index %i", stream);
+        JAMI_ERROR("No stream found at index {}", stream);
         return -1;
     }
     demuxer_->setStreamCallback(stream, [this](AVPacket& packet) { return decode(packet); });
@@ -584,18 +584,18 @@ MediaDecoder::setupStream()
             decoderCtx_->pix_fmt = accel_->getFormat();
             if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
                 // Failed to open codec
-                JAMI_WARN("Fail to open hardware decoder for %s with %s",
-                          avcodec_get_name(decoderCtx_->codec_id),
-                          it.getName().c_str());
+                JAMI_WARNING("Fail to open hardware decoder for {} with {}",
+                             avcodec_get_name(decoderCtx_->codec_id),
+                             it.getName());
                 avcodec_free_context(&decoderCtx_);
                 decoderCtx_ = nullptr;
                 accel_.reset();
                 continue;
             } else {
                 // Codec opened successfully.
-                JAMI_WARN("Using hardware decoding for %s with %s",
-                          avcodec_get_name(decoderCtx_->codec_id),
-                          it.getName().c_str());
+                JAMI_WARNING("Using hardware decoding for {} with {}",
+                             avcodec_get_name(decoderCtx_->codec_id),
+                             it.getName());
                 break;
             }
         }
@@ -608,19 +608,19 @@ MediaDecoder::setupStream()
              av_get_media_type_string(avStream_->codecpar->codec_type));
     decoderCtx_->thread_count = std::max(1, std::min(8, static_cast<int>(std::thread::hardware_concurrency()) / 2));
     if (emulateRate_)
-        JAMI_DBG() << "Using framerate emulation";
+        JAMI_LOG("Using framerate emulation");
     startTime_ = av_gettime(); // Used to set pts after decoding, and for rate emulation
 
 #ifdef ENABLE_HWACCEL
     if (!accel_) {
-        JAMI_WARN("Not using hardware decoding for %s", avcodec_get_name(decoderCtx_->codec_id));
+        JAMI_WARNING("Not using hardware decoding for {}", avcodec_get_name(decoderCtx_->codec_id));
         ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     }
 #else
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
 #endif
     if (ret < 0) {
-        JAMI_ERR() << "Unable to open codec: " << libav_utils::getError(ret);
+        JAMI_ERROR("Unable to open codec: {}", libav_utils::getError(ret));
         return -1;
     }
 
@@ -703,7 +703,7 @@ MediaDecoder::decode(AVPacket& packet)
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
 #ifdef ENABLE_HWACCEL
         if (accel_) {
-            JAMI_WARN("Decoding error falling back to software");
+            JAMI_WARNING("Decoding error falling back to software");
             fallback_ = true;
             accel_.reset();
             avcodec_flush_buffers(decoderCtx_);
@@ -736,7 +736,7 @@ MediaDecoder::decode(AVPacket& packet)
     frame->time_base = decoderCtx_->time_base;
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
-            JAMI_DBG("Resolution changed from %dx%d to %dx%d", width_, height_, decoderCtx_->width, decoderCtx_->height);
+            JAMI_LOG("Resolution changed from {}x{} to {}x{}", width_, height_, decoderCtx_->width, decoderCtx_->height);
             width_ = decoderCtx_->width;
             height_ = decoderCtx_->height;
             resolutionChangedCallback_(width_, height_);
@@ -927,7 +927,7 @@ MediaStream
 MediaDecoder::getStream(const std::string& name) const
 {
     if (!decoderCtx_) {
-        JAMI_WARN("No decoder context");
+        JAMI_WARNING("No decoder context");
         return {};
     }
     auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);

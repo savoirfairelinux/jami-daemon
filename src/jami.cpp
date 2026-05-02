@@ -136,7 +136,7 @@ logging(const std::string& whom, const std::string& action) noexcept
     } else if ("file" == whom) {
         jami::Logger::setFileLog(action);
     } else {
-        JAMI_ERR("Bad log handler %s", whom.c_str());
+        JAMI_ERROR("Bad log handler {}", whom);
     }
 }
 

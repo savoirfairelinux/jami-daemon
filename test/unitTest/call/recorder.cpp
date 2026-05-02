@@ -200,12 +200,12 @@ RecorderTest::registerSignalHandlers()
 void
 RecorderTest::testRecordCall()
 {
-    JAMI_INFO("Start testRecordCall");
+    JAMI_LOG("Start testRecordCall");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
                                                            libjami::Media::MediaAttributeValue::AUDIO},
@@ -295,18 +295,18 @@ RecorderTest::testRecordCall()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-    JAMI_INFO("End testRecordCall");
+    JAMI_LOG("End testRecordCall");
 }
 
 void
 RecorderTest::testRecordAudioOnlyCall()
 {
-    JAMI_INFO("Start testRecordAudioOnlyCall");
+    JAMI_LOG("Start testRecordAudioOnlyCall");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     // Audio only call
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
@@ -338,13 +338,13 @@ RecorderTest::testRecordAudioOnlyCall()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-    JAMI_INFO("End testRecordAudioOnlyCall");
+    JAMI_LOG("End testRecordAudioOnlyCall");
 }
 
 void
 RecorderTest::testRecordCallOnePersonRdv()
 {
-    JAMI_INFO("Start testRecordCallOnePersonRdv");
+    JAMI_LOG("Start testRecordCallOnePersonRdv");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -358,7 +358,7 @@ RecorderTest::testRecordCallOnePersonRdv()
 
     recordedFile.clear();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     // Audio only call
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
@@ -389,18 +389,18 @@ RecorderTest::testRecordCallOnePersonRdv()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-    JAMI_INFO("End testRecordCallOnePersonRdv");
+    JAMI_LOG("End testRecordCallOnePersonRdv");
 }
 
 void
 RecorderTest::testStopCallWhileRecording()
 {
-    JAMI_INFO("Start testStopCallWhileRecording");
+    JAMI_LOG("Start testStopCallWhileRecording");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
                                                            libjami::Media::MediaAttributeValue::AUDIO},
@@ -439,13 +439,13 @@ RecorderTest::testStopCallWhileRecording()
         return bobCall.state == "OVER" && !recordedFile.empty() && recordingFinalized
                && recordedFile.find(".webm") != std::string::npos;
     }));
-    JAMI_INFO("End testStopCallWhileRecording");
+    JAMI_LOG("End testStopCallWhileRecording");
 }
 
 void
 RecorderTest::testDaemonPreference()
 {
-    JAMI_INFO("Start testDaemonPreference");
+    JAMI_LOG("Start testDaemonPreference");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -453,7 +453,7 @@ RecorderTest::testDaemonPreference()
     libjami::setIsAlwaysRecording(true);
     recordedFile.clear();
 
-    JAMI_INFO("Start call between Alice and Bob");
+    JAMI_LOG("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
                                                            libjami::Media::MediaAttributeValue::AUDIO},
@@ -485,7 +485,7 @@ RecorderTest::testDaemonPreference()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.state == "OVER" && !recordedFile.empty() && recordedFile.find(".webm") != std::string::npos;
     }));
-    JAMI_INFO("End testDaemonPreference");
+    JAMI_LOG("End testDaemonPreference");
 }
 
 } // namespace test

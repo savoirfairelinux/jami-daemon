@@ -122,7 +122,7 @@ CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 bool
 CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 {
-    JAMI_DBG("iOS CoreLayer - initializing audio session");
+    JAMI_DEBUG("iOS CoreLayer - initializing audio session");
 
     AudioComponentDescription outputUnitDescription;
     outputUnitDescription.componentType             = kAudioUnitType_Output;
@@ -133,7 +133,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     auto comp = AudioComponentFindNext(nullptr, &outputUnitDescription);
     if (comp == nullptr) {
-        JAMI_ERR("Unable to find default output audio component.");
+        JAMI_ERROR("Unable to find default output audio component.");
         return false;
     }
 
@@ -155,7 +155,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
         return false;
     }
     auto playBackDeviceList = getPlaybackDeviceList();
-    JAMI_DBG("Setting playback device: %s", playBackDeviceList[indexOut_].c_str());
+    JAMI_DEBUG("Setting playback device: {}", playBackDeviceList[indexOut_]);
     switch(indexOut_) {
         case 0:
             [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
@@ -179,7 +179,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
 void
 CoreLayer::setupOutputBus() {
-    JAMI_DBG("iOS CoreLayer - initializing output bus");
+    JAMI_DEBUG("iOS CoreLayer - initializing output bus");
 
     AudioUnitScope outputBus = 0;
     UInt32 size;
@@ -226,7 +226,7 @@ CoreLayer::setupOutputBus() {
 
 void
 CoreLayer::setupInputBus() {
-    JAMI_DBG("Initializing input bus");
+    JAMI_DEBUG("Initializing input bus");
 
     AudioUnitScope inputBus = 1;
     UInt32 size;
@@ -332,7 +332,7 @@ void
 CoreLayer::startStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueIOS(), ^{
-        JAMI_DBG("iOS CoreLayer - Start Stream");
+        JAMI_DEBUG("iOS CoreLayer - Start Stream");
         auto currentCategory =  [[AVAudioSession sharedInstance] category];
 
         bool updateStream = currentCategory == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
@@ -354,7 +354,7 @@ CoreLayer::startStream(AudioDeviceType stream)
 void
 CoreLayer::destroyAudioLayer()
 {
-    JAMI_DBG("iOS CoreLayer - destroy Audio layer");
+    JAMI_DEBUG("iOS CoreLayer - destroy Audio layer");
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
@@ -365,7 +365,7 @@ void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueIOS(), ^{
-        JAMI_DBG("iOS CoreLayer - Stop Stream");
+        JAMI_DEBUG("iOS CoreLayer - Stop Stream");
         auto currentCategory =  [[AVAudioSession sharedInstance] category];
         bool keepCurrentStream = currentCategory == AVAudioSessionCategoryPlayAndRecord && (stream == AudioDeviceType::PLAYBACK);
         if (status_ != Status::Started || keepCurrentStream)
@@ -438,7 +438,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     (void) ioData;
 
     if (inNumberFrames <= 0) {
-        JAMI_WARN("No frames for input.");
+        JAMI_WARNING("No frames for input.");
         return;
     }
 
