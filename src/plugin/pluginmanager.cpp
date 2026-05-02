@@ -33,7 +33,7 @@ PluginManager::~PluginManager()
         try {
             func.second();
         } catch (...) {
-            JAMI_ERR() << "Exception caught during plugin exit";
+            JAMI_ERROR("Exception caught during plugin exit");
         }
     }
 
@@ -55,14 +55,14 @@ PluginManager::load(const std::string& path)
     // Load plugin library
     std::unique_ptr<Plugin> plugin(Plugin::load(path, error));
     if (!plugin) {
-        JAMI_ERR() << "Plugin: " << error;
+        JAMI_ERROR("Plugin: {}", error);
         return false;
     }
 
     // Get init function from loaded library
     const auto& init_func = plugin->getInitFunction();
     if (!init_func) {
-        JAMI_ERR() << "Plugin: no init symbol" << error;
+        JAMI_ERROR("Plugin: no init symbol{}", error);
         return false;
     }
 
@@ -141,12 +141,12 @@ PluginManager::callPluginInitFunction(const std::string& path)
             // Call Plugin Init function
             exitFunc = initFunc(&plugin->api_);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
             return false;
         }
 
         if (!exitFunc) {
-            JAMI_ERR() << "Plugin: init failed";
+            JAMI_ERROR("Plugin: init failed");
             // emit signal with error message to let user know that jamid was unable to load plugin
             returnValue = false;
         } else {
@@ -175,7 +175,7 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
         auto* plugin = static_cast<DLPlugin*>(api->context);
         auto* manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
-            JAMI_ERR() << "invokeService called with null plugin API";
+            JAMI_ERROR("invokeService called with null plugin API");
             return -1;
         }
 
@@ -187,12 +187,12 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
     pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void* data) {
         auto* plugin = static_cast<DLPlugin*>(api->context);
         if (!plugin) {
-            JAMI_ERR() << "createComponent called with null context";
+            JAMI_ERROR("createComponent called with null context");
             return -1;
         }
         auto* manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
-            JAMI_ERR() << "createComponent called with null plugin API";
+            JAMI_ERROR("createComponent called with null plugin API");
             return -1;
         }
         return manager->manageComponent(plugin, name, data);
@@ -201,11 +201,11 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
     try {
         exitFunc = initFunc(&pluginPtr->api_);
     } catch (const std::runtime_error& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
     }
 
     if (!exitFunc) {
-        JAMI_ERR() << "Plugin: init failed";
+        JAMI_ERROR("Plugin: init failed");
         return false;
     }
 
@@ -232,7 +232,7 @@ PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, vo
     // Search if desired service exists
     const auto& iterFunc = services_.find(name);
     if (iterFunc == services_.cend()) {
-        JAMI_ERR() << "Services not found: " << name;
+        JAMI_ERROR("Services not found: {}", name);
         return -1;
     }
 
@@ -242,7 +242,7 @@ PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, vo
         // Call service with data
         return func(plugin, data);
     } catch (const std::runtime_error& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return -1;
     }
 }
@@ -252,7 +252,7 @@ PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, 
 {
     const auto& iter = componentsLifeCycleManagers_.find(name);
     if (iter == componentsLifeCycleManagers_.end()) {
-        JAMI_ERR() << "Component lifecycle manager not found: " << name;
+        JAMI_ERROR("Component lifecycle manager not found: {}", name);
         return -1;
     }
 
@@ -265,7 +265,7 @@ PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, 
         }
         return r;
     } catch (const std::runtime_error& e) {
-        JAMI_ERR() << e.what();
+        JAMI_ERROR("{}", e.what());
         return -1;
     }
 }
@@ -345,7 +345,7 @@ PluginManager::createObject(const std::string& type)
             // (but keep also wildcard registration for other object types)
             int32_t res = registerObjectFactory(op.type, factory.data);
             if (res < 0) {
-                JAMI_ERR() << "failed to register object " << op.type;
+                JAMI_ERROR("failed to register object {}", op.type);
                 return {nullptr, nullptr};
             }
 
@@ -361,12 +361,12 @@ PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* typ
 {
     auto* manager = reinterpret_cast<PluginManager*>(api->context);
     if (!manager) {
-        JAMI_ERR() << "registerObjectFactory called with null plugin API";
+        JAMI_ERROR("registerObjectFactory called with null plugin API");
         return -1;
     }
 
     if (!data) {
-        JAMI_ERR() << "registerObjectFactory called with null factory data";
+        JAMI_ERROR("registerObjectFactory called with null factory data");
         return -1;
     }
 

@@ -81,7 +81,7 @@ void VideoDeviceMonitorImpl::start()
             try {
                 monitor_->addDevice([[avf_device uniqueID] UTF8String]);
             } catch (const std::runtime_error &e) {
-                JAMI_ERR("%s", e.what());
+                JAMI_ERROR("{}", e.what());
             }
         }
     }

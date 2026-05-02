@@ -51,12 +51,12 @@ connectPorts(jack_client_t* client, int portType, const std::vector<jack_port_t*
         const char* port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
-                JAMI_ERR("Unable to connect %s to %s", port, physical_ports[i]);
+                JAMI_ERROR("Unable to connect {} to {}", port, physical_ports[i]);
                 break;
             }
         } else {
             if (jack_connect(client, physical_ports[i], port)) {
-                JAMI_ERR("Unable to connect port %s to %s", physical_ports[i], port);
+                JAMI_ERROR("Unable to connect port {} to {}", physical_ports[i], port);
                 break;
             }
         }
@@ -244,9 +244,9 @@ JackLayer::~JackLayer()
         jack_port_unregister(captureClient_, p);
 
     if (jack_client_close(playbackClient_))
-        JAMI_ERR("Unable to close JACK client");
+        JAMI_ERROR("Unable to close JACK client");
     if (jack_client_close(captureClient_))
-        JAMI_ERR("Unable to close JACK client");
+        JAMI_ERROR("Unable to close JACK client");
 
     for (auto r : out_ringbuffers_)
         jack_ringbuffer_free(r);
@@ -316,7 +316,7 @@ JackLayer::process_capture(jack_nframes_t frames, void* arg)
         // fill the rest with silence
         if (bytes_to_rb < bytes_to_read) {
             // TODO: set some flag for underrun?
-            JAMI_WARN("Dropped %lu bytes", bytes_to_read - bytes_to_rb);
+            JAMI_WARNING("Dropped {} bytes", bytes_to_read - bytes_to_rb);
         }
     }
 
@@ -368,7 +368,7 @@ JackLayer::startStream(AudioDeviceType)
     status_ = Status::Started;
 
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
-        JAMI_ERR("Unable to activate JACK client");
+        JAMI_ERROR("Unable to activate JACK client");
         return;
     }
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
@@ -379,7 +379,7 @@ JackLayer::startStream(AudioDeviceType)
 void
 JackLayer::onShutdown(void* /* data */)
 {
-    JAMI_WARN("JACK server shutdown");
+    JAMI_WARNING("JACK server shutdown");
     // FIXME: handle this safely
 }
 
@@ -396,7 +396,7 @@ JackLayer::stopStream(AudioDeviceType)
     data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
-        JAMI_ERR("Unable to deactivate JACK client");
+        JAMI_ERROR("Unable to deactivate JACK client");
     }
 
     if (ringbuffer_thread_.joinable())

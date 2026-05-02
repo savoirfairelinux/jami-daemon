@@ -339,7 +339,7 @@ JamiAccount::~JamiAccount() noexcept
 void
 JamiAccount::shutdownConnections()
 {
-    JAMI_DBG("[Account %s] Shutdown connections", getAccountID().c_str());
+    JAMI_LOG("[Account {}] Shutdown connections", getAccountID());
 
     decltype(gitServers_) gservers;
     {
@@ -392,7 +392,7 @@ JamiAccount::newIncomingCall(const std::string& from,
         return call;
     }
 
-    JAMI_ERR("newIncomingCall: unable to find matching call for %s", from.c_str());
+    JAMI_ERROR("newIncomingCall: unable to find matching call for {}", from);
     return nullptr;
 }
 
@@ -413,7 +413,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     if (not mediaList.empty()) {
         call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
     } else {
-        JAMI_WARN("Media list is empty, setting a default list");
+        JAMI_WARNING("Media list is empty, setting a default list");
         call = manager.callFactory.newSipCall(shared(),
                                               Call::CallType::OUTGOING,
                                               MediaAttribute::mediaAttributesToMediaMaps(
@@ -437,7 +437,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
         auto shared = w.lock();
         if (!shared)
             return;
-        JAMI_DBG() << "New outgoing call with " << uri.toString();
+        JAMI_LOG("New outgoing call with {}", uri.toString());
         call->setPeerNumber(uri.authority());
         call->setPeerUri(uri.toString());
 
@@ -498,7 +498,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjam
                 auto& sipConn = value.back();
 
                 if (!sipConn.channel) {
-                    JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
+                    JAMI_WARNING("A SIP transport exists without Channel, this is a bug. Please report");
                     continue;
                 }
 
@@ -1050,8 +1050,7 @@ JamiAccount::provideAccountAuthentication(const std::string& credentialsFromUser
     if (auto manager = std::dynamic_pointer_cast<ArchiveAccountManager>(accountManager_)) {
         return manager->provideAccountAuthentication(credentialsFromUser, scheme);
     }
-    JAMI_ERR("[LinkDevice] Invalid AccountManager instance while providing current account "
-             "authentication.");
+    JAMI_ERROR("[LinkDevice] Invalid AccountManager instance while providing current account authentication.");
     return false;
 }
 
@@ -1060,7 +1059,7 @@ JamiAccount::addDevice(const std::string& uriProvided)
 {
     JAMI_LOG("[LinkDevice] JamiAccount::addDevice({}, {})", getAccountID(), uriProvided);
     if (not accountManager_) {
-        JAMI_ERR("[LinkDevice] Invalid AccountManager instance while adding a device.");
+        JAMI_ERROR("[LinkDevice] Invalid AccountManager instance while adding a device.");
         return static_cast<int32_t>(AccountManager::AddDeviceError::GENERIC);
     }
     auto authHandler = channelHandlers_.find(Uri::Scheme::AUTH);
@@ -1740,7 +1739,7 @@ JamiAccount::loadBootstrap() const
     while (jami::getline(stream, node_addr, ';'))
         bootstrap.emplace_back(node_addr);
     for (const auto& b : bootstrap)
-        JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
+        JAMI_LOG("[Account {}] Bootstrap node: {}", getAccountID(), b);
     return bootstrap;
 }
 
@@ -1977,7 +1976,7 @@ JamiAccount::doRegister_()
         if (presenceManager_)
             presenceManager_->refresh();
     } catch (const std::exception& e) {
-        JAMI_ERR("Error registering DHT account: %s", e.what());
+        JAMI_ERROR("Error registering DHT account: {}", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
@@ -2460,7 +2459,7 @@ SyncModule*
 JamiAccount::syncModule()
 {
     if (!accountManager() || currentDeviceId() == "") {
-        JAMI_ERR() << "Calling syncModule() with an uninitialized account.";
+        JAMI_ERROR("Calling syncModule() with an uninitialized account.");
         return nullptr;
     }
     std::lock_guard lk(moduleMtx_);
@@ -2506,10 +2505,10 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
 
-    JAMI_WARN("[Account %s] Unregistering account %p", getAccountID().c_str(), this);
+    JAMI_WARNING("[Account {}] Unregistering account {}", getAccountID(), fmt::ptr(this));
     dht_->shutdown(
         [&] {
-            JAMI_WARN("[Account %s] DHT shutdown complete", getAccountID().c_str());
+            JAMI_WARNING("[Account {}] DHT shutdown complete", getAccountID());
             std::lock_guard lock(mtx);
             shutdown_complete = true;
             cv.notify_all();
@@ -2799,7 +2798,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
                     for (auto p = start; p <= end; p++)
                         proxys.emplace_back(match[1].str() + match[2].str() + ":" + std::to_string(p));
                 } catch (...) {
-                    JAMI_WARN("Malformed proxy, ignore it");
+                    JAMI_WARNING("Malformed proxy, ignore it");
                     continue;
                 }
             } else {
@@ -2938,7 +2937,7 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
                            address,
                            reliable ? "tls" : "dtls");
     } else {
-        JAMI_ERR("getContactHeader: no SIP transport provided");
+        JAMI_ERROR("getContactHeader: no SIP transport provided");
         return fmt::format("\"{}\" <sips:{}@ring.dht>", config().displayName, id_.second->getId().toString());
     }
 }
@@ -3095,7 +3094,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     }
 
     if (payload.size() >= 64000) {
-        JAMI_WARN() << "Trust request is too big. Remove payload";
+        JAMI_WARNING("Trust request is too big. Remove payload");
     }
 
     auto conversation = convModule()->getOneToOneConversation(to);
@@ -3429,7 +3428,7 @@ JamiAccount::startAccountDiscovery()
                                                                                         1,
                                                                                         a);
                         }
-                        JAMI_INFO("Account removed from discovery list: %s", a.c_str());
+                        JAMI_LOG("Account removed from discovery list: {}", a);
                     });
             }
         });

@@ -94,7 +94,7 @@ createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
-    JAMI_DBG("Adding route %s", host.c_str());
+    JAMI_LOG("Adding route {}", host);
     pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
 
     return route_set;
@@ -173,7 +173,7 @@ void
 addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
 {
     if (contactHdr.empty()) {
-        JAMI_WARN("Contact header is unable to be added (empty string)");
+        JAMI_WARNING("Contact header is unable to be added (empty string)");
         return;
     }
 
@@ -217,7 +217,7 @@ std::string_view
 getPeerUserAgent(const pjsip_rx_data* rdata)
 {
     if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
-        JAMI_ERR("Unexpected null pointer!");
+        JAMI_ERROR("Unexpected null pointer!");
         return {};
     }
 
@@ -233,7 +233,7 @@ std::vector<std::string>
 getPeerAllowMethods(const pjsip_rx_data* rdata)
 {
     if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
-        JAMI_ERR("Unexpected null pointer!");
+        JAMI_ERROR("Unexpected null pointer!");
         return {};
     }
 

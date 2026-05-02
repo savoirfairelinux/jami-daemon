@@ -145,7 +145,7 @@ Call::getAccountId() const
 {
     if (auto shared = account_.lock())
         return shared->getAccountID();
-    JAMI_ERR("No account detected");
+    JAMI_ERROR("No account detected");
     return {};
 }
 
@@ -223,20 +223,11 @@ bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::unique_lock<std::recursive_mutex> lock(callMutex_);
-    JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d",
-             id_.c_str(),
-             (unsigned) callState_,
-             (unsigned) call_state,
-             (unsigned) connectionState_,
-             (unsigned) cnx_state,
-             code);
+    JAMI_LOG("[call:{}] state change {}/{}, cnx {}/{}, code {}", id_, (unsigned) callState_, (unsigned) call_state, (unsigned) connectionState_, (unsigned) cnx_state, code);
 
     if (callState_ != call_state) {
         if (not validStateTransition(call_state)) {
-            JAMI_ERR("[call:%s] invalid call state transition from %u to %u",
-                     id_.c_str(),
-                     (unsigned) callState_,
-                     (unsigned) call_state);
+            JAMI_ERROR("[call:{}] invalid call state transition from {} to {}", id_, (unsigned) callState_, (unsigned) call_state);
             return false;
         }
     } else if (connectionState_ == cnx_state)
@@ -257,7 +248,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
-            JAMI_DBG("[call:%s] emit client call state change %s, code %d", id_.c_str(), new_client_state.c_str(), code);
+            JAMI_LOG("[call:{}] emit client call state change {}, code {}", id_, new_client_state, code);
             lock.unlock();
             emitSignal<libjami::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
         }
@@ -419,11 +410,11 @@ Call::addSubCall(Call& subcall)
     }
 
     if (not subcalls_.emplace(getPtr(subcall)).second) {
-        JAMI_ERR("[call:%s] add twice subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+        JAMI_ERROR("[call:{}] add twice subcall {}", getCallId(), subcall.getCallId());
         return;
     }
 
-    JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    JAMI_LOG("[call:{}] add subcall {}", getCallId(), subcall.getCallId());
     subcall.parent_ = getPtr(*this);
 
     for (const auto& msg : pendingOutMessages_)
@@ -464,7 +455,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
 
     // We found a responding device: hangup all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
-        JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(), subcall.getCallId().c_str());
+        JAMI_LOG("[call:{}] subcall {} answered by peer", getCallId(), subcall.getCallId());
 
         hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != &subcall; });
         merge(subcall);
@@ -475,7 +466,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     // Hangup the call if any device hangup or send busy
     if ((new_state == CallState::ACTIVE or new_state == CallState::PEER_BUSY)
         and new_cstate == ConnectionState::DISCONNECTED) {
-        JAMI_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(), subcall.getCallId().c_str());
+        JAMI_WARNING("[call:{}] subcall {} hangup by peer", getCallId(), subcall.getCallId());
         reason_ = new_state == CallState::ACTIVE ? "declined" : "busy";
         hangupCalls(safePopSubcalls(), 0);
         Manager::instance().peerHungupCall(*this);
@@ -486,9 +477,9 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     // Subcall is busy or failed
     if (new_state >= CallState::BUSY) {
         if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
-            JAMI_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
+            JAMI_WARNING("[call:{}] subcall {} busy", getCallId(), subcall.getCallId());
         else
-            JAMI_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
+            JAMI_WARNING("[call:{}] subcall {} failed", getCallId(), subcall.getCallId());
         std::lock_guard lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
@@ -526,7 +517,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
 void
 Call::merge(Call& subcall)
 {
-    JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    JAMI_LOG("[call:{}] merge subcall {}", getCallId(), subcall.getCallId());
 
     // Merge data
     pendingInMessages_ = std::move(subcall.pendingInMessages_);

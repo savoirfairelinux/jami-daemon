@@ -156,8 +156,7 @@ VideoDeviceImpl::getDeviceParams() const
         }
     }
     if (!found) {
-        JAMI_WARN("avfoundation device %s not found in enumeration; falling back to index 0",
-                  [[avDevice_ uniqueID] UTF8String]);
+        JAMI_WARNING("avfoundation device {} not found in enumeration; falling back to index 0", [[avDevice_ uniqueID] UTF8String]);
         params.input = "0:none";
     }
     return params;

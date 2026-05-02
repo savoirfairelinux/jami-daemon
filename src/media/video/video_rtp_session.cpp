@@ -107,14 +107,11 @@ VideoRtpSession::startSender()
 {
     std::lock_guard lock(mutex_);
 
-    JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
-             this,
-             conference_ ? "Video Mixer" : input_.c_str(),
-             send_.hold ? "YES" : "NO");
+    JAMI_LOG("[{}] Start video RTP sender: input [{}] - muted [{}]", fmt::ptr(this), conference_ ? "Video Mixer" : input_, send_.hold ? "YES" : "NO");
 
     if (not socketPair_) {
         // Ignore if the transport is not set yet
-        JAMI_WARN("[%p] Transport not set yet", this);
+        JAMI_WARNING("[{}] Transport not set yet", fmt::ptr(this));
         return;
     }
 
@@ -124,7 +121,7 @@ VideoRtpSession::startSender()
                 videoLocal_->detach(sender_.get());
             if (videoMixer_)
                 videoMixer_->detach(sender_.get());
-            JAMI_WARN("[%p] Restarting video sender", this);
+            JAMI_WARNING("[{}] Restarting video sender", fmt::ptr(this));
         }
 
         if (not conference_) {
@@ -141,15 +138,15 @@ VideoRtpSession::startSender()
                     if (newParams.valid() && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
                     } else {
-                        JAMI_ERR("[%p] No valid new video parameters", this);
+                        JAMI_ERROR("[{}] No valid new video parameters", fmt::ptr(this));
                         return;
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Exception during retrieving video parameters: %s", e.what());
+                    JAMI_ERROR("Exception during retrieving video parameters: {}", e.what());
                     return;
                 }
             } else {
-                JAMI_WARN("Unable to lock video input");
+                JAMI_WARNING("Unable to lock video input");
                 return;
             }
 
@@ -199,7 +196,7 @@ VideoRtpSession::startSender()
                 socketPair_->setPacketLossCallback([this]() { cbKeyFrameRequest_(); });
 
         } catch (const MediaEncoderException& e) {
-            JAMI_ERR("%s", e.what());
+            JAMI_ERROR("{}", e.what());
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
@@ -237,10 +234,7 @@ VideoRtpSession::stopSender(bool forceStopSocket)
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Stop video RTP sender: input [%s] - muted [%s]",
-             this,
-             conference_ ? "Video Mixer" : input_.c_str(),
-             send_.hold ? "YES" : "NO");
+    JAMI_LOG("[{}] Stop video RTP sender: input [{}] - muted [{}]", fmt::ptr(this), conference_ ? "Video Mixer" : input_, send_.hold ? "YES" : "NO");
 
     if (sender_) {
         if (videoLocal_)
@@ -264,11 +258,11 @@ VideoRtpSession::startReceiver()
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Starting receiver", this);
+    JAMI_LOG("[{}] Starting receiver", fmt::ptr(this));
 
     if (receive_.enabled and not receive_.hold) {
         if (receiveThread_)
-            JAMI_WARN("[%p] Already has a receiver, restarting", this);
+            JAMI_WARNING("[{}] Already has a receiver, restarting", fmt::ptr(this));
         receiveThread_.reset(new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
         // ensure that start has been called
@@ -297,7 +291,7 @@ VideoRtpSession::startReceiver()
             });
         });
     } else {
-        JAMI_DBG("[%p] Video receiver disabled", this);
+        JAMI_LOG("[{}] Video receiver disabled", fmt::ptr(this));
         if (videoMixer_ and conference_) {
             // Note, this should be managed differently, this is a bit hacky
             auto audioId_ = streamId_;
@@ -326,7 +320,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Stopping receiver", this);
+    JAMI_LOG("[{}] Stopping receiver", fmt::ptr(this));
 
     if (not receiveThread_)
         return;
@@ -400,7 +394,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("[%p] Socket creation failed: %s", this, e.what());
+        JAMI_ERROR("[{}] Socket creation failed: {}", fmt::ptr(this), e.what());
         return;
     }
 
@@ -451,7 +445,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
     // Sender
     if (dir == Direction::SEND) {
         if (send_.hold == mute) {
-            JAMI_DBG("[%p] Local already %s", this, mute ? "muted" : "un-muted");
+            JAMI_LOG("[{}] Local already {}", fmt::ptr(this), mute ? "muted" : "un-muted");
             return;
         }
 
@@ -472,7 +466,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
 
     // Receiver
     if (receive_.hold == mute) {
-        JAMI_DBG("[%p] Remote already %s", this, mute ? "muted" : "un-muted");
+        JAMI_LOG("[{}] Remote already {}", fmt::ptr(this), mute ? "muted" : "un-muted");
         return;
     }
 
@@ -519,7 +513,7 @@ VideoRtpSession::setupVideoPipeline()
 {
     if (sender_) {
         if (videoLocal_) {
-            JAMI_DBG("[%p] Setup video pipeline on local capture device", this);
+            JAMI_LOG("[{}] Setup video pipeline on local capture device", fmt::ptr(this));
             videoLocal_->attach(sender_.get());
         }
     } else {
@@ -540,7 +534,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
             if (videoMixer_)
                 videoMixer_->attach(sender_.get());
         } else {
-            JAMI_WARN("[%p] no sender", this);
+            JAMI_WARNING("[{}] no sender", fmt::ptr(this));
         }
     } else {
         JAMI_DEBUG("[conf:{}] Setup video receiver pipeline for call {}", conference.getConfId(), callId_);
@@ -549,7 +543,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
             if (videoMixer_)
                 videoMixer_->attachVideo(receiveThread_.get(), callId_, streamId_);
         } else {
-            JAMI_WARN("[%p] no receiver", this);
+            JAMI_WARNING("[{}] no receiver", fmt::ptr(this));
         }
     }
 }
@@ -691,13 +685,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
             newBitrate = static_cast<int>(std::lround(newBitrate * (1.0f - rtcpi->packetLoss / 150.0f)));
             histoLoss_.clear();
             lastMediaRestart_ = now;
-            JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from "
-                     "%u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
-                     oldBitrate,
-                     newBitrate,
-                     (float) newBitrate / oldBitrate,
-                     pondLoss,
-                     rtcpi->packetLoss);
+            JAMI_LOG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from {} Kbps to {} Kbps, ratio {} (ponderate loss: {}%, packet loss rate: {}%)", oldBitrate, newBitrate, (float) newBitrate / oldBitrate, pondLoss, rtcpi->packetLoss);
         }
     }
 
@@ -742,11 +730,11 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
         if (sender_) {
             auto ret = sender_->setBitrate(newBR);
             if (ret == -1)
-                JAMI_ERR("Fail to access the encoder");
+                JAMI_ERROR("Fail to access the encoder");
             else if (ret == 0)
                 restartSender();
         } else {
-            JAMI_ERR("Fail to access the sender");
+            JAMI_ERROR("Fail to access the sender");
         }
     }
 }
@@ -916,7 +904,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         // Limit REMB decrease to MAX_REMB_DEC every DELAY_AFTER_REMB_DEC ms
         if (remb_dec_cnt_ < MAX_REMB_DEC && remb_timer_dec < DELAY_AFTER_REMB_DEC) {
             remb_dec_cnt_++;
-            JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
+            JAMI_WARNING("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
             uint64_t br = 0x6803; // Decrease 3
             auto v = cc->createREMB(br);

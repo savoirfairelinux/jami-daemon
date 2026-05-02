@@ -147,22 +147,22 @@ udp_socket_create(int family, int port)
 #endif
 
     if (udp_fd < 0) {
-        JAMI_ERR("socket() failed");
+        JAMI_ERROR("socket() failed");
         strErr();
         return -1;
     }
 
     auto bind_addr = dhtnet::ip_utils::getAnyHostAddr(family);
     if (not bind_addr.isIpv4() and not bind_addr.isIpv6()) {
-        JAMI_ERR("No IPv4/IPv6 host found for family %u", family);
+        JAMI_ERROR("No IPv4/IPv6 host found for family {}", family);
         close(udp_fd);
         return -1;
     }
 
     bind_addr.setPort(port);
-    JAMI_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
+    JAMI_LOG("use local address: {}", bind_addr.toString(true, true));
     if (::bind(udp_fd, bind_addr, bind_addr.getLength()) < 0) {
-        JAMI_ERR("bind() failed");
+        JAMI_ERROR("bind() failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -180,8 +180,7 @@ SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
-    JAMI_DBG("[%p] Creating instance using ICE sockets for comp %d and %d",
-             this,
+    JAMI_LOG("[{}] Creating instance using ICE sockets for comp {} and {}", fmt::ptr(this),
              rtp_sock_->getCompId(),
              rtcp_sock_->getCompId());
 
@@ -203,7 +202,7 @@ SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
-    JAMI_DBG("[%p] Instance destroyed", this);
+    JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
 }
 
 bool
@@ -283,7 +282,7 @@ SocketPair::createSRTP(const char* out_suite, const char* out_key, const char* i
 void
 SocketPair::interrupt()
 {
-    JAMI_WARN("[%p] Interrupting RTP sockets", this);
+    JAMI_WARNING("[{}] Interrupting RTP sockets", fmt::ptr(this));
     interrupted_ = true;
     if (rtp_sock_)
         rtp_sock_->setOnRecv(nullptr);
@@ -296,7 +295,7 @@ SocketPair::interrupt()
 void
 SocketPair::setReadBlockingMode(bool block)
 {
-    JAMI_DBG("[%p] Read operations in blocking mode [%s]", this, block ? "YES" : "NO");
+    JAMI_LOG("[{}] Read operations in blocking mode [{}]", fmt::ptr(this), block ? "YES" : "NO");
     readBlockingMode_ = block;
     cv_.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
@@ -320,7 +319,7 @@ SocketPair::closeSockets()
 void
 SocketPair::openSockets(const char* uri, int local_rtp_port)
 {
-    JAMI_DBG("Creating rtp socket for uri %s on port %d", uri, local_rtp_port);
+    JAMI_LOG("[{}] Creating rtp socket for uri {} on port {}", fmt::ptr(this), uri, local_rtp_port);
 
     char hostname[256];
     char path[1024];
@@ -340,11 +339,11 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1
         or (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
         closeSockets();
-        JAMI_ERR("[%p] Sockets creation failed", this);
+        JAMI_ERROR("[{}] Sockets creation failed", fmt::ptr(this));
         throw std::runtime_error("Sockets creation failed");
     }
 
-    JAMI_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
+    JAMI_WARNING("SocketPair: local({},{}) / {}({},{})",
               local_rtp_port,
               local_rtcp_port,
               hostname,
@@ -506,7 +505,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             else if (header->pt == 200) {
                 // not used yet
             } else {
-                JAMI_DBG("Unable to read RTCP: unknown packet type %u", header->pt);
+                unsigned pt = header->pt;
+                JAMI_LOG("Unable to read RTCP: unknown packet type {}", pt);
             }
             fromRTCP = true;
         }
@@ -547,7 +547,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             packetLossCallback_();
         lastSeqNumIn_ = buf[2] << 8 | buf[3];
         if (err < 0)
-            JAMI_WARN("decrypt error %d", err);
+            JAMI_WARNING("decrypt error {}", err);
     }
 
     if (len != 0)
@@ -613,7 +613,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
                                    srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
         if (buf_size < 0) {
-            JAMI_WARN("encrypt error %d", buf_size);
+            JAMI_WARNING("encrypt error {}", buf_size);
             return buf_size;
         }
 
@@ -732,7 +732,7 @@ SocketPair::lastSeqValOut()
 {
     if (srtpContext_)
         return srtpContext_->srtp_out.seq_largest;
-    JAMI_ERR("SRTP context not found.");
+    JAMI_ERROR("SRTP context not found.");
     return 0;
 }
 
