@@ -40,7 +40,7 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
     Json::CharReaderBuilder::strictMode(&rbuilder.settings_);
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(char_data, char_data + dat.size(), &value, &err)) {
-        JAMI_ERR() << "Archive JSON parsing error: " << err;
+        JAMI_ERROR("Archive JSON parsing error: {}", err);
         throw std::runtime_error("failed to parse JSON");
     }
 
@@ -88,11 +88,11 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
                     config[key] = itr->asString();
                 }
             } catch (const std::exception& ex) {
-                JAMI_ERR("Unable to parse JSON entry with value of type %d: %s", (unsigned) itr->type(), ex.what());
+                JAMI_ERROR("Unable to parse JSON entry with value of type {}: {}", (unsigned) itr->type(), ex.what());
             }
         }
     } catch (const std::exception& ex) {
-        JAMI_ERR("Unable to parse JSON: %s", ex.what());
+        JAMI_ERROR("Unable to parse JSON: {}", ex.what());
     }
 
     if (not id.first) {

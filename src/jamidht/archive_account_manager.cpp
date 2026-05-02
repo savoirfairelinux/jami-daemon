@@ -1149,12 +1149,12 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
 void
 ArchiveAccountManager::migrateAccount(AuthContext& ctx)
 {
-    JAMI_WARN("[Auth] Account migration needed");
+    JAMI_WARNING("[Auth] Account migration needed");
     AccountArchive archive;
     try {
         archive = readArchive(ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (...) {
-        JAMI_DBG("[Auth] Unable to load archive");
+        JAMI_LOG("[Auth] Unable to load archive");
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
         return;
     }
@@ -1496,10 +1496,10 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath,
         std::filesystem::copy_file(archivePath, destinationPath, std::filesystem::copy_options::overwrite_existing, ec);
         return !ec;
     } catch (const std::runtime_error& ex) {
-        JAMI_ERR("[Auth] Unable to export archive: %s", ex.what());
+        JAMI_ERROR("[Auth] Unable to export archive: {}", ex.what());
         return false;
     } catch (...) {
-        JAMI_ERR("[Auth] Unable to export archive: Unable to read archive");
+        JAMI_ERROR("[Auth] Unable to export archive: Unable to read archive");
         return false;
     }
 }
