@@ -144,12 +144,12 @@ CallTest::testCall()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived.load(); }));
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
@@ -193,7 +193,7 @@ CallTest::testCachedCall()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Connect Alice's device and Bob's device");
+    JAMI_LOG("Connect Alice's device and Bob's device");
     aliceAccount->connectionManager()
         .connectDevice(bobDeviceId,
                        "sip",
@@ -204,12 +204,12 @@ CallTest::testCachedCall()
                        });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return successfullyConnected.load(); }));
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived.load(); }));
 
     callStopped = 0;
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
@@ -239,11 +239,11 @@ CallTest::testStopSearching()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     // Bob not there, so we should get a SEARCHING STATUS
-    JAMI_INFO("Wait OVER state");
+    JAMI_LOG("Wait OVER state");
     // Then wait for the DHT no answer. this can take some times
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return callStopped.load(); }));
 }
@@ -299,14 +299,14 @@ CallTest::testDeclineMultiDevice()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto bobAccount2 = Manager::instance().getAccount<JamiAccount>(bob2Id);
 
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return callReceived == 2 && !callIdBob.empty(); }));
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().refuseCall(bobId, callIdBob);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
@@ -351,7 +351,7 @@ CallTest::testTlsInfosPeerCertificate()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
@@ -366,7 +366,7 @@ CallTest::testTlsInfosPeerCertificate()
     CPPUNIT_ASSERT(cert && cert->issuer);
     CPPUNIT_ASSERT(cert->issuer->getId().toString() == bobAccount->getUsername());
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
@@ -419,7 +419,7 @@ CallTest::testSocketInfos()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
@@ -427,10 +427,10 @@ CallTest::testSocketInfos()
     Manager::instance().acceptCall(bobId, bobCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT" && mediaReady; }));
 
-    JAMI_INFO("Detail debug");
+    JAMI_LOG("Detail debug");
     auto details = libjami::getCallDetails(aliceId, callId);
     for (auto i = details.begin(); i != details.end(); i++) {
-        JAMI_INFO("%s : %s", i->first.c_str(), i->second.c_str());
+        JAMI_LOG("{} : {}", i->first, i->second);
     }
     auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
     auto transport = call->getIceMedia();
@@ -438,7 +438,7 @@ CallTest::testSocketInfos()
     CPPUNIT_ASSERT(transport->isRunning());
     CPPUNIT_ASSERT(transport->link().c_str() == details[libjami::Call::Details::SOCKETS]);
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
@@ -497,12 +497,12 @@ CallTest::testInvalidTurn()
     libjami::setAccountDetails(aliceId, details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceReady; }));
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return callReceived.load(); }));
 
-    JAMI_INFO("Stop call between alice and Bob");
+    JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
@@ -564,19 +564,19 @@ CallTest::testTransfer()
         }));
     libjami::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobCallReceived.load(); }));
 
-    JAMI_INFO("Bob transfer to Carla");
+    JAMI_LOG("Bob transfer to Carla");
     libjami::transfer(bobId, bobCallId, carlaUri);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobCallStopped.load(); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCallReceived.load(); }));
     CPPUNIT_ASSERT(carlaCallPeer == aliceUri);
 
-    JAMI_INFO("Stop call between alice and carla");
+    JAMI_LOG("Stop call between alice and carla");
     aliceCallStopped = 0;
     Manager::instance().hangupCall(carlaId, carlaCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallStopped.load(); }));
@@ -619,7 +619,7 @@ CallTest::testDhtPublicInCall()
     details["DHT.PublicInCalls"] = "FALSE";
     libjami::setAccountDetails(bobId, details);
 
-    JAMI_INFO("Start call between alice and Bob");
+    JAMI_LOG("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return callReceived.load(); }));

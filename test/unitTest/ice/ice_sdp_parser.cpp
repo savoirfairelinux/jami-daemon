@@ -100,7 +100,7 @@ MediaReceiver::update(Observable<std::shared_ptr<jami::MediaFrame>>*, const std:
         frameCounter_++;
 
     if (frameCounter_ % 10 == 1) {
-        JAMI_INFO("[%s] Frame counter %lu", mediaTypeStr_.c_str(), frameCounter_);
+        JAMI_LOG("[{}] Frame counter %lu", mediaTypeStr_, frameCounter_);
     }
 
     if (frameCounter_ >= REQUIRED_FRAME_COUNT)
@@ -196,7 +196,7 @@ IceSdpParsingTest::setUp()
     details[ConfProperties::UPNP_ENABLED] = "false";
     bobData_.accountId_ = Manager::instance().addAccount(details);
 
-    JAMI_INFO("Initialize accounts ...");
+    JAMI_LOG("Initialize accounts ...");
     auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 }
@@ -204,7 +204,7 @@ IceSdpParsingTest::setUp()
 void
 IceSdpParsingTest::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
+    JAMI_LOG("Remove created accounts...");
     wait_for_removal_of({aliceData_.accountId_, bobData_.accountId_});
 }
 
@@ -214,12 +214,13 @@ IceSdpParsingTest::getUserAlias(const std::string& callId)
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         return {};
     }
 
     auto const& account = call->getAccount().lock();
     if (not account) {
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return {};
     }
 
@@ -234,11 +235,11 @@ IceSdpParsingTest::onIncomingCall(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCall::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              mediaList.size());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}u]",
+             libjami::CallSignal::IncomingCall::name,
+             callData.alias_,
+             callId,
+             mediaList.size());
 
     // NOTE.
     // We shouldn't access shared_ptr<Call> as this event is supposed to mimic
@@ -246,7 +247,7 @@ IceSdpParsingTest::onIncomingCall(const std::string& accountId,
     // needed to check if the call exists. This is the most straightforward and
     // reliable way to do it until we add a new API (like hasCall(id)).
     if (not Manager::instance().getCallFromCallID(callId)) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         callData.callId_ = {};
         return;
     }
@@ -264,23 +265,11 @@ IceSdpParsingTest::onCallStateChange(const std::string&,
                                      const std::string& state,
                                      CallData& callData)
 {
-    auto call = Manager::instance().getCallFromCallID(callId);
-    if (not call) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
-        return;
-    }
-
-    auto account = call->getAccount().lock();
-    if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
-        return;
-    }
-
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::StateChange::name,
-              callData.alias_.c_str(),
-              callId.c_str(),
-              state.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::StateChange::name,
+             callData.alias_,
+             callId,
+             state);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -300,21 +289,21 @@ IceSdpParsingTest::onMediaNegotiationStatus(const std::string& callId, const std
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
-        JAMI_WARN("Call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Call [{}] does not exist!", callId);
         return;
     }
 
     auto account = call->getAccount().lock();
     if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
+        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
         return;
     }
 
-    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              libjami::CallSignal::MediaNegotiationStatus::name,
-              account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
-              call->getCallId().c_str(),
-              event.c_str());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::MediaNegotiationStatus::name,
+             account->getAccountDetails()[ConfProperties::ALIAS],
+             call->getCallId(),
+             event);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -338,7 +327,7 @@ IceSdpParsingTest::waitForSignal(CallData& callData, const std::string& expected
     if (not expectedEvent.empty())
         sigEvent += "::" + expectedEvent;
 
-    JAMI_INFO("[%s] is waiting for [%s] signal/event", callData.alias_.c_str(), sigEvent.c_str());
+    JAMI_LOG("[{}] is waiting for [{}] signal/event", callData.alias_, sigEvent);
 
     auto res = callData.cv_.wait_for(lock, TIME_OUT, [&] {
         // Search for the expected signal in list of received signals.
@@ -356,12 +345,12 @@ IceSdpParsingTest::waitForSignal(CallData& callData, const std::string& expected
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
+        JAMI_ERROR("[{}] waiting for signal/event [{}] timed-out!", callData.alias_, sigEvent);
 
-        JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
+        JAMI_LOG("[{}] currently has the following signals:", callData.alias_);
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "Signal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_LOG("Signal [{}{}]", sig.name_, (sig.event_.empty() ? "" : ("::" + sig.event_)));
         }
     }
 
@@ -468,7 +457,7 @@ IceSdpParsingTest::test_call()
 {
     configureTest(aliceData_, bobData_);
 
-    JAMI_INFO("=== Start a call and validate ===");
+    JAMI_LOG("=== Start a call and validate ===");
 
     // NOTE:
     // We use two audio media instead of one audio and one video media
@@ -503,9 +492,7 @@ IceSdpParsingTest::test_call()
                                                      MediaAttribute::mediaAttributesToMediaMaps(offer));
     CPPUNIT_ASSERT(not aliceData_.callId_.empty());
 
-    JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData_.accountId_.c_str(),
-              bobData_.accountId_.c_str());
+    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData_.accountId_, bobData_.accountId_);
 
     // Give it some time to ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -527,7 +514,7 @@ IceSdpParsingTest::test_call()
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+    JAMI_LOG("BOB answered the call [{}]", bobData_.callId_);
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
@@ -557,7 +544,7 @@ IceSdpParsingTest::test_call()
     // Currenty hosts/containers used for testing are not setup to capture
     // and playback audio, so this validation will be disabled for now.
 #if 0
-    JAMI_INFO("Waiting for media to flow ...");
+    JAMI_LOG("Waiting for media to flow ...");
     for (size_t i = 0; i < MEDIA_COUNT; i++) {
         CPPUNIT_ASSERT(mediaReceivers_[i]->waitForMediaFlow());
     }
@@ -568,20 +555,20 @@ IceSdpParsingTest::test_call()
     }
 
     // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
     Manager::instance().hangupCall(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
-    JAMI_INFO("Call terminated on both sides");
+    JAMI_LOG("Call terminated on both sides");
 }
 
 void
 IceSdpParsingTest::call_with_rfc5245_compliancy_disabled()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = false;
     test_call();
@@ -590,7 +577,7 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_disabled()
 void
 IceSdpParsingTest::call_with_rfc5245_compliancy_enabled()
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+    JAMI_LOG("=== Begin test {} ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = true;
     test_call();

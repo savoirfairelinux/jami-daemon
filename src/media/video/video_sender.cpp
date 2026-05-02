@@ -72,7 +72,7 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
             --forceKeyFrame_;
 
         if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
-            JAMI_ERR("encoding failed");
+            JAMI_ERROR("encoding failed");
     }
 #ifdef DEBUG_SDP
     if (frameNumber_ == 1) // video stream is lazy initialized, wait for first frame
@@ -89,7 +89,7 @@ VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/, const std:
 void
 VideoSender::forceKeyFrame()
 {
-    JAMI_DBG("Key frame requested");
+    JAMI_LOG("Key frame requested");
     ++forceKeyFrame_;
 }
 

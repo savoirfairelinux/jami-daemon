@@ -42,7 +42,7 @@ std::string
 placeCall(const std::string& accountId, const std::string& to)
 {
     // TODO. Remove ASAP.
-    JAMI_WARN("This API is deprecated, use placeCallWithMedia() instead");
+    JAMI_WARNING("This API is deprecated, use placeCallWithMedia() instead");
     return placeCallWithMedia(accountId, to, {});
 }
 
@@ -51,7 +51,7 @@ placeCallWithMedia(const std::string& accountId, const std::string& to, const st
 {
     // Check if a destination number is available
     if (to.empty()) {
-        JAMI_DBG("No number entered - Call aborted");
+        JAMI_LOG("No number entered - Call aborted");
         return {};
     } else {
         return jami::Manager::instance().outgoingCall(accountId, to, mediaList);
@@ -102,7 +102,7 @@ answerMediaChangeRequest(const std::string& accountId,
                 call->answerMediaChangeRequest(mediaList);
                 return true;
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("%s", e.what());
+                JAMI_ERROR("{}", e.what());
             }
         }
     return false;
@@ -137,7 +137,7 @@ muteLocalMedia(const std::string& accountId, const std::string& callId, const st
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
-            JAMI_DBG("Muting [%s] for call %s", mediaType.c_str(), callId.c_str());
+            JAMI_LOG("Muting [{}] for call {}", mediaType, callId);
             call->muteMedia(mediaType, mute);
             return true;
         } else if (auto conf = account->getConference(callId)) {
@@ -276,7 +276,7 @@ currentMediaList(const std::string& accountId, const std::string& callId)
             return conf->currentMediaList();
         }
     }
-    JAMI_WARN("Call not found %s", callId.c_str());
+    JAMI_WARNING("Call not found {}", callId);
     return {};
 }
 
@@ -374,7 +374,7 @@ getCallList(const std::string& accountId)
         return jami::Manager::instance().getCallList();
     else if (const auto account = jami::Manager::instance().getAccount(accountId))
         return account->getCallList();
-    JAMI_WARN("Unknown account: %s", accountId.c_str());
+    JAMI_WARNING("Unknown account: {}", accountId);
     return {};
 }
 
@@ -507,7 +507,7 @@ muteStream(const std::string& accountId,
 void
 setActiveParticipant(const std::string& accountId, const std::string& confId, const std::string& participant)
 {
-    JAMI_ERR() << "setActiveParticipant is deprecated, please use setActiveStream";
+    JAMI_ERROR("setActiveParticipant is deprecated, please use setActiveStream");
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setActiveParticipant(participant);
@@ -572,7 +572,7 @@ raiseParticipantHand(const std::string& accountId,
                      const std::string& peerId,
                      const bool& state)
 {
-    JAMI_ERR() << "raiseParticipantHand is deprecated, please use raiseHand";
+    JAMI_ERROR("raiseParticipantHand is deprecated, please use raiseHand");
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             if (auto call = std::static_pointer_cast<jami::SIPCall>(conf->getCallFromPeerID(peerId))) {

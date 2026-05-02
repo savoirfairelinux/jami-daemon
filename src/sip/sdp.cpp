@@ -122,7 +122,7 @@ void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
     if (activeLocalSession_ != sdp)
-        JAMI_DBG("Set active local session to [%p]. Was [%p]", sdp, activeLocalSession_);
+        JAMI_LOG("Set active local session to [{}]. Was [{}]", fmt::ptr(sdp), fmt::ptr(activeLocalSession_));
     activeLocalSession_ = sdp;
 }
 
@@ -130,7 +130,7 @@ void
 Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session* sdp)
 {
     if (activeLocalSession_ != sdp)
-        JAMI_DBG("Set active remote session to [%p]. Was [%p]", sdp, activeRemoteSession_);
+        JAMI_LOG("Set active remote session to [{}]. Was [{}]", fmt::ptr(sdp), fmt::ptr(activeRemoteSession_));
     activeRemoteSession_ = sdp;
 }
 
@@ -230,7 +230,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
 
-    JAMI_DBG("Add media description [%s]", mediaAttr.toString(true).c_str());
+    JAMI_LOG("Add media description [{}]", mediaAttr.toString(true));
 
     pjmedia_sdp_media* med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
@@ -360,7 +360,7 @@ Sdp::setPublishedIP(const std::string& addr, pj_uint16_t addr_type)
         localSession_->origin.addr = sip_utils::CONST_PJ_STR(publishedIpAddr_);
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            JAMI_ERR("Unable to validate SDP");
+            JAMI_ERROR("Unable to validate SDP");
     }
 }
 
@@ -517,7 +517,7 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
     createLocalSession(SdpDirection::OFFER);
 
     if (validateSession() != PJ_SUCCESS) {
-        JAMI_ERR("Failed to create initial offer");
+        JAMI_ERROR("Failed to create initial offer");
         return false;
     }
 
@@ -530,12 +530,12 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
     }
 
     if (validateSession() != PJ_SUCCESS) {
-        JAMI_ERR("Failed to add medias");
+        JAMI_ERROR("Failed to add medias");
         return false;
     }
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
-        JAMI_ERR("Failed to create an initial SDP negotiator");
+        JAMI_ERROR("Failed to create an initial SDP negotiator");
         return false;
     }
 
@@ -548,7 +548,7 @@ void
 Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
 {
     if (remote == nullptr) {
-        JAMI_ERR("Remote session is NULL");
+        JAMI_ERROR("Remote session is NULL");
         return;
     }
     remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
@@ -566,7 +566,7 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 
     createLocalSession(SdpDirection::ANSWER);
     if (validateSession() != PJ_SUCCESS) {
-        JAMI_ERR("Failed to create local session");
+        JAMI_ERROR("Failed to create local session");
         return false;
     }
 
@@ -581,13 +581,13 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     printSession(localSession_, "Local session:\n", sdpDirection_);
 
     if (validateSession() != PJ_SUCCESS) {
-        JAMI_ERR("Failed to add medias");
+        JAMI_ERROR("Failed to add medias");
         return false;
     }
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_, remoteSession_, &negotiator_)
         != PJ_SUCCESS) {
-        JAMI_ERR("Failed to initialize media negotiation");
+        JAMI_ERROR("Failed to initialize media negotiation");
         return false;
     }
 
@@ -597,10 +597,10 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 bool
 Sdp::startNegotiation()
 {
-    JAMI_DBG("Starting media negotiation for [%s]", sessionName_.c_str());
+    JAMI_LOG("Starting media negotiation for [{}]", sessionName_);
 
     if (negotiator_ == NULL) {
-        JAMI_ERR("Unable to start negotiation with invalid negotiator");
+        JAMI_ERROR("Unable to start negotiation with invalid negotiator");
         return false;
     }
 
@@ -608,17 +608,17 @@ Sdp::startNegotiation()
     const pjmedia_sdp_session* active_remote;
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-        JAMI_WARN("Negotiator not in right state for negotiation");
+        JAMI_WARNING("Negotiator not in right state for negotiation");
         return false;
     }
 
     if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS) {
-        JAMI_ERR("Failed to start media negotiation");
+        JAMI_ERROR("Failed to start media negotiation");
         return false;
     }
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        JAMI_ERR("Unable to retrieve local active session");
+        JAMI_ERROR("Unable to retrieve local active session");
 
     setActiveLocalSdpSession(active_local);
 
@@ -627,7 +627,7 @@ Sdp::startNegotiation()
     }
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS or active_remote == nullptr) {
-        JAMI_ERR("Unable to retrieve remote active session");
+        JAMI_ERROR("Unable to retrieve remote active session");
         return false;
     }
 
@@ -646,7 +646,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
         pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory, "tmpSdp", BUF_SZ, BUF_SZ, nullptr));
     auto* cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned) {
-        JAMI_ERR("Unable to clone SDP");
+        JAMI_ERROR("Unable to clone SDP");
         return "";
     }
 
@@ -655,13 +655,13 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
     for (unsigned i = 0; i < cloned->media_count; i++)
         if (i != media_keep) {
             if (pjmedia_sdp_media_deactivate(tmpPool_.get(), cloned->media[i]) != PJ_SUCCESS)
-                JAMI_ERR("Unable to deactivate media");
+                JAMI_ERROR("Unable to deactivate media");
         } else {
             hasKeep = true;
         }
 
     if (not hasKeep) {
-        JAMI_DBG("No media to keep present in SDP");
+        JAMI_LOG("No media to keep present in SDP");
         return "";
     }
 
@@ -740,7 +740,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         // get connection info
         pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
         if (not conn) {
-            JAMI_ERR("Unable to find connection information for media");
+            JAMI_ERROR("Unable to find connection information for media");
             continue;
         }
         descr.addr = std::string_view(conn->addr.ptr, conn->addr.slen);
@@ -773,7 +773,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
             auto* const rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
             if (!rtpMapAttribute) {
-                JAMI_ERR("Unable to find rtpmap attribute");
+                JAMI_ERROR("Unable to find rtpmap attribute");
                 descr.enabled = false;
                 continue;
             }
@@ -837,7 +837,7 @@ void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
     if (media_index >= localSession_->media_count) {
-        JAMI_ERR("addIceCandidates failed: unable to access media#%u (may be deactivated)", media_index);
+        JAMI_ERROR("addIceCandidates failed: unable to access media#{} (may be deactivated)", media_index);
         return;
     }
 
@@ -858,24 +858,21 @@ Sdp::getIceCandidates(unsigned media_index) const
     const auto* remoteSession = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
     const auto* localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
     if (not remoteSession) {
-        JAMI_ERR("getIceCandidates failed: no remote session");
+        JAMI_ERROR("getIceCandidates failed: no remote session");
         return {};
     }
     if (not localSession) {
-        JAMI_ERR("getIceCandidates failed: no local session");
+        JAMI_ERROR("getIceCandidates failed: no local session");
         return {};
     }
     if (media_index >= remoteSession->media_count || media_index >= localSession->media_count) {
-        JAMI_ERR("getIceCandidates failed: unable to access media#%u (may be deactivated)", media_index);
+        JAMI_ERROR("getIceCandidates failed: unable to access media#{} (may be deactivated)", media_index);
         return {};
     }
     auto* media = remoteSession->media[media_index];
     auto* localMedia = localSession->media[media_index];
     if (media->desc.port == 0 || localMedia->desc.port == 0) {
-        JAMI_WARN("Media#%u is disabled. Media ports: local %u, remote %u",
-                  media_index,
-                  localMedia->desc.port,
-                  media->desc.port);
+        JAMI_WARNING("Media#{} is disabled. Media ports: local {}, remote {}", media_index, localMedia->desc.port, media->desc.port);
         return {};
     }
 
@@ -992,7 +989,7 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
         else if (!pj_stricmp2(&media->desc.media, "video"))
             mediaAttr.type_ = MediaType::MEDIA_VIDEO;
         else {
-            JAMI_WARN("Media#%u only 'audio' and 'video' types are supported!", idx);
+            JAMI_WARNING("Media#{} only 'audio' and 'video' types are supported!", idx);
             // Disable the media. No need to parse the attributes.
             mediaAttr.enabled_ = false;
             continue;
@@ -1013,7 +1010,7 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
         // Get transport.
         auto transp = getMediaTransport(media);
         if (transp == MediaTransport::UNKNOWN) {
-            JAMI_WARN("Media#%u is unable to determine transport type!", idx);
+            JAMI_WARNING("Media#{} is unable to determine transport type!", idx);
         }
 
         // A media is secure if the transport is of type RTP/SAVP

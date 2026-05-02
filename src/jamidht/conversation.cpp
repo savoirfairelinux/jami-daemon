@@ -1439,18 +1439,18 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
             auto initialMembers = getInitialMembers();
             auto it = std::find(initialMembers.begin(), initialMembers.end(), contactUri);
             if (it == initialMembers.end()) {
-                JAMI_WARN("Unable to add new member in one to one conversation");
+                JAMI_WARNING("Unable to add new member in one to one conversation");
                 cb(false, "");
                 return;
             }
         }
     } catch (const std::exception& e) {
-        JAMI_WARN("Unable to get mode: %s", e.what());
+        JAMI_WARNING("Unable to get mode: {}", e.what());
         cb(false, "");
         return;
     }
     if (isMember(contactUri, true)) {
-        JAMI_WARN("Unable to add member %s because it's already a member", contactUri.c_str());
+        JAMI_WARNING("Unable to add member {} because it's already a member", contactUri);
         cb(false, "");
         return;
     }
@@ -1468,7 +1468,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                 }
             });
         } else {
-            JAMI_WARN("Unable to add member %s because this member is blocked", contactUri.c_str());
+            JAMI_WARNING("Unable to add member {} because this member is blocked", contactUri);
             cb(false, "");
         }
         return;
@@ -1552,7 +1552,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri, const std::string_v
 {
     // Check if admin
     if (!isAdmin()) {
-        JAMI_WARN("You're not an admin of this repo. Unable to unblock %s", contactUri.c_str());
+        JAMI_WARNING("You're not an admin of this repo. Unable to unblock {}", contactUri);
         cb(false, {});
         return;
     }
@@ -1561,7 +1561,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri, const std::string_v
     std::unique_lock lk(writeMtx_);
     auto voteCommit = repository_->voteUnban(contactUri, type);
     if (voteCommit.empty()) {
-        JAMI_WARN("Unbanning %s failed", contactUri.c_str());
+        JAMI_WARNING("Unbanning {} failed", contactUri);
         cb(false, "");
         return;
     }
@@ -1575,7 +1575,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri, const std::string_v
     if (!resolveCommit.empty()) {
         commits.emplace_back(resolveCommit);
         lastId = resolveCommit;
-        JAMI_WARN("Vote solved for unbanning %s.", contactUri.c_str());
+        JAMI_WARNING("Vote solved for unbanning {}.", contactUri);
     }
     announce(commits, true);
     lk.unlock();
@@ -1591,7 +1591,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             if (auto sthis = w.lock()) {
                 // Check if admin
                 if (!sthis->pimpl_->isAdmin()) {
-                    JAMI_WARN("You're not an admin of this repo. Unable to block %s", contactUri.c_str());
+                    JAMI_WARNING("You're not an admin of this repo. Unable to block {}", contactUri);
                     cb(false, {});
                     return;
                 }
@@ -1624,7 +1624,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 std::unique_lock lk(sthis->pimpl_->writeMtx_);
                 auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, type);
                 if (voteCommit.empty()) {
-                    JAMI_WARN("Kicking %s failed", contactUri.c_str());
+                    JAMI_WARNING("Kicking {} failed", contactUri);
                     cb(false, "");
                     return;
                 }
@@ -1638,7 +1638,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 if (!resolveCommit.empty()) {
                     commits.emplace_back(resolveCommit);
                     lastId = resolveCommit;
-                    JAMI_WARN("Vote solved for %s. %s banned", contactUri.c_str(), isDevice ? "Device" : "Member");
+                    JAMI_WARNING("Vote solved for {}. {} banned", contactUri, isDevice ? "Device" : "Member");
                     sthis->pimpl_->disconnectFromPeer(contactUri);
                 }
 

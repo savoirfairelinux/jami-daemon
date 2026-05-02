@@ -78,13 +78,13 @@ uint64_t
 CongestionControl::parseREMB(const rtcpREMBHeader& packet)
 {
     if (packet.fmt != 15 || packet.pt != 206) {
-        JAMI_ERR("Unable to parse REMB packet.");
+        JAMI_ERROR("Unable to parse REMB packet.");
         return 0;
     }
     uint64_t bitrate_bps = (packet.br_mantis << packet.br_exp);
     bool shift_overflow = (bitrate_bps >> packet.br_exp) != packet.br_mantis;
     if (shift_overflow) {
-        JAMI_ERR("Invalid remb bitrate value : %u*2^%u", packet.br_mantis, packet.br_exp);
+        JAMI_ERROR("Invalid remb bitrate value : {}*2^{}", packet.br_mantis, packet.br_exp);
         return 0;
     }
     return bitrate_bps;

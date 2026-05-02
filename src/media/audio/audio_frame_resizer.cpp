@@ -69,7 +69,7 @@ AudioFrameResizer::setFormat(const AudioFormat& format, int size)
         setFrameSize(size);
     if (format != format_) {
         if (auto discarded = samples())
-            JAMI_WARN("Discarding %d samples", discarded);
+            JAMI_WARNING("Discarding {} samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
         queue_ = av_audio_fifo_alloc(format.sampleFormat, static_cast<int>(format.nb_channels), frameSize_);
@@ -113,7 +113,7 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 
     // queue reallocates itself if need be
     if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0) {
-        JAMI_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
+        JAMI_ERROR("Audio resizer error: {}", libav_utils::getError(ret));
         throw std::runtime_error("Failed to add audio to frame resizer");
     }
 
@@ -134,7 +134,7 @@ AudioFrameResizer::dequeue()
     auto frame = std::make_shared<AudioFrame>(format_, frameSize_);
     int ret;
     if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(frame->pointer()->data), frameSize_)) < 0) {
-        JAMI_ERR() << "Unable to read samples from queue: " << libav_utils::getError(ret);
+        JAMI_ERROR("Unable to read samples from queue: {}", libav_utils::getError(ret));
         return {};
     }
     frame->pointer()->pts = nextOutputPts_;
