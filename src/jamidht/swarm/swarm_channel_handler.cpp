@@ -55,13 +55,36 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
 
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
-    if (auto acc = account_.lock())
-        if (auto* convModule = acc->convModule(true)) {
-            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
-            return res;
+    auto* convModule = acc->convModule(true);
+    if (!convModule) {
+        JAMI_ERROR("[Account {}] Received swarm channel request for '{}' but conversation module is unavailable",
+                   acc->getAccountID(),
+                   name);
+        return false;
+    }
+    auto issuerUri = cert->issuer->getId().toString();
+    auto deviceUri = cert->getLongId().toString();
+    if (!convModule->isPeerAuthorized(conversationId, issuerUri, deviceUri, true)) {
+        if (convModule->isMemberBanned(conversationId, issuerUri)) {
+            JAMI_WARNING("[Account {}] Received swarm channel request for '{}' but user {} is banned",
+                         acc->getAccountID(),
+                         name,
+                         issuerUri);
+        } else if (convModule->isDeviceBanned(conversationId, deviceUri)) {
+            JAMI_WARNING("[Account {}] Received swarm channel request for '{}' but device {} is banned",
+                         acc->getAccountID(),
+                         name,
+                         deviceUri);
+        } else {
+            JAMI_WARNING("[Account {}] Received swarm channel request for '{}' from unauthorized peer {}/{}",
+                         acc->getAccountID(),
+                         name,
+                         issuerUri,
+                         deviceUri);
         }
-    return false;
+        return false;
+    }
+    return true;
 }
 
 void
