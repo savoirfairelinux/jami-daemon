@@ -1020,7 +1020,7 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
                 }
             }
         } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
+            JAMI_ERROR("{}", e.what());
         }
         conv.conversation->erase();
         conv.conversation.reset();
@@ -1214,8 +1214,7 @@ ConversationModule::Impl::createCommit(
                                                  if (ok)
                                                      sendMessageNotification(conversationId, true, commitId);
                                                  else
-                                                     JAMI_ERR("Failed to send message to conversation %s",
-                                                              conversationId.c_str());
+                                                     JAMI_ERROR("Failed to send message to conversation {}", conversationId);
                                              });
     }
 }
@@ -1879,7 +1878,7 @@ ConversationModule::clearPendingFetch()
     for (auto& conv : pimpl_->getSyncedConversations()) {
         std::lock_guard lk(conv->mtx);
         if (conv && conv->pending) {
-            JAMI_ERR("This is a bug, seems to still fetch to some device on initializing");
+            JAMI_ERROR("This is a bug, seems to still fetch to some device on initializing");
             conv->pending.reset();
         }
     }
@@ -2834,7 +2833,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
                             toRm.emplace_back(convId);
                     }
                 } catch (const std::exception& e) {
-                    JAMI_WARN("%s", e.what());
+                    JAMI_WARNING("{}", e.what());
                 }
             } else {
                 removeConvInfo(conv, conv->info.members);
@@ -3157,8 +3156,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                                                if (auto shared = w.lock())
                                                    shared->sendMessageNotification(conversationId, true, commitId);
                                            } else {
-                                               JAMI_ERR("Failed to send message to conversation %s",
-                                                        conversationId.c_str());
+                                               JAMI_ERROR("Failed to send message to conversation {}", conversationId);
                                            }
                                        });
 
@@ -3212,7 +3210,7 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
         msgpack::unpack(result, (const char*) file.data(), file.size());
         result.get().convert(convInfos);
     } catch (const std::exception& e) {
-        JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
+        JAMI_WARNING("[convInfo] error loading convInfo: {}", e.what());
     }
     return convInfos;
 }
@@ -3236,7 +3234,7 @@ ConversationModule::convRequestsFromPath(const std::filesystem::path& path)
         msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
         result.get().convert(convRequests);
     } catch (const std::exception& e) {
-        JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
+        JAMI_WARNING("[convInfo] error loading convInfo: {}", e.what());
     }
     return convRequests;
 }

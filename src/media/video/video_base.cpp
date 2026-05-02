@@ -129,7 +129,7 @@ bool
 convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::VideoSettings& rhs)
 {
     if (not node.IsMap()) {
-        JAMI_WARN("Unable to decode VideoSettings YAML node");
+        JAMI_WARNING("Unable to decode VideoSettings YAML node");
         return false;
     }
     rhs.name = node["name"].as<std::string>();

@@ -567,7 +567,7 @@ void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
     std::lock_guard m(currentCallMutex_);
-    JAMI_DBG("----- Switch current call ID to '%s' -----", not id.empty() ? id.c_str() : "none");
+    JAMI_LOG("----- Switch current call ID to '{}' -----", not id.empty() ? id.c_str() : "none");
     currentCall_ = id;
 }
 
@@ -606,7 +606,7 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
         return;
 
     if (base_.preferences.isAccountPending(accountid)) {
-        JAMI_INFO("[account:%s] Removing pending account from disk", accountid.c_str());
+        JAMI_LOG("[account:{}] Removing pending account from disk", accountid);
         base_.removeAccount(accountid, true);
         cleanupAccountStorage(accountid);
         return;
@@ -889,7 +889,7 @@ Manager::finish() noexcept
         callFactory.forbid();
 
         // End all remaining active calls
-        JAMI_DBG("End %zu remaining call(s)", callFactory.callCount());
+        JAMI_LOG("End {} remaining call(s)", callFactory.callCount());
         for (const auto& call : callFactory.getAllCalls())
             hangupCall(call->getAccountId(), call->getCallId());
         callFactory.clear();
@@ -1083,7 +1083,7 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_DBG() << "Attempt outgoing call to '" << to << "'" << " with account '" << account_id << "'";
+    JAMI_LOG("Attempt outgoing call to '{}' with account '{}'", to, account_id);
 
     std::shared_ptr<Call> call;
 
@@ -1170,7 +1170,7 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     /* We often get here when the call was hungup before being created */
     auto call = account->getCall(callId);
     if (not call) {
-        JAMI_WARN("Unable to hang up nonexistent call %s", callId.c_str());
+        JAMI_WARNING("Unable to hang up nonexistent call {}", callId);
         return false;
     }
 
@@ -1862,7 +1862,7 @@ Manager::playDtmf(char code)
     dtmfTimer->async_wait([this, audioGuard, t = dtmfTimer.get()](const asio::error_code& ec) {
         if (ec)
             return;
-        JAMI_DBG("End of dtmf");
+        JAMI_LOG("End of dtmf");
         std::lock_guard lock(pimpl_->audioLayerMutex_);
         if (pimpl_->dtmfTimer_.get() == t)
             pimpl_->dtmfTimer_.reset();
@@ -1958,11 +1958,11 @@ Manager::sendCallTextMessage(const std::string& accountId,
             try {
                 call->sendTextMessage(messages, from);
             } catch (const im::InstantMessageException& e) {
-                JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
+                JAMI_ERROR("Failed to send message to call {}: {}", call->getCallId(), e.what());
             }
         }
     } else {
-        JAMI_ERR("Failed to send message to %s: nonexistent call ID", callID.c_str());
+        JAMI_ERROR("Failed to send message to {}: nonexistent call ID", callID);
     }
 }
 
@@ -1971,7 +1971,7 @@ void
 Manager::peerAnsweredCall(Call& call)
 {
     const auto& callId = call.getCallId();
-    JAMI_DBG("[call:%s] Peer answered", callId.c_str());
+    JAMI_LOG("[call:{}] Peer answered", callId);
 
     // The if statement is useful only if we sent two calls at the same time.
     if (isCurrentCall(call))
@@ -2909,7 +2909,7 @@ Manager::loadAccountMap(const YAML::Node& node)
         }
 
         if (preferences.isAccountPending(dir)) {
-            JAMI_INFO("[account:%s] Removing pending account from disk", dir.c_str());
+            JAMI_LOG("[account:{}] Removing pending account from disk", dir);
             removeAccount(dir, true);
             pimpl_->cleanupAccountStorage(dir);
             continue;

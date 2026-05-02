@@ -80,7 +80,7 @@ AlsaLayer::run()
 bool
 AlsaLayer::openDevice(snd_pcm_t** pcm, const std::string& dev, snd_pcm_stream_t stream, AudioFormat& format)
 {
-    JAMI_DBG("Alsa: Opening %s device '%s'", (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback", dev.c_str());
+    JAMI_LOG("Alsa: Opening {} device '{}'", (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback", dev);
 
     static const int MAX_RETRIES = 10; // times of 100ms
     int err, tries = 0;
@@ -95,12 +95,12 @@ AlsaLayer::openDevice(snd_pcm_t** pcm, const std::string& dev, snd_pcm_stream_t 
     } while (err == -EBUSY and ++tries <= MAX_RETRIES);
 
     if (err < 0) {
-        JAMI_ERR("Alsa: Unable to open %s device %s : %s",
-                 (stream == SND_PCM_STREAM_CAPTURE)    ? "capture"
-                 : (stream == SND_PCM_STREAM_PLAYBACK) ? "playback"
-                                                       : "ringtone",
-                 dev.c_str(),
-                 snd_strerror(err));
+        JAMI_ERROR("Alsa: Unable to open {} device {} : {}",
+                   (stream == SND_PCM_STREAM_CAPTURE)    ? "capture"
+                   : (stream == SND_PCM_STREAM_PLAYBACK) ? "playback"
+                                                         : "ringtone",
+                   dev,
+                   snd_strerror(err));
         return false;
     }
 
@@ -211,7 +211,7 @@ AlsaLayer::stopThread()
     ({ \
         int err_code = call; \
         if (err_code < 0) \
-            JAMI_ERR(error ": %s", snd_strerror(err_code)); \
+            JAMI_ERROR(error ": {}", snd_strerror(err_code)); \
         err_code; \
     })
 
@@ -230,7 +230,7 @@ AlsaLayer::closeCaptureStream()
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream();
 
-    JAMI_DBG("Alsa: Closing capture stream");
+    JAMI_LOG("Alsa: Closing capture stream");
     if (is_capture_open_ && ALSA_CALL(snd_pcm_close(captureHandle_), "Unable to close capture") >= 0) {
         is_capture_open_ = false;
         captureHandle_ = nullptr;
@@ -262,7 +262,7 @@ AlsaLayer::closePlaybackStream()
         stopPlaybackStream();
 
     if (is_playback_open_) {
-        JAMI_DBG("Alsa: Closing playback stream");
+        JAMI_LOG("Alsa: Closing playback stream");
         if (ALSA_CALL(snd_pcm_close(playbackHandle_), "Coulnd't close playback") >= 0)
             is_playback_open_ = false;
         playbackHandle_ = nullptr;
@@ -337,7 +337,7 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     // Query the max number of channels supported by the hardware
     unsigned int max_channels = 0;
     if (snd_pcm_hw_params_get_channels_max(hwparams, &max_channels) < 0) {
-        JAMI_WARN("Unable to query hardware channel number, defaulting to 2");
+        JAMI_WARNING("Unable to query hardware channel number, defaulting to 2");
         max_channels = 2;
     }
 
@@ -351,8 +351,8 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_get_buffer_size_max(hwparams, &buffer_size_max);
     snd_pcm_hw_params_get_period_size_min(hwparams, &period_size_min, nullptr);
     snd_pcm_hw_params_get_period_size_max(hwparams, &period_size_max, nullptr);
-    JAMI_DBG("Buffer size range from %lu to %lu", buffer_size_min, buffer_size_max);
-    JAMI_DBG("Period size range from %lu to %lu", period_size_min, period_size_max);
+    JAMI_LOG("Buffer size range from {} to {}", buffer_size_min, buffer_size_max);
+    JAMI_LOG("Period size range from {} to {}", period_size_min, period_size_max);
     buffer_size = buffer_size > buffer_size_max ? buffer_size_max : buffer_size;
     buffer_size = buffer_size < buffer_size_min ? buffer_size_min : buffer_size;
     period_size = period_size > period_size_max ? period_size_max : period_size;
@@ -367,19 +367,19 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_get_period_size(hwparams, &period_size, nullptr);
     snd_pcm_hw_params_get_rate(hwparams, &format.sample_rate, nullptr);
     snd_pcm_hw_params_get_channels(hwparams, &format.nb_channels);
-    JAMI_DBG("Was set period_size = %lu", period_size);
-    JAMI_DBG("Was set buffer_size = %lu", buffer_size);
+    JAMI_LOG("Was set period_size = {}", period_size);
+    JAMI_LOG("Was set buffer_size = {}", buffer_size);
 
     if (2 * period_size > buffer_size) {
-        JAMI_ERR("buffer to small, unable to use");
+        JAMI_ERROR("buffer to small, unable to use");
         return false;
     }
 
 #undef HW
 
-    JAMI_DBG("%s using format %s",
+    JAMI_LOG("{} using format {}",
              (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-             format.toString().c_str());
+             format.toString());
 
     snd_pcm_sw_params_t* swparams = nullptr;
     snd_pcm_sw_params_alloca(&swparams);
@@ -432,12 +432,12 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
 
         if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0) {
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
-                JAMI_ERR("Writing in state SND_PCM_STATE_SETUP, should be "
-                         "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
+                JAMI_ERROR(
+                    "Writing in state SND_PCM_STATE_SETUP, should be SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
                 int error = snd_pcm_prepare(handle);
 
                 if (error < 0) {
-                    JAMI_ERR("Failed to prepare handle: %s", snd_strerror(error));
+                    JAMI_ERROR("Failed to prepare handle: {}", snd_strerror(error));
                     stopPlaybackStream();
                 }
             }
@@ -447,7 +447,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
     }
 
     default:
-        JAMI_ERR("Unknown write error, dropping frames: %s", snd_strerror(err));
+        JAMI_ERROR("Unknown write error, dropping frames: {}", snd_strerror(err));
         stopPlaybackStream();
         break;
     }
@@ -483,12 +483,12 @@ AlsaLayer::read(unsigned frames)
                 startCaptureStream();
             }
 
-        JAMI_ERR("XRUN capture ignored (%s)", snd_strerror(err));
+        JAMI_ERROR("XRUN capture ignored ({})", snd_strerror(err));
         break;
     }
 
     case -EPERM:
-        JAMI_ERR("Unable to capture, EPERM (%s)", snd_strerror(err));
+        JAMI_ERROR("Unable to capture, EPERM ({})", snd_strerror(err));
         prepareCaptureStream();
         startCaptureStream();
         break;
@@ -515,7 +515,7 @@ safeUpdate(snd_pcm_t* handle, long& samples)
         samples = snd_pcm_recover(handle, samples, 0);
 
         if (samples < 0) {
-            JAMI_ERR("Got unrecoverable error from snd_pcm_avail_update: %s", snd_strerror(samples));
+            JAMI_ERROR("Got unrecoverable error from snd_pcm_avail_update: {}", snd_strerror(samples));
             return false;
         }
     }
@@ -573,12 +573,12 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 int err;
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARN("Unable to get info for %s %s: %s",
-                              getCapture ? "capture device" : "playback device",
-                              name.c_str(),
-                              snd_strerror(err));
+                    JAMI_WARNING("Unable to get info for {} {}: {}",
+                                 getCapture ? "capture device" : "playback device",
+                                 name,
+                                 snd_strerror(err));
                 } else {
-                    JAMI_DBG("card %i : %s [%s]",
+                    JAMI_LOG("card {} : {} [{}]",
                              numCard,
                              snd_ctl_card_info_get_id(info),
                              snd_ctl_card_info_get_name(info));
@@ -644,7 +644,7 @@ AlsaLayer::getAudioDeviceName(int index, AudioDeviceType type) const
         return getCaptureDeviceList().at(index);
     default:
         // Should never happen
-        JAMI_ERR("Unexpected type");
+        JAMI_ERROR("Unexpected type");
         return "";
     }
 }
@@ -659,7 +659,7 @@ AlsaLayer::capture()
 
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
     if (toGetFrames < 0)
-        JAMI_ERR("Audio: Mic error: %s", snd_strerror(toGetFrames));
+        JAMI_ERROR("Audio: Mic error: {}", snd_strerror(toGetFrames));
     if (toGetFrames <= 0)
         return;
 
@@ -668,7 +668,7 @@ AlsaLayer::capture()
     if (auto r = read(toGetFrames)) {
         putRecorded(std::move(r));
     } else
-        JAMI_ERR("ALSA MIC : Unable to read!");
+        JAMI_ERROR("ALSA MIC : Unable to read!");
 }
 
 void

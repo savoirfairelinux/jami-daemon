@@ -54,7 +54,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     try {
         /* Encoder setup */
-        JAMI_DBG("audioEncoder_->openOutput %s", dest_.c_str());
+        JAMI_LOG("audioEncoder_->openOutput {}", dest_);
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
         auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(args_.codec);
@@ -64,7 +64,7 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_->getContext());
     } catch (const MediaEncoderException& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("{}", e.what());
         return false;
     }
 #ifdef DEBUG_SDP
@@ -90,12 +90,12 @@ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
         if (voiceCallback_) {
             voiceCallback_(voice_);
         } else {
-            JAMI_ERR("AudioSender no voice callback!");
+            JAMI_ERROR("AudioSender no voice callback!");
         }
     }
 
     if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
-        JAMI_ERR("encoding failed");
+        JAMI_ERROR("encoding failed");
 }
 
 void
@@ -104,7 +104,7 @@ AudioSender::setVoiceCallback(std::function<void(bool)> cb)
     if (cb) {
         voiceCallback_ = std::move(cb);
     } else {
-        JAMI_ERR("AudioSender attempting to set invalid voice callback");
+        JAMI_ERROR("AudioSender attempting to set invalid voice callback");
     }
 }
 

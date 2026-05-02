@@ -87,7 +87,7 @@ MediaAttribute::getMediaType(const libjami::MediaMap& map)
 
     auto type = stringToMediaType(iter->second);
     if (type == MediaType::MEDIA_NONE) {
-        JAMI_ERR("Invalid value [%s] for a media type key in media map", iter->second.c_str());
+        JAMI_ERROR("Invalid value [{}] for a media type key in media map", iter->second);
         return {false, type};
     }
 
@@ -108,7 +108,7 @@ MediaAttribute::getBoolValue(const libjami::MediaMap& map, const std::string& ke
     if (value.compare(FALSE_STR) == 0)
         return {true, false};
 
-    JAMI_ERR("Invalid value %s for a boolean key", value.c_str());
+    JAMI_ERROR("Invalid value {} for a boolean key", value);
     return {false, false};
 }
 
