@@ -124,7 +124,7 @@ protected:
                     so->update(this, data);
                 } catch (std::exception& e) {
 #ifndef __DEBUG__
-                    JAMI_ERR() << e.what();
+                    JAMI_ERROR("{}", e.what());
 #endif
                 }
             } else {

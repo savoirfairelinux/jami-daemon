@@ -184,7 +184,7 @@ Matrix1D<Row, Value, Accessor>::operator[](Row v)
 {
     // ASSERT(size_t(v) >= size_t(Row::COUNT__),"State Machine Out of Bounds\n");
     if (size_t(v) >= enum_class_size<Row>() || static_cast<int>(v) < 0) {
-        JAMI_ERR("State Machine Out of Bounds %d\n", size_t(v));
+        JAMI_ERROR("State Machine Out of Bounds {}", size_t(v));
         assert(false);
         throw v;
     }
@@ -197,7 +197,7 @@ Matrix1D<Row, Value, Accessor>::operator[](Row v) const
 {
     assert(size_t(v) <= enum_class_size<Row>() + 1 && size_t(v) >= 0); // COUNT__ is also valid
     if (size_t(v) >= enum_class_size<Row>()) {
-        JAMI_ERR("State Machine Out of Bounds %zu\n", size_t(v));
+        JAMI_ERROR("State Machine Out of Bounds {}", size_t(v));
         assert(false);
         throw v;
     }

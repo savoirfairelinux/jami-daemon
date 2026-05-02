@@ -252,7 +252,7 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
         srtpKeyExchange = sip_utils::getKeyExchangeProtocol(iter->second);
 
     if (credentials.empty()) { // credentials not set, construct 1 entry
-        JAMI_WARN("No credentials set, inferring them...");
+        JAMI_WARNING("No credentials set, inferring them...");
         std::map<std::string, std::string> map;
         map[Conf::CONFIG_ACCOUNT_USERNAME] = username;
         parseString(details, Conf::CONFIG_ACCOUNT_PASSWORD, map[Conf::CONFIG_ACCOUNT_PASSWORD]);

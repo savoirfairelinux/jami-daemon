@@ -127,7 +127,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
     // 3) Set the audio unit callback.
     // 4) Initialize everything.
     // 5) Profit...
-    JAMI_DBG("INIT AUDIO IO");
+    JAMI_DEBUG("INIT AUDIO IO");
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
@@ -142,7 +142,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     auto comp = AudioComponentFindNext(nullptr, &desc);
     if (comp == nullptr) {
-        JAMI_ERR("Unable to find default output audio component.");
+        JAMI_ERROR("Unable to find default output audio component.");
         return;
     }
 
@@ -182,7 +182,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                                      &size,
                                                      &inputDeviceID);
             if (status != kAudioServicesNoError) {
-                JAMI_ERR() << "failed to set audio input device";
+                JAMI_ERROR("failed to set audio input device");
                 return;
             }
         }
@@ -214,7 +214,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                                      &size,
                                                      &playbackDeviceID);
             if (status != kAudioServicesNoError) {
-                JAMI_ERR() << "failed to set audio output device";
+                JAMI_ERROR("failed to set audio output device");
                 return;
             }
         }
@@ -343,7 +343,7 @@ void
 CoreLayer::startStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueMacOS(), ^{
-        JAMI_DBG("START STREAM");
+        JAMI_DEBUG("START STREAM");
 
         if (status_ != Status::Idle)
             return;
@@ -372,7 +372,7 @@ void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueMacOS(), ^{
-        JAMI_DBG("STOP STREAM");
+        JAMI_DEBUG("STOP STREAM");
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
@@ -473,7 +473,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
                 AudioBufferList* ioData)
 {
     if (inNumberFrames <= 0) {
-        JAMI_WARN("No frames for input.");
+        JAMI_WARNING("No frames for input.");
         return;
     }
     auto format = audioInputFormat_;
