@@ -399,12 +399,12 @@ public:
     // Get the map into a VCard format for storing
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
-    /**
-     * Return if a device or member is banned from a conversation
-     * @param convId
-     * @param uri
-     */
-    bool isBanned(const std::string& convId, const std::string& uri) const;
+    bool isMemberBanned(const std::string& convId, const std::string& uri) const;
+    bool isDeviceBanned(const std::string& convId, const std::string& deviceId) const;
+    bool isPeerAuthorized(const std::string& convId,
+                          const std::string& uri,
+                          const std::string& deviceId,
+                          bool includeInvited = false) const;
 
     // Remove swarm
     /**

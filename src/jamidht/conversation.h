@@ -306,7 +306,17 @@ public:
      * @return true if uri is a member
      */
     bool isMember(const std::string& uri, bool includeInvited = false) const;
-    bool isBanned(const std::string& uri) const;
+    bool isMemberBanned(const std::string& uri) const;
+    bool isDeviceBanned(const std::string& deviceId) const;
+
+    /**
+     * Check if a device is authorized to clone or interact with the conversation.
+     * Assumption: the deviceId must already be a confirmed device of the user.
+     * @param uri               URI of the user
+     * @param deviceId          Device id to check
+     * @param includeInvited    If true, consider invited members as authorized.
+     */
+    bool isPeerAuthorized(const std::string& uri, const std::string& deviceId, bool includeInvited = false) const;
 
     void createCommit(CommitMessage&& message, OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
 
