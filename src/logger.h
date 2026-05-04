@@ -93,15 +93,6 @@ public:
     Logger(const Logger&) = delete;
     Logger(Logger&&) noexcept = default;
 
-    ~Logger() { log(level_, file_, line_, linefeed_, "%s", os_.str().c_str()); }
-
-    template<typename T>
-    inline Logger& operator<<(const T& value)
-    {
-        os_ << value;
-        return *this;
-    }
-
     constexpr static int dhtLevel(dht::log::LogLevel level)
     {
         switch (level) {
@@ -140,12 +131,6 @@ public:
     static void log(int level, const char* file, unsigned line, bool linefeed, const char* const fmt, ...)
         PRINTF_ATTRIBUTE(5, 6);
 
-    ///
-    /// Printf fashion logging (using va_list parameters)
-    ///
-    LIBJAMI_PUBLIC
-    static void vlog(int level, const char* file, unsigned line, bool linefeed, const char* fmt, va_list);
-
     static void setConsoleLog(bool enable);
     static void setSysLog(bool enable);
     static void setMonitorLog(bool enable);
@@ -166,7 +151,6 @@ private:
     const char* const file_; ///< contextual filename (printed as header)
     const unsigned line_;    ///< contextual line number (printed as header)
     bool linefeed_ {true};   ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
-    std::ostringstream os_;  ///< string stream used with C++ stream style (stream operator<<)
 };
 
 namespace log {
@@ -224,11 +208,6 @@ xerror(const char* file, unsigned line, S&& format, Args&&... args)
 } // namespace log
 
 // We need to use macros for contextual information
-#define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_DBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_ERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ##__VA_ARGS__)
-
 #define JAMI_XINFO(formatstr, ...) ::jami::log::xinfo(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 #define JAMI_XDBG(formatstr, ...)  ::jami::log::xdbg(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 #define JAMI_XWARN(formatstr, ...) ::jami::log::xwarn(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
