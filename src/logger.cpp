@@ -593,15 +593,6 @@ Logger::setFileLog(const std::string& path)
     LogDispatcher::instance().enableFileLog(path);
 }
 
-LIBJAMI_PUBLIC void
-Logger::log(int level, const char* file, unsigned line, bool linefeed, const char* fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vlog(level, file, line, linefeed, fmt, ap);
-    va_end(ap);
-}
-
 static std::atomic_bool debugEnabled_ {false};
 
 void
@@ -614,22 +605,6 @@ bool
 Logger::debugEnabled()
 {
     return debugEnabled_.load(std::memory_order_relaxed);
-}
-
-void
-Logger::vlog(int level, const char* file, unsigned line, bool linefeed, const char* fmt, va_list ap)
-{
-    if (level < LOG_WARNING and not debugEnabled_.load(std::memory_order_relaxed)) {
-        return;
-    }
-
-    if (!LogDispatcher::instance().isEnabled()) {
-        return;
-    }
-
-    /* Timestamp is generated here. */
-    Msg msg(level, file, line, linefeed, {}, fmt, ap);
-    LogDispatcher::instance().log(std::move(msg));
 }
 
 void
