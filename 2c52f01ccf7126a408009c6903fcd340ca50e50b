@@ -16,6 +16,29 @@
       "message": "!build",
       "revId": "2c52f01ccf7126a408009c6903fcd340ca50e50b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "38f1ef71_0d57e4ec",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 743,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-05T14:32:34Z",
+      "side": 1,
+      "message": "This doesn\u0027t look right. Shouldn\u0027t we either use a default value or not perform any update if the index is invalid?",
+      "range": {
+        "startLine": 743,
+        "startChar": 8,
+        "endLine": 743,
+        "endChar": 21
+      },
+      "revId": "2c52f01ccf7126a408009c6903fcd340ca50e50b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
