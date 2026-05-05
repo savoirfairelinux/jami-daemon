@@ -65,12 +65,12 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_inv_session** inv)
 {
     JAMI_LOG("Creating SIP dialog: \nFrom: {}\nContact: {}\nTo: {}",
-             sip_utils::as_view(from),
-             sip_utils::as_view(contact),
-             sip_utils::as_view(to));
+             sip_utils::as_view(*from),
+             sip_utils::as_view(*contact),
+             sip_utils::as_view(*to));
 
     if (target) {
-        JAMI_LOG("Target: {}", sip_utils::as_view(target));
+        JAMI_LOG("Target: {}", sip_utils::as_view(*target));
     } else {
         JAMI_LOG("No target provided, using 'to' as target");
     }
@@ -78,7 +78,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
     auto status = pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg);
     if (status != PJ_SUCCESS) {
         JAMI_ERROR("Unable to create SIP dialogs for user agent client when calling {} {}",
-                   sip_utils::as_view(to),
+                   sip_utils::as_view(*to),
                    status);
         return false;
     }
