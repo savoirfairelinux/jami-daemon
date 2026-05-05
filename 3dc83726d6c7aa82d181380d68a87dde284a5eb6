@@ -312,6 +312,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "87a79a48_abafc840",
+        "filename": "test/fuzzing/lib/utils.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "63a1aaca_310306b6",
+      "range": {
+        "startLine": 100,
+        "startChar": 23,
+        "endLine": 100,
+        "endChar": 26
+      },
+      "revId": "3dc83726d6c7aa82d181380d68a87dde284a5eb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cc80c8f3_688de3c1",
@@ -325,6 +349,30 @@
       "writtenOn": "2026-05-05T17:29:47Z",
       "side": 1,
       "message": "`{}`",
+      "range": {
+        "startLine": 103,
+        "startChar": 23,
+        "endLine": 103,
+        "endChar": 26
+      },
+      "revId": "3dc83726d6c7aa82d181380d68a87dde284a5eb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a36fbd42_d4d02f37",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc80c8f3_688de3c1",
       "range": {
         "startLine": 103,
         "startChar": 23,

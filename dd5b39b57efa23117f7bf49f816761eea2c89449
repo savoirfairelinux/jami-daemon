@@ -186,6 +186,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6fadcb3f_cd32af13",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce7eb968_c6b81653",
+      "range": {
+        "startLine": 199,
+        "startChar": 8,
+        "endLine": 199,
+        "endChar": 137
+      },
+      "revId": "dd5b39b57efa23117f7bf49f816761eea2c89449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c5556229_25d53256",
@@ -245,6 +269,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "45611e90_16c067fe",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "190e1ba0_77fde4b8",
+      "range": {
+        "startLine": 272,
+        "startChar": 91,
+        "endLine": 272,
+        "endChar": 99
+      },
+      "revId": "dd5b39b57efa23117f7bf49f816761eea2c89449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d38f02af_a89fd4e5",
@@ -258,6 +306,30 @@
       "writtenOn": "2026-05-05T17:29:47Z",
       "side": 1,
       "message": "Conversation to C string no longer needed.",
+      "range": {
+        "startLine": 282,
+        "startChar": 84,
+        "endLine": 282,
+        "endChar": 92
+      },
+      "revId": "dd5b39b57efa23117f7bf49f816761eea2c89449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f301b88_c2b2d2d1",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d38f02af_a89fd4e5",
       "range": {
         "startLine": 282,
         "startChar": 84,
@@ -335,6 +407,30 @@
       "writtenOn": "2026-05-05T17:29:47Z",
       "side": 1,
       "message": "It\u0027s probably better to use `sip_utils::as_view` here to be safe since the buffer in a `pj_str_t` isn\u0027t guaranteed to be null-terminated. (Same comment applies to lines 70 and 77.)",
+      "range": {
+        "startLine": 67,
+        "startChar": 69,
+        "endLine": 67,
+        "endChar": 101
+      },
+      "revId": "dd5b39b57efa23117f7bf49f816761eea2c89449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "73593bbb_3c515aa4",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:37:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3fd274da_f834f5a2",
       "range": {
         "startLine": 67,
         "startChar": 69,
