@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "821c5eef_fc5b7796",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 586,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-05T18:12:01Z",
+      "side": 1,
+      "message": "Same information included twice.",
+      "range": {
+        "startLine": 585,
+        "startChar": 51,
+        "endLine": 586,
+        "endChar": 81
+      },
+      "revId": "814643efb94a6e518ba3500836d706eb1e058ff4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
