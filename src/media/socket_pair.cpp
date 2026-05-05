@@ -180,7 +180,8 @@ SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
-    JAMI_LOG("[{}] Creating instance using ICE sockets for comp {} and {}", fmt::ptr(this),
+    JAMI_LOG("[{}] Creating instance using ICE sockets for comp {} and {}",
+             fmt::ptr(this),
              rtp_sock_->getCompId(),
              rtcp_sock_->getCompId());
 
@@ -344,11 +345,11 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     }
 
     JAMI_WARNING("SocketPair: local({},{}) / {}({},{})",
-              local_rtp_port,
-              local_rtcp_port,
-              hostname,
-              dst_rtp_port,
-              dst_rtcp_port);
+                 local_rtp_port,
+                 local_rtcp_port,
+                 hostname,
+                 dst_rtp_port,
+                 dst_rtcp_port);
 }
 
 MediaIOHandle*

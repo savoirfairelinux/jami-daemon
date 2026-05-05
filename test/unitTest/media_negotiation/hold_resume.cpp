@@ -189,10 +189,11 @@ HoldResumeTest::onIncomingCall(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]", libjami::CallSignal::IncomingCall::name,
-              callData.alias_,
-              callId,
-              mediaList.size());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]",
+             libjami::CallSignal::IncomingCall::name,
+             callData.alias_,
+             callId,
+             mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
         JAMI_WARNING("Call with ID [{}] does not exist!", callId);
@@ -212,9 +213,7 @@ HoldResumeTest::onIncomingCall(const std::string& accountId, const std::string& 
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_LOG("Signal [{}] - user [{}] - call [{}]", libjami::CallSignal::IncomingCall::name,
-              callData.alias_,
-              callId);
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}]", libjami::CallSignal::IncomingCall::name, callData.alias_, callId);
 
     if (not Manager::instance().getCallFromCallID(callId)) {
         JAMI_WARNING("Call with ID [{}] does not exist!", callId);
@@ -237,10 +236,11 @@ HoldResumeTest::onMediaChangeRequested(const std::string& accountId,
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
-    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]", libjami::CallSignal::MediaChangeRequested::name,
-              callData.alias_,
-              callId,
-              mediaList.size());
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - media count [{}]",
+             libjami::CallSignal::MediaChangeRequested::name,
+             callData.alias_,
+             callId,
+             mediaList.size());
 
     if (not Manager::instance().getCallFromCallID(callId)) {
         JAMI_WARNING("Call with ID [{}] does not exist!", callId);
@@ -270,10 +270,11 @@ HoldResumeTest::onCallStateChange(const std::string& callId, const std::string& 
         return;
     }
 
-    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]", libjami::CallSignal::StateChange::name,
-              callData.alias_,
-              callId,
-              state);
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::StateChange::name,
+             callData.alias_,
+             callId,
+             state);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -303,10 +304,11 @@ HoldResumeTest::onMediaNegotiationStatus(const std::string& callId, const std::s
         return;
     }
 
-    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]", libjami::CallSignal::MediaNegotiationStatus::name,
-              account->getAccountDetails()[ConfProperties::ALIAS],
-              call->getCallId(),
-              event);
+    JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
+             libjami::CallSignal::MediaNegotiationStatus::name,
+             account->getAccountDetails()[ConfProperties::ALIAS],
+             call->getCallId(),
+             event);
 
     if (account->getAccountID() != callData.accountId_)
         return;
@@ -442,8 +444,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
     CPPUNIT_ASSERT(aliceCall);
     aliceData.callId_ = aliceCall->getCallId();
 
-    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData.accountId_,
-              bobData.accountId_);
+    JAMI_LOG("ALICE [{}] started a call with BOB [{}] and wait for answer", aliceData.accountId_, bobData.accountId_);
 
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));

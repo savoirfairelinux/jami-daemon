@@ -487,7 +487,7 @@ SIPAccount::getVolatileAccountDetails() const
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto* cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         if (tlsInfos.cipher and not cipher)
-            JAMI_WARNING("Unknown cipher: {}", (int)tlsInfos.cipher);
+            JAMI_WARNING("Unknown cipher: {}", (int) tlsInfos.cipher);
         a.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
         a.emplace(libjami::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
         auto ca = tlsInfos.peerCert->issuer;
@@ -926,7 +926,9 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
     }
 
     if (param->expiration != config().registrationExpire) {
-        JAMI_LOG("Registrar returned EXPIRE value [{} s] different from the requested [{} s]", param->expiration, config().registrationExpire);
+        JAMI_LOG("Registrar returned EXPIRE value [{} s] different from the requested [{} s]",
+                 param->expiration,
+                 config().registrationExpire);
         // NOTE: We don't alter the EXPIRE set by the user even if the registrar
         // returned a different value. PJSIP lib will set the proper timer for
         // the refresh, if the auto-regisration is enabled.
@@ -1641,7 +1643,11 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         return false;
     }
 
-    JAMI_WARNING("[account {}] Contact address changed: ({} → {}:{}). Updating registration.", accountID_, contact_addr.toString(true), via_addrstr.data(), rport);
+    JAMI_WARNING("[account {}] Contact address changed: ({} → {}:{}). Updating registration.",
+                 accountID_,
+                 contact_addr.toString(true),
+                 via_addrstr.data(),
+                 rport);
 
     /*
      * Build new Contact header

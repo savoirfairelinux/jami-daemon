@@ -312,7 +312,9 @@ PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::st
 {
     auto dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(name));
     if (dev_info == list.end()) {
-        JAMI_WARNING("Preferred device {} not found in device list, selecting default {} instead.", name, list.front().name);
+        JAMI_WARNING("Preferred device {} not found in device list, selecting default {} instead.",
+                     name,
+                     list.front().name);
         return &list.front();
     }
     return &(*dev_info);
@@ -644,7 +646,7 @@ PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t ty
         break;
 
     default:
-        JAMI_LOG("Unhandled event type 0x{:x}", (int)type);
+        JAMI_LOG("Unhandled event type 0x{:x}", (int) type);
         break;
     }
 
@@ -708,7 +710,14 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     if (!i)
         return;
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    JAMI_LOG("PulseAudio server info:\n    Server name: {}\n    Server version: {}\n    Default sink: {}\n    Default source: {}\n    Default sample specification: {}\n    Default channel map: {}", i->server_name, i->server_version, i->default_sink_name, i->default_source_name, pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec), pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
+    JAMI_LOG("PulseAudio server info:\n    Server name: {}\n    Server version: {}\n    Default sink: {}\n    Default "
+             "source: {}\n    Default sample specification: {}\n    Default channel map: {}",
+             i->server_name,
+             i->server_version,
+             i->default_sink_name,
+             i->default_source_name,
+             pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+             pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
 
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
     std::lock_guard lk(context->readyMtx_);
@@ -744,7 +753,22 @@ PulseLayer::source_input_info_callback(pa_context* c UNUSED, const pa_source_inf
     }
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    JAMI_LOG("Source {}\n    Name: {}\n    Driver: {}\n    Description: {}\n    Sample Specification: {}\n    Channel Map: {}\n    Owner Module: {}\n    Volume: {}\n    Monitor if Sink: {}\n    Latency: {:0.0} usec\n    Flags: {}{}{}", i->index, i->name, i->driver, i->description, pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec), pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map), i->owner_module, i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume), i->monitor_of_sink, (double) i->latency, i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "", i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "", i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+    JAMI_LOG("Source {}\n    Name: {}\n    Driver: {}\n    Description: {}\n    Sample Specification: {}\n    Channel "
+             "Map: {}\n    Owner Module: {}\n    Volume: {}\n    Monitor if Sink: {}\n    Latency: {:0.0} usec\n    "
+             "Flags: {}{}{}",
+             i->index,
+             i->name,
+             i->driver,
+             i->description,
+             pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+             pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+             i->owner_module,
+             i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+             i->monitor_of_sink,
+             (double) i->latency,
+             i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+             i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+             i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 #endif
     if (not context->inSourceList(i->name)) {
         context->sourceList_.emplace_back(*i);
@@ -764,7 +788,22 @@ PulseLayer::sink_input_info_callback(pa_context* c UNUSED, const pa_sink_info* i
     }
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    JAMI_LOG("Sink {}\n    Name: {}\n    Driver: {}\n    Description: {}\n    Sample Specification: {}\n    Channel Map: {}\n    Owner Module: {}\n    Volume: {}\n    Monitor Source: {}\n    Latency: {:0.0} usec\n    Flags: {}{}{}", i->index, i->name, i->driver, i->description, pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec), pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map), i->owner_module, i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume), i->monitor_source, static_cast<double>(i->latency), i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "", i->flags & PA_SINK_LATENCY ? "LATENCY " : "", i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+    JAMI_LOG(
+        "Sink {}\n    Name: {}\n    Driver: {}\n    Description: {}\n    Sample Specification: {}\n    Channel Map: "
+        "{}\n    Owner Module: {}\n    Volume: {}\n    Monitor Source: {}\n    Latency: {:0.0} usec\n    Flags: {}{}{}",
+        i->index,
+        i->name,
+        i->driver,
+        i->description,
+        pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+        pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+        i->owner_module,
+        i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+        i->monitor_source,
+        static_cast<double>(i->latency),
+        i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+        i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+        i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 #endif
     if (not context->inSinkList(i->name)) {
         context->sinkList_.emplace_back(*i);

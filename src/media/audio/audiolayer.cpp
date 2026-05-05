@@ -200,7 +200,8 @@ AudioLayer::createAudioProcessor()
         JAMI_WARNING("[audiolayer] using WebRTCAudioProcessor");
         audioProcessor.reset(new WebRTCAudioProcessor(formatForProcessor, frame_size));
 #else
-        JAMI_ERROR("[audiolayer] audioProcessor preference is webrtc, but library not linked! using null AudioProcessor instead");
+        JAMI_ERROR("[audiolayer] audioProcessor preference is webrtc, but library not linked! using null "
+                   "AudioProcessor instead");
         audioProcessor.reset();
 #endif
     } else if (pref_.getAudioProcessor() == "speex") {
@@ -208,7 +209,8 @@ AudioLayer::createAudioProcessor()
         JAMI_WARNING("[audiolayer] using SpeexAudioProcessor");
         audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
 #else
-        JAMI_ERROR("[audiolayer] audioProcessor preference is Speex, but library not linked! using null AudioProcessor instead");
+        JAMI_ERROR("[audiolayer] audioProcessor preference is Speex, but library not linked! using null AudioProcessor "
+                   "instead");
         audioProcessor.reset();
 #endif
     } else if (pref_.getAudioProcessor() == "null") {

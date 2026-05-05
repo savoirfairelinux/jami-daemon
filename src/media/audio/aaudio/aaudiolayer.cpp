@@ -26,9 +26,9 @@
 namespace jami {
 
 // Signature for functions not available on older Android versions
-using SetUsageFunc = void (*)(AAudioStreamBuilder *, aaudio_usage_t);
-using SetContentTypeFunc = void (*)(AAudioStreamBuilder *, aaudio_content_type_t);
-using SetInputPresetFunc = void (*)(AAudioStreamBuilder *, aaudio_input_preset_t);
+using SetUsageFunc = void (*)(AAudioStreamBuilder*, aaudio_usage_t);
+using SetContentTypeFunc = void (*)(AAudioStreamBuilder*, aaudio_content_type_t);
+using SetInputPresetFunc = void (*)(AAudioStreamBuilder*, aaudio_input_preset_t);
 
 // Set once from JNI_OnLoad; used to create the Java AudioTrack fallback on API < 28.
 static JavaVM* sJavaVM {nullptr};
@@ -87,8 +87,9 @@ getStreamFormat(AAudioStream* stream)
 }
 
 AAudioLayer::AAudioStreamPtr
-AAudioLayer::buildStream(AudioDeviceType type) {
-    AAudioStreamBuilder *builder;
+AAudioLayer::buildStream(AudioDeviceType type)
+{
+    AAudioStreamBuilder* builder;
     AAudio_createStreamBuilder(&builder);
     AAudioStreamBuilder_setDirection(builder,
                                      (type == AudioDeviceType::CAPTURE) ? AAUDIO_DIRECTION_INPUT
@@ -97,16 +98,15 @@ AAudioLayer::buildStream(AudioDeviceType type) {
     //      type == AudioDeviceType::RINGTONE ? AAUDIO_SHARING_MODE_SHARED
     //                                        : AAUDIO_SHARING_MODE_EXCLUSIVE);
     AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_FLOAT);
-    AAudioStreamBuilder_setPerformanceMode(builder, type == AudioDeviceType::RINGTONE
-                                                    ? AAUDIO_PERFORMANCE_MODE_POWER_SAVING
-                                                    : AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+    AAudioStreamBuilder_setPerformanceMode(builder,
+                                           type == AudioDeviceType::RINGTONE ? AAUDIO_PERFORMANCE_MODE_POWER_SAVING
+                                                                             : AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 
-    static auto setUsage = reinterpret_cast<SetUsageFunc>(dlsym(RTLD_DEFAULT,
-                                                                "AAudioStreamBuilder_setUsage"));
-    static auto setContentType = reinterpret_cast<SetContentTypeFunc>(dlsym(RTLD_DEFAULT,
-                                                                            "AAudioStreamBuilder_setContentType"));
-    static auto setInputPreset = reinterpret_cast<SetInputPresetFunc>(dlsym(RTLD_DEFAULT,
-                                                                            "AAudioStreamBuilder_setInputPreset"));
+    static auto setUsage = reinterpret_cast<SetUsageFunc>(dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setUsage"));
+    static auto setContentType = reinterpret_cast<SetContentTypeFunc>(
+        dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setContentType"));
+    static auto setInputPreset = reinterpret_cast<SetInputPresetFunc>(
+        dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setInputPreset"));
     if (setUsage) {
         setUsage(builder,
                  type == AudioDeviceType::RINGTONE ? AAUDIO_USAGE_NOTIFICATION_RINGTONE
@@ -116,17 +116,15 @@ AAudioLayer::buildStream(AudioDeviceType type) {
     }
     if (setContentType) {
         setContentType(builder,
-                       type == AudioDeviceType::RINGTONE ? AAUDIO_CONTENT_TYPE_MUSIC
-                                                         : AAUDIO_CONTENT_TYPE_SPEECH);
+                       type == AudioDeviceType::RINGTONE ? AAUDIO_CONTENT_TYPE_MUSIC : AAUDIO_CONTENT_TYPE_SPEECH);
     } else {
-        JAMI_WARNING(
-                "AAudioStreamBuilder_setContentType not available, stream content type will be unknown");
+        JAMI_WARNING("AAudioStreamBuilder_setContentType not available, stream content type will be unknown");
     }
     if (type == AudioDeviceType::CAPTURE) {
         if (setInputPreset) {
             setInputPreset(builder, AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION);
-        } else  {
-            JAMI_WARNING( "AAudioStreamBuilder_setInputPreset not available, input preset will be unknown");
+        } else {
+            JAMI_WARNING("AAudioStreamBuilder_setInputPreset not available, input preset will be unknown");
         }
     }
 
@@ -178,7 +176,7 @@ AAudioLayer::startStreamLocked(AudioDeviceType stream)
 
         // Start with minimal buffer size (low latency) and let the callback increase it if underruns occur.
         AAudioStream_setBufferSizeInFrames(playStream_.get(), AAudioStream_getFramesPerBurst(playStream_.get()) * 2);
-        //AAudioStream_setBufferSizeInFrames(playStream_.get(), 20 * format.sample_rate / 1000);
+        // AAudioStream_setBufferSizeInFrames(playStream_.get(), 20 * format.sample_rate / 1000);
         auto bufferSize = AAudioStream_getBufferCapacityInFrames(playStream_.get());
         hardwareFormatAvailable(format, bufferSize);
 
@@ -201,8 +199,7 @@ AAudioLayer::startStreamLocked(AudioDeviceType stream)
         // would default to AUDIO_STREAM_MUSIC.  Build a Java AudioTrack with
         // STREAM_RING directly so that DND / silent / vibrate rules are respected
         // and the hardware volume keys control ring volume, not media volume.
-        static auto setUsageCheck = reinterpret_cast<SetUsageFunc>(
-            dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setUsage"));
+        static auto setUsageCheck = reinterpret_cast<SetUsageFunc>(dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setUsage"));
         if (!setUsageCheck) {
             if (!startJavaRingStream()) {
                 JAMI_ERROR("Failed to start Java ringtone stream fallback");
@@ -358,8 +355,8 @@ AAudioLayer::errorCallback(AAudioStream* stream, void* userData, aaudio_result_t
 {
     AAudioLayer* layer = static_cast<AAudioLayer*>(userData);
     auto streamType = (stream == layer->playStream_.get())  ? AudioDeviceType::PLAYBACK
-                                                            : (stream == layer->recStream_.get()) ? AudioDeviceType::CAPTURE
-                                                                                                  : AudioDeviceType::RINGTONE;
+                      : (stream == layer->recStream_.get()) ? AudioDeviceType::CAPTURE
+                                                            : AudioDeviceType::RINGTONE;
     JAMI_ERROR("AAudio error: {} for type {}", AAudio_convertResultToText(error), (unsigned) streamType);
 
     if (error == AAUDIO_ERROR_DISCONNECTED) {
@@ -379,17 +376,17 @@ AAudioLayer::getCaptureDeviceList() const
 // Java AudioTrack fallback for ringtone on Android API < 28
 // ---------------------------------------------------------------------------
 
-static constexpr int JAVA_STREAM_RING          = 2;   // AudioManager.STREAM_RING
-static constexpr int JAVA_CHANNEL_OUT_STEREO   = 12;  // AudioFormat.CHANNEL_OUT_STEREO
-static constexpr int JAVA_ENCODING_PCM_FLOAT   = 4;   // AudioFormat.ENCODING_PCM_FLOAT (API 21+)
-static constexpr int JAVA_MODE_STREAM          = 1;   // AudioTrack.MODE_STREAM
-static constexpr int JAVA_STATE_INITIALIZED    = 1;   // AudioTrack.STATE_INITIALIZED
-static constexpr int JAVA_WRITE_BLOCKING       = 0;   // AudioTrack.WRITE_BLOCKING
-static constexpr int JAVA_RING_SAMPLE_RATE     = 48000;
-static constexpr int JAVA_RING_CHANNELS        = 2;
+static constexpr int JAVA_STREAM_RING = 2;         // AudioManager.STREAM_RING
+static constexpr int JAVA_CHANNEL_OUT_STEREO = 12; // AudioFormat.CHANNEL_OUT_STEREO
+static constexpr int JAVA_ENCODING_PCM_FLOAT = 4;  // AudioFormat.ENCODING_PCM_FLOAT (API 21+)
+static constexpr int JAVA_MODE_STREAM = 1;         // AudioTrack.MODE_STREAM
+static constexpr int JAVA_STATE_INITIALIZED = 1;   // AudioTrack.STATE_INITIALIZED
+static constexpr int JAVA_WRITE_BLOCKING = 0;      // AudioTrack.WRITE_BLOCKING
+static constexpr int JAVA_RING_SAMPLE_RATE = 48000;
+static constexpr int JAVA_RING_CHANNELS = 2;
 // 10 ms of stereo float at 48 kHz
-static constexpr int JAVA_RING_FRAMES          = 480;
-static constexpr int JAVA_RING_FLOATS          = JAVA_RING_FRAMES * JAVA_RING_CHANNELS;
+static constexpr int JAVA_RING_FRAMES = 480;
+static constexpr int JAVA_RING_FLOATS = JAVA_RING_FRAMES * JAVA_RING_CHANNELS;
 
 bool
 AAudioLayer::startJavaRingStream()
@@ -417,7 +414,8 @@ AAudioLayer::startJavaRingStream()
     jclass atClass = env->FindClass("android/media/AudioTrack");
     if (!atClass) {
         JAMI_ERROR("AAudioLayer: AudioTrack class not found");
-        if (attached) sJavaVM->DetachCurrentThread();
+        if (attached)
+            sJavaVM->DetachCurrentThread();
         return false;
     }
 
@@ -448,7 +446,8 @@ AAudioLayer::startJavaRingStream()
         env->ExceptionClear();
         JAMI_ERROR("AAudioLayer: failed to construct Java AudioTrack for ringtone");
         env->DeleteLocalRef(atClass);
-        if (attached) sJavaVM->DetachCurrentThread();
+        if (attached)
+            sJavaVM->DetachCurrentThread();
         return false;
     }
 
@@ -458,7 +457,8 @@ AAudioLayer::startJavaRingStream()
         JAMI_ERROR("AAudioLayer: Java AudioTrack not initialised (wrong state)");
         env->DeleteLocalRef(track);
         env->DeleteLocalRef(atClass);
-        if (attached) sJavaVM->DetachCurrentThread();
+        if (attached)
+            sJavaVM->DetachCurrentThread();
         return false;
     }
 
@@ -468,20 +468,21 @@ AAudioLayer::startJavaRingStream()
     env->DeleteLocalRef(atClass);
 
     // Promote to global refs so the write thread can access them safely.
-    javaRingTrack_  = env->NewGlobalRef(track);
+    javaRingTrack_ = env->NewGlobalRef(track);
     jfloatArray buf = env->NewFloatArray(JAVA_RING_FLOATS);
     javaRingBuffer_ = reinterpret_cast<jfloatArray>(env->NewGlobalRef(buf));
     env->DeleteLocalRef(track);
     env->DeleteLocalRef(buf);
 
-    if (attached) sJavaVM->DetachCurrentThread();
+    if (attached)
+        sJavaVM->DetachCurrentThread();
 
     // Tell the daemon what format to expect from getToRing().
     AudioFormat format(JAVA_RING_SAMPLE_RATE, JAVA_RING_CHANNELS, AV_SAMPLE_FMT_FLT);
     hardwareFormatAvailable(format, bufBytes / static_cast<int>(sizeof(float)));
 
     javaRingRunning_ = true;
-    javaRingThread_  = std::thread([this] { javaRingLoop(); });
+    javaRingThread_ = std::thread([this] { javaRingLoop(); });
 
     JAMI_WARNING("AAudioLayer: Java STREAM_RING AudioTrack started (API < 28 fallback)");
     status_ = Status::Started;
@@ -495,8 +496,8 @@ AAudioLayer::javaRingLoop()
     if (!sJavaVM)
         return;
 
-    JNIEnv* env    = nullptr;
-    bool attached  = false;
+    JNIEnv* env = nullptr;
+    bool attached = false;
     jint envStatus = sJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
     if (envStatus == JNI_EDETACHED) {
         if (sJavaVM->AttachCurrentThread(&env, nullptr) == JNI_OK)
@@ -507,9 +508,9 @@ AAudioLayer::javaRingLoop()
         }
     }
 
-    jclass     atClass    = env->GetObjectClass(javaRingTrack_);
+    jclass atClass = env->GetObjectClass(javaRingTrack_);
     // write(float[] audioData, int offsetInFloats, int sizeInFloats, int writeMode) → int
-    jmethodID  writeMethod = env->GetMethodID(atClass, "write", "([FIII)I");
+    jmethodID writeMethod = env->GetMethodID(atClass, "write", "([FIII)I");
     env->DeleteLocalRef(atClass);
 
     const AudioFormat format(JAVA_RING_SAMPLE_RATE, JAVA_RING_CHANNELS, AV_SAMPLE_FMT_FLT);
@@ -519,12 +520,7 @@ AAudioLayer::javaRingLoop()
         if (frame && frame->pointer() && frame->pointer()->data[0]) {
             const auto* src = reinterpret_cast<const float*>(frame->pointer()->data[0]);
             env->SetFloatArrayRegion(javaRingBuffer_, 0, JAVA_RING_FLOATS, src);
-            env->CallIntMethod(javaRingTrack_,
-                               writeMethod,
-                               javaRingBuffer_,
-                               0,
-                               JAVA_RING_FLOATS,
-                               JAVA_WRITE_BLOCKING);
+            env->CallIntMethod(javaRingTrack_, writeMethod, javaRingBuffer_, 0, JAVA_RING_FLOATS, JAVA_WRITE_BLOCKING);
         } else {
             // No audio ready yet — yield briefly to avoid busy-spinning.
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -545,7 +541,7 @@ AAudioLayer::stopJavaRingStream()
     if (!sJavaVM || !javaRingTrack_)
         return;
 
-    JNIEnv* env   = nullptr;
+    JNIEnv* env = nullptr;
     bool attached = false;
     if (sJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
         if (sJavaVM->AttachCurrentThread(&env, nullptr) == JNI_OK)
@@ -553,9 +549,9 @@ AAudioLayer::stopJavaRingStream()
     }
 
     if (env) {
-        jclass    atClass      = env->GetObjectClass(javaRingTrack_);
-        jmethodID stopMethod   = env->GetMethodID(atClass, "stop",    "()V");
-        jmethodID releaseMethod= env->GetMethodID(atClass, "release", "()V");
+        jclass atClass = env->GetObjectClass(javaRingTrack_);
+        jmethodID stopMethod = env->GetMethodID(atClass, "stop", "()V");
+        jmethodID releaseMethod = env->GetMethodID(atClass, "release", "()V");
         env->CallVoidMethod(javaRingTrack_, stopMethod);
         env->CallVoidMethod(javaRingTrack_, releaseMethod);
         env->DeleteLocalRef(atClass);
@@ -564,7 +560,7 @@ AAudioLayer::stopJavaRingStream()
         env->DeleteGlobalRef(reinterpret_cast<jobject>(javaRingBuffer_));
     }
 
-    javaRingTrack_  = nullptr;
+    javaRingTrack_ = nullptr;
     javaRingBuffer_ = nullptr;
 
     if (attached)

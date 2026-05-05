@@ -216,7 +216,11 @@ MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 int
 MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
-    JAMI_LOG("[{}] Initializing stream: codec type {}, name {}, lib {}", fmt::ptr(this), static_cast<unsigned>(systemCodecInfo.codecType), systemCodecInfo.name, systemCodecInfo.libName);
+    JAMI_LOG("[{}] Initializing stream: codec type {}, name {}, lib {}",
+             fmt::ptr(this),
+             static_cast<unsigned>(systemCodecInfo.codecType),
+             systemCodecInfo.name,
+             systemCodecInfo.libName);
 
     std::lock_guard lk(encMutex_);
 
@@ -254,7 +258,9 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 
     if (stream == nullptr) {
-        JAMI_ERROR("[{}] Unable to init, output context has no coding sessions for {}", fmt::ptr(this), systemCodecInfo.name);
+        JAMI_ERROR("[{}] Unable to init, output context has no coding sessions for {}",
+                   fmt::ptr(this),
+                   systemCodecInfo.name);
         throw MediaEncoderException("Unable to allocate stream");
     }
 
@@ -288,14 +294,18 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             accel_->setDetails(encoderCtx);
             if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
                 // Failed to open codec
-                JAMI_WARNING("Fail to open hardware encoder {} with {} ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName());
+                JAMI_WARNING("Fail to open hardware encoder {} with {} ",
+                             avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
+                             it.getName());
                 avcodec_free_context(&encoderCtx);
                 encoderCtx = nullptr;
                 accel_ = nullptr;
                 continue;
             } else {
                 // Succeed to open codec
-                JAMI_WARNING("Using hardware encoding for {} with {} ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName());
+                JAMI_WARNING("Using hardware encoding for {} with {} ",
+                             avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
+                             it.getName());
                 encoders_.emplace_back(encoderCtx);
                 break;
             }
@@ -304,7 +314,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #endif
 
     if (!encoderCtx) {
-        JAMI_WARNING("Not using hardware encoding for {}", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
+        JAMI_WARNING("Not using hardware encoding for {}",
+                     avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
         encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.bitrate);
         readConfig(encoderCtx);
         encoders_.emplace_back(encoderCtx);
@@ -717,7 +728,10 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     default:
         JAMI_LOG("Unrecognized H264 profile byte");
     }
-    JAMI_LOG("Using profile {} ({:x}) and level {}", avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile), ctx->profile, ctx->level);
+    JAMI_LOG("Using profile {} ({:x}) and level {}",
+             avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile),
+             ctx->profile,
+             ctx->level);
 }
 
 #ifdef ENABLE_HWACCEL

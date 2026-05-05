@@ -73,7 +73,9 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
         return;
     }
 
-    JAMI_LOG("Subscription for pres_client '{}' is '{}'", pres_client->getURI(), pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
+    JAMI_LOG("Subscription for pres_client '{}' is '{}'",
+             pres_client->getURI(),
+             pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
     pjsip_evsub_state state = pjsip_evsub_get_state(sub);
 
@@ -389,7 +391,10 @@ PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
     if (reschedule) {
         pj_time_val delay;
 
-        JAMI_WARNING("pres_client  {} will resubscribe in {} ms (reason: {})", sip_utils::as_view(uri_), msec, sip_utils::as_view(term_reason_));
+        JAMI_WARNING("pres_client  {} will resubscribe in {} ms (reason: {})",
+                     sip_utils::as_view(uri_),
+                     msec,
+                     sip_utils::as_view(term_reason_));
         pj_timer_entry_init(&timer_, 0, this, &pres_client_timer_cb);
         delay.sec = 0;
         delay.msec = msec;

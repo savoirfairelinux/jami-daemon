@@ -1183,18 +1183,27 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {
-        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
-        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
-        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            onConversationRequestAccepted(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
+    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
+                                                 onContactAdded(uri, confirmed);
+                                             },
+                                             [this](const std::string& uri, bool banned) {
+                                                 onContactRemoved(uri, banned);
+                                             },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    time_t received) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
+                                             },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
+                                                 onKnownDevicesChanged(devices);
+                                             },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) {
+                                                 onContactConfirmed(uri, convFromReq);
+                                             }};
 }
 
 void
@@ -4149,11 +4158,7 @@ JamiAccount::sendFile(const std::string& conversationId,
         if (auto shared = w.lock()) {
             auto tid = jami::generateUID(shared->rand);
             auto displayName = name.empty() ? path.filename().string() : name;
-            auto commitMessage = CommitMessage::fileSent(displayName,
-                                                         fileutils::sha3File(path),
-                                                         tid,
-                                                         fileSize,
-                                                         replyTo);
+            auto commitMessage = CommitMessage::fileSent(displayName, fileutils::sha3File(path), tid, fileSize, replyTo);
 
             shared->convModule()->createCommit(
                 conversationId,
@@ -4400,7 +4405,8 @@ JamiAccount::initConnectionManager()
         channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(shared(),
                                                                                           *connectionManager_.get());
         if (jami::Manager::instance().syncOnRegister) {
-            channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
+            channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(),
+                                                                                       *connectionManager_.get());
         }
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());

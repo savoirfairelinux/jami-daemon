@@ -172,4 +172,5 @@ operator<<(std::ostream& os, const MediaStream& ms)
 }; // namespace jami
 
 template<>
-struct fmt::formatter<jami::MediaStream> : fmt::ostream_formatter {};
+struct fmt::formatter<jami::MediaStream> : fmt::ostream_formatter
+{};

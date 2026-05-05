@@ -872,7 +872,10 @@ Sdp::getIceCandidates(unsigned media_index) const
     auto* media = remoteSession->media[media_index];
     auto* localMedia = localSession->media[media_index];
     if (media->desc.port == 0 || localMedia->desc.port == 0) {
-        JAMI_WARNING("Media#{} is disabled. Media ports: local {}, remote {}", media_index, localMedia->desc.port, media->desc.port);
+        JAMI_WARNING("Media#{} is disabled. Media ports: local {}, remote {}",
+                     media_index,
+                     localMedia->desc.port,
+                     media->desc.port);
         return {};
     }
 

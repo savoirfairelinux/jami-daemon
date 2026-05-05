@@ -95,15 +95,13 @@ VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
 std::map<std::string, std::string>
 VideoSettings::to_map() const
 {
-    return {
-        {"name",        name                          },
-        {"id",          unique_id                     },
-        {"input",       input                         },
-        {"size",        video_size                    },
-        {"channel",     channel                       },
-        {"rate",        framerate                     },
-        {"passthrough", passthrough ? "true" : "false"}
-    };
+    return {{"name", name},
+            {"id", unique_id},
+            {"input", input},
+            {"size", video_size},
+            {"channel", channel},
+            {"rate", framerate},
+            {"passthrough", passthrough ? "true" : "false"}};
 }
 
 } // namespace video

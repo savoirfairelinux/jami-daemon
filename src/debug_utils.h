@@ -289,7 +289,11 @@ public:
     ~VideoWriter()
     {
         fclose(f_);
-        JAMI_LOG("Play video file with: ffplay -f rawvideo -pixel_format {} -video_size {}x{} {}", av_get_pix_fmt_name(format_), width_, height_, filename_);
+        JAMI_LOG("Play video file with: ffplay -f rawvideo -pixel_format {} -video_size {}x{} {}",
+                 av_get_pix_fmt_name(format_),
+                 width_,
+                 height_,
+                 filename_);
     }
 
     void write(VideoFrame& frame)

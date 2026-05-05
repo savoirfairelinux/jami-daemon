@@ -803,7 +803,12 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         return;
 
     if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG and ev->type != PJSIP_EVENT_RX_MSG) {
-        JAMI_WARNING("[call:{}] INVITE@{} state changed to {} ({}): unexpected event type {}", call->getCallId(), fmt::ptr(inv), pjsip_inv_state_name(inv->state), pjsip_inv_state_name(inv->state), static_cast<int>(ev->type));
+        JAMI_WARNING("[call:{}] INVITE@{} state changed to {} ({}): unexpected event type {}",
+                     call->getCallId(),
+                     fmt::ptr(inv),
+                     pjsip_inv_state_name(inv->state),
+                     pjsip_inv_state_name(inv->state),
+                     static_cast<int>(ev->type));
         return;
     }
 
@@ -1253,7 +1258,12 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
         return;
 
     const std::string_view bodyText {static_cast<char*>(msg->body->data), msg->body->len};
-    JAMI_LOG("[call:{}] NOTIFY body start - {}\n{}\n[call:{}] NOTIFY body end - {}", call.getCallId(), fmt::ptr(msg->body), bodyText, call.getCallId(), fmt::ptr(msg->body));
+    JAMI_LOG("[call:{}] NOTIFY body start - {}\n{}\n[call:{}] NOTIFY body end - {}",
+             call.getCallId(),
+             fmt::ptr(msg->body),
+             bodyText,
+             call.getCallId(),
+             fmt::ptr(msg->body));
 
     // TODO
 }

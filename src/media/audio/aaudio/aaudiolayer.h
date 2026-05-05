@@ -29,7 +29,8 @@
 
 namespace jami {
 
-class AAudioLayer : public AudioLayer {
+class AAudioLayer : public AudioLayer
+{
 public:
     AAudioLayer(const AudioPreference& pref);
     ~AAudioLayer();
@@ -43,7 +44,7 @@ public:
 
     std::vector<std::string> getCaptureDeviceList() const override;
     std::vector<std::string> getPlaybackDeviceList() const override;
-    
+
     int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const override;
     std::string getAudioDeviceName(int index, AudioDeviceType type) const override;
 
@@ -54,8 +55,10 @@ public:
     void updatePreference(AudioPreference& pref, int index, AudioDeviceType type) override;
 
 private:
-    struct AAudioStreamDeleter {
-        void operator()(AAudioStream* stream) const {
+    struct AAudioStreamDeleter
+    {
+        void operator()(AAudioStream* stream) const
+        {
             if (stream) {
                 AAudioStream_close(stream);
             }
@@ -71,20 +74,16 @@ private:
     AAudioStreamPtr recStream_ {nullptr};
     int previousUnderrunCount_ {0};
 
-    static aaudio_data_callback_result_t dataCallback(
-        AAudioStream *stream,
-        void *userData,
-        void *audioData,
-        int32_t numFrames);
+    static aaudio_data_callback_result_t dataCallback(AAudioStream* stream,
+                                                      void* userData,
+                                                      void* audioData,
+                                                      int32_t numFrames);
 
-    static void errorCallback(
-        AAudioStream *stream,
-        void *userData,
-        aaudio_result_t error);
+    static void errorCallback(AAudioStream* stream, void* userData, aaudio_result_t error);
 
     void stopPlayback();
     void stopCapture();
-    
+
     void loop();
     void startStreamLocked(AudioDeviceType stream);
     void stopStreamLocked(AudioDeviceType stream);
@@ -98,10 +97,10 @@ private:
     void stopJavaRingStream();
     void javaRingLoop();
 
-    jobject javaRingTrack_ {nullptr};   // GlobalRef to android.media.AudioTrack
+    jobject javaRingTrack_ {nullptr};      // GlobalRef to android.media.AudioTrack
     jfloatArray javaRingBuffer_ {nullptr}; // GlobalRef, reused each write
     std::atomic<bool> javaRingRunning_ {false};
     std::thread javaRingThread_;
 };
 
-}
+} // namespace jami

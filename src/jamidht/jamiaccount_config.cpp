@@ -103,10 +103,8 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     parseValueOptional(node, libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
 
-    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED,
-                       dhtProxyServerEnabled);
-    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT,
-                       dhtProxyServerPort);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED, dhtProxyServerEnabled);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT, dhtProxyServerPort);
 
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
@@ -158,10 +156,8 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
     a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
 
-    a.emplace(libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED,
-              dhtProxyServerEnabled ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT,
-              std::to_string(dhtProxyServerPort));
+    a.emplace(libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED, dhtProxyServerEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT, std::to_string(dhtProxyServerPort));
 
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
@@ -209,12 +205,8 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
     parseString(details, libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
 
-    parseBool(details,
-              libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED,
-              dhtProxyServerEnabled);
-    parseInt(details,
-             libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT,
-             dhtProxyServerPort);
+    parseBool(details, libjami::Account::ConfProperties::DHT_PROXY_SERVER_ENABLED, dhtProxyServerEnabled);
+    parseInt(details, libjami::Account::ConfProperties::DHT_PROXY_SERVER_PORT, dhtProxyServerPort);
 
     parseString(details, libjami::Account::ConfProperties::UI_CUSTOMIZATION, uiCustomization);
     if (not managerUri.empty() and managerUri.rfind("http", 0) != 0) {

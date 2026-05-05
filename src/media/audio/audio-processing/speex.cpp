@@ -52,7 +52,10 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
                 &speex_echo_state_destroy)
     , procBuffer(std::make_unique<AudioFrame>(format.withSampleFormat(AV_SAMPLE_FMT_S16P), frameSize_))
 {
-    JAMI_LOG("[speex-dsp] SpeexAudioProcessor, frame size = {} (={} ms), channels = {}", frameSize, frameDurationMs_, format_.nb_channels);
+    JAMI_LOG("[speex-dsp] SpeexAudioProcessor, frame size = {} (={} ms), channels = {}",
+             frameSize,
+             frameDurationMs_,
+             format_.nb_channels);
     // set up speex echo state
     speex_echo_ctl(echoState.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
 

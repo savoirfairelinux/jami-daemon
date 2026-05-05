@@ -24,7 +24,10 @@ namespace jami {
 NullAudioProcessor::NullAudioProcessor(AudioFormat format, unsigned frameSize)
     : AudioProcessor(format, frameSize)
 {
-    JAMI_LOG("[null_audio] NullAudioProcessor, frame size = {} (={} ms), channels = {}", frameSize, frameDurationMs_, format.nb_channels);
+    JAMI_LOG("[null_audio] NullAudioProcessor, frame size = {} (={} ms), channels = {}",
+             frameSize,
+             frameDurationMs_,
+             format.nb_channels);
 }
 
 std::shared_ptr<AudioFrame>

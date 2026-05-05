@@ -31,13 +31,9 @@
 
 namespace jami {
 
-SystemCodecContainer::SystemCodecContainer()
-{
-}
+SystemCodecContainer::SystemCodecContainer() {}
 
-SystemCodecContainer::~SystemCodecContainer()
-{
-}
+SystemCodecContainer::~SystemCodecContainer() {}
 
 void
 SystemCodecContainer::initCodecConfig()

@@ -361,7 +361,11 @@ PortAudioLayer::PortAudioLayerImpl::initInput(PortAudioLayer& parent)
     parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
     parent.audioInputFormat_.sampleFormat = AV_SAMPLE_FMT_FLTP;
     parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
-    JAMI_LOG("PortAudio input device: {} (native: {:.0} Hz, using: {} Hz, {} channels)", inputDeviceInfo->name, inputDeviceInfo->defaultSampleRate, parent.audioInputFormat_.sample_rate, parent.audioInputFormat_.nb_channels);
+    JAMI_LOG("PortAudio input device: {} (native: {:.0} Hz, using: {} Hz, {} channels)",
+             inputDeviceInfo->name,
+             inputDeviceInfo->defaultSampleRate,
+             parent.audioInputFormat_.sample_rate,
+             parent.audioInputFormat_.nb_channels);
     inputInitialized_ = true;
 }
 
@@ -398,7 +402,11 @@ PortAudioLayer::PortAudioLayerImpl::initOutput(PortAudioLayer& parent)
     parent.audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
     parent.audioFormat_.sampleFormat = AV_SAMPLE_FMT_FLTP;
     parent.hardwareFormatAvailable(parent.audioFormat_);
-    JAMI_LOG("PortAudio output device: {} (native: {:.0} Hz, using: {} Hz, {} channels)", outputDeviceInfo->name, outputDeviceInfo->defaultSampleRate, parent.audioFormat_.sample_rate, parent.audioFormat_.nb_channels);
+    JAMI_LOG("PortAudio output device: {} (native: {:.0} Hz, using: {} Hz, {} channels)",
+             outputDeviceInfo->name,
+             outputDeviceInfo->defaultSampleRate,
+             parent.audioFormat_.sample_rate,
+             parent.audioFormat_.nb_channels);
     outputInitialized_ = true;
 }
 

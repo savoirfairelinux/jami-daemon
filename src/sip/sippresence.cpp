@@ -175,7 +175,11 @@ SIPPresence::reportPresSubClientNotification(std::string_view uri, pjsip_pres_st
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string& acc_ID = acc_->getAccountID();
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    JAMI_LOG(" Received status of PresSubClient {}(acc:{}): status={} note={}", uri, acc_ID, status->info[0].basic_open ? "open" : "closed", note);
+    JAMI_LOG(" Received status of PresSubClient {}(acc:{}): status={} note={}",
+             uri,
+             acc_ID,
+             status->info[0].basic_open ? "open" : "closed",
+             note);
 
     if (uri == acc_->getFromUri()) {
         // save the status of our own account

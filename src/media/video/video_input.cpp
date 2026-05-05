@@ -348,7 +348,11 @@ VideoInput::createDecoder()
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
-    JAMI_LOG("created decoder with video params : size={}X{}, fps={} pix={}", decOpts_.width, decOpts_.height, decOpts_.framerate.real(), decOpts_.pixel_format);
+    JAMI_LOG("created decoder with video params : size={}X{}, fps={} pix={}",
+             decOpts_.width,
+             decOpts_.height,
+             decOpts_.framerate.real(),
+             decOpts_.pixel_format);
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
 

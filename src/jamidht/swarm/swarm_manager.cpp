@@ -357,13 +357,11 @@ SwarmManager::getRoutingTableInfo() const
     std::vector<std::map<std::string, std::string>> result;
     result.reserve(stats.size());
     for (const auto& stat : stats) {
-        result.push_back({
-            {"id",            stat.id                         },
-            {"device",        stat.id                         },
-            {"status",        stat.status                     },
-            {"remoteAddress", stat.remoteAddress              },
-            {"mobile",        stat.isMobile ? "true" : "false"}
-        });
+        result.push_back({{"id", stat.id},
+                          {"device", stat.id},
+                          {"status", stat.status},
+                          {"remoteAddress", stat.remoteAddress},
+                          {"mobile", stat.isMobile ? "true" : "false"}});
         if (stat.connectionTime != std::chrono::system_clock::time_point::min()) {
             auto tt = std::chrono::system_clock::to_time_t(stat.connectionTime);
             result.back().emplace("connectionTime", std::to_string(tt));

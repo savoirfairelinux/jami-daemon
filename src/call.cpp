@@ -223,11 +223,20 @@ bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::unique_lock<std::recursive_mutex> lock(callMutex_);
-    JAMI_LOG("[call:{}] state change {}/{}, cnx {}/{}, code {}", id_, (unsigned) callState_, (unsigned) call_state, (unsigned) connectionState_, (unsigned) cnx_state, code);
+    JAMI_LOG("[call:{}] state change {}/{}, cnx {}/{}, code {}",
+             id_,
+             (unsigned) callState_,
+             (unsigned) call_state,
+             (unsigned) connectionState_,
+             (unsigned) cnx_state,
+             code);
 
     if (callState_ != call_state) {
         if (not validStateTransition(call_state)) {
-            JAMI_ERROR("[call:{}] invalid call state transition from {} to {}", id_, (unsigned) callState_, (unsigned) call_state);
+            JAMI_ERROR("[call:{}] invalid call state transition from {} to {}",
+                       id_,
+                       (unsigned) callState_,
+                       (unsigned) call_state);
             return false;
         }
     } else if (connectionState_ == cnx_state)

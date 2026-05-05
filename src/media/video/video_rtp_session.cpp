@@ -107,7 +107,10 @@ VideoRtpSession::startSender()
 {
     std::lock_guard lock(mutex_);
 
-    JAMI_LOG("[{}] Start video RTP sender: input [{}] - muted [{}]", fmt::ptr(this), conference_ ? "Video Mixer" : input_, send_.hold ? "YES" : "NO");
+    JAMI_LOG("[{}] Start video RTP sender: input [{}] - muted [{}]",
+             fmt::ptr(this),
+             conference_ ? "Video Mixer" : input_,
+             send_.hold ? "YES" : "NO");
 
     if (not socketPair_) {
         // Ignore if the transport is not set yet
@@ -234,7 +237,10 @@ VideoRtpSession::stopSender(bool forceStopSocket)
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_LOG("[{}] Stop video RTP sender: input [{}] - muted [{}]", fmt::ptr(this), conference_ ? "Video Mixer" : input_, send_.hold ? "YES" : "NO");
+    JAMI_LOG("[{}] Stop video RTP sender: input [{}] - muted [{}]",
+             fmt::ptr(this),
+             conference_ ? "Video Mixer" : input_,
+             send_.hold ? "YES" : "NO");
 
     if (sender_) {
         if (videoLocal_)
@@ -685,7 +691,13 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
             newBitrate = static_cast<int>(std::lround(newBitrate * (1.0f - rtcpi->packetLoss / 150.0f)));
             histoLoss_.clear();
             lastMediaRestart_ = now;
-            JAMI_LOG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from {} Kbps to {} Kbps, ratio {} (ponderate loss: {}%, packet loss rate: {}%)", oldBitrate, newBitrate, (float) newBitrate / oldBitrate, pondLoss, rtcpi->packetLoss);
+            JAMI_LOG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from {} Kbps to {} "
+                     "Kbps, ratio {} (ponderate loss: {}%, packet loss rate: {}%)",
+                     oldBitrate,
+                     newBitrate,
+                     (float) newBitrate / oldBitrate,
+                     pondLoss,
+                     rtcpi->packetLoss);
         }
     }
 

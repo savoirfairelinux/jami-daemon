@@ -1214,7 +1214,8 @@ ConversationModule::Impl::createCommit(
                                                  if (ok)
                                                      sendMessageNotification(conversationId, true, commitId);
                                                  else
-                                                     JAMI_ERROR("Failed to send message to conversation {}", conversationId);
+                                                     JAMI_ERROR("Failed to send message to conversation {}",
+                                                                conversationId);
                                              });
     }
 }
