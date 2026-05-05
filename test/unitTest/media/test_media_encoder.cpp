@@ -144,10 +144,12 @@ MediaEncoderTest::testMultiStream()
     const constexpr int nbChannels = 2;
     const constexpr int width = 320;
     const constexpr int height = 240;
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
     auto vp8Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
+        codecs->searchCodecByName("VP8", jami::MEDIA_VIDEO));
     auto opusCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
+        codecs->searchCodecByName("opus", jami::MEDIA_AUDIO));
     auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
     auto a = MediaStream("a", AV_SAMPLE_FMT_S16, rational<int>(1, sampleRate), sampleRate, nbChannels, 960);
 
