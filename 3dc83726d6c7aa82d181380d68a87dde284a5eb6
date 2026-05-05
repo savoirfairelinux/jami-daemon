@@ -291,6 +291,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "63a1aaca_310306b6",
+        "filename": "test/fuzzing/lib/utils.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-05T17:29:47Z",
+      "side": 1,
+      "message": "`{}`",
+      "range": {
+        "startLine": 100,
+        "startChar": 23,
+        "endLine": 100,
+        "endChar": 26
+      },
+      "revId": "3dc83726d6c7aa82d181380d68a87dde284a5eb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc80c8f3_688de3c1",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-05T17:29:47Z",
+      "side": 1,
+      "message": "`{}`",
+      "range": {
+        "startLine": 103,
+        "startChar": 23,
+        "endLine": 103,
+        "endChar": 26
+      },
+      "revId": "3dc83726d6c7aa82d181380d68a87dde284a5eb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fe81ff3a_25e495bb",
         "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
         "patchSetId": 16
