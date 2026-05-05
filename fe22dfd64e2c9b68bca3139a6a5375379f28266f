@@ -181,6 +181,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c66a6f85_76fa1902",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f2e0ea1_5506acdb",
+      "revId": "fe22dfd64e2c9b68bca3139a6a5375379f28266f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "34f982cb_fcca167a",
