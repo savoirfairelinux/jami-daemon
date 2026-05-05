@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "22372ba5_da4d3eb7",
+        "filename": "src/call.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-05T15:33:27Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "277d4658_edc748a1",
+      "revId": "c6f418aa91f871204095e245821beba40d2de60f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "819ea57b_35fff36f",
