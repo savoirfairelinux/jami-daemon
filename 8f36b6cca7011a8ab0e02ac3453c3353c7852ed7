@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9663e495_ca8bc742",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c05f8499_83738120",
+      "range": {
+        "startLine": 103,
+        "startChar": 37,
+        "endLine": 103,
+        "endChar": 40
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0586e2bc_6e72234f",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-05-05T17:38:16Z",
       "side": 1,
       "message": "Leftover \u0027u\u0027",
+      "range": {
+        "startLine": 237,
+        "startChar": 67,
+        "endLine": 237,
+        "endChar": 68
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "91fb1bd2_aaea0ea3",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0586e2bc_6e72234f",
       "range": {
         "startLine": 237,
         "startChar": 67,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e6ce580_393bb697",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 269,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04fce154_2273e7bb",
+      "range": {
+        "startLine": 269,
+        "startChar": 8,
+        "endLine": 269,
+        "endChar": 63
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "843698b3_a3a1caa2",
@@ -83,6 +155,30 @@
       "writtenOn": "2026-05-05T17:38:16Z",
       "side": 1,
       "message": "Missed this line",
+      "range": {
+        "startLine": 275,
+        "startChar": 8,
+        "endLine": 275,
+        "endChar": 82
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc34d6de_c58b145c",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "843698b3_a3a1caa2",
       "range": {
         "startLine": 275,
         "startChar": 8,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "91c72818_f670d9d3",
+        "filename": "test/unitTest/media_negotiation/auto_answer.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "580a92dd_184c1115",
+      "range": {
+        "startLine": 377,
+        "startChar": 65,
+        "endLine": 377,
+        "endChar": 68
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "be75b661_24420576",
@@ -129,6 +249,30 @@
       "writtenOn": "2026-05-05T17:38:16Z",
       "side": 1,
       "message": "Leftover \u0027u\u0027",
+      "range": {
+        "startLine": 403,
+        "startChar": 65,
+        "endLine": 403,
+        "endChar": 68
+      },
+      "revId": "8f36b6cca7011a8ab0e02ac3453c3353c7852ed7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce7655ce_ab65b903",
+        "filename": "test/unitTest/media_negotiation/auto_answer.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-05T17:43:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be75b661_24420576",
       "range": {
         "startLine": 403,
         "startChar": 65,
