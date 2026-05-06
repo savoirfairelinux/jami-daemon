@@ -56,6 +56,14 @@ public:
 
     void syncBlueprintConfig(SyncBlueprintCallback onSuccess);
 
+    using RefreshAnnounceCallback = std::function<void(std::string receipt, std::vector<uint8_t> receiptSignature)>;
+
+    // Re-fetches the device announce from the JAMS server using the existing device
+    // key and the user's password. Used when the stored announce is missing a public
+    // key due to an old server bug. The callback is always invoked; an empty receipt
+    // string indicates failure.
+    void refreshAnnounce(const std::string& password, RefreshAnnounceCallback cb);
+
     bool revokeDevice(const std::string& device,
                       std::string_view scheme,
                       const std::string& password,

@@ -610,6 +610,110 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
         logger_));
 }
 
+void
+ServerAccountManager::refreshAnnounce(const std::string& password, RefreshAnnounceCallback cb)
+{
+    if (!info_) {
+        JAMI_WARNING("[Account {}] [Auth] refreshAnnounce called with no account info", accountId_);
+        if (cb)
+            cb({}, {});
+        return;
+    }
+    JAMI_WARNING("[Account {}] [Auth] Refreshing device announce from JAMS server", accountId_);
+    const std::string url = managerHostname_ + PATH_DEVICE;
+    auto key = info_->identity.first;
+    auto deviceName = getAccountDeviceName();
+    dht::ThreadPool::computation().run([key, deviceName, url, password, cb = std::move(cb), w = weak_from_this()] {
+        auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+        if (!this_) {
+            if (cb)
+                cb({}, {});
+            return;
+        }
+        auto csrReq = std::make_unique<dht::crypto::CertificateRequest>();
+        csrReq->setName("Jami device");
+        csrReq->setUID(key->getPublicKey().getId().toString());
+        csrReq->sign(*key);
+        Json::Value body;
+        body["csr"] = csrReq->toString();
+        body["deviceName"] = deviceName;
+        auto request = std::make_shared<Request>(
+            *Manager::instance().ioContext(),
+            url,
+            body,
+            [cb, w](Json::Value json, const dht::http::Response& response) {
+                auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+                if (!this_) {
+                    if (cb)
+                        cb({}, {});
+                    return;
+                }
+                JAMI_DEBUG("[Account {}] [Auth] refreshAnnounce got status code={}",
+                           this_->accountId_,
+                           response.status_code);
+                if (response.status_code >= 200 && response.status_code < 300) {
+                    try {
+                        auto receipt = json["deviceReceipt"].asString();
+                        Json::Value receiptJson;
+                        std::string err;
+                        auto reader = std::unique_ptr<Json::CharReader>(Json::CharReaderBuilder {}.newCharReader());
+                        if (!reader->parse(receipt.data(), receipt.data() + receipt.size(), &receiptJson, &err)) {
+                            JAMI_ERROR("[Account {}] [Auth] refreshAnnounce: unable to parse receipt: {}",
+                                       this_->accountId_,
+                                       err);
+                            if (cb)
+                                cb({}, {});
+                            this_->clearRequest(response.request);
+                            return;
+                        }
+                        auto receiptSignature = base64::decode(json["receiptSignature"].asString());
+                        auto devicePk = this_->info_->identity.first->getSharedPublicKey();
+                        auto announce = parseAnnounce(receiptJson["announce"].asString(),
+                                                      this_->info_->accountId,
+                                                      devicePk->getId().toString(),
+                                                      devicePk->getLongId().toString());
+                        if (!announce) {
+                            JAMI_ERROR("[Account {}] [Auth] refreshAnnounce: unable to parse new announce",
+                                       this_->accountId_);
+                            if (cb)
+                                cb({}, {});
+                            this_->clearRequest(response.request);
+                            return;
+                        }
+                        DeviceAnnouncement da;
+                        da.unpackValue(*announce);
+                        if (!da.pk) {
+                            JAMI_ERROR("[Account {}] [Auth] refreshAnnounce: server still returned announce without "
+                                       "public key",
+                                       this_->accountId_);
+                            if (cb)
+                                cb({}, {});
+                            this_->clearRequest(response.request);
+                            return;
+                        }
+                        JAMI_WARNING("[Account {}] [Auth] Device announce successfully refreshed", this_->accountId_);
+                        this_->info_->announce = std::move(announce);
+                        if (cb)
+                            cb(std::move(receipt), std::move(receiptSignature));
+                    } catch (const std::exception& e) {
+                        JAMI_ERROR("[Account {}] [Auth] refreshAnnounce error: {}", this_->accountId_, e.what());
+                        if (cb)
+                            cb({}, {});
+                    }
+                } else {
+                    JAMI_WARNING("[Account {}] [Auth] refreshAnnounce failed with status code={}",
+                                 this_->accountId_,
+                                 response.status_code);
+                    if (cb)
+                        cb({}, {});
+                }
+                this_->clearRequest(response.request);
+            },
+            this_->logger_);
+        this_->sendAccountRequest(request, password);
+    });
+}
+
 bool
 ServerAccountManager::revokeDevice(const std::string& device,
                                    std::string_view scheme,

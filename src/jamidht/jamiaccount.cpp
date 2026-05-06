@@ -1529,6 +1529,45 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (not isEnabled())
                 setRegistrationState(RegistrationState::UNREGISTERED);
 
+            if (!conf.managerUri.empty() && info->announce) {
+                DeviceAnnouncement da;
+                da.unpackValue(*info->announce);
+                if (!da.pk) {
+                    JAMI_WARNING("[Account {}] Saved announce is missing public key", getAccountID());
+                    if (archive_password.empty()) {
+                        // We need a USER-scoped token to refresh the announce from JAMS,
+                        // which requires the user's password. Ask for it.
+                        Migration::setState(accountID_, Migration::State::INVALID);
+                        setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                        return;
+                    }
+                    if (auto* sam = dynamic_cast<ServerAccountManager*>(accountManager_.get())) {
+                        JAMI_WARNING("[Account {}] Refreshing announce from JAMS server", getAccountID());
+                        sam->refreshAnnounce(archive_password,
+                                             [w = weak()](std::string receipt, std::vector<uint8_t> receiptSig) {
+                                                 auto self = w.lock();
+                                                 if (!self)
+                                                     return;
+                                                 if (!receipt.empty()) {
+                                                     self->editConfig([&](JamiAccountConfig& conf) {
+                                                         conf.receipt = std::move(receipt);
+                                                         conf.receiptSignature = std::move(receiptSig);
+                                                     });
+                                                     Migration::setState(self->getAccountID(),
+                                                                         Migration::State::SUCCESS);
+                                                     self->setRegistrationState(RegistrationState::UNREGISTERED);
+                                                     self->doRegister();
+                                                 } else {
+                                                     Migration::setState(self->getAccountID(),
+                                                                         Migration::State::INVALID);
+                                                     self->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                                                 }
+                                             });
+                        return;
+                    }
+                }
+            }
+
             scheduleAccountReady();
             return;
         }
