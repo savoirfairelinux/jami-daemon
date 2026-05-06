@@ -22,6 +22,7 @@
 
 #include <dhtnet/connectionmanager.h>
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -40,6 +41,9 @@ namespace jami {
  * Client side: `connect()` opens a `svcdisc://query` channel and sends a
  * SvcDiscQuery as soon as the channel is ready; the response is delivered
  * through the callback registered via `setOnResponse`.
+ *
+ * Cache: maintains a per-device service cache that is proactively refreshed
+ * when a new device connects. queryPeerServices() reads from this cache.
  */
 class SvcDiscoveryChannelHandler : public ChannelHandlerInterface
 {
@@ -53,7 +57,8 @@ public:
                                           const std::vector<svc_protocol::SvcInfo>& services)>;
 
     SvcDiscoveryChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                               dhtnet::ConnectionManager& cm);
+                               dhtnet::ConnectionManager& cm,
+                               std::filesystem::path cachePath);
     ~SvcDiscoveryChannelHandler() override;
 
     /// Register the handler invoked when a discovery response is received from
@@ -68,8 +73,7 @@ public:
                  const std::string& connectionType = "",
                  bool forceNewConnection = false) override;
 
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                   const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
@@ -77,8 +81,35 @@ public:
 
     /// Build the SvcDiscResponse the host would send to the given peer,
     /// based on the current ServiceManager state. Exposed for testing.
-    static svc_protocol::SvcDiscResponse buildResponse(JamiAccount& account,
-                                                       const std::string& peerAccountUri);
+    static svc_protocol::SvcDiscResponse buildResponse(JamiAccount& account, const std::string& peerAccountUri);
+
+    // ---- Cache API ----
+
+    /// Callback invoked when the service cache is updated for a peer device.
+    using CacheUpdateCb = std::function<
+        void(const std::string& peerUri, const DeviceId& deviceId, const std::vector<svc_protocol::SvcInfo>& services)>;
+
+    /// Set a callback to be notified whenever the cache is updated.
+    void onCacheUpdated(CacheUpdateCb cb);
+
+    /// Proactively discover services on a newly-connected device and cache
+    /// the result. Called from onNewDeviceConnection.
+    void refreshDevice(const std::string& peerUri, const DeviceId& deviceId);
+
+    /// A service entry annotated with the device that offers it.
+    struct CachedSvcInfo
+    {
+        DeviceId deviceId;
+        svc_protocol::SvcInfo info;
+    };
+
+    /// Return the cached services for a peer (all devices aggregated).
+    /// Each entry carries the device ID that advertised it.
+    /// Returns an empty vector if nothing is cached yet.
+    std::vector<CachedSvcInfo> getCachedServices(const std::string& peerUri) const;
+
+    /// Remove all cached entries for a specific device.
+    void removeDevice(const DeviceId& deviceId);
 
 private:
     /// State shared between the handler and per-channel read closures, so
@@ -88,18 +119,31 @@ private:
     {
         std::mutex mtx;
         ResponseCb responseCb;
+        CacheUpdateCb cacheUpdateCb;
         /// Strong references to channels we have onReady'd, so they remain
         /// alive long enough to send/receive their messages even if the
         /// caller of `connect()` did not retain the socket.
         std::vector<std::shared_ptr<dhtnet::ChannelSocket>> channels;
+
+        // ---- Cache state ----
+        struct CachedDeviceServices
+        {
+            std::string peerUri;
+            std::vector<svc_protocol::SvcInfo> services;
+            MSGPACK_DEFINE_MAP(peerUri, services)
+        };
+        /// deviceId -> cached services
+        std::map<DeviceId, CachedDeviceServices> cache;
     };
 
-    void installReader(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
-                       std::string peerAccountUri);
+    void installReader(const std::shared_ptr<dhtnet::ChannelSocket>& channel, std::string peerAccountUri);
+    void saveCache() const;
+    void loadCache();
 
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
     std::shared_ptr<State> state_;
+    std::filesystem::path cachePath_;
 };
 
 } // namespace jami
