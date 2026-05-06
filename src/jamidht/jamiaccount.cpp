@@ -1547,8 +1547,20 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         bool migrating = registrationState_ == RegistrationState::ERROR_NEED_MIGRATION;
         setRegistrationState(RegistrationState::INITIALIZING);
 
-        auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
-            []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+        // Reuse the existing device key if the device was previously accepted by the
+        // server (receipt present) but useIdentity failed for another reason (e.g.
+        // the stored announce is missing a public key).  When the receipt was cleared
+        // (revoked device) or there is no identity on disk yet (fresh account), a new
+        // key must be generated.
+        AccountManager::PrivateKey fDeviceKey;
+        if (id.first && !conf.receipt.empty()) {
+            std::promise<std::shared_ptr<dht::crypto::PrivateKey>> p;
+            p.set_value(id.first);
+            fDeviceKey = p.get_future().share();
+        } else {
+            fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
+                []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+        }
 
         bool hasPassword = false;
         auto creds = buildAccountCredentials(conf,
