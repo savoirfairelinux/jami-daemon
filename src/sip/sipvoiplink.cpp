@@ -54,6 +54,14 @@
 #include <cstddef>
 #include <regex>
 
+// On Windows, gai_strerror is a macro that expands to a wide-string
+// version; use the narrow-string variant explicitly.
+#ifdef _WIN32
+#define jami_gai_strerror gai_strerrorA
+#else
+#define jami_gai_strerror gai_strerror
+#endif
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -591,7 +599,7 @@ SIPVoIPLink::SIPVoIPLink()
             char hbuf[NI_MAXHOST];
             if (auto ret
                 = getnameinfo((sockaddr*) &ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST)) {
-                JAMI_WARNING("Error printing SIP nameserver: {}", gai_strerror(ret));
+                JAMI_WARNING("Error printing SIP nameserver: {}", jami_gai_strerror(ret));
             } else {
                 JAMI_LOG("Using SIP nameserver: {}", hbuf);
                 pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
@@ -1472,15 +1480,19 @@ SIPVoIPLink::resolveSrvName(const std::string& name, pjsip_transport_type_e type
     pjsip_endpt_resolve(endpt_, pool_.get(), &host_info, (void*) token, resolver_callback);
 }
 
+// Workaround for MSVC where __VA_ARGS__ is treated as a single token
+// when passed to another variadic macro. This forces a re-scan.
+#define VA_EXPAND(x) x
+
 #define RETURN_IF_NULL(A, ...) \
     if ((A) == NULL) { \
-        JAMI_WARNING(__VA_ARGS__); \
+        VA_EXPAND(JAMI_WARNING(__VA_ARGS__)); \
         return; \
     }
 
 #define RETURN_FALSE_IF_NULL(A, ...) \
     if ((A) == NULL) { \
-        JAMI_WARNING(__VA_ARGS__); \
+        VA_EXPAND(JAMI_WARNING(__VA_ARGS__)); \
         return false; \
     }
 
