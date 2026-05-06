@@ -105,14 +105,11 @@ SvcTunnelChannelHandler::connect(const DeviceId& deviceId,
     // channel-handler entry-point is unused but must not block. Just signal
     // back asynchronously with a null socket so callers can fall through.
     if (cb && io_)
-        asio::post(*io_, [cb = std::move(cb), deviceId]() mutable {
-            cb(nullptr, deviceId);
-        });
+        asio::post(*io_, [cb = std::move(cb), deviceId]() mutable { cb(nullptr, deviceId); });
 }
 
 bool
-SvcTunnelChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                                   const std::string& name)
+SvcTunnelChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name)
 {
     if (!peer || !peer->issuer)
         return false;
@@ -123,7 +120,9 @@ SvcTunnelChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificat
     if (!acc)
         return false;
     const auto peerUri = peer->issuer->getId().toString();
-    auto checker = [&acc](const std::string& uri) { return acc->isConfirmedContact(uri); };
+    auto checker = [&acc](const std::string& uri) {
+        return acc->isConfirmedContact(uri);
+    };
     return acc->serviceManager().isAuthorized(serviceId, peerUri, checker);
 }
 
@@ -165,8 +164,7 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
     std::error_code ec;
     auto endpoints = resolver.resolve(rec->localHost, std::to_string(rec->localPort), ec);
     if (ec) {
-        JAMI_WARNING("[SvcTunnel] resolve {}:{} failed: {}",
-                     rec->localHost, rec->localPort, ec.message());
+        JAMI_WARNING("[SvcTunnel] resolve {}:{} failed: {}", rec->localHost, rec->localPort, ec.message());
         channel->shutdown();
         return;
     }
@@ -187,13 +185,10 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
         std::lock_guard lk(pre->m);
         if (pre->tcpReady) {
             auto buf = std::make_shared<std::vector<uint8_t>>(data, data + size);
-            asio::async_write(*pre->tcp,
-                              asio::buffer(*buf),
-                              [buf](const std::error_code& ec, std::size_t) {
-                                  if (ec)
-                                      JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}",
-                                                 ec.message());
-                              });
+            asio::async_write(*pre->tcp, asio::buffer(*buf), [buf](const std::error_code& ec, std::size_t) {
+                if (ec)
+                    JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
+            });
         } else {
             pre->bytes.insert(pre->bytes.end(), data, data + size);
         }
@@ -202,8 +197,8 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
 
     asio::async_connect(*tcp,
                         endpoints,
-                        [this, channel = channelKeep, tcp, pre, serviceId](
-                            const std::error_code& cec, const asio::ip::tcp::endpoint&) {
+                        [this, channel = channelKeep, tcp, pre, serviceId](const std::error_code& cec,
+                                                                           const asio::ip::tcp::endpoint&) {
                             if (cec) {
                                 JAMI_WARNING("[SvcTunnel] connect failed: {}", cec.message());
                                 channel->shutdown();
@@ -222,9 +217,7 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
                                                   asio::buffer(*buf),
                                                   [buf](const std::error_code& ec, std::size_t) {
                                                       if (ec)
-                                                          JAMI_DEBUG(
-                                                              "[SvcTunnel] flush failed: {}",
-                                                              ec.message());
+                                                          JAMI_DEBUG("[SvcTunnel] flush failed: {}", ec.message());
                                                   });
                             }
                             // Switch to a hot-path setOnRecv now that tcp is up.
@@ -234,9 +227,8 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
                                                   asio::buffer(*buf),
                                                   [buf](const std::error_code& ec, std::size_t) {
                                                       if (ec)
-                                                          JAMI_DEBUG(
-                                                              "[SvcTunnel] write to TCP failed: {}",
-                                                              ec.message());
+                                                          JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}",
+                                                                     ec.message());
                                                   });
                                 return static_cast<ssize_t>(n);
                             });
@@ -252,12 +244,10 @@ SvcTunnelChannelHandler::relay(std::shared_ptr<dhtnet::ChannelSocket> channel,
     auto channelHold = channel;
     channel->setOnRecv([tcp, channelHold](const uint8_t* data, size_t size) -> ssize_t {
         auto buf = std::make_shared<std::vector<uint8_t>>(data, data + size);
-        asio::async_write(*tcp,
-                          asio::buffer(*buf),
-                          [buf](const std::error_code& ec, std::size_t /*n*/) {
-                              if (ec)
-                                  JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
-                          });
+        asio::async_write(*tcp, asio::buffer(*buf), [buf](const std::error_code& ec, std::size_t /*n*/) {
+            if (ec)
+                JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
+        });
         return static_cast<ssize_t>(size);
     });
 
@@ -275,24 +265,23 @@ SvcTunnelChannelHandler::relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket
     auto reader = std::make_shared<std::function<void()>>();
     *reader = [channelKeep, tcpKeep, buf, reader]() {
         tcpKeep->async_read_some(asio::buffer(*buf),
-                                 [channelKeep, tcpKeep, buf, reader](const std::error_code& ec,
-                                                                     std::size_t n) {
-            if (ec || n == 0) {
-                channelKeep->shutdown();
-                std::error_code ig;
-                tcpKeep->close(ig);
-                return;
-            }
-            std::error_code wec;
-            channelKeep->write(buf->data(), n, wec);
-            if (wec) {
-                channelKeep->shutdown();
-                std::error_code ig;
-                tcpKeep->close(ig);
-                return;
-            }
-            (*reader)();
-        });
+                                 [channelKeep, tcpKeep, buf, reader](const std::error_code& ec, std::size_t n) {
+                                     if (ec || n == 0) {
+                                         channelKeep->shutdown();
+                                         std::error_code ig;
+                                         tcpKeep->close(ig);
+                                         return;
+                                     }
+                                     std::error_code wec;
+                                     channelKeep->write(buf->data(), n, wec);
+                                     if (wec) {
+                                         channelKeep->shutdown();
+                                         std::error_code ig;
+                                         tcpKeep->close(ig);
+                                         return;
+                                     }
+                                     (*reader)();
+                                 });
     };
     (*reader)();
 
@@ -340,7 +329,10 @@ SvcTunnelChannelHandler::openTunnel(std::string peerUri,
         tunnels_[t->id] = t;
     }
     JAMI_LOG("[SvcTunnel] opened tunnel id={} listening on 127.0.0.1:{} -> peer={} service=\"{}\"",
-             t->id, bound, t->peerUri, t->serviceName);
+             t->id,
+             bound,
+             t->peerUri,
+             t->serviceName);
     if (onOpened)
         onOpened(t->id, bound);
 
@@ -353,8 +345,7 @@ SvcTunnelChannelHandler::acceptLoop(const std::shared_ptr<ClientTunnel>& tunnel)
 {
     auto self = tunnel;
     auto sock = std::make_shared<asio::ip::tcp::socket>(*io_);
-    self->acceptor->async_accept(*sock,
-                                 [this, self, sock](const std::error_code& ec) {
+    self->acceptor->async_accept(*sock, [this, self, sock](const std::error_code& ec) {
         if (self->closed) {
             return;
         }
@@ -365,20 +356,19 @@ SvcTunnelChannelHandler::acceptLoop(const std::shared_ptr<ClientTunnel>& tunnel)
             return;
         }
         // Open a fresh dhtnet channel for this TCP connection.
-        std::string channelName = std::string(svc_protocol::kTunnelChannelPrefix) + self->serviceId;
-        connectionManager_.connectDevice(
-            self->peerDevice,
-            channelName,
-            [this, self, sock](std::shared_ptr<dhtnet::ChannelSocket> channel,
-                               const DeviceId&) {
-                if (!channel) {
-                    JAMI_WARNING("[SvcTunnel] client-side connectDevice returned null");
-                    std::error_code ig;
-                    sock->close(ig);
-                    return;
-                }
-                onClientChannelReady(self, sock, std::move(channel));
-            });
+        std::string channelName = std::string(svc_protocol::TunnelChannelPrefix) + self->serviceId;
+        connectionManager_.connectDevice(self->peerDevice,
+                                         channelName,
+                                         [this, self, sock](std::shared_ptr<dhtnet::ChannelSocket> channel,
+                                                            const DeviceId&) {
+                                             if (!channel) {
+                                                 JAMI_WARNING("[SvcTunnel] client-side connectDevice returned null");
+                                                 std::error_code ig;
+                                                 sock->close(ig);
+                                                 return;
+                                             }
+                                             onClientChannelReady(self, sock, std::move(channel));
+                                         });
         // Continue accepting.
         acceptLoop(self);
     });
@@ -401,13 +391,12 @@ SvcTunnelChannelHandler::trackClientConnection(const std::shared_ptr<ClientTunne
     {
         std::lock_guard lk(tunnel->connsMtx);
         // Compact dead entries opportunistically.
-        tunnel->activeConns.erase(
-            std::remove_if(tunnel->activeConns.begin(),
-                           tunnel->activeConns.end(),
-                           [](const ClientTunnel::Conn& c) {
-                               return !c.channel.lock() && !c.tcp.lock();
-                           }),
-            tunnel->activeConns.end());
+        tunnel->activeConns.erase(std::remove_if(tunnel->activeConns.begin(),
+                                                 tunnel->activeConns.end(),
+                                                 [](const ClientTunnel::Conn& c) {
+                                                     return !c.channel.lock() && !c.tcp.lock();
+                                                 }),
+                                  tunnel->activeConns.end());
         tunnel->activeConns.push_back({channel, tcp});
     }
     std::weak_ptr<ClientTunnel> wt = tunnel;
@@ -421,8 +410,7 @@ SvcTunnelChannelHandler::trackClientConnection(const std::shared_ptr<ClientTunne
         t->activeConns.erase(std::remove_if(t->activeConns.begin(),
                                             t->activeConns.end(),
                                             [&](const ClientTunnel::Conn& cn) {
-                                                return cn.channel.lock() == c
-                                                       || !cn.channel.lock();
+                                                return cn.channel.lock() == c || !cn.channel.lock();
                                             }),
                              t->activeConns.end());
     });
@@ -459,8 +447,7 @@ SvcTunnelChannelHandler::closeTunnel(const std::string& tunnelId)
             sock->close(ig);
         }
     }
-    JAMI_LOG("[SvcTunnel] closed tunnel id={} ({} live connection(s) torn down)",
-             tunnelId, conns.size());
+    JAMI_LOG("[SvcTunnel] closed tunnel id={} ({} live connection(s) torn down)", tunnelId, conns.size());
     if (t->onClosed)
         t->onClosed(tunnelId, "closed");
     return true;
@@ -477,11 +464,7 @@ SvcTunnelChannelHandler::trackServerChannel(const std::string& serviceId,
         std::lock_guard lk(mtx_);
         auto& vec = serverChannels_[serviceId];
         // Drop dead entries opportunistically.
-        vec.erase(std::remove_if(vec.begin(),
-                                 vec.end(),
-                                 [](const ServerConn& c) {
-                                     return !c.channel.lock();
-                                 }),
+        vec.erase(std::remove_if(vec.begin(), vec.end(), [](const ServerConn& c) { return !c.channel.lock(); }),
                   vec.end());
         vec.push_back({channel, tcp});
     }
@@ -528,8 +511,7 @@ SvcTunnelChannelHandler::closeServerChannelsForService(const std::string& servic
         }
     }
     if (!conns.empty())
-        JAMI_LOG("[SvcTunnel] closed {} inbound connection(s) for service id={}",
-                 conns.size(), serviceId);
+        JAMI_LOG("[SvcTunnel] closed {} inbound connection(s) for service id={}", conns.size(), serviceId);
 }
 
 std::vector<SvcTunnelChannelHandler::Tunnel>

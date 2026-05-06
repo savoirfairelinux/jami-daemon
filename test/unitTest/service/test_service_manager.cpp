@@ -369,8 +369,8 @@ ServiceManagerTest::protocol_query_roundtrip_test()
     auto oh = pack_unpack(q);
     svc_protocol::SvcDiscQuery decoded;
     oh.get().convert(decoded);
-    CPPUNIT_ASSERT_EQUAL(svc_protocol::kMaxVersion, decoded.v);
-    CPPUNIT_ASSERT_EQUAL(std::string(svc_protocol::MsgType::kQuery), decoded.type);
+    CPPUNIT_ASSERT_EQUAL(svc_protocol::MaxVersion, decoded.v);
+    CPPUNIT_ASSERT_EQUAL(std::string(svc_protocol::MsgType::Query), decoded.type);
 }
 
 void
@@ -383,7 +383,7 @@ ServiceManagerTest::protocol_response_roundtrip_test()
 
     svc_protocol::SvcDiscResponse decoded;
     oh.get().convert(decoded);
-    CPPUNIT_ASSERT_EQUAL(std::string(svc_protocol::MsgType::kServiceList), decoded.type);
+    CPPUNIT_ASSERT_EQUAL(std::string(svc_protocol::MsgType::ServiceList), decoded.type);
     CPPUNIT_ASSERT_EQUAL(size_t {2}, decoded.services.size());
     CPPUNIT_ASSERT_EQUAL(std::string("id-a"), decoded.services[0].id);
     CPPUNIT_ASSERT_EQUAL(std::string("web"), decoded.services[0].name);
@@ -400,18 +400,18 @@ ServiceManagerTest::protocol_peek_type_test()
 {
     {
         auto oh = pack_unpack(svc_protocol::SvcDiscQuery {});
-        CPPUNIT_ASSERT_EQUAL(std::string("query"), svc_protocol::peekType(oh.get()));
+        CPPUNIT_ASSERT_EQUAL(std::string_view("query"), svc_protocol::peekType(oh.get()));
     }
     {
         svc_protocol::SvcDiscError err;
         err.code = 403;
         err.message = "no";
         auto oh = pack_unpack(err);
-        CPPUNIT_ASSERT_EQUAL(std::string("error"), svc_protocol::peekType(oh.get()));
+        CPPUNIT_ASSERT_EQUAL(std::string_view("error"), svc_protocol::peekType(oh.get()));
     }
     {
         auto oh = pack_unpack(svc_protocol::SvcDiscResponse {});
-        CPPUNIT_ASSERT_EQUAL(std::string("service_list"), svc_protocol::peekType(oh.get()));
+        CPPUNIT_ASSERT_EQUAL(std::string_view("service_list"), svc_protocol::peekType(oh.get()));
     }
 }
 

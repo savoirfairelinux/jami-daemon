@@ -57,7 +57,6 @@
 #include <future>
 #include <list>
 #include <map>
-#include <deque>
 #include <optional>
 #include <vector>
 #include <filesystem>
@@ -801,15 +800,10 @@ private:
     /// Emit the terminal `PeerServicesReceived` signal for `requestId` with
     /// the given status (matching `libjami::ServiceSignal::PeerServicesStatus`)
     /// and JSON payload, then drop the request from the pending tables.
-    /// Idempotent — subsequent calls for the same id are no-ops.
     void finalizeSvcQuery(uint32_t requestId, int status, const std::string& servicesJson);
 
     mutable std::mutex pendingSvcQueriesMtx_;
     std::map<uint32_t, std::shared_ptr<PendingSvcQuery>> pendingSvcQueries_;
-    /// Reverse index used by the discovery channel handler's response
-    /// callback (which only knows the peer URI) to find which request id a
-    /// reply belongs to. FIFO per peer.
-    std::map<std::string, std::deque<uint32_t>> pendingSvcQueriesByPeer_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::shared_ptr<AccountManager> accountManager_;
