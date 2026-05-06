@@ -253,6 +253,19 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
 
     libjami::registerSignalHandlers(handlers_);
 
+    // --- Alice exposes a local echo service BEFORE contact establishment ---
+    // This ensures the service is available when the connection-triggered
+    // service discovery refresh populates Bob's cache.
+    TinyEchoServer echo;
+    ServiceRecord rec;
+    rec.name = "echo";
+    rec.description = "test echo service";
+    rec.localHost = "127.0.0.1";
+    rec.localPort = echo.port();
+    rec.policy = AccessPolicy::PUBLIC;
+    auto serviceId = alice->serviceManager().addService(rec);
+    CPPUNIT_ASSERT(!serviceId.empty());
+
     alice->addContact(bobUri);
     alice->sendTrustRequest(bobUri, {});
     {
@@ -265,18 +278,26 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
         CPPUNIT_ASSERT(cv_.wait_for(lk, 60s, [&] { return aliceContactAdded && bobContactAdded; }));
     }
 
-    // --- Alice exposes a local echo service (PUBLIC so policy is moot) ---
-    TinyEchoServer echo;
-    ServiceRecord rec;
-    rec.name = "echo";
-    rec.description = "test echo service";
-    rec.localHost = "127.0.0.1";
-    rec.localPort = echo.port();
-    rec.policy = AccessPolicy::PUBLIC;
-    auto serviceId = alice->serviceManager().addService(rec);
-    CPPUNIT_ASSERT(!serviceId.empty());
+    // Wait for the proactive cache-update signal (requestId==0) that fires
+    // when the device connection triggers a service discovery refresh on Bob.
+    {
+        std::unique_lock lk(mtx_);
+        CPPUNIT_ASSERT(cv_.wait_for(lk, 60s, [&] {
+            return receivedReqId.load() == 0
+                   && receivedStatus.load() == static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK)
+                   && receivedJson.find(serviceId) != std::string::npos;
+        }));
+    }
 
-    // --- Bob discovers Alice's services ---
+    // --- Bob discovers Alice's services (reads from the populated cache) ---
+    // Reset signal state before the explicit query.
+    {
+        std::lock_guard lk(mtx_);
+        receivedReqId = UINT32_MAX;
+        receivedStatus = -1;
+        receivedJson.clear();
+        receivedPeer.clear();
+    }
     auto reqId = libjami::queryPeerServices(bobId, aliceUri);
     CPPUNIT_ASSERT(reqId != 0);
     {

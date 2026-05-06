@@ -26,45 +26,45 @@ namespace jami {
 namespace svc_protocol {
 
 /// Maximum protocol version implemented.
-constexpr uint8_t kMaxVersion = 1;
+constexpr uint8_t MaxVersion = 1;
 
 /// Discovery message type discriminators.
 namespace MsgType {
-constexpr const char* kQuery            = "query";
-constexpr const char* kServiceList      = "service_list";
-constexpr const char* kError            = "error";
-constexpr const char* kVersionMismatch  = "version_mismatch";
+constexpr const char* Query = "query";
+constexpr const char* ServiceList = "service_list";
+constexpr const char* Error = "error";
+constexpr const char* VersionMismatch = "version_mismatch";
 } // namespace MsgType
 
 /// Channel name prefix used for tunnels: "svc://<service-uuid>".
-constexpr const char* kTunnelChannelPrefix = "svc://";
+constexpr const char* TunnelChannelPrefix = "svc://";
 /// Channel name used for discovery: "svcdisc://query".
-constexpr const char* kDiscoveryChannelName = "svcdisc://query";
+constexpr const char* DiscoveryChannelName = "svcdisc://query";
 
 /// Single service descriptor exposed in a service_list response.
 struct SvcInfo
 {
-    std::string id;          ///< RFC 4122 v4 UUID
+    std::string id; ///< RFC 4122 v4 UUID
     std::string name;
     std::string description;
-    std::string proto;       ///< "tcp" in v1
-    std::string scheme;      ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
+    std::string proto;  ///< "tcp" in v1
+    std::string scheme; ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
     MSGPACK_DEFINE_MAP(id, name, description, proto, scheme)
 };
 
 /// Request sent by the client over `svcdisc://query`.
 struct SvcDiscQuery
 {
-    uint8_t v {kMaxVersion};
-    std::string type {MsgType::kQuery};
+    uint8_t v {MaxVersion};
+    std::string type {MsgType::Query};
     MSGPACK_DEFINE_MAP(v, type)
 };
 
 /// Successful response listing the services visible to the requesting peer.
 struct SvcDiscResponse
 {
-    uint8_t v {kMaxVersion};
-    std::string type {MsgType::kServiceList};
+    uint8_t v {MaxVersion};
+    std::string type {MsgType::ServiceList};
     /// Long device id of the responder, so the requester can target the
     /// exact device when opening a tunnel without a separate lookup.
     std::string device;
@@ -75,8 +75,8 @@ struct SvcDiscResponse
 /// Application-level error response.
 struct SvcDiscError
 {
-    uint8_t v {kMaxVersion};
-    std::string type {MsgType::kError};
+    uint8_t v {MaxVersion};
+    std::string type {MsgType::Error};
     uint16_t code {0};
     std::string message;
     MSGPACK_DEFINE_MAP(v, type, code, message)
@@ -85,9 +85,9 @@ struct SvcDiscError
 /// Sent when the client requested a higher protocol version than supported.
 struct SvcDiscVersionMismatch
 {
-    uint8_t v {kMaxVersion};
-    std::string type {MsgType::kVersionMismatch};
-    uint8_t max_supported {kMaxVersion};
+    uint8_t v {MaxVersion};
+    std::string type {MsgType::VersionMismatch};
+    uint8_t max_supported {MaxVersion};
     MSGPACK_DEFINE_MAP(v, type, max_supported)
 };
 
@@ -96,7 +96,7 @@ struct SvcDiscVersionMismatch
  * without committing to a specific message struct yet.
  * Returns the type string or an empty string if the field is missing.
  */
-inline std::string
+inline std::string_view
 peekType(const msgpack::object& obj)
 {
     if (obj.type != msgpack::type::MAP)
@@ -106,7 +106,7 @@ peekType(const msgpack::object& obj)
         if (kv.key.type == msgpack::type::STR) {
             std::string_view k(kv.key.via.str.ptr, kv.key.via.str.size);
             if (k == "type" && kv.val.type == msgpack::type::STR)
-                return std::string(kv.val.via.str.ptr, kv.val.via.str.size);
+                return std::string_view(kv.val.via.str.ptr, kv.val.via.str.size);
         }
     }
     return {};
