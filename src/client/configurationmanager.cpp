@@ -836,6 +836,25 @@ setRecordQuality(int32_t quality)
 #endif
 }
 
+std::string
+getConferenceResolution()
+{
+#ifdef ENABLE_VIDEO
+    return jami::Manager::instance().videoPreferences.getConferenceResolution();
+#else
+    return {};
+#endif
+}
+
+void
+setConferenceResolution(const std::string& resolution)
+{
+#ifdef ENABLE_VIDEO
+    jami::Manager::instance().videoPreferences.setConferenceResolution(resolution);
+    jami::Manager::instance().saveConfig();
+#endif
+}
+
 int32_t
 getHistoryLimit()
 {

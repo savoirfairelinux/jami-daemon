@@ -168,6 +168,8 @@ LIBJAMI_PUBLIC bool getRecordPreview();
 LIBJAMI_PUBLIC void setRecordPreview(bool rec);
 LIBJAMI_PUBLIC int getRecordQuality();
 LIBJAMI_PUBLIC void setRecordQuality(int quality);
+LIBJAMI_PUBLIC std::string getConferenceResolution();
+LIBJAMI_PUBLIC void setConferenceResolution(const std::string& resolution);
 
 LIBJAMI_PUBLIC void setHistoryLimit(int32_t days);
 LIBJAMI_PUBLIC int32_t getHistoryLimit();
