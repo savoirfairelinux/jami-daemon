@@ -749,7 +749,7 @@ PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
         return false;
     auto ret = Pa_IsStreamStopped(paStream);
     if (ret == 1) {
-        JAMI_LOG("PortAudioLayer stream {} already stopped", streamDirection);
+        JAMI_LOG("PortAudioLayer stream {} already stopped", static_cast<int>(streamDirection));
         return true;
     } else if (ret < 0) {
         JAMI_ERROR("Pa_IsStreamStopped error: {}", Pa_GetErrorText(ret));
@@ -765,7 +765,7 @@ PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
         JAMI_ERROR("Pa_CloseStream error: {}", Pa_GetErrorText(err));
         return false;
     }
-    JAMI_LOG("PortAudioLayer stream {} stopped", streamDirection);
+    JAMI_LOG("PortAudioLayer stream {} stopped", static_cast<int>(streamDirection));
     streams_[streamDirection] = nullptr;
     return true;
 };
