@@ -16,6 +16,74 @@
       "message": "!build",
       "revId": "fe4493cb172a3d1b934711d4bfdcec83fee8d973",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "742b9188_d8854ec3",
+        "filename": "src/account.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-07T18:51:57Z",
+      "side": 1,
+      "message": "Line 172: The unnamed parameter in `needToReconnect(const std::map\u003cstd::string, std::string\u003e\u0026)` makes the base-class declaration less self-documenting; name it `details` for consistency with the override.",
+      "revId": "fe4493cb172a3d1b934711d4bfdcec83fee8d973",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b56c0c6b_39bc9151",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 973,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-07T18:51:57Z",
+      "side": 1,
+      "message": "[warning] Line 973: If `PUBLIC_IN_CALLS` is absent from `details` while `dhtPublicInCalls` is currently `true`, the function returns `false` even though some call-paths in `setAccountDetails` may reset the field to its default (`false`), silently skipping the needed reconnect.",
+      "revId": "fe4493cb172a3d1b934711d4bfdcec83fee8d973",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89cef459_19ad8f1c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-07T18:51:57Z",
+      "side": 1,
+      "message": "[error] Line 974: Logic is asymmetric: only the `true→false` transition triggers a reconnect. When `dhtPublicInCalls` is currently `false` and the new value is `true`, the early `return false` fires and existing connections are never reset to adopt the new public-DHT setting. Fix: compare the current and incoming values regardless of direction, e.g. `auto it \u003d details.find(...); if (it \u003d\u003d details.end()) return false; return (it-\u003esecond \u003d\u003d TRUE_STR) !\u003d config().dhtPublicInCalls;`",
+      "revId": "fe4493cb172a3d1b934711d4bfdcec83fee8d973",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec1e9cc3_3c92669e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-07T18:51:57Z",
+      "side": 1,
+      "message": "[warning] Line 974: `it-\u003esecond !\u003d TRUE_STR` treats any unrecognised string (e.g. empty string, \"1\", \"yes\") as though the feature is being disabled, spuriously triggering a reconnect. Compare against both `TRUE_STR` and `FALSE_STR`, or canonicalise the value first.",
+      "revId": "fe4493cb172a3d1b934711d4bfdcec83fee8d973",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
