@@ -148,7 +148,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                                                            accountCert,
                                                                            this_->path_,
                                                                            this_->onChange_);
-                            // info->contacts->setContacts(a.contacts);
+                            info->contacts->load();
                             if (ctx->deviceName.empty())
                                 ctx->deviceName = info->deviceId.substr(8);
                             info->contacts->foundAccountDevice(cert, ctx->deviceName, clock::now());
