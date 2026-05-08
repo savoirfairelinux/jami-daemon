@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f59a55bb_267b18b9",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:13:07Z",
+      "side": 1,
+      "message": "[error] Line 151: `info-\u003econtacts-\u003eload()` triggers `loadTrustRequests()`, which calls `onTrustRequest(..., confirm\u003dfalse, ...)` for every cached request, which unconditionally fires `callbacks_.trustRequest` (contact_list.cpp line 370). Similarly, `loadKnownDevices()` fires `callbacks_.devicesChanged`. Both callbacks fire here before `this_-\u003einfo_` is assigned at line 167, so any callback handler that dereferences account info will observe null or stale state. Consider deferring the `load()` call until after `this_-\u003einfo_` is fully populated, or suppress callback emission during the initial load (similar to how `updateContact(..., emit\u003dfalse)` is used in `loadContacts()`).",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61067d81_76ae534e",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:13:07Z",
+      "side": 1,
+      "message": "[warning] Line 151: For a brand-new JAMS device provisioning (no local files yet), `load()` is a complete no-op—all three sub-loaders silently return on missing files. The previously commented-out `setContacts(a.contacts)` would have seeded the contact list from server-provided data on first device enrolment. If the server returns contacts in the auth response and there is no separate server-sync path, newly provisioned devices will start with an empty contact list.",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
