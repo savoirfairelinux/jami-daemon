@@ -35,6 +35,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c944758_94ef539b",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-08T18:49:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "08fb548f_54dc3bce",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6b346b0_65ff9197",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-08T18:49:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b7692cab_303771a1",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f59a55bb_267b18b9",
@@ -65,6 +101,42 @@
       "writtenOn": "2026-05-08T14:13:07Z",
       "side": 1,
       "message": "[warning] Line 151: For a brand-new JAMS device provisioning (no local files yet), `load()` is a complete no-op—all three sub-loaders silently return on missing files. The previously commented-out `setContacts(a.contacts)` would have seeded the contact list from server-provided data on first device enrolment. If the server returns contacts in the auth response and there is no separate server-sync path, newly provisioned devices will start with an empty contact list.",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "12769c7f_178ab6f7",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-08T18:49:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "61067d81_76ae534e",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "34fc5e5e_8df74456",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-08T18:49:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f59a55bb_267b18b9",
       "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
