@@ -71,9 +71,6 @@ ServerAccountManager::initAuthentication(std::string deviceName,
 {
     auto ctx = std::make_shared<AuthContext>();
     ctx->accountId = accountId_;
-    ctx->key = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
-        []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
-    ctx->request = buildRequest(ctx->key);
     ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ServerAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
@@ -82,6 +79,19 @@ ServerAccountManager::initAuthentication(std::string deviceName,
         ctx->onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
         return;
     }
+
+    // Reuse the existing private key if there is one.
+    if (auto privateKey = ctx->credentials->identity.first) {
+        JAMI_LOG("[Account {}] [Auth] Authenticating with existing device private key", accountId_);
+        std::promise<std::shared_ptr<dht::crypto::PrivateKey>> keyPromise;
+        keyPromise.set_value(privateKey);
+        ctx->key = keyPromise.get_future();
+    } else {
+        JAMI_LOG("[Account {}] [Auth] Authenticating with new device private key", accountId_);
+        ctx->key = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
+            []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+    }
+    ctx->request = buildRequest(ctx->key);
 
     onChange_ = std::move(onChange);
     const std::string url = managerHostname_ + PATH_DEVICE;
@@ -307,8 +317,8 @@ ServerAccountManager::authFailed(TokenScope scope, int code)
     if (code == 401) {
         // NOTE: we do not login every time to the server but retrieve a device token to use the
         // account If authentificate device fails with 401 it means that the device is revoked
-        if (onNeedsMigration_)
-            onNeedsMigration_();
+        if (onDeviceRevoked_)
+            onDeviceRevoked_();
     }
     while (not requests.empty()) {
         auto req = std::move(requests.front());

@@ -1347,6 +1347,7 @@ JamiAccount::buildAccountCredentials(const JamiAccountConfig& conf,
     } else {
         auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
         screds->username = conf.managerUsername;
+        screds->identity = id;
         creds = std::move(screds);
     }
 
@@ -1963,11 +1964,21 @@ JamiAccount::doRegister_()
         lkCM.unlock();
 
         if (!conf.managerUri.empty() && accountManager_) {
-            dynamic_cast<ServerAccountManager*>(accountManager_.get())->onNeedsMigration([this]() {
+            dynamic_cast<ServerAccountManager*>(accountManager_.get())->onDeviceRevoked([this]() {
+                JAMI_WARNING("[Account {}] Device revoked by server, deleting identity", getAccountID());
                 editConfig([&](JamiAccountConfig& conf) {
+                    // Delete the revoked device's key and certificate files
+                    std::error_code ec;
+                    if (!conf.tlsPrivateKeyFile.empty())
+                        std::filesystem::remove(idPath_ / conf.tlsPrivateKeyFile, ec);
+                    if (!conf.tlsCertificateFile.empty())
+                        std::filesystem::remove(idPath_ / conf.tlsCertificateFile, ec);
+                    conf.tlsPrivateKeyFile.clear();
+                    conf.tlsCertificateFile.clear();
                     conf.receipt.clear();
                     conf.receiptSignature.clear();
                 });
+                id_ = {};
                 Migration::setState(accountID_, Migration::State::INVALID);
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             });
