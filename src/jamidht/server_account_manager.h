@@ -36,6 +36,7 @@ public:
     {
         std::string username;
         std::shared_ptr<dht::crypto::Certificate> ca;
+        dht::crypto::Identity identity;
     };
 
     void initAuthentication(std::string deviceName,
@@ -66,7 +67,7 @@ public:
                       const std::string& password,
                       RegistrationCallback cb) override;
 
-    void onNeedsMigration(std::function<void()> cb) { onNeedsMigration_ = std::move(cb); }
+    void onDeviceRevoked(std::function<void()> cb) { onDeviceRevoked_ = std::move(cb); }
 
 private:
     struct AuthContext
@@ -117,7 +118,7 @@ private:
     void authFailed(TokenScope scope, int code);
     void authError(TokenScope scope);
     void onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope scope);
-    std::function<void()> onNeedsMigration_;
+    std::function<void()> onDeviceRevoked_;
 
     void setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration);
 };
