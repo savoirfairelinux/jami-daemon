@@ -189,6 +189,24 @@
       "message": "[error] Line 331: `connectNode` calls `isConnectedWith(nodeId)` and `addKnownNode(nodeId)` while already holding `std::lock_guard lock(mutex)`. Both are public `SwarmManager` methods that acquire `mutex` internally, causing a deadlock. Either use internal (non-locking) helpers or move the check/add outside the lock.",
       "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61f53984_fa4481f0",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 331,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-08T15:28:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "deea1688_b7fae00a",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
