@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "625abae3_c8d4db4d",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3319,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 3319: `addKnownDevice` calls `pimpl_-\u003egetConversations()` which returns a full copy of all conversations, then iterates and calls `isMember` on every one. For accounts with many conversations this is O(N) on the hot path triggered on every new device connection; consider indexing conversations by member URI.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de237f2a_7c494637",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2150,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 2150: `onNewDeviceConnection` checks `cert-\u003eissuer` for null but does not verify that the certificate chain is trusted before acting on it (e.g., opening sync channels). The existing `getCertificateStatus` check is only done for the `peerId`, not for the device certificate itself.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c028bc8_ea7672bc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2165,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 2165: `onNewDeviceConnection` accesses `jami::Manager::instance().syncOnRegister` from a `dht::ThreadPool::io()` thread without any synchronisation. If this field can be written concurrently, it is a data race.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0476eeb7_fd88addb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2405,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[error] Line 2405: The previous guard `if (!shared-\u003econnectionManager_-\u003eisConnecting(device, swarmUri))` was removed, so `connectDevice` can now be called concurrently for the same device/URI when `noNewSocket\u003dfalse`. This can produce duplicate ICE negotiations. The guard should be kept for the `noNewSocket\u003dfalse` path.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4cbd71d_51184a19",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2405,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 2405: The `type` parameter of `onConversationNeedSwarmSocket` is no longer captured in the lambda and is therefore unused in the function body, which will produce a compiler warning. It should either be removed from the signature or documented as intentionally dropped.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3dedbdd4_6e0aa6dd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2420,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 2420: `opts.uniqueName \u003d noNewSocket` conflates two unrelated semantics: \"reuse an existing transport\" and \"deduplicate by channel name\". Setting `uniqueName` to `true` only when reusing a socket means normal new connections lose deduplication. These should be set independently.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2e37ce4_c8a7faf8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2432,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[warning] Line 2432: The old callback called `shared-\u003erequestMessageConnection(uri, deviceId, \"\")` upon a successful swarm socket. The new code removed this call entirely, which may prevent the message connection from being established after a swarm channel comes up.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "deea1688_b7fae00a",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 331,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T14:37:17Z",
+      "side": 1,
+      "message": "[error] Line 331: `connectNode` calls `isConnectedWith(nodeId)` and `addKnownNode(nodeId)` while already holding `std::lock_guard lock(mutex)`. Both are public `SwarmManager` methods that acquire `mutex` internally, causing a deadlock. Either use internal (non-locking) helpers or move the check/add outside the lock.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
