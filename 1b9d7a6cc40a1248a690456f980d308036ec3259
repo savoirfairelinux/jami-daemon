@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b7692cab_303771a1",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T15:44:25Z",
+      "side": 1,
+      "message": "[warning] Line 149: The old code (`setContacts(a.contacts)`) loaded server-provided contacts, while `load()` presumably reads from local storage. This changes the data source from server-authoritative to local-disk, which may cause contacts to be stale or missing on first login / new device. Confirm this is the intended semantic change and that server-synced contacts are reconciled elsewhere.",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08fb548f_54dc3bce",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-08T15:44:25Z",
+      "side": 1,
+      "message": "[warning] Line 149: `info-\u003econtacts-\u003eload()` is called immediately after constructing the `ContactList`, but before `foundAccountDevice` and before the account info is fully populated. If `load()` triggers callbacks or accesses members (e.g., `ethAccount`, device info) that are set later in this block, it could operate on incomplete state. Verify that `load()` has no side-effects that depend on `info-\u003eethAccount`, `info-\u003eannounce`, or the device being registered via `foundAccountDevice`.",
+      "revId": "1b9d7a6cc40a1248a690456f980d308036ec3259",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f59a55bb_267b18b9",
         "filename": "src/jamidht/server_account_manager.cpp",
         "patchSetId": 1
