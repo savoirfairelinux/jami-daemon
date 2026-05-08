@@ -159,10 +159,18 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
                        da.from.toString());
             return {};
         }
-        if ((da.pk && da.pk->getLongId().to_view() != deviceSha256) || da.dev.toString() != deviceSha1) {
-            JAMI_ERROR("[Auth] Device ID mismatch in announce (device: {}, in announce: {})",
-                       da.pk ? deviceSha256 : deviceSha1,
-                       da.pk ? da.pk->getLongId().to_view() : da.dev.toString());
+        if (da.dev.toString() != deviceSha1) {
+            JAMI_ERROR("[Auth] Device ID mismatch in announce (device: {}, in announce: {})", deviceSha1, da.dev);
+            return {};
+        }
+        if (!da.pk) {
+            JAMI_ERROR("[Auth] No public key found in announce (account: {}, device: {})", accountId, da.dev);
+            return {};
+        }
+        if (da.pk->getLongId().to_view() != deviceSha256) {
+            JAMI_ERROR("[Auth] Public key ID mismatch in announce (device: {}, in announce: {})",
+                       deviceSha256,
+                       da.pk->getLongId().to_view());
             return {};
         }
     } catch (const std::exception& e) {
