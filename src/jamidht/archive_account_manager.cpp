@@ -45,8 +45,7 @@ constexpr auto CHANNEL_SCHEME = "auth:"sv;
 constexpr auto OP_TIMEOUT = 5min;
 
 void
-ArchiveAccountManager::initAuthentication(PrivateKey key,
-                                          std::string deviceName,
+ArchiveAccountManager::initAuthentication(std::string deviceName,
                                           std::unique_ptr<AccountCredentials> credentials,
                                           AuthSuccessCallback onSuccess,
                                           AuthFailureCallback onFailure,
@@ -55,8 +54,9 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
     JAMI_WARNING("[Account {}] [Auth] starting authentication with scheme '{}'", accountId_, credentials->scheme);
     auto ctx = std::make_shared<AuthContext>();
     ctx->accountId = accountId_;
-    ctx->key = key;
-    ctx->request = buildRequest(key);
+    ctx->key = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
+        []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+    ctx->request = buildRequest(ctx->key);
     ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ArchiveAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);

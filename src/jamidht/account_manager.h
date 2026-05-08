@@ -113,13 +113,11 @@ public:
         virtual ~AccountCredentials() {};
     };
 
-    virtual void initAuthentication(PrivateKey request,
-                                    std::string deviceName,
+    virtual void initAuthentication(std::string deviceName,
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
                                     AuthFailureCallback onFailure,
-                                    const OnChangeCallback& onChange)
-        = 0;
+                                    const OnChangeCallback& onChange) = 0;
 
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
@@ -270,8 +268,7 @@ public:
     virtual void registerName(const std::string& name,
                               std::string_view scheme,
                               const std::string& password,
-                              RegistrationCallback cb)
-        = 0;
+                              RegistrationCallback cb) = 0;
 
     dhtnet::tls::CertificateStore& certStore() const;
 

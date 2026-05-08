@@ -38,8 +38,7 @@ public:
         std::shared_ptr<dht::crypto::Certificate> ca;
     };
 
-    void initAuthentication(PrivateKey request,
-                            std::string deviceName,
+    void initAuthentication(std::string deviceName,
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
                             AuthFailureCallback onFailure,

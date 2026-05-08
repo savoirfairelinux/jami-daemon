@@ -63,8 +63,7 @@ ServerAccountManager::setAuthHeaderFields(Request& request) const
 }
 
 void
-ServerAccountManager::initAuthentication(PrivateKey key,
-                                         std::string deviceName,
+ServerAccountManager::initAuthentication(std::string deviceName,
                                          std::unique_ptr<AccountCredentials> credentials,
                                          AuthSuccessCallback onSuccess,
                                          AuthFailureCallback onFailure,
@@ -72,8 +71,9 @@ ServerAccountManager::initAuthentication(PrivateKey key,
 {
     auto ctx = std::make_shared<AuthContext>();
     ctx->accountId = accountId_;
-    ctx->key = key;
-    ctx->request = buildRequest(key);
+    ctx->key = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
+        []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+    ctx->request = buildRequest(ctx->key);
     ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ServerAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
