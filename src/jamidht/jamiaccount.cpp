@@ -1547,9 +1547,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         bool migrating = registrationState_ == RegistrationState::ERROR_NEED_MIGRATION;
         setRegistrationState(RegistrationState::INITIALIZING);
 
-        auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
-            []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
-
         bool hasPassword = false;
         auto creds = buildAccountCredentials(conf,
                                              id,
@@ -1563,7 +1560,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
         const bool hadIdentity = static_cast<bool>(id.first);
         accountManager_->initAuthentication(
-            fDeviceKey,
             ip_utils::getDeviceName(),
             std::move(creds),
             [w = weak(), migrating, hasPassword](const AccountInfo& info,

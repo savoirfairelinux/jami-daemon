@@ -113,8 +113,7 @@ public:
         virtual ~AccountCredentials() {};
     };
 
-    virtual void initAuthentication(PrivateKey request,
-                                    std::string deviceName,
+    virtual void initAuthentication(std::string deviceName,
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
                                     AuthFailureCallback onFailure,
