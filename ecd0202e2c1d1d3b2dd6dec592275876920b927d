@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7112cdd_b52ef286",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2156,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c57b289a_db7d2be7",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1c028bc8_ea7672bc",
@@ -104,6 +122,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "01ca5c5d_82a6fbc8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2405,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0476eeb7_fd88addb",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d8e4e63_8b422620",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2405,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b4cbd71d_51184a19",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed1a9a97_c06637a9",
@@ -140,6 +194,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "239facae_9d9dc51e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2411,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ed1a9a97_c06637a9",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5810953_1ec5d6ae",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2411,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db661eff_6d92df0e",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3dedbdd4_6e0aa6dd",
@@ -153,6 +243,24 @@
       "writtenOn": "2026-05-08T14:37:17Z",
       "side": 1,
       "message": "[warning] Line 2420: `opts.uniqueName \u003d noNewSocket` conflates two unrelated semantics: \"reuse an existing transport\" and \"deduplicate by channel name\". Setting `uniqueName` to `true` only when reusing a socket means normal new connections lose deduplication. These should be set independently.",
+      "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7165c5c2_82db7c67",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2420,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-11T19:14:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3dedbdd4_6e0aa6dd",
       "revId": "ecd0202e2c1d1d3b2dd6dec592275876920b927d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
