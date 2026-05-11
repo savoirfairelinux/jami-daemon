@@ -22,10 +22,12 @@
         "OPENDHT_PROXY_SERVER=1",
         "OPENDHT_PUSH_NOTIFICATIONS=1",
         "OPENDHT_TOOLS=0",
+        "OPENDHT_DOWNLOAD_DEPS=0",
         "CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
     ],
     "patches": [
-        "0001-cmake-fix-jami-contrib-linking.patch"
+        "0001-cmake-fix-jami-contrib-linking.patch",
+        "0002-msvc-gnutls-3.8-ocsp-status-types.patch"
     ],
     "win_patches": [],
     "project_paths": [],

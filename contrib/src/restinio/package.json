@@ -9,6 +9,7 @@
         "llhttp"
     ],
     "use_cmake": true,
+    "cmake_source_subdir": "dev",
     "defines": [
         "RESTINIO_EXPLICIT_CPPSTD=20",
         "RESTINIO_TEST=OFF",
@@ -24,8 +25,8 @@
     "custom_scripts": {
         "pre_build": [
             "wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp",
-            "md '.\\dev\\nonstd' 2>nul || exit /b 0",
-            "move /Y expected.hpp '.\\dev\\nonstd\\' 2>nul || exit /b 0"
+            "md .\\dev\\nonstd 2>nul || exit /b 0",
+            "move /Y expected.hpp .\\dev\\nonstd\\ 2>nul || exit /b 0"
         ]
     }
 }

@@ -1,0 +1,32 @@
+From 85f3a8d5e2730e2e8bb96653c100acb3beae11b7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Adrien=20B=C3=A9raud?= <adrien.beraud@savoirfairelinux.com>
+Date: Fri, 22 Aug 2025 21:03:26 -0400
+Subject: [PATCH] windows ffnvcodec patch
+
+---
+ configure | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/configure b/configure
+index 8b17cd9627..260299c579 100755
+--- a/configure
++++ b/configure
+@@ -6592,15 +6592,6 @@ else
+     check_nvcc cuda_llvm
+ fi
+ 
+-if ! disabled ffnvcodec; then
+-    ffnv_hdr_list="ffnvcodec/nvEncodeAPI.h ffnvcodec/dynlink_cuda.h ffnvcodec/dynlink_cuviddec.h ffnvcodec/dynlink_nvcuvid.h"
+-    check_pkg_config ffnvcodec "ffnvcodec >= 12.1.14.0" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 12.0.16.1 ffnvcodec < 12.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 11.1.5.3 ffnvcodec < 12.0" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 11.0.10.3 ffnvcodec < 11.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.15 ffnvcodec < 8.2" "$ffnv_hdr_list" ""
+-fi
+-
+ if enabled_all libglslang libshaderc; then
+     die "ERROR: libshaderc and libglslang are mutually exclusive, if in doubt, disable libglslang"
+ fi
+-- 
+2.51.0.windows.1
+

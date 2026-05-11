@@ -1,4 +1,16 @@
 {
     "name": "daemon",
+    "deps": [
+        "ffmpeg",
+        "dhtnet",
+        "libarchive",
+        "yaml-cpp",
+        "speexdsp",
+        "webrtc-audio-processing",
+        "portaudio",
+        "libgit2",
+        "secp256k1",
+        "openssl"
+    ],
     "use_cmake": true
 }

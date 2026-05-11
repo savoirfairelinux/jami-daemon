@@ -1,7 +1,7 @@
 {
     "name": "gnutls",
-    "version": "3.8.3",
-    "cpe": "cpe:2.3:a:gnu:gnutls:3.8.3:*:*:*:*:*:*:*",
+    "version": "3.8.8",
+    "cpe": "cpe:2.3:a:gnu:gnutls:3.8.8:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/gnutls/archive/refs/tags/__VERSION__.tar.gz",
     "deps": [
         "iconv",
@@ -16,9 +16,9 @@
         "pre_build": [
             "git init",
             "git remote add origin https://github.com/ShiftMediaProject/gnutls.git || exit /b 0",
-            "git fetch origin --depth=1 --tags && git reset --hard 3.8.3",
-            "git apply --whitespace=fix ../../src/gnutls/0001-fix-mkdir-permissions-on-Windows.patch",
-            "git submodule update --init --recursive --depth=1 gnulib devel/libtasn1"
+            "git fetch origin --depth=1 --tags && git reset --hard 3.8.8",
+            "git submodule update --init --recursive --depth=1 gnulib devel/libtasn1",
+            "git submodule update --init --recursive --depth=1 gnulib devel/openssl"
         ]
     }
 }

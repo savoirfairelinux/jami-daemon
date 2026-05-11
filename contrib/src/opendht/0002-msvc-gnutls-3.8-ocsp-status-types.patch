@@ -1,0 +1,21 @@
+diff --git a/src/crypto.cpp b/src/crypto.cpp
+--- a/src/crypto.cpp
++++ b/src/crypto.cpp
+@@ -1605,7 +1605,7 @@ OcspResponse::getCertificateStatus() const
+     int ret;
+     unsigned int status;
+     // MSVC/vcpkg GnuTLS cast workaround
+-#if _WIN32 && (GNUTLS_VERSION_NUMBER == 0x030807)
++#if _WIN32 && (GNUTLS_VERSION_NUMBER >= 0x030807)
+     ret = gnutls_ocsp_resp_get_single(response,
+                                       0,
+                                       NULL,
+@@ -1679,7 +1679,7 @@ OcspResponse::verifyDirect(const Certificate& crt, const Blob& nonce)
+     // Check certificate revocation status
+     unsigned int status_ocsp;
+     // MSVC/vcpkg GnuTLS cast workaround
+-#if _WIN32 && (GNUTLS_VERSION_NUMBER == 0x030807)
++#if _WIN32 && (GNUTLS_VERSION_NUMBER >= 0x030807)
+     ret = gnutls_ocsp_resp_get_single(response,
+                                       0,
+                                       NULL,
