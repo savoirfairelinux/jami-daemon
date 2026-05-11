@@ -1,0 +1,242 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "698b6aca_a0d09911",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 39: Adding `pluginData` to `SwarmMessage` is an ABI-breaking change to a public interface struct. Combined with `JAMI_PLUGIN_API_VERSION` bump to 3, this is intentional, but any out-of-tree consumer using `SwarmMessage` will break at runtime if they don\u0027t recompile.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f45a66ee_9bbdda42",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 463: `c.at(\"type\")` and `c.at(\"id\")` may throw `std::out_of_range` if the commit map doesn\u0027t contain these keys. The outer code doesn\u0027t guard against this for all commit types. Consider using `find()` instead.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06df8c8b_5ed5ad66",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[error] Line 468: Copy of `*sharedMsg` into `single` vector, then `transformSwarmMessages` mutates the copy, but the original `sharedMsg` in `loadedHistory_` is also modified two lines later without holding `loadedHistory_.mutex`. Other threads iterating `quickAccess` or reading `pluginData` concurrently will race.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b343f4e_7a149df0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1215,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[error] Line 1215: The `handleEdition` path clears all `bodyOverwrite*` keys and re-runs `transformSwarmMessages`, but does not hold `loadedHistory_.mutex` while modifying `it-\u003esecond-\u003epluginData`. The surrounding code in `handleEdition` may or may not hold the mutex — verify the lock is held here to avoid races with `bodyOverwritePreCachedMessages`.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2fb0933_595599a6",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1856,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[error] Line 1856: `loadedHistory_.mutex` is locked to collect `toOverwrite`, then unlocked, then each element is accessed and mutated without the lock, then the lock is re-acquired for writing. Between unlock and re-lock, another thread could erase or replace the `sharedMsg` from `quickAccess`, causing a use-after-free or stale write.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ffd9341c_06dbcf87",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1878,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "Line 1878: `anySyncSet` is computed but never actually gates the copy loop — the `continue` skips the whole block, but the copy loop below re-checks `rfind(\"bodyOverwrite\", 0) \u003d\u003d 0 \u0026\u0026 !val.empty()` individually. If `anySyncSet` is false, the `continue` is correct, but the variable name is misleading since it\u0027s really \"anyNonEmpty\".",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26753a8c_06a331fe",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[error] Line 60: `allowDenyList_` is iterated and `chatSubjects_` is modified inside the registration callback, but this runs under `pmMtx_` only. If `publishMessage` or `cleanChatSubjects` is called concurrently, they also touch `chatSubjects_` and `chatHandlerToggled_` — the PR doesn\u0027t show these other paths acquiring `pmMtx_`, creating a data race on `chatSubjects_`.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b078867f_e9c4fd1e",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 130: The `reloadBodyOverwriteConversations` lambda iterates all accounts and conversations while holding no lock. If a conversation is removed concurrently, the `shared_ptr` returned by `getConversation` may be null after the `if` check — this is fine here, but `convModule()` returning a raw pointer used after the account is destroyed is not safe. Consider capturing a `shared_ptr` to the account.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f3b0a94_471649e1",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 177: `editMessageService` calls `acc-\u003econvModule()-\u003eeditMessage(...)` synchronously from a plugin service callback. If `editMessage` emits signals or publishes messages that re-enter the plugin system, this can deadlock on `pmMtx_` or cause infinite recursion.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2165fee2_db1e4d19",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "Line 314: The refactored `publishMessage` splits activation and publish into two passes, but `shouldPublish` is set even when the subject was only just created and may have zero subscribers (because `notifyChatSubject` failed silently). Publishing to an empty subject is harmless but wasteful.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78b3d1f2_e0f39ca7",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 558: `setPluginAccPreference` calls `getPreferencesValuesMap(rootPath, accountId)` twice (once for the `find` check, once implicitly). This is wasteful and could return different results if the file changes between calls. Cache the result in a local variable.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8744478_7bdbb424",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 566,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 566: `std::ofstream` writes msgpack data while holding a file lock, but `getPreferencesValuesMap` earlier reads the same file without necessarily holding the same lock, so the read-modify-write is not atomic and can lose concurrent writes from another thread.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84c3faac_d4ef03b1",
+        "filename": "src/plugin/streamdata.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "[warning] Line 107: Comment says default key is `\"BodyOverwrite\"` (capital B) but the default member initializer is `\"bodyOverwrite\"` (lowercase b). The comment is misleading and will confuse plugin authors.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ff402a5_0436a0ea",
+        "filename": "src/plugin/streamdata.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-11T17:33:18Z",
+      "side": 1,
+      "message": "Line 113: File is missing a trailing newline (evidenced by `\\ No newline at end of file` in the diff). This can cause compiler warnings and diff noise.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
