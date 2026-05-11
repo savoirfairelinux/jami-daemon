@@ -612,14 +612,6 @@ AccountManager::findCertificate(const dht::InfoHash& h,
     if (auto cert = certStore().getCertificate(h.toString())) {
         if (cb)
             cb(cert);
-    } else if (dht_) {
-        dht_->findCertificate(h, [cb = std::move(cb), this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (crt && info_) {
-                certStore().pinCertificate(crt);
-            }
-            if (cb)
-                cb(crt);
-        });
     } else if (cb)
         cb(nullptr);
     return true;

@@ -92,7 +92,9 @@ validateCertificate(const std::string& accountId, const std::string& certificate
     } catch (const std::runtime_error& e) {
         JAMI_WARNING("Certificate loading failed: {}", e.what());
     }
-    return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+    return {
+        {Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}
+    };
 }
 
 std::map<std::string, std::string>
@@ -107,7 +109,9 @@ validateCertificatePath(const std::string& accountId,
             return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch (const std::runtime_error& e) {
         JAMI_WARNING("Certificate loading failed: {}", e.what());
-        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+        return {
+            {Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}
+        };
     }
     return {};
 }
@@ -186,8 +190,7 @@ bool
 pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        acc->dht()->findCertificate(dht::InfoHash(certId),
-                                    [](const std::shared_ptr<dht::crypto::Certificate>& /*crt*/) {});
+        acc->dht()->findCertificate(dht::PkId(certId), [](const std::shared_ptr<dht::crypto::Certificate>& /*crt*/) {});
         return true;
     }
     return false;
