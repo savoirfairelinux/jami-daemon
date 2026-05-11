@@ -2047,18 +2047,7 @@ JamiAccount::initDhtContext()
         context.logger = logger_;
     }
 
-    context.certificateStore = [&](const dht::InfoHash& pk_id) {
-        std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-        if (auto cert = certStore().getCertificate(pk_id.toString()))
-            ret.emplace_back(std::move(cert));
-        JAMI_LOG("[Account {}] Query for local certificate store: {}: {} found.",
-                 getAccountID(),
-                 pk_id.toString(),
-                 ret.size());
-        return ret;
-    };
-
-    context.certificateStorePkId = [&](const DeviceId& pk_id) {
+    context.certificateStore = [&](const DeviceId& pk_id) {
         std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
         if (auto cert = certStore().getCertificate(pk_id.toString()))
             ret.emplace_back(std::move(cert));
