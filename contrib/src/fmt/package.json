@@ -15,7 +15,7 @@
     "with_env": "",
     "custom_scripts": {
         "pre_build": [
-            "mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR% -DBUILD_SHARED_LIBS=Off -DFMT_TEST=Off"
+            "mkdir msvc & cd msvc & cmake .. -G \"%CMAKE_GENERATOR%\" -A %CMAKE_GENERATOR_PLATFORM% -DBUILD_SHARED_LIBS=Off -DFMT_TEST=Off"
         ],
         "build": [],
         "post_build": []

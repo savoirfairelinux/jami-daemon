@@ -31,7 +31,6 @@ import zipfile
 import tarfile
 import multiprocessing
 import shutil
-import shlex
 import glob
 import time
 from datetime import timedelta
@@ -68,30 +67,87 @@ vs_where_path = os.path.join(
     os.environ['ProgramFiles(x86)'], 'Microsoft Visual Studio', 'Installer', 'vswhere.exe'
 )
 
+VS_GENERATORS = {
+    '18': 'Visual Studio 18 2026',
+    '17': 'Visual Studio 17 2022',
+}
+VS_TOOLSETS = {
+    '18': '145',
+    '17': '143',
+}
+selected_vs_instance = None
+
+
+def getVSInstances():
+    args = [
+        '-prerelease',
+        '-products',
+        '*',
+        '-requires',
+        'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+        '-format',
+        'json'
+    ]
+    try:
+        output = subprocess.check_output([vs_where_path] + args).decode('utf-8')
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    if not output:
+        return []
+    return json.loads(output)
+
+
+def getVSInstanceVersion(instance):
+    version = instance.get('installationVersion', '')
+    if not version:
+        return None
+    return version.split('.')[0]
+
+
+def getSupportedCMakeGenerators():
+    try:
+        output = subprocess.check_output(
+            ['cmake', '--help'], stderr=subprocess.STDOUT).decode('utf-8', errors='ignore')
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return output
+
+
+def getSelectedVSInstance():
+    global selected_vs_instance
+    if selected_vs_instance is not None:
+        return selected_vs_instance
+
+    instances = getVSInstances()
+    if not instances:
+        return None
+    instances = sorted(
+        instances,
+        key=lambda instance: instance.get('installationVersion', ''),
+        reverse=True)
+    cmake_generators = getSupportedCMakeGenerators()
+    for instance in instances:
+        version = getVSInstanceVersion(instance)
+        generator = VS_GENERATORS.get(version)
+        if generator is None:
+            continue
+        if cmake_generators is None or generator in cmake_generators:
+            selected_vs_instance = instance
+            return selected_vs_instance
+    selected_vs_instance = instances[0]
+    return selected_vs_instance
+
 
 def getLatestVSVersion():
-    args = [
-        '-latest',
-        '-products *',
-        '-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-        '-property installationVersion'
-    ]
-    cmd = [vs_where_path] + args
-    output = subprocess.check_output(' '.join(cmd)).decode('utf-8')
-    if output:
-        return output.splitlines()[0].split('.')[0]
-    else:
-        return
+    instance = getSelectedVSInstance()
+    if instance is None:
+        return None
+    return getVSInstanceVersion(instance)
 
 # Visual Studio help
-win_sdk_default = '10.0.18362.0'
+win_sdk_default = '10.0.26100.0'
 VSVersion = getLatestVSVersion()
-if VSVersion == '17':
-    win_toolset_default = '143'
-elif VSVersion == '16':
-    win_toolset_default = '142'
-else:
-    win_toolset_default = '144'
+win_toolset_default = VS_TOOLSETS.get(VSVersion, '144')
 
 host_is_64bit = (False, True)[platform.machine().endswith('64')]
 python_is_64bit = (False, True)[8 * struct.calcsize("P") == 64]
@@ -116,21 +172,10 @@ def shellquote(s, windows=False):
 
 
 def findVSLatestDir():
-    args = [
-        '-latest',
-        '-products *',
-        '-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-        '-property installationPath'
-    ]
-    cmd = [vs_where_path] + args
-    output = subprocess.check_output(
-        ' '.join(cmd)).decode(
-        'utf-8',
-        errors='ignore')
-    if output:
-        return output.splitlines()[0]
-    else:
-        return
+    instance = getSelectedVSInstance()
+    if instance is None:
+        return None
+    return instance.get('installationPath')
 
 
 def findMSBuild():
@@ -152,13 +197,25 @@ def getVSEnv(arch='x64', platform='', version=''):
 
 
 def getCMakeGenerator(vs_version):
-    if vs_version == '17':
-        return '\"Visual Studio 17 2022\" -A x64'
-    elif vs_version == '16':
-        return '\"Visual Studio 16 2019\" -A x64'
+    generator = getCMakeGeneratorName(vs_version)
+    if generator:
+        return '\"' + generator + '\" -A x64'
     else:
         root_logger.critical("Unable to return CMake generator for Visual Studio " + vs_version)
         return ''
+
+
+def getCMakeGeneratorName(vs_version):
+    return VS_GENERATORS.get(vs_version)
+
+
+def getCMakeGeneratorArgs(vs_version):
+    generator = getCMakeGeneratorName(vs_version)
+    if generator:
+        return ['-G', generator, '-A', 'x64']
+    else:
+        root_logger.critical("Unable to return CMake generator for Visual Studio " + vs_version)
+        return []
 
 
 def getVSEnvCmd(arch='x64', platform='', version=''):
@@ -229,12 +286,17 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
     cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_SYSTEM_VERSION=' + sdk_version + \
+        ' -DBUILD_CONTRIB=OFF' + \
+        ' -DCMAKE_C_FLAGS=/FS -DCMAKE_CXX_FLAGS=/FS' + \
         ' -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion(
         )) + ' -T $(DefaultPlatformToolset) -S ../../ -B ../../build'
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
     if result[0] != 0:
         sys.exit("CMake errors")
+    for project_file in glob.glob(os.path.join(daemon_dir, 'build', '*.vcxproj')):
+        getMSbuilder().replace_vs_prop(project_file, 'MultiProcessorCompilation', 'false')
+        getMSbuilder().replace_vs_prop(project_file, 'DebugInformationFormat', 'None')
 
     for dep in pkg_info.get('deps', []):
         resolve(dep, False, sdk_version, toolset)
@@ -261,6 +323,15 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
         return make_plugin(pkg_info, force, sdk_version, toolset)
     md5 = getMd5ForDirectory(contrib_src_dir + r'\\' + pkg_name)
     version = pkg_info.get('version')
+    env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
+    sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
+        'with_env', '')
+    build_signature = '\n'.join([
+        md5,
+        'vs=' + getLatestVSVersion(),
+        'toolset=' + toolset,
+        'sdk=' + sdk_to_use,
+    ])
     pkg_build_uptodate = False
     pkg_ver_uptodate = False
     # attempt to get the current built version
@@ -274,7 +345,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
             pkg_build_uptodate = is_build_uptodate(pkg_name, build_file)
             with open(build_file, 'r+', encoding="utf8", errors='ignore') as f:
                 current_version = f.read()
-                if current_version == md5:
+                if current_version == build_signature:
                     pkg_ver_uptodate = True
     for dep in pkg_info.get('deps', []):
         dep_build_dep = resolve(dep, False, sdk_version, toolset)
@@ -290,7 +361,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
         pkg_build_path = contrib_build_dir + '\\' + pkg_name
         if os.path.exists(pkg_build_path):
             log.warning('Cleaning build for ' + pkg_name)
-            getSHrunner().exec_batch('rmdir', ['/s', '/q', pkg_build_path])
+            remove_directory(pkg_build_path)
         if not pkg_up_to_date or force:
             if not force and not current_version is None:
                 log.warning(pkg_name + ' is not up to date')
@@ -298,21 +369,19 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
                     pkg_name, version, pkg_info['url'], force):
                 apply(pkg_name, pkg_info.get('patches', []),
                       pkg_info.get('win_patches', []))
-        env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
-        sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
-            'with_env', '')
-
         # configure with CMake
         use_cmake = pkg_info.get('use_cmake', False)
         if use_cmake:
-            cmake_defines = ""
+            cmake_source_dir = os.path.join(
+                pkg_build_path, pkg_info.get('cmake_source_subdir', ''))
+            cmake_args = getCMakeGeneratorArgs(getLatestVSVersion())
             for define in pkg_info.get('defines', []):
-                cmake_defines += " -D" + define
+                cmake_args.append('-D' + define)
+            cmake_args.extend(['-S', cmake_source_dir,
+                               '-B', pkg_build_path + '\\build'])
             if not pkg_up_to_date or current_version is None or force:
-                cmake_conf_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
-                )) + cmake_defines + " -S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
                 log.debug("Configuring with CMake")
-                result = getSHrunner().exec_batch(cmake_conf_script)
+                result = getSHrunner().exec_batch('cmake', cmake_args)
                 if result[0] != 0:
                     log.error("Error configuring with CMake")
                     exit(1)
@@ -325,7 +394,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
                  sdk_to_use,
                  toolset,
                  use_cmake=use_cmake):
-            track_build(pkg_name, md5, False)
+            track_build(pkg_name, build_signature, False)
         else:
             log.error("Unable to build contrib " + pkg_name)
             exit(1)
@@ -368,18 +437,44 @@ def fetch_pkg(pkg_name, version, url, force):
     return False
 
 
+def remove_directory(path):
+    if not os.path.exists(path):
+        return
+    try:
+        shutil.rmtree(path)
+    except OSError:
+        getSHrunner().exec_batch('rmdir', ['/s', '/q', path])
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
 def remove_archive_if_needed(pkg_build_path, dirty_path):
     if os.path.exists(pkg_build_path):
         log.debug('Removing old package ' + pkg_build_path)
-        getSHrunner().exec_batch('rmdir', ['/s', '/q', pkg_build_path])
-    elif os.path.exists(dirty_path):
+        remove_directory(pkg_build_path)
+    if os.path.exists(dirty_path):
         log.debug('Removing partial decompression ' + dirty_path)
-        getSHrunner().exec_batch('rmdir', ['/s', '/q', dirty_path])
+        remove_directory(dirty_path)
+
+
+def has_windows_reserved_name(path):
+    reserved_names = {
+        'CON', 'PRN', 'AUX', 'NUL',
+        'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+        'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+    }
+    for part in re.split(r'[\\/]+', path):
+        name = part.split('.')[0].upper()
+        if name in reserved_names:
+            return True
+    return False
 
 
 def extract_tar(pkg_build_path, name, path, pkg_name):
     with tarfile.open(path, 'r', encoding="utf8", errors='ignore') as tarball:
-        tar_common_prefix = os.path.commonprefix(tarball.getnames())
+        members = [member for member in tarball.getmembers()
+                   if not has_windows_reserved_name(member.name)]
+        tar_common_prefix = os.path.commonprefix([member.name for member in members])
         prefix = tar_common_prefix
         if prefix == "":
             prefix = pkg_name
@@ -387,9 +482,9 @@ def extract_tar(pkg_build_path, name, path, pkg_name):
         remove_archive_if_needed(pkg_build_path, dirty_path)
         log.debug('Decompressing ' + name + ' to ' + pkg_build_path)
         if tar_common_prefix == "":
-            tarball.extractall(dirty_path)
+            tarball.extractall(dirty_path, members=members)
         else:
-            tarball.extractall(contrib_build_dir)
+            tarball.extractall(contrib_build_dir, members=members)
             os.rename(contrib_build_dir + '\\' + tar_common_prefix,
                     pkg_build_path)
         return True
@@ -538,9 +633,8 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
         # build directly with CMake
         if use_cmake is True:
             log.debug('CMake build phase')
-            cmake_build_script = "cmake --build '" + pkg_dir + \
-                "\\build' " + "--config " + conf
-            result = getSHrunner().exec_batch(cmake_build_script)
+            result = getSHrunner().exec_batch(
+                'cmake', ['--build', pkg_dir + '\\build', '--config', conf])
             if result[0] != 0:
                 log.error("Error building with CMake")
                 exit(1)
@@ -618,7 +712,8 @@ class SHrunner():
             'CONTRIB_SRC_DIR': contrib_src_dir,
             'CONTRIB_BUILD_DIR': contrib_build_dir,
             'VCVARSALL_CMD': getVSEnvCmd(),
-            'CMAKE_GENERATOR': getCMakeGenerator(getLatestVSVersion())
+            'CMAKE_GENERATOR': getCMakeGeneratorName(getLatestVSVersion()),
+            'CMAKE_GENERATOR_PLATFORM': 'x64'
         }
         self.base_env_vars = self.project_env_vars.copy()
         self.base_env_vars.update(os.environ.copy())
@@ -631,9 +726,9 @@ class SHrunner():
 
     def exec_script(self, script_type=ScriptType.cmd, script=None, args=[]):
         if script_type is ScriptType.cmd:
-            cmd = [script]
-            if not args:
-                cmd = shlex.split(script)
+            cmd = script
+            if args:
+                cmd = [script]
         elif script_type is ScriptType.ps1:
             cmd = [self.ps_path, '-ExecutionPolicy', 'ByPass', script]
         elif script_type is ScriptType.sh:
@@ -676,10 +771,11 @@ class MSbuilder:
     def __init__(self):
         self.vsenv_done = False
         self.msbuild = findMSBuild()
+        msbuild_max_cpu = os.environ.get('JAMI_MSBUILD_MAX_CPU', str(multiprocessing.cpu_count()))
         self.default_msbuild_args = [
             '/nologo',
             '/verbosity:normal',
-            '/maxcpucount:' + str(multiprocessing.cpu_count())]
+            '/maxcpucount:' + msbuild_max_cpu]
         self.set_msbuild_configuration()
 
     def set_msbuild_configuration(self, with_env='false', arch='x64',
@@ -703,19 +799,23 @@ class MSbuilder:
     def build(self, pkg_name, proj_path, sdk_version, toolset):
         if not os.path.isfile(self.msbuild):
             raise IOError('msbuild.exe not found. path=' + self.msbuild)
+        project_files = sorted(set(
+            [proj_path] + glob.glob(os.path.join(os.path.dirname(proj_path), '*.vcxproj'))))
         if os.environ.get('JENKINS_URL'):
             log.info("Jenkins Clear DebugInformationFormat")
-            self.__class__.replace_vs_prop(proj_path,
-                                           'DebugInformationFormat',
-                                           'None')
-        # force chosen SDK
-        self.__class__.replace_vs_prop(proj_path,
-                                       'WindowsTargetPlatformVersion',
-                                       sdk_version)
-        # force chosen toolset
-        self.__class__.replace_vs_prop(proj_path,
-                                       'PlatformToolset',
-                                       toolset)
+            for project_file in project_files:
+                self.__class__.replace_vs_prop(project_file,
+                                               'DebugInformationFormat',
+                                               'None')
+        for project_file in project_files:
+            # force chosen SDK
+            self.__class__.replace_vs_prop(project_file,
+                                           'WindowsTargetPlatformVersion',
+                                           sdk_version)
+            # force chosen toolset
+            self.__class__.replace_vs_prop(project_file,
+                                           'PlatformToolset',
+                                           toolset)
         args = []
         args.extend(self.default_msbuild_args)
         args.extend(self.extra_msbuild_args)
@@ -797,8 +897,8 @@ def main():
         log.error('These scripts will only run on a 64-bit Windows system for now!')
         sys.exit(1)
 
-    if int(getLatestVSVersion()) < 16:
-        log.error('These scripts require at least Visual Studio v16 2019!')
+    if int(getLatestVSVersion()) < 17:
+        log.error('These scripts require at least Visual Studio v17 2022!')
         sys.exit(1)
 
     if parsed_args.purge:
@@ -848,8 +948,9 @@ def main():
                         'rmdir', ['/s', '/q', plugins_dir + "\\" + parsed_args.clean + "\\msvc"])
 
     if parsed_args.build:
-        if not os.path.exists(contrib_build_dir):
-            os.makedirs(contrib_build_dir)
+        for path in (contrib_build_dir, contrib_tmp_dir):
+            if not os.path.exists(path):
+                os.makedirs(path)
         log.info('Making: ' + parsed_args.build)
         resolve(parsed_args.build, parsed_args.force,
                 parsed_args.sdk, parsed_args.toolset, parsed_args.plugin)

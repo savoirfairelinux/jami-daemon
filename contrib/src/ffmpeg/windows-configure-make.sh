@@ -201,5 +201,5 @@ FFMPEGCONF=$(echo $FFMPEGCONF | sed -e "s/[[:space:]]\+/ /g")
 set -x
 set -e
 ../../../configure $FFMPEGCONF --extra-cflags="${EXTRACFLAGS}" --extra-ldflags="${EXTRALDFLAGS}" --prefix="${PREFIX}" --extra-cxxflags="-std:c++20 /Zc:__cplusplus"
-make -j8 install
+make -j"${JAMI_FFMPEG_MAKE_JOBS:-8}" install
 cd ../../..
