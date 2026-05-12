@@ -39,6 +39,42 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b37fcded_ad94a9be",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3176,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-05-12T19:27:22Z",
+      "side": 1,
+      "message": "Still applicable in latest patchset, can probably be removed.",
+      "parentUuid": "c51831d3_c147b653",
+      "revId": "9c61c051543a9cd7115e42784e5063c0a5b00741",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "99c0821c_f587857f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3176,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-05-12T19:27:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d7100a5d_8a518c40",
+      "revId": "9c61c051543a9cd7115e42784e5063c0a5b00741",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2a0574e1_4c0e647e",
         "filename": "src/jamidht/svc_protocol.h",
         "patchSetId": 1
