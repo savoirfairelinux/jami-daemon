@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a0c8742_0d281635",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-05-12T18:32:26Z",
+      "side": 1,
+      "message": "Can this struct not be defined outside of the function ?",
+      "range": {
+        "startLine": 160,
+        "startChar": 0,
+        "endLine": 168,
+        "endChar": 6
+      },
+      "revId": "78367b88576ccb94f05539a96ab1e6d57e06e590",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
