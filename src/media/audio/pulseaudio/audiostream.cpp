@@ -153,7 +153,8 @@ AudioStream::stop()
 {
     if (not audiostream_)
         return;
-    JAMI_LOG("Destroying stream with device {}", pa_stream_get_device_name(audiostream_));
+    const char* deviceName = pa_stream_get_device_name(audiostream_);
+    JAMI_LOG("Destroying stream with device {}", deviceName ? deviceName : "(unknown)");
     if (pa_stream_get_state(audiostream_) == PA_STREAM_CREATING) {
         disconnectStream(audiostream_);
         pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void*) { destroyStream(s); }, nullptr);
@@ -173,11 +174,11 @@ void
 AudioStream::moved(pa_stream* s)
 {
     audiostream_ = s;
-    JAMI_LOG("[audiostream] Stream moved: {:d}, {:s}", pa_stream_get_index(s), pa_stream_get_device_name(s));
+    const char* name = pa_stream_get_device_name(s);
+    JAMI_LOG("[audiostream] Stream moved: {:d}, {:s}", pa_stream_get_index(s), name ? name : "(unknown device)");
 
     if (audioType_ == AudioDeviceType::CAPTURE) {
         // check for echo cancel
-        const char* name = pa_stream_get_device_name(s);
         if (!name) {
             JAMI_ERROR("[audiostream] moved() unable to get audio stream device");
             return;
@@ -235,8 +236,9 @@ AudioStream::stateChanged(pa_stream* s)
         JAMI_LOG("Stream is terminating…");
         break;
 
-    case PA_STREAM_READY:
-        JAMI_LOG("Stream successfully created, connected to {}", pa_stream_get_device_name(s));
+    case PA_STREAM_READY: {
+        const char* deviceName = pa_stream_get_device_name(s);
+        JAMI_LOG("Stream successfully created, connected to {}", deviceName ? deviceName : "(unknown)");
         // JAMI_DEBUG("maxlength {}", pa_stream_get_buffer_attr(s)->maxlength);
         // JAMI_DEBUG("tlength {}", pa_stream_get_buffer_attr(s)->tlength);
         // JAMI_DEBUG("prebuf {}", pa_stream_get_buffer_attr(s)->prebuf);
@@ -245,6 +247,7 @@ AudioStream::stateChanged(pa_stream* s)
         // JAMI_DEBUG("samplespec {}", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
         onReady_();
         break;
+    }
 
     case PA_STREAM_UNCONNECTED:
         JAMI_LOG("Stream unconnected");
