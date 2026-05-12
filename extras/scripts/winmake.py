@@ -57,9 +57,16 @@ def build_contrib(args, paths):
         if jom_path and os.path.exists(jom_path):
             log.info(f"Using JOM from environment: {jom_path}")
         else:
-            # Try to find JOM in the default Qt installation path
-            qt_tools_dir = os.path.join(os.getenv("QTDIR", "C:\\Qt"), "Tools")
-            jom_path = os.path.join(qt_tools_dir, "QtCreator", "bin", "jom", "jom.exe")
+            # Try to find JOM on PATH
+            import shutil
+            jom_which = shutil.which("jom")
+            if jom_which:
+                jom_path = jom_which
+                log.info(f"Using JOM from PATH: {jom_path}")
+            else:
+                # Try to find JOM in the default Qt installation path
+                qt_tools_dir = os.path.join(os.getenv("QTDIR", "C:\\Qt"), "Tools")
+                jom_path = os.path.join(qt_tools_dir, "QtCreator", "bin", "jom", "jom.exe")
 
             if not os.path.exists(jom_path):
                 # Fallback to looking in other common Qt Creator paths
