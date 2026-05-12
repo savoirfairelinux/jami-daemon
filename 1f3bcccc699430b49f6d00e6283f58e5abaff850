@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31e85609_86faeb30",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-05-12T19:07:28Z",
+      "side": 1,
+      "message": "Cannot build, issues in `test_service_manager.cpp`",
+      "revId": "1f3bcccc699430b49f6d00e6283f58e5abaff850",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
