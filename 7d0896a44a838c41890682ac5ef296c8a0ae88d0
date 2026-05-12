@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd9ec4b4_01250919",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-05-12T19:32:36Z",
+      "side": 1,
+      "message": "Address this",
+      "range": {
+        "startLine": 488,
+        "startChar": 4,
+        "endLine": 488,
+        "endChar": 81
+      },
+      "revId": "7d0896a44a838c41890682ac5ef296c8a0ae88d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
