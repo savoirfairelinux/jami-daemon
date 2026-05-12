@@ -223,16 +223,18 @@ if (BUILD_CONTRIB)
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
     else()
-        set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        set(WINMAKE_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts/winmake.py)
+        message(STATUS "Building Windows contribs via pywinmake...")
         execute_process(
-            COMMAND python ${SCRIPTS_DIR}/winmake.py
-            WORKING_DIRECTORY ${SCRIPTS_DIR}
+            COMMAND ${Python3_EXECUTABLE} ${WINMAKE_SCRIPT} resolve all
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             RESULT_VARIABLE BUILD_RESULT
         )
         if (BUILD_RESULT)
-            message(FATAL_ERROR "Contrib build failed.")
+            message(FATAL_ERROR "pywinmake failed with exit code ${BUILD_RESULT}")
         else()
-            message(STATUS "Contrib build successful.")
+            message(STATUS "pywinmake contrib build successful.")
         endif()
     endif()
 endif()
