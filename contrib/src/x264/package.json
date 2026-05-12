@@ -5,7 +5,7 @@
     "deps": [],
     "patches": [],
     "win_patches": [],
-    "project_paths": ["SMP/libx264.vcxproj"],
+    "project_paths": ["SMP/libx264.vcxproj", "SMP/libx264bit.vcxproj"],
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [],
