@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e7bb4eda_170d2e0a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1186,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:07:23Z",
+      "side": 1,
+      "message": "Line 1186: This hunk is pure whitespace/formatting and is unrelated to the `scheme` feature. Mixing formatting churn with functional changes makes review harder and pollutes `git blame`. Consider splitting formatting-only changes into a separate commit.",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "70cc5506_e575277e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:07:23Z",
+      "side": 1,
+      "message": "Line 3148: Good: `scheme` is correctly propagated into the JSON response sent via the signal, keeping the client-facing API consistent with the new field.",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "55334b11_47f71525",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:07:23Z",
+      "side": 1,
+      "message": "[warning] Line 49: The `scheme` field is free-form with no validation anywhere in the patch. A malicious or misconfigured client could set it to an arbitrary string (e.g. `javascript`, `file`, `data`) which a UI might naïvely use in URI construction, leading to scheme-injection. Add validation in `mapToServiceRecord` (and/or `fromJson`) to reject or sanitize values that are not in a small allow-list (e.g. `\"\"`, `\"http\"`, `\"https\"`).",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5829128c_5cf13d59",
+        "filename": "src/jamidht/svc_discovery_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:07:23Z",
+      "side": 1,
+      "message": "Line 80: The `scheme` value returned to remote peers originates from the local config with no sanitization. A compromised local service database could advertise an attacker-controlled scheme to all querying peers. Validate or clamp the value before placing it on the wire, consistent with the previous comment.",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2aefcbbf_b183965b",
+        "filename": "src/jamidht/svc_protocol.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:07:23Z",
+      "side": 1,
+      "message": "[warning] Line 52: Adding `scheme` to the MSGPACK_DEFINE_MAP is a wire-protocol breaking change for older peers. A v1 peer that deserializes a v2 message with the extra field may reject or misparse it (depending on msgpack configuration). Consider: (1) bumping the protocol version constant so peers can negotiate, or (2) using MSGPACK_DEFINE_MAP with optional/defaulted handling so that the field is silently ignored by older decoders. At minimum, document the backward-compatibility story.",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
