@@ -28,6 +28,7 @@
 namespace jami {
 
 namespace {
+
 template<typename T>
 bool
 sendMsg(const std::shared_ptr<dhtnet::ChannelSocket>& s, const T& msg)
@@ -117,7 +118,7 @@ SvcDiscoveryChannelHandler::buildResponse(JamiAccount& account, const std::strin
     if (const auto& id = account.identity().first)
         out.device = id->getPublicKey().getLongId().toString();
     auto checker = [&account](const std::string& uri) {
-        return account.isConfirmedContact(uri);
+        return account.isContact(uri);
     };
     auto visible = account.serviceManager().getVisibleServices(peerAccountUri, checker);
     out.services.reserve(visible.size());
@@ -143,40 +144,46 @@ SvcDiscoveryChannelHandler::connect(const DeviceId& deviceId,
     auto userCb = std::make_shared<ConnectCb>(std::move(cb));
     auto state = state_;
     auto wacc = account_;
-    connectionManager_
-        .connectDevice(deviceId,
-                       svc_protocol::DiscoveryChannelName,
-                       [userCb, state, wacc, this](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& dev) {
-                           if (socket) {
-                               // Retain the channel for its full lifetime so the response
-                               // can come back even if no one else holds it.
-                               {
-                                   std::lock_guard lk(state->mtx);
-                                   state->channels.push_back(socket);
-                               }
-                               socket->onShutdown([state, ws = std::weak_ptr(socket)](const std::error_code&) {
-                                   auto s = ws.lock();
-                                   if (!s)
-                                       return;
-                                   std::lock_guard lk(state->mtx);
-                                   auto it = std::find(state->channels.begin(), state->channels.end(), s);
-                                   if (it != state->channels.end())
-                                       state->channels.erase(it);
-                               });
-                               // The initiating side immediately writes a Query so the server
-                               // can respond. We need to install a reader to handle the
-                               // response too — derive peer account uri from the cert.
-                               auto cert = socket->peerCertificate();
-                               std::string peerAccountUri;
-                               if (cert && cert->issuer)
-                                   peerAccountUri = cert->issuer->getId().toString();
-                               installReader(socket, peerAccountUri);
-                               if (!sendMsg(socket, svc_protocol::SvcDiscQuery {}))
-                                   JAMI_WARNING("[SvcDiscovery] failed to send SvcDiscQuery to {}", peerAccountUri);
-                           }
-                           if (*userCb)
-                               (*userCb)(socket, dev);
-                       });
+    connectionManager_.connectDevice(deviceId,
+                                     std::string(svc_protocol::DiscoveryChannelName),
+                                     [userCb, state, wacc, this](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                                 const DeviceId& dev) {
+                                         if (socket) {
+                                             // Retain the channel for its full lifetime so the response
+                                             // can come back even if no one else holds it.
+                                             auto cert = socket->peerCertificate();
+                                             std::string peerAccountUri;
+                                             if (cert && cert->issuer)
+                                                 peerAccountUri = cert->issuer->getId().toString();
+                                             {
+                                                 std::lock_guard lk(state->mtx);
+                                                 state->channels[peerAccountUri].push_back(socket);
+                                             }
+                                             socket->onShutdown([state, ws = std::weak_ptr(socket), peerAccountUri](
+                                                                    const std::error_code&) {
+                                                 auto s = ws.lock();
+                                                 if (!s)
+                                                     return;
+                                                 std::lock_guard lk(state->mtx);
+                                                 auto it = state->channels.find(peerAccountUri);
+                                                 if (it != state->channels.end()) {
+                                                     auto& vec = it->second;
+                                                     vec.erase(std::remove(vec.begin(), vec.end(), s), vec.end());
+                                                     if (vec.empty())
+                                                         state->channels.erase(it);
+                                                 }
+                                             });
+                                             // The initiating side immediately writes a Query so the server
+                                             // can respond. We need to install a reader to handle the
+                                             // response too.
+                                             installReader(socket, peerAccountUri);
+                                             if (!sendMsg(socket, svc_protocol::SvcDiscQuery {}))
+                                                 JAMI_WARNING("[SvcDiscovery] failed to send SvcDiscQuery to {}",
+                                                              peerAccountUri);
+                                         }
+                                         if (*userCb)
+                                             (*userCb)(socket, dev);
+                                     });
 }
 
 bool
@@ -203,17 +210,21 @@ SvcDiscoveryChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certifica
     auto peerUri = peer->issuer->getId().toString();
     {
         std::lock_guard lk(state_->mtx);
-        state_->channels.push_back(channel);
+        state_->channels[peerUri].push_back(channel);
     }
     auto state = state_;
-    channel->onShutdown([state, ws = std::weak_ptr(channel)](const std::error_code&) {
+    channel->onShutdown([state, ws = std::weak_ptr(channel), peerUri](const std::error_code&) {
         auto s = ws.lock();
         if (!s)
             return;
         std::lock_guard lk(state->mtx);
-        auto it = std::find(state->channels.begin(), state->channels.end(), s);
-        if (it != state->channels.end())
-            state->channels.erase(it);
+        auto it = state->channels.find(peerUri);
+        if (it != state->channels.end()) {
+            auto& vec = it->second;
+            vec.erase(std::remove(vec.begin(), vec.end(), s), vec.end());
+            if (vec.empty())
+                state->channels.erase(it);
+        }
     });
     installReader(channel, peer->issuer->getId().toString());
 }
@@ -281,6 +292,21 @@ SvcDiscoveryChannelHandler::installReader(const std::shared_ptr<dhtnet::ChannelS
                     JAMI_WARNING("[SvcDiscovery] no responseCb set; dropping {} services from {}",
                                  resp.services.size(),
                                  peerAccountUri);
+            } else if (type == svc_protocol::MsgType::ServiceUpdate) {
+                svc_protocol::SvcDiscServiceUpdate update;
+                try {
+                    obj.convert(update);
+                } catch (const std::exception& e) {
+                    JAMI_WARNING("[SvcDiscovery] bad service_update: {}", e.what());
+                    continue;
+                }
+                ResponseCb cb;
+                {
+                    std::lock_guard lk(state->mtx);
+                    cb = state->responseCb;
+                }
+                if (cb)
+                    cb(peerAccountUri, update.device, update.services);
             } else if (type == svc_protocol::MsgType::VersionMismatch || type == svc_protocol::MsgType::Error) {
                 ResponseCb cb;
                 {
@@ -298,12 +324,46 @@ SvcDiscoveryChannelHandler::installReader(const std::shared_ptr<dhtnet::ChannelS
 }
 
 void
+SvcDiscoveryChannelHandler::broadcastServiceUpdate()
+{
+    auto acc = account_.lock();
+    if (!acc)
+        return;
+
+    // Snapshot connected peers and their channels under the lock.
+    std::map<std::string, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> snapshot;
+    {
+        std::lock_guard lk(state_->mtx);
+        snapshot = state_->channels;
+    }
+
+    if (snapshot.empty())
+        return;
+
+    std::size_t peerCount = 0;
+    for (const auto& [peerUri, sockets] : snapshot) {
+        // Build a per-peer filtered service list.
+        auto resp = buildResponse(*acc, peerUri);
+        svc_protocol::SvcDiscServiceUpdate update;
+        update.device = resp.device;
+        update.services = std::move(resp.services);
+
+        for (const auto& sock : sockets)
+            sendMsg(sock, update);
+        ++peerCount;
+    }
+    JAMI_LOG("[SvcDiscovery] broadcast service_update to {} peer(s)", peerCount);
+}
+
+void
 SvcDiscoveryChannelHandler::refreshDevice(const std::string& /*peerUri*/, const DeviceId& deviceId)
 {
-    connect(deviceId, svc_protocol::DiscoveryChannelName, [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {
-        // Connection callback — nothing needed here; the cache is
-        // updated when the response is read via installReader/responseCb.
-    });
+    connect(deviceId,
+            std::string(svc_protocol::DiscoveryChannelName),
+            [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {
+                // Connection callback — nothing needed here; the cache is
+                // updated when the response is read via installReader/responseCb.
+            });
 }
 
 std::vector<SvcDiscoveryChannelHandler::CachedSvcInfo>
