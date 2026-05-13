@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c88155a9_4ef2a149",
+        "filename": "src/uri.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:02:26Z",
+      "side": 1,
+      "message": "Line 50: Potential prefix-matching ambiguity: `\"svc\"` is a prefix of `\"svcdisc\"`. Currently the order is safe because `svcdisc` is checked first, but this is fragile — a future refactor that reorders the branches or switches to a different lookup strategy (e.g., a map) could silently break `svcdisc` matching. Consider adding a brief comment noting the ordering dependency, or renaming one of the schemes to avoid the prefix overlap (e.g., `svc-disc` instead of `svcdisc`).",
+      "revId": "da9a8ce8e04b150df8479fa54c68db79cd16c9f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
