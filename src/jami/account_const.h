@@ -20,7 +20,20 @@
 // Defined in windows.h
 #include <cstdint>
 #ifdef ERROR
+#ifdef _WIN32
+// Defined in windows.h
+#ifdef ERROR
 #undef ERROR
+#endif
+// Defined in nb30.h (Windows NetBIOS header)
+#ifdef REGISTERED
+#undef REGISTERED
+#endif
+#endif // _WIN32
+#endif
+// Defined in nb30.h (Windows NetBIOS header)
+#ifdef REGISTERED
+#undef REGISTERED
 #endif
 
 namespace libjami {
