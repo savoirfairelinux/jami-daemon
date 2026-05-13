@@ -18,8 +18,8 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
-
 #include <msgpack.hpp>
 
 namespace jami {
@@ -30,16 +30,17 @@ constexpr uint8_t MaxVersion = 1;
 
 /// Discovery message type discriminators.
 namespace MsgType {
-constexpr const char* Query = "query";
-constexpr const char* ServiceList = "service_list";
-constexpr const char* Error = "error";
-constexpr const char* VersionMismatch = "version_mismatch";
+constexpr std::string_view Query = "query";
+constexpr std::string_view ServiceList = "service_list";
+constexpr std::string_view ServiceUpdate = "service_update";
+constexpr std::string_view Error = "error";
+constexpr std::string_view VersionMismatch = "version_mismatch";
 } // namespace MsgType
 
 /// Channel name prefix used for tunnels: "svc://<service-uuid>".
-constexpr const char* TunnelChannelPrefix = "svc://";
+constexpr std::string_view TunnelChannelPrefix = "svc://";
 /// Channel name used for discovery: "svcdisc://query".
-constexpr const char* DiscoveryChannelName = "svcdisc://query";
+constexpr std::string_view DiscoveryChannelName = "svcdisc://query";
 
 /// Single service descriptor exposed in a service_list response.
 struct SvcInfo
@@ -67,6 +68,16 @@ struct SvcDiscResponse
     std::string type {MsgType::ServiceList};
     /// Long device id of the responder, so the requester can target the
     /// exact device when opening a tunnel without a separate lookup.
+    std::string device;
+    std::vector<SvcInfo> services;
+    MSGPACK_DEFINE_MAP(v, type, device, services)
+};
+
+/// Unsolicited push sent by the host when its service list changes.
+struct SvcDiscServiceUpdate
+{
+    uint8_t v {MaxVersion};
+    std::string type {MsgType::ServiceUpdate};
     std::string device;
     std::vector<SvcInfo> services;
     MSGPACK_DEFINE_MAP(v, type, device, services)
@@ -105,7 +116,7 @@ peekType(const msgpack::object& obj)
         const auto& kv = obj.via.map.ptr[i];
         if (kv.key.type == msgpack::type::STR) {
             std::string_view k(kv.key.via.str.ptr, kv.key.via.str.size);
-            if (k == "type" && kv.val.type == msgpack::type::STR)
+            if (k == "type"sv && kv.val.type == msgpack::type::STR)
                 return std::string_view(kv.val.via.str.ptr, kv.val.via.str.size);
         }
     }
@@ -125,7 +136,7 @@ peekVersion(const msgpack::object& obj)
         const auto& kv = obj.via.map.ptr[i];
         if (kv.key.type == msgpack::type::STR) {
             std::string_view k(kv.key.via.str.ptr, kv.key.via.str.size);
-            if (k == "v" && kv.val.type == msgpack::type::POSITIVE_INTEGER) {
+            if (k == "v"sv && kv.val.type == msgpack::type::POSITIVE_INTEGER) {
                 auto n = kv.val.via.u64;
                 return n > 255 ? 255 : static_cast<uint8_t>(n);
             }

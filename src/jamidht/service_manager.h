@@ -126,9 +126,16 @@ public:
     /// Path of the JSON file used for persistence.
     std::filesystem::path filePath() const;
 
+    /// Callback type invoked when the service list is mutated.
+    using OnChangeCb = std::function<void()>;
+
+    /// Register a callback invoked after any service add/update/remove.
+    void setOnChanged(OnChangeCb cb);
+
 private:
     void loadLocked();
     void saveLocked() const;
+    void notifyChanged();
 
     static bool isAuthorizedNoLock(const ServiceRecord& rec,
                                    const std::string& peerAccountUri,
@@ -137,6 +144,7 @@ private:
     std::filesystem::path storagePath_;
     mutable std::shared_mutex mutex_;
     std::map<std::string, ServiceRecord> services_;
+    OnChangeCb onChangeCb_;
 };
 
 /// Generate an RFC 4122 v4 UUID using the supplied random engine.

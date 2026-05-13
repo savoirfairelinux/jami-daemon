@@ -566,9 +566,9 @@ public:
 
     dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
 
-    /// Returns true if `peerAccountUri` is a confirmed (active, non-banned)
+    /// Returns true if `peerAccountUri` is an active
     /// contact of this account.
-    bool isConfirmedContact(const std::string& peerAccountUri) const;
+    bool isContact(const std::string& peerAccountUri) const;
 
     class ServiceManager& serviceManager() { return *serviceManager_; }
     const class ServiceManager& serviceManager() const { return *serviceManager_; }
