@@ -3032,10 +3032,10 @@ JamiAccount::getContactInfo(const std::string& uri) const
 }
 
 bool
-JamiAccount::isConfirmedContact(const std::string& peerAccountUri) const
+JamiAccount::isContact(const std::string& peerAccountUri) const
 {
     auto info = getContactInfo(peerAccountUri);
-    return info && info->isActive() && info->confirmed;
+    return info && info->isActive();
 }
 
 // ----------------------------------------------------------------------------
@@ -4634,6 +4634,20 @@ JamiAccount::initConnectionManager()
                     static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK),
                     json::toString(arr));
             });
+        serviceManager_->setOnChanged([w = weak()]() {
+            auto self = w.lock();
+            if (!self)
+                return;
+            runOnMainThread([w]() {
+                auto self = w.lock();
+                if (!self)
+                    return;
+                std::shared_lock lk(self->connManagerMtx_);
+                auto it = self->channelHandlers_.find(Uri::Scheme::SVC_DISCOVERY);
+                if (it != self->channelHandlers_.end() && it->second)
+                    static_cast<SvcDiscoveryChannelHandler*>(it->second.get())->broadcastServiceUpdate();
+            });
+        });
         channelHandlers_[Uri::Scheme::SVC_TUNNEL]
             = std::make_unique<SvcTunnelChannelHandler>(shared(),
                                                         *connectionManager_.get(),

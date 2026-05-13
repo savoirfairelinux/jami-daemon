@@ -607,4 +607,49 @@ if conf.get('ENABLE_VIDEO')
         is_parallel: false,
         timeout: 1800,
     )
+
+    ut_service_manager = executable(
+        'ut_service_manager',
+        sources: files('unitTest/service/test_service_manager.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'service_manager',
+        ut_service_manager,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_service_update = executable(
+        'ut_service_update',
+        sources: files('unitTest/service/test_service_update.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'service_update',
+        ut_service_update,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
+    ut_service_update_integration = executable(
+        'ut_service_update_integration',
+        sources: files('unitTest/service/test_service_update_integration.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'service_update_integration',
+        ut_service_update_integration,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
 endif

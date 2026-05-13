@@ -113,16 +113,12 @@ generateServiceUuid(std::mt19937_64& rng)
     // Set version (0100) and variant (10).
     a = (a & 0xffffffffffff0fffULL) | 0x0000000000004000ULL;
     b = (b & 0x3fffffffffffffffULL) | 0x8000000000000000ULL;
-    char buf[37];
-    std::snprintf(buf,
-                  sizeof(buf),
-                  "%08x-%04x-%04x-%04x-%012llx",
-                  static_cast<unsigned>((a >> 32) & 0xffffffffULL),
-                  static_cast<unsigned>((a >> 16) & 0xffffULL),
-                  static_cast<unsigned>(a & 0xffffULL),
-                  static_cast<unsigned>((b >> 48) & 0xffffULL),
-                  static_cast<unsigned long long>(b & 0xffffffffffffULL));
-    return std::string(buf, 36);
+    return fmt::format("{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+                       static_cast<uint32_t>((a >> 32) & 0xffffffffULL),
+                       static_cast<uint32_t>((a >> 16) & 0xffffULL),
+                       static_cast<uint32_t>(a & 0xffffULL),
+                       static_cast<uint32_t>((b >> 48) & 0xffffULL),
+                       static_cast<uint64_t>(b & 0xffffffffffffULL));
 }
 
 ServiceManager::ServiceManager(std::filesystem::path storagePath)
@@ -195,6 +191,8 @@ ServiceManager::addService(ServiceRecord rec, std::mt19937_64& rng)
              stored.localHost,
              stored.localPort,
              stored.enabled);
+    lk.unlock();
+    notifyChanged();
     return id;
 }
 
@@ -221,6 +219,8 @@ ServiceManager::updateService(const ServiceRecord& rec)
                  rec.name,
                  rec.localHost,
                  rec.localPort);
+    lk.unlock();
+    notifyChanged();
     return true;
 }
 
@@ -232,6 +232,8 @@ ServiceManager::removeService(const std::string& id)
     if (erased) {
         saveLocked();
         JAMI_LOG("[ServiceManager] removed service id={}", id);
+        lk.unlock();
+        notifyChanged();
     }
     return erased;
 }
@@ -301,4 +303,24 @@ ServiceManager::getVisibleServices(const std::string& peerAccountUri, const Cont
     return out;
 }
 
+void
+ServiceManager::setOnChanged(OnChangeCb cb)
+{
+    std::unique_lock lk(mutex_);
+    onChangeCb_ = std::move(cb);
+}
+
+void
+ServiceManager::notifyChanged()
+{
+    OnChangeCb cb;
+    {
+        std::shared_lock lk(mutex_);
+        cb = onChangeCb_;
+    }
+    if (cb)
+        cb();
+}
+
 } // namespace jami
+

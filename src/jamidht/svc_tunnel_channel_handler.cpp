@@ -121,7 +121,7 @@ SvcTunnelChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificat
         return false;
     const auto peerUri = peer->issuer->getId().toString();
     auto checker = [&acc](const std::string& uri) {
-        return acc->isConfirmedContact(uri);
+        return acc->isContact(uri);
     };
     return acc->serviceManager().isAuthorized(serviceId, peerUri, checker);
 }
@@ -185,10 +185,16 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
         std::lock_guard lk(pre->m);
         if (pre->tcpReady) {
             auto buf = std::make_shared<std::vector<uint8_t>>(data, data + size);
-            asio::async_write(*pre->tcp, asio::buffer(*buf), [buf](const std::error_code& ec, std::size_t) {
-                if (ec)
-                    JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
-            });
+            asio::async_write(*pre->tcp,
+                              asio::buffer(*buf),
+                              [buf, pre, channelKeep](const std::error_code& ec, std::size_t) {
+                                  if (ec) {
+                                      JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
+                                      channelKeep->shutdown();
+                                      std::error_code ig;
+                                      pre->tcp->close(ig);
+                                  }
+                              });
         } else {
             pre->bytes.insert(pre->bytes.end(), data, data + size);
         }
@@ -215,9 +221,13 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
                                 auto buf = std::make_shared<std::vector<uint8_t>>(std::move(drained));
                                 asio::async_write(*tcp,
                                                   asio::buffer(*buf),
-                                                  [buf](const std::error_code& ec, std::size_t) {
-                                                      if (ec)
+                                                  [buf, channel, tcp](const std::error_code& ec, std::size_t) {
+                                                      if (ec) {
                                                           JAMI_DEBUG("[SvcTunnel] flush failed: {}", ec.message());
+                                                          channel->shutdown();
+                                                          std::error_code ig;
+                                                          tcp->close(ig);
+                                                      }
                                                   });
                             }
                             // Switch to a hot-path setOnRecv now that tcp is up.
@@ -225,10 +235,14 @@ SvcTunnelChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>
                                 auto buf = std::make_shared<std::vector<uint8_t>>(data, data + n);
                                 asio::async_write(*tcp,
                                                   asio::buffer(*buf),
-                                                  [buf](const std::error_code& ec, std::size_t) {
-                                                      if (ec)
+                                                  [buf, channel, tcp](const std::error_code& ec, std::size_t) {
+                                                      if (ec) {
                                                           JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}",
                                                                      ec.message());
+                                                          channel->shutdown();
+                                                          std::error_code ig;
+                                                          tcp->close(ig);
+                                                      }
                                                   });
                                 return static_cast<ssize_t>(n);
                             });
@@ -244,10 +258,16 @@ SvcTunnelChannelHandler::relay(std::shared_ptr<dhtnet::ChannelSocket> channel,
     auto channelHold = channel;
     channel->setOnRecv([tcp, channelHold](const uint8_t* data, size_t size) -> ssize_t {
         auto buf = std::make_shared<std::vector<uint8_t>>(data, data + size);
-        asio::async_write(*tcp, asio::buffer(*buf), [buf](const std::error_code& ec, std::size_t /*n*/) {
-            if (ec)
-                JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
-        });
+        asio::async_write(*tcp,
+                          asio::buffer(*buf),
+                          [buf, channelHold, tcp](const std::error_code& ec, std::size_t /*n*/) {
+                              if (ec) {
+                                  JAMI_DEBUG("[SvcTunnel] write to TCP failed: {}", ec.message());
+                                  channelHold->shutdown();
+                                  std::error_code ig;
+                                  tcp->close(ig);
+                              }
+                          });
         return static_cast<ssize_t>(size);
     });
 
@@ -270,6 +290,7 @@ SvcTunnelChannelHandler::relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket
                                          channelKeep->shutdown();
                                          std::error_code ig;
                                          tcpKeep->close(ig);
+                                         *reader = nullptr; // break the cycle
                                          return;
                                      }
                                      std::error_code wec;
@@ -278,6 +299,7 @@ SvcTunnelChannelHandler::relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket
                                          channelKeep->shutdown();
                                          std::error_code ig;
                                          tcpKeep->close(ig);
+                                         *reader = nullptr; // break the cycle
                                          return;
                                      }
                                      (*reader)();

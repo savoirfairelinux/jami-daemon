@@ -96,6 +96,11 @@ public:
     /// the result. Called from onNewDeviceConnection.
     void refreshDevice(const std::string& peerUri, const DeviceId& deviceId);
 
+    /// Push the current service list to all connected peers over existing
+    /// svcdisc channels. Each peer receives only the services they are
+    /// authorized to see.
+    void broadcastServiceUpdate();
+
     /// A service entry annotated with the device that offers it.
     struct CachedSvcInfo
     {
@@ -120,10 +125,9 @@ private:
         std::mutex mtx;
         ResponseCb responseCb;
         CacheUpdateCb cacheUpdateCb;
-        /// Strong references to channels we have onReady'd, so they remain
-        /// alive long enough to send/receive their messages even if the
-        /// caller of `connect()` did not retain the socket.
-        std::vector<std::shared_ptr<dhtnet::ChannelSocket>> channels;
+        /// Strong references to channels we have onReady'd, indexed by peer
+        /// account URI so we can push updates to specific peers.
+        std::map<std::string, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> channels;
 
         // ---- Cache state ----
         struct CachedDeviceServices

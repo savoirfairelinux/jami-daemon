@@ -263,7 +263,7 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
     rec.localHost = "127.0.0.1";
     rec.localPort = echo.port();
     rec.policy = AccessPolicy::PUBLIC;
-    auto serviceId = alice->serviceManager().addService(rec);
+    auto serviceId = alice->serviceManager().addService(rec, alice->rand);
     CPPUNIT_ASSERT(!serviceId.empty());
 
     alice->addContact(bobUri);
