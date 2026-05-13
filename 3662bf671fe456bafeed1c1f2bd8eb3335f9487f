@@ -1,0 +1,225 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f614888_e894ec09",
+        "filename": "src/jamidht/service_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "[critical] Line 78: 🟡 `fromJson` does not validate `localHost`. A malicious or corrupted JSON file could set `localHost` to an arbitrary hostname/IP (e.g. `0.0.0.0` or a remote address), causing the tunnel handler to connect to unintended hosts. Consider validating that `localHost` is a loopback address (`127.0.0.1` or `::1`) to prevent SSRF-like issues when the tunnel connects outbound.\n\n```suggestion\n    r.localHost \u003d v.get(\"localHost\", \"127.0.0.1\").asString();\n    if (r.localHost !\u003d \"127.0.0.1\" \u0026\u0026 r.localHost !\u003d \"::1\" \u0026\u0026 r.localHost !\u003d \"localhost\") {\n        JAMI_WARNING(\"[ServiceManager] rejecting non-loopback localHost: {}\", r.localHost);\n        return false;\n    }\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb4d4194_bff0aca8",
+        "filename": "src/jamidht/service_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 100: 🔴 The `snprintf` format specifier `%012llx` expects `unsigned long long`, but the mask `0xffffffffffffULL` produces a 48-bit value which is fine in practice. However, the fields extracted from `a` and `b` don\u0027t correctly produce a valid RFC 4122 v4 UUID. The version nibble (bits 12–15 of `time_hi_and_version`) should appear in the third group, and the variant bits (bits 6–7 of `clock_seq_hi`) in the fourth group. Currently:\n- The version bits are set on `a` at bits 12–15 (`a \u0026 0xffffffffffff0fff | 0x4000`), which is correct for the third group only if the third group is `a \u0026 0xffff`. That checks out.\n- The variant is set on `b` bits 62–63 (`b \u0026 0x3fff... | 0x8000...`), and the fourth group extracts `(b \u003e\u003e 48) \u0026 0xffff` — that\u0027s bits 48–63 of `b`, so bits 62–63 carry the variant. This is correct.\n\nHowever, the format string uses `%012llx` for the last 48 bits which is correct. The real issue: the cast `static_cast\u003cunsigned\u003e` for 32-bit and 16-bit fields is fine on all platforms, but `static_cast\u003cunsigned long long\u003e` for the last field is only needed because of `%llx`. Consider using `PRIx64`/`PRIx32` from `\u003ccinttypes\u003e` for portability, or simply use `fmt::format` / `std::format` consistent with the rest of the codebase.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "812b69e9_20058239",
+        "filename": "src/jamidht/service_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 113: 🟡 The constructor acquires `mutex_` via `unique_lock` but this is the constructor — no other thread can have a reference yet. The lock is unnecessary and adds misleading overhead. Remove it or add a comment explaining why it\u0027s there (e.g., future-proofing).\n\n```suggestion\n    loadLocked();\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3835bfa4_ac0948bc",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 50: 🟢 Good use of `std::shared_mutex` for read-heavy workloads, clear separation between `shared_lock` for reads and `unique_lock` for writes. The `ContactChecker` predicate pattern is a clean way to decouple from `ContactList`.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5745e004_e29d1caf",
+        "filename": "src/jamidht/svc_discovery_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "[critical] Line 108: 🟡 The `connect()` lambda captures `this` by pointer but `SvcDiscoveryChannelHandler` could be destroyed before the async callback fires. While `state_` is shared and safe, the `this` capture is used only implicitly (for `installReader`). Consider making `installReader` a free function or static method, or capture only what\u0027s needed.\n\nActually, `installReader` is a member function called via `this` — if the handler is destroyed mid-flight, this is undefined behavior.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b2b60c5d_66c22a2f",
+        "filename": "src/jamidht/svc_discovery_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 157: 🟡 The `msgpack::unpacker` `reader` has a fixed initial `reserve_buffer(4096)`, and while capacity is checked before each `memcpy`, there\u0027s no upper bound on buffer growth. A malicious peer could send an enormous single msgpack object to exhaust memory. Consider capping the unpacker buffer size (e.g., 1 MB) and disconnecting if exceeded.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bae0ee76_46aac94b",
+        "filename": "src/jamidht/svc_protocol.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 33: 🟡 `MsgType` constants are `const char*` pointers, which means every comparison requires `strcmp`-style matching. Since `peekType` already returns `std::string`, consider making these `constexpr std::string_view` for type safety and to enable `\u003d\u003d` comparisons without implicit conversion.\n\n```suggestion\nconstexpr std::string_view kQuery            \u003d \"query\";\nconstexpr std::string_view kServiceList      \u003d \"service_list\";\nconstexpr std::string_view kError            \u003d \"error\";\nconstexpr std::string_view kVersionMismatch  \u003d \"version_mismatch\";\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "49c621d4_097c8972",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 120: 🔴 `onRequest` captures `acc` (a `shared_ptr\u003cJamiAccount\u003e`) by reference in the lambda passed to `isAuthorized`. This is safe here because the lambda doesn\u0027t outlive the scope, but the pattern is fragile — if `isAuthorized` ever stores the checker, it would dangle. Use a value capture for safety:\n\n```suggestion\n    auto checker \u003d [acc](const std::string\u0026 uri) { return acc-\u003eisConfirmedContact(uri); };\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "544acaf2_44b674cc",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 157: 🔴 The `pre-\u003etcpReady` flag is checked under `pre-\u003em` in `setOnRecv`, but `async_write` is called while still holding the lock. `async_write` may complete synchronously (or inline on some ASIO implementations), which could re-enter the callback and attempt to lock `pre-\u003em` again (though unlikely with current flow). More importantly, holding a mutex while calling into ASIO\u0027s write path can cause priority inversion and latency spikes. Move the `async_write` call outside the lock:\n\n```suggestion\n    channel-\u003esetOnRecv([pre, channelKeep](const uint8_t* data, size_t size) -\u003e ssize_t {\n        bool ready;\n        {\n            std::lock_guard lk(pre-\u003em);\n            ready \u003d pre-\u003etcpReady;\n            if (!ready) {\n                pre-\u003ebytes.insert(pre-\u003ebytes.end(), data, data + size);\n                return static_cast\u003cssize_t\u003e(size);\n            }\n        }\n        auto buf \u003d std::make_shared\u003cstd::vector\u003cuint8_t\u003e\u003e(data, data + size);\n        asio::async_write(*pre-\u003etcp,\n                          asio::buffer(*buf),\n                          [buf](const std::error_code\u0026 ec, std::size_t) {\n                              if (ec)\n                                  JAMI_DEBUG(\"[SvcTunnel] write to TCP failed: {}\",\n                                             ec.message());\n                          });\n        return static_cast\u003cssize_t\u003e(size);\n    });\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f65ebb99_62e9423f",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 176: 🟡 `async_write` to the TCP socket is fire-and-forget — errors in the completion handler are only logged, not propagated back. If the TCP write fails, the channel continues forwarding data into a broken socket. The error handler should shut down the channel socket to stop the flow:\n\n```suggestion\n                              [buf, channelKeep](const std::error_code\u0026 ec, std::size_t) {\n                                  if (ec) {\n                                      JAMI_DEBUG(\"[SvcTunnel] write to TCP failed: {}\", ec.message());\n                                      channelKeep-\u003eshutdown();\n                                  }\n                              });\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "600be663_ebf1038c",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "[critical] Line 233: 🔴 `relayTcpToChannel` captures `reader` (a `shared_ptr\u003cfunction\u003e`) inside the lambda stored in `*reader`, creating a strong reference cycle: `reader -\u003e lambda -\u003e reader`. This cycle is never broken because the only cleanup path (`channelKeep-\u003eshutdown()` / `tcpKeep-\u003eclose()`) does not reset `*reader`. The `std::function` and its captures (including `channelKeep`, `tcpKeep`, `buf`) will leak.\n\nBreak the cycle by using a `weak_ptr` or by explicitly clearing `*reader` on shutdown:\n\n```suggestion\n    *reader \u003d [channelKeep, tcpKeep, buf, reader]() {\n        tcpKeep-\u003easync_read_some(asio::buffer(*buf),\n                                 [channelKeep, tcpKeep, buf, reader](const std::error_code\u0026 ec,\n                                                                     std::size_t n) {\n            if (ec || n \u003d\u003d 0) {\n                channelKeep-\u003eshutdown();\n                std::error_code ig;\n                tcpKeep-\u003eclose(ig);\n                *reader \u003d nullptr;  // break the cycle\n                return;\n            }\n            std::error_code wec;\n            channelKeep-\u003ewrite(buf-\u003edata(), n, wec);\n            if (wec) {\n                channelKeep-\u003eshutdown();\n                std::error_code ig;\n                tcpKeep-\u003eclose(ig);\n                *reader \u003d nullptr;  // break the cycle\n                return;\n            }\n            (*reader)();\n        });\n    };\n```",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab98e7e7_0340b7a7",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "Line 289: 🟡 `openTunnel` calls `onOpened` synchronously before `acceptLoop` has started. If `onOpened` triggers immediate connections to the bound port, there\u0027s a race where the acceptor isn\u0027t yet listening. Consider calling `onOpened` after `acceptLoop` is initiated, or document that the port is bound but not yet accepting when `onOpened` fires. Actually, `listen()` is called before `onOpened` so the OS will queue connections — this is fine but worth a brief comment.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5d6423c_c12821e1",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T19:05:48Z",
+      "side": 1,
+      "message": "[critical] Line 300: 🟡 `acceptLoop` also captures `this` in the lambda. If `SvcTunnelChannelHandler` is destroyed while an async accept is pending, the callback will access a dangling `this` (to call `acceptLoop` and `connectionManager_`). The destructor closes the acceptor, which cancels the accept, but there\u0027s a race: the callback might already be queued in the io_context. Consider using `weak_from_this` or `shared_from_this` pattern.",
+      "revId": "3662bf671fe456bafeed1c1f2bd8eb3335f9487f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
