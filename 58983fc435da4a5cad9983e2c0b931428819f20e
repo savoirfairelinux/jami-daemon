@@ -54,6 +54,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "4de250ce_f6c5ab40",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-13T17:22:11Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "55334b11_47f71525",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "5829128c_5cf13d59",
         "filename": "src/jamidht/svc_discovery_channel_handler.cpp",
         "patchSetId": 9
@@ -82,6 +100,24 @@
       "writtenOn": "2026-05-13T17:07:23Z",
       "side": 1,
       "message": "[warning] Line 52: Adding `scheme` to the MSGPACK_DEFINE_MAP is a wire-protocol breaking change for older peers. A v1 peer that deserializes a v2 message with the extra field may reject or misparse it (depending on msgpack configuration). Consider: (1) bumping the protocol version constant so peers can negotiate, or (2) using MSGPACK_DEFINE_MAP with optional/defaulted handling so that the field is silently ignored by older decoders. At minimum, document the backward-compatibility story.",
+      "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f163ec14_22f85065",
+        "filename": "src/jamidht/svc_protocol.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-13T17:22:11Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2aefcbbf_b183965b",
       "revId": "58983fc435da4a5cad9983e2c0b931428819f20e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
