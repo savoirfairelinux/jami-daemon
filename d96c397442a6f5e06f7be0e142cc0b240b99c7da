@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4afa9cf_d2bfb41b",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T21:28:23Z",
+      "side": 1,
+      "message": "[minor] Line 23: 🟡 Suggestion: Consider grouping both Windows-specific `#undef` blocks under a single `#ifdef _WIN32` / `#endif` guard. This makes it explicit that these workarounds are Windows-only and avoids unnecessary preprocessor checks on other platforms. However, the current approach (guarded `#ifdef MACRO` / `#undef`) is safe and already idiomatic in this file, so this is a minor style suggestion.\n\n```suggestion\n#ifdef _WIN32\n// Defined in windows.h\n#ifdef ERROR\n#undef ERROR\n#endif\n// Defined in nb30.h (Windows NetBIOS header)\n#ifdef REGISTERED\n#undef REGISTERED\n#endif\n#endif // _WIN32\n```",
+      "revId": "d96c397442a6f5e06f7be0e142cc0b240b99c7da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b1acf62_32fe0c4e",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T21:28:23Z",
+      "side": 1,
+      "message": "[info] Line 25: 🟢 Good Practice: The comment clearly documents the origin of the macro (`nb30.h`, Windows NetBIOS header), consistent with the existing pattern for the `ERROR` macro from `windows.h` above. This helps future maintainers understand why the `#undef` is needed.",
+      "revId": "d96c397442a6f5e06f7be0e142cc0b240b99c7da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
