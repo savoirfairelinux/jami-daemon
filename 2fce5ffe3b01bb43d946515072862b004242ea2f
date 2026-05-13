@@ -1,6 +1,159 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "adb7dd9c_809b0dd3",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 448,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "Line 448: Good: the fallback `r.type \u003d \"custom\"` when the map value is empty is a sensible defensive default, preventing empty strings from propagating.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb7914cb_9e4b98b2",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 495,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "[warning] Line 495: The `addService` call now passes `acc-\u003erand` directly: `acc-\u003eserviceManager().addService(mapToServiceRecord(details), acc-\u003erand)`. Since `acc-\u003erand` is a mutable member shared across the account, this could race with other concurrent users of the same RNG on the account. The previous `thread_local` approach in `generateServiceUuid` avoided this. Consider either holding the account\u0027s mutex around this call or using a dedicated RNG per ServiceManager.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aae305ac_41feb7f0",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "Line 574: Good addition: `hasServiceManager()` null-check before dereferencing `serviceManager_` eliminates potential null-pointer dereferences in the configuration manager API layer.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cd46e34_f106cedf",
+        "filename": "src/jamidht/service_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "[warning] Line 105: The `generateServiceUuid` function now takes `std::mt19937_64\u0026` by non-const reference. This function is called from `SvcTunnelChannelHandler` which stores its own `rng_` member without any mutex protection (see svc_tunnel_channel_handler.h line 153). If `openTunnel` or `addService` can ever be called concurrently on the same object, the RNG state will be corrupted (data race / UB). The previous `thread_local` approach was inherently thread-safe. Verify that all call sites are single-threaded or add synchronization around RNG access.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2727ff55_6c978569",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "Line 55: The `type` field accepts any string but the code only ever defaults to \"custom\". There is no validation that `type` is one of the documented values (\"custom\" or \"embedded\"). If an unknown type string is supplied (e.g. typo like \"embeded\"), it will be silently stored and persisted. Consider validating the value in `addService`/`updateService` or using an enum instead of a free-form string.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f02d94e9_26d151d6",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "[warning] Line 60: The default for `localHost` changed from `\"127.0.0.1\"` to `\"localhost\"`. While functionally similar in most cases, `localhost` involves a DNS/hosts-file lookup and may resolve to `::1` (IPv6) on dual-stack systems, which could break services that only listen on IPv4 `127.0.0.1`. This is a behavioural change for existing deployments whose persisted JSON has no `localHost` key — `fromJson` will now default to `\"localhost\"` instead of `\"127.0.0.1\"`. Ensure this is intentional and that the TCP connect path handles both IPv4 and IPv6 resolution of `localhost`.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3510c375_e190d1f0",
+        "filename": "src/jamidht/service_manager.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "[warning] Line 62: The `directory` field is stored and persisted as-is with no sanitization. If this is used to serve files via an embedded HTTP server, a path like `/../../../etc/passwd` could be a directory-traversal risk. Even if validation happens elsewhere, a brief doc comment noting expectations (e.g. \"must be an absolute path within the account data directory\") would help prevent misuse.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9364bcd2_b3b7a3d4",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "[warning] Line 66: The `rng_` member is derived from `acc-\u003erand` during construction. `acc-\u003erand` is declared `mutable` in `Account` and used from many places (conversation module, proxy selection, etc.) without obvious synchronization. Calling `getDerivedRandomEngine(acc-\u003erand)` reads and advances the shared RNG state. If the `SvcTunnelChannelHandler` constructor runs concurrently with other code using `acc-\u003erand`, this is a data race. Consider guarding the derivation or seeding from `std::random_device` directly.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4bc53ec_d24139de",
+        "filename": "test/unitTest/service/test_service_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-13T17:03:18Z",
+      "side": 1,
+      "message": "Line 192: Good: the new `default_host_test` explicitly verifies that the default localHost is now `\"localhost\"`, which documents and locks in the behavioural change.",
+      "revId": "2fce5ffe3b01bb43d946515072862b004242ea2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ae5437fb_e8900673",
