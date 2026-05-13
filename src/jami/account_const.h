@@ -22,6 +22,10 @@
 #ifdef ERROR
 #undef ERROR
 #endif
+// Defined in nb30.h (Windows NetBIOS header)
+#ifdef REGISTERED
+#undef REGISTERED
+#endif
 
 namespace libjami {
 
