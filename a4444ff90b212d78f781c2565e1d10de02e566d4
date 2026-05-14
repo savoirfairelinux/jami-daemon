@@ -173,6 +173,42 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "a80be0e5_38df98bc",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T15:13:57Z",
+      "side": 1,
+      "message": "Validation is done in `AccountManager::loadIdentity`.",
+      "parentUuid": "9a1de7db_06e860c1",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0bd2a29_0104abed",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T15:13:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "6bcca786_9eb62c4a",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "37b9062e_405877d5",
         "filename": "src/jamidht/server_account_manager.cpp",
         "patchSetId": 1
@@ -205,6 +241,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "389cdc2a_7aa25a1b",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T15:13:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fc95c087_2b9c6ff2",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "302ea571_cd5a8ec5",
@@ -218,6 +272,24 @@
       "writtenOn": "2026-05-14T14:42:44Z",
       "side": 1,
       "message": "[info] Line 317: 🟢 Good practice: The rename from `onNeedsMigration_` to `onDeviceRevoked_` is accurate — a 401 on device authentication specifically means the device was revoked, not that a generic migration is needed. The callback naming now matches its semantics.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc5410a5_dfcb426f",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T15:13:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "302ea571_cd5a8ec5",
       "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -269,6 +341,24 @@
       "writtenOn": "2026-05-14T14:42:52Z",
       "side": 1,
       "message": "[info] Line 70: 🟢 Good practice: Renaming `onNeedsMigration` to `onDeviceRevoked` is a clarity improvement — it accurately describes the semantic trigger (a 401 from the server indicating device revocation) rather than an ambiguous side effect.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b98a8beb_5b89289a",
+        "filename": "src/jamidht/server_account_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T15:13:57Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "1c7861e6_334acf35",
       "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
