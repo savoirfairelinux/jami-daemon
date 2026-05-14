@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dea1370a_1222faca",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-14T15:43:12Z",
+      "side": 1,
+      "message": "agreeing with @virtual-engineer@jami.net - Maybe id_ should not be modified at that point.",
+      "revId": "59cec209ad12a5185f47d482b8127ed36d80bce1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
