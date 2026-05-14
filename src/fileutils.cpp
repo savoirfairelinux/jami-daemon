@@ -68,6 +68,7 @@
 #endif
 
 #include <nettle/sha3.h>
+#include <nettle/version.h>
 
 #include <sstream>
 #include <fstream>
@@ -785,7 +786,11 @@ sha3File(const std::filesystem::path& path)
     }
 
     unsigned char digest[SHA3_512_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+    sha3_512_digest(&ctx, digest);
+#else
     sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
+#endif
     return dht::toHex(digest, SHA3_512_DIGEST_SIZE);
 }
 
@@ -796,7 +801,11 @@ sha3sum(const std::vector<uint8_t>& buffer)
     sha3_512_init(&ctx);
     sha3_512_update(&ctx, buffer.size(), buffer.data());
     unsigned char digest[SHA3_512_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+    sha3_512_digest(&ctx, digest);
+#else
     sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
+#endif
     return dht::toHex(digest, SHA3_512_DIGEST_SIZE);
 }
 
