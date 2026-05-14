@@ -22,6 +22,30 @@
       },
       "revId": "756117d51a1bbd89c98fbefee89f45a9eb1eabc4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d424a7c_1771cdfe",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2415,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T21:04:24Z",
+      "side": 1,
+      "message": "It looks like this would indeed result in more daemon wakeups on iOS.\n\nAs far as I can tell, the connection type set in `Conversation::onNeedSocket` has been ignored since the very beginning (https://review.jami.net/c/jami-daemon/+/22861), so we could probably just stop setting it (or maybe use a different value specific to swarm connections if we think it might be useful in the future?)",
+      "parentUuid": "538b7711_5b19a9e2",
+      "range": {
+        "startLine": 2415,
+        "startChar": 8,
+        "endLine": 2415,
+        "endChar": 29
+      },
+      "revId": "756117d51a1bbd89c98fbefee89f45a9eb1eabc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
