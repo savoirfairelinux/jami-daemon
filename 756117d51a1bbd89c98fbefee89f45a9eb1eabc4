@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "538b7711_5b19a9e2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2415,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T20:19:14Z",
+      "side": 1,
+      "message": "`JamiAccount::onConversationNeedSwarmSocket` used to call `connectDevice` with an empty `connType` since it ignored its `type` argument. With this change, `connType` would become equal to `\"application/im-gitmessage-id\"`, potentially causing issues with push notifications on iOS. I\u0027ve already talked about this with @kateryna.kostiuk@savoirfairelinux.com; she will look into it.",
+      "range": {
+        "startLine": 2415,
+        "startChar": 8,
+        "endLine": 2415,
+        "endChar": 29
+      },
+      "revId": "756117d51a1bbd89c98fbefee89f45a9eb1eabc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
