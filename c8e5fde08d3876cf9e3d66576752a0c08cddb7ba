@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "43b5fa68_94b03455",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2111,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T17:55:22Z",
+      "side": 1,
+      "message": "I agree with this, otherwise the patch LGTM.",
+      "parentUuid": "724761e6_cb36a7e3",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "71b7b923_7fcddce4",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 2
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-14T17:19:59Z",
       "side": 1,
       "message": "[info] Line 2114: 🟢 Good practice: `requestMessageConnection` (line 3728) acquires its own `shared_lock(connManagerMtx_)`. The old code held a `shared_lock` on the same mutex and then called this function, which attempted to take a second `shared_lock` on the same thread — undefined behavior for `std::shared_mutex` (it is not recursive). Moving the call outside the caller-held lock correctly eliminates the potential deadlock / UB.",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ac8e68f_7b57ca5e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T17:55:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "71b7b923_7fcddce4",
       "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -48,6 +84,24 @@
       "writtenOn": "2026-05-14T17:19:59Z",
       "side": 1,
       "message": "[low] Line 2115: 🟡 Suggestion: `syncModule()-\u003eisConnected(...)` is now called without holding `connManagerMtx_`. This is fine only if `syncModule()` does not depend on state protected by that mutex. From inspection it appears independent, but please confirm that `syncModule()` and its `isConnected()` method are safe to call without the connection-manager lock — otherwise this introduces a new race.",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6c89da5_04ea41f6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2115,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T17:55:22Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d3e64d63_3de821ec",
       "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
