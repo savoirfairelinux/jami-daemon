@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "19dbd4e1_47bbc9dd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:59:52Z",
+      "side": 1,
+      "message": "Looks like the same issue was encountered over 10 years ago in another context :) \nhttps://review.jami.net/c/jami-daemon/+/1378/33/src/registration_states.h",
+      "revId": "c2fbea91f29f361e8ebda41907523b2ee420f2cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
