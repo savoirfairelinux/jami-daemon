@@ -2120,19 +2120,16 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
             lk.unlock();
             shared->requestMessageConnection(shared->getUsername(), crt->getLongId(), "sync");
 
+            std::shared_lock slk(shared->connManagerMtx_);
             // NOTE: connectionManager_ and channelHandlers_ get initialized at the
             // same time and are both protected by connManagerMtx_, so this check
             // ensures that the access to channelHandlers_ below is valid.
-            if (!shared->syncModule()->isConnected(crt->getLongId())) {
-                std::shared_lock slk(shared->connManagerMtx_);
-                if (!shared->connectionManager_)
-                    return;
-                shared->channelHandlers_[Uri::Scheme::SYNC]
-                    ->connect(crt->getLongId(),
-                              "",
-                              [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
-                                 const DeviceId& /*deviceId*/) {});
-            }
+            if (!shared->connectionManager_)
+                return;
+            shared->channelHandlers_[Uri::Scheme::SYNC]
+                ->connect(crt->getLongId(),
+                          "",
+                          [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/, const DeviceId& /*deviceId*/) {});
         });
     }
 }
