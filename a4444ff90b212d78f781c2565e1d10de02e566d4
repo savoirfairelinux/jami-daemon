@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fa242c4_052329e6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "Line 1967: 🟡 Suggestion: `dynamic_cast\u003cServerAccountManager*\u003e(accountManager_.get())` is used twice in sequence (lines 1967 and 1985) without a null check. If `accountManager_` is not a `ServerAccountManager`, this is undefined behavior. Consider storing the cast result once and guarding it:\n```suggestion\n            if (auto* sam \u003d dynamic_cast\u003cServerAccountManager*\u003e(accountManager_.get())) {\n                sam-\u003eonDeviceRevoked([this]() {\n                    // ... revocation handling ...\n                });\n                sam-\u003esyncBlueprintConfig([this](const std::map\u003cstd::string, std::string\u003e\u0026 config) {\n                    // ... sync handling ...\n                });\n            }\n```",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d63fa667_195b6ce8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1969,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "Line 1969: 🟡 Suggestion: Filesystem operations (`std::filesystem::remove`) are performed inside the `editConfig` callback, which likely holds a lock on the account configuration. Disk I/O under a lock can cause latency spikes. Consider moving the file deletion outside of the `editConfig` lambda — capture the paths first, clear the config, then delete the files afterward.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec954eae_7ff4104c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1971,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "Line 1971: 🟡 Suggestion: The `std::error_code ec` is captured but never inspected after each `std::filesystem::remove` call. If the deletion fails (e.g., permission denied), the code silently proceeds, clears the config fields, and resets the identity — leaving orphan files on disk with no indication of failure. Consider at least logging the error.\n```suggestion\n                    std::error_code ec;\n                    if (!conf.tlsPrivateKeyFile.empty()) {\n                        std::filesystem::remove(idPath_ / conf.tlsPrivateKeyFile, ec);\n                        if (ec)\n                            JAMI_WARNING(\"Failed to remove private key file: {}\", ec.message());\n                    }\n                    if (!conf.tlsCertificateFile.empty()) {\n                        std::filesystem::remove(idPath_ / conf.tlsCertificateFile, ec);\n                        if (ec)\n                            JAMI_WARNING(\"Failed to remove certificate file: {}\", ec.message());\n                    }\n```",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a21e2d5_07f5e4e3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1981,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "[critical] Line 1981: 🔴 Critical: `id_ \u003d {};` is set outside of any visible lock. `id_` is the account\u0027s `dht::crypto::Identity`, which may be read concurrently by DHT operations running on other threads. Ensure this assignment is protected by the same mutex guarding `id_` reads, or document why it\u0027s safe here (e.g., if registration state change serializes access). A race on `id_` could lead to use-after-free of the private key or certificate.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bcca786_9eb62c4a",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "[info] Line 84: 🟢 Good practice: Checking for an existing private key and reusing it avoids unnecessary key generation — this is the core improvement of the change and it\u0027s cleanly implemented. The `std::promise`/`future` approach correctly matches the expected `SharedFuture` type of `ctx-\u003ekey`.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37b9062e_405877d5",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "Line 86: 🟡 Suggestion: The `std::promise` is created on the stack, `set_value` is called, then `get_future()` is obtained — all synchronously. This works but `std::make_ready_future` (C++20 proposal, or a helper) would be more idiomatic. If OpenDHT\u0027s `getShared` returns a `dht::SharedFuture`, verify that `std::promise::get_future()` produces a compatible type. If `SharedFuture` is `std::shared_future`, this code silently converts via `std::future` → `std::shared_future`, which is fine — just worth confirming in testing.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "302ea571_cd5a8ec5",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "[info] Line 317: 🟢 Good practice: The rename from `onNeedsMigration_` to `onDeviceRevoked_` is accurate — a 401 on device authentication specifically means the device was revoked, not that a generic migration is needed. The callback naming now matches its semantics.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a3cb9292_2f963eb4",
+        "filename": "src/jamidht/server_account_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T14:42:44Z",
+      "side": 1,
+      "message": "Line 39: 🟡 Suggestion: `dht::crypto::Identity` contains both a private key and a certificate. In `initAuthentication`, only `identity.first` (the private key) is used. Document or consider whether passing just the private key (as a `std::shared_ptr\u003cdht::crypto::PrivateKey\u003e`) would be a more precise API. Passing the full `Identity` when only the key is needed slightly widens the interface.",
+      "revId": "a4444ff90b212d78f781c2565e1d10de02e566d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
