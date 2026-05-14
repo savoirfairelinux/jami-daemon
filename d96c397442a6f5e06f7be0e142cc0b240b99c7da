@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f83e2d44_b259addc",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-05-14T18:42:33Z",
+      "side": 1,
+      "message": "Fix applied.",
+      "parentUuid": "c4afa9cf_d2bfb41b",
+      "revId": "d96c397442a6f5e06f7be0e142cc0b240b99c7da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9b1acf62_32fe0c4e",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-13T21:28:23Z",
       "side": 1,
       "message": "[info] Line 25: 🟢 Good Practice: The comment clearly documents the origin of the macro (`nb30.h`, Windows NetBIOS header), consistent with the existing pattern for the `ERROR` macro from `windows.h` above. This helps future maintainers understand why the `#undef` is needed.",
+      "revId": "d96c397442a6f5e06f7be0e142cc0b240b99c7da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "56c3dccc_58c1f507",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-05-14T18:42:33Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9b1acf62_32fe0c4e",
       "revId": "d96c397442a6f5e06f7be0e142cc0b240b99c7da",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
