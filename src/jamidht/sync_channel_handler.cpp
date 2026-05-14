@@ -37,11 +37,12 @@ SyncChannelHandler::connect(const DeviceId& deviceId,
                             bool /*forceNewConnection*/)
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
-    if (connectionManager_.isConnecting(deviceId, channelName)) {
-        JAMI_LOG("Already connecting to {}", deviceId);
-        return;
-    }
-    connectionManager_.connectDevice(deviceId, channelName, std::move(cb));
+    connectionManager_.connectDevice(deviceId,
+                                     channelName,
+                                     std::move(cb),
+                                     dhtnet::ConnectDeviceOptions {.forceNewSocket = false,
+                                                                   .uniqueName = true,
+                                                                   .connType = "sync"});
 }
 
 bool
