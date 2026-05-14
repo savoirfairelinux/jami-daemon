@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "724761e6_cb36a7e3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2111,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T17:19:59Z",
+      "side": 1,
+      "message": "[low] Line 2111: 🟡 Suggestion: The NOTE comment is now misplaced. It describes the rationale for the `connectionManager_` null-check guarding `channelHandlers_` access, but it now sits above the unrelated `requestMessageConnection` call rather than next to the guarded block. Move it inside the `if (!shared-\u003esyncModule()-\u003eisConnected(...))` block, just before the `shared_lock` acquisition, where it is actually relevant.\n\n```suggestion\n            shared-\u003erequestMessageConnection(shared-\u003egetUsername(), crt-\u003egetLongId(), \"sync\");\n            if (!shared-\u003esyncModule()-\u003eisConnected(crt-\u003egetLongId())) {\n                // NOTE: connectionManager_ and channelHandlers_ get initialized at the\n                // same time and are both protected by connManagerMtx_, so this check\n                // ensures that the access to channelHandlers_ below is valid.\n                std::shared_lock slk(shared-\u003econnManagerMtx_);\n```",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71b7b923_7fcddce4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2114,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T17:19:59Z",
+      "side": 1,
+      "message": "[info] Line 2114: 🟢 Good practice: `requestMessageConnection` (line 3728) acquires its own `shared_lock(connManagerMtx_)`. The old code held a `shared_lock` on the same mutex and then called this function, which attempted to take a second `shared_lock` on the same thread — undefined behavior for `std::shared_mutex` (it is not recursive). Moving the call outside the caller-held lock correctly eliminates the potential deadlock / UB.",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d3e64d63_3de821ec",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2115,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-14T17:19:59Z",
+      "side": 1,
+      "message": "[low] Line 2115: 🟡 Suggestion: `syncModule()-\u003eisConnected(...)` is now called without holding `connManagerMtx_`. This is fine only if `syncModule()` does not depend on state protected by that mutex. From inspection it appears independent, but please confirm that `syncModule()` and its `isConnected()` method are safe to call without the connection-manager lock — otherwise this introduces a new race.",
+      "revId": "c8e5fde08d3876cf9e3d66576752a0c08cddb7ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
