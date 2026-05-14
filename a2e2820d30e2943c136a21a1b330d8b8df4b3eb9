@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce4f1996_abafa4f6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "86629239_354ff070",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d4bd429e_5f247832",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-14T16:43:29Z",
       "side": 1,
       "message": "[minor] Line 1969: 🟡 Suggestion: File deletion via `std::filesystem::remove` is performed inside `editConfig`, which likely holds a config lock. Filesystem I/O under a lock can block other threads. Consider deleting the files outside the `editConfig` lambda, capturing the paths first, to minimize lock hold time.\n\n```suggestion\n                // Capture paths before clearing config\n                std::string privKeyFile, certFile;\n                editConfig([\u0026](JamiAccountConfig\u0026 conf) {\n                    privKeyFile \u003d conf.tlsPrivateKeyFile;\n                    certFile \u003d conf.tlsCertificateFile;\n                    conf.tlsPrivateKeyFile.clear();\n                    conf.tlsCertificateFile.clear();\n                    conf.receipt.clear();\n                    conf.receiptSignature.clear();\n                });\n                // Delete files outside the config lock\n                std::error_code ec;\n                if (!privKeyFile.empty())\n                    std::filesystem::remove(idPath_ / privKeyFile, ec);\n                if (!certFile.empty())\n                    std::filesystem::remove(idPath_ / certFile, ec);\n```",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc5ade78_20f0b0e1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1969,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d4bd429e_5f247832",
       "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "118c8ef1_0a8aab85",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1971,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "daa46785_9e846bd0",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c48f2e4_32631957",
@@ -65,6 +119,24 @@
       "writtenOn": "2026-05-14T16:43:29Z",
       "side": 1,
       "message": "[minor] Line 84: 🟡 Suggestion: `ctx-\u003ecredentials-\u003eidentity.first` is a `std::shared_ptr\u003cdht::crypto::PrivateKey\u003e`. The `auto privateKey \u003d ...` creates a copy of the shared_ptr (incrementing the refcount). Since you only use it to set the promise value, this is fine functionally, but consider using a const reference or checking with a boolean conversion to avoid the copy:\n\n```suggestion\n    if (ctx-\u003ecredentials-\u003eidentity.first) {\n        JAMI_LOG(\"[Account {}] [Auth] Authenticating with existing device private key\", accountId_);\n        std::promise\u003cstd::shared_ptr\u003cdht::crypto::PrivateKey\u003e\u003e keyPromise;\n        keyPromise.set_value(ctx-\u003ecredentials-\u003eidentity.first);\n        ctx-\u003ekey \u003d keyPromise.get_future();\n```",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88913f6e_adccbf14",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9c48f2e4_32631957",
       "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a44ef69_b90a450e",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a62d9fd2_7bdf1ec4",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "93ca0980_23d50ae6",
@@ -103,6 +193,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "845afa7f_2e36d380",
+        "filename": "src/jamidht/server_account_manager.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "93ca0980_23d50ae6",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e4c7e03f_17a290f4",
@@ -116,6 +224,24 @@
       "writtenOn": "2026-05-14T16:43:29Z",
       "side": 1,
       "message": "[info] Line 70: 🟢 Good practice: Renaming `onNeedsMigration` to `onDeviceRevoked` is a meaningful improvement—the new name precisely describes the semantic event (401 means the device was revoked), making the code much more self-documenting.",
+      "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2af7bc7a_3339745a",
+        "filename": "src/jamidht/server_account_manager.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-14T18:04:05Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e4c7e03f_17a290f4",
       "revId": "a2e2820d30e2943c136a21a1b330d8b8df4b3eb9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
