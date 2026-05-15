@@ -52,6 +52,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e5b57308_3aa4d124",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2149,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-15T20:10:50Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b6a6b1be_beb1b5bb",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e0d54314_dad27e8c",
@@ -83,6 +101,24 @@
       "writtenOn": "2026-05-15T19:46:08Z",
       "side": 1,
       "message": "[critical] Line 2162: 🔴 **Potential null-pointer dereference**: `accountManager()` can return `nullptr` (as guarded elsewhere in this file, e.g., line 2334 and 2476). If it returns null here, calling `getCertificateStatus()` on the result will crash.\n\n```suggestion\n        auto am \u003d shared-\u003eaccountManager();\n        if (!am || am-\u003egetCertificateStatus(peerId)\n            \u003d\u003d dhtnet::tls::TrustStore::PermissionStatus::BANNED) {\n            return;\n        }\n```",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "17a8dff3_9c327fda",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2162,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-15T20:10:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7da48ea0_fd13987a",
       "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -134,6 +170,24 @@
       "writtenOn": "2026-05-15T19:46:08Z",
       "side": 1,
       "message": "Line 340: 🟡 **`connectNode` does not check `isShutdown_`**: Other SwarmManager entry points (e.g., `setKnownNodes`, `maintainBuckets`) check `isShutdown_` before proceeding. `connectNode` does not, which means it can initiate a connection attempt on a shut-down swarm manager.\n\n```suggestion\nvoid\nSwarmManager::connectNode(const NodeId\u0026 nodeId)\n{\n    {\n        std::lock_guard lock(mutex);\n        if (isShutdown_)\n            return;\n        if (isConnectedWith(nodeId))\n            return;\n        addKnownNode(nodeId);\n        if (!routing_table.addConnectingNode(nodeId))\n            return;\n    }\n    tryConnect(nodeId, true);\n}\n```",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22877a8e_09826834",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-15T20:10:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f4c8308_7f577433",
       "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
