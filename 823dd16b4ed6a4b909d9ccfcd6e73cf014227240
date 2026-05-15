@@ -1,0 +1,157 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "457e376d_8720fae1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 3323,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "Line 3323: 🟡 **Iterating all conversations on every new device connection**: `addKnownDevice` calls `getConversations()` and iterates every conversation, calling `isMember` and potentially `connectNode` for each. For accounts with many conversations, this runs on every new TCP link to any peer. Consider filtering conversations by member first (e.g., maintaining a member→conversation index) or at least documenting this as an acceptable cost.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3eff7db9_694626b2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1960,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "Line 1960: 🟡 **Capturing `this` raw in callback**: The `onNewDeviceConnection` callback captures `this` without a weak reference. The existing `onChannelRequest` and `onICERequest` callbacks on lines 1958-1959 have the same pattern so this is consistent, but worth noting: if the connection manager outlives the account (even briefly), this is a use-after-free. The body dispatches to `dht::ThreadPool::io()` with a weak_ptr which mitigates this, but the outer lambda still dereferences `this`.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6a6b1be_beb1b5bb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2149,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "[positive] Line 2149: 🟢 Good design: centralizing the sync and swarm setup logic in `onNewDeviceConnection` instead of scattering it across `onAccountDeviceFound` and `requestSIPConnection` is a clear improvement. The code is easier to follow and the comments explain the flow well.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7da48ea0_fd13987a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2162,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "[critical] Line 2162: 🔴 **Potential null-pointer dereference**: `accountManager()` can return `nullptr` (as guarded elsewhere in this file, e.g., line 2334 and 2476). If it returns null here, calling `getCertificateStatus()` on the result will crash.\n\n```suggestion\n        auto am \u003d shared-\u003eaccountManager();\n        if (!am || am-\u003egetCertificateStatus(peerId)\n            \u003d\u003d dhtnet::tls::TrustStore::PermissionStatus::BANNED) {\n            return;\n        }\n```",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eaa2e5bf_10439ac0",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2360,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "Line 2360: 🟡 **`noNewSocket` parameter is silently ignored**: `onConversationNeedSocket` accepts `noNewSocket` but the parameter is commented out (`bool /*noNewSocket*/`) and never forwarded to `connectDevice`. If it\u0027s intentionally unused for git sockets, consider not adding it to the signature at all (keep the old 4-parameter version) or add a comment explaining why it\u0027s ignored. Otherwise, callers passing `noNewSocket\u003dtrue` get silently incorrect behaviour.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83990140_354c6fa6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2447,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "Line 2447: 🟡 **Missing `requestMessageConnection` after successful swarm socket**: The old code called `shared-\u003erequestMessageConnection(uri, deviceId, \"\")` when a swarm socket connected successfully. This line was removed in the refactor, but it served a purpose — ensuring a message channel exists for the peer. If `onNewDeviceConnection` is now the sole path for this, it only fires once on first TCP link establishment; subsequent swarm connections to new conversations with the same peer won\u0027t trigger it again. Verify this is intentional and that the message connection is guaranteed to already exist in all cases.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f4c8308_7f577433",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "Line 340: 🟡 **`connectNode` does not check `isShutdown_`**: Other SwarmManager entry points (e.g., `setKnownNodes`, `maintainBuckets`) check `isShutdown_` before proceeding. `connectNode` does not, which means it can initiate a connection attempt on a shut-down swarm manager.\n\n```suggestion\nvoid\nSwarmManager::connectNode(const NodeId\u0026 nodeId)\n{\n    {\n        std::lock_guard lock(mutex);\n        if (isShutdown_)\n            return;\n        if (isConnectedWith(nodeId))\n            return;\n        addKnownNode(nodeId);\n        if (!routing_table.addConnectingNode(nodeId))\n            return;\n    }\n    tryConnect(nodeId, true);\n}\n```",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "759d32e3_ddbb7467",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "[positive] Line 173: 🟢 Good API change — making `connectNode` the public interface while moving `isConnectedWith` to private is a cleaner separation of concerns. The doc comment clearly explains the `noNewSocket\u003dtrue` semantics.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ec5d003_bc53b39d",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T19:46:08Z",
+      "side": 1,
+      "message": "[positive] Line 249: 🟢 Tests are properly updated to match the new `NeedSocketCb` signature with the `noNewSocket` parameter.",
+      "revId": "823dd16b4ed6a4b909d9ccfcd6e73cf014227240",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
