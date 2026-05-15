@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f0921cd_e2a39c74",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 327,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "[info] Line 327: 🟢 Good practice: Extracting the `isRemovedGroupConversation` predicate as a named method is clean and makes the three call-sites readable. The explicit exclusion of `ONE_TO_ONE` mode is important for correctness and clearly expressed.",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "86cd6a88_e8716332",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "Line 337: 🟡 Suggestion: `addConversationRequest` is documented as requiring `conversationsRequestsMtx_` to be locked, but it now calls `isRemovedGroupConversation` which independently locks `convInfosMtx_`. While the lock ordering appears safe (requests → conversations → convInfos), this implicit cross-mutex dependency introduced inside a method documented for single-mutex use should be noted in the comment to prevent future deadlocks.\n```suggestion\n        // conversationsRequestsMtx_ MUST BE LOCKED\n        // Note: isRemovedGroupConversation internally locks convInfosMtx_\n        if (isConversation(id) \u0026\u0026 !isRemovedGroupConversation(id))\n```",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab2226ad_1c7d4358",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1482,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "[info] Line 1482: 🟢 Good practice: Checking both `conv-\u003einfo.mode` and `request.mode()` against `ONE_TO_ONE` provides defense-in-depth — it ensures neither the local state nor the remote request can bypass the restriction independently.",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f077c263_7cf3dd80",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1487,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "Line 1487: 🟡 Suggestion: When re-cloning, `removed` and `erased` are reset but `members` is not refreshed. If the member set changed while the user was absent (members added or removed), the local `conv-\u003einfo.members` may be stale until the clone completes and syncs. Consider adding a log or comment noting that the member set will be reconciled during the clone/sync phase, to make the intent clear to future readers.",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f3a89d70_669268e5",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2005,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "Line 2005: 🟡 Suggestion: The re-invite path does not validate that the incoming request\u0027s mode matches the mode of the existing removed conversation. A malformed or malicious request could claim a different mode than what the original conversation was. Although `cloneConversationFrom` performs its own ONE_TO_ONE check, consider adding a consistency check here:\n```suggestion\n        if (!pimpl_-\u003eisRemovedGroupConversation(convId)\n            || req.mode() \u003d\u003d ConversationMode::ONE_TO_ONE) {\n            return;\n        }\n```\nThis makes the `onConversationRequest` gate consistent with the `cloneConversationFrom` gate and rejects bad requests earlier.",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f06f8e49_6b57d78b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2008,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-15T20:37:13Z",
+      "side": 1,
+      "message": "Line 2008: 🟡 Suggestion: `rmConversationRequest` is called unconditionally, but if `isConversation(convId)` returned true, the conversation was already accepted previously and there is likely no pending request to remove. This call will needlessly invoke `saveMetadata()` and `saveConvRequests()` (disk I/O) even when there is nothing to erase. Consider guarding it:\n```suggestion\n        if (pimpl_-\u003egetRequest(convId) !\u003d std::nullopt)\n            pimpl_-\u003ermConversationRequest(convId);\n```\nAlternatively, make `rmConversationRequest` itself no-op when the key is absent (skip the saves).",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
