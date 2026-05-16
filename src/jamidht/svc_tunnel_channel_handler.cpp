@@ -333,15 +333,27 @@ SvcTunnelChannelHandler::openTunnel(std::string peerUri,
     t->serviceName = std::move(serviceName);
     t->onClosed = std::move(onClosed);
     try {
+        // Try dual-stack loopback: prefer IPv4 loopback but fallback to IPv6
+        // for IPv6-only systems where 127.0.0.1 may not be available.
         asio::ip::tcp::endpoint ep(asio::ip::address_v4::loopback(), localPort);
         t->acceptor = std::make_shared<asio::ip::tcp::acceptor>(*io_);
         t->acceptor->open(ep.protocol());
         t->acceptor->set_option(asio::socket_base::reuse_address(true));
         t->acceptor->bind(ep);
         t->acceptor->listen();
-    } catch (const std::exception& e) {
-        JAMI_WARNING("[SvcTunnel] cannot bind 127.0.0.1:{}: {}", localPort, e.what());
-        return {};
+    } catch (const std::exception&) {
+        // IPv4 loopback failed, try IPv6 loopback
+        try {
+            asio::ip::tcp::endpoint ep6(asio::ip::address_v6::loopback(), localPort);
+            t->acceptor = std::make_shared<asio::ip::tcp::acceptor>(*io_);
+            t->acceptor->open(ep6.protocol());
+            t->acceptor->set_option(asio::socket_base::reuse_address(true));
+            t->acceptor->bind(ep6);
+            t->acceptor->listen();
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[SvcTunnel] cannot bind loopback:{}: {}", localPort, e.what());
+            return {};
+        }
     }
 
     auto bound = static_cast<uint16_t>(t->acceptor->local_endpoint().port());
@@ -350,8 +362,9 @@ SvcTunnelChannelHandler::openTunnel(std::string peerUri,
         std::lock_guard lk(mtx_);
         tunnels_[t->id] = t;
     }
-    JAMI_LOG("[SvcTunnel] opened tunnel id={} listening on 127.0.0.1:{} -> peer={} service=\"{}\"",
+    JAMI_LOG("[SvcTunnel] opened tunnel id={} listening on {}:{} -> peer={} service=\"{}\"",
              t->id,
+             t->acceptor->local_endpoint().address().to_string(),
              bound,
              t->peerUri,
              t->serviceName);

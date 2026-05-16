@@ -3509,8 +3509,10 @@ SIPCall::setupIceResponse(bool isReinvite)
                                                                   opt.accountPublicAddr.getFamily());
     } else {
         // Just set the local address for both, most likely the account is not
-        // registered.
+        // registered. Try IPv4 first, fallback to IPv6 for IPv6-only networks.
         opt.accountLocalAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
+        if (not opt.accountLocalAddr)
+            opt.accountLocalAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET6);
         opt.accountPublicAddr = opt.accountLocalAddr;
     }
 

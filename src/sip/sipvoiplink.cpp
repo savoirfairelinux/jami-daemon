@@ -965,16 +965,21 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         return;
     }
 
-    auto family = pj_AF_INET();
-    // FIXME: for now, use the same address family as the SIP transport
+    auto family = pj_AF_UNSPEC();
+    // Use the same address family as the SIP transport
     if (auto* dlg = inv->dlg) {
         if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
             if (auto* tr = dlg->tp_sel.u.transport)
                 family = tr->local_addr.addr.sa_family;
-        } else if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
+        } else if (dlg->tp_sel.type == PJSIP_TPSELECTOR_LISTENER) {
             if (auto* tr = dlg->tp_sel.u.listener)
                 family = tr->local_addr.addr.sa_family;
         }
+    }
+    // If transport family is unknown, detect from available addresses
+    if (family == pj_AF_UNSPEC()) {
+        auto addr4 = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), pj_AF_INET());
+        family = addr4 ? pj_AF_INET() : pj_AF_INET6();
     }
     auto ifaceAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
@@ -1536,14 +1541,27 @@ bool
 SIPVoIPLink::findLocalAddressFromSTUN(
     pjsip_transport* transport, pj_str_t* stunServerName, int stunPort, std::string& addr, pj_uint16_t& port) const
 {
-    // WARN: this code use pjstun_get_mapped_addr2 that works
-    // in IPv4 only.
+    // WARN: pjstun_get_mapped_addr2 works in IPv4 only.
+    // For IPv6 transports, STUN is not needed (no NAT), return local address.
     // WARN: this function is blocking (network request).
 
     // Initialize the sip port with the default SIP port
     port = sip_utils::DEFAULT_SIP_PORT;
 
-    // Get Local IP address
+    // Detect transport family - skip STUN for IPv6 (no NAT on IPv6)
+    if (transport && transport->local_addr.addr.sa_family == pj_AF_INET6()) {
+        auto localIp6 = dhtnet::ip_utils::getLocalAddr(pj_AF_INET6());
+        if (localIp6) {
+            addr = localIp6.toString();
+            port = pj_sockaddr_get_port(&transport->local_addr);
+            if (port == 0)
+                port = sip_utils::DEFAULT_SIP_PORT;
+            JAMI_DEBUG("IPv6 transport detected, skipping STUN, using local address {}:{}", addr, port);
+            return true;
+        }
+    }
+
+    // Get Local IPv4 address for STUN
     auto localIp = dhtnet::ip_utils::getLocalAddr(pj_AF_INET());
     if (not localIp) {
         JAMI_WARNING("Failed to find local IP");

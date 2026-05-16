@@ -1932,8 +1932,14 @@ SIPAccount::getUserUri() const
 dhtnet::IpAddr
 SIPAccount::createBindingAddress()
 {
-    auto family = hostIp_ ? hostIp_.getFamily() : PJ_AF_INET;
+    auto family = hostIp_ ? hostIp_.getFamily() : PJ_AF_UNSPEC;
     const auto& conf = config();
+
+    // If family is unknown, detect from available interfaces
+    if (family == PJ_AF_UNSPEC) {
+        auto addr4 = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), PJ_AF_INET);
+        family = addr4 ? PJ_AF_INET : PJ_AF_INET6;
+    }
 
     dhtnet::IpAddr ret = conf.bindAddress.empty()
                              ? (conf.interface == dhtnet::ip_utils::DEFAULT_INTERFACE || conf.interface.empty()

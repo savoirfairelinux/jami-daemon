@@ -1184,7 +1184,10 @@ setAccountsOrder(const std::string& order)
 std::string
 getAddrFromInterfaceName(const std::string& interface)
 {
-    return dhtnet::ip_utils::getInterfaceAddr(interface, AF_INET);
+    auto addr = dhtnet::ip_utils::getInterfaceAddr(interface, AF_INET);
+    if (not addr)
+        addr = dhtnet::ip_utils::getInterfaceAddr(interface, AF_INET6);
+    return addr;
 }
 
 std::vector<std::string>
