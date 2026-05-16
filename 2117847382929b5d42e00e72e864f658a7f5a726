@@ -1,0 +1,157 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "724ef5c4_2c52fbbd",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1187,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "[info] Line 1187: 🟢 Clean and correct fallback for a public API function. The implicit conversion from IpAddr to string via `return addr` works correctly here.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c2445fe_92573704",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 339: 🟡 Code duplication: The acceptor setup sequence (open → set_option → bind → listen) is repeated for IPv4 and IPv6. Consider extracting a small lambda or helper to reduce duplication and ensure both paths stay in sync during future changes.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f76c4f1_d4f66352",
+        "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 344: 🟡 The outer catch discards the exception message from the IPv4 bind failure. While the fallback logic is correct, logging the IPv4 failure at DEBUG level would aid troubleshooting on dual-stack systems where both fail unexpectedly.\n\n```suggestion\n    } catch (const std::exception\u0026 e4) {\n        // IPv4 loopback failed, try IPv6 loopback\n        JAMI_DEBUG(\"[SvcTunnel] IPv4 loopback bind failed: {}, trying IPv6\", e4.what());\n```",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c524f9a_0dc62cfc",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1939,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 1939: 🟡 The fallback detection pattern (try IPv4, else IPv6) is repeated in four different files. Consider extracting a utility like `ip_utils::getInterfaceAddrDualStack(interface)` to centralize this logic and ensure consistent behavior across all call sites.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92dac2ac_c8100aaa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3513,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "[info] Line 3513: 🟢 Good pattern: The IPv4-first-then-IPv6 fallback with the existing null check on line 3519 provides a clean safety net. If neither family yields an address, the error handling below correctly reports the failure.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ca04735_dfc56a6e",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "[info] Line 974: 🔴 Bug fix confirmed: The original code had a duplicate `PJSIP_TPSELECTOR_TRANSPORT` check, which meant the `PJSIP_TPSELECTOR_LISTENER` branch was dead code. Changing it to `PJSIP_TPSELECTOR_LISTENER` is correct and important. Good catch.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4516ef83_35e9246e",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 980: 🟡 If `getInterfaceAddr` with `pj_AF_INET()` fails and you fall through to `pj_AF_INET6()`, the subsequent `getInterfaceAddr` on line 984 could also fail, leaving `ifaceAddr` empty. The existing fallback on line 995-996 handles this, but adding a log when detection falls back to IPv6 would help with debugging:\n\n```suggestion\n    if (family \u003d\u003d pj_AF_UNSPEC()) {\n        auto addr4 \u003d dhtnet::ip_utils::getInterfaceAddr(account-\u003egetLocalInterface(), pj_AF_INET());\n        family \u003d addr4 ? pj_AF_INET() : pj_AF_INET6();\n        if (!addr4)\n            JAMI_DEBUG(\"No IPv4 address on interface, falling back to IPv6 for SDP offer\");\n    }\n```",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d400ea45_11fc2191",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1552,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 1552: 🟡 The comment says \u0027no NAT on IPv6\u0027, but this is an oversimplification. While IPv6 NAT (NAT66) is less common, it does exist in some enterprise and carrier-grade deployments. Consider weakening the comment to \u0027NAT is uncommon on IPv6\u0027 or \u0027STUN is typically not needed for IPv6\u0027. Additionally, if the transport is IPv6 but getLocalAddr returns a link-local address (fe80::), using it as the STUN result could cause reachability issues. Consider verifying that the returned address is a global unicast address.\n\n```suggestion\n    // Detect transport family - skip STUN for IPv6 (NAT is uncommon on IPv6,\n    // and pjstun_get_mapped_addr2 only supports IPv4)\n```",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea6f2169_86f27eee",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1556,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T20:18:51Z",
+      "side": 1,
+      "message": "Line 1556: 🟡 `pj_sockaddr_get_port` returns `pj_uint16_t`, but there\u0027s no validation that the transport\u0027s local address is actually a valid sockaddr before calling this. If `transport-\u003elocal_addr` is zero-initialized or corrupt, you might get port 0 (handled) or a garbage value. This is a pre-existing issue but worth noting since you\u0027re adding a new code path that calls it.",
+      "revId": "2117847382929b5d42e00e72e864f658a7f5a726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
