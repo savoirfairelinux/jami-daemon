@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af89217c_059b71d7",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T22:48:52Z",
+      "side": 1,
+      "message": "[critical] Line 87: 🔴 **Breaking change: missing default value for `shutdownConnections`**\n\nThe underlying C++ API in `configurationmanager_interface.h` (line 48) declares this parameter with a default:\n```\nvoid setAccountActive(const std::string\u0026 accountId, bool active, bool shutdownConnections \u003d false);\n```\n\nHowever, the SWIG interface here omits the default value. This means all existing Java/Android callers of `setAccountActive(accountId, active)` will fail to compile — the two-argument overload no longer exists in the generated JNI bindings. This is a source-breaking change for downstream consumers.\n\nSWIG supports default argument values and will generate overloaded methods for them.\n\n```suggestion\nvoid setAccountActive(const std::string\u0026 accountId, bool active, bool shutdownConnections \u003d false);\n```",
+      "revId": "54ea30d2214b0de1e40e13b4b3cab61bbf819d84",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "19f10e3a_28b573ee",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-16T22:48:52Z",
+      "side": 1,
+      "message": "Line 87: 🟡 **Other binding interfaces not updated**\n\nThe Node.js SWIG interface (`bin/nodejs/configurationmanager.i`, line 84) still has the old two-argument signature:\n```\nvoid setAccountActive(const std::string\u0026 accountId, bool active);\n```\n\nThe D-Bus interface (`bin/dbus/dbusconfigurationmanager.hpp`, line 59) similarly lacks the new parameter and just forwards with the default.\n\nIf the intent is to expose `shutdownConnections` to clients, these should also be updated for consistency. If only JNI needs it, that rationale should be stated in the commit message.",
+      "revId": "54ea30d2214b0de1e40e13b4b3cab61bbf819d84",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
