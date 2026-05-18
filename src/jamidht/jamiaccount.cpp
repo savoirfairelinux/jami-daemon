@@ -2111,12 +2111,10 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
             auto shared = w.lock();
             if (!shared)
                 return;
-            std::unique_lock lk(shared->connManagerMtx_);
-            shared->initConnectionManager();
-            lk.unlock();
-            std::shared_lock slk(shared->connManagerMtx_);
-            if (!shared->connectionManager_)
-                return;
+            {
+                std::unique_lock lk(shared->connManagerMtx_);
+                shared->initConnectionManager();
+            }
             // Initiate a message connection to create the first TCP link.
             // Once established, onNewDeviceConnection will set up sync and
             // swarm channels.
