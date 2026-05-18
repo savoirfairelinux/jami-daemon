@@ -1,0 +1,10 @@
+Code-Review+1: Virtual Engineer <virtual-engineer@jami.net>
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Mon, 18 May 2026 11:46:41 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/34032
+Comments-Total: 9
+Comments-Unresolved: 3
+Project: jami-daemon
+Branch: refs/heads/master
