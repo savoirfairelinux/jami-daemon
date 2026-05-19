@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdd941b9_a2a7fea2",
+        "filename": "src/jamidht/sync_channel_handler.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T20:34:31Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 40: Removing the `isConnecting(deviceId, channelName)` guard changes duplicate-connection behavior. With `.uniqueName \u003d true`, repeated sync connect calls can use distinct channel names and may no longer be coalesced by the previous `(deviceId, channelName)` in-flight check, potentially creating parallel pending sync connection attempts for the same device. Please either keep an equivalent in-flight guard keyed by device/sync purpose, or document/verify that `connectDevice(..., uniqueName\u003dtrue, forceNewSocket\u003dfalse)` deduplicates pending requests for the same device and connection type.\n\n```suggestion\n    if (connectionManager_.isConnecting(deviceId, channelName)) {\n        JAMI_LOG(\"Already connecting to {}\", deviceId);\n        return;\n    }\n    connectionManager_.connectDevice(deviceId,\n                                     channelName,\n                                     std::move(cb),\n                                     dhtnet::ConnectDeviceOptions {.forceNewSocket \u003d false,\n                                                                   .uniqueName \u003d true,\n                                                                   .connType \u003d \"sync\"});\n```",
+      "revId": "57fc046e3e07ddeb5725a48bc08de516a4a67cce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
