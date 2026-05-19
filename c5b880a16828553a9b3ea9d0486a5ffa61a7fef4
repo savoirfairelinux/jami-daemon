@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4bf893d_0e7081cc",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2809,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T20:24:48Z",
+      "side": 1,
+      "message": "[Critical] Line 2809: For one-to-one conversations, `isPeerAuthorized()` now delegates to `Conversation::isPeerAuthorized()`, which checks conversation membership/ban files instead of preserving the previous one-to-one trust-store-only authorization behavior used by `isBanned()`. This can reject valid one-to-one peers if the local conversation repository is not fully initialized or membership state differs from the trust store. Handle `ConversationMode::ONE_TO_ONE` explicitly after the trust-store checks, e.g. return true when neither member nor device certificate is banned, or otherwise apply the existing one-to-one authorization semantics.",
+      "revId": "c5b880a16828553a9b3ea9d0486a5ffa61a7fef4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b8069a8_5c9b39a4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2423,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T20:24:48Z",
+      "side": 1,
+      "message": "[Critical] Line 2423: `onConversationNeedSwarmSocket()` only checks `isDeviceBanned(convId, deviceId)`. The rest of the patch hardens git/conversation/swarm incoming paths with `isPeerAuthorized()` to reject banned members, non-members, and device/member mismatches, but this outgoing swarm socket path still allows connecting to a device whose owner is no longer authorized as long as the device itself is not banned. Resolve the device owner and use the same peer authorization check before connecting, or ensure the callback receives enough peer identity to validate both the member URI and device ID.",
+      "revId": "c5b880a16828553a9b3ea9d0486a5ffa61a7fef4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
