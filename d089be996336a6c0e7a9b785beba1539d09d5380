@@ -83,6 +83,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7f525c7f_221e44a7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1218,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T21:28:01Z",
+      "side": 1,
+      "message": "Do we actually need to do this? The original body and previous editions of the message can\u0027t change (git commits are immutable), so there shouldn\u0027t be any \"stale\" information to clear and reload.",
+      "range": {
+        "startLine": 1216,
+        "startChar": 19,
+        "endLine": 1218,
+        "endChar": 65
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7655255b_19f90370",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1235,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T21:28:01Z",
+      "side": 1,
+      "message": "Does this need to be done here in `handleEdition`, or could it be moved to `announce` (where we already call `transformSwarmMessages` and update `pluginData` using almost identical code)?",
+      "range": {
+        "startLine": 1227,
+        "startChar": 20,
+        "endLine": 1235,
+        "endChar": 21
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "42412658_b44d3d4b",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 22
@@ -94,6 +140,29 @@
       "writtenOn": "2026-05-19T20:14:15Z",
       "side": 1,
       "message": "[Major] Line 1852: bodyOverwritePreCachedMessages stores shared_ptrs while holding loadedHistory_.mutex, then dereferences and copies the pointed-to messages after releasing the lock. Other code can concurrently mutate pluginData/editions on the same SwarmMessage, so the copy passed to plugins is still racing. Store value snapshots plus ids while locked, and only write back resolved pluginData under the lock.\n```suggestion\nstd::vector\u003cstd::pair\u003cstd::string, libjami::SwarmMessage\u003e\u003e toOverwrite;\n{\n    std::lock_guard lk(loadedHistory_.mutex);\n    for (auto\u0026 [id, msg] : loadedHistory_.quickAccess) {\n        if (msg-\u003etype \u003d\u003d \"text/plain\" \u0026\u0026 needsWork)\n            toOverwrite.emplace_back(id, *msg);\n    }\n}\nfor (auto\u0026 [id, snapshot] : toOverwrite) {\n    std::vector single {snapshot};\n    pluginChatManager.transformSwarmMessages(single, accountId_, convId);\n    ...\n    std::lock_guard writeLk(loadedHistory_.mutex);\n    auto it \u003d loadedHistory_.quickAccess.find(id);\n    if (it \u003d\u003d loadedHistory_.quickAccess.end())\n        continue;\n    ...\n}\n```",
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "287d8ba2_ef5856b1",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T21:28:01Z",
+      "side": 1,
+      "message": "I find the name of this method a bit confusing. Maybe rename it to something like `loadMissingBodyOverwrites`?",
+      "range": {
+        "startLine": 319,
+        "startChar": 9,
+        "endLine": 319,
+        "endChar": 39
+      },
       "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
