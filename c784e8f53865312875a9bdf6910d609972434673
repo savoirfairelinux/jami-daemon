@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f13dddf5_907c7e0e",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 3
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T18:43:12Z",
+      "side": 1,
+      "message": "Line 85: 🟡 Suggestion: The default value `false` for `shutdownConnections` preserves backward compatibility, which is good. However, SWIG\u0027s handling of default parameters in Java can be inconsistent across versions. Verify that the generated Java binding correctly produces both a two-argument and a three-argument overload, or alternatively define an explicit overload without the default to guarantee ABI compatibility with existing callers:\n```suggestion\nvoid setAccountActive(const std::string\u0026 accountId, bool active, bool shutdownConnections);\n```\nIf you take this route, add a two-argument convenience wrapper on the Java side. Otherwise, confirm the SWIG version in use generates proper overloads for default arguments (requires `%feature(\"compactdefaultargs\")` or similar).",
+      "revId": "c784e8f53865312875a9bdf6910d609972434673",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
