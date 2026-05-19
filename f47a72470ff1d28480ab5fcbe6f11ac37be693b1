@@ -20,6 +20,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "34df85b1_c3ed754e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 327,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-05-19T22:02:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0f0921cd_e2a39c74",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "86cd6a88_e8716332",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 4
@@ -48,6 +66,24 @@
       "writtenOn": "2026-05-15T20:37:13Z",
       "side": 1,
       "message": "[info] Line 1482: 🟢 Good practice: Checking both `conv-\u003einfo.mode` and `request.mode()` against `ONE_TO_ONE` provides defense-in-depth — it ensures neither the local state nor the remote request can bypass the restriction independently.",
+      "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8032d52_340abced",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1482,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-05-19T22:02:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ab2226ad_1c7d4358",
       "revId": "f47a72470ff1d28480ab5fcbe6f11ac37be693b1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
