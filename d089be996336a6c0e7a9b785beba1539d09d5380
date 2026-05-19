@@ -20,6 +20,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d45a3cf4_ff3bfca5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T20:21:19Z",
+      "side": 1,
+      "message": "`CommitKey::TYPE`",
+      "range": {
+        "startLine": 463,
+        "startChar": 47,
+        "endLine": 463,
+        "endChar": 53
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18bf59fa_dbe9784b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T20:21:19Z",
+      "side": 1,
+      "message": "`CommitType::TEXT`",
+      "range": {
+        "startLine": 465,
+        "startChar": 82,
+        "endLine": 465,
+        "endChar": 94
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5479d433_b4555631",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 22

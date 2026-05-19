@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee1892ce_cef5027d",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-19T20:21:19Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "698b6aca_a0d09911",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f45a66ee_9bbdda42",
