@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2f97c10_ead5707e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "[Critical] Line 472: This reads and writes loadedHistory_.quickAccess without holding loadedHistory_.mutex, while the new helper methods consistently protect the same structure. That introduces a data race with load/clear/update paths and can invalidate shared message state. Acquire the mutex when finding/copying/updating the cached message, then emit outside the lock.",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35e78219_142f27a0",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "[Critical] Line 130: Plugin-facing service updateMessageBodyOverwrite dereferences the opaque payload without a null check, so a malformed or buggy plugin can crash the daemon. Return an error before dereferencing, consistent with other plugin services.\n```suggestion\nauto* upd \u003d static_cast\u003cMessageBodyOverwriteUpdate*\u003e(data);\nif (!upd)\n    return -1;\n```",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f58f64d8_8bc6b9ef",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "[Critical] Line 136: updateMessageBodyOverwrite trusts any plugin-provided accountId/conversationId/messageId and pluginDataKey. That allows a plugin to update message display state for conversations where it is not enabled, and potentially overwrite keys owned by other plugins. Validate that the calling plugin/handler is enabled for the target conversation and restrict the key namespace before applying the update.",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08aa461e_3d8d0590",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "[Critical] Line 166: editMessageService also dereferences plugin data without validating it. A null payload from invokeService will crash the daemon before any exception handling applies.\n```suggestion\nauto* cm \u003d static_cast\u003cJamiMessage*\u003e(data);\nif (!cm)\n    return -1;\n```",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a23829e_f1aeea2e",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "[Critical] Line 255: Critical privacy/authorization issue: transformSwarmMessages() invokes every loaded ChatHandler for every loaded conversation, regardless of the conversation allow/deny state. This lets disabled plugins read and mutate message history for conversations where the user did not enable them. Filter to handlers active for {accountId, conversationId}, reusing the same allow/deny/always activation rules as publishMessage().\n```suggestion\nvoid\nChatServicesManager::transformSwarmMessages(std::vector\u003clibjami::SwarmMessage\u003e\u0026 messages,\n                                            const std::string\u0026 accountId,\n                                            const std::string\u0026 conversationId)\n{\n    std::pair\u003cstd::string, std::string\u003e key(accountId, conversationId);\n    for (auto\u0026 handler : chatHandlers_) {\n        const auto handlerName \u003d handler-\u003egetChatHandlerDetails().at(\"name\");\n        const auto toggled \u003d chatHandlerToggled_[key].find((uintptr_t) handler.get())\n                             !\u003d chatHandlerToggled_[key].end();\n        const auto allowed \u003d allowDenyList_[key].find(handlerName) !\u003d allowDenyList_[key].end()\n                             \u0026\u0026 allowDenyList_[key][handlerName];\n        if (toggled || allowed)\n            handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n    }\n}\n```",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0edd6dc_b0443507",
+        "filename": "src/plugin/streamdata.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T19:45:42Z",
+      "side": 1,
+      "message": "Line 108: The comment documents default keys as \"BodyOverwrite\"/\"BodyOverwrite_e0\", but the implementation uses \"bodyOverwrite\"/\"bodyOverwrite_e0\". This ABI-facing documentation mismatch can make plugins send keys the daemon never reloads or clears. Update the comment to the exact lowercase key names.",
+      "revId": "37023eeb3b95863882f024e5dc0511e8d487a11f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
