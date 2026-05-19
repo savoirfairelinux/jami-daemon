@@ -25,6 +25,8 @@
 namespace jami {
 namespace svc_protocol {
 
+using namespace std::literals;
+
 /// Maximum protocol version implemented.
 constexpr uint8_t MaxVersion = 1;
 

@@ -11,6 +11,7 @@ list (APPEND Source_Files__jami
       "${CMAKE_CURRENT_SOURCE_DIR}/datatransfer_interface.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/jami.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_const.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/networkservice_interface.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/presence_const.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/presencemanager_interface.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/security_const.h"

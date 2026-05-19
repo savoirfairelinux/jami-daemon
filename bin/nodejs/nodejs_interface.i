@@ -75,6 +75,7 @@ namespace std {
 %include "videomanager.i"
 %include "conversation.i"
 %include "datatransfer.i"
+%include "networkservicemanager.i"
 
 %header %{
 #include "callback.h"

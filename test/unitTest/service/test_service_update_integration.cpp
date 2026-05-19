@@ -31,6 +31,7 @@
 #include "jami.h"
 #include "jami/account_const.h"
 #include "jami/configurationmanager_interface.h"
+#include "jami/networkservice_interface.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/service_manager.h"
 #include "manager.h"

@@ -3,6 +3,8 @@
 #include <napi.h>
 #include <uv.h>
 
+#include "jami/networkservice_interface.h"
+
 #include <queue>
 #include <functional>
 #include <mutex>
@@ -899,6 +901,49 @@ serverError(const std::string& accountId, const std::string& error, const std::s
     uv_async_send(&signalAsync);
 }
 
+// Network service signals
+
+void
+peerServicesReceived(uint32_t requestId,
+                     const std::string& accountId,
+                     const std::string& peerId,
+                     int status,
+                     const std::string& servicesJson)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([requestId, accountId, peerId, status, servicesJson]() {
+        napi_value args[] = {napiUint32(requestId),
+                             napiString(accountId),
+                             napiString(peerId),
+                             napiInt32(status),
+                             napiString(servicesJson)};
+        callCallback("PeerServicesReceived", 5, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+serviceTunnelOpened(const std::string& accountId, const std::string& tunnelId, uint16_t localPort)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, tunnelId, localPort]() {
+        napi_value args[] = {napiString(accountId), napiString(tunnelId), napiUint32(localPort)};
+        callCallback("ServiceTunnelOpened", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+serviceTunnelClosed(const std::string& accountId, const std::string& tunnelId, const std::string& reason)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, tunnelId, reason]() {
+        napi_value args[] = {napiString(accountId), napiString(tunnelId), napiString(reason)};
+        callCallback("ServiceTunnelClosed", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
 // Daemon initialization
 
 void
@@ -918,6 +963,7 @@ initJami(napi_env env, napi_value callbackMap)
     using libjami::CallSignal;
     using libjami::ConversationSignal;
     using libjami::PresenceSignal;
+    using libjami::ServiceSignal;
     using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
     const std::map<std::string, SharedCallback> callEvHandlers
@@ -984,6 +1030,12 @@ initJami(napi_env env, napi_value callbackMap)
            exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&nearbyPeerNotification, _1, _2, _3, _4)),
            exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&subscriptionStateChanged, _1, _2, _3))};
 
+    const std::map<std::string, SharedCallback> networkServiceEvHandlers = {
+        exportable_callback<ServiceSignal::PeerServicesReceived>(bind(&peerServicesReceived, _1, _2, _3, _4, _5)),
+        exportable_callback<ServiceSignal::TunnelOpened>(bind(&serviceTunnelOpened, _1, _2, _3)),
+        exportable_callback<ServiceSignal::TunnelClosed>(bind(&serviceTunnelClosed, _1, _2, _3)),
+    };
+
     if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
         return;
 
@@ -992,5 +1044,6 @@ initJami(napi_env env, napi_value callbackMap)
     registerSignalHandlers(conversationHandlers);
     registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(presenceEvHandlers);
+    registerSignalHandlers(networkServiceEvHandlers);
     libjami::start();
 }

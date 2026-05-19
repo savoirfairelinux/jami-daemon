@@ -318,24 +318,6 @@ LIBJAMI_PUBLIC bool isAllModerators(const std::string& accountId);
  */
 LIBJAMI_PUBLIC void setResourceDirPath(const std::string& resourceDirPath);
 
-/* Local-service exposure ("Network Services") */
-
-LIBJAMI_PUBLIC std::string addExposedService(const std::string& accountId,
-                                             const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC bool updateExposedService(const std::string& accountId,
-                                         const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC bool removeExposedService(const std::string& accountId, const std::string& serviceId);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getExposedServices(const std::string& accountId);
-LIBJAMI_PUBLIC uint32_t queryPeerServices(const std::string& accountId, const std::string& peerUri);
-LIBJAMI_PUBLIC std::string openServiceTunnel(const std::string& accountId,
-                                             const std::string& peerUri,
-                                             const std::string& deviceId,
-                                             const std::string& serviceId,
-                                             const std::string& serviceName,
-                                             uint16_t localPort);
-LIBJAMI_PUBLIC bool closeServiceTunnel(const std::string& accountId, const std::string& tunnelId);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getActiveTunnels(const std::string& accountId);
-
 struct LIBJAMI_PUBLIC AudioSignal
 {
     struct LIBJAMI_PUBLIC DeviceEvent
@@ -589,57 +571,6 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "MessageSend";
         using cb_type = void(const std::string&);
-    };
-};
-
-// Service-exposure signal type definitions
-struct LIBJAMI_PUBLIC ServiceSignal
-{
-    /**
-     * Status code attached to PeerServicesReceived. Every queryPeerServices()
-     * call is guaranteed to result in exactly one PeerServicesReceived signal,
-     * with `status` indicating the outcome.
-     */
-    enum class PeerServicesStatus : int {
-        OK = 0,            ///< Peer responded; servicesJson is the (possibly empty) list.
-        NoDevices = 1,     ///< No devices announced for the peer (offline / unknown).
-        Unreachable = 2,   ///< Devices were found but no channel could be opened.
-        Timeout = 3,       ///< Channel opened but no response arrived within the deadline.
-        InternalError = 4, ///< Local error (account stopping, handler missing, ...).
-    };
-
-    /**
-     * Asynchronous response to queryPeerServices(). Emitted exactly once per
-     * request id.
-     * @param requestId   Token returned by queryPeerServices() — first arg.
-     * @param accountId   Local account that issued the query.
-     * @param peerId      URI of the peer that produced the response.
-     * @param status      One of PeerServicesStatus, indicating success or
-     *                    the failure mode.
-     * @param servicesJson JSON array describing visible services
-     *                    ([{"id":..,"name":..,"description":..,"proto":..}]).
-     *                    Empty `[]` for any non-OK status.
-     */
-    struct LIBJAMI_PUBLIC PeerServicesReceived
-    {
-        constexpr static const char* name = "PeerServicesReceived";
-        using cb_type = void(uint32_t /*requestId*/,
-                             const std::string& /*accountId*/,
-                             const std::string& /*peerId*/,
-                             int /*status*/,
-                             const std::string& /*servicesJson*/);
-    };
-    struct LIBJAMI_PUBLIC TunnelOpened
-    {
-        constexpr static const char* name = "ServiceTunnelOpened";
-        using cb_type = void(const std::string& /*accountId*/, const std::string& /*tunnelId*/, uint16_t /*localPort*/);
-    };
-    struct LIBJAMI_PUBLIC TunnelClosed
-    {
-        constexpr static const char* name = "ServiceTunnelClosed";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /*tunnelId*/,
-                             const std::string& /*reason*/);
     };
 };
 

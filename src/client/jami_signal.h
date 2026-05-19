@@ -23,6 +23,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "conversation_interface.h"
+#include "networkservice_interface.h"
 #include "presencemanager_interface.h"
 #include "datatransfer_interface.h"
 

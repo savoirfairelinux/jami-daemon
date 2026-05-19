@@ -210,6 +210,7 @@ namespace std {
 %include "videomanager.i"
 %include "plugin_manager_interface.i"
 %include "conversation.i"
+%include "networkservicemanager.i"
 
 #include "jami/callmanager_interface.h"
 
@@ -218,7 +219,7 @@ namespace std {
  * that are not declared elsewhere in the c++ code
  */
 
-void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, DataTransferCallback* dataM, VideoCallback* videoM, ConversationCallback* convM) {
+void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, DataTransferCallback* dataM, VideoCallback* videoM, ConversationCallback* convM, NetworkServiceCallback* nsMgr) {
     using namespace std::placeholders;
 
     using std::bind;
@@ -230,6 +231,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     using libjami::PresenceSignal;
     using libjami::VideoSignal;
     using libjami::ConversationSignal;
+    using libjami::ServiceSignal;
 
     using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
@@ -337,6 +339,12 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3))
     };
 
+    const std::map<std::string, SharedCallback> networkServiceEvHandlers = {
+        exportable_callback<ServiceSignal::PeerServicesReceived>(bind(&NetworkServiceCallback::peerServicesReceived, nsMgr, _1, _2, _3, _4, _5)),
+        exportable_callback<ServiceSignal::TunnelOpened>(bind(&NetworkServiceCallback::serviceTunnelOpened, nsMgr, _1, _2, _3)),
+        exportable_callback<ServiceSignal::TunnelClosed>(bind(&NetworkServiceCallback::serviceTunnelClosed, nsMgr, _1, _2, _3)),
+    };
+
     if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_SYSLOG)))
         return;
 
@@ -346,6 +354,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(videoEvHandlers);
     registerSignalHandlers(conversationHandlers);
+    registerSignalHandlers(networkServiceEvHandlers);
 
     libjami::start();
 }
