@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "256f8b6f_b10b754b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1486,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T22:02:36Z",
+      "side": 1,
+      "message": "[Critical] Line 1486: Clearing `removed`/`erased` before the re-clone and sync complete can make a previously left conversation visible again even if the clone later fails, leaving stale membership/messages exposed as an active conversation. Defer reactivating the conversation until after the clone succeeds, or roll back these fields on every failure path.\n\n```suggestion\n        // Reactivate only after the clone/sync path has succeeded, or restore the\n        // previous removed/erased values if cloning fails.\n```",
+      "revId": "3dfb534fe14163676ad7a9dceb3aef8f707d7cf3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be7800c3_e39bc265",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2009,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-19T22:02:36Z",
+      "side": 1,
+      "message": "Line 2009: For a removed group, an existing pending request is deleted before the duplicate-request check. This changes the previous behavior from ignoring duplicate requests to replacing the pending request with the latest inbound one, which can reset metadata such as sender/received time and allows request churn. Keep the existing request unless there is a concrete reason to replace it, or compare/update only when the new request is strictly newer/valid.\n\n```suggestion\n        if (pimpl_-\u003egetRequest(convId) !\u003d std::nullopt)\n            return;\n```",
+      "revId": "3dfb534fe14163676ad7a9dceb3aef8f707d7cf3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
