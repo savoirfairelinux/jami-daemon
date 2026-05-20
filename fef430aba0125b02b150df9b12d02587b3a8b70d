@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79b008cf_a9b57908",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 23
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T19:01:08Z",
+      "side": 1,
+      "message": "[Critical] Line 86: Adding host system pkg-config directories to PKG_CONFIG_PATH unconditionally can make cross-compilation pick up host .pc files. That defeats the contrib isolation and can produce binaries linked against incompatible host libraries. Gate these paths to native builds only, or remove them from the cross-build path.\n```suggestion\nifndef HAVE_CROSS_COMPILE\nPKG_CONFIG_PATH :\u003d $(PREFIX)/lib/pkgconfig:$(PREFIX)/lib/$(HOST)/pkgconfig:$(PKG_CONFIG_PATH):/usr/lib/$(HOST)/pkgconfig:/usr/share/pkgconfig\nelse\nPKG_CONFIG_PATH :\u003d $(PREFIX)/lib/pkgconfig:$(PREFIX)/lib/$(HOST)/pkgconfig:$(PKG_CONFIG_PATH)\nendif\n```",
+      "revId": "fef430aba0125b02b150df9b12d02587b3a8b70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99658a73_73e56fcf",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T19:01:08Z",
+      "side": 1,
+      "message": "[Critical] Line 127: updateMessageBodyOverwrite dereferences the plugin-provided data pointer without validating it. A malformed or buggy plugin call with nullptr will crash the daemon. Add the same null guard used by the scoped conversation services before accessing the payload.\n```suggestion\nauto* upd \u003d static_cast\u003cMessageBodyOverwriteUpdate*\u003e(data);\nif (!upd)\n    return -1;\n```",
+      "revId": "fef430aba0125b02b150df9b12d02587b3a8b70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "645fbcc1_73ca5f26",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T19:01:08Z",
+      "side": 1,
+      "message": "[Critical] Line 173: editMessageService dereferences the plugin-provided JamiMessage pointer without a null check. Since this is an exported plugin service boundary, invalid input should fail cleanly instead of crashing the daemon.\n```suggestion\nauto* cm \u003d static_cast\u003cJamiMessage*\u003e(data);\nif (!cm)\n    return -1;\n```",
+      "revId": "fef430aba0125b02b150df9b12d02587b3a8b70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9b315be_449f3774",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T19:01:08Z",
+      "side": 1,
+      "message": "[Critical] Line 260: transformSwarmMessages currently invokes every loaded ChatHandler for every conversation, regardless of whether that handler is enabled for the {accountId, conversationId} pair. This bypasses the allow/deny state used by publishMessage, so a disabled plugin can still receive and transform historical swarm messages. Restrict transformations to handlers that are toggled or auto-enabled for that conversation, mirroring publishMessage activation logic.\n```suggestion\nstd::pair\u003cstd::string, std::string\u003e mPair(accountId, conversationId);\nfor (auto\u0026 handler : chatHandlers_) {\n    const auto handlerName \u003d handler-\u003egetChatHandlerDetails().at(\"name\");\n    const auto found \u003d handler-\u003eid().find_last_of(DIR_SEPARATOR_CH);\n    const bool autoEnabled \u003d PluginPreferencesUtils::getAlwaysPreference(handler-\u003eid().substr(0, found), handlerName);\n    const bool enabled \u003d chatHandlerToggled_[mPair].count(reinterpret_cast\u003cuintptr_t\u003e(handler.get()))\n        || allowDenyList_[mPair][handlerName]\n        || autoEnabled;\n    if (enabled)\n        handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "fef430aba0125b02b150df9b12d02587b3a8b70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
