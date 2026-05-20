@@ -53,6 +53,10 @@ ifdef HAVE_IOS
 	--without-zstd
 endif
 
+ifdef HAVE_ANDROID
+	GNUTLS_CONF += --without-brotli --without-zstd
+endif
+
 
 #Workaround for localtime_r function
 ifdef HAVE_WIN32
