@@ -1294,6 +1294,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     announcement.dev = devId;
     announcement.pk = device.getSharedPublicKey();
     dht::Value ann_val {announcement};
+    ann_val.priority = 1; // normal priority — presence updates should not wake peers
     ann_val.sign(*id.first);
 
     auto packedAnnoucement = ann_val.getPacked();
@@ -1468,7 +1469,9 @@ ArchiveAccountManager::revokeDevice(const std::string& device,
 
                         // Announce CRL immediately
                         auto h = a.id.second->getId();
-                        this_->dht_->put(h, a.revoked, dht::DoneCallback {}, {}, true);
+                        auto crlVal = std::make_shared<dht::Value>(*a.revoked);
+                        crlVal->priority = 1; // CRLs are not urgent
+                        this_->dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
 
                         this_->saveArchive(a, scheme, password);
                         this_->info_->contacts->removeAccountDevice(crt->getLongId());
