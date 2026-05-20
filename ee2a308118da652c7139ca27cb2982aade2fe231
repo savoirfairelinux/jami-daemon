@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "124c91eb_fd9ef9cb",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 1781,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T20:23:45Z",
+      "side": 1,
+      "message": "[Critical] Line 1781: `isPeerAuthorized()` accepts a device when `uriFromDevice(deviceId)` returns empty. That means any member or invited user can authorize an unknown/untracked device id as long as the issuer URI is a valid member, which defeats the device-membership portion of the authorization check. For established conversations, unknown devices should be rejected unless there is an explicit invite/bootstrap path that requires otherwise.\n```suggestion\nauto mappedUri \u003d uriFromDevice(deviceId);\nreturn !mappedUri.empty() \u0026\u0026 mappedUri \u003d\u003d uri;\n```",
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6fc5e1f0_55b5151e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 2806,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T20:23:45Z",
+      "side": 1,
+      "message": "[Critical] Line 2806: The fallback path used when `conv-\u003econversation` is null only checks `conv-\u003einfo.members`, but it does not validate that `deviceId` belongs to `uri`. This reintroduces the confused-deputy case fixed elsewhere: a valid invited/member URI can be paired with an unrelated device id and still be accepted. Either reject this state or carry enough device information in `conv-\u003einfo` to enforce the same URI-device binding as `Conversation::isPeerAuthorized()`.",
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f9c50c9_c8397ffe",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 2268,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-20T20:23:45Z",
+      "side": 1,
+      "message": "[Critical] Line 2268: The incoming git channel no longer verifies that the device embedded in the channel name (`git://\u003cdevice\u003e/\u003cconversation\u003e`) matches the local device being requested. This allows an authorized conversation member to open a server-side git channel using an arbitrary target device id, which weakens the channel-binding hardening this patch is trying to add. Keep parsing the requested device from `name` and reject requests not addressed to this account/device before authorizing the peer.\n```suggestion\nauto requestedDevice \u003d name.substr(6, sep - 6);\nif (requestedDevice !\u003d currentDeviceId().toString()) {\n    JAMI_WARNING(\"[Account {:s}] [Conversation {}] Git server requested for unexpected device {}\",\n                 getAccountID(),\n                 conversationId,\n                 requestedDevice);\n    channel-\u003eshutdown();\n    return;\n}\n```",
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
