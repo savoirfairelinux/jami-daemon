@@ -177,6 +177,9 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
         JAMI_ERROR("[Auth] unable to read announce: {}", e.what());
         return {};
     }
+    // Device announcements are presence-only — use normal priority to avoid
+    // waking peers with high-priority push notifications.
+    announce_val->priority = 1;
     return announce_val;
 }
 
@@ -299,8 +302,11 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                 {},
                 true);
         }
-        for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
-            dht_->put(h, crl, dht::DoneCallback {}, {}, true);
+        for (const auto& crl : info_->identity.second->issuer->getRevocationLists()) {
+            auto crlVal = std::make_shared<dht::Value>(*crl);
+            crlVal->priority = 1; // CRLs are not urgent — use normal priority
+            dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+        }
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
             if (dev.pk) {
                 findCertificate(dev.pk->getLongId(), [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
