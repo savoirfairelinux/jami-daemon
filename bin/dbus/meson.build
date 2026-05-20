@@ -31,6 +31,12 @@ jamid_targets += custom_target('presencemanager.adaptor',
     output: 'dbuspresencemanager.adaptor.h'
 )
 
+jamid_targets += custom_target('networkservicemanager.adaptor',
+    command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+    input: 'cx.ring.Ring.NetworkServiceManager.xml',
+    output: 'dbusnetworkservicemanager.adaptor.h'
+)
+
 if conf.get('ENABLE_VIDEO')
     jamid_targets += custom_target('videomanager.adaptor',
         command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
@@ -78,6 +84,7 @@ install_data(
     'cx.ring.Ring.CallManager.xml',
     'cx.ring.Ring.ConfigurationManager.xml',
     'cx.ring.Ring.Instance.xml',
+    'cx.ring.Ring.NetworkServiceManager.xml',
     'cx.ring.Ring.PresenceManager.xml',
     install_dir: get_option('datadir') / 'dbus-1' / 'interfaces'
 )

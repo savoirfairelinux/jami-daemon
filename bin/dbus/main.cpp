@@ -22,6 +22,7 @@
 #include "dbuscallmanager.hpp"
 #include "dbusconfigurationmanager.hpp"
 #include "dbusinstance.hpp"
+#include "dbusnetworkservicemanager.hpp"
 #include "dbuspresencemanager.hpp"
 #ifdef ENABLE_VIDEO
 #include "dbusvideomanager.hpp"
@@ -200,6 +201,7 @@ main(int argc, char* argv[])
         DBusCallManager callManager(*connection);
         DBusConfigurationManager configurationManager(*connection);
         DBusInstance instanceManager(*connection);
+        DBusNetworkServiceManager networkServiceManager(*connection);
         DBusPresenceManager presenceManager(*connection);
 #ifdef ENABLE_VIDEO
         DBusVideoManager videoManager(*connection);

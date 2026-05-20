@@ -875,6 +875,7 @@ else()
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.CallManager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.ConfigurationManager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.Instance.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.NetworkServiceManager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.PresenceManager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.VideoManager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.PluginManagerInterface.xml
@@ -883,6 +884,7 @@ else()
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuscallmanager.adaptor.h
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusconfigurationmanager.adaptor.h
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusinstance.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusnetworkservicemanager.adaptor.h
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspresencemanager.adaptor.h
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusvideomanager.adaptor.h
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspluginmanagerinterface.adaptor.h

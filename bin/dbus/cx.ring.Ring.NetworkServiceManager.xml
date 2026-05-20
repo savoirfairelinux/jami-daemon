@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<node name="/cx/ring/Ring/NetworkServiceManager"
+    xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+    <interface name="cx.ring.Ring.NetworkServiceManager">
+
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+            Used to manage exposed network services and tunnels.
+        </tp:docstring>
+
+        <method name="getExposedServices" tp:name-for-bindings="getExposedServices">
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="services" direction="out"/>
+        </method>
+
+        <method name="addExposedService" tp:name-for-bindings="addExposedService">
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="service" direction="in"/>
+            <arg type="s" name="serviceId" direction="out"/>
+        </method>
+
+        <method name="updateExposedService" tp:name-for-bindings="updateExposedService">
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="service" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
+        <method name="removeExposedService" tp:name-for-bindings="removeExposedService">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="serviceId" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
+        <method name="queryPeerServices" tp:name-for-bindings="queryPeerServices">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="peerUri" direction="in"/>
+            <arg type="u" name="requestId" direction="out"/>
+        </method>
+
+        <method name="openServiceTunnel" tp:name-for-bindings="openServiceTunnel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="peerUri" direction="in"/>
+            <arg type="s" name="peerDevice" direction="in"/>
+            <arg type="s" name="serviceId" direction="in"/>
+            <arg type="s" name="serviceName" direction="in"/>
+            <arg type="q" name="localPort" direction="in"/>
+            <arg type="s" name="tunnelId" direction="out"/>
+        </method>
+
+        <method name="closeServiceTunnel" tp:name-for-bindings="closeServiceTunnel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="tunnelId" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
+        <method name="getActiveTunnels" tp:name-for-bindings="getActiveTunnels">
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="tunnels" direction="out"/>
+        </method>
+
+        <signal name="peerServicesReceived" tp:name-for-bindings="peerServicesReceived">
+            <arg type="u" name="requestId"/>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="peerId"/>
+            <arg type="i" name="status"/>
+            <arg type="s" name="servicesJson"/>
+        </signal>
+
+        <signal name="serviceTunnelOpened" tp:name-for-bindings="serviceTunnelOpened">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="tunnelId"/>
+            <arg type="q" name="localPort"/>
+        </signal>
+
+        <signal name="serviceTunnelClosed" tp:name-for-bindings="serviceTunnelClosed">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="tunnelId"/>
+            <arg type="s" name="reason"/>
+        </signal>
+
+    </interface>
+</node>
