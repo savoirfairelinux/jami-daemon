@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e73182f_730b2846",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 24
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 86: Appending /usr/lib/$(HOST)/pkgconfig and /usr/share/pkgconfig to PKG_CONFIG_PATH during contrib builds can accidentally resolve host/system libraries instead of the contrib sysroot, especially in cross-compile builds. That undermines reproducibility and can link incompatible dependencies. Keep contrib pkg-config isolated to $(PREFIX), or gate host paths behind a native-build-only condition.",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44ed0259_64439e4b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 1259: Edition entries are tagged with latestEditionId before replacing the body, but the pending-edition path in handleMessage() only sets latestEditionId to the newest pending edit and does not add equivalent ids to each superseded body in the editions list. That makes bodyOverwrite lookup for historical editions inconsistent depending on whether edits arrived before or after the parent message. Apply the same id-tagging logic when replaying pending editions.",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e49ba4e3_7d3dbb5a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 1867,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "Line 1867: loadMissingBodyOverwrites treats the absence of pluginData[\"bodyOverwrite\"] as both \"not processed yet\" and \"processed but no overwrite was produced\". If a handler intentionally leaves a message unchanged or performs async work, the same message is considered missing on every load/reactivation, causing repeated plugin work and repeated scans. Store an explicit processed marker, or have transformSwarmMessages return/update a state that distinguishes \"no overwrite\" from \"not attempted\".\n```suggestion\n// Example: mark completion even when no overwrite is produced.\nwork.msg-\u003epluginData[\"bodyOverwriteProcessed\"] \u003d \"true\";\n```",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a58ed76_7dc94fb8",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 121: The new global services reloadBodyOverwriteConversations, clearSwarmBodyOverwrite, and bodyOverwriteLoadedConversations affect every account and every loaded conversation regardless of which plugin invoked them. A single plugin can clear or retrigger body overwrites produced by unrelated plugins across the daemon. Prefer the scoped conversation variants, or scope global operations to the invoking plugin\u0027s enabled conversations and plugin-owned keys rather than clearing all pluginData[\"bodyOverwrite\"].",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "42b0f87d_72b50ff8",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 137: updateMessageBodyOverwrite casts the plugin-provided void* and immediately dereferences it. A plugin bug or ABI mismatch can crash the daemon. Other new services validate null payloads; this one should do the same before reading accountId/conversationId/messageId.\n```suggestion\nauto* upd \u003d static_cast\u003cMessageBodyOverwriteUpdate*\u003e(data);\nif (!upd)\n    return -1;\n```",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4652294e_9a4a2691",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 177: editMessageService also dereferences a plugin-provided pointer without validating it. Since plugin service calls cross a C-style void* boundary, reject null payloads consistently to avoid daemon crashes.\n```suggestion\nauto* cm \u003d static_cast\u003cJamiMessage*\u003e(data);\nif (!cm)\n    return -1;\n```",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f845704_410dc74c",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T13:10:07Z",
+      "side": 1,
+      "message": "[Critical] Line 271: transformSwarmMessages() invokes every loaded chat handler for every conversation, ignoring the per-conversation allow/deny/toggled state used by publishMessage(). This lets an installed but disabled plugin inspect or rewrite messages for conversations where it is not attached, which is both a privacy and behavior regression. Filter handlers by the {accountId, conversationId} key before calling into plugins.\n```suggestion\nstd::pair\u003cstd::string, std::string\u003e key(accountId, conversationId);\nconst auto toggledIt \u003d chatHandlerToggled_.find(key);\nconst auto allowIt \u003d allowDenyList_.find(key);\nfor (auto\u0026 handler : chatHandlers_) {\n    const auto raw \u003d reinterpret_cast\u003cuintptr_t\u003e(handler.get());\n    const auto name \u003d handler-\u003egetChatHandlerDetails().at(\"name\");\n    const bool toggled \u003d toggledIt !\u003d chatHandlerToggled_.end() \u0026\u0026 toggledIt-\u003esecond.count(raw) !\u003d 0;\n    const bool allowed \u003d allowIt !\u003d allowDenyList_.end()\n        \u0026\u0026 allowIt-\u003esecond.find(name) !\u003d allowIt-\u003esecond.end()\n        \u0026\u0026 allowIt-\u003esecond.at(name);\n    if (toggled || allowed)\n        handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "7b2bab5146d2ebaa6f63c19dc5c90a75a88d6fdc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
