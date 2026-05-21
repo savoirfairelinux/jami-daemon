@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92ee1c43_ff2df2d6",
+        "filename": "src/jamidht/sync_channel_handler.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T20:10:57Z",
+      "side": 1,
+      "message": "[Major] Line 39: Removing the in-flight connection guard changes behavior: repeated SyncChannelHandler::connect calls for the same device can now enqueue multiple simultaneous sync-channel connection attempts because uniqueName makes each request distinguishable instead of coalescing them. That can create duplicate sync channels, duplicated synchronization work, and extra socket/channel state. Keep the duplicate-attempt guard around the logical channel name while still passing uniqueName to connectDevice.\\n```suggestion\\n    if (connectionManager_.isConnecting(deviceId, channelName)) {\\n        JAMI_LOG(\\\"Already connecting to {}\\\", deviceId);\\n        return;\\n    }\\n    connectionManager_.connectDevice(deviceId,\\n                                     channelName,\\n                                     std::move(cb),\\n                                     dhtnet::ConnectDeviceOptions {.forceNewSocket \u003d false, .uniqueName \u003d true});\\n```",
+      "revId": "ee5b7a55132ac613e2853205c50ec2f193251f71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
