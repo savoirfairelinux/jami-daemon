@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6a84f302_481346bf",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 935,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-21T20:52:54Z",
+      "side": 1,
+      "message": "Do we actually need this? `disconnectFromDevice` does two things:\n1. Remove the device from the swarm manager.\n2. Shut down the device\u0027s git socket if there is one.\n\nIt seems to me that all peer devices concerned by point 1 should already be handled by lines 924-927, and those concerned by point 2 by lines 939-943.",
+      "range": {
+        "startLine": 929,
+        "startChar": 4,
+        "endLine": 935,
+        "endChar": 5
+      },
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "124c91eb_fd9ef9cb",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 19
@@ -14,6 +37,24 @@
       "writtenOn": "2026-05-20T20:23:45Z",
       "side": 1,
       "message": "[Critical] Line 1781: `isPeerAuthorized()` accepts a device when `uriFromDevice(deviceId)` returns empty. That means any member or invited user can authorize an unknown/untracked device id as long as the issuer URI is a valid member, which defeats the device-membership portion of the authorization check. For established conversations, unknown devices should be rejected unless there is an explicit invite/bootstrap path that requires otherwise.\n```suggestion\nauto mappedUri \u003d uriFromDevice(deviceId);\nreturn !mappedUri.empty() \u0026\u0026 mappedUri \u003d\u003d uri;\n```",
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c73df78c_642908ba",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 1781,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-21T20:52:54Z",
+      "side": 1,
+      "message": "If allowing an empty `mappedUri` is actually the desired behavior, then I think it\u0027s worth adding a comment explaining why.",
+      "parentUuid": "124c91eb_fd9ef9cb",
       "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
