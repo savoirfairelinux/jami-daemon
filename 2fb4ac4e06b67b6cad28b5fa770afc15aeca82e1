@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "193bebc2_75e4871c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 2805,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T20:09:07Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 2805: For unloaded conversations this fallback authorizes an invited/member URI without verifying that the presented device belongs to that URI. The loaded-conversation path calls Conversation::isPeerAuthorized(), which checks uriFromDevice(deviceId) to reject a known device mapped to another account. This fallback should apply the same mapping check before accepting conv-\u003einfo.members; otherwise a known device from another peer can be authorized when using a certificate issuer URI present in conv-\u003einfo.members. Suggested fix:\n```suggestion\n        auto mappedUri \u003d pimpl_-\u003eaccountManager_-\u003egetUsernameFromDevice(deviceId);\n        if (!mappedUri.empty() \u0026\u0026 mappedUri !\u003d uri)\n            return false;\n        return !conv-\u003einfo.isRemoved() \u0026\u0026 conv-\u003einfo.members.find(uri) !\u003d conv-\u003einfo.members.end();\n```\nUse the repository/account helper that matches Conversation::uriFromDevice() in this layer.",
+      "revId": "2fb4ac4e06b67b6cad28b5fa770afc15aeca82e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "973013f1_1bdb82b1",
+        "filename": "test/unitTest/conversation/conversationBanStatus.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-21T20:09:07Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 218: The new test file has no trailing newline. This is minor, but it commonly trips formatting/lint checks and is inconsistent with the rest of the tree. Add a final newline after CORE_TEST_RUNNER(...).",
+      "revId": "2fb4ac4e06b67b6cad28b5fa770afc15aeca82e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
