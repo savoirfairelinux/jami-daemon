@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52d3b6e9_15548724",
+        "filename": "src/jamidht/sync_channel_handler.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-05-21T18:55:30Z",
+      "side": 1,
+      "message": "As discussed, it\u0027s probably better to leave `connType` empty as it was before, at least for now.",
+      "range": {
+        "startLine": 45,
+        "startChar": 67,
+        "endLine": 45,
+        "endChar": 85
+      },
+      "revId": "08e1c18c2b1b67569a9aa02d025fac865b7a74a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
