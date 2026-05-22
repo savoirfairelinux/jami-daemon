@@ -41,13 +41,6 @@ AuthChannelHandler::connect(const DeviceId& deviceId,
     connectionManager_.connectDevice(deviceId, name, std::move(cb));
 }
 
-void
-AuthChannelHandler::connect(const dht::InfoHash& infoHash, const std::string& channelPath, ConnectCallbackLegacy&& cb)
-{
-    JAMI_DEBUG("[AuthChannel {}] connecting to channelPath = {}", infoHash.toString(), channelPath);
-    connectionManager_.connectDevice(infoHash, channelPath, std::move(cb));
-}
-
 bool
 AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
