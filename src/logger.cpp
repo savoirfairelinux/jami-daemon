@@ -211,7 +211,7 @@ struct Msg
 
     std::string_view file_;
     unsigned line_;
-    std::string_view tag_;
+    std::string tag_;
     std::string payload_;
     int level_;
     bool linefeed_;
