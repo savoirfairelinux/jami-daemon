@@ -180,7 +180,9 @@ formatPrintfArgs(const char* format, va_list ap)
     return ret;
 }
 
-struct Logger::Msg
+namespace Logger {
+
+struct Msg
 {
     Msg() = delete;
 
@@ -216,7 +218,7 @@ struct Logger::Msg
     std::string header_;
 };
 
-class Logger::Handler
+class Handler
 {
 public:
     virtual ~Handler() = default;
@@ -230,13 +232,13 @@ protected:
     std::atomic_bool enabled_ {false};
 };
 
-class ConsoleLog final : public Logger::Handler
+class ConsoleLog final : public Handler
 {
 public:
     ConsoleLog() = default;
 
 #ifdef _WIN32
-    void printLogImpl(const Logger::Msg& msg, bool with_color)
+    void printLogImpl(const Msg& msg, bool with_color)
     {
         // If we are using Visual Studio, we can use OutputDebugString to print
         // to the "Output" window. Otherwise, we just use fputs to stderr.
@@ -296,7 +298,7 @@ public:
         }
     }
 #else
-    void printLogImpl(const Logger::Msg& msg, bool with_color)
+    void printLogImpl(const Msg& msg, bool with_color)
     {
         if (with_color) {
             constexpr const char* color_header = CYAN;
@@ -335,10 +337,10 @@ public:
 
     bool withColor_ = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR") || getenv("NO_COLOURS"));
 
-    void consume(const Logger::Msg& msg) override { printLogImpl(msg, withColor_); }
+    void consume(const Msg& msg) override { printLogImpl(msg, withColor_); }
 };
 
-class SysLog final : public Logger::Handler
+class SysLog final : public Handler
 {
 public:
     SysLog()
@@ -352,7 +354,7 @@ public:
 #endif /* _WIN32 */
     }
 
-    void consume(const Logger::Msg& msg) override
+    void consume(const Msg& msg) override
     {
 #ifdef __ANDROID__
         __android_log_write(msg.level_, msg.file_.data(), msg.payload_.c_str());
@@ -367,19 +369,19 @@ public:
     }
 };
 
-class MonitorLog final : public Logger::Handler
+class MonitorLog final : public Handler
 {
 public:
     MonitorLog() = default;
 
-    void consume(const Logger::Msg& msg) override
+    void consume(const Msg& msg) override
     {
         auto message = msg.header_ + msg.payload_;
         emitSignal<libjami::ConfigurationSignal::MessageSend>(message);
     }
 };
 
-class FileLog final : public Logger::Handler
+class FileLog final : public Handler
 {
 public:
     FileLog() = default;
@@ -401,7 +403,7 @@ public:
         }
     }
 
-    void consume(const Logger::Msg& msg) override
+    void consume(const Msg& msg) override
     {
         std::lock_guard lk(mtx_);
         if (file_.is_open()) {
@@ -426,7 +428,7 @@ public:
         return *self;
     }
 
-    void log(Logger::Msg&& msg)
+    void log(Msg&& msg)
     {
         {
             std::lock_guard lk(mtx_);
@@ -563,32 +565,32 @@ private:
 
     std::mutex mtx_;
     std::condition_variable cv_;
-    std::list<Logger::Msg> msgQueue_;
-    std::list<Logger::Msg> recycleQueue_;
+    std::list<Msg> msgQueue_;
+    std::list<Msg> recycleQueue_;
     bool running_ {false};
     std::thread thread_;
 };
 
 void
-Logger::setConsoleLog(bool en)
+setConsoleLog(bool en)
 {
     LogDispatcher::instance().enableConsoleLog(en);
 }
 
 void
-Logger::setSysLog(bool en)
+setSysLog(bool en)
 {
     LogDispatcher::instance().enableSysLog(en);
 }
 
 void
-Logger::setMonitorLog(bool en)
+setMonitorLog(bool en)
 {
     LogDispatcher::instance().enableMonitorLog(en);
 }
 
 void
-Logger::setFileLog(const std::string& path)
+setFileLog(const std::string& path)
 {
     LogDispatcher::instance().enableFileLog(path);
 }
@@ -596,19 +598,19 @@ Logger::setFileLog(const std::string& path)
 static std::atomic_bool debugEnabled_ {false};
 
 void
-Logger::setDebugMode(bool enable)
+setDebugMode(bool enable)
 {
     debugEnabled_.store(enable, std::memory_order_relaxed);
 }
 
 bool
-Logger::debugEnabled()
+debugEnabled()
 {
     return debugEnabled_.load(std::memory_order_relaxed);
 }
 
 void
-Logger::write(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message)
+write(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message)
 {
     if (!LogDispatcher::instance().isEnabled()) {
         return;
@@ -619,15 +621,16 @@ Logger::write(int level, std::string_view file, unsigned line, bool linefeed, st
 }
 
 void
-Logger::fini()
+fini()
 {
     // Force close on file and join thread
     LogDispatcher::instance().enableFileLog({});
     LogDispatcher::instance().stop();
 
 #ifdef _WIN32
-    Logger::setConsoleLog(false);
+    setConsoleLog(false);
 #endif /* _WIN32 */
 }
 
+} // namespace Logger
 } // namespace jami

@@ -73,85 +73,47 @@ namespace jami {
  */
 void strErr();
 
-///
-/// Level-driven logging class that support printf and C++ stream logging fashions.
-///
-class Logger
+namespace Logger {
+
+constexpr int
+dhtLevel(dht::log::LogLevel level)
 {
-public:
-    class Handler;
-    struct Msg;
-
-    Logger(int level, const char* file, unsigned line, bool linefeed)
-        : level_ {level}
-        , file_ {file}
-        , line_ {line}
-        , linefeed_ {linefeed}
-    {}
-
-    Logger() = delete;
-    Logger(const Logger&) = delete;
-    Logger(Logger&&) noexcept = default;
-
-    constexpr static int dhtLevel(dht::log::LogLevel level)
-    {
-        switch (level) {
-        case dht::log::LogLevel::debug:
-            return LOG_DEBUG;
-        case dht::log::LogLevel::warning:
-            return LOG_WARNING;
-        case dht::log::LogLevel::error:
-        default:
-            return LOG_ERR;
-        }
+    switch (level) {
+    case dht::log::LogLevel::debug:
+        return LOG_DEBUG;
+    case dht::log::LogLevel::warning:
+        return LOG_WARNING;
+    case dht::log::LogLevel::error:
+    default:
+        return LOG_ERR;
     }
+}
 
-    LIBJAMI_PUBLIC
-    static void write(
-        int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message);
+LIBJAMI_PUBLIC
+void write(int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message);
 
-    static inline void writeDht(dht::log::source_loc loc,
-                                dht::log::LogLevel level,
-                                std::string_view tag,
-                                std::string&& message)
-    {
-        write(dhtLevel(level), loc.file, loc.line, true, tag, std::move(message));
-    }
-    static inline std::shared_ptr<dht::log::Logger> dhtLogger(const std::string& tag = {})
-    {
-        return std::make_shared<dht::Logger>(&Logger::writeDht, tag);
-    }
+inline void
+writeDht(dht::log::source_loc loc, dht::log::LogLevel level, std::string_view tag, std::string&& message)
+{
+    write(dhtLevel(level), loc.file, loc.line, true, tag, std::move(message));
+}
 
-    ///
-    /// Printf fashion logging.
-    ///
-    /// Example: JAMI_DBG("%s", "Hello, World!")
-    ///
-    LIBJAMI_PUBLIC
-    static void log(int level, const char* file, unsigned line, bool linefeed, const char* const fmt, ...)
-        PRINTF_ATTRIBUTE(5, 6);
+inline std::shared_ptr<dht::log::Logger>
+dhtLogger(const std::string& tag = {})
+{
+    return std::make_shared<dht::Logger>(&Logger::writeDht, tag);
+}
 
-    static void setConsoleLog(bool enable);
-    static void setSysLog(bool enable);
-    static void setMonitorLog(bool enable);
-    static void setFileLog(const std::string& path);
+void setConsoleLog(bool enable);
+void setSysLog(bool enable);
+void setMonitorLog(bool enable);
+void setFileLog(const std::string& path);
 
-    static void setDebugMode(bool enable);
-    static bool debugEnabled();
+void setDebugMode(bool enable);
+bool debugEnabled();
 
-    static void fini();
-
-    static Logger log(int level, const char* file, unsigned line, bool linefeed)
-    {
-        return {level, file, line, linefeed};
-    }
-
-private:
-    int level_;              ///< LOG_XXXX values
-    const char* const file_; ///< contextual filename (printed as header)
-    const unsigned line_;    ///< contextual line number (printed as header)
-    bool linefeed_ {true};   ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
-};
+void fini();
+} // namespace Logger
 
 namespace log {
 
