@@ -839,7 +839,7 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
 
     url.remove_prefix(AUTH_URI_SCHEME.length());
     auto slashPos = url.find('/');
-    if (slashPos == std::string_view::npos || (slashPos != 40 && slashPos != 64)) {
+    if (slashPos == std::string_view::npos || slashPos != 64) {
         JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
@@ -848,6 +848,11 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
     auto peerCodeS = url.substr(0, url.find('/'));
     if (peerCodeS.size() != 6) {
         JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
+    }
+    auto peerId = dht::PkId(peerTempAcc);
+    if (!peerId) {
+        JAMI_ERROR("[LinkDevice] Invalid peer id in uri: {}", peerTempAcc);
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
     JAMI_LOG("[LinkDevice] ======\n * tempAcc =  {}\n * code = {}", peerTempAcc, peerCodeS);
@@ -885,17 +890,11 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
     };
 
     auto channelName = fmt::format("{}{}", CHANNEL_SCHEME, peerCodeS);
-    if (peerTempAcc.size() == 40) {
-        channelHandler->connect(dht::InfoHash(peerTempAcc),
-                                channelName,
-                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                            const dht::InfoHash& /*infoHash*/) { onConnect(std::move(socket)); });
-    } else {
-        channelHandler->connect(dht::PkId(peerTempAcc),
-                                channelName,
-                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                            const dht::PkId& /*infoHash*/) { onConnect(std::move(socket)); });
-    }
+    channelHandler->connect(peerId,
+                            channelName,
+                            [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket, const dht::PkId& /*infoHash*/) {
+                                onConnect(std::move(socket));
+                            });
 
     runOnMainThread([token, id = accountId_] {
         emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(id,
