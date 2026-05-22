@@ -1,0 +1,9 @@
+Code-Review+2: François-Simon Fauteux-Chapleau <francois-simon.fauteux-chapleau@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 22 May 2026 13:55:51 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/34075
+Comments-Total: 1
+Comments-Unresolved: 1
+Project: jami-daemon
+Branch: refs/heads/master
