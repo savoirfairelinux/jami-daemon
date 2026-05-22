@@ -43,7 +43,6 @@ public:
                  ConnectCb&& cb,
                  const std::string& connectionType = "",
                  bool forceNewConnection = false) override;
-    void connect(const dht::InfoHash& infoHash, const std::string&, ConnectCallbackLegacy&& cb) override;
 
     /**
      * Determine if we accept or not the sync request
