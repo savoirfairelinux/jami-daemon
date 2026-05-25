@@ -78,13 +78,16 @@ if(COVERAGE_TOOLS_AVAILABLE OR GCOVR_PATH)
         # coverage-html target (using lcov/genhtml)
         add_custom_target(coverage-html
             # Initialize coverage data
-            COMMAND ${LCOV_PATH} --capture --initial --directory ${CMAKE_BINARY_DIR} --output-file jami-coverage-base.info
+            # Depending on the versions of gcc/lcov used, we may get spurious 'mismatched end line' errors (due to
+            # CPPUNIT macros) and 'unexpected negative count' errors (in standard library headers). Ignore them,
+            # otherwise the operation will fail and no coverage report will be generated.
+            COMMAND ${LCOV_PATH} --capture --initial --directory ${CMAKE_BINARY_DIR} --output-file jami-coverage-base.info --ignore-errors mismatch,negative --rc geninfo_unexecuted_blocks=1
             # Capture test execution data
-            COMMAND ${LCOV_PATH} --capture --directory ${CMAKE_BINARY_DIR} --output-file jami-coverage-tests.info
+            COMMAND ${LCOV_PATH} --capture --directory ${CMAKE_BINARY_DIR} --output-file jami-coverage-tests.info --ignore-errors mismatch,negative --rc geninfo_unexecuted_blocks=1
             # Combine base and test coverage
             COMMAND ${LCOV_PATH} --add-tracefile jami-coverage-base.info --add-tracefile jami-coverage-tests.info --output-file jami-coverage.info
             # Remove unwanted files
-            COMMAND ${LCOV_PATH} --remove jami-coverage.info 
+            COMMAND ${LCOV_PATH} --remove jami-coverage.info --ignore-errors unused
                 "*/contrib/*"
                 "*/bin/dbus/*"
                 "*/_deps/*"
