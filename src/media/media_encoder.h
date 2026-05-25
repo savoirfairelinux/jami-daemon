@@ -31,6 +31,7 @@
 #include "media_stream.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -99,9 +100,6 @@ public:
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
 
-    const std::string& getAudioCodec() const { return audioCodec_; }
-    const std::string& getVideoCodec() const { return videoCodec_; }
-
     int setBitrate(uint64_t br);
     int setPacketLoss(uint64_t pl);
 
@@ -121,7 +119,7 @@ private:
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
-    int initStream(const std::string& codecName, AVBufferRef* framesCtx = {});
+    int initVideoStream(AVBufferRef* framesCtx = {});
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx = {});
     void openIOContext();
     void startIO();
@@ -176,8 +174,7 @@ protected:
     AVDictionary* options_ = nullptr;
     MediaStream videoOpts_;
     MediaStream audioOpts_;
-    std::string videoCodec_;
-    std::string audioCodec_;
+    std::optional<SystemCodecInfo> videoCodecInfo_ {};
 };
 
 } // namespace jami

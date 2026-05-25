@@ -24,7 +24,6 @@
 #include "logger.h"
 #include "manager.h"
 #include "string_utils.h"
-#include "system_codec_container.h"
 
 #ifdef ENABLE_HWACCEL
 #include "video/accel.h"
@@ -173,10 +172,8 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
 int
 MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
-    if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
-        audioCodec_ = systemCodecInfo.name;
-    } else {
-        videoCodec_ = systemCodecInfo.name;
+    if (systemCodecInfo.mediaType != MEDIA_AUDIO) {
+        videoCodecInfo_ = systemCodecInfo;
     }
 
     auto* stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -204,11 +201,10 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 }
 
 int
-MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
+MediaEncoder::initVideoStream(AVBufferRef* framesCtx)
 {
-    const auto codecInfo = Manager::instance().getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
-    if (codecInfo)
-        return initStream(*codecInfo, framesCtx);
+    if (videoCodecInfo_)
+        return initStream(*videoCodecInfo_, framesCtx);
     else
         return -1;
 }
@@ -405,7 +401,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     if (auto pkt = input->packet()) {
         // passthrough already-encoded packet
         if (!initialized_) {
-            currentStreamIdx_ = initStream(videoCodec_);
+            currentStreamIdx_ = initVideoStream();
             startIO();
         }
         return send(*pkt, -1) ? 0 : -1;
@@ -419,7 +415,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     }
 
     if (!initialized_) {
-        initStream(videoCodec_, input->pointer()->hw_frames_ctx);
+        initVideoStream(input->pointer()->hw_frames_ctx);
         startIO();
     }
 
@@ -480,7 +476,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo and videoOpts_.isValid()) {
             // Has video stream, so init with video frame
-            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx);
+            streamIdx = initVideoStream(frame->hw_frames_ctx);
             startIO();
         } else if (!isVideo and !videoOpts_.isValid()) {
             // Only audio, for MediaRecorder, which doesn't use encodeAudio
@@ -528,7 +524,7 @@ bool
 MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
     if (!initialized_) {
-        streamIdx = initStream(videoCodec_);
+        streamIdx = initVideoStream();
         startIO();
     }
     if (streamIdx < 0)
