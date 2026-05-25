@@ -220,7 +220,7 @@ IceSdpParsingTest::getUserAlias(const std::string& callId)
 
     auto const& account = call->getAccount().lock();
     if (account)
-        return account->getAccountID();
+        return account->getAccountDetails()[ConfProperties::ALIAS];
 
     JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
     return {};
@@ -259,7 +259,7 @@ IceSdpParsingTest::onIncomingCall(const std::string& accountId,
 }
 
 void
-IceSdpParsingTest::onCallStateChange(const std::string& accountId,
+IceSdpParsingTest::onCallStateChange(const std::string& /* accountId */,
                                      const std::string& callId,
                                      const std::string& state,
                                      CallData& callData)
