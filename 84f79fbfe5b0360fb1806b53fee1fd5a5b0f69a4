@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfa94598_53c50af3",
+        "filename": "src/jamidht/conversation_channel_handler.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-26T18:46:51Z",
+      "side": 1,
+      "message": "[Critical] Line 55: 🔴 Critical Issues - This authorization path trusts `cert-\u003egetLongId()` as the device id but does not validate that the device belongs to `cert-\u003eissuer` before accepting the channel. Because `Conversation::isPeerAuthorized()` explicitly assumes the device has already been confirmed, callers handling untrusted requests must enforce that precondition here or in `ConversationModule::isPeerAuthorized()`. Suggested fix: move the confirmed-device check into `ConversationModule::isPeerAuthorized()` so all channel handlers get the same protection.\n```suggestion\nreturn convModule-\u003eisPeerAuthorized(conversationId, issuerUri, deviceId, true);\n```",
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc6b4348_bed62310",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 2806,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-26T18:46:51Z",
+      "side": 1,
+      "message": "[Critical] Line 2806: 🔴 Critical Issues - `isPeerAuthorized()` only verifies that `uri` is a member and `deviceId` is not banned; it never verifies that `deviceId` is actually a trusted/confirmed device belonging to `uri`. The new callers are channel admission paths, so the header assumption in `Conversation::isPeerAuthorized()` is not enforced at the boundary. A certificate/device that is not present in the conversation devices list could be authorized as long as it claims a member issuer and is not explicitly banned. Please add an explicit member-device binding/known-device check before returning true. For example:\n```suggestion\nif (conv-\u003econversation) {\n    const auto authorized \u003d conv-\u003econversation-\u003eisPeerAuthorized(uri, deviceId, includeInvited);\n    return authorized \u0026\u0026 conv-\u003econversation-\u003ehasDeviceForMember(uri, deviceId);\n}\n```",
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9783037_ed824576",
+        "filename": "src/jamidht/swarm/swarm_channel_handler.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-26T18:46:51Z",
+      "side": 1,
+      "message": "[Critical] Line 69: 🔴 Critical Issues - Same authorization gap as the conversation channel handler: incoming swarm channel requests are accepted based on member URI plus non-banned device id, but the code does not prove that the device id is a confirmed device for that member. This is especially sensitive because swarm channels are used for synchronization. Enforce the issuer/device relationship in the shared authorization helper before accepting the request.",
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "370af1a6_230ff788",
+        "filename": "test/unitTest/conversation/conversationBanStatus.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-26T18:46:51Z",
+      "side": 1,
+      "message": "Line 218: 🟡 Suggestions - The new tests cover member/device ban splitting and invite authorization, but they do not cover the critical precondition documented by `Conversation::isPeerAuthorized()`: rejecting a device id that is not a confirmed device of the supplied member URI. Add a regression test that calls `isPeerAuthorized()` with Bob\u0027s URI and Carla\u0027s device id, expecting false.\n```suggestion\nCPPUNIT_ASSERT(!convModule-\u003eisPeerAuthorized(memberConvId, bobUri, carlaDeviceId, true));\n```",
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
