@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "db2e3182_58e16cfa",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 935,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-26T18:46:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6a84f302_481346bf",
+      "range": {
+        "startLine": 929,
+        "startChar": 4,
+        "endLine": 935,
+        "endChar": 5
+      },
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "124c91eb_fd9ef9cb",
@@ -55,6 +79,24 @@
       "side": 1,
       "message": "If allowing an empty `mappedUri` is actually the desired behavior, then I think it\u0027s worth adding a comment explaining why.",
       "parentUuid": "124c91eb_fd9ef9cb",
+      "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96a33100_f18b1de3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 1781,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-26T18:46:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c73df78c_642908ba",
       "revId": "ee2a308118da652c7139ca27cb2982aade2fe231",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
