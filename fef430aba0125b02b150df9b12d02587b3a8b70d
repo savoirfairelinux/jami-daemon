@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "80ea6a16_ac294e4e",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 23
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-05-26T20:32:03Z",
+      "side": 1,
+      "message": "Agreeing with this ^",
+      "parentUuid": "79b008cf_a9b57908",
+      "revId": "fef430aba0125b02b150df9b12d02587b3a8b70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "99658a73_73e56fcf",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 23
