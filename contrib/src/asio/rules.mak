@@ -1,5 +1,5 @@
-ASIO_VERSION := asio-1-36-0
-PKG_CPE += cpe:2.3:a:*:asio:1.36.0:*:*:*:*:*:*:*
+ASIO_VERSION := asio-1-38-0
+PKG_CPE += cpe:2.3:a:*:asio:1.38.0:*:*:*:*:*:*:*
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 ifeq ($(call need_pkg,'asio >= 1.30'),)
@@ -11,9 +11,8 @@ $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 
 asio: asio-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
-	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
+	rm -rf asio-$(ASIO_VERSION)/asio
 	$(APPLY) $(SRC)/asio/0001-Disable-building-tests-and-examples.patch
-	$(APPLY) $(SRC)/asio/0002-Remove-_FORTIFY_SOURCE-workaround.patch
 	$(MOVE)
 
 .asio: asio .sum-asio
