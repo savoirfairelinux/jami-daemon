@@ -1,0 +1,93 @@
+From f08c70419c6455902790ba10d8cb544c1482ef99 Mon Sep 17 00:00:00 2001
+From: Christopher Kohlhoff <chris@kohlhoff.com>
+Date: Sun, 30 Nov 2025 12:21:39 +1100
+Subject: [PATCH] Remove _FORTIFY_SOURCE workaround. Check size when processing
+ addrinfo.
+
+The previous workaround for _FORTIFY_SOURCE warnings increased the size
+of all IP endpoint objects. Instead, try fixing the warning at the point
+where it occurs, by limiting the length memcpy-ed while processing the
+addrinfo results from getaddrinfo.
+---
+include/asio/ip/basic_resolver_results.hpp | 22 ++++++++++++-------
+include/asio/ip/detail/endpoint.hpp        | 12 ++++------
+ 2 files changed, 18 insertions(+), 16 deletions(-)
+
+diff --git a/include/asio/ip/basic_resolver_results.hpp b/include/asio/ip/basic_resolver_results.hpp
+index 3b68fd55a..0bbbb799a 100644
+--- a/include/asio/ip/basic_resolver_results.hpp
++++ b/include/asio/ip/basic_resolver_results.hpp
+@@ -132,14 +132,20 @@ public:
+       if (address_info->ai_family == ASIO_OS_DEF(AF_INET)
+           || address_info->ai_family == ASIO_OS_DEF(AF_INET6))
+       {
+-        using namespace std; // For memcpy.
+-        typename InternetProtocol::endpoint endpoint;
+-        endpoint.resize(static_cast<std::size_t>(address_info->ai_addrlen));
+-        memcpy(endpoint.data(), address_info->ai_addr,
+-            address_info->ai_addrlen);
+-        results.values_->push_back(
+-            basic_resolver_entry<InternetProtocol>(endpoint,
+-              actual_host_name, service_name));
++        const std::size_t expected_size =
++          address_info->ai_family == ASIO_OS_DEF(AF_INET)
++            ? sizeof(asio::detail::sockaddr_in4_type)
++            : sizeof(asio::detail::sockaddr_in6_type);
++        if (address_info->ai_addrlen >= expected_size)
++        {
++          using namespace std; // For memcpy.
++          typename InternetProtocol::endpoint endpoint;
++          endpoint.resize(expected_size);
++          memcpy(endpoint.data(), address_info->ai_addr, expected_size);
++          results.values_->push_back(
++              basic_resolver_entry<InternetProtocol>(endpoint,
++                actual_host_name, service_name));
++        }
+       }
+       address_info = address_info->ai_next;
+     }
+diff --git a/include/asio/ip/detail/endpoint.hpp b/include/asio/ip/detail/endpoint.hpp
+index 82fbf7678..85e402328 100644
+--- a/include/asio/ip/detail/endpoint.hpp
++++ b/include/asio/ip/detail/endpoint.hpp
+@@ -59,13 +59,13 @@ public:
+   // Get the underlying endpoint in the native type.
+   asio::detail::socket_addr_type* data() noexcept
+   {
+-    return &data_.base[0];
++    return &data_.base;
+   }
+
+   // Get the underlying endpoint in the native type.
+   const asio::detail::socket_addr_type* data() const noexcept
+   {
+-    return &data_.base[0];
++    return &data_.base;
+   }
+
+   // Get the underlying size of the endpoint in the native type.
+@@ -110,7 +110,7 @@ public:
+   // Determine whether the endpoint is IPv4.
+   bool is_v4() const noexcept
+   {
+-    return data_.base[0].sa_family == ASIO_OS_DEF(AF_INET);
++    return data_.base.sa_family == ASIO_OS_DEF(AF_INET);
+   }
+
+ #if !defined(ASIO_NO_IOSTREAM)
+@@ -122,11 +122,7 @@ private:
+   // The underlying IP socket address.
+   union data_union
+   {
+-#if defined(_FORTIFY_SOURCE)
+-    asio::detail::socket_addr_type base[8];
+-#else // defined(_FORTIFY_SOURCE)
+-    asio::detail::socket_addr_type base[1];
+-#endif // defined(_FORTIFY_SOURCE)
++    asio::detail::socket_addr_type base;
+     asio::detail::sockaddr_in4_type v4;
+     asio::detail::sockaddr_in6_type v6;
+   } data_;
+--
+2.43.0
+

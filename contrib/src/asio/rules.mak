@@ -13,6 +13,7 @@ asio: asio-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
 	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
 	$(APPLY) $(SRC)/asio/0001-Disable-building-tests-and-examples.patch
+	$(APPLY) $(SRC)/asio/0002-Remove-_FORTIFY_SOURCE-workaround.patch
 	$(MOVE)
 
 .asio: asio .sum-asio
