@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.8.9
+GNUTLS_VERSION := 3.8.13
 PKG_CPE += cpe:2.3:a:gnu:gnutls:$(GNUTLS_VERSION):*:*:*:*:*:*:*
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-$(GNUTLS_VERSION).tar.xz
 
@@ -19,7 +19,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
-	$(APPLY) $(SRC)/gnutls/0001-fix-autotools-build-errors.patch
+#	$(APPLY) $(SRC)/gnutls/0001-fix-autotools-build-errors.patch
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
