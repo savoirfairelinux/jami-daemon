@@ -1,6 +1,6 @@
 {
   "name": "@savoirfairelinux/jami-core-darwin-arm64",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Jami daemon native addon for macOS arm64",
   "os": [
     "darwin"
