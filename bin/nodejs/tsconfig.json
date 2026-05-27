@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "composite": true,
-    "target": "es2022",
-    "module": "es2022",
+    "target": "es2025",
+    "module": "nodenext",
     "rootDir": "src",
     "moduleResolution": "node",
     "declaration": true,
