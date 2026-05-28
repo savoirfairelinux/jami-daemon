@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1cd466d7_8e568095",
+        "filename": "extras/tools/tools.mak",
+        "patchSetId": 27
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T19:44:40Z",
+      "side": 1,
+      "message": "[Critical] Line 270: The generated meson wrapper is not valid shell: `exec PYTHONPATH\u003d... python3 ...` attempts to exec a program named `PYTHONPATH\u003d...` instead of setting the environment. Meson will fail to start from this toolchain. Export PYTHONPATH before exec, preserving any existing value. Suggested fix:\n```suggestion\n\tprintf \u0027#!/bin/sh\\nexport PYTHONPATH\u003d\"$(PREFIX)/lib/meson-packages$${PYTHONPATH:+:$$PYTHONPATH}\"\\nexec python3 -m mesonbuild \"$$@\"\\n\u0027 \\\n\t\t\u003e $(PREFIX)/bin/meson\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b55518be_90985948",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1269,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T19:44:40Z",
+      "side": 1,
+      "message": "[Critical] Line 1269: The normal SwarmMessageUpdated emission was removed from handleEdition and is now only emitted from the plugin path when ENABLE_PLUGIN is enabled and plugin handlers exist. This means ordinary message edits will no longer update clients when plugins are disabled or no chat handler is active. Restore the baseline update signal independently of plugin processing, and only add plugin overwrite injection as an enhancement. Suggested fix:\n```suggestion\n                emitSignal\u003clibjami::ConversationSignal::SwarmMessageUpdated\u003e(\n                    accountId_, repository_-\u003eid(), injectEditionOverwrites(*it-\u003esecond, history.quickAccess));\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f7751bf_97e6e958",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1907,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T19:44:40Z",
+      "side": 1,
+      "message": "[Major] Line 1907: `loadMissingBodyOverwrites` stores shared `SwarmMessage` pointers under the history mutex, then dereferences and copies them after releasing the mutex while other paths can mutate `body`, `editions`, or `pluginData`. That creates a data race and can produce inconsistent plugin input. Store message IDs during collection, then re-lock to take a value snapshot before transforming and re-lock again to write the result.",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abd92245_2b54cfcd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1948,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T19:44:40Z",
+      "side": 1,
+      "message": "[Critical] Line 1948: `std::string::starts_with` requires C++20, while this project is built as C++17 in several targets. This will break builds with C++17 compilers. Use a C++17-compatible prefix check. Suggested fix:\n```suggestion\n                if (it-\u003efirst.rfind(\"bodyOverwrite\", 0) \u003d\u003d 0)\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c622143_7f78a346",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T19:44:40Z",
+      "side": 1,
+      "message": "[Critical] Line 151: The new plugin services, especially `editMessage`, `updateMessageBodyOverwrite`, and the global clear/reload services, trust caller-provided account and conversation IDs without checking that the calling plugin is enabled for that conversation. A loaded plugin can therefore edit messages or alter UI-visible message bodies across all accounts/conversations. Bind these services to the `DLPlugin*` caller and reject operations unless that plugin\u0027s chat handler is attached/allowed for the target conversation. Suggested pattern:\n```suggestion\n        if (!isPluginAllowedForConversation(plugin, cm-\u003eaccountId, cm-\u003epeerId))\n            return -1;\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
