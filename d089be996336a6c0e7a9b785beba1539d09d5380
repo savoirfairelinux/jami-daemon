@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b10ccd8_8699525a",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 22
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "407d25c5_db836def",
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d45a3cf4_ff3bfca5",
@@ -41,6 +59,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df871ee5_78df83ce",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d45a3cf4_ff3bfca5",
+      "range": {
+        "startLine": 463,
+        "startChar": 47,
+        "endLine": 463,
+        "endChar": 53
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "18bf59fa_dbe9784b",
@@ -54,6 +96,30 @@
       "writtenOn": "2026-05-19T20:21:19Z",
       "side": 1,
       "message": "`CommitType::TEXT`",
+      "range": {
+        "startLine": 465,
+        "startChar": 82,
+        "endLine": 465,
+        "endChar": 94
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1fc93719_54c59dd9",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "18bf59fa_dbe9784b",
       "range": {
         "startLine": 465,
         "startChar": 82,
@@ -104,6 +170,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "43476d67_2dd28379",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1218,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7f525c7f_221e44a7",
+      "range": {
+        "startLine": 1216,
+        "startChar": 19,
+        "endLine": 1218,
+        "endChar": 65
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7655255b_19f90370",
@@ -117,6 +207,30 @@
       "writtenOn": "2026-05-19T21:28:01Z",
       "side": 1,
       "message": "Does this need to be done here in `handleEdition`, or could it be moved to `announce` (where we already call `transformSwarmMessages` and update `pluginData` using almost identical code)?",
+      "range": {
+        "startLine": 1227,
+        "startChar": 20,
+        "endLine": 1235,
+        "endChar": 21
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a50704d_0dc844c5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1235,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7655255b_19f90370",
       "range": {
         "startLine": 1227,
         "startChar": 20,
@@ -167,6 +281,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec1442aa_3bdb7dad",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1866,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "3de5736b_87fd6ebe",
+      "range": {
+        "startLine": 1866,
+        "startChar": 20,
+        "endLine": 1866,
+        "endChar": 50
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "287d8ba2_ef5856b1",
@@ -190,6 +328,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d4b609e_44347094",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "287d8ba2_ef5856b1",
+      "range": {
+        "startLine": 319,
+        "startChar": 9,
+        "endLine": 319,
+        "endChar": 39
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e9e1644f_df18630f",
@@ -203,6 +365,30 @@
       "writtenOn": "2026-05-20T15:03:47Z",
       "side": 1,
       "message": "Doesn\u0027t really make sense to have references to \"language\" here, this is a generic function that could be used by other chat plugins.",
+      "range": {
+        "startLine": 123,
+        "startChar": 4,
+        "endLine": 125,
+        "endChar": 81
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41501702_45bdd1c9",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "It was just an artifact left from when i initially added the feature",
+      "parentUuid": "e9e1644f_df18630f",
       "range": {
         "startLine": 123,
         "startChar": 4,
@@ -247,6 +433,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "29556b82_5867d4d8",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8a4a1c68_5fe21260",
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eaa36fd8_ee5a930d",
@@ -270,6 +474,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2b4d1590_fa2f8b7a",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 534,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "eaa36fd8_ee5a930d",
+      "range": {
+        "startLine": 534,
+        "startChar": 65,
+        "endLine": 534,
+        "endChar": 77
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "841ad318_e3cae0b7",
@@ -283,6 +511,30 @@
       "writtenOn": "2026-05-20T14:20:36Z",
       "side": 1,
       "message": "I\u0027d remove this sentence (it could easily become false in the future and IMO doesn\u0027t help with understanding the code).",
+      "range": {
+        "startLine": 557,
+        "startChar": 38,
+        "endLine": 558,
+        "endChar": 87
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69064362_160f8d08",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "841ad318_e3cae0b7",
       "range": {
         "startLine": 557,
         "startChar": 38,
@@ -342,6 +594,30 @@
       "writtenOn": "2026-05-19T21:58:45Z",
       "side": 1,
       "message": "\"bodyOverwrite\" is currently hardcoded in several places in the daemon and the client, so do we gain anything by having `pluginDataKey` be a parameter?",
+      "range": {
+        "startLine": 110,
+        "startChar": 4,
+        "endLine": 112,
+        "endChar": 29
+      },
+      "revId": "d089be996336a6c0e7a9b785beba1539d09d5380",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35699553_a8f16c6b",
+        "filename": "src/plugin/streamdata.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-28T19:43:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b0234083_e0e64b2b",
       "range": {
         "startLine": 110,
         "startChar": 4,
