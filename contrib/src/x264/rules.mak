@@ -64,10 +64,14 @@ x264: x264-$(X264_VERSION).tar.bz2 .sum-x264
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) AS="$(CC)" ./configure $(X264CONF)
 else
+ifdef HAVE_MACOSX
+	cd $< && $(HOSTVARS) ASFLAGS="$(CFLAGS)" ./configure $(X264CONF)
+else
 ifdef HAVE_IOS
 	cd $< && $(HOSTVARS) ASFLAGS="$(CFLAGS)" ./configure $(X264CONF)
 else
 	cd $< && $(HOSTVARS) ./configure $(X264CONF)
+endif
 endif
 endif
 	cd $< && $(MAKE) install
