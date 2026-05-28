@@ -333,7 +333,12 @@ FFMPEGCONF += \
 	--enable-hwaccel=hevc_videotoolbox \
 	--enable-encoder=h264_videotoolbox \
 	--enable-encoder=hevc_videotoolbox \
-	--disable-securetransport
+	--disable-securetransport \
+	--disable-xlib \
+	--disable-libxcb \
+	--disable-libxcb-shm \
+	--disable-libxcb-shape \
+	--disable-libxcb-xfixes
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --enable-cross-compile
 endif
