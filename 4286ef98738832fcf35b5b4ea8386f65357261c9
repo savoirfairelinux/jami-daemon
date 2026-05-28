@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0cf6746_5b0cd06e",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T17:18:49Z",
+      "side": 1,
+      "message": "[Critical] Line 105: The macOS-specific LOCAL_HOSTVARS assignment drops $(HOSTVARS), unlike the Android path. That means the vpx configure step can lose the contrib-provided compiler/binutils environment while adding ASFLAGS, which is especially risky for cross or non-default toolchain builds. Preserve HOSTVARS and append the macOS assembler flag instead.\n```suggestion\nLOCAL_HOSTVARS\u003d$(HOSTVARS) ASFLAGS\u003d\"-mmacosx-version-min\u003d$(MIN_OSX_VERSION)\"\n```",
+      "revId": "4286ef98738832fcf35b5b4ea8386f65357261c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f988e0e6_aa6fb076",
+        "filename": "contrib/src/x264/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-28T17:18:49Z",
+      "side": 1,
+      "message": "[Critical] Line 63: The new HAVE_MACOSX branch is placed before HAVE_IOS. If HAVE_MACOSX is also defined for iOS/Darwin-style builds in this contrib system, iOS will now take the macOS path and bypass the existing iOS-specific branch. Prefer checking HAVE_IOS first or combine the identical ASFLAGS configure path so iOS behavior cannot be accidentally shadowed.\n```suggestion\nifdef HAVE_IOS\n\tcd $\u003c \u0026\u0026 $(HOSTVARS) ASFLAGS\u003d\"$(CFLAGS)\" ./configure $(X264CONF)\nelse\nifdef HAVE_MACOSX\n\tcd $\u003c \u0026\u0026 $(HOSTVARS) ASFLAGS\u003d\"$(CFLAGS)\" ./configure $(X264CONF)\nelse\n\tcd $\u003c \u0026\u0026 $(HOSTVARS) ./configure $(X264CONF)\nendif\nendif\n```",
+      "revId": "4286ef98738832fcf35b5b4ea8386f65357261c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
