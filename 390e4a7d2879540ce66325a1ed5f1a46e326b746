@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63b560fa_5ed8a6c2",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "[Critical] Line 355: 🔴 Critical Issues - The audio congestion callback is invoked every RTCP check while loss stays above 3%, even when this is a receive-side impairment that reducing local video bitrate may not fix. In a bidirectional call this can unnecessarily throttle all local video streams because the code couples remote audio receive loss directly to local video send bitrate. Gate this on sender-side congestion evidence, or document and implement the intended directionality explicitly so only the video stream sharing the congested uplink is reduced.\n```suggestion\n// Only trigger audio-\u003evideo coupling for congestion affecting this endpoint\u0027s outgoing media,\n// or pass direction/context into the callback and reduce the matching video sender only.\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdfc8255_aab25e83",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "Line 54: 🟡 Suggestions - The registry is added and documented as the way tests attach simulators to media streams, but no production code looks up the registry or wires these simulators into `SocketPair::setNetworkSimulator()`. As written, `getOrCreate(callId, streamType)` has no effect on RTP traffic. Either add the missing call/stream integration when sessions create their socket pairs, or remove the registry/docs until it is actually connected.\n```suggestion\n// During RTP session/socket-pair setup:\nif (auto sim \u003d NetworkSimRegistry::instance().get(callId, streamType))\n    socketPair_-\u003esetNetworkSimulator(sim);\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a9b239a_b3bfa3e7",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "Line 54: 🟡 Suggestions - `shouldSend()` sleeps on the media send path to simulate jitter. This can block encoder/RTP threads and alter application timing well beyond packet-level simulation, especially with multiple streams. Prefer queueing delayed packets in a simulator-owned worker, or keep this simulator limited to unit tests behind a test-only build flag.\n```suggestion\n// Instead of sleeping here, enqueue the packet with a target send time and let a simulator worker release it later.\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d80c3dbc_d8ff0c7c",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "Line 101: 🟡 Suggestions - `tokenBucket_ + bytesToAdd` can overflow before `std::min()` clamps it, producing a much smaller bucket after long idle periods or very high bandwidth limits. Clamp using subtraction from `maxBucket` before adding.\n```suggestion\nconst auto room \u003d maxBucket \u003e tokenBucket_ ? maxBucket - tokenBucket_ : 0;\ntokenBucket_ +\u003d std::min(bytesToAdd, room);\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ab75bdb_e60391a7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "[Critical] Line 248: 🔴 Critical Issues - `std::static_pointer_cast\u003cvideo::VideoRtpSession\u003e(videoSession)` assumes every MEDIA_VIDEO RTP session is a `VideoRtpSession`. If another `RtpSession` subtype is ever present, this is undefined behavior. Use `dynamic_pointer_cast` and skip non-video RTP sessions.\n```suggestion\nfor (const auto\u0026 videoSession : thisPtr-\u003egetRtpSessionList(MediaType::MEDIA_VIDEO)) {\n    if (auto videoRtp \u003d std::dynamic_pointer_cast\u003cvideo::VideoRtpSession\u003e(videoSession))\n        videoRtp-\u003eonAudioCongestion(audioLoss);\n}\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb803e58_367b0029",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 6
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:52Z",
+      "side": 1,
+      "message": "Line 131: 🟡 Suggestions - The script appends iptables ACCEPT rules but only deletes one matching rule on teardown. If setup is interrupted after partial state changes or duplicate rules already exist, rules can be left behind. Use `iptables-save`/restore for the previous state, or delete in a loop until no matching rule remains.\n```suggestion\nwhile iptables -D FORWARD -i ${BR_A} -o ${BR_B} -j ACCEPT 2\u003e/dev/null; do :; done\nwhile iptables -D FORWARD -i ${BR_B} -o ${BR_A} -j ACCEPT 2\u003e/dev/null; do :; done\n```",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
