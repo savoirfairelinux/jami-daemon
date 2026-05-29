@@ -1,0 +1,174 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "def5cc2a_61f5642c",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 355: The new audio-to-video QoS callback fires on every RTCP check while loss remains above 3%, even if audio itself is already adapting. This can repeatedly force video down to minimum bitrate for transient or audio-only loss because there is no hysteresis/recovery signal and the threshold is much higher than the existing video packet-loss threshold. Please add hysteresis or trigger only on sustained congestion, and document/test the expected recovery behavior. Suggested shape:\\n```suggestion\\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 previousPondLoss_ \u003c AUDIO_CONGESTION_THRESHOLD) {\\n    // signal sustained/edge-triggered congestion\\n}\\n```",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecf361ed_fa503584",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟢 Good Practices] Line 358: Good practice: the congestion callback is copied under the mutex and invoked after releasing it, which avoids callback-induced deadlocks.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52cbaaa4_48b63392",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 57: The registry stores simulators indefinitely unless tests explicitly call `clear()`/`removeAll()`. Because keys are call IDs, long-running test processes or integration runs can leak simulator instances across calls and produce cross-test contamination. Prefer RAII ownership tied to the call/session lifecycle, or integrate cleanup where calls are torn down.\\n```suggestion\\n// Ensure SIPCall teardown removes all simulators for its call id, or return a scoped handle from getOrCreate().\\n```",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "262f84cb_4c3e2922",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 635: The simulator silently drops RTCP as well as RTP because it is applied after `isRTCP` detection but before any packet-type filtering. Dropping RTCP feedback changes the control loop itself and can hide or distort the QoS behavior being tested. If the intent is to impair media packets, gate this to RTP only; if RTCP loss is intentional, make it configurable and cover it in tests.\\n```suggestion\\nif (!isRTCP \u0026\u0026 sim \u0026\u0026 !sim-\u003eshouldSend(static_cast\u003csize_t\u003e(buf_size)))\\n    return buf_size;\\n```",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9b1eaca_4f2682e6",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 636,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 636: Returning `buf_size` for a simulated drop makes the sender believe the packet was successfully written, which is fine for loss simulation, but the stats are counted before the actual socket write succeeds. If the subsequent real write fails for non-simulated packets, simulator stats will over-report sent packets. Consider recording successful sends only after `writeData()` succeeds, and only record drops before returning early.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2df3434d_a0bad4da",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 794,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 794: Holding `mutex_` while calling `setupVideoBitrateInfo()` is risky because this method appears to update bitrate state used by the normal video adaptation path; if it acquires the same lock internally or depends on state mutated by `setNewBitrate()`, this can deadlock or race with the RTCP checker. Please verify locking expectations and keep only direct state reads/writes under the lock. A safer pattern is to snapshot the current bitrate info under the lock, compute outside, then call `setNewBitrate()`.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e7e6c46e_e6fe55ea",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟢 Good Practices] Line 238: Good practice: the callback captures weak pointers and revalidates that the audio session is still active before touching video sessions, which avoids a common lifetime bug in async media callbacks.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f78d428_f24a4838",
+        "filename": "test/unitTest/media/test_network_simulator.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 131: The jitter test is probabilistic and can fail spuriously: with uniform random delay `[0, 50]`, elapsed time can be very small on fast systems, and scheduler delays can exceed 600ms on loaded CI. Avoid timing assertions based on randomness; inject a deterministic RNG/clock or test only bounds through a controllable fake.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b8a8c29_97d72ce2",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 5
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 108: The lab topology does not actually place `BR_A` and `BR_B` on a shared L2 segment or add routes for the peer subnet. Both namespaces are configured as `/24` and will ARP directly for the other peer, but the host-side veth interfaces are separate links, so `peer-a` cannot resolve/reach `10.99.0.2`. The default routes are also ineffective for same-subnet traffic. Use a real Linux bridge with both host veth ends attached, or use point-to-point subnets plus explicit routes.\\n```suggestion\\n# Example direction: create br-qos, attach ${BR_A}/${BR_B}, assign host IP on br-qos,\\n# or configure /30 links and route ${IP_B}/32 via the host-side address.\\n```",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b4dd7a0_8f55b675",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 5
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 117: `iptables -A` adds duplicate FORWARD rules every time `up` is run if cleanup does not remove the previous exact rules, and the script does not restore the previous `net.ipv4.ip_forward` value on `down`. This leaves persistent host networking changes after tests. Use `iptables -C` before append and save/restore the forwarding sysctl, or isolate rules with a dedicated chain that is deleted on teardown.",
+      "revId": "2bd694874bdafd03fa949a202c97757d08a02467",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
