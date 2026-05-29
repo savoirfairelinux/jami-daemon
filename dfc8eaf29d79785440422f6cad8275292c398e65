@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c4ba23e_7f4aac0c",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:16Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 116: applyIncrease() divides by cfg_.increaseRampTime without validating that the config value is positive. Config is public and the constructor accepts caller-provided values, so a zero or negative ramp time can produce inf/NaN ramp progress and unstable bitrate decisions. Validate Config in the constructor or guard the denominator before division.\n```suggestion\n        const auto rampTime \u003d std::max(cfg_.increaseRampTime, 0.001f);\n        rampProgress \u003d std::clamp((secSinceDecrease - cfg_.probeDelaySec) / rampTime, 0.0f, 1.0f);\n```",
+      "revId": "dfc8eaf29d79785440422f6cad8275292c398e65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3a71814_8abae0c5",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:16Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 155: update() accepts raw packetLoss/jitter/rtt inputs and feeds them directly into EWMAs. Negative loss values, NaN, or out-of-range percentages can come from sentinel values or malformed RTCP stats and will skew the controller, potentially causing incorrect increases during congestion. Clamp and validate samples at the controller boundary before updating state.\n```suggestion\n    if (!std::isfinite(packetLoss) || !std::isfinite(jitterMs) || !std::isfinite(rttMs))\n        return targetBitrate_;\n    packetLoss \u003d std::clamp(packetLoss, 0.0f, 100.0f);\n    jitterMs \u003d std::max(jitterMs, 0.0f);\n    rttMs \u003d std::max(rttMs, 0.0f);\n```",
+      "revId": "dfc8eaf29d79785440422f6cad8275292c398e65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1c522ac_8f76b2bc",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:16Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 660: The code says it caps to a real REMB bitrate estimate, but it ignores the advertised value and only applies a fixed 15% decrease via onRembFeedback(true). If the receiver reports a much lower available bitrate, the sender can remain far above capacity for several RTCP cycles, worsening congestion and packet loss. Use the REMB estimate directly as the controller target or add an API that clamps the target to the receiver estimate.\n```suggestion\n        } else if (br \u003e 0 \u0026\u0026 br \u003c 100000) {\n            auto rembKbps \u003d static_cast\u003cunsigned\u003e(br);\n            if (rembKbps \u003c bwController_.getTargetBitrate()) {\n                bwController_.setTargetBitrate(rembKbps);\n                setNewBitrate(rembKbps);\n            }\n        }\n```",
+      "revId": "dfc8eaf29d79785440422f6cad8275292c398e65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9701659_99049889",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 675,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T12:34:16Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 675: This unconditionally drops RTCP reports with jitter \u003e 1000, but the previous code intentionally skipped that guard on Android. That changes Android behavior and can disable bitrate adaptation whenever Android reports large jitter values, which the old implementation apparently considered expected or unreliable. Preserve the platform guard unless the Android semantics were verified and adjusted separately.\n```suggestion\n#ifndef __ANDROID__\n        if (rtcpi.jitter \u003e 1000)\n            return;\n#endif\n```",
+      "revId": "dfc8eaf29d79785440422f6cad8275292c398e65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
