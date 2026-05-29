@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4294a067_839f5c6d",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Major] Line 365: The congestion callback fires on every RTCP check while loss remains above 3%, with no hysteresis or state transition. Although video has a cooldown, every coupled video stream still receives repeated reduction requests and audio will keep logging/signaling indefinitely under sustained loss. Gate this on crossing the threshold or add an audio-side cooldown/recovery state so video is not repeatedly forced downward for the same congestion episode.",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "996749fa_089ae3fc",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Critical] Line 85: This declares `pondLoss_` twice in the same class, once here and again below with a different initial value. The patch will not compile. Keep a single member with the intended initial value, for example:\n```suggestion\n    float pondLoss_ {10.0f};\n```",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a075b2b_e35f85d8",
+        "filename": "src/media/network_sim/network_simulator.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Critical] Line 79: `size_t` is used in the public API but this header does not include `\u003ccstddef\u003e`. Relying on transitive includes is fragile and can break depending on include order/toolchain. Add the direct include:\n```suggestion\n#include \u003ccstddef\u003e\n```",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83465cef_e110cbaa",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Critical] Line 635: The simulator integration is only exposed through `SocketPair::setNetworkSimulator()`, but this patch never wires `NetworkSimRegistry` to any created `SocketPair`. As a result, the README usage with `NetworkSimRegistry::getOrCreate(callId, \"audio\")` has no effect on actual RTP traffic. Either remove the registry/documentation from this change or attach the matching simulator when RTP sessions/socket pairs are configured, e.g. by looking up the call id and media type and calling `socketPair_-\u003esetNetworkSimulator(sim)`.",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9680b3a6_6d3d78f2",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 807,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Major] Line 807: `onAudioCongestion()` computes the new bitrate from `videoBitrateCurrent`, but if the encoder has not yet reported the previous reduction, repeated callbacks after the cooldown can recompute from a stale higher bitrate and fail to make further progress. Track the last audio-QoS target or update the local bitrate state before calling `setNewBitrate()` so consecutive congestion periods continue reducing predictably.",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b089726_fdc53eda",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 9
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:58Z",
+      "side": 1,
+      "message": "[Major] Line 80: `do_up()` creates a fresh `/run/qos-lab.*` state directory every time, while `do_down()` restores the first directory returned by `ls | head -1`. If setup is run multiple times or a previous run left stale state, teardown can restore the wrong `ip_forward` value. Use a deterministic state path for this lab and overwrite it atomically, for example `/run/jami-qos-lab/ipfwd`.",
+      "revId": "b987996ce5fc6b996f0242528afcdba9cda8bcce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
