@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c44d498_319fe2ca",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:51Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 397: This no longer compiles because `getPonderateLoss()` still reads and writes `pondLoss_`, but the member was removed from `AudioRtpSession` in the header. Either restore the member or remove this legacy method if it is no longer used.\n```suggestion\n    // In audio_rtp_session.h, keep the state used by getPonderateLoss().\n    // EWMA ponderated loss for congestion detection\n    float pondLoss_ {10.0f};\n```",
+      "revId": "9d440d0e0e02eb873c1d186e8d39bb9e71b183c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fadda688_73488898",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:51Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 190: The RTT baseline is fixed from the first five samples and is never reset or adapted. If the call starts on a high-latency path, or the route changes mid-call, the controller can permanently under-detect or over-detect RTT congestion. Consider using a rolling minimum/slow EWMA baseline or resetting the baseline after a long stable period.\n```suggestion\n// Example direction: track the minimum observed RTT slowly instead of freezing the first samples.\nif (rttMs \u003e 0.0f)\n    baselineRtt_ \u003d baselineRtt_ \u003d\u003d 0.0f ? rttMs : std::min(baselineRtt_, rttMs);\n```",
+      "revId": "9d440d0e0e02eb873c1d186e8d39bb9e71b183c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f60b907_2bc0807b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:10:51Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 660: `setNewBitrate()` is called immediately after `onRembFeedback()` even when the REMB signal does not change the controller target. Because `setNewBitrate()` now refreshes `lastMediaRestart_` only when the bitrate changes this is mostly harmless for equal values, but it still re-enters the bitrate path on every REMB packet and can race with RR-driven updates. Gate the call on an actual bitrate change so only real controller decisions restart/sync the encoder path.\n```suggestion\n            auto newBitrate \u003d bwController_.onRembFeedback(isOveruse);\n            if (newBitrate !\u003d videoBitrateInfo_.videoBitrateCurrent)\n                setNewBitrate(newBitrate);\n```",
+      "revId": "9d440d0e0e02eb873c1d186e8d39bb9e71b183c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
