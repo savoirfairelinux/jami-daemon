@@ -91,13 +91,10 @@ private:
     void processRtcpChecker();
 
     // Interval in seconds between RTCP checking
-    std::chrono::seconds rtcp_checking_interval {4};
+    std::chrono::seconds rtcp_checking_interval {2};
 
     std::function<void(bool)> voiceCallback_;
     std::function<void(float)> congestionCallback_;
-
-    // EWMA ponderated loss for congestion detection
-    float pondLoss_ {10.0f};
 
     // Threshold above which audio considers itself congested (%)
     static constexpr float AUDIO_CONGESTION_THRESHOLD {3.0f};
