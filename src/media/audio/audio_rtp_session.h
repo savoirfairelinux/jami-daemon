@@ -61,6 +61,13 @@ public:
 
     void setVoiceCallback(std::function<void(bool)> cb);
 
+    /**
+     * Set a callback that fires when audio detects congestion (packet loss above threshold).
+     * The callback receives the current audio packet loss percentage.
+     * Used for audio→video QoS coupling: video can reduce its bitrate to free bandwidth.
+     */
+    void setCongestionCallback(std::function<void(float)> cb);
+
 private:
     void startSender();
     void startReceiver();
@@ -77,6 +84,7 @@ private:
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
     unsigned packetLoss_ {10};
+    float pondLoss_ {0.0f}; // Start at zero to avoid false congestion on first RTCP
     DeviceParams localAudioParams_;
 
     InterruptedThreadLoop rtcpCheckerThread_;
@@ -86,6 +94,10 @@ private:
     std::chrono::seconds rtcp_checking_interval {4};
 
     std::function<void(bool)> voiceCallback_;
+    std::function<void(float)> congestionCallback_;
+
+    // Threshold above which audio considers itself congested (%)
+    static constexpr float AUDIO_CONGESTION_THRESHOLD {3.0f};
 
     void attachRemoteRecorder(const MediaStream& ms);
     void attachLocalRecorder(const MediaStream& ms);
