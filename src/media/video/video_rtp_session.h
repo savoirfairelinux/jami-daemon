@@ -18,6 +18,7 @@
 
 #include "media/rtp_session.h"
 #include "media/media_device.h"
+#include "media/bandwidth_controller.h"
 
 #include "media_stream.h"
 #include "threadloop.h"
@@ -142,26 +143,18 @@ private:
     void storeVideoBitrateInfo();
     void setupVideoBitrateInfo();
     void checkReceiver();
-    float getPonderateLoss(float lastLoss);
     void delayMonitor(int gradient, int deltaT);
-    void dropProcessing(RTCPInfo* rtcpi);
-    void delayProcessing(int br);
     void setNewBitrate(unsigned int newBR);
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
-    std::list<std::pair<time_point, float>> histoLoss_;
 
     // 5 tries in a row
     static constexpr unsigned MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
-    // Minimum delay between audio-triggered reductions
-    static constexpr auto AUDIO_QOS_COOLDOWN = std::chrono::seconds(4);
-    // Reduction factor when audio reports congestion
-    static constexpr float AUDIO_QOS_REDUCTION_FACTOR {0.6f};
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
@@ -171,16 +164,19 @@ private:
     std::function<void(bool)> recordingStateCallback_;
 
     // interval in seconds between RTCP checkings
-    std::chrono::seconds rtcp_checking_interval {4};
+    std::chrono::seconds rtcp_checking_interval {2};
 
     time_point lastMediaRestart_ {time_point::min()};
-    time_point last_REMB_inc_ {time_point::min()};
-    time_point last_REMB_dec_ {time_point::min()};
-    time_point lastBitrateDecrease {time_point::min()};
-    time_point lastAudioQosReduction_ {time_point::min()};
 
-    unsigned remb_dec_cnt_ {0};
+    // Unified bandwidth controller (replaces old REMB/loss/audio QoS loops)
+    BandwidthController bwController_;
+    bool bwControllerInitialized_ {false};
 
+    // Rate limiting for REMB feedback (separate to avoid overuse suppression)
+    time_point lastRembOveruseSent_ {time_point::min()};
+    time_point lastRembNormalSent_ {time_point::min()};
+
+    // Legacy REMB packet parsing (kept for protocol compatibility)
     std::unique_ptr<CongestionControl> cc;
 
     std::function<void(void)> cbKeyFrameRequest_;
