@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "182e10e3_31c400b2",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[Critical] Line 183: 🔴 Critical Issues - `now - lastDecrease_` is evaluated before checking whether `lastDecrease_` is initialized. Since `lastDecrease_` starts at `time_point::min()`, this can overflow the underlying steady_clock duration and produce undefined behavior. Check the sentinel first and only subtract for initialized timestamps.\n\n```suggestion\n    const bool hasDecrease \u003d lastDecrease_ !\u003d time_point::min();\n    auto secSinceDecrease \u003d hasDecrease ? std::chrono::duration\u003cfloat\u003e(now - lastDecrease_).count()\n                                       : std::numeric_limits\u003cfloat\u003e::infinity();\n\n    if (congestion \u003e cfg_.congestionThreshold) {\n        if (!hasDecrease || secSinceDecrease \u003e cfg_.decreaseCooldownSec) {\n            applyDecrease(congestion);\n        }\n```\n\nApply the same pattern anywhere a `time_point::min()` sentinel is subtracted.",
+      "revId": "c17687095b533d8e021a5b42965ca34e989dc6e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0593023_3f27e3f0",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[Critical] Line 219: 🔴 Critical Issues - `onAudioCongestion()` has the same sentinel subtraction issue as `update()`: `now - lastDecrease_` is computed while `lastDecrease_` may still be `time_point::min()`. This can make the first audio congestion event behave unpredictably.\n\n```suggestion\n    const bool hasDecrease \u003d lastDecrease_ !\u003d time_point::min();\n    auto secSinceDecrease \u003d hasDecrease ? std::chrono::duration\u003cfloat\u003e(now - lastDecrease_).count()\n                                       : std::numeric_limits\u003cfloat\u003e::infinity();\n    if (hasDecrease \u0026\u0026 secSinceDecrease \u003c cfg_.decreaseCooldownSec)\n        return targetBitrate_;\n```",
+      "revId": "c17687095b533d8e021a5b42965ca34e989dc6e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6e82712_4301b663",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[Critical] Line 259: 🔴 Critical Issues - `onRembFeedback()` also subtracts `lastDecrease_` before proving it is initialized. The cooldown check should avoid subtracting the sentinel value.\n\n```suggestion\n        const bool hasDecrease \u003d lastDecrease_ !\u003d time_point::min();\n        auto secSinceDecrease \u003d hasDecrease ? std::chrono::duration\u003cfloat\u003e(now - lastDecrease_).count()\n                                           : std::numeric_limits\u003cfloat\u003e::infinity();\n        if (hasDecrease \u0026\u0026 secSinceDecrease \u003c 0.5f)\n            return targetBitrate_;\n```",
+      "revId": "c17687095b533d8e021a5b42965ca34e989dc6e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "364d048b_227bcbd9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[Major] Line 660: 🟡 Suggestions - The new controller ignores non-sentinel REMB bitrate values. `check_RCTP_Info_REMB()` parses a `uint64_t* br`, but this code only reacts to `0x6803` and `0x7378`; if peers send a standard REMB bitrate estimate, it is silently discarded, regressing interoperability. Either keep the legacy sentinel path explicitly separated from standard REMB or clamp/apply real bitrate estimates.\n\n```suggestion\n        if (br \u003d\u003d 0x6803 || br \u003d\u003d 0x7378) {\n            auto newBitrate \u003d bwController_.onRembFeedback(br \u003d\u003d 0x6803);\n            setNewBitrate(newBitrate);\n        } else if (br \u003e 0) {\n            auto newBitrate \u003d static_cast\u003cunsigned\u003e(std::min\u003cuint64_t\u003e(br / 1000, videoBitrateInfo_.videoBitrateMax));\n            bwController_.setTargetBitrate(newBitrate);\n            setNewBitrate(newBitrate);\n        }\n```",
+      "revId": "c17687095b533d8e021a5b42965ca34e989dc6e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
