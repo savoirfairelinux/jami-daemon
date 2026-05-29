@@ -308,6 +308,13 @@ AudioRtpSession::setVoiceCallback(std::function<void(bool)> cb)
     }
 }
 
+void
+AudioRtpSession::setCongestionCallback(std::function<void(float)> cb)
+{
+    std::lock_guard lock(mutex_);
+    congestionCallback_ = std::move(cb);
+}
+
 bool
 AudioRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
 {
@@ -350,6 +357,20 @@ AudioRtpSession::dropProcessing(RTCPInfo* rtcpi)
 {
     auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
     setNewPacketLoss(static_cast<unsigned int>(pondLoss));
+
+    // Signal congestion to coupled video streams when audio loss exceeds threshold
+    if (pondLoss >= AUDIO_CONGESTION_THRESHOLD) {
+        std::function<void(float)> cb;
+        {
+            std::lock_guard lock(mutex_);
+            cb = congestionCallback_;
+        }
+        if (cb) {
+            JAMI_LOG("[AudioQoS] Audio congestion detected (loss: {}%), signaling video to reduce bitrate",
+                     pondLoss);
+            cb(pondLoss);
+        }
+    }
 }
 
 void
