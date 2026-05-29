@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67e06e7c_818d17b9",
+        "filename": "extras/tools/tools.mak",
+        "patchSetId": 27
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T17:01:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1cd466d7_8e568095",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b55518be_90985948",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-05-28T19:44:40Z",
       "side": 1,
       "message": "[Critical] Line 1269: The normal SwarmMessageUpdated emission was removed from handleEdition and is now only emitted from the plugin path when ENABLE_PLUGIN is enabled and plugin handlers exist. This means ordinary message edits will no longer update clients when plugins are disabled or no chat handler is active. Restore the baseline update signal independently of plugin processing, and only add plugin overwrite injection as an enhancement. Suggested fix:\n```suggestion\n                emitSignal\u003clibjami::ConversationSignal::SwarmMessageUpdated\u003e(\n                    accountId_, repository_-\u003eid(), injectEditionOverwrites(*it-\u003esecond, history.quickAccess));\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30be80a7_077ef90e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1269,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T17:01:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b55518be_90985948",
       "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "81f1e981_a0e0a13d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1907,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T17:01:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1f7751bf_97e6e958",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "abd92245_2b54cfcd",
@@ -69,6 +123,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "66c34d3b_24ad332c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1948,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T17:01:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "abd92245_2b54cfcd",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0c622143_7f78a346",
@@ -82,6 +154,24 @@
       "writtenOn": "2026-05-28T19:44:40Z",
       "side": 1,
       "message": "[Critical] Line 151: The new plugin services, especially `editMessage`, `updateMessageBodyOverwrite`, and the global clear/reload services, trust caller-provided account and conversation IDs without checking that the calling plugin is enabled for that conversation. A loaded plugin can therefore edit messages or alter UI-visible message bodies across all accounts/conversations. Bind these services to the `DLPlugin*` caller and reject operations unless that plugin\u0027s chat handler is attached/allowed for the target conversation. Suggested pattern:\n```suggestion\n        if (!isPluginAllowedForConversation(plugin, cm-\u003eaccountId, cm-\u003epeerId))\n            return -1;\n```",
+      "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88e61dbf_3d184766",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T17:01:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0c622143_7f78a346",
       "revId": "bad686d9b41474309af9e66cfb987a0e0b56435e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
