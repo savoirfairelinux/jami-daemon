@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed6b8843_3295ec9c",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 44: setLimits() accepts `minKbps \u003e maxKbps`, then clampBitrate() calls std::clamp with an invalid range. std::clamp requires `lo \u003c\u003d hi`; violating that precondition can produce incorrect bitrate limits. Validate or normalize the inputs before storing them.\n```suggestion\n    if (minKbps \u003e maxKbps)\n        std::swap(minKbps, maxKbps);\n    cfg_.minBitrateKbps \u003d minKbps;\n    cfg_.maxBitrateKbps \u003d maxKbps;\n```",
+      "revId": "c6cfbd4dc6439a29743f523747c979ff7c4889e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b7e28a5_7b69f973",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 68: The RTT component treats any RTT as congestion (`ewmaRtt_ / congestionRttScale`). With the current defaults, a normal 100 ms RTT contributes 0.10 after weighting, already above the 0.08 congestion threshold even with 0% loss, causing repeated bitrate decreases on healthy long-distance calls. Use an RTT baseline/excess value, or raise the threshold so normal RTT alone does not trigger draining.\n```suggestion\n    float rttComponent \u003d std::max(0.0f, (ewmaRtt_ - cfg_.baselineRttMs) / cfg_.congestionRttScale);\n```",
+      "revId": "c6cfbd4dc6439a29743f523747c979ff7c4889e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a0f1eb6_b6a309c7",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 650: REMB overuse feedback updates the controller target but the returned bitrate is discarded, so delay-based congestion no longer affects the encoder unless a receiver-report packet is also processed in the same pass. This regresses the previous behavior where REMB immediately called setNewBitrate(). Apply the controller result when valid REMB feedback is received.\n```suggestion\n        if (isOveruse || br \u003d\u003d 0x7378) {\n            auto newBitrate \u003d bwController_.onRembFeedback(isOveruse);\n            setNewBitrate(newBitrate);\n        }\n```",
+      "revId": "c6cfbd4dc6439a29743f523747c979ff7c4889e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60a0eda8_1c3bf889",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 736: onAudioCongestion() reduces the controller target, then immediately calls setupVideoBitrateInfo(), which calls bwController_.setTargetBitrate(codecVideo-\u003ebitrate) and can overwrite the just-computed controller state before setNewBitrate() applies it. Move setupVideoBitrateInfo() before onAudioCongestion(), or avoid resetting the controller target from setup during audio congestion handling.",
+      "revId": "c6cfbd4dc6439a29743f523747c979ff7c4889e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
