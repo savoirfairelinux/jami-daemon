@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b70f693a_11bd3aac",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 1935,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:11:44Z",
+      "side": 1,
+      "message": "[Critical] Line 1935: `clearBodyOverwrites()` clears the single shared `pluginData[\"bodyOverwrite\"]` value for every loaded message, but `ChatServicesManager` exposes this as a plugin-scoped operation. If two plugins are enabled in the same conversation, disabling or reloading one plugin will remove the other plugin\u0027s overwrite data and emit stale updates. Store overwrites under a plugin-specific key, or pass the calling plugin/handler identity down so only that plugin\u0027s keys are cleared/reloaded.\n\n```suggestion\n// Example shape: namespace overwrite data by plugin/handler id.\nconst auto key \u003d fmt::format(\"bodyOverwrite:{}\", pluginId);\nmsg-\u003epluginData.erase(key);\n```",
+      "revId": "e7169e2f0213cc9801d3e0777da1a8801687f92d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3fd38e2_29715971",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:11:44Z",
+      "side": 1,
+      "message": "[Critical] Line 132: `reloadBodyOverwriteConversations` is scoped by enabled conversations, but `Conversation::reloadBodyOverwriteMessages()` clears all `bodyOverwrite*` entries and then calls `transformSwarmMessages()` for all enabled handlers in that conversation. A preference change in one plugin can therefore discard/recompute unrelated plugins\u0027 data. Make the reload path plugin-specific instead of conversation-wide, or avoid clearing shared keys until overwrite data is namespaced.",
+      "revId": "e7169e2f0213cc9801d3e0777da1a8801687f92d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea29f346_c0503be1",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:11:44Z",
+      "side": 1,
+      "message": "[Critical] Line 209: The scoped services `clearSwarmBodyOverwriteConversation` and `bodyOverwriteLoadedConversation` do not authorize that the calling plugin is enabled for the supplied account/conversation. Any plugin that can call these services can clear or trigger body-overwrite processing for arbitrary conversations, unlike the global variants above that use `getEnabledConversationsForPlugin(plugin)`. Pass the `plugin` argument through and reject unauthorized pairs before touching the conversation.\n\n```suggestion\nauto clearSwarmBodyOverwriteConversation \u003d [this](const DLPlugin* plugin, void* data) {\n    auto* p \u003d static_cast\u003cstd::pair\u003cstd::string, std::string\u003e*\u003e(data);\n    if (!p)\n        return -1;\n    if (!getEnabledConversationsForPlugin(plugin).count(*p)) {\n        JAMI_WARNING(\"clearSwarmBodyOverwriteConversation: plugin not enabled for {}/{}, rejecting\", p-\u003efirst, p-\u003esecond);\n        return -1;\n    }\n    ...\n};\n```",
+      "revId": "e7169e2f0213cc9801d3e0777da1a8801687f92d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d06a3816_aafe0805",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 407,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:11:44Z",
+      "side": 1,
+      "message": "[Critical] Line 407: `getEnabledConversationsForPlugin()` associates handlers with a plugin using substring matching: `handler-\u003eid().find(rootPath) !\u003d std::string::npos`. This can match unrelated paths such as `/plugins/foo` and `/plugins/foobar`, giving the wrong plugin authorization over conversations. Compare normalized parent paths for equality instead.\n\n```suggestion\nconst auto handlerRoot \u003d handler-\u003eid().substr(0, handler-\u003eid().find_last_of(DIR_SEPARATOR_CH));\nif (handlerRoot \u003d\u003d rootPath) {\n    handlerPtrs.insert(reinterpret_cast\u003cuintptr_t\u003e(handler.get()));\n    handlerNames.insert(handler-\u003egetChatHandlerDetails().at(\"name\"));\n}\n```",
+      "revId": "e7169e2f0213cc9801d3e0777da1a8801687f92d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
