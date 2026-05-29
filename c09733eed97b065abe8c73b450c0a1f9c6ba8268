@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d3900abe_52f7be5d",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:01:32Z",
+      "side": 1,
+      "message": "[Critical] Line 50: setLimits() accepts minKbps \u003e maxKbps and then passes those values to std::clamp(), whose behavior requires the low bound not exceed the high bound. Guard or normalize the limits before storing them.\n```suggestion\n    if (minKbps \u003e maxKbps)\n        std::swap(minKbps, maxKbps);\n    cfg_.minBitrateKbps \u003d minKbps;\n    cfg_.maxBitrateKbps \u003d maxKbps;\n```",
+      "revId": "c09733eed97b065abe8c73b450c0a1f9c6ba8268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0eba5f87_f961ba1a",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:01:32Z",
+      "side": 1,
+      "message": "[Critical] Line 64: The RTT component treats absolute RTT as congestion instead of RTT growth/excess. With the defaults, a normal 100 ms RTT contributes 0.1 to the score, exceeding the 0.08 threshold even with zero loss, so the controller will repeatedly decrease bitrate on stable long-distance calls. Track a baseline/min RTT and score only excess delay, or raise/remove the absolute RTT contribution.\n```suggestion\n    auto rttExcess \u003d std::max(0.0f, ewmaRtt_ - baselineRtt_);\n    float rttComponent \u003d std::max(0.0f, rttExcess / cfg_.congestionRttScale);\n```",
+      "revId": "c09733eed97b065abe8c73b450c0a1f9c6ba8268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fef0c250_0ac0c259",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:01:32Z",
+      "side": 1,
+      "message": "Line 130: update() accepts packetLoss, jitterMs, and rttMs without validating their ranges. RTCPInfo can contain sentinel/invalid values such as negative latency or NO_INFO-like loss, and those values are folded into the EWMA and congestion score. Clamp percentages and ignore unavailable RTT/jitter samples before updating the filters so one invalid report cannot poison the controller state.\n```suggestion\n    packetLoss \u003d std::clamp(packetLoss, 0.0f, 100.0f);\n    jitterMs \u003d std::max(0.0f, jitterMs);\n    rttMs \u003d std::max(0.0f, rttMs);\n```",
+      "revId": "c09733eed97b065abe8c73b450c0a1f9c6ba8268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "053be6a1_017db026",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:01:32Z",
+      "side": 1,
+      "message": "[Critical] Line 645: The restart grace period was removed from the loss/RTT adaptation path. The old dropProcessing() ignored RTCP samples for DELAY_AFTER_RESTART after sender start/restart to avoid reacting to stale feedback while the encoder and receiver settle. The new controller consumes RR immediately, so stale packet loss after restart can force an unnecessary bitrate drop. Keep the restart guard before feeding RR stats to the controller.\n```suggestion\n    auto now \u003d clock::now();\n    if (now - lastMediaRestart_ \u003c DELAY_AFTER_RESTART)\n        return;\n```",
+      "revId": "c09733eed97b065abe8c73b450c0a1f9c6ba8268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ae8da04_ebc679a5",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 657,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:01:32Z",
+      "side": 1,
+      "message": "[Critical] Line 657: REMB feedback now updates only the controller state and is never applied to the encoder unless an RR packet is also available in the same pass. If check_RCTP_Info_RR() returns false, overuse REMB reductions are silently dropped and setupVideoBitrateInfo() on the next iteration can resync the controller from the unchanged codec bitrate. Apply the returned bitrate immediately, or otherwise ensure REMB-only feedback reaches setNewBitrate().\n```suggestion\n        if (isOveruse || br \u003d\u003d 0x7378) {\n            auto newBitrate \u003d bwController_.onRembFeedback(isOveruse);\n            setNewBitrate(newBitrate);\n        }\n```",
+      "revId": "c09733eed97b065abe8c73b450c0a1f9c6ba8268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
