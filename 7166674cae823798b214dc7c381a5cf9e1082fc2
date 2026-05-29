@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bf6f6ba_419c9c25",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T07:43:19Z",
+      "side": 1,
+      "message": "[warning] Line 126: 🟡 Suggestions - `lastIncrease_` is updated but never read, so `applyIncrease()` can run on every RTCP checker tick and any additional caller cadence change directly changes AIMD aggressiveness. Either remove the unused member or use it to enforce an explicit increase interval so the controller behavior is stable regardless of polling frequency.",
+      "revId": "7166674cae823798b214dc7c381a5cf9e1082fc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "496837a6_4a72eb02",
+        "filename": "src/media/bandwidth_controller.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T07:43:19Z",
+      "side": 1,
+      "message": "[warning] Line 143: 🟡 Suggestions - `history_` is maintained on every update but never used for trend detection. This adds memory churn and makes the controller look more sophisticated than it currently is. Remove it until trend logic is implemented, or add the missing trend-based behavior.",
+      "revId": "7166674cae823798b214dc7c381a5cf9e1082fc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afec57a0_c93cca17",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T07:43:19Z",
+      "side": 1,
+      "message": "[Critical] Line 660: 🔴 Critical Issues - The new controller starts at its hard-coded default `initialBitrateKbps` of 800 Kbps and `setLimits()` only clamps it; it is never synchronized with `videoBitrateInfo_.videoBitrateCurrent`. On the first RR update, calls may force the encoder toward 800 Kbps even when the negotiated/current codec bitrate is different. Initialize or reset the controller from the current codec bitrate after `setupVideoBitrateInfo()`.\n\n```suggestion\n        bwController_.setLimits(codecVideo-\u003eminBitrate, codecVideo-\u003emaxBitrate);\n        bwController_.setTargetBitrate(videoBitrateInfo_.videoBitrateCurrent);\n```",
+      "revId": "7166674cae823798b214dc7c381a5cf9e1082fc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7bcd46f4_38d397ad",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 823,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T07:43:19Z",
+      "side": 1,
+      "message": "[Critical] Line 823: 🔴 Critical Issues - `delayMonitor()` now sends a REMB packet on every overuse/normal callback, removing the previous 500ms/1s throttling. This callback can run at RTP-packet frequency, so this can flood RTCP, waste bandwidth/CPU, and make the remote encoder oscillate. Keep rate limiting around both decrease and increase feedback.\n\n```suggestion\n    auto now \u003d clock::now();\n    if (bwState \u003d\u003d BandwidthUsage::bwOverusing) {\n        if (now - last_REMB_dec_ \u003c DELAY_AFTER_REMB_DEC)\n            return;\n        last_REMB_dec_ \u003d now;\n        JAMI_LOG(\"[BandwidthCtrl] Reception overuse detected, sending REMB decrease\");\n        auto v \u003d cc-\u003ecreateREMB(0x6803);\n        socketPair_-\u003ewriteData(v.data(), static_cast\u003cint\u003e(v.size()));\n    } else if (bwState \u003d\u003d BandwidthUsage::bwNormal) {\n        if (now - last_REMB_inc_ \u003c DELAY_AFTER_REMB_INC)\n            return;\n        last_REMB_inc_ \u003d now;\n        auto v \u003d cc-\u003ecreateREMB(0x7378);\n        socketPair_-\u003ewriteData(v.data(), static_cast\u003cint\u003e(v.size()));\n    }\n```",
+      "revId": "7166674cae823798b214dc7c381a5cf9e1082fc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
