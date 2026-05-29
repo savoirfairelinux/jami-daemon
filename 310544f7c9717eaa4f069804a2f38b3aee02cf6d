@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b70d596_2f66b64a",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:47Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 46: Only `increaseRampTime` is validated. Other configurable values can make the controller behave incorrectly, for example `minBitrateKbps \u003e maxBitrateKbps`, `initialBitrateKbps` outside limits, negative alpha values, or `maxDecreaseFactor \u003e 1`. Normalize the full config in the constructor so callers cannot instantiate an invalid controller state.",
+      "revId": "310544f7c9717eaa4f069804a2f38b3aee02cf6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7762757e_b949ec70",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:47Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 148: The comment says inputs are clamped to prevent NaN pollution, but `std::clamp`/`std::max` do not sanitize NaN values reliably. A NaN RTCP metric can permanently poison EWMA state and all future congestion decisions. Explicitly reject non-finite samples before updating the controller.\n```suggestion\n    if (!std::isfinite(packetLoss) || !std::isfinite(jitterMs) || !std::isfinite(rttMs)) {\n        JAMI_WARNING(\"[BandwidthCtrl] Ignoring non-finite RTCP sample: loss\u003d{} jitter\u003d{} rtt\u003d{}\",\n                     packetLoss,\n                     jitterMs,\n                     rttMs);\n        return targetBitrate_;\n    }\n\n    packetLoss \u003d std::clamp(packetLoss, 0.0f, 100.0f);\n    jitterMs \u003d std::max(jitterMs, 0.0f);\n    rttMs \u003d std::max(rttMs, 0.0f);\n```",
+      "revId": "310544f7c9717eaa4f069804a2f38b3aee02cf6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47df5584_9464a406",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 655,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:47Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 655: REMB bitrate units appear to be mishandled. `check_RCTP_Info_REMB()` returns the REMB bitrate field, which is normally in bits per second, but this branch treats values below 100000 as Kbps and passes them directly to `setTargetBitrate()`/`setNewBitrate()`. A 64 Kbps REMB estimate would be interpreted as 64000 Kbps and clamped to max, increasing bitrate under congestion instead of reducing it. Convert real REMB estimates to Kbps before applying them, and keep sentinel handling separate.\n```suggestion\n        } else if (br \u003e 0) {\n            auto rembKbps \u003d static_cast\u003cunsigned\u003e(br / 1000);\n            auto currentBitrate \u003d bwController_.getTargetBitrate();\n            if (rembKbps \u003e 0 \u0026\u0026 rembKbps \u003c currentBitrate) {\n                bwController_.setTargetBitrate(rembKbps);\n                setNewBitrate(rembKbps);\n            }\n        }\n```",
+      "revId": "310544f7c9717eaa4f069804a2f38b3aee02cf6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8dd667fa_2e3dc7f6",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 673,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:00:47Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 673: The post-restart RTCP guard returns from `adaptQualityAndBitrate()` entirely when an RR report arrives within 2 seconds. Because REMB is processed before this block, that may be acceptable for the current ordering, but this early return also skips any future logic added after RR processing and makes the function fragile. Prefer skipping only the stale RR sample.\n```suggestion\n        if (sinceRestart \u003e\u003d 2.0f) {\n#if !__ANDROID__\n            if (rtcpi.jitter \u003c\u003d 1000)\n#endif\n            {\n                auto newBitrate \u003d bwController_.update(rtcpi.packetLoss,\n                                                       static_cast\u003cfloat\u003e(rtcpi.jitter),\n                                                       rtcpi.latency);\n                setNewBitrate(newBitrate);\n            }\n        }\n```",
+      "revId": "310544f7c9717eaa4f069804a2f38b3aee02cf6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
