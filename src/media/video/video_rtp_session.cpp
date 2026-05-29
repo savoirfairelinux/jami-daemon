@@ -42,12 +42,7 @@ namespace video {
 
 using std::string;
 
-static constexpr unsigned MAX_REMB_DEC {1};
-
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
-constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
-constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
-constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
 VideoRtpSession::VideoRtpSession(const string& callId,
                                  const string& streamId,
@@ -203,8 +198,7 @@ VideoRtpSession::startSender()
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
-        last_REMB_inc_ = clock::now();
-        last_REMB_dec_ = clock::now();
+        bwController_.reset();
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
@@ -388,8 +382,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
         }
 
-        last_REMB_inc_ = clock::now();
-        last_REMB_dec_ = clock::now();
+        bwController_.reset();
 
         socketPair_->setRtpDelayCallback([&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
 
@@ -650,75 +643,24 @@ VideoRtpSession::adaptQualityAndBitrate()
 {
     setupVideoBitrateInfo();
 
+    // Feed REMB signal to controller
     uint64_t br;
     if (check_RCTP_Info_REMB(&br)) {
-        delayProcessing(static_cast<int>(br));
-    }
-
-    RTCPInfo rtcpi {};
-    if (check_RCTP_Info_RR(rtcpi)) {
-        dropProcessing(&rtcpi);
-    }
-}
-
-void
-VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
-{
-    // If bitrate has changed, let time to receive fresh RTCP packets
-    auto now = clock::now();
-    auto restartTimer = now - lastMediaRestart_;
-    if (restartTimer < DELAY_AFTER_RESTART) {
-        return;
-    }
-#ifndef __ANDROID__
-    // Do nothing if jitter is more than 1 second
-    if (rtcpi->jitter > 1000) {
-        return;
-    }
-#endif
-    auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
-    auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    int newBitrate = static_cast<int>(oldBitrate);
-
-    // Fill histoLoss and histoJitter_ with samples
-    if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
-        return;
-    } else {
-        // If ponderate drops are inferior to 10% that mean drop are not from congestion but from
-        // network...
-        // ... we can increase
-        if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
-            newBitrate = static_cast<int>(std::lround(newBitrate * (1.0f - rtcpi->packetLoss / 150.0f)));
-            histoLoss_.clear();
-            lastMediaRestart_ = now;
-            JAMI_LOG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from {} Kbps to {} "
-                     "Kbps, ratio {} (ponderate loss: {}%, packet loss rate: {}%)",
-                     oldBitrate,
-                     newBitrate,
-                     (float) newBitrate / oldBitrate,
-                     pondLoss,
-                     rtcpi->packetLoss);
+        // Legacy REMB: 0x6803 = overuse, 0x7378 = normal/increase
+        bool isOveruse = (br == 0x6803);
+        if (isOveruse || br == 0x7378) {
+            bwController_.onRembFeedback(isOveruse);
         }
     }
 
-    setNewBitrate(newBitrate);
-}
-
-void
-VideoRtpSession::delayProcessing(int br)
-{
-    int newBitrate = static_cast<int>(videoBitrateInfo_.videoBitrateCurrent);
-    if (br == 0x6803)
-        newBitrate = static_cast<int>(std::lround(newBitrate * 0.85f));
-    else if (br == 0x7378) {
-        auto now = clock::now();
-        auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBitrateDecrease);
-        auto increaseCoefficient = std::min(static_cast<float>(msSinceLastDecrease.count()) / 600000.0f + 1.0f, 1.05f);
-        newBitrate = static_cast<int>(std::lround(newBitrate * increaseCoefficient));
-    } else
-        return;
-
-    setNewBitrate(newBitrate);
+    // Feed RR stats to controller
+    RTCPInfo rtcpi {};
+    if (check_RCTP_Info_RR(rtcpi)) {
+        auto newBitrate = bwController_.update(rtcpi.packetLoss, 
+                                                static_cast<float>(rtcpi.jitter),
+                                                rtcpi.latency);
+        setNewBitrate(newBitrate);
+    }
 }
 
 void
@@ -726,9 +668,6 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 {
     newBR = std::max(newBR, videoBitrateInfo_.videoBitrateMin);
     newBR = std::min(newBR, videoBitrateInfo_.videoBitrateMax);
-
-    if (newBR < videoBitrateInfo_.videoBitrateCurrent)
-        lastBitrateDecrease = clock::now();
 
     if (videoBitrateInfo_.videoBitrateCurrent != newBR) {
         videoBitrateInfo_.videoBitrateCurrent = newBR;
@@ -767,6 +706,9 @@ VideoRtpSession::setupVideoBitrateInfo()
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
         };
+        // Keep bandwidth controller in sync with codec limits and current bitrate
+        bwController_.setLimits(codecVideo->minBitrate, codecVideo->maxBitrate);
+        bwController_.setTargetBitrate(codecVideo->bitrate);
     } else {
         videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
     }
@@ -794,30 +736,8 @@ VideoRtpSession::onAudioCongestion(float audioPacketLoss)
     unsigned int newBitrate;
     {
         std::lock_guard lock(mutex_);
-        auto now = clock::now();
-        if (now - lastAudioQosReduction_ < AUDIO_QOS_COOLDOWN)
-            return;
-
-        lastAudioQosReduction_ = now;
+        newBitrate = bwController_.onAudioCongestion(audioPacketLoss);
         setupVideoBitrateInfo();
-
-        auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-        // Scale reduction with severity: more audio loss → more aggressive reduction
-        float reductionFactor = AUDIO_QOS_REDUCTION_FACTOR;
-        if (audioPacketLoss > 10.0f)
-            reductionFactor = 0.4f; // Very aggressive for severe audio loss
-        else if (audioPacketLoss > 5.0f)
-            reductionFactor = 0.5f;
-
-        newBitrate = static_cast<unsigned int>(std::lround(static_cast<float>(oldBitrate) * reductionFactor));
-        newBitrate = std::max(newBitrate, videoBitrateInfo_.videoBitrateMin);
-
-        JAMI_LOG("[AudioQoS] Video bitrate reduced: {} Kbps -> {} Kbps (audio loss: {}%)",
-                 oldBitrate,
-                 newBitrate,
-                 audioPacketLoss);
-
-        lastMediaRestart_ = clock::now();
     }
     // Call outside mutex to avoid deadlock (may restart encoder)
     setNewBitrate(newBitrate);
@@ -897,77 +817,31 @@ VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
         sender_->setChangeOrientationCallback(changeOrientationCallback_);
 }
 
-float
-VideoRtpSession::getPonderateLoss(float lastLoss)
-{
-    float pond = 0.0f, pondLoss = 0.0f, totalPond = 0.0f;
-    constexpr float coefficient_a = -1 / 100.0f;
-    constexpr float coefficient_b = 100.0f;
-
-    auto now = clock::now();
-
-    histoLoss_.emplace_back(now, lastLoss);
-
-    for (auto it = histoLoss_.begin(); it != histoLoss_.end();) {
-        auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->first);
-
-        // 1ms      -> 100%
-        // 2000ms   -> 80%
-        if (delay <= EXPIRY_TIME_RTCP) {
-            if (it->second == 0.0f)
-                pond = 20.0f; // Reduce weight of null drop
-            else
-                pond = std::min(static_cast<float>(delay.count()) * coefficient_a + coefficient_b, 100.0f);
-            totalPond += pond;
-            pondLoss += it->second * pond;
-            ++it;
-        } else
-            it = histoLoss_.erase(it);
-    }
-    if (totalPond == 0)
-        return 0.0f;
-
-    return pondLoss / totalPond;
-}
-
 void
 VideoRtpSession::delayMonitor(int gradient, int deltaT)
 {
     float estimation = cc->kalmanFilter(gradient);
     float thresh = cc->get_thresh();
-
     cc->update_thresh(estimation, deltaT);
 
     BandwidthUsage bwState = cc->get_bw_state(estimation, thresh);
+
+    // Rate-limit REMB feedback to avoid flooding (max once per 500ms per direction)
     auto now = clock::now();
+    static constexpr auto MIN_REMB_INTERVAL = std::chrono::milliseconds(500);
 
     if (bwState == BandwidthUsage::bwOverusing) {
-        auto remb_timer_dec = now - last_REMB_dec_;
-        if ((not remb_dec_cnt_) or (remb_timer_dec > DELAY_AFTER_REMB_DEC)) {
-            last_REMB_dec_ = now;
-            remb_dec_cnt_ = 0;
-        }
-
-        // Limit REMB decrease to MAX_REMB_DEC every DELAY_AFTER_REMB_DEC ms
-        if (remb_dec_cnt_ < MAX_REMB_DEC && remb_timer_dec < DELAY_AFTER_REMB_DEC) {
-            remb_dec_cnt_++;
-            JAMI_WARNING("[BandwidthAdapt] Detected reception bandwidth overuse");
-            uint8_t* buf = nullptr;
-            uint64_t br = 0x6803; // Decrease 3
-            auto v = cc->createREMB(br);
-            buf = &v[0];
-            socketPair_->writeData(buf, static_cast<int>(v.size()));
-            last_REMB_inc_ = clock::now();
+        if (now - lastRembSent_ >= MIN_REMB_INTERVAL) {
+            JAMI_LOG("[BandwidthCtrl] Reception overuse detected, sending REMB decrease");
+            auto v = cc->createREMB(0x6803);
+            socketPair_->writeData(v.data(), static_cast<int>(v.size()));
+            lastRembSent_ = now;
         }
     } else if (bwState == BandwidthUsage::bwNormal) {
-        auto remb_timer_inc = now - last_REMB_inc_;
-        if (remb_timer_inc > DELAY_AFTER_REMB_INC) {
-            uint8_t* buf = nullptr;
-            uint64_t br = 0x7378; // INcrease
-            auto v = cc->createREMB(br);
-            buf = &v[0];
-            socketPair_->writeData(buf, static_cast<int>(v.size()));
-            last_REMB_inc_ = clock::now();
+        if (now - lastRembSent_ >= std::chrono::seconds(1)) {
+            auto v = cc->createREMB(0x7378);
+            socketPair_->writeData(v.data(), static_cast<int>(v.size()));
+            lastRembSent_ = now;
         }
     }
 }
