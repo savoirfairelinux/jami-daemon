@@ -226,6 +226,20 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
 
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
         setupVoiceCallback(rtpSession);
+
+#ifdef ENABLE_VIDEO
+        // QoS coupling: when audio detects congestion, reduce video bitrate
+        if (auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession)) {
+            audioRtp->setCongestionCallback([w = weak()](float audioLoss) {
+                if (auto thisPtr = w.lock()) {
+                    for (const auto& videoSession : thisPtr->getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+                        auto videoRtp = std::static_pointer_cast<video::VideoRtpSession>(videoSession);
+                        videoRtp->onAudioCongestion(audioLoss);
+                    }
+                }
+            });
+        }
+#endif
     }
 
 #ifdef ENABLE_VIDEO
