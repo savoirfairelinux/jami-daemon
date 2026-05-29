@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "876320a2_bb4942ef",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 29
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:43:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 87: Appending `/usr/lib/$(HOST)/pkgconfig` and `/usr/share/pkgconfig` to `PKG_CONFIG_PATH` for native contrib builds allows host packages to satisfy contrib dependency checks. That weakens reproducibility and can silently mix system libraries with the contrib prefix, especially after raising `opendht` to `\u003e\u003d 4.0.0`. Prefer keeping contrib resolution constrained to `$(PREFIX)` and pass host pkg-config paths explicitly only for the specific package that requires them.",
+      "revId": "ebe3c8ad1681e5a515b36377a10e6a2147a01e11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b0f8019_09b26423",
+        "filename": "extras/tools/tools.mak",
+        "patchSetId": 29
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:43:56Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 275: The generated meson wrapper is invalid shell: `exec PYTHONPATH\u003d... python3 ...` makes `PYTHONPATH\u003d...` the command passed to `exec`, so the wrapper will fail instead of launching Meson. Put the environment assignment before `exec`.\n```suggestion\n\tprintf \u0027#!/bin/sh\\nPYTHONPATH\u003d\"$(PREFIX)/lib/meson-packages\" exec python3 -m mesonbuild \"$$@\"\\n\u0027 \\\n\t\t\u003e $(PREFIX)/bin/meson\n```",
+      "revId": "ebe3c8ad1681e5a515b36377a10e6a2147a01e11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "639c370a_57044e86",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 1345,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:43:56Z",
+      "side": 1,
+      "message": "[🟢 Good Practices] Line 1345: Good separation of concerns: plugin transforms are run outside `loadedHistory_.mutex`, then results are written back under lock and signals are emitted after unlocking. That avoids holding the history lock across plugin code and signal delivery.",
+      "revId": "ebe3c8ad1681e5a515b36377a10e6a2147a01e11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4c99417_b412042e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 2048,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:43:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2048: `reloadBodyOverwriteMessages()` clears every pluginData key whose name starts with `bodyOverwrite`. The rest of the implementation only defines `bodyOverwrite`; deleting arbitrary prefixed keys risks removing unrelated plugin-local data such as `bodyOverwriteLanguage` or `bodyOverwriteMetadata`. Clear only the exact key this feature owns.\n```suggestion\n                if (it-\u003efirst \u003d\u003d \"bodyOverwrite\")\n                    it \u003d msg-\u003epluginData.erase(it);\n                else\n                    ++it;\n```",
+      "revId": "ebe3c8ad1681e5a515b36377a10e6a2147a01e11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcc05258_c760c43e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 2095,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:43:56Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 2095: `updateMessageBodyOverwrite()` always writes `bodyOverwrite`, even when the new value is empty. Other paths treat an empty overwrite as cleared, so this can leave stale/empty plugin data on the parent/current message and emit inconsistent updates. Erase the key when the overwrite is empty, and apply the same logic when propagating to the parent.\n```suggestion\n        if (bodyOverwrite.empty())\n            it-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n        else\n            it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bodyOverwrite;\n```\nApply the same conditional assignment to `parentIt-\u003esecond-\u003epluginData` below.",
+      "revId": "ebe3c8ad1681e5a515b36377a10e6a2147a01e11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
