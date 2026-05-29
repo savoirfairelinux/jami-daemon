@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a6b040d_e47db6f5",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 392,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 392: `pondLoss_` is mutated without synchronization. The old function-local static was also problematic across calls, but this new member can still be accessed from the RTCP checker thread while other methods use `mutex_` for session state. Guard the EWMA update with the same mutex or make all access single-thread explicit.",
+      "revId": "73f5ea470e5cb3b7d39e8f21b41ce36844e9dc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13f074cb_e7491368",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 54: `shouldSend()` sleeps on the media send path to simulate jitter. This blocks RTP sender threads directly and can distort encoder pacing, RTCP timing, and call behavior beyond the intended network impairment. Prefer a queue/pacer model for jitter simulation, or limit this class to packet loss/bandwidth drops and leave delay/jitter to the namespace-based netem tests.",
+      "revId": "73f5ea470e5cb3b7d39e8f21b41ce36844e9dc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "86757283_7ea10626",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 635,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 635: The network simulator silently drops RTP after SRTP/ICE processing has produced the final packet, but it returns `buf_size` as if the packet was successfully written. This makes callers believe bytes were transmitted and can hide send-path failures from RTP pacing/statistics. More importantly, this simulator is never attached from `NetworkSimRegistry`, so the documented in-process test API cannot affect real media sockets. Wire the registry into RTP session/socket construction using the call id and media type, or remove the registry/documentation until there is a real integration point.",
+      "revId": "73f5ea470e5cb3b7d39e8f21b41ce36844e9dc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc7a2026_16dcc9ed",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 7
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 124: The script defines `phase_start` and `phase_end` but never uses them to filter logs, so each profile summary can include events from previous phases and produce misleading QoS results. Either truncate/copy logs per phase before applying the profile, or use timestamp-aware filtering in `collect_rtcp_stats()` and call it for each peer/profile.",
+      "revId": "73f5ea470e5cb3b7d39e8f21b41ce36844e9dc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b644dc2_9d379752",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 7
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T13:37:49Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 72: The setup script changes host-wide firewall and forwarding state, but cleanup only restores `ip_forward` if `down` is called and always writes to a shared `/tmp/.qos_lab_ipfwd_saved` path. If the script fails after enabling forwarding or multiple runs overlap, the host can be left with unexpected routing/firewall changes. Add a trap in `do_up` to roll back on failure and use a lab-specific state file with validation before restoring.",
+      "revId": "73f5ea470e5cb3b7d39e8f21b41ce36844e9dc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
