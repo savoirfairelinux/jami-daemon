@@ -94,6 +94,13 @@ public:
     void enterConference(Conference& conference);
     void exitConference();
 
+    /**
+     * Called by the audio session when it detects congestion.
+     * Aggressively reduces video bitrate to free bandwidth for audio.
+     * @param audioPacketLoss Current audio packet loss percentage.
+     */
+    void onAudioCongestion(float audioPacketLoss);
+
     void setChangeOrientationCallback(std::function<void(int)> cb);
     void initRecorder() override;
     void deinitRecorder() override;
@@ -151,6 +158,10 @@ private:
     static constexpr unsigned MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
+    // Minimum delay between audio-triggered reductions
+    static constexpr auto AUDIO_QOS_COOLDOWN = std::chrono::seconds(4);
+    // Reduction factor when audio reports congestion
+    static constexpr float AUDIO_QOS_REDUCTION_FACTOR {0.6f};
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
@@ -166,6 +177,7 @@ private:
     time_point last_REMB_inc_ {time_point::min()};
     time_point last_REMB_dec_ {time_point::min()};
     time_point lastBitrateDecrease {time_point::min()};
+    time_point lastAudioQosReduction_ {time_point::min()};
 
     unsigned remb_dec_cnt_ {0};
 
