@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8cdbaf51_37a746b1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 1997,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:22:42Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1997: Messages for which the plugin returns no bodyOverwrite are never marked as processed, so every subsequent loadMissingBodyOverwrites() call will re-run all plugin transforms for the same messages and editions. This can become very expensive and may repeatedly call network-backed plugins such as translators. Store an explicit processed-empty value or separate marker after transform attempts.\n```suggestion\nif (boIt !\u003d single[0].pluginData.end()) {\n    std::lock_guard writeLk(loadedHistory_.mutex);\n    auto realIt \u003d loadedHistory_.quickAccess.find(work.id);\n    if (realIt !\u003d loadedHistory_.quickAccess.end())\n        realIt-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n    anySyncSet \u003d !boIt-\u003esecond.empty();\n}\n```",
+      "revId": "f7071d29fb65089ebde55ae08bb05df7b8f3fcec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82ca3224_248f505a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 2070,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:22:42Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2070: updateMessageBodyOverwrite() writes an empty bodyOverwrite as a present pluginData entry for the target message. Other paths treat a present key as already processed and only inject non-empty values, so an explicit clear works inconsistently and can suppress future recomputation until reloadBodyOverwriteMessages() is called. Prefer erasing the key for empty updates.\n```suggestion\nif (bodyOverwrite.empty())\n    it-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\nelse\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bodyOverwrite;\n```",
+      "revId": "f7071d29fb65089ebde55ae08bb05df7b8f3fcec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8fb850f9_d01464dd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 2081,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:22:42Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2081: updateMessageBodyOverwrite() only propagates an edition overwrite to the parent when latestEditionId matches, but it does not clear the parent\u0027s existing bodyOverwrite when bodyOverwrite is empty. Clearing the latest edition overwrite can therefore leave stale translated/current text visible on the parent. Erase the parent overwrite when the current edition is cleared.\n```suggestion\nif (parentIt-\u003esecond-\u003elatestEditionId \u003d\u003d messageId) {\n    if (bodyOverwrite.empty())\n        parentIt-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n    else\n        parentIt-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bodyOverwrite;\n}\n```",
+      "revId": "f7071d29fb65089ebde55ae08bb05df7b8f3fcec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "375b9e3c_67e288a7",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T15:22:42Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2256: The plugin transformation is run after SwarmLoaded is emitted, despite the ChatHandler API documenting that plugins are called before SwarmLoaded. This changes observable behavior: clients first receive untranslated messages and then a burst of SwarmMessageUpdated signals. Either move loadMissingBodyOverwrites() before emitting SwarmLoaded and inject pluginData into the loaded payload, or update the API contract and client expectations.",
+      "revId": "f7071d29fb65089ebde55ae08bb05df7b8f3fcec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
