@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c25c89b4_63016756",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 129: The registry key is built by concatenating `callId + \u0027:\u0027 + streamType`, but `forEach()` later splits on the first colon. Call IDs can contain arbitrary identifier formats, so a colon in the call ID corrupts iteration results and may make cleanup/debug tooling target the wrong call. Store a structured key instead of encoding two fields into one string.\n```suggestion\nusing Key \u003d std::pair\u003cstd::string, std::string\u003e;\nstruct KeyHash {\n    std::size_t operator()(const Key\u0026 key) const {\n        return std::hash\u003cstd::string\u003e{}(key.first) ^ (std::hash\u003cstd::string\u003e{}(key.second) \u003c\u003c 1);\n    }\n};\nstd::unordered_map\u003cKey, std::shared_ptr\u003cNetworkSimulator\u003e, KeyHash\u003e simulators_;\n```",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e5c9459_282db80e",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 637,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 637: The simulator is checked inside the retry loop, so a transient `EAGAIN` from `writeData()` can cause the same packet to be randomly dropped on a later retry even though the simulated network already allowed it once. Apply the simulator decision once before entering the retry loop.\n```suggestion\n    std::shared_ptr\u003cNetworkSimulator\u003e sim;\n    {\n        std::lock_guard lock(netSimMutex_);\n        sim \u003d networkSim_;\n    }\n    if (sim \u0026\u0026 !sim-\u003eshouldSend(static_cast\u003csize_t\u003e(buf_size)))\n        return buf_size;\n\n    do {\n        if (interrupted_)\n            return -EINTR;\n        ret \u003d writeData(buf, buf_size);\n    } while (ret \u003c 0 and errno \u003d\u003d EAGAIN);\n```",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16ff15cc_2fd33913",
+        "filename": "src/media/socket_pair.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 176: `setNetworkSimulator()` is added, but this patch never wires `NetworkSimRegistry` into `SocketPair` construction/configuration. As a result, the documented call/stream registry cannot affect RTP traffic unless tests manually obtain every `SocketPair`, which the README does not show. Attach the registry simulator when configuring RTP sessions, or remove the registry/documented integration until it is actually connected.",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a06c2708_9125145d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 790,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 790: `onAudioCongestion()` holds `mutex_` while calling `setupVideoBitrateInfo()` and `setNewBitrate()`. Existing session methods commonly synchronize internally, so this risks self-deadlock or blocking RTP/RTCP work during bitrate reconfiguration. Compute the new bitrate under the lock if needed, release the lock, then call the bitrate setter outside the critical section.\n```suggestion\nunsigned int newBitrate;\n{\n    std::lock_guard lock(mutex_);\n    auto now \u003d clock::now();\n    if (now - lastAudioQosReduction_ \u003c AUDIO_QOS_COOLDOWN)\n        return;\n    lastAudioQosReduction_ \u003d now;\n    setupVideoBitrateInfo();\n    auto oldBitrate \u003d videoBitrateInfo_.videoBitrateCurrent;\n    auto factor \u003d audioPacketLoss \u003e 10.0f ? 0.4f : audioPacketLoss \u003e 5.0f ? 0.5f : AUDIO_QOS_REDUCTION_FACTOR;\n    newBitrate \u003d std::max(static_cast\u003cunsigned int\u003e(std::lround(oldBitrate * factor)), videoBitrateInfo_.videoBitrateMin);\n    lastMediaRestart_ \u003d now;\n}\nsetNewBitrate(newBitrate);\n```",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88b63efb_7ecec3a5",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 232: The new audio→video coupling references `video::VideoRtpSession` outside the existing `#ifdef ENABLE_VIDEO` guard, so audio-only builds will fail to compile even though video support is disabled. Wrap the callback setup in `#ifdef ENABLE_VIDEO`, or avoid referencing video types when video is not enabled.\n```suggestion\n#ifdef ENABLE_VIDEO\n        if (auto audioRtp \u003d std::dynamic_pointer_cast\u003cAudioRtpSession\u003e(rtpSession)) {\n            audioRtp-\u003esetCongestionCallback([w \u003d weak()](float audioLoss) {\n                if (auto thisPtr \u003d w.lock()) {\n                    for (const auto\u0026 videoSession : thisPtr-\u003egetRtpSessionList(MediaType::MEDIA_VIDEO)) {\n                        if (auto videoRtp \u003d std::dynamic_pointer_cast\u003cvideo::VideoRtpSession\u003e(videoSession))\n                            videoRtp-\u003eonAudioCongestion(audioLoss);\n                    }\n                }\n            });\n        }\n#endif\n```",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf2f6095_a054ca1e",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 77: `collect_rtcp_stats()` accepts phase start/end parameters but does not use them, so each profile summary can include stale log lines from previous phases. This makes the QoS comparison misleading. Filter logs by timestamp or truncate/copy a baseline offset before each phase and only analyze new lines.",
+      "revId": "6eb64728b0c2d680b417f910ea1e2aad95bc8831",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
