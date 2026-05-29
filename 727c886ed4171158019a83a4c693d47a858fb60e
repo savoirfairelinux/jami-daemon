@@ -282,6 +282,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "60788b9e_f3d1efdb",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T16:20:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8f3b0a94_471649e1",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "2165fee2_db1e4d19",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 15
@@ -345,6 +363,24 @@
       "writtenOn": "2026-05-11T17:33:18Z",
       "side": 1,
       "message": "[warning] Line 566: `std::ofstream` writes msgpack data while holding a file lock, but `getPreferencesValuesMap` earlier reads the same file without necessarily holding the same lock, so the read-modify-write is not atomic and can lose concurrent writes from another thread.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98be7a02_60c3d596",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 566,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T16:20:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f8744478_7bdbb424",
       "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
