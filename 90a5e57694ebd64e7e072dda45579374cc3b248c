@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c937344_d58a7884",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 98: The new congestion trigger inherits the previous EWMA initial value of 10%, so a first RTCP report with 0% loss computes `pondLoss_ \u003d 5` and immediately fires audio congestion because the threshold is 3%. That will reduce video bitrate on clean calls. Initialize the EWMA to 0 for the new congestion path, or avoid using the smoothed bootstrap value for congestion decisions.\n```suggestion\nfloat pondLoss_ {0.0f};\n```",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f8f0f01_b0d19a62",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 52: The global simulator registry stores shared simulators indefinitely unless tests remember to call `clear()`/`removeAll()`. Because keys are arbitrary call IDs and the registry is process-global, integration tests can leak state across calls or test cases and produce order-dependent failures. Prefer RAII-scoped registration, weak entries, or ensure call teardown removes simulators consistently where the SocketPair/session is destroyed.",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac115353_b6d23db5",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 633,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 633: The simulator drops only outgoing RTP after SRTP/packetization, but `writeCallback()` returns `buf_size` as if the packet was sent. This makes sender-side statistics and backpressure believe transmission succeeded, while receiver-side RTCP reports loss later. That may be acceptable for a test-only fault injector, but this code is compiled into production media sources with no build/test guard and no public attachment path shown in this change. Gate this integration behind a test/debug build option or keep the simulator out of production code paths.",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f4d9f6d_d159cf19",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 806,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 806: `onAudioCongestion()` reduces bitrate every cooldown interval even when video is already at the minimum, and it does not coordinate with the existing bitrate-decrease timers/counters. This can cause repeated encoder reconfiguration/log spam and interfere with normal REMB adaptation. Return early when `oldBitrate \u003c\u003d videoBitrateInfo_.videoBitrateMin`, and update/reuse the existing decrease state if this is meant to be part of congestion control.",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccacd6a1_3b3b681d",
+        "filename": "test/unitTest/media/test_network_simulator.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 128: The jitter test is probabilistic and can flake: uniform jitter over 10 packets can legally produce a total sleep of 0ms or slightly exceed the arbitrary timing bound on loaded CI. Avoid asserting wall-clock randomness; inject a deterministic RNG/clock or test deterministic bounds with max jitter disabled/enabled through a controllable dependency.",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bca145b_a1bfd57e",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 8
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:56Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 93: The script writes a fixed `/tmp/.qos_lab_ipfwd_saved` file and later trusts its contents as root. On shared systems this is vulnerable to symlink/clobbering and state injection. Use a private temp directory created with `mktemp -d`, restrict permissions, and clean it up, or store the previous value in memory for the lifetime of the command.",
+      "revId": "90a5e57694ebd64e7e072dda45579374cc3b248c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
