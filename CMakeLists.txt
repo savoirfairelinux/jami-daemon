@@ -23,6 +23,7 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+set(CONTRIB_BUILD_JOBS "" CACHE STRING "Number of parallel jobs to use when building contrib dependencies")
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -68,7 +69,9 @@ if(NOT MSVC)
 
     include(ProcessorCount)
     ProcessorCount(NPROC)
-    if(NOT NPROC EQUAL 0)
+    if(CONTRIB_BUILD_JOBS)
+        set(CONTRIB_BUILD_FLAGS -j${CONTRIB_BUILD_JOBS})
+    elseif(NOT NPROC EQUAL 0)
         set(CONTRIB_BUILD_FLAGS -j${NPROC})
     endif()
 
