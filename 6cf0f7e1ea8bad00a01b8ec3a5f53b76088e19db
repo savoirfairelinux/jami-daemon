@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60eecd7e_73e935ad",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 31
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:21:12Z",
+      "side": 1,
+      "message": "[Major] Line 87: Adding host system pkg-config paths to PKG_CONFIG_PATH for all non-cross contrib builds can make need_pkg resolve against system libraries instead of the contrib prefix. That weakens reproducibility and can silently skip building required contrib versions depending on the developer machine. Prefer leaving PKG_CONFIG_PATH scoped to $(PREFIX), or gate system paths behind an explicit opt-in variable.",
+      "revId": "6cf0f7e1ea8bad00a01b8ec3a5f53b76088e19db",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9f5a642_650f99c7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1372,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:21:12Z",
+      "side": 1,
+      "message": "[Critical] Line 1372: Removing the unconditional SwarmMessageUpdated emission makes normal edit updates disappear whenever plugins are disabled or no chat handlers are registered. The replacement signal is only emitted inside the ENABLE_PLUGIN/hasHandlers() path in announce(), so clients will not be notified that a message body changed in the common no-plugin case. Keep the base edit notification independent of plugin processing, and only add overwrite injection when plugin data is available.\n```suggestion\nlibjami::SwarmMessage updated \u003d *it-\u003esecond;\n#ifdef ENABLE_PLUGIN\nupdated \u003d injectEditionOverwrites(*it-\u003esecond, history.quickAccess);\n#endif\nemitSignal\u003clibjami::ConversationSignal::SwarmMessageUpdated\u003e(accountId_, repository_-\u003eid(), updated);\n```",
+      "revId": "6cf0f7e1ea8bad00a01b8ec3a5f53b76088e19db",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc14e70b_2f12aad3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 2031,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:21:12Z",
+      "side": 1,
+      "message": "[Major] Line 2031: When a plugin previously produced no bodyOverwrite, this method does not record that the message was processed. Because loadMissingBodyOverwrites() treats absence of the key as missing work, every subsequent load/reload will re-run plugin transforms for the same messages forever. Store an explicit empty/sentinel value or otherwise distinguish \u0027processed with no overwrite\u0027 from \u0027not processed yet\u0027.",
+      "revId": "6cf0f7e1ea8bad00a01b8ec3a5f53b76088e19db",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83e0c61f_075d0ad1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:21:12Z",
+      "side": 1,
+      "message": "[Major] Line 2257: loadMissingBodyOverwrites() is called only after SwarmLoaded is emitted, so the loaded batch initially reaches clients without plugin body overwrites and is then corrected by later SwarmMessageUpdated signals. That contradicts the new ChatHandler API contract saying transforms happen before SwarmLoaded, and can cause visible flicker or stale rendering if clients do not merge follow-up updates for already-loaded rows. Run the transform before emitting SwarmLoaded, or update the API documentation to reflect asynchronous post-load updates.",
+      "revId": "6cf0f7e1ea8bad00a01b8ec3a5f53b76088e19db",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
