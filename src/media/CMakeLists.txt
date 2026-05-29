@@ -5,6 +5,8 @@
 # audio|video
 
 list (APPEND Source_Files__media
+      "${CMAKE_CURRENT_SOURCE_DIR}/bandwidth_controller.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/bandwidth_controller.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/decoder_finder.h"

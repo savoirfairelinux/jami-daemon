@@ -395,7 +395,7 @@ AudioRtpSession::setNewPacketLoss(unsigned int newPL)
 float
 AudioRtpSession::getPonderateLoss(float lastLoss)
 {
-    pondLoss_ = floor(0.5f * lastLoss + 0.5f * pondLoss_);
+    pondLoss_ = std::floor(0.5f * lastLoss + 0.5f * pondLoss_);
     if (lastLoss > pondLoss_) {
         return lastLoss;
     } else {

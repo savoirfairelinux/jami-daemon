@@ -70,6 +70,7 @@ libjami_sources = files(
     'media/localrecorder.cpp',
     'media/localrecordermanager.cpp',
     'media/media_attribute.cpp',
+    'media/bandwidth_controller.cpp',
     'media/media_buffer.cpp',
     'media/media_codec.cpp',
     'media/media_decoder.cpp',
