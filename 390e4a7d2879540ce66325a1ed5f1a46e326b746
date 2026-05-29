@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6d8f53e5_204566dd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2026-05-29T13:07:54Z",
+      "side": 1,
+      "message": "Doesn\u0027t this patch cause conflicts with video processing—especially since there are issues like https://git.jami.net/savoirfairelinux/jami-client-android/-/work_items/1076 and https://git.jami.net/savoirfairelinux/jami-client-android/-/work_items/1355#note_49723 on Android? Or does it somehow fix these issues?",
+      "revId": "390e4a7d2879540ce66325a1ed5f1a46e326b746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "63b560fa_5ed8a6c2",
         "filename": "src/media/audio/audio_rtp_session.cpp",
         "patchSetId": 6
