@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcb9a541_a2cbba55",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T15:21:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f45a66ee_9bbdda42",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "06df8c8b_5ed5ad66",
@@ -192,6 +210,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b156525_d5b871ea",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T15:21:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "26753a8c_06a331fe",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b078867f_e9c4fd1e",
@@ -205,6 +241,24 @@
       "writtenOn": "2026-05-11T17:33:18Z",
       "side": 1,
       "message": "[warning] Line 130: The `reloadBodyOverwriteConversations` lambda iterates all accounts and conversations while holding no lock. If a conversation is removed concurrently, the `shared_ptr` returned by `getConversation` may be null after the `if` check — this is fine here, but `convModule()` returning a raw pointer used after the account is destroyed is not safe. Consider capturing a `shared_ptr` to the account.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11dd6ee1_98156434",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T15:21:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b078867f_e9c4fd1e",
       "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -256,6 +310,24 @@
       "writtenOn": "2026-05-11T17:33:18Z",
       "side": 1,
       "message": "[warning] Line 558: `setPluginAccPreference` calls `getPreferencesValuesMap(rootPath, accountId)` twice (once for the `find` check, once implicitly). This is wasteful and could return different results if the file changes between calls. Cache the result in a local variable.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f14de5f9_144afc5c",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T15:21:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "78b3d1f2_e0f39ca7",
       "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
