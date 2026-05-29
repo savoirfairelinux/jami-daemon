@@ -226,6 +226,37 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
 
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
         setupVoiceCallback(rtpSession);
+
+#ifdef ENABLE_VIDEO
+        // QoS coupling: when audio detects congestion, reduce video bitrate.
+        // The callback fires from the RTCP checker thread, so dispatch onto
+        // the Manager io_context to safely access session lists.
+        if (auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession)) {
+            audioRtp->setCongestionCallback([w = weak(), audioWeak = std::weak_ptr(audioRtp)](float audioLoss) {
+                asio::post(*Manager::instance().ioContext(), [w, audioWeak, audioLoss] {
+                    auto thisPtr = w.lock();
+                    if (!thisPtr)
+                        return;
+                    auto audioSession = audioWeak.lock();
+                    if (!audioSession)
+                        return;
+                    bool stillActive = false;
+                    for (const auto& s : thisPtr->getRtpSessionList(MediaType::MEDIA_AUDIO)) {
+                        if (s == audioSession) {
+                            stillActive = true;
+                            break;
+                        }
+                    }
+                    if (!stillActive)
+                        return;
+                    for (const auto& videoSession : thisPtr->getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+                        if (auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(videoSession))
+                            videoRtp->onAudioCongestion(audioLoss);
+                    }
+                });
+            });
+        }
+#endif
     }
 
 #ifdef ENABLE_VIDEO

@@ -789,6 +789,44 @@ VideoRtpSession::processRtcpChecker()
 }
 
 void
+VideoRtpSession::onAudioCongestion(float audioPacketLoss)
+{
+    unsigned int newBitrate;
+    {
+        std::lock_guard lock(mutex_);
+        auto now = clock::now();
+        if (now - lastAudioQosReduction_ < AUDIO_QOS_COOLDOWN)
+            return;
+
+        setupVideoBitrateInfo();
+
+        auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
+        if (oldBitrate == 0 || oldBitrate <= videoBitrateInfo_.videoBitrateMin)
+            return;
+
+        // Scale reduction with severity: more audio loss → more aggressive reduction
+        float reductionFactor = AUDIO_QOS_REDUCTION_FACTOR;
+        if (audioPacketLoss > 10.0f)
+            reductionFactor = 0.4f; // Very aggressive for severe audio loss
+        else if (audioPacketLoss > 5.0f)
+            reductionFactor = 0.5f;
+
+        newBitrate = static_cast<unsigned int>(std::lround(static_cast<float>(oldBitrate) * reductionFactor));
+        newBitrate = std::clamp(newBitrate, videoBitrateInfo_.videoBitrateMin, oldBitrate);
+
+        // Only record timestamp after confirming a reduction will be applied.
+        lastAudioQosReduction_ = now;
+
+        JAMI_LOG("[AudioQoS] Video bitrate reduced: {} Kbps -> {} Kbps (audio loss: {}%)",
+                 oldBitrate,
+                 newBitrate,
+                 audioPacketLoss);
+    }
+    // Call outside mutex to avoid deadlock (may restart encoder)
+    setNewBitrate(newBitrate);
+}
+
+void
 VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
     std::lock_guard lock(mutex_);
