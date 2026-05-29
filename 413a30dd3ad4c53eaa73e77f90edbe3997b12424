@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "155ec11d_5c16ad7d",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "Line 358: 🟡 Suggestion: The congestion callback fires every RTCP cycle while loss stays above 3%, even if the video side has already throttled and is in cooldown. This can create repeated cross-stream work/log spam for persistent loss and makes multiple video streams each apply their own cooldown independently. Add audio-side hysteresis/cooldown or only notify on threshold crossing so one sustained congestion episode maps to one reduction request.\n\n```suggestion\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 lastAudioCongestionSignal_ + AUDIO_CONGESTION_COOLDOWN \u003c\u003d clock::now()) {\n    lastAudioCongestionSignal_ \u003d clock::now();\n    // copy and invoke callback\n}\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "320e314e_09a7a6af",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "[Critical] Line 85: 🔴 Critical Issues: `pondLoss_` now starts at 0.0, while the previous smoothing state started at 10.0. This changes the first several packet-loss samples and can suppress the existing audio bitrate adaptation at call start. If the default loss baseline was intentional, preserve it when converting the old static local into an instance member.\n\n```suggestion\nfloat pondLoss_ {10.0f};\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc72ebba_17a989ba",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "[Critical] Line 51: 🔴 Critical Issues: The registry is never wired into `SocketPair`, so `getOrCreate(callId, streamType)` in tests creates simulators that are not attached to any media stream. The README advertises this as the way to attach simulators, but no production/test path looks up the registry and calls `SocketPair::setNetworkSimulator()`. Add an integration point during RTP session/socket setup, or remove the registry/docs until it is actually connected.\n\n```suggestion\nauto sim \u003d NetworkSimRegistry::instance().get(callId, streamType);\nif (sim)\n    socketPair_-\u003esetNetworkSimulator(sim);\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c56f4273_1350294c",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "[Critical] Line 52: 🔴 Critical Issues: `shouldSend()` blocks the media send path to simulate jitter. On RTP sender threads this can back up encoding/pacing, distort timestamps, and make tests exercise local thread stalls rather than network jitter. Model jitter with queued delayed delivery, or keep this class packet-drop/bandwidth-only and remove blocking jitter from the synchronous socket write path.\n\n```suggestion\n// Do not sleep in SocketPair::writeCallback(); either enqueue delayed packets on a worker\n// or expose jitter only in tests that explicitly call the simulator outside media send paths.\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8ad230b_55d87066",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 632,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "[Critical] Line 632: 🔴 Critical Issues: The simulator is applied only to non-RTCP packets, but `writeCallback` carries both RTP and RTCP packets from SRTP/DTLS paths. Silently returning `buf_size` for a dropped RTP packet means the upper layer records the packet as sent, but the simulator\u0027s bandwidth accounting excludes RTCP and control overhead, so QoS tests will overestimate available media bandwidth and under-report congestion. Either account for RTCP bytes while never dropping them, or document/rename the simulator as RTP-only and adjust tests accordingly.\n\n```suggestion\nif (sim) {\n    if (isRTCP) {\n        sim-\u003eaccountControlPacket(static_cast\u003csize_t\u003e(buf_size));\n    } else if (!sim-\u003eshouldSend(static_cast\u003csize_t\u003e(buf_size))) {\n        return buf_size;\n    }\n}\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e42b7e5d_44f5f850",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "Line 231: 🟡 Suggestion: The audio congestion callback captures the whole `SIPCall` and scans current sessions on the RTCP checker thread. This couples media adaptation to SIP call internals and makes lock ordering harder to reason about. Prefer wiring audio/video sessions together at media-session configuration time with weak video-session references, so the callback only targets the paired video RTP sessions and does not need to re-enter call session enumeration.\n\n```suggestion\naudioRtp-\u003esetCongestionCallback([videoWeak \u003d std::weak_ptr(videoRtp)](float audioLoss) {\n    if (auto video \u003d videoWeak.lock())\n        video-\u003eonAudioCongestion(audioLoss);\n});\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "473af694_fb8697dc",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 10
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "Line 78: 🟡 Suggestion: `collect_rtcp_stats()` accepts `phase_start` and `phase_end` but does not use them, so each profile summary can include log lines from previous phases and produce misleading QoS results. Filter by timestamp if logs include one, or truncate/rotate logs before each phase.\n\n```suggestion\n: \u003e \"${OUTPUT_DIR}/${profile}_${ns//-/_}.log\"\n# start fresh capture for this phase, then summarize only that file\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7cd172d8_0b33ba90",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 10
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T16:20:24Z",
+      "side": 1,
+      "message": "[Critical] Line 76: 🔴 Critical Issues: `do_up()` creates a new `/run/qos-lab.*` state directory every run, while `do_down()` restores the first directory returned by `ls | head -1`. After repeated runs this can restore stale `ip_forward` state and leave newer state directories behind. Use a deterministic state path for this lab or record the active path explicitly.\n\n```suggestion\nSTATE_DIR\u003d\"/run/jami-qos-lab\"\nrm -rf \"$STATE_DIR\"\nmkdir -m 700 \"$STATE_DIR\"\ncat /proc/sys/net/ipv4/ip_forward \u003e \"$STATE_DIR/ipfwd\"\n```",
+      "revId": "413a30dd3ad4c53eaa73e77f90edbe3997b12424",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
