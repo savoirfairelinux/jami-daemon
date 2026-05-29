@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90e1ae9b_bc90e193",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 360: The congestion callback fires on every RTCP check while `pondLoss` remains above 3%, with no hysteresis or recovery signal. Video has a 4s cooldown, but audio RTCP also runs every 4s, so sustained loss can force repeated multiplicative reductions until video reaches minimum bitrate even if the first reduction was enough. Add hysteresis/state in audio, or send explicit congestion enter/recover events so video only reacts once per congestion episode. ```suggestion\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 !audioCongested_) {\n    audioCongested_ \u003d true;\n    cb(pondLoss);\n} else if (pondLoss \u003c AUDIO_CONGESTION_RECOVERY_THRESHOLD) {\n    audioCongested_ \u003d false;\n}\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ae43a42_28ead2b4",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 51: `shouldSend()` sleeps synchronously to simulate jitter on the media write path. This blocks the RTP sender thread and changes encoder/backpressure timing rather than only network delivery timing, which can distort QoS measurements and potentially cause audio underruns in tests. Prefer queueing/delayed delivery for jitter, or limit this simulator to packet loss/bandwidth drops and document that jitter is not safe for sender-thread use.",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8dac6102_6318eae4",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 99: `tokenBucket_ + bytesToAdd` can overflow before `std::min()` if a very large bandwidth or long elapsed interval is configured, wrapping the bucket to a small value and causing artificial drops. Use saturating arithmetic before applying the cap. ```suggestion\nauto available \u003d maxBucket - std::min(tokenBucket_, maxBucket);\ntokenBucket_ \u003d std::min(maxBucket, tokenBucket_ + std::min(bytesToAdd, available));\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c7b236c_61102e89",
+        "filename": "src/media/network_sim/network_simulator.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 79: The header declares `shouldSend(size_t packetSize)` but does not include `\u003ccstddef\u003e`, where `std::size_t`/`size_t` is defined. This can compile only through incidental transitive includes. Add the direct include and prefer `std::size_t` in the signature. ```suggestion\n#include \u003ccstddef\u003e\n...\nbool shouldSend(std::size_t packetSize);\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53c17f91_18cf5ed6",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 627,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 627: The simulator hook is only applied on writes from this SocketPair, but no code in this patch ever attaches the NetworkSimRegistry entries to any SocketPair. As a result, the documented `NetworkSimRegistry::getOrCreate(callId, \"audio\")` path cannot affect RTP/RTCP traffic, so the new simulator and its tests do not validate the QoS behavior. Wire the registry into RTP session/socket setup, or remove the registry documentation until it is actually integrated. For example, when the call ID and media type are known: ```suggestion\nauto sim \u003d NetworkSimRegistry::instance().get(getCallId(), mediaTypeString);\nif (sim)\n    socketPair_-\u003esetNetworkSimulator(std::move(sim));\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5cf64541_e31c4ef8",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 809,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 809: `lastMediaRestart_` is updated before calling `setNewBitrate(newBitrate)`. If `setNewBitrate()` or the existing bitrate adaptation path uses `lastMediaRestart_` as a restart/cooldown guard, this pre-update can suppress the very encoder restart needed to apply the audio-triggered bitrate reduction. Move the timestamp update into/after the successful bitrate change path, reusing the same place normal bitrate adaptation updates it. ```suggestion\n    }\n    // Call outside mutex to avoid deadlock (may restart encoder)\n    setNewBitrate(newBitrate);\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0a57245_6842d28a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 233: The callback captures only the call weak pointer, then invokes `VideoRtpSession::onAudioCongestion()` on every current video session without checking whether the audio session that emitted the signal is still the active audio stream. If an audio RTP session is replaced or torn down while its callback remains installed, stale RTCP processing can still throttle unrelated/new video sessions on the same call. Clear the callback during audio session teardown or capture a weak pointer to the specific audio session and verify it still belongs to the call before throttling video.",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd8b0e60_f79e83e4",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T09:10:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 109: `setup-qos-lab.sh down` removes only one instance of each FORWARD rule, but `up` appends rules every run after `cleanup`; repeated `up` executions can leave duplicate iptables rules behind. Make setup idempotent by deleting existing matching rules before adding, or use `iptables -C ... || iptables -A ...`. ```suggestion\niptables -C FORWARD -i ${BR_A} -o ${BR_B} -j ACCEPT 2\u003e/dev/null || iptables -A FORWARD -i ${BR_A} -o ${BR_B} -j ACCEPT\niptables -C FORWARD -i ${BR_B} -o ${BR_A} -j ACCEPT 2\u003e/dev/null || iptables -A FORWARD -i ${BR_B} -o ${BR_A} -j ACCEPT\n```",
+      "revId": "3b3c7421f96e69829f1a7e7278b1778a57af330e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
