@@ -91,6 +91,8 @@
 #include <opendht/peer_discovery.h>
 #include <opendht/http.h>
 
+#include <asio/steady_timer.hpp>
+
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
@@ -187,6 +189,20 @@ struct JamiAccount::DiscoveredPeer
 {
     std::string displayName;
     std::unique_ptr<asio::steady_timer> cleanupTimer;
+};
+
+struct JamiAccount::IdentityRetryState
+{
+    asio::steady_timer timer;
+    unsigned attempt {0};
+    bool exhausted {false}; // Reset on new doRegister_() cycle
+    static constexpr unsigned maxAttempts = 3;
+    // Exponential back-off delays in seconds for identity announce retries
+    static constexpr std::array<unsigned, maxAttempts> delays {5, 15, 30};
+
+    explicit IdentityRetryState(asio::io_context& ctx)
+        : timer(ctx)
+    {}
 };
 
 /**
@@ -1852,6 +1868,13 @@ JamiAccount::doRegister_()
         return;
     }
 
+    // Reset retry state for the new registration cycle so retries are not
+    // permanently disabled after a previous exhaustion.
+    if (identityRetryState_) {
+        identityRetryState_->timer.cancel();
+        identityRetryState_.reset();
+    }
+
     JAMI_DEBUG("[Account {}] Starting account…", getAccountID());
     const auto& conf = config();
 
@@ -2083,15 +2106,79 @@ JamiAccount::initDhtContext()
     };
 
     context.identityAnnouncedCb = [this](bool ok) {
-        if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
-            return;
-        }
-        JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
-        accountManager_
-            ->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) { onAccountDeviceFound(crt); },
-                        [this] { onAccountDeviceAnnounced(); },
-                        publishPresence_);
+        // Marshal onto Manager's io_context — timer and retry state are bound to it,
+        // so all access must happen on the same strand to avoid data races.
+        asio::post(*Manager::instance().ioContext(), [w = weak(), ok] {
+            auto thisPtr = w.lock();
+            if (!thisPtr)
+                return;
+            if (!ok) {
+                // Initialize retry state on first failure, reuse on subsequent ones.
+                if (!thisPtr->identityRetryState_)
+                    thisPtr->identityRetryState_ = std::make_shared<IdentityRetryState>(
+                        *Manager::instance().ioContext());
+                auto& state = *thisPtr->identityRetryState_;
+                if (state.exhausted) {
+                    JAMI_WARNING("[Account {}] Identity callback ignored (retries exhausted)", thisPtr->getAccountID());
+                    return;
+                }
+                if (state.attempt >= IdentityRetryState::maxAttempts) {
+                    JAMI_ERROR("[Account {}] Identity announcement failed after {} retries, giving up",
+                               thisPtr->getAccountID(),
+                               state.attempt);
+                    state.exhausted = true;
+                    return;
+                }
+                auto delaySec = IdentityRetryState::delays[state.attempt];
+                JAMI_ERROR("[Account {}] Identity announcement failed, retry {}/{} in {}s",
+                           thisPtr->getAccountID(),
+                           state.attempt + 1,
+                           IdentityRetryState::maxAttempts,
+                           delaySec);
+                state.attempt++;
+                state.timer.cancel();
+                state.timer.expires_after(std::chrono::seconds(delaySec));
+                state.timer.async_wait([w2 = thisPtr->weak()](const asio::error_code& ec) {
+                    if (ec)
+                        return;
+                    if (auto acc = w2.lock()) {
+                        JAMI_WARNING("[Account {}] Retrying sync after identity announcement failure",
+                                     acc->getAccountID());
+                        if (acc->accountManager_) {
+                            auto weakAcc = acc->weak();
+                            acc->accountManager_->startSync(
+                                [weakAcc](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                    if (auto account = weakAcc.lock())
+                                        account->onAccountDeviceFound(crt);
+                                },
+                                [weakAcc] {
+                                    if (auto account = weakAcc.lock())
+                                        account->onAccountDeviceAnnounced();
+                                },
+                                acc->publishPresence_);
+                        }
+                    }
+                });
+                return;
+            }
+            JAMI_WARNING("[Account {}] Identity announcement succeeded", thisPtr->getAccountID());
+            if (thisPtr->identityRetryState_) {
+                thisPtr->identityRetryState_->timer.cancel();
+                thisPtr->identityRetryState_.reset();
+            }
+            if (!thisPtr->accountManager_)
+                return;
+            thisPtr->accountManager_->startSync(
+                [w](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                    if (auto account = w.lock())
+                        account->onAccountDeviceFound(crt);
+                },
+                [w] {
+                    if (auto account = w.lock())
+                        account->onAccountDeviceAnnounced();
+                },
+                thisPtr->publishPresence_);
+        });
     };
 
     return context;
@@ -2641,6 +2728,13 @@ JamiAccount::connectivityChanged()
             connectionManager_->setPublishedAddress({});
         }
     }
+    // Re-subscribe presence for all tracked buddies. Subscriptions may
+    // have been silently lost while the DHT was disconnected (trackPresence
+    // returns early when the DHT is not running). refresh() is idempotent:
+    // it clears existing listen tokens before re-subscribing, so repeated
+    // calls only cost a lightweight token teardown/recreate cycle.
+    if (presenceManager_ && dht_ && dht_->isRunning())
+        presenceManager_->refresh();
 }
 
 bool
