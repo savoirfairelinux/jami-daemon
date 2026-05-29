@@ -1,0 +1,245 @@
+/*
+ * Copyright (C) 2022-2026 Savoir-faire Linux Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation; either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
+ */
+
+// NPM publishing pipeline for:
+//   @savoirfairelinux/jami-core-linux-x64
+//   @savoirfairelinux/jami-core-linux-arm64
+//   @savoirfairelinux/jami-core-darwin-arm64
+//   @savoirfairelinux/jami-core
+//
+// Requirements:
+//   - Docker plugin
+//   - Credentials: 'npm-token' (secret text) - NPM automation token
+//   - ansicolor plugin
+//   - linux x64/aarch64 agents with Docker
+//   - darwin arm64 agent with Node.js, CMake, Ninja, SWIG >= 4.3 and daemon build dependencies
+
+pipeline {
+    agent none
+
+    options {
+        ansiColor('xterm')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    parameters {
+        string(
+            name: 'RELEASE_VERSION',
+            description: 'Semver version to publish (e.g. 0.1.0). Leave empty to use version from package.json.'
+        )
+        booleanParam(
+            name: 'DRY_RUN',
+            defaultValue: true,
+            description: 'Run npm pack without publishing (for verification).'
+        )
+    }
+
+    stages {
+
+        // 1. Build native addon for each platform.
+
+        stage('Build native modules') {
+            parallel {
+                stage('linux-x64') {
+                    agent { label 'linux && x86_64' }
+                    steps {
+                        checkout scm
+                        sh 'git submodule update --init --recursive'
+                        buildNativeAddonInDocker('linux', 'x64')
+                        stash includes: 'jamid.node', name: 'native-linux-x64'
+                    }
+                }
+                stage('linux-arm64') {
+                    agent { label 'linux && aarch64' }
+                    steps {
+                        checkout scm
+                        sh 'git submodule update --init --recursive'
+                        buildNativeAddonInDocker('linux', 'arm64')
+                        stash includes: 'jamid.node', name: 'native-linux-arm64'
+                    }
+                }
+                stage('darwin-arm64') {
+                    agent { label 'darwin && arm64' }
+                    steps {
+                        checkout scm
+                        sh 'git submodule update --init --recursive'
+                        sh 'npm ci --ignore-scripts'
+                        buildNativeAddonOnHost('darwin', 'arm64')
+                        stash includes: 'jamid.node', name: 'native-darwin-arm64'
+                    }
+                }
+            }
+        }
+
+        // 2. Assemble and publish packages.
+
+        stage('Publish') {
+            agent { label 'linux' }
+            environment {
+                NODE_AUTH_TOKEN = credentials('npm-token')
+            }
+            stages {
+
+                stage('Checkout & setup') {
+                    steps {
+                        checkout scm
+                        sh 'git submodule update --init --recursive'
+                        sh 'npm ci --ignore-scripts'
+                        setVersionIfRequested()
+                    }
+                }
+
+                stage('Build TypeScript') {
+                    steps {
+                        sh 'npm run build --workspace=common --workspace=@savoirfairelinux/jami-core'
+                    }
+                }
+
+                stage('Publish jami-core-linux-x64') {
+                    steps {
+                        publishPlatformPackage('linux', 'x64')
+                    }
+                }
+
+                stage('Publish jami-core-linux-arm64') {
+                    steps {
+                        publishPlatformPackage('linux', 'arm64')
+                    }
+                }
+
+                stage('Publish jami-core-darwin-arm64') {
+                    steps {
+                        publishPlatformPackage('darwin', 'arm64')
+                    }
+                }
+
+                stage('Publish jami-core') {
+                    steps {
+                        dir('daemon/bin/nodejs') {
+                            npmPublishOrPack()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            node('linux') {
+                cleanWs()
+            }
+        }
+    }
+}
+
+// Helper methods
+
+/**
+ * Build the native daemon addon inside Docker using the existing
+ * daemon/Dockerfile, then extract jamid.node to the workspace root.
+ */
+void buildNativeAddonInDocker(String platform, String arch) {
+    dir('daemon') {
+        sh "docker build --build-arg cmake_args='-DJAMI_NODEJS=ON -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON' -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
+    }
+    sh """
+        container_id=\$(docker create jami-daemon-${platform}-${arch}:${env.BUILD_ID})
+        docker cp \${container_id}:/daemon/bin/nodejs/build/Release/jamid.node jamid.node
+        docker rm \${container_id}
+    """
+}
+
+/**
+ * Build the native daemon addon on the current host, then copy jamid.node
+ * to the workspace root for stashing.
+ */
+void buildNativeAddonOnHost(String platform, String arch) {
+    sh """
+        node -e "if (process.platform !== '${platform}' || process.arch !== '${arch}') { console.error('Expected ${platform}-${arch}, got ' + process.platform + '-' + process.arch); process.exit(1); }"
+        rm -rf daemon/build daemon/bin/nodejs/build
+        cmake -S daemon -B daemon/build \
+            -DJAMI_NODEJS=ON \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+            -DCMAKE_OSX_ARCHITECTURES=${arch} \
+            -GNinja
+        cmake --build daemon/build --config Release --parallel 4
+        cp daemon/bin/nodejs/build/Release/jamid.node jamid.node
+    """
+}
+
+/**
+ * Assemble a platform-specific native package (@savoirfairelinux/jami-core-<os>-<arch>)
+ * from the stashed jamid.node binary, then publish it.
+ */
+void publishPlatformPackage(String os, String arch) {
+    def pkgDir = "daemon/bin/nodejs/npm/${os}-${arch}"
+
+    dir(pkgDir) {
+        sh 'rm -f jamid.node'
+        unstash "native-${os}-${arch}"
+        npmPublishOrPack()
+    }
+}
+
+/**
+ * Apply RELEASE_VERSION to all publishable package.json files.
+ */
+void setVersionIfRequested() {
+    if (!params.RELEASE_VERSION?.trim()) return
+
+    def version = params.RELEASE_VERSION.trim()
+    def packageDirs = [
+        'daemon/bin/nodejs',
+        'daemon/bin/nodejs/npm/darwin-arm64',
+        'daemon/bin/nodejs/npm/linux-arm64',
+        'daemon/bin/nodejs/npm/linux-x64',
+    ]
+
+    for (packageDir in packageDirs) {
+        sh "npm version '${version}' --no-git-tag-version --prefix '${packageDir}'"
+    }
+
+    // Keep optionalDependencies in daemon/bin/nodejs/package.json in sync.
+    sh """
+        cd daemon/bin/nodejs
+        node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+            for (const key of Object.keys(pkg.optionalDependencies || {})) {
+                pkg.optionalDependencies[key] = '${version}';
+            }
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\\n');
+        "
+    """
+}
+
+/**
+ * Publish if not DRY_RUN, otherwise just pack for inspection.
+ */
+void npmPublishOrPack() {
+    writeFile file: '.npmrc', text: "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}\n"
+    if (params.DRY_RUN) {
+        sh 'npm pack --dry-run'
+    } else {
+        sh 'npm publish --access public'
+    }
+}
