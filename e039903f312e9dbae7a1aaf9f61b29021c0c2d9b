@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3515f8d_92076aa8",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:54Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 36: Only `increaseRampTime` is validated, but several config values can make the controller behave incorrectly if a caller supplies a custom `Config`: `minBitrateKbps \u003e maxBitrateKbps`, `initialBitrateKbps` outside limits, negative alpha values, negative cooldown/probe values, or `maxDecreaseFactor \u003e 1`. That can lead to invalid clamp bounds, negative timing comparisons, or increases/decreases outside the intended AIMD envelope. Normalize all externally configurable fields in the constructor before initializing state.\n```suggestion\ncfg_.lossAlpha \u003d std::clamp(cfg_.lossAlpha, 0.0f, 1.0f);\ncfg_.rttAlpha \u003d std::clamp(cfg_.rttAlpha, 0.0f, 1.0f);\ncfg_.maxDecreaseFactor \u003d std::clamp(cfg_.maxDecreaseFactor, 0.0f, 1.0f);\ncfg_.minIncreaseFactor \u003d std::max(cfg_.minIncreaseFactor, 0.0f);\ncfg_.maxIncreaseFactor \u003d std::max(cfg_.maxIncreaseFactor, cfg_.minIncreaseFactor);\ncfg_.decreaseCooldownSec \u003d std::max(cfg_.decreaseCooldownSec, 0.0f);\ncfg_.probeDelaySec \u003d std::max(cfg_.probeDelaySec, 0.0f);\nif (cfg_.minBitrateKbps \u003e cfg_.maxBitrateKbps)\n    std::swap(cfg_.minBitrateKbps, cfg_.maxBitrateKbps);\ncfg_.initialBitrateKbps \u003d std::clamp(cfg_.initialBitrateKbps, cfg_.minBitrateKbps, cfg_.maxBitrateKbps);\n```",
+      "revId": "e039903f312e9dbae7a1aaf9f61b29021c0c2d9b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f98562e4_099a891e",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:54Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 663: The controller is updated from RTCP RR only after `sinceRestart \u003e\u003d 2.0f`, but `lastMediaRestart_` is no longer refreshed when bitrate changes. The old loss path set `lastMediaRestart_ \u003d now` on decrease, effectively suppressing stale RTCP reports after each encoder restart/bitrate change. With the new flow, immediately following `setNewBitrate()` the next RR can still reflect the pre-change bitrate and trigger another decrease, causing cascaded bitrate drops. Update the restart/stale-report timestamp when the encoder bitrate actually changes, or add a dedicated `lastBitrateChange_` guard used by `adaptQualityAndBitrate()`.\n```suggestion\nif (videoBitrateInfo_.videoBitrateCurrent !\u003d newBR) {\n    videoBitrateInfo_.videoBitrateCurrent \u003d newBR;\n    lastMediaRestart_ \u003d clock::now();\n    storeVideoBitrateInfo();\n```\nUse a separate timestamp if `lastMediaRestart_` has broader semantics.",
+      "revId": "e039903f312e9dbae7a1aaf9f61b29021c0c2d9b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f1f2758_93bea0f8",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 715,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T14:37:54Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 715: `setupVideoBitrateInfo()` calls `bwController_.setLimits()` on every RTCP cycle, but `setLimits()` only clamps `targetBitrate_` and leaves `lastStableBitrate_` unchanged. If codec limits are reduced, `lastStableBitrate_` can remain above the new maximum, which skews the probing logic that compares `targetBitrate_` against `lastStableBitrate_ * 85 / 100`. Clamp `lastStableBitrate_` when limits change.\n```suggestion\ncfg_.minBitrateKbps \u003d minKbps;\ncfg_.maxBitrateKbps \u003d maxKbps;\ntargetBitrate_ \u003d clampBitrate(targetBitrate_);\nlastStableBitrate_ \u003d clampBitrate(lastStableBitrate_);\n```",
+      "revId": "e039903f312e9dbae7a1aaf9f61b29021c0c2d9b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
