@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "45cf6732_0ee7e460",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T11:02:39Z",
+      "side": 1,
+      "message": "Line 42: reset() leaves lastPeriodicLog_ unchanged. After a sender restart or session restart, the controller state is reset but status logging may be suppressed until the previous 5-second cadence expires, making restart behavior harder to diagnose. Reset all timing state consistently.\n```suggestion\n    lastPeriodicLog_ \u003d time_point::min();\n```",
+      "revId": "c56c88e116b588251cc30baeea493dca21f25647",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87767972_bfad6599",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 652,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T11:02:39Z",
+      "side": 1,
+      "message": "[Critical] Line 652: REMB feedback is now only acted on when the parsed value is exactly 0x6803 or 0x7378, so any real bitrate estimate carried in REMB is ignored. This regresses interoperability with receivers that send an estimated bitrate instead of these legacy sentinel values, causing the sender to miss congestion signals. Treat numeric REMB values as a target/ceiling or preserve the previous handling path for non-sentinel values.\n```suggestion\n        if (br \u003d\u003d 0x6803 || br \u003d\u003d 0x7378) {\n            auto newBitrate \u003d bwController_.onRembFeedback(br \u003d\u003d 0x6803);\n            setNewBitrate(newBitrate);\n        } else if (br \u003e 0) {\n            setNewBitrate(static_cast\u003cunsigned\u003e(br / 1000));\n        }\n```",
+      "revId": "c56c88e116b588251cc30baeea493dca21f25647",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d947b36b_049366d8",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 668,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T11:02:39Z",
+      "side": 1,
+      "message": "Line 668: The old implementation ignored RR reports with jitter \u003e 1000 on non-Android, but this patch raises the guard to 5000 and applies it on all platforms. That allows multi-second jitter samples to feed the controller, which can produce bogus EWMA state and bitrate decisions from stale/pathological RTCP reports. Keep the existing platform-specific threshold unless there is evidence the larger value is safe.\n```suggestion\n#ifndef __ANDROID__\n        if (rtcpi.jitter \u003e 1000)\n            return;\n#endif\n```",
+      "revId": "c56c88e116b588251cc30baeea493dca21f25647",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f034d6a5_2e722a17",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T11:02:39Z",
+      "side": 1,
+      "message": "[Critical] Line 749: The audio congestion path updates the bandwidth controller before calling setupVideoBitrateInfo(), so the controller may still have default limits/target or stale codec limits. That can reduce from 800 Kbps instead of the actual current bitrate, or clamp against 50-4000 even when the negotiated codec range differs. Synchronize limits/current bitrate before feeding the audio-loss signal.\n```suggestion\n        setupVideoBitrateInfo();\n        bwController_.setTargetBitrate(videoBitrateInfo_.videoBitrateCurrent);\n        newBitrate \u003d bwController_.onAudioCongestion(audioPacketLoss);\n```",
+      "revId": "c56c88e116b588251cc30baeea493dca21f25647",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
