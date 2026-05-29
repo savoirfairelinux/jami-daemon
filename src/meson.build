@@ -78,6 +78,7 @@ libjami_sources = files(
     'media/media_io_handle.cpp',
     'media/media_player.cpp',
     'media/media_recorder.cpp',
+    'media/network_sim/network_simulator.cpp',
     'media/recordable.cpp',
     'media/socket_pair.cpp',
     'media/srtp.c',
