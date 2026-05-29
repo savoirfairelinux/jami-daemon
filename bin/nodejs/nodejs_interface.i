@@ -89,7 +89,28 @@ static Napi::Value _wrap_native_init(const Napi::CallbackInfo& info) {
         Napi::Error::New(env, "init requires a callback map object").ThrowAsJavaScriptException();
         return env.Undefined();
     }
-    initJami(napi_env(env), napi_value(info[0]));
+    uint16_t flags = libjami::LIBJAMI_FLAG_DEBUG;
+    if (info.Length() >= 2 && !info[1].IsUndefined() && !info[1].IsNull()) {
+        if (!info[1].IsObject()) {
+            Napi::Error::New(env, "init options must be an object").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+        Napi::Object options = info[1].As<Napi::Object>();
+        Napi::Value flagsValue = options.Get("flags");
+        if (!flagsValue.IsUndefined()) {
+            if (!flagsValue.IsNumber()) {
+                Napi::Error::New(env, "init options.flags must be a number").ThrowAsJavaScriptException();
+                return env.Undefined();
+            }
+            int32_t optionFlags = flagsValue.As<Napi::Number>().Int32Value();
+            if (optionFlags < 0 || optionFlags > 0xffff) {
+                Napi::Error::New(env, "init options.flags must fit in uint16_t").ThrowAsJavaScriptException();
+                return env.Undefined();
+            }
+            flags = static_cast<uint16_t>(optionFlags);
+        }
+    }
+    initJami(napi_env(env), napi_value(info[0]), flags);
     return env.Undefined();
 }
 %}

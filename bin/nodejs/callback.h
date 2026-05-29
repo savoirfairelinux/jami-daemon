@@ -942,7 +942,7 @@ serviceTunnelClosed(const std::string& accountId, const std::string& tunnelId, c
 // Daemon initialization
 
 void
-initJami(napi_env env, napi_value callbackMap)
+initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI_FLAG_DEBUG)
 {
     g_env = env;
     parseCbMap(env, callbackMap);
@@ -1031,7 +1031,7 @@ initJami(napi_env env, napi_value callbackMap)
         exportable_callback<ServiceSignal::TunnelClosed>(bind(&serviceTunnelClosed, _1, _2, _3)),
     };
 
-    if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
+    if (!libjami::init(static_cast<libjami::InitFlag>(flags)))
         return;
 
     registerSignalHandlers(configEvHandlers);

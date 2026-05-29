@@ -161,6 +161,10 @@ export function vectMapToRecordArray(vectMap: VectMap): Record<string, string>[]
   return records
 }
 
+export interface JamiInitOptions {
+  flags?: number
+}
+
 // ── JamiSwig interface ──────────────────────────────────────
 
 /**
@@ -169,7 +173,7 @@ export function vectMapToRecordArray(vectMap: VectMap): Record<string, string>[]
  * The full list of methods can be found in SWIG interface files (`.i`) in `daemon/bin/nodejs`.
  */
 export interface JamiSwig {
-  init(args: Record<string, unknown>): void
+  init(args: Record<string, unknown>, options?: JamiInitOptions): void
   fini(): void
 
   monitor(continuous: boolean): void
