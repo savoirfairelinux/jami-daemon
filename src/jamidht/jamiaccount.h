@@ -941,6 +941,10 @@ private:
 
     bool publishPresence_ {true};
 
+    // Opaque retry state for identity announcement (defined in jamiaccount.cpp).
+    struct IdentityRetryState;
+    std::shared_ptr<IdentityRetryState> identityRetryState_;
+
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
     std::unique_ptr<ConversationModule> convModule_;
