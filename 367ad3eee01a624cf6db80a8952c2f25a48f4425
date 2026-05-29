@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90c8e6ea_06ca2019",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 365: Audio congestion is signaled whenever ponderated loss is above 3%, with no hysteresis or edge detection. As long as loss remains above the threshold this repeatedly calls into video every RTCP interval, leaving throttling policy split between audio and video and making callback users responsible for rate limiting. Prefer firing on threshold crossing or add a clear audio-side cooldown/reset threshold.\\n```suggestion\\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 lastPondLoss_ \u003c AUDIO_CONGESTION_THRESHOLD) {\\n    // notify congestion transition\\n}\\nlastPondLoss_ \u003d pondLoss;\\n```",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5353ec0e_3799e836",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 63: Bandwidth limiting initializes the token bucket to only one second of bytes in setBandwidthLimit(), while refillBucket() caps it at two seconds. This means a newly configured simulator has a different burst allowance than one that has been idle for a moment, making tests and scenarios inconsistent. Initialize the bucket to the same capacity used by refillBucket().\\n```suggestion\\ntokenBucket_ \u003d (bitsPerSecond / 8) * 2; // 2 seconds worth of bytes, same as refill cap\\n```",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e409fb04_05212a7b",
+        "filename": "src/media/network_sim/network_simulator.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 67: The public API documents jitter injection and says shouldSend() may block, but the implementation intentionally ignores jitter. This API/documentation mismatch will mislead test authors and already conflicts with the added unit test. Update the documentation to state that jitter is currently not simulated, or implement the documented behavior. For example, if keeping the current implementation:\\n```suggestion\\n * Set jitter configuration for future/alternative simulators.\\n * Note: shouldSend() currently does not inject delay; use tc/netem for jitter.\\n```",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75521e03_917563f9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 815,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 815: The video reduction path only decreases bitrate and relies on unrelated adaptation to recover later. Under transient audio loss, video can be pushed to minimum and stay there much longer than necessary. Add an explicit recovery policy or document how existing REMB/packet-loss adaptation will restore bitrate after audio congestion clears.",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11782c7a_00ab2263",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 243: The congestion callback reduces every video RTP session on the call whenever any audio stream reports loss. In calls with multiple media streams, screen sharing, or future multi-stream layouts, congestion on one audio stream can throttle unrelated video streams. Couple only sessions that share the same transport/media bundle, or pass the associated video session explicitly when configuring the paired streams.",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7715f54f_8124b0af",
+        "filename": "test/unitTest/media/test_network_simulator.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:06:22Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 136: The jitter test expects shouldSend() to block and add measurable delay, but NetworkSimulator::shouldSend() explicitly does not apply jitter. This makes the new unit test fail nondeterministically or consistently on fast systems. Either implement jitter in shouldSend(), or remove the jitter behavior/test until a non-blocking queued simulator is added. Suggested fix if blocking jitter is acceptable for the test utility:\\n```suggestion\\nuint32_t jitterMs \u003d randomJitter();\\nif (jitterMs \u003e 0)\\n    std::this_thread::sleep_for(std::chrono::milliseconds(jitterMs));\\n```",
+      "revId": "367ad3eee01a624cf6db80a8952c2f25a48f4425",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
