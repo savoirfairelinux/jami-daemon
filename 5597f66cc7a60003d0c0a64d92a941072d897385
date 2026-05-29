@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69967af9_0e358ef7",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T10:12:31Z",
+      "side": 1,
+      "message": "[Minor] Line 74: computeCongestionScore() divides by configurable scale values without validating them. If a caller supplies congestionLossScale or congestionRttScale as 0, this produces infinities/NaNs and can make bitrate decisions unpredictable. Clamp or reject invalid config values in the constructor/setter path before use.\n```suggestion\n    const auto lossScale \u003d std::max(cfg_.congestionLossScale, 0.001f);\n    const auto rttScale \u003d std::max(cfg_.congestionRttScale, 0.001f);\n    float lossComponent \u003d std::max(0.0f, (ewmaLoss_ - cfg_.baselineLoss) / lossScale);\n    float rttExcess \u003d (baselineRtt_ \u003e 0) ? std::max(0.0f, ewmaRtt_ - baselineRtt_) : ewmaRtt_;\n    float rttComponent \u003d rttExcess / rttScale;\n```",
+      "revId": "5597f66cc7a60003d0c0a64d92a941072d897385",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53074d42_c72d79d3",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T10:12:31Z",
+      "side": 1,
+      "message": "[Major] Line 198: bwController_.reset() resets the controller target to the default 800 Kbps, but bwControllerInitialized_ remains true after the first setupVideoBitrateInfo() call. On later sender restarts or call restarts, setupVideoBitrateInfo() will only update limits and will not reseed the controller with the negotiated/current codec bitrate, so the next RTCP update can force video back toward 800 Kbps regardless of codec settings. Reset the initialization flag whenever the controller is reset, or explicitly seed from the current codec bitrate after reset.\n```suggestion\n        bwController_.reset();\n        bwControllerInitialized_ \u003d false;\n```",
+      "revId": "5597f66cc7a60003d0c0a64d92a941072d897385",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe57d8ec_03ed612a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 382,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T10:12:31Z",
+      "side": 1,
+      "message": "[Major] Line 382: Same controller reinitialization bug exists in start(): resetting bwController_ without clearing bwControllerInitialized_ leaves the controller target at the default bitrate for subsequent starts. Apply the same fix here so setupVideoBitrateInfo() can sync with codecVideo-\u003ebitrate again.\n```suggestion\n        bwController_.reset();\n        bwControllerInitialized_ \u003d false;\n```",
+      "revId": "5597f66cc7a60003d0c0a64d92a941072d897385",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4073197_90ab4387",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 657,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T10:12:31Z",
+      "side": 1,
+      "message": "[Major] Line 657: The RR-loss path removed the previous restart and invalid-jitter guards, so stale RTCP reports right after encoder restart or pathological jitter values can now drive the new controller and unnecessarily reduce bitrate. This regresses the old protection in dropProcessing(). Restore those filters before calling bwController_.update().\n```suggestion\n    RTCPInfo rtcpi {};\n    if (check_RCTP_Info_RR(rtcpi)) {\n        auto now \u003d clock::now();\n        auto restartTimer \u003d now - lastMediaRestart_;\n        if (restartTimer \u003c DELAY_AFTER_RESTART + std::chrono::seconds(1))\n            return;\n#ifndef __ANDROID__\n        if (rtcpi.jitter \u003e 1000)\n            return;\n#endif\n        auto newBitrate \u003d bwController_.update(rtcpi.packetLoss, static_cast\u003cfloat\u003e(rtcpi.jitter), rtcpi.latency);\n        setNewBitrate(newBitrate);\n    }\n```",
+      "revId": "5597f66cc7a60003d0c0a64d92a941072d897385",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
