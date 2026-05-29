@@ -21,6 +21,7 @@
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
+#include "network_sim/network_simulator.h"
 #include "logger.h"
 #include "connectivity/security/memory.h"
 
@@ -626,6 +627,21 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
         auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
+    }
+
+    // Network simulator: drop RTP only (preserve RTCP feedback for controller accuracy)
+    // Account RTCP bytes in bandwidth budget without dropping them
+    std::shared_ptr<NetworkSimulator> sim;
+    {
+        std::lock_guard lock(netSimMutex_);
+        sim = networkSim_;
+    }
+    if (sim) {
+        if (isRTCP) {
+            sim->accountBytes(static_cast<size_t>(buf_size));
+        } else if (!sim->shouldSend(static_cast<size_t>(buf_size))) {
+            return buf_size; // pretend we sent it (silent drop)
+        }
     }
 
     do {
