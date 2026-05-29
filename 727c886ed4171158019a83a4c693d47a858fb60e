@@ -70,6 +70,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "08c99b00_642a901c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T14:43:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "06df8c8b_5ed5ad66",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8b343f4e_7a149df0",
@@ -87,6 +105,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "351fdd58_035e9cd7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1215,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T14:43:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b343f4e_7a149df0",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c2fb0933_595599a6",
@@ -100,6 +136,24 @@
       "writtenOn": "2026-05-11T17:33:18Z",
       "side": 1,
       "message": "[error] Line 1856: `loadedHistory_.mutex` is locked to collect `toOverwrite`, then unlocked, then each element is accessed and mutated without the lock, then the lock is re-acquired for writing. Between unlock and re-lock, another thread could erase or replace the `sharedMsg` from `quickAccess`, causing a use-after-free or stale write.",
+      "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "af5f0ad2_19a64215",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1856,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-05-29T14:43:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c2fb0933_595599a6",
       "revId": "727c886ed4171158019a83a4c693d47a858fb60e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
