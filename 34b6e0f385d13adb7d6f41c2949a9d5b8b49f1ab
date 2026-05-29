@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb080111_3a35066d",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[Critical] Line 52: `setLimits()` accepts invalid limits such as `minKbps \u003e maxKbps`, but `std::clamp` has undefined behavior when the low bound is greater than the high bound. Validate or normalize the inputs before storing them.\\n```suggestion\\n    if (minKbps \u003e maxKbps)\\n        std::swap(minKbps, maxKbps);\\n    cfg_.minBitrateKbps \u003d minKbps;\\n    cfg_.maxBitrateKbps \u003d maxKbps;\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65842040_fa3f2c5a",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[Critical] Line 65: The RTT component uses absolute RTT, not RTT excess over a baseline, even though the config comment says `congestionRttScale` maps RTT excess. With the current defaults, a stable 300 ms path contributes 0.3 to the score and crosses the 0.08 threshold with no packet loss, causing repeated decreases on high-latency but uncongested links. Add a baseline RTT field or remove RTT from congestion until a baseline is established.\\n```suggestion\\n    float rttComponent \u003d std::max(0.0f, (ewmaRtt_ - cfg_.baselineRttMs) / cfg_.congestionRttScale);\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c10ba02_818ea7b0",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[Critical] Line 133: `lastDecrease_` is initialized to `time_point::min()`, so `now - lastDecrease_` can overflow/produce an enormous duration before any decrease has occurred. That makes the first probing ramp jump straight to `maxIncreaseFactor`, allowing aggressive bitrate growth immediately after startup instead of the configured slow ramp. Handle the no-decrease case explicitly.\\n```suggestion\\n    float rampProgress \u003d 0.0f;\\n    if (lastDecrease_ !\u003d time_point::min()) {\\n        auto secSinceDecrease \u003d std::chrono::duration\u003cfloat\u003e(now - lastDecrease_).count();\\n        rampProgress \u003d std::clamp(\\n            (secSinceDecrease - cfg_.probeDelaySec) / cfg_.increaseRampTime, 0.0f, 1.0f);\\n    }\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ca9e4b9_005e2b1b",
+        "filename": "src/media/bandwidth_controller.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "Line 58: `audioLossThreshold` is configured but never used: `VideoRtpSession::onAudioCongestion()` always reduces video whenever called, regardless of the threshold. Either enforce the threshold in `BandwidthController::onAudioCongestion()` or remove the unused config to avoid misleading callers.\\n```suggestion\\n    if (audioLoss \u003c cfg_.audioLossThreshold)\\n        return targetBitrate_;\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72bc09cc_0c53b1f2",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 649,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[Critical] Line 649: REMB feedback updates the controller but the returned bitrate is never applied unless a Receiver Report is also available later in the same pass. This regresses the previous delay-based path where REMB overuse immediately reduced the encoder bitrate, and can leave video sending too high during congestion when RR packets are delayed or missing. Apply the controller result immediately.\\n```suggestion\\n        if (isOveruse || br \u003d\u003d 0x7378) {\\n            auto newBitrate \u003d bwController_.onRembFeedback(isOveruse);\\n            setNewBitrate(newBitrate);\\n        }\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61bad3d9_3aff70de",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T08:10:41Z",
+      "side": 1,
+      "message": "[Critical] Line 704: `setupVideoBitrateInfo()` now calls `bwController_.setTargetBitrate(codecVideo-\u003ebitrate)` every time it runs, and `adaptQualityAndBitrate()` calls it before each controller update. This resets `lastStableBitrate_` and the controller target to the codec bitrate on every RTCP tick, which undermines AIMD state and can also overwrite reductions made just before calling `setupVideoBitrateInfo()` (for example in `onAudioCongestion`). Sync limits each tick, but only seed the controller target on initialization/start or when the codec limits actually change.\\n```suggestion\\n        bwController_.setLimits(codecVideo-\u003eminBitrate, codecVideo-\u003emaxBitrate);\\n        // Do not reset the controller target on every RTCP check; it owns the current AIMD target.\\n```",
+      "revId": "34b6e0f385d13adb7d6f41c2949a9d5b8b49f1ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
