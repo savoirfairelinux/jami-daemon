@@ -1,6 +1,6 @@
 {
   "name": "@savoirfairelinux/jami-core-linux-arm64",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Jami daemon native addon for Linux arm64",
   "os": [
     "linux"
@@ -16,7 +16,7 @@
   "repository": {
     "type": "git",
     "url": "https://git.jami.net/savoirfairelinux/jami-web.git",
-    "directory": "core"
+    "directory": "daemon/bin/nodejs/npm/linux-arm64"
   },
   "keywords": [
     "jami",
