@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf56bc9f_4c2b9e6c",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "[Critical] Line 363: congestionCallback_ is written under mutex_ in setCongestionCallback() but read and invoked here without synchronization. If the callback is configured or cleared while RTCP processing runs, this is a data race on std::function. Copy the callback under the same mutex, then invoke the copy outside the lock to avoid both the race and re-entrant locking issues.\n```suggestion\nstd::function\u003cvoid(float)\u003e congestionCallback;\n{\n    std::lock_guard lock(mutex_);\n    congestionCallback \u003d congestionCallback_;\n}\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 congestionCallback) {\n    JAMI_LOG(\"[AudioQoS] Audio congestion detected (loss: {}%), signaling video to reduce bitrate\", pondLoss);\n    congestionCallback(pondLoss);\n}\n```",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef3bbc2e_1efef653",
+        "filename": "src/media/network_sim/network_sim_registry.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "Line 110: forEach() invokes user-provided callbacks while holding the registry mutex. If the callback calls back into the registry, this deadlocks; if it does slow work, all registry operations are blocked. Snapshot the entries under the lock, release it, then invoke callbacks.\n```suggestion\nstd::vector\u003cstd::pair\u003cstd::string, std::shared_ptr\u003cNetworkSimulator\u003e\u003e\u003e entries;\n{\n    std::lock_guard lock(mutex_);\n    entries.assign(simulators_.begin(), simulators_.end());\n}\nfor (const auto\u0026 [key, sim] : entries) {\n    auto sep \u003d key.find(\u0027:\u0027);\n    if (sep !\u003d std::string::npos)\n        cb(key.substr(0, sep), key.substr(sep + 1), sim);\n}\n```",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25fb5281_b59e057c",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "Line 96: The token bucket arithmetic can overflow for very large bandwidthLimit_ values because bwLimit is multiplied by elapsed microseconds before division. Even if tests use small values, this is public configuration and overflow would wrap the bucket refill calculation. Use duration\u003cdouble\u003e or divide before multiplying with saturation.\n```suggestion\nauto elapsedSec \u003d std::chrono::duration\u003cdouble\u003e(now - lastRefill_).count();\nauto bytesToAdd \u003d static_cast\u003cuint64_t\u003e((static_cast\u003cdouble\u003e(bwLimit) / 8.0) * elapsedSec);\n```",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6850a802_5f94f541",
+        "filename": "src/media/socket_pair.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "[Critical] Line 177: networkSim_ is assigned by setNetworkSimulator() and read from writeCallback() without synchronization. Since writeCallback() runs on media I/O threads, changing the simulator during a call can race on the shared_ptr object itself. Protect access with a mutex or use an atomic shared_ptr pattern so the writer takes a safe local copy before use.\n```suggestion\nvoid setNetworkSimulator(std::shared_ptr\u003cNetworkSimulator\u003e sim)\n{\n    std::lock_guard lock(networkSimMutex_);\n    networkSim_ \u003d std::move(sim);\n}\n```\nThen in writeCallback(), copy networkSim_ under the same mutex before calling shouldSend().",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "822a9c30_2921e4d8",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 811,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "[Critical] Line 811: The audio-triggered bitrate reduction can drive video below the configured minimum bitrate because it computes a percentage of the current bitrate and calls setNewBitrate() without clamping. Repeated congestion callbacks every cooldown interval can reduce video to near-zero, which may break encoder behavior or make recovery impossible. Clamp to videoBitrateInfo_.videoBitrateMin after setupVideoBitrateInfo().\n```suggestion\nauto newBitrate \u003d std::max(videoBitrateInfo_.videoBitrateMin,\n                           static_cast\u003cunsigned int\u003e(std::lround(oldBitrate * reductionFactor)));\n```",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36b865fa_6694a33a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T06:28:01Z",
+      "side": 1,
+      "message": "Line 230: The dynamic_pointer_cast\u003cAudioRtpSession\u003e() result is dereferenced unconditionally. The media type check makes this likely today, but configureRtpSession() accepts a generic RtpSession and a bad pairing would crash instead of failing safely. Guard the cast before installing the callback.\n```suggestion\nauto audioRtp \u003d std::dynamic_pointer_cast\u003cAudioRtpSession\u003e(rtpSession);\nif (!audioRtp)\n    return;\naudioRtp-\u003esetCongestionCallback([w \u003d weak()](float audioLoss) {\n```",
+      "revId": "5ab20db455e57bc0c4f0a98f6e3543f86b50e493",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
