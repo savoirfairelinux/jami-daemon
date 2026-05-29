@@ -21,6 +21,7 @@
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
+#include "network_sim/network_simulator.h"
 #include "logger.h"
 #include "connectivity/security/memory.h"
 
@@ -631,6 +632,9 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     do {
         if (interrupted_)
             return -EINTR;
+        // Network simulator: drop packet if conditions dictate
+        if (networkSim_ && !networkSim_->shouldSend(static_cast<size_t>(buf_size)))
+            return buf_size; // pretend we sent it (silent drop)
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 

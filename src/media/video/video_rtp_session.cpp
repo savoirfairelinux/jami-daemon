@@ -789,6 +789,36 @@ VideoRtpSession::processRtcpChecker()
 }
 
 void
+VideoRtpSession::onAudioCongestion(float audioPacketLoss)
+{
+    std::lock_guard lock(mutex_);
+    auto now = clock::now();
+    if (now - lastAudioQosReduction_ < AUDIO_QOS_COOLDOWN)
+        return;
+
+    lastAudioQosReduction_ = now;
+    setupVideoBitrateInfo();
+
+    auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
+    // Scale reduction with severity: more audio loss → more aggressive reduction
+    float reductionFactor = AUDIO_QOS_REDUCTION_FACTOR;
+    if (audioPacketLoss > 10.0f)
+        reductionFactor = 0.4f; // Very aggressive for severe audio loss
+    else if (audioPacketLoss > 5.0f)
+        reductionFactor = 0.5f;
+
+    auto newBitrate = static_cast<unsigned int>(std::lround(oldBitrate * reductionFactor));
+
+    JAMI_LOG("[AudioQoS] Video bitrate reduced: {} Kbps -> {} Kbps (audio loss: {}%)",
+             oldBitrate,
+             newBitrate,
+             audioPacketLoss);
+
+    setNewBitrate(newBitrate);
+    lastMediaRestart_ = now;
+}
+
+void
 VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
     std::lock_guard lock(mutex_);

@@ -317,6 +317,21 @@ test(
     timeout: 1800,
 )
 
+ut_network_simulator = executable(
+    'ut_network_simulator',
+    sources: files('unitTest/media/test_network_simulator.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'network_simulator',
+    ut_network_simulator,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 300,
+)
+
 ut_media_filter = executable(
     'ut_media_filter',
     sources: files('unitTest/media/test_media_filter.cpp'),

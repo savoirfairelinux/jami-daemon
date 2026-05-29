@@ -47,6 +47,7 @@ using socklen_t = int;
 
 namespace jami {
 
+class NetworkSimulator;
 class SRTPProtoContext;
 
 typedef struct
@@ -175,6 +176,8 @@ public:
     void setPacketLossCallback(std::function<void(void)> cb) { packetLossCallback_ = std::move(cb); }
     void setRtpDelayCallback(std::function<void(int, int)> cb);
 
+    void setNetworkSimulator(std::shared_ptr<NetworkSimulator> sim) { networkSim_ = std::move(sim); }
+
     int writeData(uint8_t* buf, int buf_size);
 
     uint16_t lastSeqValOut();
@@ -213,6 +216,7 @@ private:
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;
     std::function<void(int, int)> rtpDelayCallback_;
+    std::shared_ptr<NetworkSimulator> networkSim_;
     bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
     bool parse_RTP_ext(uint8_t* buf, float* abs);
 
