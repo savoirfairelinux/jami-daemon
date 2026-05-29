@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77276238_b79a934e",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-29T17:39:14Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 106: The macOS branch replaces LOCAL_HOSTVARS with only MACOSX_DEPLOYMENT_TARGET, so any host variables normally needed for cross/build tool selection are not propagated to libvpx configure. This can make macOS cross builds pick the wrong compiler/toolchain even though Android explicitly preserves HOSTVARS. Keep HOSTVARS and append the deployment target.\n```suggestion\nLOCAL_HOSTVARS\u003d$(HOSTVARS) MACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)\n```",
+      "revId": "a3aba0c45909f75769b2af50dd1ac1fe21dccc59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
