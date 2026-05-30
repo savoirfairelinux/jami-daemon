@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c36e696a_8b1c1ae2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2091,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T21:41:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2091: The retry timer is stored as `std::shared_ptr\u003cvoid\u003e` and down-cast with `static_pointer_cast` at each use. This removes type safety and can turn future maintenance mistakes into undefined behavior. Since `jamiaccount.cpp` now includes `asio/steady_timer.hpp`, the header can forward-declare the timer type and store the real type directly.\n```suggestion\nnamespace asio {\nclass steady_timer;\n}\n\nstd::shared_ptr\u003casio::steady_timer\u003e identityRetryTimer_;\n```\nThen the call sites can use `identityRetryTimer_-\u003ecancel()` without casts.",
+      "revId": "9280c3e62a212933b40047e5115c7062f4820219",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0253aa64_db5c621f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2098,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T21:41:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2098: The retry path captures `w` and then reuses the same weak pointer inside callbacks passed to `startSync`, but the outer lambda resets `identityRetryTimer_` before calling `startSync`. If `startSync` can synchronously invoke one of these callbacks, this is safe, but the ownership/lifetime relationship is non-obvious and fragile. Prefer capturing a local `weakThis` explicitly and avoid reusing the outer capture implicitly.\n```suggestion\nauto weakThis \u003d thisPtr-\u003eweak();\nthisPtr-\u003eaccountManager_-\u003estartSync(\n    [weakThis](const std::shared_ptr\u003cdht::crypto::Certificate\u003e\u0026 crt) {\n        if (auto account \u003d weakThis.lock())\n            account-\u003eonAccountDeviceFound(crt);\n    },\n    [weakThis] {\n        if (auto account \u003d weakThis.lock())\n            account-\u003eonAccountDeviceAnnounced();\n    },\n    thisPtr-\u003epublishPresence_);\n```",
+      "revId": "9280c3e62a212933b40047e5115c7062f4820219",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4de49c12_dd7d7a9c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2107,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T21:41:36Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2107: The new retry runs `startSync` only once after five seconds. If the DHT/account manager is still unable to announce after GSM standby, presence tracking can remain broken. Consider either retrying until success with bounded/backoff behavior, or explicitly invoking the identity announcement path that reports success/failure again. A single delayed `startSync` does not guarantee recovery from longer standby/network restoration delays.",
+      "revId": "9280c3e62a212933b40047e5115c7062f4820219",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6329d10_bd496318",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2675,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T21:41:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2675: Calling `presenceManager_-\u003erefresh()` on every `connectivityChanged()` while the DHT is running may re-subscribe all buddies repeatedly during noisy network transitions. If `refresh()` is expensive or creates DHT listeners, this can cause unnecessary churn. Gate this on an actual disconnected-to-running transition, or debounce it similarly to the identity retry timer.",
+      "revId": "9280c3e62a212933b40047e5115c7062f4820219",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
