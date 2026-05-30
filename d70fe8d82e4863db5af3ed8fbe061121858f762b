@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82de06e7_42470cb5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2090,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T20:36:32Z",
+      "side": 1,
+      "message": "[Major] Line 2090: This sleeps for 5 seconds inside `dht::ThreadPool::io()`, which blocks an I/O worker and can delay unrelated DHT/network callbacks during exactly the unstable-connectivity path this patch is trying to fix. Use a non-blocking delayed scheduler/timer instead of occupying the thread. For example:\n```suggestion\n            Manager::instance().scheduler().scheduleIn([w \u003d weak()] {\n                if (auto thisPtr \u003d w.lock()) {\n                    JAMI_WARNING(\"[Account {}] Retrying sync after identity announcement failure\",\n                                 thisPtr-\u003egetAccountID());\n                    if (thisPtr-\u003eaccountManager_)\n                        thisPtr-\u003eaccountManager_-\u003estartSync(\n                            [w](const std::shared_ptr\u003cdht::crypto::Certificate\u003e\u0026 crt) {\n                                if (auto thisPtr \u003d w.lock())\n                                    thisPtr-\u003eonAccountDeviceFound(crt);\n                            },\n                            [w] {\n                                if (auto thisPtr \u003d w.lock())\n                                    thisPtr-\u003eonAccountDeviceAnnounced();\n                            },\n                            thisPtr-\u003epublishPresence_);\n                }\n            }, std::chrono::seconds(5));\n```",
+      "revId": "d70fe8d82e4863db5af3ed8fbe061121858f762b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "504089a7_9d84074f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2668,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T20:36:32Z",
+      "side": 1,
+      "message": "[Major] Line 2668: `presenceManager_-\u003erefresh()` is now called on every connectivity change, including transitions where the account/DHT is not yet connected. That can re-run the same listen attempts while disconnected, causing the same silent failures and unnecessary work during network flaps. Gate this to the connected/registered state, or invoke it from the point where DHT connectivity is confirmed restored.\n```suggestion\n    if (presenceManager_ \u0026\u0026 isRegistered())\n        presenceManager_-\u003erefresh();\n```",
+      "revId": "d70fe8d82e4863db5af3ed8fbe061121858f762b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
