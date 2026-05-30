@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5fb39b97_c88416fc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2092,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T21:25:52Z",
+      "side": 1,
+      "message": "[Critical] Line 2092: 🔴 Critical Issues - This schedules an independent retry timer on every failed identity announcement, but nothing cancels or deduplicates it. If the proxy/DHT retries and later succeeds before this 5s timer fires, both the success path and the delayed failure path can call `startSync()`, causing duplicate sync/presence subscriptions or duplicate device announcement callbacks. Store the retry timer/state on the account and cancel it when identity announcement succeeds, or guard `startSync()` so it only starts once.\n\n```suggestion\nif (syncRetryTimer_)\n    syncRetryTimer_-\u003ecancel();\nsyncRetryTimer_ \u003d std::make_shared\u003casio::steady_timer\u003e(*Manager::instance().ioContext(), std::chrono::seconds(5));\nsyncRetryTimer_-\u003easync_wait([w \u003d weak()](const asio::error_code\u0026 ec) {\n    if (ec)\n        return;\n    if (auto thisPtr \u003d w.lock())\n        thisPtr-\u003estartAccountSyncIfNeeded();\n});\n```",
+      "revId": "1d95f5baae3fdf5cf5ff75471c8d279bac7c5b56",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
