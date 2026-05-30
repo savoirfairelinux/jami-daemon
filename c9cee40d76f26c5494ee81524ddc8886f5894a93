@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9123bf7a_015a8e7b",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T18:51:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 30: `setPacketLoss()` writes an atomic float with the implicit assignment operator while other setters use explicit synchronization for related state. Use `store()` with a memory order for consistency and clarity; the same applies to `setJitter()` and `setEnabled()` in the header.\n```suggestion\n    packetLossRatio_.store(std::clamp(ratio, 0.0f, 1.0f), std::memory_order_relaxed);\n```",
+      "revId": "c9cee40d76f26c5494ee81524ddc8886f5894a93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f120623_77f65adb",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 640,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T18:51:06Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 640: The simulator returns success for dropped RTP packets without updating normal send-path state such as sequence/byte accounting that may happen inside `writeData()`. This makes the sender believe packets were transmitted while bypassing any side effects in the real path, which can skew RTCP/QoS measurements and make tests validate behavior that production would not exercise. Prefer placing the simulator at the lowest send point inside/around `writeData()` after normal RTP bookkeeping, or explicitly preserve the same side effects before dropping.",
+      "revId": "c9cee40d76f26c5494ee81524ddc8886f5894a93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6cf27764_90dba275",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 807,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T18:51:06Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 807: This can increase the video bitrate when `oldBitrate` is already below `videoBitrateMin` or is still unset/zero, because `std::max(newBitrate, videoBitrateInfo_.videoBitrateMin)` raises it to the minimum during an audio congestion event. That works against the feature goal of freeing bandwidth for audio. Skip the change when there is no valid current bitrate, and clamp only downward.\n```suggestion\n        if (oldBitrate \u003d\u003d 0 || oldBitrate \u003c\u003d videoBitrateInfo_.videoBitrateMin)\n            return;\n\n        newBitrate \u003d static_cast\u003cunsigned int\u003e(std::lround(static_cast\u003cfloat\u003e(oldBitrate) * reductionFactor));\n        newBitrate \u003d std::max(newBitrate, videoBitrateInfo_.videoBitrateMin);\n        if (newBitrate \u003e\u003d oldBitrate)\n            return;\n```",
+      "revId": "c9cee40d76f26c5494ee81524ddc8886f5894a93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16e20f8a_d36628db",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 12
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-30T18:51:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 79: `phase_start` and `phase_end` are accepted by `collect_rtcp_stats()` but never used by the awk filter, and the function is never called. The script therefore reports counts over entire logs instead of per-profile windows, which can produce misleading QoS comparisons. Either remove the dead parameters/function or parse timestamped log lines and call the function for each phase before summarizing.",
+      "revId": "c9cee40d76f26c5494ee81524ddc8886f5894a93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
