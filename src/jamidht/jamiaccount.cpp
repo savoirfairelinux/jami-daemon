@@ -91,6 +91,8 @@
 #include <opendht/peer_discovery.h>
 #include <opendht/http.h>
 
+#include <thread>
+
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
@@ -2084,7 +2086,28 @@ JamiAccount::initDhtContext()
 
     context.identityAnnouncedCb = [this](bool ok) {
         if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
+            JAMI_ERROR("[Account {}] Identity announcement failed, scheduling retry", getAccountID());
+            // The permanent put will be retried by the proxy client, but startSync
+            // must still be called so device announcements and presence tracking begin.
+            // Schedule startSync after a delay to allow the DHT to stabilize.
+            dht::ThreadPool::io().run([w = weak()] {
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+                if (auto thisPtr = w.lock()) {
+                    JAMI_WARNING("[Account {}] Retrying sync after identity announcement failure",
+                                 thisPtr->getAccountID());
+                    if (thisPtr->accountManager_)
+                        thisPtr->accountManager_->startSync(
+                            [w](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                if (auto thisPtr = w.lock())
+                                    thisPtr->onAccountDeviceFound(crt);
+                            },
+                            [w] {
+                                if (auto thisPtr = w.lock())
+                                    thisPtr->onAccountDeviceAnnounced();
+                            },
+                            thisPtr->publishPresence_);
+                }
+            });
             return;
         }
         JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
@@ -2641,6 +2664,10 @@ JamiAccount::connectivityChanged()
             connectionManager_->setPublishedAddress({});
         }
     }
+    // Re-subscribe presence for buddies that may have been tracked
+    // while the DHT was disconnected (listen silently failed).
+    if (presenceManager_)
+        presenceManager_->refresh();
 }
 
 bool
