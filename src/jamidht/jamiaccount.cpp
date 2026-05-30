@@ -91,6 +91,8 @@
 #include <opendht/peer_discovery.h>
 #include <opendht/http.h>
 
+#include <asio/steady_timer.hpp>
+
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
@@ -2084,10 +2086,39 @@ JamiAccount::initDhtContext()
 
     context.identityAnnouncedCb = [this](bool ok) {
         if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
+            JAMI_ERROR("[Account {}] Identity announcement failed, scheduling retry", getAccountID());
+            // Cancel any previous retry timer to avoid duplicates.
+            if (auto oldTimer = std::static_pointer_cast<asio::steady_timer>(identityRetryTimer_))
+                oldTimer->cancel();
+            auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), std::chrono::seconds(5));
+            identityRetryTimer_ = timer;
+            timer->async_wait([w = weak()](const asio::error_code& ec) {
+                if (ec)
+                    return;
+                if (auto thisPtr = w.lock()) {
+                    JAMI_WARNING("[Account {}] Retrying sync after identity announcement failure",
+                                 thisPtr->getAccountID());
+                    thisPtr->identityRetryTimer_.reset();
+                    if (thisPtr->accountManager_)
+                        thisPtr->accountManager_->startSync(
+                            [w](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                if (auto thisPtr = w.lock())
+                                    thisPtr->onAccountDeviceFound(crt);
+                            },
+                            [w] {
+                                if (auto thisPtr = w.lock())
+                                    thisPtr->onAccountDeviceAnnounced();
+                            },
+                            thisPtr->publishPresence_);
+                }
+            });
             return;
         }
         JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
+        if (identityRetryTimer_) {
+            std::static_pointer_cast<asio::steady_timer>(identityRetryTimer_)->cancel();
+            identityRetryTimer_.reset();
+        }
         accountManager_
             ->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) { onAccountDeviceFound(crt); },
                         [this] { onAccountDeviceAnnounced(); },
@@ -2641,6 +2672,12 @@ JamiAccount::connectivityChanged()
             connectionManager_->setPublishedAddress({});
         }
     }
+    // Re-subscribe presence for buddies that may have been tracked
+    // while the DHT was disconnected (listen silently failed).
+    // Only refresh when the DHT is actually running to avoid repeating
+    // the same silent failures during network flaps.
+    if (presenceManager_ && dht_ && dht_->isRunning())
+        presenceManager_->refresh();
 }
 
 bool

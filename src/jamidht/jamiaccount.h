@@ -941,6 +941,9 @@ private:
 
     bool publishPresence_ {true};
 
+    // Type-erased timer for identity announcement retry (asio::steady_timer)
+    std::shared_ptr<void> identityRetryTimer_;
+
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
     std::unique_ptr<ConversationModule> convModule_;
