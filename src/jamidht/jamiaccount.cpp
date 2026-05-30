@@ -91,6 +91,8 @@
 #include <opendht/peer_discovery.h>
 #include <opendht/http.h>
 
+#include <asio/steady_timer.hpp>
+
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
@@ -187,6 +189,18 @@ struct JamiAccount::DiscoveredPeer
 {
     std::string displayName;
     std::unique_ptr<asio::steady_timer> cleanupTimer;
+};
+
+struct JamiAccount::IdentityRetryState
+{
+    asio::steady_timer timer;
+    unsigned attempt {0};
+    static constexpr unsigned maxAttempts = 3;
+    static constexpr std::array<unsigned, maxAttempts> delays {5, 15, 30};
+
+    explicit IdentityRetryState(asio::io_context& ctx)
+        : timer(ctx)
+    {}
 };
 
 /**
@@ -2084,10 +2098,54 @@ JamiAccount::initDhtContext()
 
     context.identityAnnouncedCb = [this](bool ok) {
         if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
+            // Initialize retry state on first failure, reuse on subsequent ones.
+            if (!identityRetryState_)
+                identityRetryState_ = std::make_shared<IdentityRetryState>(*Manager::instance().ioContext());
+            auto& state = *identityRetryState_;
+            if (state.attempt >= IdentityRetryState::maxAttempts) {
+                JAMI_ERROR("[Account {}] Identity announcement failed after {} retries, giving up",
+                           getAccountID(),
+                           state.attempt);
+                identityRetryState_.reset();
+                return;
+            }
+            auto delaySec = IdentityRetryState::delays[state.attempt];
+            JAMI_ERROR("[Account {}] Identity announcement failed, retry {}/{} in {}s",
+                       getAccountID(),
+                       state.attempt + 1,
+                       IdentityRetryState::maxAttempts,
+                       delaySec);
+            state.attempt++;
+            state.timer.cancel();
+            state.timer.expires_after(std::chrono::seconds(delaySec));
+            state.timer.async_wait([w = weak()](const asio::error_code& ec) {
+                if (ec)
+                    return;
+                if (auto thisPtr = w.lock()) {
+                    JAMI_WARNING("[Account {}] Retrying sync after identity announcement failure",
+                                 thisPtr->getAccountID());
+                    if (thisPtr->accountManager_) {
+                        auto weakThis = thisPtr->weak();
+                        thisPtr->accountManager_->startSync(
+                            [weakThis](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                if (auto account = weakThis.lock())
+                                    account->onAccountDeviceFound(crt);
+                            },
+                            [weakThis] {
+                                if (auto account = weakThis.lock())
+                                    account->onAccountDeviceAnnounced();
+                            },
+                            thisPtr->publishPresence_);
+                    }
+                }
+            });
             return;
         }
         JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
+        if (identityRetryState_) {
+            identityRetryState_->timer.cancel();
+            identityRetryState_.reset();
+        }
         accountManager_
             ->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) { onAccountDeviceFound(crt); },
                         [this] { onAccountDeviceAnnounced(); },
@@ -2639,6 +2697,19 @@ JamiAccount::connectivityChanged()
             connectionManager_->connectivityChanged();
             // reset cache
             connectionManager_->setPublishedAddress({});
+        }
+    }
+    // Re-subscribe presence for buddies that may have been tracked
+    // while the DHT was disconnected (listen silently failed).
+    // Debounce: only refresh at most once every 30s to avoid churn
+    // during rapid network transitions.
+    if (presenceManager_ && dht_ && dht_->isRunning()) {
+        using clock = std::chrono::steady_clock;
+        static constexpr auto debounceInterval = std::chrono::seconds(30);
+        auto now = clock::now();
+        if (now - lastPresenceRefresh_ >= debounceInterval) {
+            lastPresenceRefresh_ = now;
+            presenceManager_->refresh();
         }
     }
 }
