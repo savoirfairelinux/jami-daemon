@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "197b560a_82725dcd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:51:14Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2119: The posted callback captures the result but does not appear to verify that it still belongs to the current registration cycle. A delayed failure from a previous DHT context can create identityRetryState_ and schedule retries after doRegister_ has already reset state for a new cycle. Consider adding a generation/token captured when the DHT context is initialized and ignore callbacks that do not match the current cycle.",
+      "revId": "7b6c122876b324821fa1b69050cc31abe8362e7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88dce4cb_28f6db13",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2160,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:51:14Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2160: The retry timer can fire after the account has unregistered or entered a new registration state; the handler only checks that accountManager_ still exists before calling startSync(). That can restart sync/presence publishing for an account that is no longer registered, especially if unregister does not reset identityRetryState_. Add a registration/DHT-running guard in the timer callback before retrying.\n```suggestion\n                        if (acc-\u003eaccountManager_ \u0026\u0026 acc-\u003edht_ \u0026\u0026 acc-\u003edht_-\u003eisRunning()\n                            \u0026\u0026 acc-\u003egetRegistrationState() \u003d\u003d RegistrationState::REGISTERED) {\n```",
+      "revId": "7b6c122876b324821fa1b69050cc31abe8362e7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69d192dc_18112e1c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2739,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:51:14Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2739: Calling presenceManager_-\u003erefresh() on every connectivityChanged() while the DHT is running can also run on non-recovery connectivity events, causing all tracked presence subscriptions to be torn down and recreated unnecessarily. On mobile networks this can happen frequently and may create extra DHT listen churn and transient presence gaps. Gate the refresh to the actual transition where the DHT/account has come back online after being unavailable, or debounce it through the existing account/connection state machinery.\n```suggestion\n    if (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning() \u0026\u0026 isRegistered())\n        presenceManager_-\u003erefresh();\n```",
+      "revId": "7b6c122876b324821fa1b69050cc31abe8362e7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
