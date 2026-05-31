@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96fadcb6_afcfab5f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:45:44Z",
+      "side": 1,
+      "message": "Line 2119: The retry callback silently returns when retries are exhausted after a previous failure (`state.exhausted`). That hides repeated failures in the same registration cycle and makes diagnostics difficult. Log at least once when an exhausted callback is ignored, or cancel/unregister the callback after exhaustion so the silence is intentional.\n```suggestion\n                if (state.exhausted) {\n                    JAMI_DEBUG(\"[Account {}] Identity announcement retry already exhausted\", thisPtr-\u003egetAccountID());\n                    return;\n                }\n```",
+      "revId": "92894d2d834ddf8e552f96e368fee2d2a8380d7d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75a2494e_b9a0e32f",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:45:44Z",
+      "side": 1,
+      "message": "Line 303: `onAudioCongestion()` hard-codes severe-loss reduction factors `0.45f` and `0.55f`, bypassing the validated `audioReductionFactor` configuration. This makes tuning ineffective and can even make severe-loss behavior less aggressive than a configured lower reduction factor. Derive severity scaling from the configured factor and clamp once.\n```suggestion\n    float reductionFactor \u003d cfg_.audioReductionFactor;\n    if (audioLoss \u003e 10.0f)\n        reductionFactor \u003d std::min(reductionFactor, 0.45f);\n    else if (audioLoss \u003e 5.0f)\n        reductionFactor \u003d std::min(reductionFactor, 0.55f);\n```",
+      "revId": "92894d2d834ddf8e552f96e368fee2d2a8380d7d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bc82e8e_5d8b2802",
+        "filename": "src/media/bandwidth_controller.h",
+        "patchSetId": 25
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:45:44Z",
+      "side": 1,
+      "message": "[Critical] Line 151: The controller starts in `State::Probing`, and `setTargetBitrate()` does not move it to Stable. As soon as normal RR feedback arrives on a new call, `evaluateState()` takes the `State::Probing` path and increases bitrate even though no prior congestion/decrease occurred. This can ramp every RTCP interval until max bitrate purely because the call is healthy. Initialize to Stable consistently with `reset()` and the state comment.\n```suggestion\n    State state_ {State::Stable};\n```",
+      "revId": "92894d2d834ddf8e552f96e368fee2d2a8380d7d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ed4532c_1482bb3b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:45:44Z",
+      "side": 1,
+      "message": "[Critical] Line 729: `setupVideoBitrateInfo()` calls `bwController_.setLimits()` on every RTCP/audio QoS pass, but `setLimits()` only clamps the current target. If codec settings change and the current bitrate is now outside the new bounds, the encoder is not updated unless a later congestion event changes the target. This leaves the active encoder bitrate outside negotiated limits. After updating limits, sync/apply the clamped controller target when it differs from `videoBitrateCurrent`.\n```suggestion\n        bwController_.setLimits(codecVideo-\u003eminBitrate, codecVideo-\u003emaxBitrate);\n        if (bwControllerInitialized_) {\n            videoBitrateInfo_.videoBitrateCurrent \u003d std::clamp(videoBitrateInfo_.videoBitrateCurrent,\n                                                               codecVideo-\u003eminBitrate,\n                                                               codecVideo-\u003emaxBitrate);\n            bwController_.syncAppliedBitrate(videoBitrateInfo_.videoBitrateCurrent);\n        }\n```",
+      "revId": "92894d2d834ddf8e552f96e368fee2d2a8380d7d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a7779b5_c48d4f78",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 858,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:45:44Z",
+      "side": 1,
+      "message": "[Critical] Line 858: `delayMonitor()` now holds `mutex_` while calling `socketPair_-\u003ewriteData()`. Network/socket writes can block, and this mutex is also used by bitrate adaptation and media/session state paths. Holding it across I/O can stall RTCP processing or deadlock with teardown/restart paths that need the same lock. Take a stable local reference or add a socket-pair helper that safely sends under its own synchronization, then release `mutex_` before doing the write.\n```suggestion\n        auto packet \u003d std::move(rembPacket);\n        auto* socketPair \u003d socketPair_.get();\n        if (socketPair \u0026\u0026 !packet.empty())\n            socketPair-\u003ewriteData(packet.data(), static_cast\u003cint\u003e(packet.size()));\n```\nIf raw pointer lifetime cannot be guaranteed after unlocking, the safer fix is to move REMB sending behind a method owned by the socket pair/session thread rather than doing blocking I/O under `mutex_`.",
+      "revId": "92894d2d834ddf8e552f96e368fee2d2a8380d7d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
