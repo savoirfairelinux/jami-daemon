@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b286869_63c583bc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2112,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T05:36:05Z",
+      "side": 1,
+      "message": "[Major] Line 2112: After the retry budget is exhausted, identityRetryState_ is reset. If identityAnnouncedCb is invoked again with ok\u003dfalse later, a fresh IdentityRetryState is created and the same 3 retries are scheduled again, so the code does not actually \u0027give up\u0027 across repeated announcement failures. This can create unbounded retry cycles under persistent network/server failure. Preserve an exhausted state or add a separate cooldown/backoff before recreating retry state.\n```suggestion\nif (state.attempt \u003e\u003d IdentityRetryState::maxAttempts) {\n    JAMI_ERROR(\"[Account {}] Identity announcement failed after {} retries, giving up\",\n               getAccountID(), state.attempt);\n    return;\n}\n```",
+      "revId": "344aacf61f57d86cb98ad59ca8900e1c4d9c7b7f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cddfc923_a4c1e638",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2707,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T05:36:05Z",
+      "side": 1,
+      "message": "[Major] Line 2707: The 30s debounce is keyed only on the last refresh time, so a connectivityChanged() event while the DHT is already running can update lastPresenceRefresh_ and then suppress the refresh needed immediately after a later reconnect/GSM standby recovery. That makes the fix timing-dependent and can leave buddy presence unsubscribed for up to 30s or indefinitely if no later event occurs. Gate the debounce to actual DHT restart/reconnect state, or always perform the first refresh after a disconnected-to-running transition and debounce only subsequent churn.\n```suggestion\nif (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning()) {\n    const auto now \u003d std::chrono::steady_clock::now();\n    if (!presenceRefreshDoneSinceDisconnect_\n        || now - lastPresenceRefresh_ \u003e\u003d std::chrono::seconds(30)) {\n        presenceRefreshDoneSinceDisconnect_ \u003d true;\n        lastPresenceRefresh_ \u003d now;\n        presenceManager_-\u003erefresh();\n    }\n}\n```\nReset presenceRefreshDoneSinceDisconnect_ when the account/DHT is observed disconnected.",
+      "revId": "344aacf61f57d86cb98ad59ca8900e1c4d9c7b7f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
