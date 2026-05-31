@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d973fcf5_38ce1236",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2115,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:44:00Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2115: The callback is marshalled to `dht::ThreadPool::io()`, but `IdentityRetryState::timer` is constructed with `Manager::instance().ioContext()`. The retry state and timer are also cancelled/reset from `doRegister_()` outside this dispatch path. This leaves `identityRetryState_` and the timer accessed from multiple execution contexts, which can race during reconnect/register cycles. Use one executor consistently for creation, cancellation, expiry and state mutation, or guard all accesses with the account\u0027s existing synchronization primitive.\n```suggestion\n// Example: run timer operations on the timer\u0027s own executor/Manager io_context\nManager::instance().ioContext()-\u003epost([w \u003d weak(), ok] {\n    auto thisPtr \u003d w.lock();\n    if (!thisPtr)\n        return;\n    // mutate identityRetryState_ and arm/cancel timer here\n});\n```",
+      "revId": "fd5c3bd974eadeeb5e5ed299b5f8c4478be00cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5a025b7_d6d6e1a6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2168,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:44:00Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2168: The success path dereferences `accountManager_` without checking it, while the retry timer path does check it. During shutdown or reconfiguration the account can still be alive while `accountManager_` has been cleared, making this a potential null dereference. Keep the same guard used in the retry path before calling `startSync()`.\n```suggestion\nif (!thisPtr-\u003eaccountManager_)\n    return;\nthisPtr-\u003eaccountManager_-\u003estartSync(\n    [w](const std::shared_ptr\u003cdht::crypto::Certificate\u003e\u0026 crt) {\n        if (auto account \u003d w.lock())\n            account-\u003eonAccountDeviceFound(crt);\n    },\n    [w] {\n        if (auto account \u003d w.lock())\n            account-\u003eonAccountDeviceAnnounced();\n    },\n    thisPtr-\u003epublishPresence_);\n```",
+      "revId": "fd5c3bd974eadeeb5e5ed299b5f8c4478be00cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bad94b59_abe606cc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2738,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:44:00Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 2738: `presenceManager_-\u003erefresh()` is invoked directly from `connectivityChanged()`. If this method can run off the account/DHT event context, refreshing presence subscriptions may race with presence listener token mutation, especially since the comment says `refresh()` clears existing listen tokens before re-subscribing. Dispatch this operation onto the same context used by DHT/presence subscription management, or document and enforce that `connectivityChanged()` always runs there.\n```suggestion\nif (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning()) {\n    dht::ThreadPool::io().run([w \u003d weak()] {\n        if (auto account \u003d w.lock(); account-\u003epresenceManager_ \u0026\u0026 account-\u003edht_ \u0026\u0026 account-\u003edht_-\u003eisRunning())\n            account-\u003epresenceManager_-\u003erefresh();\n    });\n}\n```",
+      "revId": "fd5c3bd974eadeeb5e5ed299b5f8c4478be00cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
