@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34ff7a18_de723e60",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 116: `factor \u003d 1.0f - congestion * cfg_.maxDecreaseFactor` makes `maxDecreaseFactor` behave as the maximum reduction, but the subsequent clamp is fragile and the defaults are not validated against the increase factors. If `minIncreaseFactor \u003e maxIncreaseFactor` is configured, probing can produce negative or inverted ramp behavior. Normalize these related factors in the constructor so the controller cannot be misconfigured into decreasing while probing.\n```suggestion\ncfg_.minIncreaseFactor \u003d std::clamp(cfg_.minIncreaseFactor, 0.0f, 1.0f);\ncfg_.maxIncreaseFactor \u003d std::clamp(cfg_.maxIncreaseFactor, 0.0f, 1.0f);\nif (cfg_.minIncreaseFactor \u003e cfg_.maxIncreaseFactor)\n    std::swap(cfg_.minIncreaseFactor, cfg_.maxIncreaseFactor);\n```",
+      "revId": "726f0360951a93eb5879b32b480d31b73a693032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae2d4f9b_74e7b5d6",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 673,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 673: Calling `setNewBitrate()` for every RTCP RR update now calls `bwController_.setTargetBitrate(newBR)`, and `setTargetBitrate()` resets `lastStableBitrate_` to the just-applied bitrate. After a congestion decrease this immediately overwrites the pre-congestion recovery reference, so the controller can lose its intended recovery ceiling and AIMD state. Split the API into an external/manual target setter and an applied-bitrate sync that only clamps `targetBitrate_` without changing `lastStableBitrate_`.\n```suggestion\n// bandwidth_controller.h\nvoid syncAppliedBitrate(unsigned bitrateKbps);\n\n// bandwidth_controller.cpp\nvoid\nBandwidthController::syncAppliedBitrate(unsigned bitrateKbps)\n{\n    std::lock_guard lock(mutex_);\n    targetBitrate_ \u003d clampBitrate(bitrateKbps);\n}\n\n// video_rtp_session.cpp\nbwController_.syncAppliedBitrate(newBR);\n```",
+      "revId": "726f0360951a93eb5879b32b480d31b73a693032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3264e4f_d3499b4d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 865,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 865: `delayMonitor()` writes REMB packets through `socketPair_` from the RTP delay callback without taking the session mutex, while `start()`/teardown can reset `socketPair_`. The null check does not protect against a concurrent reset after the check, which can lead to use-after-free. Take a stable local shared/locked reference using the same synchronization pattern used elsewhere for `socketPair_`, or guard this callback with the session mutex before dereferencing.\n```suggestion\nstd::lock_guard lock(mutex_);\nif (!socketPair_)\n    return;\n...\nsocketPair_-\u003ewriteData(v.data(), static_cast\u003cint\u003e(v.size()));\n```",
+      "revId": "726f0360951a93eb5879b32b480d31b73a693032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
