@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "148042d6_edc1ae3f",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:59:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 116: The multiplicative decrease factor is computed as `1.0f - congestion * maxDecreaseFactor`, which means `maxDecreaseFactor\u003d0.5` produces only a 5% reduction at congestion\u003d0.1, despite the comment saying factor\u003d0.95. The following `max()` is redundant and makes the naming ambiguous. This can make congestion response too weak or hard to tune. Use an explicit minimum factor or rename the config to reflect the actual semantics.\n```suggestion\n    const float minFactor \u003d 1.0f - cfg_.maxDecreaseFactor;\n    float factor \u003d std::clamp(1.0f - congestion * cfg_.maxDecreaseFactor, minFactor, 1.0f);\n```",
+      "revId": "1abb5565931ca635a906636f33bd4490dcb593b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01bbf537_bab61b61",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:59:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 253: Audio congestion reduction uses hard-coded factors 0.45 and 0.55, bypassing the configurable `audioReductionFactor`. This makes tuning inconsistent and also differs from the previous 0.4/0.5 severe-loss behavior removed from VideoRtpSession. Consider making these severity factors part of Config or deriving them from `audioReductionFactor` so deployments can tune audio protection coherently.\n```suggestion\n    float reductionFactor \u003d cfg_.audioReductionFactor;\n    if (audioLoss \u003e 10.0f)\n        reductionFactor \u003d std::min(reductionFactor, 0.45f);\n    else if (audioLoss \u003e 5.0f)\n        reductionFactor \u003d std::min(reductionFactor, 0.55f);\n```",
+      "revId": "1abb5565931ca635a906636f33bd4490dcb593b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d48ffeb4_f07b9c1c",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:59:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 663: RTT is fed as `rtcpi.latency` without validating whether the field is available or in milliseconds. If latency is unset or uses a sentinel/invalid value, it can establish a bogus baselineRtt_ in the first five samples and permanently skew congestion scoring for the call. Validate the value before passing it to the controller, or pass 0 when no RTT sample is available.\n```suggestion\n                const float rttMs \u003d rtcpi.latency \u003e 0 ? rtcpi.latency : 0.0f;\n                auto newBitrate \u003d bwController_.update(rtcpi.packetLoss,\n                                                       static_cast\u003cfloat\u003e(rtcpi.jitter),\n                                                       rttMs);\n```",
+      "revId": "1abb5565931ca635a906636f33bd4490dcb593b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "146cf533_ede27796",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:59:39Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 694: Calling bwController_.setTargetBitrate(newBR) after every applied controller decision resets lastStableBitrate_ to the newly reduced bitrate. This loses the pre-congestion recovery reference saved by applyDecrease()/onAudioCongestion(), so the controller immediately treats the reduced value as stable and recovery/probing behavior is biased incorrectly. Split the sync path from the external seeding path so applying a controller-computed bitrate updates only targetBitrate_, not lastStableBitrate_.\n```suggestion\n        bwController_.syncAppliedBitrate(newBR);\n```\nImplement syncAppliedBitrate() to clamp and assign targetBitrate_ without changing lastStableBitrate_.",
+      "revId": "1abb5565931ca635a906636f33bd4490dcb593b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
