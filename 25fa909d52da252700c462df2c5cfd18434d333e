@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c95a05a0_cc94ee39",
+        "filename": "src/media/network_sim/network_simulator.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Major] Line 67: `setJitter()` is documented as simulator functionality, but `shouldSend()` never applies jitter and `randomJitter()` is private/unused. Tests only verify that jitter does not block, so the advertised feature is not implemented. Either remove jitter from the public API/documentation or implement a non-blocking delayed-send design outside the RTP send thread.",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d77b0ab_77c70540",
+        "filename": "src/media/socket_pair.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Major] Line 177: `setNetworkSimulator()` exposes a production `SocketPair` hook without any build guard even though the simulator is test-only infrastructure. This adds mutable packet-dropping behavior to release builds and broadens the runtime surface unnecessarily. Gate the simulator integration behind a test/build option or keep it in test-only code paths.\\n```suggestion\\n#ifdef ENABLE_NETWORK_SIMULATOR\\n    void setNetworkSimulator(std::shared_ptr\u003cNetworkSimulator\u003e sim)\\n    {\\n        std::lock_guard lock(netSimMutex_);\\n        networkSim_ \u003d std::move(sim);\\n    }\\n#endif\\n```",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19ec53dc_b1cb2ea0",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 814,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Critical] Line 814: The audio-triggered bitrate reduction intentionally avoids clamping to `videoBitrateMin`, so repeated congestion callbacks can drive the video bitrate to zero or an unusably low value. That can effectively kill video and may pass invalid values to encoder/restart logic. Keep the reduction one-way, but clamp to a safe lower bound such as the configured minimum bitrate.\\n```suggestion\\n        newBitrate \u003d static_cast\u003cunsigned int\u003e(std::lround(static_cast\u003cfloat\u003e(oldBitrate) * reductionFactor));\\n        newBitrate \u003d std::max(videoBitrateInfo_.videoBitrateMin, std::min(newBitrate, oldBitrate));\\n```",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8e9cbf3_85978a77",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Major] Line 233: The congestion callback captures the call and audio session, but it is never cleared when the audio RTP session is detached/reconfigured. If the session object outlives the call media association, the callback can continue walking call state from the RTCP thread and coupling unrelated future media sessions. Clear the callback when tearing down or replacing audio RTP sessions, or bind it to the same lifecycle mechanism used for voice callbacks.",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27e10d39_5cd676e2",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 13
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Major] Line 113: The script tries to read `~/.local/share/jami/jami*.log` inside `ip netns exec` while running as root. The tilde expands before namespace execution to root\u0027s home, so it will not find logs for the intended Jami user and can silently produce empty reports. Require an explicit log path or run the lookup under the target user/home.",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb0c5907_aac3f126",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 13
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:02Z",
+      "side": 1,
+      "message": "[Minor] Line 144: `do_down()` always restores `net.ipv4.ip_forward` from the saved state even if another process changed it after the lab was started. This can disable forwarding needed by the host or other tests. Restore only if the current value still matches the value set by this script, or print a warning and leave it unchanged.",
+      "revId": "25fa909d52da252700c462df2c5cfd18434d333e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
