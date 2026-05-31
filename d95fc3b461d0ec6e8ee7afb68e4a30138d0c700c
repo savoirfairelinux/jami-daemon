@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bebb07ea_9b1a212e",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:01:22Z",
+      "side": 1,
+      "message": "Line 37: 🟡 Suggestions - setBandwidthLimit() resets tokenBucket_ to 0, so enabling or changing a limit causes an artificial burst of drops until tokens accumulate. That can skew QoS tests and make audio/video behavior look worse than the configured bandwidth. Initialize the bucket to a reasonable capacity, for example the max bucket size, when applying a new limit.",
+      "revId": "d95fc3b461d0ec6e8ee7afb68e4a30138d0c700c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1d9f337_f68bec07",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 824,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:01:22Z",
+      "side": 1,
+      "message": "[Critical] Line 824: 🔴 Critical Issues - The audio-triggered bitrate reduction calls setNewBitrate() but does not update the existing video bitrate backoff state such as lastBitrateDecrease / REMB decrease state. The normal RTCP adaptation loop can therefore raise the bitrate again on the next cycle and undo the audio-priority decision. Route this through the same decrease path used by video congestion handling, or update the same cooldown/decrease markers before applying the new bitrate.",
+      "revId": "d95fc3b461d0ec6e8ee7afb68e4a30138d0c700c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df7ac6a4_8f16dfbd",
+        "filename": "src/meson.build",
+        "patchSetId": 19
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:01:22Z",
+      "side": 1,
+      "message": "Line 81: 🟡 Suggestions - network_simulator.cpp is compiled into libjami unconditionally, while the integration points are behind JAMI_NETWORK_SIMULATOR and that define is only added for tests. If this is test-only infrastructure, guard the source entry with get_option(\u0027tests\u0027) as well so production builds do not carry unused simulator code.",
+      "revId": "d95fc3b461d0ec6e8ee7afb68e4a30138d0c700c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
