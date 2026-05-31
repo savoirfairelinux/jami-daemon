@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aad13192_2ec29267",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 374,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:54:47Z",
+      "side": 1,
+      "message": "[Critical] Line 374: 🔴 Critical Issues - Must fix before merge: Normal REMB feedback no longer increases bitrate. `onRembFeedback(false)` only moves `Draining -\u003e Probing`, and later normal REMB packets do nothing because `state_ \u003d\u003d State::Draining` is false. This regresses the old `delayProcessing(0x7378)` behavior and contradicts the comment saying recovery works even without RR. Apply an increase when normal REMB is received in `Probing`.\n\n```suggestion\n    if (!isOveruse) {\n        auto secSinceDecrease \u003d secSinceLastDecrease(now);\n        if (state_ \u003d\u003d State::Draining \u0026\u0026 secSinceDecrease \u003e cfg_.probeDelaySec) {\n            state_ \u003d State::Probing;\n            JAMI_LOG(\"[BandwidthCtrl] REMB normal -\u003e entering PROBING state\");\n        }\n        if (state_ \u003d\u003d State::Probing)\n            applyIncrease();\n    }\n```",
+      "revId": "1949eed8d062f801004e8113443d0f3e43fbd941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ef56bd5_9a54a35d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 873,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:54:47Z",
+      "side": 1,
+      "message": "[Major] Line 873: 🟡 Suggestions - Improvements to consider: `lastRembSent_` rate-limits both normal and overuse REMB packets. A normal/increase REMB can therefore suppress an urgent overuse REMB for up to 500 ms, delaying congestion reaction compared with the previous independent decrease limiter. Use separate timestamps or always prioritize overuse feedback.\n\n```suggestion\n        if (bwState \u003d\u003d BandwidthUsage::bwOverusing) {\n            if (now - lastRembOveruseSent_ \u003e\u003d MIN_REMB_INTERVAL) {\n                rembPacket \u003d cc-\u003ecreateREMB(0x6803);\n                lastRembOveruseSent_ \u003d now;\n            }\n        } else if (bwState \u003d\u003d BandwidthUsage::bwNormal) {\n            if (now - lastRembNormalSent_ \u003e\u003d std::chrono::seconds(1)) {\n                rembPacket \u003d cc-\u003ecreateREMB(0x7378);\n                lastRembNormalSent_ \u003d now;\n            }\n        }\n```",
+      "revId": "1949eed8d062f801004e8113443d0f3e43fbd941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "390ae709_fff76600",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 887,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:54:47Z",
+      "side": 1,
+      "message": "[Critical] Line 887: 🔴 Critical Issues - Must fix before merge: `socketPair_` is checked while holding `mutex_`, but dereferenced after the lock is released. Because `socketPair_` is a `unique_ptr` that can be reset by another media/control thread, this introduces a use-after-free/data race in the RTP delay callback. Keep the dereference synchronized, or change ownership so the callback can hold a safe reference.\n\n```suggestion\n    if (!rembPacket.empty()) {\n        std::lock_guard lock(mutex_);\n        if (socketPair_)\n            socketPair_-\u003ewriteData(rembPacket.data(), static_cast\u003cint\u003e(rembPacket.size()));\n    }\n```",
+      "revId": "1949eed8d062f801004e8113443d0f3e43fbd941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
