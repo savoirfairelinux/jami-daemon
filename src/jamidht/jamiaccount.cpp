@@ -91,6 +91,8 @@
 #include <opendht/peer_discovery.h>
 #include <opendht/http.h>
 
+#include <asio/steady_timer.hpp>
+
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
@@ -187,6 +189,20 @@ struct JamiAccount::DiscoveredPeer
 {
     std::string displayName;
     std::unique_ptr<asio::steady_timer> cleanupTimer;
+};
+
+struct JamiAccount::IdentityRetryState
+{
+    asio::steady_timer timer;
+    unsigned attempt {0};
+    bool exhausted {false};
+    static constexpr unsigned maxAttempts = 3;
+    // Exponential back-off delays in seconds for identity announce retries
+    static constexpr std::array<unsigned, maxAttempts> delays {5, 15, 30};
+
+    explicit IdentityRetryState(asio::io_context& ctx)
+        : timer(ctx)
+    {}
 };
 
 /**
@@ -1186,18 +1202,27 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {
-        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
-        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
-        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            onConversationRequestAccepted(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
+    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
+                                                 onContactAdded(uri, confirmed);
+                                             },
+                                             [this](const std::string& uri, bool banned) {
+                                                 onContactRemoved(uri, banned);
+                                             },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    time_t received) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
+                                             },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
+                                                 onKnownDevicesChanged(devices);
+                                             },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) {
+                                                 onContactConfirmed(uri, convFromReq);
+                                             }};
 }
 
 void
@@ -2084,10 +2109,58 @@ JamiAccount::initDhtContext()
 
     context.identityAnnouncedCb = [this](bool ok) {
         if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
+            // Initialize retry state on first failure, reuse on subsequent ones.
+            if (!identityRetryState_)
+                identityRetryState_ = std::make_shared<IdentityRetryState>(*Manager::instance().ioContext());
+            auto& state = *identityRetryState_;
+            if (state.exhausted) {
+                // Retries already exhausted for this registration cycle — do not restart.
+                return;
+            }
+            if (state.attempt >= IdentityRetryState::maxAttempts) {
+                JAMI_ERROR("[Account {}] Identity announcement failed after {} retries, giving up",
+                           getAccountID(),
+                           state.attempt);
+                state.exhausted = true;
+                return;
+            }
+            auto delaySec = IdentityRetryState::delays[state.attempt];
+            JAMI_ERROR("[Account {}] Identity announcement failed, retry {}/{} in {}s",
+                       getAccountID(),
+                       state.attempt + 1,
+                       IdentityRetryState::maxAttempts,
+                       delaySec);
+            state.attempt++;
+            state.timer.cancel();
+            state.timer.expires_after(std::chrono::seconds(delaySec));
+            state.timer.async_wait([w = weak()](const asio::error_code& ec) {
+                if (ec)
+                    return;
+                if (auto thisPtr = w.lock()) {
+                    JAMI_WARNING("[Account {}] Retrying sync after identity announcement failure",
+                                 thisPtr->getAccountID());
+                    if (thisPtr->accountManager_) {
+                        auto weakThis = thisPtr->weak();
+                        thisPtr->accountManager_->startSync(
+                            [weakThis](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                if (auto account = weakThis.lock())
+                                    account->onAccountDeviceFound(crt);
+                            },
+                            [weakThis] {
+                                if (auto account = weakThis.lock())
+                                    account->onAccountDeviceAnnounced();
+                            },
+                            thisPtr->publishPresence_);
+                    }
+                }
+            });
             return;
         }
         JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
+        if (identityRetryState_) {
+            identityRetryState_->timer.cancel();
+            identityRetryState_.reset();
+        }
         accountManager_
             ->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) { onAccountDeviceFound(crt); },
                         [this] { onAccountDeviceAnnounced(); },
@@ -2641,6 +2714,12 @@ JamiAccount::connectivityChanged()
             connectionManager_->setPublishedAddress({});
         }
     }
+    // Re-subscribe presence for all tracked buddies. Subscriptions may
+    // have been silently lost while the DHT was disconnected (trackPresence
+    // returns early when the DHT is not running). This is safe to call
+    // repeatedly: refresh() clears existing listen tokens before re-subscribing.
+    if (presenceManager_ && dht_ && dht_->isRunning())
+        presenceManager_->refresh();
 }
 
 bool
