@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13ad933a_d766a28b",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:36:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 27: The constructor normalizes min/max and validates factors after initializing `targetBitrate_` and `lastStableBitrate_`, but it never clamps the initial bitrate to the normalized limits. A config with an initial bitrate outside the range can keep the controller target out of bounds until the next adjustment path happens to clamp it. Clamp both initialized bitrate fields after config normalization.\n```suggestion\n    targetBitrate_ \u003d clampBitrate(targetBitrate_);\n    lastStableBitrate_ \u003d targetBitrate_;\n```\n",
+      "revId": "0a53ec08db576918e178cd7a89e1128b402ffc5d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65486615_86b48c4f",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:36:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 124: `applyIncrease()` updates `lastIncrease_` even when the bitrate is already clamped at the maximum and did not actually change. This throttles future probing unnecessarily and can leave the controller reporting probe timing even though no increase happened. Only update `lastIncrease_` when the target changes.\n```suggestion\n    if (targetBitrate_ !\u003d oldBitrate) {\n        JAMI_LOG(\"[BandwidthCtrl] INCREASE: {} -\u003e {} Kbps (ramp\u003d{:.0f}%, +{:.1f}%)\",\n                 oldBitrate,\n                 targetBitrate_,\n                 rampProgress * 100,\n                 increaseFactor * 100);\n        lastIncrease_ \u003d now;\n    }\n```\n",
+      "revId": "0a53ec08db576918e178cd7a89e1128b402ffc5d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4844654_0694c126",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:36:10Z",
+      "side": 1,
+      "message": "[🟢 Good Practices] Line 645: 🟢 Good practice: routing REMB, RR loss/RTT, and audio congestion through a single controller removes conflicting bitrate loops and makes the adaptation behavior much easier to reason about.",
+      "revId": "0a53ec08db576918e178cd7a89e1128b402ffc5d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8c2a3e3_1e78b2a3",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 657,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:36:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 657: The Android jitter guard is wrapped in `#if !__ANDROID__`, but `__ANDROID__` may be undefined on non-Android builds. Some compilers treat undefined identifiers in preprocessor expressions as `0`, but this is fragile and can trigger `-Wundef`/warning-as-error builds. Use the existing portable pattern.\n```suggestion\n#ifndef __ANDROID__\n            if (rtcpi.jitter \u003c\u003d 1000)\n#endif\n```\n",
+      "revId": "0a53ec08db576918e178cd7a89e1128b402ffc5d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
