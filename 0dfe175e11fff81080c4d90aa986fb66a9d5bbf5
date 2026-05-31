@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70de6239_da5e17dc",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 361: The audio congestion callback fires on every RTCP check while loss is above 3%, including transient or externally-induced audio loss. This permanently drives video down even when video is not the cause, because there is no recovery/correlation with shared bandwidth or sustained-loss requirement. Add hysteresis or require consecutive congested RTCP reports before signaling video, and clear the state after healthy reports.\n```suggestion\nif (pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD) {\n    if (++audioCongestionCount_ \u003c AUDIO_CONGESTION_REQUIRED_REPORTS)\n        return;\n} else {\n    audioCongestionCount_ \u003d 0;\n    return;\n}\n```",
+      "revId": "0dfe175e11fff81080c4d90aa986fb66a9d5bbf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff563e95_e63b6470",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 805,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 805: lastAudioQosReduction_ is updated before confirming that a reduction can actually be applied. If oldBitrate is zero or already at the minimum, future valid congestion events are suppressed for the full cooldown even though no reduction happened. Move the timestamp assignment after newBitrate is computed and known to be lower than the current bitrate.\n```suggestion\nif (oldBitrate \u003d\u003d 0 || oldBitrate \u003c\u003d videoBitrateInfo_.videoBitrateMin)\n    return;\n\nnewBitrate \u003d static_cast\u003cunsigned int\u003e(std::lround(static_cast\u003cfloat\u003e(oldBitrate) * reductionFactor));\nnewBitrate \u003d std::clamp(newBitrate, videoBitrateInfo_.videoBitrateMin, oldBitrate);\nif (newBitrate \u003e\u003d oldBitrate)\n    return;\nlastAudioQosReduction_ \u003d now;\n```",
+      "revId": "0dfe175e11fff81080c4d90aa986fb66a9d5bbf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7c78e21_124d60db",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:39Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 236: The congestion callback runs from the audio RTCP checker thread and directly iterates call RTP session lists and calls into every video session. If getRtpSessionList() is not internally synchronized for concurrent media reconfiguration, this can race with session teardown/reinvite and produce use-after-free or stale session behavior. Prefer scheduling this onto the call/media control thread or using an existing synchronized helper that snapshots sessions under the call lock before invoking callbacks outside that lock.\n```suggestion\n// Pseudocode: dispatch to the call/media executor, then snapshot active video sessions\n// under the call\u0027s synchronization primitive before calling onAudioCongestion().\nthisPtr-\u003erunOnMediaThread([w, audioWeak, audioLoss] {\n    auto call \u003d w.lock();\n    auto audioSession \u003d audioWeak.lock();\n    if (!call || !audioSession || !call-\u003ehasRtpSession(audioSession))\n        return;\n    for (auto\u0026 videoSession : call-\u003egetRtpSessionList(MediaType::MEDIA_VIDEO))\n        if (auto videoRtp \u003d std::dynamic_pointer_cast\u003cvideo::VideoRtpSession\u003e(videoSession))\n            videoRtp-\u003eonAudioCongestion(audioLoss);\n});\n```",
+      "revId": "0dfe175e11fff81080c4d90aa986fb66a9d5bbf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b76c29d_e4830f9c",
+        "filename": "test/unitTest/media/test_network_simulator.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:39Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 126: This test does not compile: NetworkSimulator has no setJitter() API, and the implementation explicitly says jitter is not simulated in shouldSend(). Either remove this test or add a real non-blocking jitter configuration API to NetworkSimulator. For the current implementation, the simplest fix is to remove testJitter from the suite and the method body.\n```suggestion\n    // Removed: jitter is intentionally handled by tc/netem, not NetworkSimulator.\n```",
+      "revId": "0dfe175e11fff81080c4d90aa986fb66a9d5bbf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7c0639f_8f732cdd",
+        "filename": "test/virtual-networking/qos-test/README.md",
+        "patchSetId": 15
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:39Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 15: The documentation says the in-process simulator supports jitter, but the implementation intentionally does not. This will mislead test authors and already caused a compile-breaking unit test. Update the README to state that jitter must be simulated with tc/netem only.\n```suggestion\nA C++ class (`daemon/src/media/network_sim/`) that intercepts packets at the\n`SocketPair` layer. Allows writing unit tests that configure packet loss and\nbandwidth limits without any network setup. Jitter/delay simulation is handled\nby OS-level `tc`/`netem`, not by the in-process simulator.\n```",
+      "revId": "0dfe175e11fff81080c4d90aa986fb66a9d5bbf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
