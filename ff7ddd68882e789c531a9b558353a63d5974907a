@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32555a52_36e31763",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:02:42Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 44: The constructor only validates increaseRampTime, but setLimits() accepts and normalizes min/max while Config construction does not. If a caller provides Config{.minBitrateKbps \u003e .maxBitrateKbps}, later std::clamp() calls have an invalid range, which is undefined behavior. Normalize limits in the constructor before any clamping can occur.\n```suggestion\nBandwidthController::BandwidthController(const Config\u0026 cfg)\n    : cfg_(cfg)\n    , targetBitrate_(cfg.initialBitrateKbps)\n    , lastStableBitrate_(cfg.initialBitrateKbps)\n{\n    if (cfg_.minBitrateKbps \u003e cfg_.maxBitrateKbps)\n        std::swap(cfg_.minBitrateKbps, cfg_.maxBitrateKbps);\n    if (cfg_.increaseRampTime \u003c\u003d 0.0f)\n        cfg_.increaseRampTime \u003d 10.0f;\n    targetBitrate_ \u003d clampBitrate(targetBitrate_);\n    lastStableBitrate_ \u003d targetBitrate_;\n}\n```",
+      "revId": "ff7ddd68882e789c531a9b558353a63d5974907a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5bca5d1_c3e08e99",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:02:42Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 110: applyDecrease() can turn a malformed maxDecreaseFactor into an increase or an underflowed unsigned value. Config is public and only partially validated, so values outside [0,1] can produce factor \u003e 1, factor \u003c 0, or a negative lround() cast to unsigned before clampBitrate(). Clamp the configured factors once in the constructor or locally before use.\n```suggestion\ncfg_.maxDecreaseFactor \u003d std::clamp(cfg_.maxDecreaseFactor, 0.0f, 1.0f);\ncfg_.minIncreaseFactor \u003d std::max(cfg_.minIncreaseFactor, 0.0f);\ncfg_.maxIncreaseFactor \u003d std::max(cfg_.maxIncreaseFactor, cfg_.minIncreaseFactor);\ncfg_.audioReductionFactor \u003d std::clamp(cfg_.audioReductionFactor, 0.0f, 1.0f);\n```",
+      "revId": "ff7ddd68882e789c531a9b558353a63d5974907a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78bbfa88_37870e5a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 657,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:02:42Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 657: The RR guard changed from DELAY_AFTER_RESTART (1s) plus the old loss-history warmup to a hard-coded 2.0f literal. This duplicates timing policy outside the constants and makes it easy for the controller cadence and stale-report filtering to drift. Use a named chrono constant and keep the unit-safe comparison.\n```suggestion\nconstexpr auto RTCP_REPORT_STALE_DELAY \u003d std::chrono::seconds(2);\n...\nif (clock::now() - lastMediaRestart_ \u003e\u003d RTCP_REPORT_STALE_DELAY) {\n```",
+      "revId": "ff7ddd68882e789c531a9b558353a63d5974907a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "275d3430_9e56a10d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 692,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:02:42Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 692: setNewBitrate() now sets lastMediaRestart_ every time the controller changes bitrate. adaptQualityAndBitrate() then ignores RR feedback for 2 seconds after each change, while the controller\u0027s normal probing interval is 1 second. During probing this can suppress the loss/RTT signal after every increase, allowing consecutive increases based mainly on REMB-normal feedback before RR congestion is considered. Keep a separate encoder-restart/stale-report timestamp, or only suppress RR after actual encoder restarts rather than every bitrate adjustment.\n```suggestion\n// Only update the stale-report guard when the encoder is actually restarted/reconfigured,\n// not for every target bitrate change.\n```",
+      "revId": "ff7ddd68882e789c531a9b558353a63d5974907a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
