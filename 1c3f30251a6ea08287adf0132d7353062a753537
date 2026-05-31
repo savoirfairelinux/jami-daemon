@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e6d99a0_7c8bb4bb",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:46:03Z",
+      "side": 1,
+      "message": "[Critical] Line 362: 🔴 Critical Issues - The congestion signal uses the ponderated loss value, but `pondLoss_` starts at 10.0f. With a first RTCP report showing 0% loss, `getPonderateLoss()` returns 5, which is above the 3% threshold and will reduce video bitrate even on a healthy call. Gate the audio→video QoS callback on actual observed loss, or initialize/use a separate QoS loss accumulator that cannot start above the threshold.\n```suggestion\n    if (rtcpi-\u003epacketLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD \u0026\u0026 pondLoss \u003e\u003d AUDIO_CONGESTION_THRESHOLD) {\n```",
+      "revId": "1c3f30251a6ea08287adf0132d7353062a753537",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d021c3e6_0260ec2d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 818,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:46:03Z",
+      "side": 1,
+      "message": "[Medium] Line 818: 🟡 Suggestions - Audio-triggered reductions update only `lastAudioQosReduction_`; the existing bitrate adaptation state is not told that a decrease just happened. That can let the normal video adaptation path raise the bitrate again immediately on the next RTCP cycle, partially undoing the audio-priority decision. Update the shared decrease/recovery state when applying this reduction so existing cooldown logic is respected.\n```suggestion\n        lastAudioQosReduction_ \u003d now;\n        lastBitrateDecrease \u003d now;\n```",
+      "revId": "1c3f30251a6ea08287adf0132d7353062a753537",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c9eb52f_add2f818",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 16
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T16:46:03Z",
+      "side": 1,
+      "message": "[Medium] Line 4: 🟡 Suggestions - The script header says it starts two Jami instances and initiates a call, but the implementation only applies profiles and copies any pre-existing logs. This makes the test scenario non-reproducible and can produce empty or stale results. Either implement the startup/call orchestration or update the description and usage to state that peers and calls must already be running.\n```suggestion\n# This script:\n# 1. Assumes two Jami instances are already running in peer-a and peer-b\n# 2. Assumes a call is already active between them\n# 3. Applies network degradation profiles in sequence\n# 4. Collects available RTCP/log statistics per media type\n# 5. Outputs a comparison report\n```",
+      "revId": "1c3f30251a6ea08287adf0132d7353062a753537",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
