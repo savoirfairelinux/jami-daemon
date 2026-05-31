@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba7f899d_ff269c0c",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:30:43Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 152: The controller starts in Probing state and immediately increases bitrate on the first non-congested RTCP report. Because setupVideoBitrateInfo() seeds the target from codecVideo-\u003ebitrate, stable calls will drift upward every second until maxBitrate even when the negotiated/default bitrate was intentionally lower. Initialize/reset to Stable after explicit setTargetBitrate(), or only enter Probing after a prior decrease. Suggested fix:\n```suggestion\nvoid\nBandwidthController::setTargetBitrate(unsigned bitrateKbps)\n{\n    std::lock_guard lock(mutex_);\n    targetBitrate_ \u003d clampBitrate(bitrateKbps);\n    lastStableBitrate_ \u003d targetBitrate_;\n    state_ \u003d State::Stable;\n}\n```\nAlso consider reset() using Stable unless recovery probing is explicitly desired.",
+      "revId": "ae4c418830361e49bd2df99a47d10927229fbe9a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7836f43c_f90bb62b",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:30:43Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 250: The new controller logs bitrate/loss/jitter/RTT every 5 seconds at normal log level for every video call. On multi-call clients this can create noisy logs and expose call network-quality telemetry in regular logs. Demote periodic status to debug/trace level or guard it behind an existing verbose-media logging setting; keep state transitions at normal level if needed.",
+      "revId": "ae4c418830361e49bd2df99a47d10927229fbe9a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1e330ed_dd1a4069",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 862,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:30:43Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 862: delayMonitor() now holds mutex_ while calling socketPair_-\u003ewriteData(). This callback is on the RTP delay path, and doing socket I/O under the session mutex can block other media/session operations or deadlock if writeData triggers code that also needs this mutex. Keep only the shared-state checks/update under the lock, then send the REMB packet outside it. Suggested shape:\n```suggestion\nstd::vector\u003cuint8_t\u003e remb;\n{\n    std::lock_guard lock(mutex_);\n    if (!socketPair_)\n        return;\n    ...\n    if (shouldSend) {\n        remb \u003d cc-\u003ecreateREMB(value);\n        lastRembSent_ \u003d now;\n    }\n}\nif (!remb.empty())\n    socketPair_-\u003ewriteData(remb.data(), static_cast\u003cint\u003e(remb.size()));\n```",
+      "revId": "ae4c418830361e49bd2df99a47d10927229fbe9a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
