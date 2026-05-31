@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35795c2e_ed1cc73e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2113,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:39:15Z",
+      "side": 1,
+      "message": "[Critical] Line 2113: The retry state is never reset when a new registration/connectivity cycle starts after retries are exhausted. Once `exhausted` is set, later identity announcement failures return immediately for the lifetime of the account unless a success callback happens first, which can leave presence tracking broken after a subsequent GSM standby/reconnect. Reset the retry state when starting a fresh DHT/registration cycle, or before scheduling retries for a new identity announcement cycle.\n```suggestion\n// When starting a fresh registration/DHT cycle:\nif (identityRetryState_) {\n    identityRetryState_-\u003etimer.cancel();\n    identityRetryState_.reset();\n}\n```",
+      "revId": "082ab3c6bc562d82272186163177e6fe3536525c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ef8b91f_3b225508",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2131,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:39:15Z",
+      "side": 1,
+      "message": "[Critical] Line 2131: `asio::steady_timer` is modified directly from `identityAnnouncedCb`, which may be invoked from the DHT/account manager thread rather than the manager io_context thread. Asio timer objects are not safe for concurrent unsynchronized access, and this can race with the async wait handler or cancellation during shutdown. Marshal all timer operations onto the timer\u0027s executor/io_context, or protect the retry state with the same serialization mechanism used elsewhere in this class.\n```suggestion\nauto weakThis \u003d weak();\nasio::post(*Manager::instance().ioContext(), [weakThis, delaySec] {\n    if (auto account \u003d weakThis.lock()) {\n        auto\u0026 state \u003d *account-\u003eidentityRetryState_;\n        state.timer.cancel();\n        state.timer.expires_after(std::chrono::seconds(delaySec));\n        state.timer.async_wait(/* existing handler */);\n    }\n});\n```",
+      "revId": "082ab3c6bc562d82272186163177e6fe3536525c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
