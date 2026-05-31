@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06a564d3_f9b6cadd",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 358: dropProcessing now dereferences rtcpi unconditionally. If callers can pass nullptr during RTCP processing/error paths, this will crash before QoS handling. Preserve the existing safety expectations by validating the pointer or documenting/enforcing non-null at the call site.\n```suggestion\n    if (!rtcpi)\n        return;\n\n    float pondLoss;\n```",
+      "revId": "4e28ccd3d37ca5ac7a60306622414fc4aa34a3ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6ac636c_4925ef02",
+        "filename": "src/media/network_sim/network_simulator.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 65: The public API exposes setJitter(), but shouldSend() explicitly never applies jitter and randomJitter() is private and unused. This makes tests/documentation think jitter is simulated when it is not, reducing test validity. Either remove the jitter API from this in-process simulator or expose/apply a non-blocking delayed-send design; otherwise keep jitter only in the tc/netem scripts.",
+      "revId": "4e28ccd3d37ca5ac7a60306622414fc4aa34a3ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "071a9a65_97e62ab1",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 816,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 816: std::clamp is called with videoBitrateInfo_.videoBitrateMin as the lower bound and oldBitrate as the upper bound. If the current bitrate is already below the configured minimum, this violates std::clamp\u0027s precondition (lo \u003c\u003d hi), which is undefined behavior. Guard this case before clamping.\n```suggestion\n        if (oldBitrate \u003c\u003d videoBitrateInfo_.videoBitrateMin)\n            return;\n\n        newBitrate \u003d static_cast\u003cunsigned int\u003e(std::lround(static_cast\u003cfloat\u003e(oldBitrate) * reductionFactor));\n        newBitrate \u003d std::clamp(newBitrate, videoBitrateInfo_.videoBitrateMin, oldBitrate);\n```",
+      "revId": "4e28ccd3d37ca5ac7a60306622414fc4aa34a3ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "252bd135_8b6e7bbe",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 14
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:14:10Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 206: The custom command passes arbitrary arguments directly into tc qdisc as root. Even though this is a test script, it should reject empty input and avoid accepting unrestricted shell-expanded option strings from callers. Prefer explicit profile parameters or validate custom input against expected netem tokens before execution.",
+      "revId": "4e28ccd3d37ca5ac7a60306622414fc4aa34a3ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
