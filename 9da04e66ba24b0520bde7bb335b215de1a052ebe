@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed6413a7_54257018",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:56:59Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2119: Posting to Manager::ioContext() does not guarantee serialized access unless that io_context is single-threaded or a strand is used. The new identityRetryState_ is also reset from doRegister_(), so if callbacks can arrive from another thread this still has a data race despite the comment. Bind the retry state/timer work to an asio strand or ensure both doRegister_() reset and the callback mutation are dispatched through the same serialized executor.\n```suggestion\n// Use a strand for all identityRetryState_ access, or dispatch the reset through\n// the same serialized executor used by identityAnnouncedCb.\n```",
+      "revId": "9da04e66ba24b0520bde7bb335b215de1a052ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bd6d81b_a1c2b0dd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2156,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:56:59Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2156: The retry path calls accountManager_-\u003estartSync() after an identity announcement failure, but the success path only starts sync after the identity is announced. If startSync() does not itself re-trigger the failed identity announcement, this bypasses the original success precondition and may run sync/presence publication while the identity is still unannounced. Retry the actual identity announcement operation instead, or rename/restructure this so the callback is only invoked after a successful announce.\n```suggestion\n// Schedule the same operation that produced identityAnnouncedCb(false), not\n// startSync(), unless startSync() is documented to re-announce the identity.\n```",
+      "revId": "9da04e66ba24b0520bde7bb335b215de1a052ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "29f71994_31c2a4df",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2739,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:56:59Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2739: refresh() is called on every connectivityChanged() while the DHT is running, regardless of whether connectivity was actually restored. If connectivityChanged() is emitted frequently for address/interface churn, this can tear down and recreate all buddy presence subscriptions unnecessarily. Gate this on a transition from disconnected/not-running to running, or debounce the refresh.\n```suggestion\nif (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning() \u0026\u0026 wasDisconnected)\n    presenceManager_-\u003erefresh();\n```",
+      "revId": "9da04e66ba24b0520bde7bb335b215de1a052ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
