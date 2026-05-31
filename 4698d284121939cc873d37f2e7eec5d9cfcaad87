@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "063a67f6_ec1a164a",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:06:46Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 356: The new locking around getPonderateLoss() only protects pondLoss_, but setNewPacketLoss() is still called outside mutex_ and mutates packetLoss_ without synchronization while other code may read it under the same session mutex. Keep the packet-loss state update in the same critical section or make packetLoss_ atomic. Suggested fix:\\n```suggestion\\n    float pondLoss;\\n    {\\n        std::lock_guard lock(mutex_);\\n        pondLoss \u003d getPonderateLoss(rtcpi-\u003epacketLoss);\\n        setNewPacketLoss(static_cast\u003cunsigned int\u003e(pondLoss));\\n    }\\n```",
+      "revId": "4698d284121939cc873d37f2e7eec5d9cfcaad87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83951607_33b8bebd",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:06:46Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 85: Changing the ponderated loss initial value from the previous effective 10% static default to 0% materially changes bitrate adaptation behavior, not only first-RTCP congestion signaling. With the old value, early audio bitrate adaptation was conservative; now initial loss smoothing can under-report early loss. If the goal is only to avoid firing the audio-to-video callback on startup, keep the previous smoothing seed and gate the congestion callback until at least one real RTCP sample has been processed.",
+      "revId": "4698d284121939cc873d37f2e7eec5d9cfcaad87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cdc0431_bc2360c7",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 636,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:06:46Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 636: The simulator drops RTP after libav/FFmpeg has produced the packet but returns buf_size as if the write succeeded. That is useful for synthetic loss, but it also means upstream send-rate/accounting sees successful transmission and cannot distinguish simulated drops from real network sends. Please document this explicitly in the SocketPair API or expose simulator stats to tests that assert QoS behavior, otherwise tests may accidentally validate sender accounting instead of actual simulated delivery.",
+      "revId": "4698d284121939cc873d37f2e7eec5d9cfcaad87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc950ee6_ab2eb332",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 811,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:06:46Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 811: newBitrate is clamped with oldBitrate as the upper bound, so when oldBitrate is below videoBitrateMin the code returns early; however when videoBitrateMin is 0, lround(oldBitrate * factor) can produce 0 for very low oldBitrate and setNewBitrate(0) may disable/invalidly configure the encoder depending on downstream expectations. Guard against a zero reduction target or clamp to at least 1 when bitrate zero is not a valid active value.",
+      "revId": "4698d284121939cc873d37f2e7eec5d9cfcaad87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f403b40_6b6a7fde",
+        "filename": "src/meson.build",
+        "patchSetId": 20
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T19:06:46Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 80: network_simulator.cpp is compiled into libjami unconditionally even though the integration points are behind JAMI_NETWORK_SIMULATOR, which is only added for test builds. This adds unused production code and keeps the test helper available in non-test artifacts. Gate the source on get_option(\u0027tests\u0027) or the same feature macro used by SocketPair. Suggested fix:\\n```suggestion\\nif get_option(\u0027tests\u0027)\\n    libjami_sources +\u003d files(\u0027media/network_sim/network_simulator.cpp\u0027)\\nendif\\n```",
+      "revId": "4698d284121939cc873d37f2e7eec5d9cfcaad87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
