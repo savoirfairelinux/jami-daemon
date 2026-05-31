@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f328aae_8bc2ac81",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2103,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T05:46:36Z",
+      "side": 1,
+      "message": "[Critical] Line 2103: 🔴 Critical Issues - The retry state is never reset when a new registration/connectivity cycle starts after all retries are exhausted. Once `state.exhausted` becomes true, future identity announcement failures return immediately forever, so a transient outage can permanently disable the intended recovery until some unrelated success path resets the state. Reset the retry state when the account reconnects/registers or when scheduling a new identity announcement cycle, rather than keeping an exhausted state across cycles.\n\n```suggestion\n// Reset identity announcement retry state when starting a new registration cycle.\nif (identityRetryState_) {\n    identityRetryState_-\u003etimer.cancel();\n    identityRetryState_.reset();\n}\n```\nPlace this at the start of the registration/DHT startup path that precedes a fresh identity announcement, or otherwise key the retry state to an explicit registration generation.",
+      "revId": "04f280a8bd876f9a1848a3a62736f58d85818b14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16617952_ef4b3eff",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2135,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T05:46:36Z",
+      "side": 1,
+      "message": "[Low] Line 2135: 🟡 Suggestions - The retry timer handler silently returns if `accountManager_` is null. That makes a recovery failure hard to diagnose and contradicts the surrounding explicit logging. Log this condition or avoid scheduling the retry when the account manager is unavailable.\n\n```suggestion\nif (!thisPtr-\u003eaccountManager_) {\n    JAMI_WARNING(\"[Account {}] Cannot retry sync: account manager is unavailable\",\n                 thisPtr-\u003egetAccountID());\n    return;\n}\nthisPtr-\u003eaccountManager_-\u003estartSync(...);\n```",
+      "revId": "04f280a8bd876f9a1848a3a62736f58d85818b14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e34d5f1_61008931",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2707,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T05:46:36Z",
+      "side": 1,
+      "message": "[Medium] Line 2707: 🟡 Suggestions - `connectivityChanged()` now refreshes presence on every connectivity notification while the DHT is running, even if connectivity did not actually transition from disconnected to connected. Depending on how often this callback fires, this can repeatedly clear and recreate all buddy listeners, causing unnecessary DHT churn for accounts with many contacts. Consider gating this on an actual reconnection/registration transition, or debouncing the refresh through the account event loop.\n\n```suggestion\nif (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning() \u0026\u0026 wasDisconnected)\n    presenceManager_-\u003erefresh();\n```\nUse the existing account/connectivity state if available rather than refreshing unconditionally.",
+      "revId": "04f280a8bd876f9a1848a3a62736f58d85818b14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
