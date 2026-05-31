@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1b25ff9_35ca2367",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:37Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 322: The audio congestion reduction constants no longer match the behavior that was removed from VideoRtpSession. Severe audio loss used to reduce video to 40% or 50%, but the new controller uses 45% or 55%. That weakens the audio-protection path, which is a user-visible behavior change and can leave audio congested longer. Either preserve the previous factors or justify the changed tuning with tests/measurements.\n```suggestion\nif (audioLoss \u003e 10.0f)\n    reductionFactor \u003d 0.4f;\nelse if (audioLoss \u003e 5.0f)\n    reductionFactor \u003d 0.5f;\n```\n",
+      "revId": "d23d187b259eec3261fb5609cd89b6b1a8982e25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "527ce93b_a6895f67",
+        "filename": "src/media/bandwidth_controller.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:37Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 164: The controller is a substantial new state machine but has no tests in this patch. Regressions in cooldown handling, min/max clamping, non-finite input rejection, REMB overuse handling, and audio-triggered reductions would be difficult to catch manually. Add focused unit tests for the controller independent of RTP session plumbing, including cooldown/probing transitions and clamping behavior.",
+      "revId": "d23d187b259eec3261fb5609cd89b6b1a8982e25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8bddd7d_21b3b4be",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 668,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:37Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 668: The new RR path no longer preserves the previous restart grace period. The old code ignored RTCP loss for DELAY_AFTER_RESTART + 1s, but this only waits 2s after lastMediaRestart_. Because DELAY_AFTER_RESTART is 1s, this may now feed stale pre-restart loss into the controller one second earlier and trigger an immediate decrease after a bitrate/encoder restart. Keep the same effective delay or make the stale window explicit and equivalent.\n```suggestion\nstatic constexpr auto STALE_REPORT_DELAY \u003d DELAY_AFTER_RESTART + std::chrono::seconds(1);\nif (clock::now() - lastMediaRestart_ \u003e\u003d STALE_REPORT_DELAY) {\n```\n",
+      "revId": "d23d187b259eec3261fb5609cd89b6b1a8982e25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d27d5d9_bcf139ac",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 675,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:37Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 675: On Android, the preprocessor guard leaves an unconditional block, so every valid RTCP report is fed to the controller regardless of jitter. On non-Android, the block is gated by rtcpi.jitter \u003c\u003d 1000. This is hard to read and easy to break because the braces are controlled by the #if. Prefer an explicit boolean guard so both paths are clear and maintainable.\n```suggestion\n#if !__ANDROID__\n            const bool validJitter \u003d rtcpi.jitter \u003c\u003d 1000;\n#else\n            const bool validJitter \u003d true;\n#endif\n            if (validJitter) {\n                auto newBitrate \u003d bwController_.update(rtcpi.packetLoss,\n                                                       static_cast\u003cfloat\u003e(rtcpi.jitter),\n                                                       rtcpi.latency);\n                setNewBitrate(newBitrate);\n            }\n```\n",
+      "revId": "d23d187b259eec3261fb5609cd89b6b1a8982e25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc73398f_f060c6f4",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 705,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T09:03:37Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 705: videoBitrateInfo_ and the controller are updated before sender_-\u003esetBitrate() is known to have succeeded. If setBitrate() returns -1, or restartSender() fails after ret \u003d\u003d 0, the stored/current bitrate and controller target diverge from the encoder\u0027s real bitrate. That can make future AIMD decisions operate on a bitrate that was never applied. Move state persistence and bwController_.syncAppliedBitrate(newBR) after a successful encoder update, or roll back on failure.\n```suggestion\nif (sender_) {\n    auto ret \u003d sender_-\u003esetBitrate(newBR);\n    if (ret \u003d\u003d -1) {\n        JAMI_ERROR(\"Fail to access the encoder\");\n        return;\n    }\n    if (ret \u003d\u003d 0) {\n        restartSender();\n        lastMediaRestart_ \u003d clock::now();\n    }\n\n    videoBitrateInfo_.videoBitrateCurrent \u003d newBR;\n    storeVideoBitrateInfo();\n    bwController_.syncAppliedBitrate(newBR);\n} else {\n    JAMI_ERROR(\"Fail to access the sender\");\n}\n```\n",
+      "revId": "d23d187b259eec3261fb5609cd89b6b1a8982e25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
