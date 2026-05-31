@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8614bb8f_dd87ce92",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 2122,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:48:21Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2122: The retry state is mutated from the dht ThreadPool callback, while the timer itself is constructed on Manager::ioContext() and can also be cancelled/reset from doRegister_(). That means cancel/reset and async_wait setup may run concurrently on the same timer/state object, which asio timers do not make safe. Keep all identityRetryState_ and timer operations on the timer executor, or bind the timer to the same executor used for all mutations.\n```suggestion\n        Manager::instance().ioContext()-\u003epost([w \u003d weak(), ok] {\n            // all identityRetryState_ and timer operations stay on Manager::ioContext()\n        });\n```\n",
+      "revId": "b4cac562998b4f78966fd498092a7c43015a9156",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df8e53f6_2b344fc9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 2167,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:48:21Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2167: The success path still dereferences accountManager_ unconditionally after the callback has been marshalled asynchronously. During shutdown/unregister, the JamiAccount can remain alive while accountManager_ is reset, so a queued successful identityAnnouncedCb can crash. Mirror the null guard used in the retry path before calling startSync.\n```suggestion\n            if (!thisPtr-\u003eaccountManager_)\n                return;\n            thisPtr-\u003eaccountManager_-\u003estartSync(\n```\n",
+      "revId": "b4cac562998b4f78966fd498092a7c43015a9156",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d64ca334_e8afa9ed",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 2737,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T08:48:21Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 2737: refresh() is called on every connectivityChanged() while the DHT is running, including cases unrelated to a reconnect or standby recovery. For large contact lists this can repeatedly tear down and recreate every presence subscription, adding avoidable DHT work and potentially causing notification churn. Gate this to the transition where subscriptions may actually have been lost, or debounce it.\n```suggestion\n    if (presenceManager_ \u0026\u0026 dht_ \u0026\u0026 dht_-\u003eisRunning() \u0026\u0026 wasDisconnected)\n        presenceManager_-\u003erefresh();\n```\n",
+      "revId": "b4cac562998b4f78966fd498092a7c43015a9156",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
