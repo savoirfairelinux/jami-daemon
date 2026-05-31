@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "617eff6a_37bca5f7",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:45:15Z",
+      "side": 1,
+      "message": "Line 85: 🟡 Suggestions: Initializing the smoothed loss state to 0 changes the first RTCP adaptation result from the previous 10% default to 0% when the first report has no loss. Since `packetLoss_` still defaults to 10, this creates an abrupt startup behavior change and can immediately drive audio bitrate adaptation differently than before. Keep the smoothing state aligned with the existing default unless this behavior change is intentional and covered by tests.\n```suggestion\n    float pondLoss_ {10.0f};\n```",
+      "revId": "8a4e39df501e14fc32965d80919d686c860d8e1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02510896_b25efdac",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 636,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:45:15Z",
+      "side": 1,
+      "message": "[Critical] Line 636: 🔴 Critical Issues: `accountBytes()` consumes bandwidth tokens for RTCP before RTP is evaluated, so under a constrained simulator RTCP can spend the shared budget and cause media RTP to be dropped, which works against the stated goal of preserving audio quality and makes simulator results dependent on feedback traffic volume. If RTCP must never be dropped, it also should not starve RTP in this in-process QoS simulator; either do not account RTCP against the drop budget, or use separate accounting that does not reduce RTP tokens.\n```suggestion\n        if (!isRTCP \u0026\u0026 !sim-\u003eshouldSend(static_cast\u003csize_t\u003e(buf_size))) {\n            return buf_size;\n        }\n```",
+      "revId": "8a4e39df501e14fc32965d80919d686c860d8e1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d04a1d2_6b219db7",
+        "filename": "test/virtual-networking/qos-test/run-qos-scenario.sh",
+        "patchSetId": 17
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:45:15Z",
+      "side": 1,
+      "message": "Line 106: 🟡 Suggestions: `phase_start` and `phase_end` are assigned but never used, and each phase copies the whole daemon log instead of only the interval for that profile. The summary can therefore count congestion events from earlier profiles again in later profiles, making the comparison report misleading. Capture log offsets before each phase or filter by timestamp using the recorded start/end times.",
+      "revId": "8a4e39df501e14fc32965d80919d686c860d8e1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9be472e5_64712dff",
+        "filename": "test/virtual-networking/qos-test/setup-qos-lab.sh",
+        "patchSetId": 17
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:45:15Z",
+      "side": 1,
+      "message": "[Critical] Line 140: 🔴 Critical Issues: The teardown deletes all matching FORWARD rules, including rules that may have existed before this script ran. `do_up()` uses `iptables -C ... || iptables -A ...`, so if an identical rule already existed, this script does not own it, but `do_down()` still removes it. Persist whether each rule was added and only remove rules created by this script, or use dedicated chain/rule comments to identify ownership.",
+      "revId": "8a4e39df501e14fc32965d80919d686c860d8e1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
