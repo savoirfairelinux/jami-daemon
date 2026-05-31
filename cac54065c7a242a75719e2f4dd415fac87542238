@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4173783f_c76b3ad5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2110,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:51:42Z",
+      "side": 1,
+      "message": "[Major] Line 2110: 🟡 Suggestions: `identityRetryState_` is mutated from `identityAnnouncedCb` and also from the Asio timer callback without any visible strand/mutex guarantee. If the DHT callback and `Manager::ioContext()` handler can run on different threads, this introduces a data race on `attempt`, `exhausted`, and the shared pointer itself. Route all retry-state reads/writes through the same io_context/strand or protect them with the account mutex used for related state.",
+      "revId": "cac54065c7a242a75719e2f4dd415fac87542238",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6adcefe4_3308fe5d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2115,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:51:42Z",
+      "side": 1,
+      "message": "[Critical] Line 2115: 🔴 Critical Issues: `identityRetryState_` is only reset after a successful identity announcement. If retries are exhausted during a transient offline/GSM standby period, `state.exhausted` remains true and later failures in the same account lifetime will return immediately without scheduling any retry, so presence/device sync can remain permanently broken until account recreation. Reset the retry state when a new registration/connectivity cycle starts, or reset exhausted state when connectivity is restored before trying to re-announce. Suggested fix example:\n```suggestion\nif (identityRetryState_) {\n    identityRetryState_-\u003etimer.cancel();\n    identityRetryState_.reset();\n}\n```\nPlace this at the beginning of the account/DHT restart path that represents a fresh registration cycle, before identity announcement can fail again.",
+      "revId": "cac54065c7a242a75719e2f4dd415fac87542238",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20fe16eb_5bbc9262",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2716,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:51:42Z",
+      "side": 1,
+      "message": "[Minor] Line 2716: 🟡 Suggestions: Calling `presenceManager_-\u003erefresh()` on every `connectivityChanged()` while the DHT is running may re-subscribe all tracked buddies even for address-only/network-interface churn, which can be expensive for large contact lists and may create unnecessary DHT traffic. Consider gating this to actual DHT reconnection/resume after a disconnected state, or debounce it with a short timer so multiple connectivity notifications collapse into one refresh.",
+      "revId": "cac54065c7a242a75719e2f4dd415fac87542238",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
