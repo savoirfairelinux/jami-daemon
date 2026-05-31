@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bbdf983_4d8d9ee0",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T14:33:21Z",
+      "side": 1,
+      "message": "Line 125: RTT baseline is the average of the first five non-zero samples and is never refreshed. If the call starts on a temporarily bad path, later RTT congestion is underdetected; if it starts unusually low, normal path changes can be treated as congestion. Use a slowly adapting minimum/low-percentile baseline, or reset the baseline after network changes/encoder restart so congestion scoring remains representative.\n```suggestion\n    if (rttMs \u003e 0) {\n        if (baselineRtt_ \u003d\u003d 0.0f)\n            baselineRtt_ \u003d rttMs;\n        else\n            baselineRtt_ \u003d std::min(baselineRtt_ * 0.995f + rttMs * 0.005f, rttMs);\n    }\n```",
+      "revId": "cda1fd7c9170b4c03c12fd152e96e4bf2b0c3dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf835682_46b80e15",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T14:33:21Z",
+      "side": 1,
+      "message": "Line 148: The computed congestion decrease is much more aggressive than the old loss controller for moderate loss. With the defaults, a congestion score just above the 0.08 threshold can immediately reduce video by about 4%, while 10% loss reduces by ~35%; the previous logic used packetLoss / 150, so 10% loss reduced ~6.7%. This risks visible quality oscillation, especially with the RTCP polling interval shortened to 2 seconds. Consider bounding the first decrease step or tuning the default maxDecreaseFactor/loss scale to preserve comparable behavior unless measurements justify the larger drop.\n```suggestion\n    float factor \u003d 1.0f - congestion * cfg_.maxDecreaseFactor;\n    factor \u003d std::clamp(factor, 0.75f, 0.95f);\n```",
+      "revId": "cda1fd7c9170b4c03c12fd152e96e4bf2b0c3dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e5d3475_cf00a444",
+        "filename": "src/media/bandwidth_controller.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T14:33:21Z",
+      "side": 1,
+      "message": "Line 144: targetBitrate_ and lastStableBitrate_ are left without in-class initializers and rely on every constructor delegating through the Config constructor. That is currently true, but this class is stateful and easy to extend incorrectly. Initializing them in the declaration makes the invariant explicit and prevents accidental uninitialized reads if another constructor is added.\n```suggestion\n    unsigned targetBitrate_ {Config {}.initialBitrateKbps};\n    unsigned lastStableBitrate_ {Config {}.initialBitrateKbps};\n```",
+      "revId": "cda1fd7c9170b4c03c12fd152e96e4bf2b0c3dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a840f67_383ef381",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 667,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T14:33:21Z",
+      "side": 1,
+      "message": "Line 667: The stale-report guard now uses a hard-coded 2 seconds while the restart suppression constant remains DELAY_AFTER_RESTART \u003d 1 second. The old logic only skipped RR processing for roughly 1 second after restart before allowing loss adaptation; this change doubles that blind period and can make the controller ignore the first post-restart RTCP sample every time the encoder restarts. Reuse the existing constant or rename/adjust it intentionally so the behavior is explicit.\n```suggestion\n        if (clock::now() - lastMediaRestart_ \u003e\u003d DELAY_AFTER_RESTART) {\n```",
+      "revId": "cda1fd7c9170b4c03c12fd152e96e4bf2b0c3dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
