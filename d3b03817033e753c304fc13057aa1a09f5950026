@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4690f7aa_0ad056f7",
+        "filename": "src/media/CMakeLists.txt",
+        "patchSetId": 18
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:57:11Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 36: The CMake build always compiles the network simulator files, but the integration point in SocketPair is only enabled when JAMI_NETWORK_SIMULATOR is defined, and this patch only adds that define to Meson test builds. This leaves CMake test builds unable to use the simulator while still compiling unused simulator code. Gate the sources and define consistently for CMake test builds, or compile the integration unconditionally if the simulator is intended to be production code.",
+      "revId": "d3b03817033e753c304fc13057aa1a09f5950026",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9635e794_86966737",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:57:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 85: Initializing pondLoss_ to 0.0f makes the first low-loss RTCP sample erase the historical 10% starting point used by getPonderateLoss(), so audio congestion can be missed during call startup compared with the previous behavior. Preserve the old initial value unless this behavior change is intentional and covered by tests.\n```suggestion\n    float pondLoss_ {10.0f};\n```",
+      "revId": "d3b03817033e753c304fc13057aa1a09f5950026",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7bbb2318_8d77a5fd",
+        "filename": "src/media/network_sim/network_simulator.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:57:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 42: setBandwidthLimit() seeds tokenBucket_ with one second of bandwidth even though refillBucket() caps it at two seconds later; this allows an immediate full-second burst after enabling or changing the limit, which can hide startup congestion in QoS tests. Start from an empty or capped bucket consistently so tests measure the configured limit from the point of activation.\n```suggestion\n    tokenBucket_ \u003d 0;\n```",
+      "revId": "d3b03817033e753c304fc13057aa1a09f5950026",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c65e63c7_674123be",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 810,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T18:57:11Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 810: This audio-triggered reduction can immediately be undone by the regular adaptive bitrate loop because it only updates lastAudioQosReduction_, not the existing bitrate-decrease state used by video congestion control. Record the reduction in the same state used by normal decreases, or otherwise gate increases for the cooldown window, so audio QoS priority has a lasting effect.\n```suggestion\n        lastAudioQosReduction_ \u003d now;\n        lastBitrateDecrease \u003d now;\n```",
+      "revId": "d3b03817033e753c304fc13057aa1a09f5950026",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
