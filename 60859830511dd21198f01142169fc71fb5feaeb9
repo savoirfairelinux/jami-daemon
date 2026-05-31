@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad840f79_8f0e248d",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:01Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 31: Config normalization does not clamp initialBitrateKbps to the normalized min/max bounds, and targetBitrate_/lastStableBitrate_ are initialized before any validation. A caller providing initialBitrateKbps outside the limits starts the controller outside its configured range until the first decrease/increase path happens to clamp it; update() can return that invalid value unchanged. Normalize limits first, then clamp the initial target.\n```suggestion\n    if (cfg_.minBitrateKbps \u003e cfg_.maxBitrateKbps)\n        std::swap(cfg_.minBitrateKbps, cfg_.maxBitrateKbps);\n\n    targetBitrate_ \u003d clampBitrate(cfg_.initialBitrateKbps);\n    lastStableBitrate_ \u003d targetBitrate_;\n```",
+      "revId": "60859830511dd21198f01142169fc71fb5feaeb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a11bb93a_bdc8ee27",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:01Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 32: Only increaseRampTime and reduction factors are validated. Other configurable floats directly affect state transitions and EWMA math; negative or out-of-range values for lossAlpha/rttAlpha, congestionThreshold, decreaseCooldownSec, or probeDelaySec can create unstable behavior, inverted cooldowns, or EWMA values outside the sample range. Clamp or reject all public Config fields with sane bounds in the constructor.\n```suggestion\n    cfg_.lossAlpha \u003d std::clamp(cfg_.lossAlpha, 0.0f, 1.0f);\n    cfg_.rttAlpha \u003d std::clamp(cfg_.rttAlpha, 0.0f, 1.0f);\n    cfg_.congestionThreshold \u003d std::clamp(cfg_.congestionThreshold, 0.0f, 1.0f);\n    cfg_.decreaseCooldownSec \u003d std::max(cfg_.decreaseCooldownSec, 0.0f);\n    cfg_.probeDelaySec \u003d std::max(cfg_.probeDelaySec, 0.0f);\n    cfg_.minIncreaseFactor \u003d std::max(cfg_.minIncreaseFactor, 0.0f);\n    cfg_.maxIncreaseFactor \u003d std::max(cfg_.maxIncreaseFactor, cfg_.minIncreaseFactor);\n```",
+      "revId": "60859830511dd21198f01142169fc71fb5feaeb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "edb7e638_29cbcd92",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:01Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 725: The controller is seeded from codecVideo-\u003ebitrate only once, but setNewBitrate() never feeds externally-applied/clamped bitrate changes back into bwController_. If sender_-\u003esetBitrate() clamps internally, encoder restart changes constraints, or another path changes videoBitrateInfo_.videoBitrateCurrent, the controller keeps computing from a stale target and can immediately undo the actual encoder bitrate on the next RTCP/audio/REMB event. Keep the controller synchronized whenever a bitrate is accepted. For example:\n```suggestion\n        if (videoBitrateInfo_.videoBitrateCurrent !\u003d newBR) {\n            videoBitrateInfo_.videoBitrateCurrent \u003d newBR;\n            bwController_.setTargetBitrate(newBR);\n            storeVideoBitrateInfo();\n```\nIf setTargetBitrate() resetting lastStableBitrate_ is not desired on controller-originated changes, add a separate syncCurrentBitrate() API that only updates targetBitrate_.",
+      "revId": "60859830511dd21198f01142169fc71fb5feaeb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2ca896a_564ce490",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T07:50:01Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 854: delayMonitor() now writes REMB packets via socketPair_ without checking that the socket pair is still available. This callback can race with session teardown/restart, and the previous code also assumed availability but this new centralized rate limiter makes the path more prominent. Guard the pointer before creating/writing feedback to avoid a null dereference during shutdown.\n```suggestion\n    if (!socketPair_)\n        return;\n\n    if (bwState \u003d\u003d BandwidthUsage::bwOverusing) {\n```",
+      "revId": "60859830511dd21198f01142169fc71fb5feaeb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
