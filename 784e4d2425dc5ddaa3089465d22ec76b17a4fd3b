@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c7c02b9_b4fe6cc8",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:58:03Z",
+      "side": 1,
+      "message": "[Major] Line 245: onAudioCongestion() does not validate non-finite or out-of-range audioLoss, while update() explicitly protects its EWMA state from invalid samples. A NaN audio loss bypasses the threshold check and still reduces video bitrate; very large values can also force aggressive reductions based on bad input. Apply the same input validation/clamping here before making control decisions.\n```suggestion\n    if (!std::isfinite(audioLoss))\n        return targetBitrate_;\n\n    audioLoss \u003d std::clamp(audioLoss, 0.0f, 100.0f);\n\n    // Ignore if below threshold\n    if (audioLoss \u003c cfg_.audioLossThreshold)\n        return targetBitrate_;\n```",
+      "revId": "784e4d2425dc5ddaa3089465d22ec76b17a4fd3b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1a34d38_1dc0e243",
+        "filename": "src/media/bandwidth_controller.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:58:03Z",
+      "side": 1,
+      "message": "[Major] Line 289: REMB overuse decreases do not preserve the pre-congestion bitrate in lastStableBitrate_, unlike applyDecrease() and onAudioCongestion(). After a REMB-triggered drop from a high bitrate, recovery is throttled against a stale/default lastStableBitrate_ value, so video can recover much more slowly than intended. Mirror the stable-bitrate update used by the other decrease paths before applying the REMB reduction.\n```suggestion\n        if (state_ !\u003d State::Draining)\n            lastStableBitrate_ \u003d targetBitrate_;\n\n        auto oldBitrate \u003d targetBitrate_;\n        targetBitrate_ \u003d clampBitrate(static_cast\u003cunsigned\u003e(std::lround(static_cast\u003cfloat\u003e(targetBitrate_) * 0.85f)));\n```",
+      "revId": "784e4d2425dc5ddaa3089465d22ec76b17a4fd3b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70e9b493_6de6c052",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 654,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-05-31T06:58:03Z",
+      "side": 1,
+      "message": "[Major] Line 654: Normal REMB feedback is now passed to onRembFeedback(false), but that method intentionally does not increase bitrate. This removes the previous delay-based increase path, so if RR stats are unavailable or skipped, a stream reduced by REMB/audio congestion can remain stuck until another RR update arrives. Either let normal REMB advance the controller\u0027s probing path, or explicitly document and enforce RR as the sole increase signal.\n```suggestion\n            auto newBitrate \u003d isOveruse\n                ? bwController_.onRembFeedback(true)\n                : bwController_.update(0.0f, 0.0f, 0.0f);\n            setNewBitrate(newBitrate);\n```",
+      "revId": "784e4d2425dc5ddaa3089465d22ec76b17a4fd3b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
