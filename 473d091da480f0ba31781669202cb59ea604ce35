@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14f337a0_a2f010f4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 2259,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-01T14:10:38Z",
+      "side": 0,
+      "message": "We should probably continue parsing the device ID in the channel name and check that it has the expected value (but I\u0027d move this code after the `if (channel-\u003eisInitiator())` block and rename `remoteDevice` to something else -- I understand that \"remote\" refers to a git remote in this context but it could also be interpreted as referring to the peer\u0027s device).",
+      "range": {
+        "startLine": 2257,
+        "startChar": 12,
+        "endLine": 2259,
+        "endChar": 56
+      },
+      "revId": "473d091da480f0ba31781669202cb59ea604ce35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

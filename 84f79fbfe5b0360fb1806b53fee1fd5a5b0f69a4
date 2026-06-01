@@ -37,6 +37,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7e1f8ad9_73bc54c2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 2265,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-01T14:10:38Z",
+      "side": 1,
+      "message": "I think DHTNet is supposed to guarantee that this is the same as the `deviceId` argument? If so, then instead of introducing a redundant variable, maybe we could just check that the values match at the beginning and return early if they don\u0027t?",
+      "range": {
+        "startLine": 2265,
+        "startChar": 17,
+        "endLine": 2265,
+        "endChar": 61
+      },
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e9783037_ed824576",
         "filename": "src/jamidht/swarm/swarm_channel_handler.cpp",
         "patchSetId": 22
@@ -48,6 +71,29 @@
       "writtenOn": "2026-05-26T18:46:51Z",
       "side": 1,
       "message": "[Critical] Line 69: 🔴 Critical Issues - Same authorization gap as the conversation channel handler: incoming swarm channel requests are accepted based on member URI plus non-banned device id, but the code does not prove that the device id is a confirmed device for that member. This is especially sensitive because swarm channels are used for synchronization. Enforce the issuer/device relationship in the shared authorization helper before accepting the request.",
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c4bab90_a162ba8f",
+        "filename": "test/unitTest/conversation/conversationBanStatus.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-01T14:10:38Z",
+      "side": 1,
+      "message": "Calling `removeMember` should result in getting disconnected from the device/peer. It\u0027d be good to check this in the test as well.",
+      "range": {
+        "startLine": 148,
+        "startChar": 4,
+        "endLine": 148,
+        "endChar": 28
+      },
       "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
