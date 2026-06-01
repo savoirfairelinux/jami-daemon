@@ -30,9 +30,12 @@ endif
 endif
 endif
 
-# android x86_64 has reloc errors related to assembly optimizations
+# android x86_64 and x86 have reloc errors related to assembly optimizations
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
+X264CONF += --disable-asm
+endif
+ifeq ($(ARCH),i386)
 X264CONF += --disable-asm
 endif
 endif
