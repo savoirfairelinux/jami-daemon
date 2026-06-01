@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e74180d_85fd6bf7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2198,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T15:42:05Z",
+      "side": 1,
+      "message": "[Critical] Line 2198: lastConnectivityRefresh_ is read and written from onICERequest() and connectivityChanged(), which can be invoked from different network/DHT threads. Because std::chrono::steady_clock::time_point is not synchronized here, this introduces a data race and the check/update is also not atomic, allowing multiple concurrent ICE requests to refresh simultaneously. Protect the timestamp and refresh decision with a mutex or use an atomic timestamp representation.\n```suggestion\n    bool shouldRefresh \u003d false;\n    auto now \u003d std::chrono::steady_clock::now();\n    {\n        std::lock_guard lk(lastConnectivityRefreshMtx_);\n        if (now - lastConnectivityRefresh_ \u003e ICE_REFRESH_THRESHOLD) {\n            lastConnectivityRefresh_ \u003d now;\n            shouldRefresh \u003d true;\n        }\n    }\n    if (shouldRefresh) {\n        JAMI_WARNING(\"[{}] ICE request from {}: refreshing stale network state\", getAccountID(), deviceId);\n        {\n            std::shared_lock lkCM(connManagerMtx_);\n            if (connectionManager_)\n                connectionManager_-\u003esetPublishedAddress({});\n        }\n        if (this-\u003econfig().turnEnabled \u0026\u0026 turnCache_)\n            turnCache_-\u003erefresh();\n    }\n```",
+      "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e45edae_b159a9df",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2648,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T15:42:05Z",
+      "side": 1,
+      "message": "[Critical] Line 2648: connectivityChanged() writes lastConnectivityRefresh_ without the same synchronization needed by onICERequest(). Once a mutex or atomic timestamp is added, this assignment must use it as well to keep the timestamp race-free.\n```suggestion\n    {\n        std::lock_guard lk(lastConnectivityRefreshMtx_);\n        lastConnectivityRefresh_ \u003d std::chrono::steady_clock::now();\n    }\n```",
+      "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0158a206_5c66ca5b",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 853,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T15:42:05Z",
+      "side": 1,
+      "message": "[Critical] Line 853: The new timestamp member needs an associated synchronization primitive if it is shared across network callbacks. Add a mutex next to the timestamp so all reads/writes use the same lock.\n```suggestion\n    // Tracks last time network state was refreshed for ICE candidate freshness\n    std::mutex lastConnectivityRefreshMtx_;\n    std::chrono::steady_clock::time_point lastConnectivityRefresh_ {};\n```",
+      "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
