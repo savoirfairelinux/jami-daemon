@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "404f6df6_7ccc4e73",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2204,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T16:10:01Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2204: The load/store pair is not atomic as a throttle: concurrent ICE requests can all observe the stale timestamp and each trigger setPublishedAddress({}) and turnCache_-\u003erefresh(). This can create a refresh storm exactly when multiple connections arrive. Use compare_exchange to let only one caller perform the refresh and leave the timestamp unchanged if another thread already refreshed it.\n```suggestion\n    auto lastCount \u003d lastConnectivityRefresh_.load(std::memory_order_relaxed);\n    auto lastRefresh \u003d std::chrono::steady_clock::time_point(\n        std::chrono::steady_clock::duration(lastCount));\n    if (now - lastRefresh \u003e ICE_REFRESH_THRESHOLD\n        \u0026\u0026 lastConnectivityRefresh_.compare_exchange_strong(\n            lastCount, now.time_since_epoch().count(), std::memory_order_relaxed)) {\n```",
+      "revId": "3cb1f0ad34f99953be3f545214e07be987a6bdaf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a59708f5_857b23e6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2207,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T16:10:01Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2207: The timestamp is updated before the refresh work is actually completed. If setPublishedAddress({}) or turnCache_-\u003erefresh() is slow, blocked, or fails internally, later ICE requests for the next two minutes will assume the network state was refreshed even though the refresh may still be incomplete or ineffective. Prefer updating the timestamp after the refresh actions complete, or use a separate in-progress guard if suppressing concurrent refreshes is required.",
+      "revId": "3cb1f0ad34f99953be3f545214e07be987a6bdaf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
