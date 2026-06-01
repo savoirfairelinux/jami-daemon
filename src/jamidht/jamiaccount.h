@@ -852,6 +852,9 @@ private:
     mutable std::shared_mutex connManagerMtx_ {};
     std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
+    // Tracks last time network state was refreshed for ICE candidate freshness
+    std::chrono::steady_clock::time_point lastConnectivityRefresh_ {};
+
     virtual void updateUpnpController() override;
 
     std::mutex discoveryMapMtx_;
