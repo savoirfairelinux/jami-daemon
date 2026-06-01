@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3556d618_044dddb9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2199,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T15:42:05Z",
+      "side": 1,
+      "message": "[Critical] Line 2199: 🔴 Critical Issues - The check-then-set of `lastConnectivityRefresh_` is not atomic, so concurrent ICE requests can both observe a stale timestamp and refresh simultaneously; combined with the unsynchronized access from `connectivityChanged()`, this is unsafe. Use a mutex or atomic compare/exchange around the throttle decision. Example shape:\n```suggestion\nauto now \u003d std::chrono::steady_clock::now();\nconst auto nowCount \u003d now.time_since_epoch().count();\nauto lastCount \u003d lastConnectivityRefresh_.load(std::memory_order_relaxed);\nif (nowCount - lastCount \u003e ICE_REFRESH_THRESHOLD.count()\n    \u0026\u0026 lastConnectivityRefresh_.compare_exchange_strong(lastCount, nowCount, std::memory_order_relaxed)) {\n    // refresh network state\n}\n```",
+      "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1e45edae_b159a9df",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
@@ -48,6 +65,23 @@
       "writtenOn": "2026-06-01T15:42:05Z",
       "side": 1,
       "message": "[Critical] Line 853: The new timestamp member needs an associated synchronization primitive if it is shared across network callbacks. Add a mutex next to the timestamp so all reads/writes use the same lock.\n```suggestion\n    // Tracks last time network state was refreshed for ICE candidate freshness\n    std::mutex lastConnectivityRefreshMtx_;\n    std::chrono::steady_clock::time_point lastConnectivityRefresh_ {};\n```",
+      "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a1955ac_9c666078",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 853,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T15:42:05Z",
+      "side": 1,
+      "message": "[Critical] Line 853: 🔴 Critical Issues - `lastConnectivityRefresh_` is read/written from `onICERequest()` and `connectivityChanged()` without synchronization. ICE requests and connectivity callbacks can run on different threads, so this introduces a data race and undefined behavior. Protect the timestamp with a mutex or make the throttling state atomic. For example:\n```suggestion\nstd::atomic\u003cstd::chrono::steady_clock::time_point::rep\u003e lastConnectivityRefresh_ {0};\n```\nThen store/load `steady_clock::now().time_since_epoch().count()` with compare/exchange so only one thread performs the refresh.",
       "revId": "e4afb6668950f974bdc4408caf204ff3f940df7a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
