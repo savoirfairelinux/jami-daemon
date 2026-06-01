@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eec605bc_8e3c6b9d",
+        "filename": "contrib/src/whispercpp/package.json",
+        "patchSetId": 33
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T13:22:24Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 11: The build downloads ggml-model.bin during pre_build without any checksum or pinned artifact validation, and --no-check-certificate disables TLS certificate verification. This creates a supply-chain risk and makes builds non-reproducible. Pin the model checksum and verify it after download, and remove --no-check-certificate unless there is a documented platform-specific reason.\n```suggestion\n\"wget --quiet --show-progress -O ggml-model.bin https://ggml.ggerganov.com/ggml-model-whisper-base.bin\",\n\"echo \u003csha256\u003e ggml-model.bin | sha256sum -c -\"\n```",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ba6353f_ede59030",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T13:22:24Z",
+      "side": 1,
+      "message": "[🟢 Good Practice] Line 451: Good concurrency pattern: snapshots are copied under loadedHistory_.mutex, plugin transforms run outside the lock, and write-back/signals are separated. This avoids holding the history mutex while invoking plugin code.",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f215402e_dfb414b2",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T13:22:24Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1967: reloadBodyOverwriteMessages only erases the exact key bodyOverwrite, but the comment says it clears bodyOverwrite* entries. If plugins use related cached keys, stale data can survive a reload and be mixed with regenerated overwrites. Either fix the comment or clear by prefix consistently. Suggested implementation:\n```suggestion\nfor (auto it \u003d msg-\u003epluginData.begin(); it !\u003d msg-\u003epluginData.end();) {\n    if (it-\u003efirst.rfind(\"bodyOverwrite\", 0) \u003d\u003d 0)\n        it \u003d msg-\u003epluginData.erase(it);\n    else\n        ++it;\n}\n```",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79745ea4_84585a1a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 2035,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T13:22:24Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2035: loadMissingBodyOverwrites treats an absent bodyOverwrite as work still pending, but when the plugin returns no overwrite the message is left absent. This means every subsequent load retriggers plugin transformation for the same messages/editions, which can become very expensive for large conversations or translation plugins. Store an explicit processed/empty state or restrict this to plugin preference changes. For example:\n```suggestion\nif (boIt !\u003d single[0].pluginData.end()) {\n    std::lock_guard writeLk(loadedHistory_.mutex);\n    auto realIt \u003d loadedHistory_.quickAccess.find(work.id);\n    if (realIt !\u003d loadedHistory_.quickAccess.end())\n        realIt-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n    anySyncSet \u003d !boIt-\u003esecond.empty();\n} else {\n    std::lock_guard writeLk(loadedHistory_.mutex);\n    auto realIt \u003d loadedHistory_.quickAccess.find(work.id);\n    if (realIt !\u003d loadedHistory_.quickAccess.end())\n        realIt-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n}\n```",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80153222_b0232b66",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 33
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-01T13:22:24Z",
+      "side": 1,
+      "message": "[🟢 Good Practice] Line 73: Good extension point: transformSwarmMessages is added as a default no-op virtual method, which keeps existing plugins source-compatible while allowing plugins to enrich loaded swarm messages.",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
