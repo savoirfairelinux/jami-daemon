@@ -2192,6 +2192,26 @@ JamiAccount::onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificat
 bool
 JamiAccount::onICERequest(const DeviceId& deviceId)
 {
+    // Ensure network state is fresh before ICE negotiation.
+    // When the phone receives an incoming connection via the DHT proxy websocket
+    // (not via FCM push), connectivityChanged is never called, so ICE candidates
+    // may use stale NAT bindings. Refresh if the last update was too long ago.
+    static constexpr auto ICE_REFRESH_THRESHOLD = std::chrono::minutes(2);
+    auto now = std::chrono::steady_clock::now();
+    auto lastRefresh = std::chrono::steady_clock::time_point(
+        std::chrono::steady_clock::duration(lastConnectivityRefresh_.load(std::memory_order_relaxed)));
+    if (now - lastRefresh > ICE_REFRESH_THRESHOLD) {
+        JAMI_WARNING("[{}] ICE request from {}: refreshing stale network state", getAccountID(), deviceId);
+        lastConnectivityRefresh_.store(now.time_since_epoch().count(), std::memory_order_relaxed);
+        {
+            std::shared_lock lkCM(connManagerMtx_);
+            if (connectionManager_)
+                connectionManager_->setPublishedAddress({});
+        }
+        if (this->config().turnEnabled && turnCache_)
+            turnCache_->refresh();
+    }
+
     std::promise<bool> accept;
     std::future<bool> fut = accept.get_future();
     accountManager_->findCertificate(deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
@@ -2629,6 +2649,8 @@ JamiAccount::connectivityChanged()
         return;
     }
     JAMI_WARNING("[{}] connectivityChanged", getAccountID());
+    lastConnectivityRefresh_.store(std::chrono::steady_clock::now().time_since_epoch().count(),
+                                    std::memory_order_relaxed);
 
     if (auto* cm = convModule())
         cm->connectivityChanged();

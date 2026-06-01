@@ -852,6 +852,11 @@ private:
     mutable std::shared_mutex connManagerMtx_ {};
     std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
+    // Tracks last time network state was refreshed for ICE candidate freshness.
+    // Stored as nanosecond count so it can be updated atomically from concurrent
+    // onICERequest() and connectivityChanged() callbacks.
+    std::atomic<std::chrono::steady_clock::rep> lastConnectivityRefresh_ {0};
+
     virtual void updateUpnpController() override;
 
     std::mutex discoveryMapMtx_;
