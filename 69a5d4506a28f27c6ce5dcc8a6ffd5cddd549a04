@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4501ee5_09e16e7b",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 6
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T18:22:54Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 106: This block introduces a malformed make fragment: `VPX_CONF +\u003d \\` is followed by `LOCAL_HOSTVARS\u003d...`, then `LOCAL_HOSTVARS` is reassigned again, and there is an unmatched `endif`. This will either make `make` fail with a conditional syntax error or append `LOCAL_HOSTVARS\u003d...` to `VPX_CONF` instead of setting the environment. Keep the macOS-specific deployment target and C++ flags inside the `ifdef HAVE_MACOSX` block only. Suggested fix:\n```suggestion\nifdef HAVE_MACOSX\nVPX_CONF +\u003d --extra-cxxflags\u003d\"$(EXTRA_COMMON) $(EXTRA_CXXFLAGS)\"\nLOCAL_HOSTVARS\u003d$(HOSTVARS) MACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)\nendif\n```",
+      "revId": "69a5d4506a28f27c6ce5dcc8a6ffd5cddd549a04",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d45ed8f0_564f1237",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 6
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T18:22:54Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 108: `LOCAL_HOSTVARS\u003d$(HOSTVARS) MACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)` is currently added unconditionally after the macOS block. That risks exporting an empty or irrelevant deployment target for non-macOS builds and may override later platform-specific `LOCAL_HOSTVARS` handling. Scope this assignment to `HAVE_MACOSX` only.",
+      "revId": "69a5d4506a28f27c6ce5dcc8a6ffd5cddd549a04",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e70d977_b3f1c2c5",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 6
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T18:22:54Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 110: `LOCAL_HOSTVARS\u003dMACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)` drops `$(HOSTVARS)`, which would remove the configured compiler/toolchain environment for vpx builds if this assignment is reached. The macOS deployment target should be appended to the existing host variables, not replace them.",
+      "revId": "69a5d4506a28f27c6ce5dcc8a6ffd5cddd549a04",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
