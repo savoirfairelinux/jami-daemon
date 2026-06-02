@@ -219,6 +219,43 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::filesystem::path& roo
 }
 
 bool
+PluginPreferencesUtils::setUserPreferenceValue(const std::filesystem::path& rootPath,
+                                               const std::string& accountId,
+                                               const std::string& key,
+                                               const std::string& value)
+{
+    auto preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
+    std::lock_guard const guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
+    std::map<std::string, std::string> rmap;
+    if (std::ifstream rfs(preferencesValuesFilePath, std::ios::binary); rfs.good()) {
+        std::string str;
+        rfs.seekg(0, std::ios::end);
+        if (const auto fileSize = static_cast<size_t>(rfs.tellg()); fileSize > 0) {
+            str.reserve(fileSize);
+            rfs.seekg(0, std::ios::beg);
+            str.assign(std::istreambuf_iterator<char>(rfs), std::istreambuf_iterator<char>());
+            try {
+                msgpack::unpack(str.data(), str.size()).get().convert(rmap);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("{}", e.what());
+            }
+        }
+    }
+    rmap[key] = value;
+    if (std::ofstream wfs(preferencesValuesFilePath, std::ios::binary); wfs.good()) {
+        msgpack::pack(wfs, rmap);
+        JAMI_DEBUG("setUserPreferenceValue: wrote {}={} for account={} path={}",
+                   key,
+                   value,
+                   accountId,
+                   preferencesValuesFilePath.string());
+        return true;
+    }
+    JAMI_WARNING("setUserPreferenceValue: failed to open {} for writing", preferencesValuesFilePath.string());
+    return false;
+}
+
+bool
 PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath, const std::string& accountId)
 {
     bool returnValue = true;
