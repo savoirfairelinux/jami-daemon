@@ -36,6 +36,12 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
     std::map<std::string, int32_t> status;
+    // Extra attributes written by plugins (e.g. {"bodyOverwrite": "..."}).
+    // Never stored to git — local display only.
+    std::map<std::string, std::string> pluginData;
+    // Id of the edition commit that last set the current body (empty = no editions yet).
+    // Used to correctly tag superseded bodies when new editions arrive.
+    std::string latestEditionId;
 
     void fromMapStringString(const std::map<std::string, std::string>& commit)
     {
