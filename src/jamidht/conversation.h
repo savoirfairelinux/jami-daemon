@@ -326,6 +326,10 @@ public:
      * @param options   The log options
      */
     void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
+    void loadMissingBodyOverwrites() const;
+    void reloadBodyOverwriteMessages() const;
+    void updateMessageBodyOverwrite(const std::string& messageId, const std::string& bodyOverwrite) const;
+    void clearBodyOverwrites() const;
     /**
      * Clear all cached messages
      */
