@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6644baa2_385b1e66",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 37
+      },
+      "lineNbr": 2040,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T20:32:15Z",
+      "side": 1,
+      "message": "[Major] Line 2040: 🟡 Messages for which plugins produce no bodyOverwrite are never marked as processed. Because loadMissingBodyOverwrites() is called after every loadConversation/loadSwarmUntil, the same messages will be retransformed on every history load, which can become very expensive for large conversations or network-backed plugins. Store an explicit local processed state, or cache negative results separately from the user-visible pluginData field so unchanged messages are skipped on subsequent loads.",
+      "revId": "0f0a109db74344072f8e54407bf1c911dbd11189",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1ee0692_3a937606",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 37
+      },
+      "lineNbr": 2148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T20:32:15Z",
+      "side": 1,
+      "message": "[Critical] Line 2148: 🔴 updateMessageBodyOverwrite() accepts and stores arbitrary overwrite text without validating the target message kind or bounding the payload size. A plugin can attach large data to any cached commit, including non-text commits, causing unnecessary memory growth and large SwarmMessageUpdated emissions. Validate that the target is a text message or text edition, reject reactions/non-text commits, and cap bodyOverwrite to the same practical limit used for message bodies before storing it.",
+      "revId": "0f0a109db74344072f8e54407bf1c911dbd11189",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "510b105f_66da62b6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 37
+      },
+      "lineNbr": 2259,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T20:32:15Z",
+      "side": 1,
+      "message": "[Critical] Line 2259: 🔴 The loaded messages are emitted before plugin body overwrites are computed, even though the new ChatHandler API documents that transformation happens before SwarmLoaded. Clients will first render stale/untranslated bodies and then receive a burst of SwarmMessageUpdated signals, which can cause flicker and makes clients that only consume SwarmLoaded miss the overwrite data. Compute/inject overwrites before emitting SwarmLoaded, or update the loaded message vector before the signal. Suggested direction:\n```suggestion\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "0f0a109db74344072f8e54407bf1c911dbd11189",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a37ba07_566da3f6",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 37
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T20:32:15Z",
+      "side": 1,
+      "message": "[Major] Line 73: 🟡 The API comment says transformSwarmMessages is called before SwarmLoaded is emitted, but the current implementation calls loadMissingBodyOverwrites after SwarmLoaded in conversation_module.cpp. Either fix the call order or update the documentation so plugin authors do not rely on a guarantee that is not true.",
+      "revId": "0f0a109db74344072f8e54407bf1c911dbd11189",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
