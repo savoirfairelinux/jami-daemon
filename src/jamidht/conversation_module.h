@@ -234,10 +234,12 @@ public:
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> convMessageStatus() const;
 
     /**
-     * Load conversation's messages
+     * Load conversation's messages and emit SwarmLoaded.
+     * If plugin chat handlers are registered, body-overwrite transforms are applied
+     * after loading and SwarmMessageUpdated is emitted for each affected message.
      * @param conversationId    Conversation to load
-     * @param fromMessage
-     * @param n                 Max interactions to load
+     * @param fromMessage       Start loading from this message id (empty = latest)
+     * @param n                 Max interactions to load (0 = default)
      * @return id of the operation
      */
     uint32_t loadConversation(const std::string& conversationId, const std::string& fromMessage = "", size_t n = 0);
