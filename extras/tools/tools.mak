@@ -260,6 +260,26 @@ CLEAN_FILE += .gettext
 CLEAN_PKG += gettext
 DISTCLEAN_PKG += gettext-$(CMAKE_VERSION).tar.gz
 
+# meson (installed via pip3 with a wrapper script for portability)
+
+meson-$(MESON_VERSION).tar.gz:
+	$(call download,$(MESON_URL))
+
+meson: meson-$(MESON_VERSION).tar.gz
+	$(UNPACK)
+	$(MOVE)
+
+.meson: meson
+	pip3 install --target="$(PREFIX)/lib/meson-packages" ./$<
+	printf '#!/bin/sh\nexport PYTHONPATH="$(PREFIX)/lib/meson-packages$${PYTHONPATH:+:$$PYTHONPATH}"\nexec python3 -m mesonbuild "$$@"\n' \
+		> $(PREFIX)/bin/meson
+	chmod a+x $(PREFIX)/bin/meson
+	touch $@
+
+CLEAN_FILE += .meson
+CLEAN_PKG += meson
+DISTCLEAN_PKG += meson-$(MESON_VERSION).tar.gz
+
 #
 #
 #
