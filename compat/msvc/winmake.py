@@ -60,7 +60,7 @@ wget_args = [
     '--no-check-certificate', '--retry-connrefused',
     '--waitretry=1', '--read-timeout=20',
     '--timeout=15', '--tries=4']
-git_apply_args = ['apply', '--reject',
+git_apply_args = ['apply', '--reject', '--no-index',
                   '--ignore-whitespace', '--whitespace=fix']
 patch_args = ['-flp1', '-i']
 

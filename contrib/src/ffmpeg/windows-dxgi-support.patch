@@ -56,7 +56,7 @@ index 53efda0514..a6fb30cdea 100644
 +SKIPHEADERS-$(CONFIG_DXGIGRAB_INDEV)     += dxgigrab.h \
 +                                            windows_capture.h \
 +                                            dxgigrab_c.h
-
+ 
  TESTPROGS-$(CONFIG_JACK_INDEV)           += timefilter
 diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
 index 22323a0a44..fb0a37513b 100644
