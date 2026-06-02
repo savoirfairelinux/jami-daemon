@@ -17,10 +17,14 @@
 
 #include "chatservicesmanager.h"
 #include "pluginmanager.h"
+#include "streamdata.h"
+#include "jamidht/commit_message.h"
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation.h"
 #include "fileutils.h"
+#include "jami/conversation_interface.h"
 
 namespace jami {
 
@@ -41,38 +45,89 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 
         if (!ptr)
             return -1;
-        handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
+        const auto handlerName = ptr->getChatHandlerDetails().at("name");
+        auto* rawPtr = ptr.get();
         std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
-        // Adding preference that tells us to automatically activate a ChatHandler.
-        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"),
-                                                           ptr->id().substr(0, found));
-        chatHandlers_.emplace_back(std::move(ptr));
+        PluginPreferencesUtils::addAlwaysHandlerPreference(handlerName, ptr->id().substr(0, found));
+
+        // Collect re-activation work under mtx_, then call notifyChatSubject outside the
+        // lock. notifyChatSubject can be synchronous (blocks until the handler is ready),
+        // and the handler's initialisation may call back into ChatServicesManager, which
+        // would deadlock if mtx_ is still held here.
+        using NotifyItem = std::pair<std::pair<std::string, std::string>, chatSubjectPtr>;
+        std::vector<NotifyItem> toNotify;
+        {
+            std::lock_guard guard(mtx_);
+            handlersNameMap_[handlerName] = (uintptr_t) rawPtr;
+            chatHandlers_.emplace_back(std::move(ptr));
+
+            // Re-activate this handler for every conversation that had it enabled before
+            // the plugin was (re)loaded.  The daemon persists allowDenyList_ to disk, so
+            // after a reinstall the UI correctly shows the handler as attached — but the
+            // handler's own in-memory state is fresh and notifyChatSubject was never called,
+            // so no translations would occur until the next real-time message triggered it.
+            for (auto& [key, allowDenySet] : allowDenyList_) {
+                const auto it = allowDenySet.find(handlerName);
+                if (it == allowDenySet.end() || !it->second)
+                    continue;
+                auto& subject = chatSubjects_.emplace(key, std::make_shared<PublishObservable<pluginMessagePtr>>())
+                                    .first->second;
+                chatHandlerToggled_[key].insert((uintptr_t) rawPtr);
+                toNotify.emplace_back(key, subject);
+            }
+        } // release mtx_ before calling into handler code
+
+        for (auto& [connection, subject] : toNotify) {
+            JAMI_DEBUG("registerChatHandler: re-activating {} for {}/{}",
+                       handlerName,
+                       connection.first,
+                       connection.second);
+            rawPtr->notifyChatSubject(connection, subject);
+        }
+
         return 0;
     };
 
     // unregisterChatHandler may be called by the PluginManager while unloading.
     auto unregisterChatHandler = [this](void* data, std::mutex& pmMtx_) {
         std::lock_guard lk(pmMtx_);
-        auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(), [data](ChatHandlerPtr& handler) {
-            return (handler.get() == data);
-        });
 
-        if (handlerIt != chatHandlers_.end()) {
-            for (auto& toggledList : chatHandlerToggled_) {
-                auto handlerId = std::find_if(toggledList.second.begin(),
-                                              toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
-                                                  return (handlerId == id);
-                                              });
-                // If ChatHandler is attempting to destroy one which is currently in use, we deactivate it.
-                if (handlerId != toggledList.second.end()) {
-                    (*handlerIt)->detach(chatSubjects_[toggledList.first]);
-                    toggledList.second.erase(handlerId);
+        // Collect detach work and move the handler out of chatHandlers_ under mtx_.
+        // The handler destructor joins threads and calls clearSwarmBodyOverwrite ->
+        // getEnabledConversationsForPlugin -> tries to acquire mtx_, so both detach
+        // and destruction must happen after mtx_ is released.
+        ChatHandlerPtr handlerToDestroy;
+        using DetachItem = std::pair<ChatHandler*, chatSubjectPtr>;
+        std::vector<DetachItem> toDetach;
+        {
+            std::lock_guard guard(mtx_);
+            auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(), [data](const ChatHandlerPtr& h) {
+                return h.get() == data;
+            });
+
+            if (handlerIt != chatHandlers_.end()) {
+                for (auto& [key, toggledSet] : chatHandlerToggled_) {
+                    if (toggledSet.erase((uintptr_t) handlerIt->get())) {
+                        auto subjIt = chatSubjects_.find(key);
+                        if (subjIt != chatSubjects_.end())
+                            toDetach.emplace_back(handlerIt->get(), subjIt->second);
+                    }
                 }
+                handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
+                handlerToDestroy = std::move(*handlerIt);
+                chatHandlers_.erase(handlerIt);
             }
-            handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
-            chatHandlers_.erase(handlerIt);
-        }
+        } // release mtx_
+
+        // detach() calls clearSwarmBodyOverwriteConversation (no mtx_ needed) — safe here.
+        for (auto& [handler, subject] : toDetach)
+            handler->detach(subject);
+
+        // Destructor joins worker threads and calls clearSwarmBodyOverwrite ->
+        // getEnabledConversationsForPlugin -> acquires mtx_. invokeService does not
+        // acquire pmMtx_, so holding pmMtx_ here is safe.
+        handlerToDestroy.reset();
+
         return true;
     };
 
@@ -99,19 +154,176 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
         return 0;
     };
 
+    // reloadBodyOverwriteConversations: called by a plugin when its configuration changes.
+    // Clears all cached BodyOverwrite and re-runs transformSwarmMessages on every conversation
+    // where the calling plugin is enabled, so unrelated plugins are not affected.
+    auto reloadBodyOverwriteConversations = [this](const DLPlugin* plugin, void*) {
+        for (const auto& [accountId, convId] : getEnabledConversationsForPlugin(plugin)) {
+            if (const auto acc = Manager::instance().getAccount<JamiAccount>(accountId))
+                if (auto* convMod = acc->convModule())
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->reloadBodyOverwriteMessages();
+        }
+        return 0;
+    };
+
+    // updateMessageBodyOverwrite: called by a plugin when a background BodyOverwrite completes.
+    // Writes the BodyOverwrite into the message's pluginData and emits SwarmMessageUpdated so
+    // the UI shows the BodyOverwritten text without blocking Jami's IO thread.
+    auto updateMessageBodyOverwrite = [this](const DLPlugin* plugin, void* data) {
+        auto* upd = static_cast<MessageBodyOverwriteUpdate*>(data);
+        if (!upd || upd->accountId.empty() || upd->conversationId.empty())
+            return -1;
+        const auto enabled = getEnabledConversationsForPlugin(plugin);
+        if (!enabled.count({upd->accountId, upd->conversationId})) {
+            JAMI_WARNING("updateMessageBodyOverwrite: plugin not enabled for {}/{}, rejecting",
+                         upd->accountId,
+                         upd->conversationId);
+            return -1;
+        }
+        JAMI_DEBUG("updateMessageBodyOverwrite: plugin authorized for {}/{}", upd->accountId, upd->conversationId);
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != upd->accountId)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(upd->conversationId))
+                    conv->updateMessageBodyOverwrite(upd->messageId, upd->bodyOverwrite);
+            }
+            break;
+        }
+        return 0;
+    };
+
+    // clearSwarmBodyOverwrite: called by a plugin on detach/deactivate.
+    // Removes pluginData["bodyOverwrite"] from loaded messages in the calling plugin's
+    // enabled conversations only, so other plugins' overwrites are not cleared.
+    auto clearSwarmBodyOverwrite = [this](const DLPlugin* plugin, void*) {
+        for (const auto& [accountId, convId] : getEnabledConversationsForPlugin(plugin)) {
+            if (const auto acc = Manager::instance().getAccount<JamiAccount>(accountId))
+                if (auto* convMod = acc->convModule())
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->clearBodyOverwrites();
+        }
+        return 0;
+    };
+
+    // bodyOverwriteLoadedConversations: called by a plugin on attach/reactivate.
+    // Runs loadMissingBodyOverwrites on the calling plugin's enabled conversations only,
+    // so it does not re-queue messages in conversations it is not attached to.
+    auto bodyOverwriteLoadedConversations = [this](const DLPlugin* plugin, void*) {
+        for (const auto& [accountId, convId] : getEnabledConversationsForPlugin(plugin)) {
+            if (const auto acc = Manager::instance().getAccount<JamiAccount>(accountId))
+                if (auto* convMod = acc->convModule())
+                    if (auto conv = convMod->getConversation(convId))
+                        conv->loadMissingBodyOverwrites();
+        }
+        return 0;
+    };
+
+    // editMessage: allows a plugin to edit an existing swarm message.
+    // Payload: JamiMessage with accountId, peerId=conversationId,
+    //          data["edit"]=originalMessageId, data["body"]=newBody.
+    auto editMessageService = [this](const DLPlugin* plugin, void* data) {
+        auto* cm = static_cast<JamiMessage*>(data);
+        if (!cm || cm->accountId.empty() || cm->peerId.empty())
+            return -1;
+        const auto enabled = getEnabledConversationsForPlugin(plugin);
+        if (!enabled.count({cm->accountId, cm->peerId})) {
+            JAMI_WARNING("editMessageService: plugin not enabled for {}/{}, rejecting", cm->accountId, cm->peerId);
+            return -1;
+        }
+        JAMI_DEBUG("editMessageService: plugin authorized for {}/{}", cm->accountId, cm->peerId);
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(cm->accountId)) {
+            try {
+                const auto bodyIt = cm->data.find(CommitKey::BODY);
+                const auto editIt = cm->data.find(CommitKey::EDIT);
+                if (bodyIt != cm->data.end() && editIt != cm->data.end())
+                    acc->convModule()->editMessage(cm->peerId, bodyIt->second, editIt->second);
+            } catch (const std::exception& e) {
+                JAMI_XERR("Exception during plugin editMessage: %s", e.what());
+            }
+        }
+        return 0;
+    };
+
+    // clearSwarmBodyOverwriteConversation: scoped variant of clearSwarmBodyOverwrite.
+    // data: std::pair<std::string,std::string>* {accountId, conversationId}
+    auto clearSwarmBodyOverwriteConversation = [](const DLPlugin*, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return 0;
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != p->first)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(p->second))
+                    conv->clearBodyOverwrites();
+            }
+            break;
+        }
+        return 0;
+    };
+
+    // bodyOverwriteLoadedConversation: scoped variant of bodyOverwriteLoadedConversations.
+    // data: std::pair<std::string,std::string>* {accountId, conversationId}
+    auto bodyOverwriteLoadedConversation = [](const DLPlugin*, void* data) {
+        auto* p = static_cast<std::pair<std::string, std::string>*>(data);
+        if (!p)
+            return 0;
+        for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (account->getAccountID() != p->first)
+                continue;
+            if (auto* convMod = account->convModule()) {
+                if (auto conv = convMod->getConversation(p->second))
+                    conv->loadMissingBodyOverwrites();
+            }
+            break;
+        }
+        return 0;
+    };
+
     // Services are registered to the PluginManager.
     pluginManager.registerService("sendTextMessage", sendTextMessage);
+    pluginManager.registerService("editMessage", editMessageService);
+    pluginManager.registerService("reloadBodyOverwriteConversations", reloadBodyOverwriteConversations);
+    pluginManager.registerService("updateMessageBodyOverwrite", updateMessageBodyOverwrite);
+    pluginManager.registerService("clearSwarmBodyOverwrite", clearSwarmBodyOverwrite);
+    pluginManager.registerService("bodyOverwriteLoadedConversations", bodyOverwriteLoadedConversations);
+    pluginManager.registerService("clearSwarmBodyOverwriteConversation", clearSwarmBodyOverwriteConversation);
+    pluginManager.registerService("bodyOverwriteLoadedConversation", bodyOverwriteLoadedConversation);
+}
+
+void
+ChatServicesManager::transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                            const std::string& accountId,
+                                            const std::string& conversationId)
+{
+    std::lock_guard lk(mtx_);
+    std::pair<std::string, std::string> key(accountId, conversationId);
+    const auto toggledIt = chatHandlerToggled_.find(key);
+    const auto allowIt = allowDenyList_.find(key);
+    for (auto& handler : chatHandlers_) {
+        const auto handlerName = handler->getChatHandlerDetails().at("name");
+        const bool toggled = toggledIt != chatHandlerToggled_.end()
+                             && toggledIt->second.count((uintptr_t) handler.get());
+        const bool allowed = allowIt != allowDenyList_.end() && allowIt->second.count(handlerName)
+                             && allowIt->second.at(handlerName);
+        if (toggled || allowed)
+            handler->transformSwarmMessages(messages, accountId, conversationId);
+    }
 }
 
 bool
 ChatServicesManager::hasHandlers() const
 {
+    std::lock_guard lk(mtx_);
     return not chatHandlers_.empty();
 }
 
 std::vector<std::string>
 ChatServicesManager::getChatHandlers() const
 {
+    std::lock_guard lk(mtx_);
     std::vector<std::string> res;
     res.reserve(chatHandlers_.size());
     for (const auto& chatHandler : chatHandlers_) {
@@ -123,47 +335,88 @@ ChatServicesManager::getChatHandlers() const
 void
 ChatServicesManager::publishMessage(const pluginMessagePtr& message)
 {
-    if (message->fromPlugin or chatHandlers_.empty())
+    if (message->fromPlugin)
         return;
 
     std::pair<std::string, std::string> mPair(message->accountId, message->peerId);
-    auto& handlers = chatHandlerToggled_[mPair];
-    auto& chatAllowDenySet = allowDenyList_[mPair];
 
-    // Search for activation flag.
-    for (auto& chatHandler : chatHandlers_) {
-        std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
-        std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        // toggle is true if we should automatically activate the ChatHandler.
-        bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
-                                                                  chatHandlerName,
-                                                                  message->accountId);
-        // toggle is overwritten if we have previously activated/deactivated the ChatHandler
-        // for the given conversation.
-        auto allowedIt = chatAllowDenySet.find(chatHandlerName);
-        if (allowedIt != chatAllowDenySet.end())
-            toggle = (*allowedIt).second;
-        bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
-        if (toggle || toggled) {
-            // Creates chat subjects if it doesn't exist yet.
-            auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
-                                .first->second;
-            if (!toggled) {
-                // If activation is expected, and not yet performed, we perform activation
-                handlers.insert((uintptr_t) chatHandler.get());
-                chatHandler->notifyChatSubject(mPair, subject);
-                chatAllowDenySet[chatHandlerName] = true;
-                PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
+    // Collect activation work and the subject to publish under the lock, then
+    // call notifyChatSubject and publish outside it. notifyChatSubject can block
+    // (e.g. a handler that initialises a model synchronously) and may call back
+    // into ChatServicesManager, both of which would deadlock if mtx_ is held.
+    using ActivateItem = std::pair<ChatHandler*, chatSubjectPtr>;
+    std::vector<ActivateItem> toActivate;
+    chatSubjectPtr subjectToPublish;
+
+    {
+        std::lock_guard lk(mtx_);
+        if (chatHandlers_.empty())
+            return;
+
+        auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatAllowDenySet = allowDenyList_[mPair];
+
+        // First pass: determine which handlers need activation and collect state.
+        // All handlers share one subject per {accountId, peerId} pair — publishing inside
+        // the loop would notify every subscriber once per active handler, causing double
+        // (or more) delivery when multiple plugins are attached to the same conversation.
+        bool shouldPublish = false;
+        for (auto& chatHandler : chatHandlers_) {
+            std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
+            std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
+            // toggle is true if we should automatically activate the ChatHandler.
+            bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
+                                                                      chatHandlerName,
+                                                                      message->accountId);
+            // toggle is overwritten if we have previously activated/deactivated the ChatHandler
+            // for the given conversation.
+            auto allowedIt = chatAllowDenySet.find(chatHandlerName);
+            if (allowedIt != chatAllowDenySet.end())
+                toggle = (*allowedIt).second;
+            bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
+            if (toggle || toggled) {
+                auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
+                                    .first->second;
+                if (!toggled) {
+                    JAMI_DEBUG("publishMessage: auto-activating handler {} for {}/{}",
+                               chatHandlerName,
+                               mPair.first,
+                               mPair.second);
+                    handlers.insert((uintptr_t) chatHandler.get());
+                    chatAllowDenySet[chatHandlerName] = true;
+                    toActivate.emplace_back(chatHandler.get(), subject);
+                }
+                shouldPublish = true;
             }
-            // Finally we feed Chat subject with the message.
-            subject->publish(message);
         }
+
+        if (shouldPublish) {
+            if (const auto subjectIt = chatSubjects_.find(mPair); subjectIt != chatSubjects_.end())
+                subjectToPublish = subjectIt->second;
+        }
+    } // release mtx_
+
+    // Activate new handlers outside the lock (notifyChatSubject may call back into us).
+    if (!toActivate.empty()) {
+        for (auto& [handler, subject] : toActivate)
+            handler->notifyChatSubject(mPair, subject);
+        std::lock_guard lk(mtx_);
+        PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
     }
+
+    // Publish outside the lock to prevent re-entrancy deadlock if plugin code
+    // calls back into ChatServicesManager (e.g., via editMessage → announce → publishMessage).
+    if (subjectToPublish)
+        subjectToPublish->publish(message);
 }
 
 void
 ChatServicesManager::cleanChatSubjects(const std::string& accountId, const std::string& peerId)
 {
+    JAMI_DEBUG("cleanChatSubjects: removing subjects for account={} peer={}",
+               accountId,
+               peerId.empty() ? "(all)" : peerId);
+    std::lock_guard lk(mtx_);
     std::pair<std::string, std::string> mPair(accountId, peerId);
     for (auto it = chatSubjects_.begin(); it != chatSubjects_.end();) {
         if (peerId.empty() && it->first.first == accountId)
@@ -187,6 +440,7 @@ ChatServicesManager::toggleChatHandler(const std::string& chatHandlerId,
 std::vector<std::string>
 ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
 {
+    std::lock_guard lk(mtx_);
     std::pair<std::string, std::string> mPair(accountId, peerId);
     const auto& it = allowDenyList_.find(mPair);
     std::vector<std::string> ret;
@@ -205,6 +459,7 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
 std::map<std::string, std::string>
 ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 {
+    std::lock_guard lk(mtx_);
     auto chatHandlerId = std::stoull(chatHandlerIdStr);
     for (auto& chatHandler : chatHandlers_) {
         if ((uintptr_t) chatHandler.get() == chatHandlerId) {
@@ -214,19 +469,79 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
     return {};
 }
 
-bool
-ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
+std::set<std::pair<std::string, std::string>>
+ChatServicesManager::getEnabledConversationsForPlugin(const DLPlugin* plugin) const
 {
-    bool status {true};
-    for (auto& chatHandler : chatHandlers_) {
-        if (chatHandler->id().find(rootPath) != std::string::npos) {
-            if (chatHandler->preferenceMapHasKey(key)) {
-                chatHandler->setPreferenceAttribute(key, value);
-                status &= false;
+    if (!plugin)
+        return {};
+
+    std::lock_guard lk(mtx_);
+    // Strip the .so filename to get the plugin's rootPath (e.g. /path/to/plugin/libFoo.so -> /path/to/plugin).
+    const auto& soPath = plugin->getPath();
+    auto sep = soPath.find_last_of(DIR_SEPARATOR_CH);
+    const std::string rootPath = sep != std::string::npos ? soPath.substr(0, sep) : soPath;
+
+    // Collect handler pointers and names that belong to this plugin.
+    std::set<uintptr_t> handlerPtrs;
+    std::set<std::string> handlerNames;
+    for (const auto& handler : chatHandlers_) {
+        const auto& hid = handler->id();
+        auto sep2 = hid.find_last_of(DIR_SEPARATOR_CH);
+        const std::string handlerRoot = sep2 != std::string::npos ? hid.substr(0, sep2) : hid;
+        if (handlerRoot == rootPath) {
+            handlerPtrs.insert((uintptr_t) handler.get());
+            handlerNames.insert(handler->getChatHandlerDetails().at("name"));
+        }
+    }
+
+    std::set<std::pair<std::string, std::string>> result;
+
+    // Conversations where a handler from this plugin is explicitly toggled on.
+    for (const auto& [key, toggledSet] : chatHandlerToggled_) {
+        for (auto ptr : handlerPtrs) {
+            if (toggledSet.count(ptr)) {
+                result.insert(key);
+                break;
             }
         }
     }
-    return status;
+
+    // Conversations where a handler from this plugin is always-enabled via allowDenyList_.
+    for (const auto& [key, nameMap] : allowDenyList_) {
+        for (const auto& name : handlerNames) {
+            auto it = nameMap.find(name);
+            if (it != nameMap.end() && it->second) {
+                result.insert(key);
+                break;
+            }
+        }
+    }
+
+    for (const auto& [a, c] : result)
+        JAMI_DEBUG("getEnabledConversationsForPlugin: plugin {} -> {}/{}", rootPath, a, c);
+
+    return result;
+}
+
+bool
+ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
+{
+    // Collect matching handlers under mtx_, then call setPreferenceAttribute outside the lock.
+    // setPreferenceAttribute callbacks into invokeService (clearSwarmBodyOverwrite,
+    // reloadBodyOverwriteConversations) which acquires mtx_ — holding it here deadlocks.
+    std::vector<ChatHandler*> toNotify;
+    {
+        std::lock_guard lk(mtx_);
+        for (auto& chatHandler : chatHandlers_) {
+            if (chatHandler->id().find(rootPath) != std::string::npos && chatHandler->preferenceMapHasKey(key))
+                toNotify.push_back(chatHandler.get());
+        }
+    } // release mtx_
+
+    for (auto* handler : toNotify)
+        handler->setPreferenceAttribute(key, value);
+
+    return toNotify.empty(); // false = key was handled → caller skips plugin reload
 }
 
 void
@@ -236,28 +551,49 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
                                        const bool toggle)
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
-    auto& handlers = chatHandlerToggled_[mPair];
-    auto& chatAllowDenySet = allowDenyList_[mPair];
-    chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
+    chatSubjectPtr subject;
+    ChatHandler* handler = nullptr;
 
-    auto chatHandlerIt = std::find_if(chatHandlers_.begin(),
-                                      chatHandlers_.end(),
-                                      [chatHandlerId](ChatHandlerPtr& handler) {
-                                          return ((uintptr_t) handler.get() == chatHandlerId);
-                                      });
+    {
+        std::lock_guard lk(mtx_);
+        auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatAllowDenySet = allowDenyList_[mPair];
+        chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
+        subject = chatSubjects_[mPair];
 
-    if (chatHandlerIt != chatHandlers_.end()) {
-        if (toggle) {
-            (*chatHandlerIt)->notifyChatSubject(mPair, chatSubjects_[mPair]);
-            if (handlers.find(chatHandlerId) == handlers.end())
-                handlers.insert(chatHandlerId);
-            chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = true;
-        } else {
-            (*chatHandlerIt)->detach(chatSubjects_[mPair]);
-            handlers.erase(chatHandlerId);
-            chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = false;
+        auto chatHandlerIt = std::find_if(chatHandlers_.begin(),
+                                          chatHandlers_.end(),
+                                          [chatHandlerId](ChatHandlerPtr& h) {
+                                              return ((uintptr_t) h.get() == chatHandlerId);
+                                          });
+
+        if (chatHandlerIt != chatHandlers_.end()) {
+            handler = chatHandlerIt->get();
+            if (toggle) {
+                if (handlers.find(chatHandlerId) == handlers.end())
+                    handlers.insert(chatHandlerId);
+                chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = true;
+            } else {
+                handlers.erase(chatHandlerId);
+                chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = false;
+            }
         }
+    } // release mtx_
+
+    if (handler) {
+        JAMI_DEBUG("toggleChatHandler: {} handler {} for {}/{}",
+                   toggle ? "activating" : "deactivating",
+                   chatHandlerId,
+                   accountId,
+                   peerId);
+        if (toggle)
+            handler->notifyChatSubject(mPair, subject);
+        else
+            handler->detach(subject);
+        std::lock_guard lk(mtx_);
         PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
+    } else {
+        JAMI_DEBUG("toggleChatHandler: handler {} not found", chatHandlerId);
     }
 }
 } // namespace jami
