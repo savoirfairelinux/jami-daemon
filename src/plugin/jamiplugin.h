@@ -33,7 +33,7 @@
 
 // JAMI_PLUGIN_API_VERSION reflects changes in Services Managers
 // (CallServicesManager, ChatServicesMansge, and PreferenceServicesManagers) and in JAMI_PluginAPI.
-#define JAMI_PLUGIN_API_VERSION 2 // 0 doesn't exist, considered as error
+#define JAMI_PLUGIN_API_VERSION 3 // 0 doesn't exist, considered as error
 
 C_INTERFACE_START;
 
