@@ -845,6 +845,13 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         }
     }
 
+    // loadAccountMap() creates the codec container when the configuration is loaded;
+    // create a default one when it isn't (load failed or NO_AUTOLOAD set).
+    if (!pimpl_->systemCodecContainer_) {
+        pimpl_->systemCodecContainer_ = std::make_shared<SystemCodecContainer>();
+        pimpl_->systemCodecContainer_->init(false);
+    }
+
     if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_AUDIO)) {
         std::lock_guard lock(pimpl_->audioLayerMutex_);
         pimpl_->initAudioDriver();
