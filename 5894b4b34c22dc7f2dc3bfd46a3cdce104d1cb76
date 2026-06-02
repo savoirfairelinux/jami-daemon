@@ -39,6 +39,52 @@
       },
       "revId": "5894b4b34c22dc7f2dc3bfd46a3cdce104d1cb76",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b4ad17a_7b00215e",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 36
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-02T19:54:41Z",
+      "side": 1,
+      "message": "not related to HAVE_CROSS_COMPILE. In many cases the issue is not using pkg-config from extra/tools. If needed, explain which contrib requires it.",
+      "range": {
+        "startLine": 88,
+        "startChar": 0,
+        "endLine": 90,
+        "endChar": 2
+      },
+      "revId": "5894b4b34c22dc7f2dc3bfd46a3cdce104d1cb76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bed98d36_f29c7b7b",
+        "filename": "src/logger.h",
+        "patchSetId": 36
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-02T19:54:41Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 95,
+        "startChar": 0,
+        "endLine": 95,
+        "endChar": 2
+      },
+      "revId": "5894b4b34c22dc7f2dc3bfd46a3cdce104d1cb76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
