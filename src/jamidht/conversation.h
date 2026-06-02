@@ -329,6 +329,36 @@ public:
      */
     void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
     /**
+     * For every loaded TEXT message that has no bodyOverwrite in pluginData, runs the plugin
+     * ChatServicesManager transform to obtain one.  If the plugin produces a bodyOverwrite,
+     * stores it in pluginData and emits SwarmMessageUpdated for the affected message
+     * (edition commits signal the original message; originals signal themselves).
+     * No-op when no plugin chat handlers are registered.
+     */
+    void loadMissingBodyOverwrites() const;
+    /**
+     * Drops all bodyOverwrite entries from the loaded message history, then calls
+     * loadMissingBodyOverwrites() to re-derive them from scratch via the plugin transform.
+     * Use when plugin chat handlers are reloaded or their transform logic has changed.
+     */
+    void reloadBodyOverwriteMessages() const;
+    /**
+     * Stores or clears the plugin-provided bodyOverwrite for a single message.
+     * An empty bodyOverwrite sets the entry to "" (marks the message as processed with no
+     * overwrite, preventing reprocessing); a non-empty value replaces it.
+     * If messageId refers to an edition commit, SwarmMessageUpdated is emitted for the
+     * original message (the one clients display); otherwise it is emitted for messageId itself.
+     * @param messageId     Id of the message (original or edition commit) to update.
+     * @param bodyOverwrite Plugin-transformed body text, or empty to clear the override.
+     */
+    void updateMessageBodyOverwrite(const std::string& messageId, const std::string& bodyOverwrite) const;
+    /**
+     * Removes all bodyOverwrite entries from every message in the loaded history and emits
+     * SwarmMessageUpdated for each affected message so clients revert to the original
+     * body.  Edition commits are resolved to their original message before signalling.
+     */
+    void clearBodyOverwrites() const;
+    /**
      * Clear all cached messages
      */
     void clearCache();
