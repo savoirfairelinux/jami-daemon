@@ -3,12 +3,13 @@
     "version": "v1.8.4",
     "url": "https://github.com/ggerganov/whisper.cpp/archive/refs/tags/__VERSION__.tar.gz",
     "deps": [],
-    "patches": ["project.patch"],
+    "patches": [],
     "win_patches": [],
     "project_paths": ["whisper.vcxproj"],
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [
+            "copy /Y \"%CONTRIB_SRC_DIR%\\whispercpp\\whisper.vcxproj\" .",
             "wget --no-check-certificate --quiet --show-progress -O ggml-model.bin https://ggml.ggerganov.com/ggml-model-whisper-base.bin"
         ],
         "build": [],

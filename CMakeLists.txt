@@ -228,9 +228,13 @@ if (BUILD_CONTRIB)
             COMMAND python ${SCRIPTS_DIR}/winmake.py
             WORKING_DIRECTORY ${SCRIPTS_DIR}
             RESULT_VARIABLE BUILD_RESULT
+            OUTPUT_VARIABLE BUILD_OUTPUT
+            ERROR_VARIABLE BUILD_ERROR
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
         )
         if (BUILD_RESULT)
-            message(FATAL_ERROR "Contrib build failed.")
+            message(FATAL_ERROR "Contrib build failed.\n${BUILD_OUTPUT}\n${BUILD_ERROR}")
         else()
             message(STATUS "Contrib build successful.")
         endif()
