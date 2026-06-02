@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c2f039a_5e4d668a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-02T20:23:08Z",
+      "side": 1,
+      "message": "Maybe we could simply create a default SystemCodecContainer if the config isn\u0027t loaded (load failed or LIBJAMI_FLAG_NO_AUTOLOAD is set).\nCreating the SystemCodecContainer twice is inefficient and could cause issues in the future.",
+      "revId": "070ebfdbb8c782661bb059d04b2a5d431ceadefd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
