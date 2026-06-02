@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e98f87fe_49083073",
+        "filename": "contrib/src/harfbuzz/rules.mak",
+        "patchSetId": 34
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Major] Line 43: The generated Meson cross file does not define binaries such as c, cpp, ar, strip, pkg-config, or exe_wrapper. Meson cross builds generally require a [binaries] section; otherwise it may pick build-machine tools or fail depending on the environment. Generate the cross file from the configured toolchain variables so Harfbuzz is built for HOST, not BUILD.\n```suggestion\nprintf \"[binaries]\\nc \u003d \u0027$(CC)\u0027\\ncpp \u003d \u0027$(CXX)\u0027\\nar \u003d \u0027$(AR)\u0027\\nstrip \u003d \u0027$(STRIP)\u0027\\npkg-config \u003d \u0027$(PKG_CONFIG)\u0027\\n\\n[host_machine]\\nsystem \u003d \u0027$$SYS\u0027\\ncpu_family \u003d \u0027$$CPU_FAM\u0027\\ncpu \u003d \u0027$$CPU\u0027\\nendian \u003d \u0027little\u0027\\n\\n[properties]\\nneeds_exe_wrapper \u003d true\\n\" \u003e $@\n```",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aab662ac_2cb8d2ce",
+        "filename": "contrib/src/whispercpp/package.json",
+        "patchSetId": 34
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Major] Line 10: project.patch is still modified and kept in the tree, but package.json no longer applies it. This creates two divergent sources of truth for whisper.vcxproj and makes future updates ambiguous. Remove project.patch from the change if the copied vcxproj is now the intended source, or keep patches enabled and do not copy a separate project file.",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5db23db3_6543d380",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1118,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Major] Line 1118: In the ENABLE_PLUGIN-disabled path, edit updates emit the parent message without injectEditionOverwrites(), while the no-handler ENABLE_PLUGIN path does inject edition overwrite fields. If a build/runtime transition leaves local pluginData in memory, or if this helper becomes used independently of plugin availability, clients receive different edition shapes depending on compile flags. Keep the signal payload construction consistent by using injectEditionOverwrites() in both paths.",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14f0a48c_65472f11",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 2075,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Major] Line 2075: When a plugin returns no bodyOverwrite for a message that previously had one, loadMissingBodyOverwrites() leaves the stale overwrite in place because it only writes on non-empty values. This is reachable after plugin preference/language changes or plugin behavior changes: reloadBodyOverwriteMessages() clears first, but loadMissingBodyOverwrites() is also used after loads and can preserve obsolete data already cached. Explicitly erase bodyOverwrite when the transform result is missing or empty, and signal if the cached value changed.\n```suggestion\nconst auto newValue \u003d boIt !\u003d single[0].pluginData.end() ? boIt-\u003esecond : std::string{};\nstd::lock_guard writeLk(loadedHistory_.mutex);\nauto realIt \u003d loadedHistory_.quickAccess.find(work.id);\nif (realIt !\u003d loadedHistory_.quickAccess.end()) {\n    if (newValue.empty())\n        realIt-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n    else\n        realIt-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d newValue;\n}\n```",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e994094_6172c1c1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Critical] Line 2256: SwarmLoaded is emitted before loadMissingBodyOverwrites() runs, so the initial loaded payload still contains untranslated/unmodified bodies. The new ChatHandler API comment says plugins are called before SwarmLoaded is emitted, but this implementation emits the stale messages first and then sends follow-up SwarmMessageUpdated signals, causing clients to briefly render the wrong body and making clients that only consume SwarmLoaded miss plugin data. Run the overwrite loading before emitting, and inject the transformed messages into the payload passed to SwarmLoaded, e.g. expose a synchronous helper returning the updated vector and use it before emitSignal.\n```suggestion\nconv-\u003econversation-\u003eloadMessages(\n    [accountId \u003d pimpl_-\u003eaccountId_, conversationId, id, convWeak](auto\u0026\u0026 messages) mutable {\n#ifdef ENABLE_PLUGIN\n        if (auto convPtr \u003d convWeak.lock())\n            messages \u003d convPtr-\u003eloadMissingBodyOverwrites(std::move(messages));\n#endif\n        emitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n    },\n    options);\n```",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d94bac7_d60084ad",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 2286,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T14:48:16Z",
+      "side": 1,
+      "message": "[Critical] Line 2286: loadSwarmUntil has the same ordering bug: SwarmLoaded is emitted before plugin body overwrites are calculated, despite the API contract saying transformation happens before SwarmLoaded. This makes bounded loads inconsistent with live update handling and with loadConversation. Apply the same pre-emit transformation path here so the loaded result already contains pluginData/bodyOverwrite.",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
