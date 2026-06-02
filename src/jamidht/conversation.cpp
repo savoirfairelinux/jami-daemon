@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <memory>
 #include <charconv>
+#include <set>
 #include <string_view>
 #include <tuple>
 #include <optional>
@@ -52,11 +53,38 @@
 #include <ctime>
 #include <functional>
 #include <atomic>
+#include <ranges>
 #include <regex>
 
 namespace jami {
 
 static const char* const LAST_MODIFIED = "lastModified";
+
+// Returns a copy of msg with each edition entry's "bodyOverwrite" injected from the
+// corresponding edition commit's pluginData, so the client can read it as a plain field.
+// Must be called with loadedHistory_.mutex held (or from the daemon's processing thread).
+static libjami::SwarmMessage
+injectEditionOverwrites(const libjami::SwarmMessage& msg,
+                        const std::map<std::string, std::shared_ptr<libjami::SwarmMessage>>& quickAccess)
+{
+    libjami::SwarmMessage copy = msg;
+    for (auto& edition : copy.editions) {
+        auto edIdIt = edition.find("id");
+        if (edIdIt == edition.end())
+            continue;
+        auto edIt = quickAccess.find(edIdIt->second);
+        if (edIt == quickAccess.end())
+            continue;
+        // Only inject for edition commits; skip the original message entry (no CommitKey::EDIT).
+        if (!edIt->second->body.contains(CommitKey::EDIT))
+            continue;
+        if (auto boIt = edIt->second->pluginData.find("bodyOverwrite");
+            boIt != edIt->second->pluginData.end() && !boIt->second.empty()) {
+            edition["bodyOverwrite"] = boIt->second;
+        }
+    }
+    return copy;
+}
 
 ConvInfo::ConvInfo(const Json::Value& json)
 {
@@ -153,7 +181,7 @@ private:
     Impl(std::unique_ptr<ConversationRepository>&& repository,
          const std::shared_ptr<JamiAccount>& account,
          std::vector<ConversationCommit>&& commits = {})
-        : repository_(std::move(repository ? repository : throw std::logic_error("Invalid repository")))
+        : repository_(repository ? std::move(repository) : throw std::logic_error("Invalid repository"))
         , account_(account)
         , accountId_(account->getAccountID())
         , userId_(account->getUsername())
@@ -418,7 +446,8 @@ public:
             bool announceMember = false;
             for (const auto& c : commits) {
                 // Announce member events
-                if (c.at(CommitKey::TYPE) == CommitType::MEMBER) {
+                const auto typeIt = c.find(CommitKey::TYPE);
+                if (typeIt != c.end() && typeIt->second == CommitType::MEMBER) {
                     if (c.find(CommitKey::URI) != c.end() && c.find(CommitKey::ACTION) != c.end()) {
                         const auto& uri = c.at(CommitKey::URI);
                         const auto& actionStr = c.at(CommitKey::ACTION);
@@ -446,17 +475,88 @@ public:
                                                                                              action);
                         }
                     }
-                } else if (c.at(CommitKey::TYPE) == CommitType::CALL_HISTORY) {
+                } else if (typeIt != c.end() && typeIt->second == CommitType::CALL_HISTORY) {
                     updateActiveCalls(c);
                 }
 #ifdef ENABLE_PLUGIN
-                auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
-                if (pluginChatManager.hasHandlers()) {
-                    auto cm = std::make_shared<JamiMessage>(accountId_, convId, c.at("author") != userId_, c, false);
+                if (auto &pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    pluginChatManager.hasHandlers()) {
+                    auto cm = std::make_shared<JamiMessage>(
+                        accountId_, convId, c.at("author") != userId_, c, false);
                     cm->isSwarm = true;
                     pluginChatManager.publishMessage(std::move(cm));
-                }
+
+                    const auto editIt = c.find(CommitKey::EDIT);
+                    const bool isEdit = editIt != c.end() && !editIt->second.empty();
+                    const bool isText = typeIt != c.end() && typeIt->second == CommitType::TEXT;
+
+                    if (const auto idIt = c.find("id");
+                        idIt != c.end() && (isEdit || isText)) {
+                        const std::string msgId = idIt->second;
+
+                        // Snapshot under lock.
+                        libjami::SwarmMessage snap;
+                        {
+                            std::lock_guard const lk(loadedHistory_.mutex);
+                            if (auto it = loadedHistory_.quickAccess.find(msgId);
+                                it != loadedHistory_.quickAccess.end()) {
+                                snap = *it->second;
+                            }
+                        }
+
+                        if (!snap.id.empty()) {
+                            // Transform outside lock.
+                            std::vector<libjami::SwarmMessage> single{snap};
+                            pluginChatManager.transformSwarmMessages(single, accountId_, convId);
+                            auto boIt = single[0].pluginData.find("bodyOverwrite");
+                            const bool hasOverwrite = boIt != single[0].pluginData.end()
+                                                      && !boIt->second.empty();
+
+                            // Write back + build signal under one lock, emit outside.
+                            libjami::SwarmMessage signalMsg;
+                            {
+                                std::lock_guard const lk(loadedHistory_.mutex);
+                                if (auto it = loadedHistory_.quickAccess.find(msgId);
+                                    it != loadedHistory_.quickAccess.end()) {
+                                    if (hasOverwrite)
+                                        it->second->pluginData["bodyOverwrite"] = boIt->second;
+                                    else
+                                        it->second->pluginData.erase("bodyOverwrite");
+                                }
+                                if (isEdit || hasOverwrite) {
+                                    const std::string& signalId = isEdit ? editIt->second : msgId;
+                                    if (auto sigIt = loadedHistory_.quickAccess.find(signalId);
+                                        sigIt != loadedHistory_.quickAccess.end())
+                                        signalMsg = injectEditionOverwrites(*sigIt->second,
+                                                                            loadedHistory_.quickAccess);
+                                }
+                            }
+                            if (!signalMsg.id.empty())
+                                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(
+                                    accountId_, convId, signalMsg);
+                        }
+                    }
+                } else
 #endif
+                {
+                    // No active handlers: still notify clients when an edit arrives.
+                    if (const auto editIt = c.find(CommitKey::EDIT);
+                        editIt != c.end() && !editIt->second.empty()) {
+                        libjami::SwarmMessage signalMsg;
+                        {
+                            std::lock_guard const lk(loadedHistory_.mutex);
+                            if (auto parentIt = loadedHistory_.quickAccess.find(editIt->second);
+                                parentIt != loadedHistory_.quickAccess.end()) {
+                                signalMsg = injectEditionOverwrites(*parentIt->second,
+                                                                    loadedHistory_.quickAccess);
+                            }
+                        }
+                        if (!signalMsg.id.empty()) {
+                            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(
+                                accountId_, convId, signalMsg);
+                        }
+                    }
+                }
             }
 
             if (announceMember && onMembersChanged_) {
@@ -599,6 +699,10 @@ public:
     const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
     std::vector<libjami::SwarmMessage> loadMessages(const LogOptions& options, History* optHistory = nullptr);
+    void loadMissingBodyOverwrites();
+    void reloadBodyOverwriteMessages();
+    void updateMessageBodyOverwrite(const std::string& messageId, const std::string& bodyOverwrite);
+    void clearBodyOverwrites();
     void pull(const std::string& deviceId);
 
     // Avoid multiple fetch/merges at the same time.
@@ -1207,8 +1311,14 @@ Conversation::Impl::handleEdition(History& history,
                 }
             } else {
                 // Normal message
-                it->second->editions.emplace(it->second->editions.begin(), it->second->body);
+                auto editionBody = it->second->body;
+                // Tag the superseded body with the commit id that introduced it, so the
+                // client can look up per-edition plugin overwrites via quickAccess.
+                editionBody["id"] =
+                    it->second->latestEditionId.empty() ? it->second->id : it->second->latestEditionId;
+                it->second->editions.emplace(it->second->editions.begin(), std::move(editionBody));
                 it->second->body[toReplace] = sharedCommit->body[toReplace];
+                it->second->latestEditionId = sharedCommit->id;
                 if (toReplace == CommitKey::TID) {
                     // Avoid to replace fileId in client
                     it->second->body["fileId"] = "";
@@ -1216,7 +1326,6 @@ Conversation::Impl::handleEdition(History& history,
                 // Remove reactions
                 if (sharedCommit->body.at(toReplace).empty())
                     it->second->reactions.clear();
-                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *it->second);
             }
         }
     } else {
@@ -1252,6 +1361,10 @@ Conversation::Impl::handleMessage(History& history,
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
         auto oldBody = sharedCommit->body;
+        // Tag original body with parent id so injectEditionOverwrites skips it
+        // (parent has no CommitKey::EDIT, so it is not an edition commit).
+        oldBody["id"] = sharedCommit->id;
+        sharedCommit->latestEditionId = peditIt->second.front()->id;
         if (sharedCommit->type == CommitType::DATA_TRANSFER) {
             sharedCommit->body[CommitKey::TID] = peditIt->second.front()->body[CommitKey::TID];
             sharedCommit->body["fileId"] = "";
@@ -1260,9 +1373,13 @@ Conversation::Impl::handleMessage(History& history,
         }
         peditIt->second.pop_front();
         for (const auto& commit : peditIt->second) {
-            sharedCommit->editions.emplace_back(commit->body);
+            auto edBody = commit->body;
+            // Tag each superseded body with its edition commit id, mirroring
+            // handleEdition so injectEditionOverwrites can find plugin overwrites.
+            edBody["id"] = commit->id;
+            sharedCommit->editions.emplace_back(std::move(edBody));
         }
-        sharedCommit->editions.emplace_back(oldBody);
+        sharedCommit->editions.emplace_back(std::move(oldBody));
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
@@ -1821,6 +1938,177 @@ Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
             cb(std::move(result));
         }
     });
+}
+
+void
+Conversation::Impl::loadMissingBodyOverwrites()
+{
+#ifdef ENABLE_PLUGIN
+    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+    if (!pluginChatManager.hasHandlers()) {
+        return;
+    }
+
+    const auto& convId = repository_->id();
+
+    // Collect all TEXT commits (originals and editions) missing a bodyOverwrite.
+    struct Work { std::string id; libjami::SwarmMessage snap; };
+    std::vector<Work> toProcess;
+    {
+        std::lock_guard const lk(loadedHistory_.mutex);
+        for (auto& [id, msg] : loadedHistory_.quickAccess) {
+            if (msg->type != CommitType::TEXT) {
+                continue;
+            }
+            if (!msg->pluginData.contains("bodyOverwrite")) {
+                toProcess.push_back({id, *msg});
+            }
+        }
+    }
+
+    for (auto& [id, snap] : toProcess) {
+        std::vector<libjami::SwarmMessage> single{snap};
+        pluginChatManager.transformSwarmMessages(single, accountId_, convId);
+        auto boIt = single[0].pluginData.find("bodyOverwrite");
+        if (boIt == single[0].pluginData.end() || boIt->second.empty()) {
+            continue;
+        }
+
+        // Edition commit → signal parent; original → signal itself.
+        const auto editIt = snap.body.find(CommitKey::EDIT);
+        const std::string signalId = (editIt != snap.body.end() && !editIt->second.empty())
+                                         ? editIt->second
+                                         : id;
+
+        libjami::SwarmMessage signalMsg;
+        {
+            std::lock_guard const lk(loadedHistory_.mutex);
+            if (auto it = loadedHistory_.quickAccess.find(id); it != loadedHistory_.quickAccess.end()) {
+                it->second->pluginData["bodyOverwrite"] = boIt->second;
+            }
+            if (auto sigIt = loadedHistory_.quickAccess.find(signalId);
+                sigIt != loadedHistory_.quickAccess.end()) {
+                signalMsg = injectEditionOverwrites(*sigIt->second, loadedHistory_.quickAccess);
+            }
+        }
+        if (!signalMsg.id.empty()) {
+            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, signalMsg);
+        }
+    }
+#endif
+}
+
+void
+Conversation::loadMissingBodyOverwrites() const {
+    pimpl_->loadMissingBodyOverwrites();
+}
+
+void
+Conversation::Impl::reloadBodyOverwriteMessages()
+{
+#ifdef ENABLE_PLUGIN
+    // Clear all bodyOverwrite* entries so loadMissingBodyOverwrites() reload all body overwrites.
+    {
+        std::lock_guard const lk(loadedHistory_.mutex);
+        for (const auto& msg : loadedHistory_.quickAccess | std::views::values) {
+            msg->pluginData.erase("bodyOverwrite");
+        }
+    }
+    loadMissingBodyOverwrites();
+#endif
+}
+
+void
+Conversation::reloadBodyOverwriteMessages() const {
+    pimpl_->reloadBodyOverwriteMessages();
+}
+
+void
+Conversation::Impl::updateMessageBodyOverwrite(const std::string& messageId, const std::string& bodyOverwrite)
+{
+#ifdef ENABLE_PLUGIN
+    const auto& convId = repository_->id();
+    libjami::SwarmMessage copy;
+
+    {
+        std::lock_guard const lk(loadedHistory_.mutex);
+        const auto it = loadedHistory_.quickAccess.find(messageId);
+        if (it == loadedHistory_.quickAccess.end()) {
+            return;
+        }
+        if (bodyOverwrite.empty()) {
+            it->second->pluginData.erase("bodyOverwrite");
+        }
+        else {
+            it->second->pluginData["bodyOverwrite"] = bodyOverwrite;
+        }
+
+        // If this is an edition commit, signal its parent (the client tracks the parent).
+        if (const auto editIt = it->second->body.find(CommitKey::EDIT);
+            editIt != it->second->body.end() && !editIt->second.empty()) {
+            const auto parentIt = loadedHistory_.quickAccess.find(editIt->second);
+            if (parentIt == loadedHistory_.quickAccess.end()) {
+                return;
+            }
+            copy = injectEditionOverwrites(*parentIt->second, loadedHistory_.quickAccess);
+        } else {
+            copy = injectEditionOverwrites(*it->second, loadedHistory_.quickAccess);
+        }
+    }
+    emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, copy);
+#endif
+}
+
+void
+Conversation::updateMessageBodyOverwrite(const std::string& messageId, const std::string& bodyOverwrite) const {
+    pimpl_->updateMessageBodyOverwrite(messageId, bodyOverwrite);
+}
+
+void
+Conversation::Impl::clearBodyOverwrites()
+{
+#ifdef ENABLE_PLUGIN
+    const auto convId = repository_->id();
+    std::vector<libjami::SwarmMessage> updated;
+    {
+        std::lock_guard const lk(loadedHistory_.mutex);
+        // Track which parent message ids need a signal: their own overwrite was cleared,
+        // or one of their edition commits' overwrite was cleared.
+        std::set<std::string> toSignal;
+        for (auto& [id, msg] : loadedHistory_.quickAccess) {
+            bool changed = false;
+            if (auto boIt = msg->pluginData.find("bodyOverwrite");
+                boIt != msg->pluginData.end()) {
+                msg->pluginData.erase(boIt);
+                changed = true;
+            }
+            if (!changed) {
+                continue;
+            }
+            // If this is an edition commit, mark its parent; otherwise mark itself.
+            if (auto editIt = msg->body.find(CommitKey::EDIT); editIt != msg->body.end() && !editIt->second.empty()) {
+                toSignal.insert(editIt->second);
+            }
+            else {
+                toSignal.insert(id);
+            }
+        }
+        for (const auto& parentId : toSignal) {
+            if (auto parentIt = loadedHistory_.quickAccess.find(parentId);
+                parentIt != loadedHistory_.quickAccess.end()) {
+                updated.push_back(*parentIt->second); // no overwrites remain — no injection needed
+            }
+        }
+    }
+    for (const auto& msg : updated) {
+        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, msg);
+    }
+#endif
+}
+
+void
+Conversation::clearBodyOverwrites() const {
+    pimpl_->clearBodyOverwrites();
 }
 
 void
@@ -2597,7 +2885,7 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
                         if (std::regex_search(body, body_match, re)) {
                             auto commit = message->body;
                             commit["id"] = message->id;
-                            commit["type"] = message->type;
+                            commit[CommitKey::TYPE] = message->type;
                             commits.emplace_back(commit);
                         }
                     } else {

@@ -18,7 +18,12 @@
 
 #include "noncopyable.h"
 #include "chathandler.h"
+#include "pluginloader.h"
 #include "pluginpreferencesutils.h"
+#include "streamdata.h"
+
+#include <mutex>
+#include <set>
 
 namespace jami {
 
@@ -62,6 +67,17 @@ public:
      * @param message
      */
     void publishMessage(const pluginMessagePtr& message);
+
+    /**
+     * @brief Calls transformSwarmMessages on every loaded ChatHandler, allowing plugins to
+     * modify message bodies in-place before SwarmLoaded is emitted to the client.
+     * @param messages        Messages to transform; handlers may set pluginData["bodyOverwrite"] in-place.
+     * @param accountId       Account that owns the conversation.
+     * @param conversationId  Conversation the messages belong to.
+     */
+    void transformSwarmMessages(std::vector<libjami::SwarmMessage>& messages,
+                                const std::string& accountId,
+                                const std::string& conversationId);
 
     /**
      * @brief If an account is unregistered or a contact is erased, we clear all chat subjects
@@ -109,6 +125,14 @@ public:
 
 private:
     /**
+     * @brief Returns the set of {accountId, conversationId} pairs where at least one
+     * ChatHandler from the given plugin is currently enabled (toggled or always-on).
+     * Used by global body-overwrite services to scope their effect to the calling plugin.
+     * @param plugin  Plugin whose handlers are checked.
+     * @return Set of (accountId, conversationId) pairs where the plugin is active.
+     */
+    std::set<std::pair<std::string, std::string>> getEnabledConversationsForPlugin(const DLPlugin* plugin) const;
+    /**
      * @brief Exposes ChatHandlers' life cycle managers services to the main API.
      * @param pluginManager
      */
@@ -126,6 +150,19 @@ private:
                            const std::string& peerId,
                            const bool toggle);
 
+    // Service callbacks registered in registerChatService.
+    static int sendTextMessage(const DLPlugin*, const JamiMessage* cm);
+    int reloadBodyOverwriteConversations(const DLPlugin* plugin, void*);
+    int updateMessageBodyOverwrite(const DLPlugin* plugin, const MessageBodyOverwriteUpdate* upd);
+    int clearSwarmBodyOverwrite(const DLPlugin* plugin, void*);
+    int bodyOverwriteLoadedConversations(const DLPlugin* plugin, void*);
+    int editMessage(const DLPlugin* plugin, const JamiMessage* cm);
+    int clearSwarmBodyOverwriteConversation(const DLPlugin* plugin, const std::pair<std::string, std::string>* p);
+    int bodyOverwriteLoadedConversation(const DLPlugin* plugin, const std::pair<std::string, std::string>* p);
+
+    // Protects chatHandlers_, chatHandlerToggled_, and allowDenyList_.
+    mutable std::mutex mtx_;
+
     // Components that a plugin can register through registerChatHandler service.
     // These objects can then be activated with toggleChatHandler.
     std::list<ChatHandlerPtr> chatHandlers_;
@@ -134,7 +171,7 @@ private:
     std::map<std::pair<std::string, std::string>, std::set<uintptr_t>> chatHandlerToggled_;
 
     // When there is a new message, chat subjects are created.
-    // Here we store a reference to them in order to make them interact with
+    // Here we store a reference to them to make them interact with
     // ChatHandlers.
     // For easy access they are mapped accordingly to the accountId, peerId pair to
     // which they belong.
