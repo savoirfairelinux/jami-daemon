@@ -815,6 +815,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         pimpl_->videoManager_.reset(new VideoManager);
     }
 
+    pimpl_->systemCodecContainer_ = std::make_shared<SystemCodecContainer>();
+
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         autoLoad = false;
         JAMI_DEBUG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts will neither be loaded nor backed up");
@@ -2882,7 +2884,6 @@ Manager::loadAccountMap(const YAML::Node& node)
         ++errorCount;
     }
 
-    pimpl_->systemCodecContainer_ = std::make_shared<SystemCodecContainer>();
 #ifdef ENABLE_VIDEO
     pimpl_->systemCodecContainer_->init(videoPreferences.getEncodingAccelerated());
 #else
