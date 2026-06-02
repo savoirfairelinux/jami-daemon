@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{47B512DE-EE88-3A32-A01F-DF4317B53175}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>whisper</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.18362.0</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\..\msvc\lib\$(Platform)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">whisper.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">whisper</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR="Release";WHISPER_VERSION="v1.8.4";GGML_VERSION="0.9.8";GGML_COMMIT="unknown"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>$(ProjectDir).;$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)ggml\include;$(ProjectDir)ggml\src;$(ProjectDir)ggml\src\ggml-cpu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <!-- whisper -->
+    <ClInclude Include="include\whisper.h" />
+    <ClCompile Include="src\whisper.cpp" />
+    <!-- ggml core -->
+    <ClInclude Include="ggml\include\ggml.h" />
+    <ClInclude Include="ggml\include\ggml-alloc.h" />
+    <ClInclude Include="ggml\include\ggml-backend.h" />
+    <ClCompile Include="ggml\src\ggml.c" />
+    <ClCompile Include="ggml\src\ggml.cpp" />
+    <ClCompile Include="ggml\src\ggml-alloc.c" />
+    <ClCompile Include="ggml\src\ggml-backend.cpp" />
+    <ClCompile Include="ggml\src\ggml-backend-reg.cpp" />
+    <ClCompile Include="ggml\src\ggml-opt.cpp" />
+    <ClCompile Include="ggml\src\ggml-quants.c" />
+    <ClCompile Include="ggml\src\ggml-threading.cpp" />
+    <ClCompile Include="ggml\src\gguf.cpp" />
+    <!-- ggml cpu backend -->
+    <ClCompile Include="ggml\src\ggml-cpu\ggml-cpu.c" />
+    <ClCompile Include="ggml\src\ggml-cpu\ggml-cpu.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\ops.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\binary-ops.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\unary-ops.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\traits.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\repack.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\vec.cpp" />
+    <ClCompile Include="ggml\src\ggml-cpu\quants.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
