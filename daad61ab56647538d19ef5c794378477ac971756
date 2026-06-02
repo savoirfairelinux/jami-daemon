@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08b57014_4171fe3b",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 5
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-02T18:07:05Z",
+      "side": 1,
+      "message": "[Critical] Line 104: The macOS block accidentally appends `LOCAL_HOSTVARS\u003d...` to `VPX_CONF` and leaves the next `--extra-cxxflags` line as a top-level tab-indented line, which will either break make parsing or pass an invalid configure argument. It also overwrites `LOCAL_HOSTVARS` later without preserving `$(HOSTVARS)`, so the configure invocation can lose the intended compiler/toolchain environment. Keep the host vars assignment separate from `VPX_CONF` and append only configure flags to `VPX_CONF`.\n```suggestion\nifdef HAVE_MACOSX\nVPX_CONF +\u003d --extra-cxxflags\u003d\"$(EXTRA_COMMON) $(EXTRA_CXXFLAGS)\"\nLOCAL_HOSTVARS\u003d$(HOSTVARS) MACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)\nendif\n```",
+      "revId": "daad61ab56647538d19ef5c794378477ac971756",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
