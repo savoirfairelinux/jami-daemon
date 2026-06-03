@@ -250,22 +250,25 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool
     }
 }
 
-void
-ContactList::loadContacts()
+std::map<dht::InfoHash, Contact>
+ContactList::contactsFromPath(const std::filesystem::path& path)
 {
-    decltype(contacts_) contacts;
+    std::map<dht::InfoHash, Contact> contacts;
     try {
-        std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
-        // read file
-        auto file = fileutils::loadFile("contacts", path_);
-        // load values
+        std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path / "contacts"));
+        auto file = fileutils::loadFile("contacts", path);
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(contacts);
     } catch (const std::exception& e) {
-        JAMI_WARNING("[Account {}] [Contacts] Error loading contacts: {}", accountId_, e.what());
-        return;
+        JAMI_WARNING("[Contacts] Error loading contacts from {}: {}", path.string(), e.what());
     }
+    return contacts;
+}
 
+void
+ContactList::loadContacts()
+{
+    auto contacts = contactsFromPath(path_);
     JAMI_WARNING("[Account {}] [Contacts] Loaded {} contacts", accountId_, contacts.size());
     for (auto& peer : contacts)
         updateContact(peer.first, peer.second, false);

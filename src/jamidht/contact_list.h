@@ -97,6 +97,8 @@ public:
     void setContacts(const std::map<dht::InfoHash, Contact>&);
     void updateContact(const dht::InfoHash&, const Contact&, bool emit = true);
 
+    static std::map<dht::InfoHash, Contact> contactsFromPath(const std::filesystem::path& path);
+
     /** Should be called only after updateContact */
     void saveContacts() const;
 

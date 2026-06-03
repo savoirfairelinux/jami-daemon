@@ -1380,13 +1380,11 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
         } else
             archive.config[it.first] = it.second;
     }
-    if (info_) {
-        // If migrating from same archive, info_ will be null
-        archive.contacts = info_->contacts->getContacts();
-        // Note we do not know accountID_ here, use path
-        archive.conversations = ConversationModule::convInfosFromPath(path_);
-        archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
-    }
+
+    // Note we do not know accountID_ here, use path
+    archive.contacts = ContactList::contactsFromPath(path_);
+    archive.conversations = ConversationModule::convInfosFromPath(path_);
+    archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
 }
 
 void
