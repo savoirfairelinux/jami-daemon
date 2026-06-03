@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60f7cadb_23b5addb",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 40
+      },
+      "lineNbr": 1199,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T15:46:18Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 1199: handleEdition() no longer emits SwarmMessageUpdated directly, relying on the later announce() path to emit the update. That is safe for newly announced commits, but any caller that invokes handleEdition() outside that announce path can update loadedHistory_ without notifying clients. If all paths are intentionally covered, add a clear invariant/comment; otherwise preserve notification here or centralize update emission in handleEdition().",
+      "revId": "b07346a8d4972b4c4380cd1e04f0cc092bcc0b7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57c94e9f_f762e205",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 40
+      },
+      "lineNbr": 2029,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T15:46:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2029: Messages for which the plugin intentionally returns no bodyOverwrite are never marked as processed, because absence of pluginData[\"bodyOverwrite\"] is used both for \"not processed yet\" and \"processed with no overwrite\". loadMissingBodyOverwrites() will therefore re-run plugin transforms for the same messages and editions on every load/reload path, which can become very expensive for large histories. Add an explicit processed marker or cache negative results separately, and clear that marker in reloadBodyOverwriteMessages().\n```suggestion\nstatic constexpr auto BODY_OVERWRITE_KEY \u003d \"bodyOverwrite\";\nstatic constexpr auto BODY_OVERWRITE_PROCESSED_KEY \u003d \"bodyOverwriteProcessed\";\n\nbool needsWork \u003d msg-\u003epluginData.find(BODY_OVERWRITE_PROCESSED_KEY) \u003d\u003d msg-\u003epluginData.end();\n...\nrealIt-\u003esecond-\u003epluginData[BODY_OVERWRITE_PROCESSED_KEY] \u003d \"true\";\nif (boIt !\u003d single[0].pluginData.end() \u0026\u0026 !boIt-\u003esecond.empty())\n    realIt-\u003esecond-\u003epluginData[BODY_OVERWRITE_KEY] \u003d boIt-\u003esecond;\nelse\n    realIt-\u003esecond-\u003epluginData.erase(BODY_OVERWRITE_KEY);\n```",
+      "revId": "b07346a8d4972b4c4380cd1e04f0cc092bcc0b7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65152aee_9c49b6fb",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 40
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T15:46:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2256: loadMissingBodyOverwrites() runs only after SwarmLoaded has already been emitted, while the new ChatHandler API documents that transforms happen before SwarmLoaded. This means clients first receive untranslated bodies and then separate SwarmMessageUpdated signals, causing observable flicker and making the API contract misleading. Either move the transform before emitting SwarmLoaded, or update the API/comment to state that overwrites are delivered asynchronously after the load signal.\n```suggestion\nconv-\u003econversation-\u003eloadMessages(\n    [accountId \u003d pimpl_-\u003eaccountId_, conversationId, id, convWeak](auto\u0026\u0026 messages) {\n#ifdef ENABLE_PLUGIN\n        if (auto convPtr \u003d convWeak.lock())\n            convPtr-\u003eloadMissingBodyOverwrites();\n#endif\n        emitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n    },\n    options);\n```",
+      "revId": "b07346a8d4972b4c4380cd1e04f0cc092bcc0b7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
