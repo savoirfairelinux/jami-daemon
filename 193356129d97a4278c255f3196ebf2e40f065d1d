@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9593d15d_573fecf4",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 826,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T13:57:41Z",
+      "side": 1,
+      "message": "[Critical] Line 826: The retry timer appears to be owned through `conv`, but `erasePending()` is called immediately after scheduling the wait. If `erasePending()` removes and destroys this pending conversation state, the timer will be destroyed/cancelled before the retry can fire, so the intended re-clone may never happen. Keep the pending state alive until the fallback handler runs, or move the timer ownership outside the erased state. For example, only erase the cloned conversation data here and let `fallbackClone()` clear the pending entry after a successful retry.\n```suggestion\n            conv-\u003efallbackClone-\u003easync_wait(std::bind(\u0026ConversationModule::Impl::fallbackClone,\n                                                      shared_from_this(),\n                                                      std::placeholders::_1,\n                                                      conversationId));\n            return;\n```",
+      "revId": "193356129d97a4278c255f3196ebf2e40f065d1d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
