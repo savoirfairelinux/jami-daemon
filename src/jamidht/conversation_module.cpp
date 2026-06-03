@@ -798,11 +798,21 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         });
         conversation->onNeedSocket(onNeedSwarmSocket_);
         if (!conversation->isMember(username_, true)) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Conversation cloned but we do not seem to be a valid member",
-                       accountId_,
-                       conversationId);
+            JAMI_ERROR(
+                "[Account {}] [Conversation {}] Conversation cloned but we do not seem to be a valid member. Re-clone in {}s",
+                accountId_,
+                conversationId,
+                conv->fallbackTimer.count());
             conversation->erase();
             lk.lock();
+            conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
+            conv->fallbackTimer *= 2;
+            if (conv->fallbackTimer > MAX_FALLBACK)
+                conv->fallbackTimer = MAX_FALLBACK;
+            conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
+                                                      shared_from_this(),
+                                                      std::placeholders::_1,
+                                                      conversationId));
             erasePending();
             return;
         }
