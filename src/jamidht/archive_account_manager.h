@@ -125,7 +125,6 @@ private:
     std::shared_ptr<AuthContext> authCtx_;
 
     void createAccount(AuthContext& ctx);
-    void migrateAccount(AuthContext& ctx);
 
     std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(const dht::crypto::Identity& id,
                                                                     const dht::crypto::Certificate& device,
@@ -140,6 +139,7 @@ private:
     static bool needsMigration(const std::string& accountId, const dht::crypto::Identity& id);
 
     void loadFromFile(AuthContext& ctx);
+    void loadFromLocalArchive(AuthContext& ctx);
 
     // for linking devices
     void startLoadArchiveFromDevice(const std::shared_ptr<AuthContext>& ctx);

@@ -87,13 +87,7 @@ ArchiveAccountManager::initAuthentication(std::string deviceName,
                 bool hasArchive = not ctx->credentials->uri.empty()
                                   and std::filesystem::is_regular_file(ctx->credentials->uri);
                 if (hasArchive) {
-                    // Create/migrate from local archive
-                    if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second
-                        and needsMigration(this_->accountId_, ctx->credentials->updateIdentity)) {
-                        this_->migrateAccount(*ctx);
-                    } else {
-                        this_->loadFromFile(*ctx);
-                    }
+                    this_->loadFromLocalArchive(*ctx);
                 } else if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
                     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
                     AccountArchive a;
@@ -247,6 +241,33 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
+    onArchiveLoaded(ctx, std::move(archive), false);
+}
+
+void
+ArchiveAccountManager::loadFromLocalArchive(AuthContext& ctx)
+{
+    JAMI_WARNING("[Account {}] [Auth] Loading local archive from: {}", accountId_, ctx.credentials->uri.c_str());
+    AccountArchive archive;
+    try {
+        archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password_scheme, ctx.credentials->password);
+    } catch (const std::exception& ex) {
+        JAMI_WARNING("[Account {}] [Auth] Unable to read archive file: {}", accountId_, ex.what());
+        ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
+        return;
+    }
+
+    updateArchive(archive);
+
+    if (ctx.credentials->updateIdentity.first and ctx.credentials->updateIdentity.second
+        and needsMigration(accountId_, ctx.credentials->updateIdentity)) {
+        JAMI_WARNING("[Account {}] [Auth] Account migration needed", accountId_);
+        if (not updateCertificates(archive, ctx.credentials->updateIdentity)) {
+            ctx.onFailure(AuthError::UNKNOWN, "");
+            return;
+        }
+    }
+
     onArchiveLoaded(ctx, std::move(archive), false);
 }
 
@@ -1143,30 +1164,6 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
         }
     }
     return false;
-}
-
-void
-ArchiveAccountManager::migrateAccount(AuthContext& ctx)
-{
-    JAMI_WARNING("[Auth] Account migration needed");
-    AccountArchive archive;
-    try {
-        archive = readArchive(ctx.credentials->password_scheme, ctx.credentials->password);
-    } catch (...) {
-        JAMI_LOG("[Auth] Unable to load archive");
-        ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
-        return;
-    }
-
-    updateArchive(archive);
-
-    if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
-        // because updateCertificates already regenerate a device, we do not need to
-        // regenerate one in onArchiveLoaded
-        onArchiveLoaded(ctx, std::move(archive), false);
-    } else {
-        ctx.onFailure(AuthError::UNKNOWN, "");
-    }
 }
 
 void
