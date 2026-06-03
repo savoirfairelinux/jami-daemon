@@ -3,6 +3,74 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f8a3bf0e_5dd819bf",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:25:40Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2019: `loadMissingBodyOverwrites()` scans every entry in `loadedHistory_.quickAccess` every time a page is loaded, then may emit updates for messages outside the requested page. On large conversations this makes each load progressively more expensive and can spam clients with unrelated updates. Restrict work to the messages returned by the current load, or pass the loaded IDs/range into this helper and only transform those plus their edition commits.",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6819909c_9e459b2f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:25:40Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2119: `reloadBodyOverwriteMessages()` clears all cached overwrites, then `loadMissingBodyOverwrites()` recomputes them only when `hasHandlers()` is true. If handlers were removed or disabled, no update is emitted after clearing, leaving clients displaying stale overwritten bodies until another signal happens. Emit updates for affected parent messages immediately after clearing, or reuse `clearBodyOverwrites()` when no handler is available.",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71a41e35_176be51b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2150,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:25:40Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 2150: `updateMessageBodyOverwrite()` returns silently when the target message or parent is not in `quickAccess`. Since this is now part of plugin-to-UI state propagation, silent drops make failures very hard to diagnose and can leave plugin UI state inconsistent. Log at debug/warn level following the surrounding pattern before returning.",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31d0ad2a_fe3dd566",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:25:40Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2257: The new plugin overwrite loading runs after `SwarmLoaded` is emitted, so clients first receive unmodified messages and only later receive per-message `SwarmMessageUpdated` corrections. This contradicts the new `ChatHandler::transformSwarmMessages` contract saying transformation happens before `SwarmLoaded`, and can cause visible flicker or stale message bodies for clients that only consume the load result. Apply the transforms before emitting the loaded batch, or include injected overwrite data in the `messages` passed to `SwarmLoaded`.\n\n```suggestion\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "69ccd0bb_1b85e02c",
         "filename": "src/plugin/pluginsutils.cpp",
         "patchSetId": 38
