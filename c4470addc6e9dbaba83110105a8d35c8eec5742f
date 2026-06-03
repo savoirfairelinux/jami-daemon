@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccfa735b_fe0b5413",
+        "filename": "compat/msvc/winmake.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T18:35:11Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 61: This changes compat/msvc/winmake.py, but the CMake contrib path shown in this patch invokes extras/scripts/winmake.py. If --no-index is required for the plugin/contrib build, this likely does not affect the code path being used. Apply the same change to the invoked script or update CMake to call this script; otherwise the build fix is incomplete. Suggested fix example:\n```suggestion\ngit_apply_args \u003d [\u0027apply\u0027, \u0027--reject\u0027, \u0027--no-index\u0027,\n                  \u0027--ignore-whitespace\u0027, \u0027--whitespace\u003dfix\u0027]\n```",
+      "revId": "c4470addc6e9dbaba83110105a8d35c8eec5742f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c007c5d_c267ae8a",
+        "filename": "contrib/src/whispercpp/package.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T18:35:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 6: The patch is no longer applied, but contrib/src/whispercpp/project.patch is still kept and modified in this patchset. This creates two sources of truth for the same Visual Studio project and the stale patch can confuse future updates or be accidentally re-enabled with different content. Please remove project.patch from the tree, or keep it as the single source by listing it in patches instead of copying whisper.vcxproj directly.",
+      "revId": "c4470addc6e9dbaba83110105a8d35c8eec5742f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
