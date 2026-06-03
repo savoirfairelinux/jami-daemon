@@ -3,6 +3,108 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "34699fd2_da8ac30b",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 39
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "[Good Practice] Line 43: Good separation of persisted message body and local plugin display state: pluginData is explicitly documented as non-git/local-only, which reduces the risk of accidentally syncing plugin-derived content into conversation history.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a5bc716_88142925",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "[Good Practice] Line 502: Good concurrency pattern: the patch copies message snapshots under loadedHistory_.mutex, runs plugin transforms outside the lock, then reacquires the lock to write back and emit outside the lock. That avoids holding the history mutex across plugin code and signal emission.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e05fc674_df884ccc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "[Critical] Line 2019: loadMissingBodyOverwrites only processes messages already present in loadedHistory_.quickAccess, but it does not update the messages vector that was just returned by loadMessages. Even if ConversationModule calls this before SwarmLoaded, the emitted payload will still be stale unless it is rebuilt from loadedHistory_ after injection or the transformation is performed directly on the result vector. Consider returning transformed copies from this method and emitting those.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3535bfa6_b0cd248a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2053,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "Line 2053: Messages for which a plugin does not produce bodyOverwrite are treated as missing forever. Every future load/reload will re-run plugin transformations for the same messages and editions, which can become expensive on large conversations and may repeatedly invoke external plugin work. Store an explicit processed/empty marker or track a generation/version so unchanged messages are not transformed repeatedly when no overwrite is produced.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffa3eb37_9546c447",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "[Critical] Line 2257: SwarmLoaded is emitted before loadMissingBodyOverwrites() runs, so the initial payload delivered to clients still contains untranslated/unmodified bodies. This contradicts the new ChatHandler contract that transformations happen before SwarmLoaded and causes clients to receive stale data followed by separate update signals. Move the overwrite loading/transformation before emitting SwarmLoaded, or apply the transformed pluginData to the messages vector before emission.\n```suggestion\n#ifdef ENABLE_PLUGIN\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\n#endif\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89fe80a3_4b88a570",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2287,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T14:44:08Z",
+      "side": 1,
+      "message": "[Critical] Line 2287: loadSwarmUntil has the same ordering problem as loadConversation: SwarmLoaded is sent before plugin body overwrites are loaded, so callers of this API get unprocessed data first. Ensure transformations are completed before emitting the loaded batch, ideally by integrating the transformation into the loadMessages result path rather than sending corrective updates afterward.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fe44938d_00e0a5a7",
         "filename": "src/plugin/pluginsutils.cpp",
         "patchSetId": 39
