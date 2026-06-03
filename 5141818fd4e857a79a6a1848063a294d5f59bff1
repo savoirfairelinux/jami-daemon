@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34748813_28aa64a8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 489,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T16:22:03Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 489: This path calls `c.at(\"author\")` for every commit when plugins are enabled, but only `type` was made defensive. If a malformed/local synthetic commit lacks `author`, the daemon can throw and abort message processing. Use `find()` consistently and choose an explicit fallback for missing author.\n```suggestion\nauto authorIt \u003d c.find(\"author\");\nauto fromPeer \u003d authorIt \u003d\u003d c.end() || authorIt-\u003esecond !\u003d userId_;\nauto cm \u003d std::make_shared\u003cJamiMessage\u003e(accountId_, convId, fromPeer, c, false);\n```",
+      "revId": "5141818fd4e857a79a6a1848063a294d5f59bff1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21c9e563_f3b7c643",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T16:22:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2019: `loadMissingBodyOverwrites()` scans all `quickAccess` entries and can run repeatedly after every `loadConversation` / `loadSwarmUntil`. For large conversations this retriggers plugin transforms for every cached message missing `bodyOverwrite`, even when the current load request only fetched a small page. This can make history loading unexpectedly expensive. Limit the work to the messages returned by the load operation, or keep a per-plugin/per-message processed marker so messages known to have no overwrite are not recomputed on each load.",
+      "revId": "5141818fd4e857a79a6a1848063a294d5f59bff1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6748f8b_25a20710",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T16:22:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2257: The new plugin overwrite pass runs after `SwarmLoaded` is emitted, so the loaded payload still contains untransformed bodies and clients must wait for separate `SwarmMessageUpdated` signals. This contradicts the new `ChatHandler::transformSwarmMessages` contract saying it is called before `SwarmLoaded`, and can cause stale display/flicker or missed updates for clients that only process the load result. Move the overwrite loading/transform before emitting `SwarmLoaded`, or transform the `messages` vector before passing it to the signal.\n```suggestion\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "5141818fd4e857a79a6a1848063a294d5f59bff1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02981b27_14ae1536",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 42
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-03T16:22:03Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 74: The API comment says plugins can modify message bodies in-place, but the implementation stores plugin output in `pluginData[\"bodyOverwrite\"]` and does not persist body changes. This mismatch makes the plugin contract ambiguous and easy to implement incorrectly. Document the expected key and whether modifying `body` is supported.\n```suggestion\n * to provide display-only overrides through message.pluginData[\"bodyOverwrite\"].\n * The underlying message body is not persisted or rewritten.\n```",
+      "revId": "5141818fd4e857a79a6a1848063a294d5f59bff1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
