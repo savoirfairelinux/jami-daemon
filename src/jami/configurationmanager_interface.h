@@ -105,6 +105,7 @@ LIBJAMI_PUBLIC void updateProfile(const std::string& accountId,
                                   const std::string& displayName,
                                   const std::string& avatar,
                                   const std::string& fileType,
+                                  const std::string& botOwner,
                                   int32_t flag);
 LIBJAMI_PUBLIC int getMessageStatus(uint64_t id);
 LIBJAMI_PUBLIC int getMessageStatus(const std::string& accountId, uint64_t id);
