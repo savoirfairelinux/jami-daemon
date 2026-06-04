@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17deb19b_e75f825c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1909,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T20:18:04Z",
+      "side": 1,
+      "message": "Line 1909: loadMissingBodyOverwrites treats the absence of bodyOverwrite as the only \u0027not processed\u0027 state. If a plugin returns an empty overwrite, the message remains missing the key and will be reprocessed on every load/reload path, which can repeatedly invoke expensive plugin work for messages that intentionally have no overwrite. Cache a processed empty state or a separate marker so negative results are not recomputed indefinitely.\n```suggestion\nif (boIt \u003d\u003d single[0].pluginData.end() || boIt-\u003esecond.empty()) {\n    std::lock_guard const lk(loadedHistory_.mutex);\n    if (auto it \u003d loadedHistory_.quickAccess.find(id); it !\u003d loadedHistory_.quickAccess.end())\n        it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n    continue;\n}\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddc7fe81_03d59ac1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1994,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T20:18:04Z",
+      "side": 1,
+      "message": "[Critical] Line 1994: clearBodyOverwrites removes the shared pluginData[\"bodyOverwrite\"] field for all messages in the conversation, even though the service is invoked for one plugin. With multiple enabled chat handlers, disabling or reconfiguring one plugin will clear another plugin\u0027s overwrite state. Store body overwrites per plugin/handler or pass a plugin identifier into Conversation so only that plugin\u0027s values are cleared.\n```suggestion\n// Example: namespace overwrite data by plugin id.\nit-\u003esecond-\u003epluginData.erase(\"bodyOverwrite:\" + pluginId);\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbf8e6d8_623b873a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 2258,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T20:18:04Z",
+      "side": 1,
+      "message": "[Critical] Line 2258: SwarmLoaded is emitted before body overwrite transforms are applied, so clients receive the loaded batch without plugin-provided bodyOverwrite data and only later get per-message update signals. This contradicts the new ChatHandler API contract that transforms happen before SwarmLoaded and can cause visible flicker or stale initial render. Apply the transform/reload before emitting, or integrate transformSwarmMessages into loadMessages result construction. Suggested shape:\n```suggestion\n#ifdef ENABLE_PLUGIN\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\n#endif\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92a490e1_42f05fa7",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T20:18:04Z",
+      "side": 1,
+      "message": "[Critical] Line 293: transformSwarmMessages holds ChatServicesManager::mtx_ while executing plugin handler code. Plugin transform implementations can invoke services such as updateMessageBodyOverwrite/reloadBodyOverwriteConversations, which call back into ChatServicesManager and acquire the same mutex, creating the deadlock pattern that this patch avoids elsewhere. Collect eligible handlers under the lock, then invoke transformSwarmMessages outside it.\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlers;\n{\n    std::lock_guard lk(mtx_);\n    // collect eligible handlers\n}\nfor (auto* handler : handlers)\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1e43dff_7249c670",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 520,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T20:18:04Z",
+      "side": 1,
+      "message": "[Critical] Line 520: Raw ChatHandler pointers are collected under mtx_ and then used after the lock is released. If a plugin is unloaded concurrently, unregisterChatHandler can erase/destroy the handler before notifyChatSubject, detach, or setPreferenceAttribute runs, leading to use-after-free. Keep the handler alive across the unlocked call, e.g. collect shared ownership if ChatHandlerPtr is shared_ptr, or otherwise add a lifetime guard around plugin unload and these callbacks.\n```suggestion\nstd::vector\u003cChatHandlerPtr\u003e toNotify;\n{\n    std::lock_guard lk(mtx_);\n    for (auto\u0026 chatHandler : chatHandlers_) {\n        if (chatHandler-\u003eid().find(rootPath) !\u003d std::string::npos \u0026\u0026 chatHandler-\u003epreferenceMapHasKey(key))\n            toNotify.push_back(chatHandler);\n    }\n}\nfor (auto\u0026 handler : toNotify)\n    handler-\u003esetPreferenceAttribute(key, value);\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
