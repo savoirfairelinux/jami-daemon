@@ -651,6 +651,11 @@
                 The file type of the avatar, for now JPEG or PNG
                 </tp:docstring>
             </arg>
+            <arg type="s" name="botOwner" direction="in">
+                <tp:docstring>
+                The owner of the bot. An empty botOwner means the profile is not a bot.
+                </tp:docstring>
+            </arg>
             <arg type="i" name="flag" direction="in"/>
             <tp:docstring>
                Update the profile of the account and send it to peers.
