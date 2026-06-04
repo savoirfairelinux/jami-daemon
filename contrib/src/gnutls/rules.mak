@@ -40,19 +40,13 @@ GNUTLS_CONF := \
 	--disable-nls \
 	--without-libintl-prefix \
 	--without-idn \
+	--without-brotli \
+	--without-zstd \
 	$(HOSTCONF)
 
-ifdef HAVE_MACOSX
-	GNUTLS_CONF += --without-brotli
-endif
-
 ifdef HAVE_IOS
-	GNUTLS_CONF += \
-	--disable-hardware-acceleration \
-	--without-brotli \
-	--without-zstd
+GNUTLS_CONF += --disable-hardware-acceleration
 endif
-
 
 #Workaround for localtime_r function
 ifdef HAVE_WIN32
