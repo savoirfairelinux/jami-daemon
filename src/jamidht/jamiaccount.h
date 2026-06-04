@@ -413,7 +413,9 @@ public:
     void updateProfile(const std::string& displayName,
                        const std::string& avatar,
                        const std::string& fileType,
-                       int32_t flag) override;
+                       int32_t flag,
+                       const bool isBot = false,
+                       const std::string& botOwnerId = "") override;
 
 #ifdef LIBJAMI_TEST
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }

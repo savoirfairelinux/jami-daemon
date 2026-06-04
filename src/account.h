@@ -211,7 +211,9 @@ public:
     virtual void updateProfile(const std::string& /*displayName*/,
                                const std::string& /*avatar*/,
                                const std::string& /*fileType*/,
-                               int32_t /*flag*/)
+                               int32_t /*flag*/,
+                               bool /*isBot*/,
+                               const std::string& /*botOwnerId*/)
         = 0;
 
     vCard::utils::VCardData getProfileVcard() const;
