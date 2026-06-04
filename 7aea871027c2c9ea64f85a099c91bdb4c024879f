@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "729ac424_5f6bd70d",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 23
+      },
+      "lineNbr": 1077,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T17:24:27Z",
+      "side": 1,
+      "message": "[Critical] Line 1077: The new conversationBanStatus test is built without conversationcommon.cpp, but the test includes conversation/conversationcommon.h and calls helpers such as load_actors(), wait_for_announcement_of(), and wait_for_removal_of(). Other conversation tests that use those helpers link conversationcommon.cpp explicitly. Add it here to avoid unresolved symbols in test builds.\n\n```suggestion\n        add_test_executable(conversationBanStatus test/unitTest/conversation/conversationBanStatus.cpp test/unitTest/conversation/conversationcommon.cpp)\n```",
+      "revId": "7aea871027c2c9ea64f85a099c91bdb4c024879f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a261d0c_06fc38a2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 2447,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T17:24:27Z",
+      "side": 1,
+      "message": "[Critical] Line 2447: This authorization check now only rejects devices explicitly listed in banned/devices. A member ban intentionally no longer makes isDeviceBanned() true, so an outgoing swarm socket can still be opened to a banned member\u0027s device if this path is reached after the member ban. Resolve the device to its member URI and use the same peer authorization check used for git/channel requests, or add a ConversationModule helper that authorizes by device id.\n\n```suggestion\n        if (!shared-\u003econnectionManager_ || !cm || !cm-\u003eisPeerAuthorizedDevice(convId, deviceId, true)) {\n            asio::post(*Manager::instance().ioContext(), [cb \u003d std::move(cb)] { cb({}); });\n            return;\n        }\n```",
+      "revId": "7aea871027c2c9ea64f85a099c91bdb4c024879f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
