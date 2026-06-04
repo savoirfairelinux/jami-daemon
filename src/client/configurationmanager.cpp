@@ -291,10 +291,11 @@ updateProfile(const std::string& accountId,
               const std::string& displayName,
               const std::string& avatar,
               const std::string& fileType,
+              const std::string& botOwner,
               int32_t flag)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountId)) {
-        acc->updateProfile(displayName, avatar, fileType, flag);
+        acc->updateProfile(displayName, avatar, fileType, botOwner, flag);
     }
 }
 
