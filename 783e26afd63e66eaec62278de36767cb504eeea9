@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f63b8f3_c0b81817",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 2070,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T19:40:13Z",
+      "side": 1,
+      "message": "Line 2070: Messages without a plugin-generated bodyOverwrite are treated as permanently missing, so loadMissingBodyOverwrites() will re-run plugin transforms for the same loaded history on every load/reload. On large conversations this can repeatedly invoke plugins over the full history even when there is no overwrite to produce. Store an explicit processed/no-overwrite state, or transform only the newly loaded range.\n```suggestion\n// Track that this message was already processed even when no overwrite was produced.\nrealIt-\u003esecond-\u003epluginData[\"bodyOverwriteProcessed\"] \u003d \"true\";\n```\nThen include that marker in the needsWork check and clear it in reloadBodyOverwriteMessages().",
+      "revId": "783e26afd63e66eaec62278de36767cb504eeea9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e24f73d0_747ab687",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 2190,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T19:40:13Z",
+      "side": 1,
+      "message": "[Critical] Line 2190: clearBodyOverwrites() clears bodyOverwrite on edition commits but does not clear the mirrored bodyOverwrite copied onto the parent when the latest edition owns the current body. After clearing, clients can still receive the parent with a stale translated current body. When an edited commit is cleared and parent.latestEditionId \u003d\u003d edition id, also erase the parent\u0027s bodyOverwrite before building the signal.\n```suggestion\nif (editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n    toSignal.insert(editIt-\u003esecond);\n    auto parentIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n    if (parentIt !\u003d loadedHistory_.quickAccess.end()\n        \u0026\u0026 parentIt-\u003esecond-\u003elatestEditionId \u003d\u003d id) {\n        parentIt-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n    }\n} else {\n    toSignal.insert(id);\n}\n```",
+      "revId": "783e26afd63e66eaec62278de36767cb504eeea9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4dedfe63_eb8eebb4",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T19:40:13Z",
+      "side": 1,
+      "message": "Line 2256: loadMissingBodyOverwrites() is called after SwarmLoaded is emitted, but the new ChatHandler API documents that transforms happen before SwarmLoaded. This means clients first receive unmodified messages, then separate SwarmMessageUpdated signals, causing flicker and making the API contract misleading. Run the overwrite loading before emitting SwarmLoaded, or update the API/comment to describe the two-phase behavior.\n```suggestion\n#ifdef ENABLE_PLUGIN\nif (auto convPtr \u003d convWeak.lock())\n    convPtr-\u003eloadMissingBodyOverwrites();\n#endif\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "783e26afd63e66eaec62278de36767cb504eeea9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
