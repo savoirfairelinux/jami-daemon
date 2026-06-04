@@ -3756,7 +3756,9 @@ void
 JamiAccount::updateProfile(const std::string& displayName,
                            const std::string& avatar,
                            const std::string& fileType,
-                           int32_t flag)
+                           int32_t flag,
+                           const bool isBot,
+                           const std::string& botOwnerId)
 {
     // if the fileType is empty then only the display name will be upated
 
@@ -3780,9 +3782,11 @@ JamiAccount::updateProfile(const std::string& displayName,
         profile = vCard::utils::initVcard();
     }
 
-    profile[std::string(vCard::Property::FORMATTED_NAME)] = displayName;
-    editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
-    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
+    if (!displayName.empty()) {
+        profile[std::string(vCard::Property::FORMATTED_NAME)] = displayName;
+        editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
+        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
+    }
 
     if (!fileType.empty()) {
         const std::string& key = "PHOTO;ENCODING=BASE64;TYPE=" + fileType;
@@ -3803,6 +3807,9 @@ JamiAccount::updateProfile(const std::string& displayName,
     }
     if (flag == 2) {
         vCard::utils::removeByKey(profile, vCard::Property::PHOTO);
+    }
+    if (isBot) {
+        profile[std::string(vCard::Property::IS_BOT_OF)] = botOwnerId;
     }
     try {
         vCard::utils::save(profile, vCardPath, path);

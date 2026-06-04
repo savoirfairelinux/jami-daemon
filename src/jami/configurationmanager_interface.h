@@ -105,7 +105,9 @@ LIBJAMI_PUBLIC void updateProfile(const std::string& accountId,
                                   const std::string& displayName,
                                   const std::string& avatar,
                                   const std::string& fileType,
-                                  int32_t flag);
+                                  int32_t flag,
+                                  bool isBot,
+                                  const std::string& botOwnerId);
 LIBJAMI_PUBLIC int getMessageStatus(uint64_t id);
 LIBJAMI_PUBLIC int getMessageStatus(const std::string& accountId, uint64_t id);
 LIBJAMI_PUBLIC void setIsComposing(const std::string& accountId, const std::string& conversationUri, bool isWriting);

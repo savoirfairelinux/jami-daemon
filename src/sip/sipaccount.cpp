@@ -136,10 +136,8 @@ SIPAccount::~SIPAccount() noexcept
 }
 
 void
-SIPAccount::updateProfile(const std::string& displayName,
-                          const std::string& avatar,
-                          const std::string& fileType,
-                          int32_t flag)
+SIPAccount::updateProfile(
+    const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag, bool isBot, const std::string& botOwnerId)
 {
     auto vCardPath = idPath_ / "profile.vcf";
 
