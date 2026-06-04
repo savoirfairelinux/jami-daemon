@@ -73,6 +73,9 @@ struct Property
     constexpr static std::string_view TYPE_JPEG = "TYPE=JPEG";
     constexpr static std::string_view PHOTO_PNG = "PHOTO;ENCODING=BASE64;TYPE=PNG";
     constexpr static std::string_view PHOTO_JPEG = "PHOTO;ENCODING=BASE64;TYPE=JPEG";
+    constexpr static std::string_view KIND = "KIND";
+    constexpr static std::string_view RELATED_OWNER = "RELATED;TYPE=owner";
+    constexpr static std::string_view IS_BOT_OF = "IS_BOT_OF";
 };
 
 struct Value

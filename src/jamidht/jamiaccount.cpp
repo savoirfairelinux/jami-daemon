@@ -1216,18 +1216,27 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {
-        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
-        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
-        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            onConversationRequestAccepted(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
+    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
+                                                 onContactAdded(uri, confirmed);
+                                             },
+                                             [this](const std::string& uri, bool banned) {
+                                                 onContactRemoved(uri, banned);
+                                             },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    time_t received) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
+                                             },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
+                                                 onKnownDevicesChanged(devices);
+                                             },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) {
+                                                 onContactConfirmed(uri, convFromReq);
+                                             }};
 }
 
 void
@@ -3756,6 +3765,7 @@ void
 JamiAccount::updateProfile(const std::string& displayName,
                            const std::string& avatar,
                            const std::string& fileType,
+                           const std::string& botOwner,
                            int32_t flag)
 {
     // if the fileType is empty then only the display name will be upated
@@ -3780,9 +3790,11 @@ JamiAccount::updateProfile(const std::string& displayName,
         profile = vCard::utils::initVcard();
     }
 
-    profile[std::string(vCard::Property::FORMATTED_NAME)] = displayName;
-    editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
-    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
+    if (!displayName.empty()) {
+        profile[std::string(vCard::Property::FORMATTED_NAME)] = displayName;
+        editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
+        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
+    }
 
     if (!fileType.empty()) {
         const std::string& key = "PHOTO;ENCODING=BASE64;TYPE=" + fileType;
@@ -3803,6 +3815,12 @@ JamiAccount::updateProfile(const std::string& displayName,
     }
     if (flag == 2) {
         vCard::utils::removeByKey(profile, vCard::Property::PHOTO);
+    }
+    if (!botOwner.empty()) {
+        // See RFC 6473
+        profile[std::string(vCard::Property::KIND)] = "application";
+        // See RFC 6350
+        profile[std::string(vCard::Property::RELATED_OWNER)] = "jami:" + botOwner;
     }
     try {
         vCard::utils::save(profile, vCardPath, path);
