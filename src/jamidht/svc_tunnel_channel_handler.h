@@ -85,8 +85,7 @@ public:
                  const std::string& connectionType = "",
                  bool forceNewConnection = false) override;
 
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                   const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
@@ -132,10 +131,8 @@ private:
     void onClientChannelReady(const std::shared_ptr<ClientTunnel>& tunnel,
                               std::shared_ptr<asio::ip::tcp::socket> tcp,
                               std::shared_ptr<dhtnet::ChannelSocket> channel);
-    void relay(std::shared_ptr<dhtnet::ChannelSocket> channel,
-               std::shared_ptr<asio::ip::tcp::socket> tcp);
-    void relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket> channel,
-                           std::shared_ptr<asio::ip::tcp::socket> tcp);
+    void relay(std::shared_ptr<dhtnet::ChannelSocket> channel, std::shared_ptr<asio::ip::tcp::socket> tcp);
+    void relayTcpToChannel(std::shared_ptr<dhtnet::ChannelSocket> channel, std::shared_ptr<asio::ip::tcp::socket> tcp);
     /// Track an active per-connection client-side relay so closeTunnel can
     /// tear it down.
     void trackClientConnection(const std::shared_ptr<ClientTunnel>& tunnel,
