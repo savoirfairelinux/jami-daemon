@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdcd144c_4fe458d6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 2793,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T17:31:39Z",
+      "side": 1,
+      "message": "[Critical] Line 2793: isPeerAuthorized() performs trust-store checks for memberStatus/deviceStatus before it knows whether the conversation is one-to-one. The previous one-to-one behavior only treated PermissionStatus::BANNED as denial, while non-one-to-one conversations used repository membership/ban state. Applying global trust-store bans to all conversation types may unintentionally reject valid swarm members in group conversations due to unrelated account-level certificate state. Keep trust-store authorization scoped to one-to-one conversations, and use conversation repository state for other modes.\n```suggestion\n    if (auto conv \u003d pimpl_-\u003egetConversation(convId)) {\n        std::lock_guard lk(conv-\u003emtx);\n        if (conv-\u003econversation) {\n            if (conv-\u003econversation-\u003emode() \u003d\u003d ConversationMode::ONE_TO_ONE) {\n                return memberStatus !\u003d dhtnet::tls::TrustStore::PermissionStatus::BANNED\n                    \u0026\u0026 deviceStatus !\u003d dhtnet::tls::TrustStore::PermissionStatus::BANNED;\n            }\n            return conv-\u003econversation-\u003eisPeerAuthorized(uri, deviceId, includeInvited);\n        }\n```\n",
+      "revId": "2c28740626e491366658f86934575039748c25dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c51dc6d_a95ffe6c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 2447,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T17:31:39Z",
+      "side": 1,
+      "message": "[Critical] Line 2447: The swarm socket path now only checks whether the device id is banned, but no longer verifies that the remote device belongs to an authorized conversation member. This preserves the original device-ban check but does not apply the new hardened authorization model used for git/conversation channels, so a non-member device that is not explicitly banned can still get a swarm connection attempt. Resolve the peer certificate on the established socket and call isPeerAuthorized(), or add an authorization check in the completion path before returning the socket.\n```suggestion\n// After receiving the socket, validate the authenticated peer before invoking cb.\nauto remoteCert \u003d socket-\u003epeerCertificate();\nif (!remoteCert || !remoteCert-\u003eissuer\n    || !cm-\u003eisPeerAuthorized(convId,\n                             remoteCert-\u003eissuer-\u003egetId().toString(),\n                             socket-\u003edeviceId().toString(),\n                             true)) {\n    socket-\u003eshutdown();\n    cb({});\n    return;\n}\n```\n",
+      "revId": "2c28740626e491366658f86934575039748c25dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b17d972f_aed132c3",
+        "filename": "test/unitTest/conversation/conversationBanStatus.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-04T17:31:39Z",
+      "side": 1,
+      "message": "[Critical] Line 107: The test fixture disables Carla in setUp(), but testPeerAuthorizationChecksMembershipAndInvites() immediately dereferences carlaAccount without re-registering Carla. Because Manager::instance().getAccount\u003cJamiAccount\u003e(carlaId) can return null for an unregistered/removed account, this can crash or make the test order-dependent. Register Carla in this test before using carlaAccount, as done in testSplitMemberAndDeviceBanStatus().\n```suggestion\n    Manager::instance().sendRegister(carlaId, true);\n    wait_for_announcement_of(carlaId);\n\n    auto aliceAccount \u003d Manager::instance().getAccount\u003cJamiAccount\u003e(aliceId);\n    auto bobAccount \u003d Manager::instance().getAccount\u003cJamiAccount\u003e(bobId);\n    auto carlaAccount \u003d Manager::instance().getAccount\u003cJamiAccount\u003e(carlaId);\n```\n",
+      "revId": "2c28740626e491366658f86934575039748c25dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
