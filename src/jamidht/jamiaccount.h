@@ -413,6 +413,7 @@ public:
     void updateProfile(const std::string& displayName,
                        const std::string& avatar,
                        const std::string& fileType,
+                       const std::string& botOwner,
                        int32_t flag) override;
 
 #ifdef LIBJAMI_TEST
