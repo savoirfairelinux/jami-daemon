@@ -54,8 +54,7 @@ class ServiceUpdateIntegrationTest : public CppUnit::TestFixture
 public:
     ServiceUpdateIntegrationTest()
     {
-        libjami::init(
-            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -93,7 +92,8 @@ private:
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers_;
 
     // State for PeerServicesReceived signals.
-    struct PushEvent {
+    struct PushEvent
+    {
         uint32_t requestId;
         int status;
         std::string servicesJson;
@@ -142,9 +142,7 @@ ServiceUpdateIntegrationTest::setUp()
         }));
 
     handlers_.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& accountId,
-            const std::string&, const std::string&,
-            const std::vector<uint8_t>&, time_t) {
+        [&](const std::string& accountId, const std::string&, const std::string&, const std::vector<uint8_t>&, time_t) {
             std::lock_guard lk(mtx_);
             if (accountId == bobId)
                 bobReceivedRequest_ = true;
@@ -207,8 +205,7 @@ ServiceUpdateIntegrationTest::establishContacts()
         std::unique_lock lk(mtx_);
         CPPUNIT_ASSERT(cv_.wait_for(lk, 60s, [&] {
             for (const auto& ev : pushEvents_) {
-                if (ev.requestId == 0
-                    && ev.status == static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK))
+                if (ev.requestId == 0 && ev.status == static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK))
                     return true;
             }
             return false;
@@ -222,16 +219,14 @@ ServiceUpdateIntegrationTest::establishContacts()
 }
 
 std::string
-ServiceUpdateIntegrationTest::waitForPush(std::function<bool(const std::string&)> pred,
-                                          std::chrono::seconds timeout)
+ServiceUpdateIntegrationTest::waitForPush(std::function<bool(const std::string&)> pred, std::chrono::seconds timeout)
 {
     std::unique_lock lk(mtx_);
     std::string result;
     CPPUNIT_ASSERT(cv_.wait_for(lk, timeout, [&] {
         for (size_t i = pushConsumed_; i < pushEvents_.size(); ++i) {
             const auto& ev = pushEvents_[i];
-            if (ev.requestId == 0
-                && ev.status == static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK)
+            if (ev.requestId == 0 && ev.status == static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK)
                 && pred(ev.servicesJson)) {
                 result = ev.servicesJson;
                 pushConsumed_ = i + 1;
@@ -259,9 +254,7 @@ ServiceUpdateIntegrationTest::testPushOnAdd()
     auto serviceId = alice->serviceManager().addService(rec, alice->rand);
     CPPUNIT_ASSERT(!serviceId.empty());
 
-    auto json = waitForPush([&](const std::string& j) -> bool {
-        return j.find(serviceId) != std::string::npos;
-    });
+    auto json = waitForPush([&](const std::string& j) -> bool { return j.find(serviceId) != std::string::npos; });
     CPPUNIT_ASSERT(json.find("\"name\":\"pushed-svc\"") != std::string::npos);
     CPPUNIT_ASSERT(json.find("\"description\":\"a pushed service\"") != std::string::npos);
 
@@ -285,8 +278,7 @@ ServiceUpdateIntegrationTest::testPushOnUpdate()
 
     // Wait for the add push to arrive.
     waitForPush([&](const std::string& j) -> bool {
-        return j.find(serviceId) != std::string::npos
-               && j.find("\"name\":\"update-me\"") != std::string::npos;
+        return j.find(serviceId) != std::string::npos && j.find("\"name\":\"update-me\"") != std::string::npos;
     });
 
     // Now update the service name.
@@ -298,8 +290,7 @@ ServiceUpdateIntegrationTest::testPushOnUpdate()
 
     // Bob should receive a push with the new name.
     auto json = waitForPush([&](const std::string& j) -> bool {
-        return j.find(serviceId) != std::string::npos
-               && j.find("\"name\":\"updated-name\"") != std::string::npos;
+        return j.find(serviceId) != std::string::npos && j.find("\"name\":\"updated-name\"") != std::string::npos;
     });
     CPPUNIT_ASSERT(json.find("\"name\":\"updated-name\"") != std::string::npos);
 
@@ -322,17 +313,13 @@ ServiceUpdateIntegrationTest::testPushOnRemove()
     CPPUNIT_ASSERT(!serviceId.empty());
 
     // Wait for add push.
-    waitForPush([&](const std::string& j) -> bool {
-        return j.find(serviceId) != std::string::npos;
-    });
+    waitForPush([&](const std::string& j) -> bool { return j.find(serviceId) != std::string::npos; });
 
     // Remove the service.
     CPPUNIT_ASSERT(alice->serviceManager().removeService(serviceId));
 
     // Bob should receive a push where the service is absent.
-    auto json = waitForPush([&](const std::string& j) -> bool {
-        return j.find(serviceId) == std::string::npos;
-    });
+    auto json = waitForPush([&](const std::string& j) -> bool { return j.find(serviceId) == std::string::npos; });
     // The service ID must not appear in the received list.
     CPPUNIT_ASSERT(json.find(serviceId) == std::string::npos);
 }

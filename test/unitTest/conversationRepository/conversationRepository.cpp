@@ -1135,8 +1135,7 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto repository = ConversationRepository::createConversation(aliceAccount);
     CPPUNIT_ASSERT(repository != nullptr);
     const auto convId = repository->id();
-    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
-                          / "conversations" / convId;
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Record the head so we can verify the original history survives the
@@ -1161,8 +1160,9 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     const bool savedFlag = ConversationRepository::FETCH_FROM_LOCAL_REPOS;
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
 
-    auto [clonedRepo, commits] = ConversationRepository::cloneConversation(
-        aliceAccount, "device-that-does-not-exist", convId);
+    auto [clonedRepo, commits] = ConversationRepository::cloneConversation(aliceAccount,
+                                                                           "device-that-does-not-exist",
+                                                                           convId);
 
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = savedFlag;
 

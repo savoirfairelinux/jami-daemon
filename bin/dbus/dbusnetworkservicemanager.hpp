@@ -31,8 +31,7 @@ public:
 
     ~DBusNetworkServiceManager() { unregisterAdaptor(); }
 
-    auto getExposedServices(const std::string& accountId)
-        -> decltype(libjami::getExposedServices(accountId))
+    auto getExposedServices(const std::string& accountId) -> decltype(libjami::getExposedServices(accountId))
     {
         return libjami::getExposedServices(accountId);
     }
@@ -49,14 +48,15 @@ public:
         return libjami::updateExposedService(accountId, service);
     }
 
-    auto removeExposedService(const std::string& accountId, const std::string& serviceId)
-        -> decltype(libjami::removeExposedService(accountId, serviceId))
+    auto removeExposedService(const std::string& accountId,
+                              const std::string& serviceId) -> decltype(libjami::removeExposedService(accountId,
+                                                                                                      serviceId))
     {
         return libjami::removeExposedService(accountId, serviceId);
     }
 
-    auto queryPeerServices(const std::string& accountId, const std::string& peerUri)
-        -> decltype(libjami::queryPeerServices(accountId, peerUri))
+    auto queryPeerServices(const std::string& accountId,
+                           const std::string& peerUri) -> decltype(libjami::queryPeerServices(accountId, peerUri))
     {
         return libjami::queryPeerServices(accountId, peerUri);
     }
@@ -72,14 +72,13 @@ public:
         return libjami::openServiceTunnel(accountId, peerUri, peerDevice, serviceId, serviceName, localPort);
     }
 
-    auto closeServiceTunnel(const std::string& accountId, const std::string& tunnelId)
-        -> decltype(libjami::closeServiceTunnel(accountId, tunnelId))
+    auto closeServiceTunnel(const std::string& accountId,
+                            const std::string& tunnelId) -> decltype(libjami::closeServiceTunnel(accountId, tunnelId))
     {
         return libjami::closeServiceTunnel(accountId, tunnelId);
     }
 
-    auto getActiveTunnels(const std::string& accountId)
-        -> decltype(libjami::getActiveTunnels(accountId))
+    auto getActiveTunnels(const std::string& accountId) -> decltype(libjami::getActiveTunnels(accountId))
     {
         return libjami::getActiveTunnels(accountId);
     }

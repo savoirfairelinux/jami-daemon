@@ -71,10 +71,7 @@ public:
         thread_ = std::thread([this] { run(); });
     }
 
-    ~TinyEchoServer()
-    {
-        stop();
-    }
+    ~TinyEchoServer() { stop(); }
 
     void stop()
     {
@@ -139,8 +136,7 @@ class ServiceIntegrationTest : public CppUnit::TestFixture
 public:
     ServiceIntegrationTest()
     {
-        libjami::init(
-            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -306,8 +302,7 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
         CPPUNIT_ASSERT(cv_.wait_for(lk, 60s, [&] { return receivedReqId == reqId; }));
     }
     CPPUNIT_ASSERT_EQUAL(aliceUri, receivedPeer);
-    CPPUNIT_ASSERT_EQUAL(static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK),
-                         receivedStatus.load());
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK), receivedStatus.load());
     CPPUNIT_ASSERT(receivedJson.find(serviceId) != std::string::npos);
     CPPUNIT_ASSERT(receivedJson.find("\"name\":\"echo\"") != std::string::npos);
 
