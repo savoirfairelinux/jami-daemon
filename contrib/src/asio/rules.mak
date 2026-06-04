@@ -1,4 +1,4 @@
-ASIO_VERSION := asio-1-38-0
+ASIO_VERSION := bd500f0a018db9a845ebaaed5c0318343ae9f497
 PKG_CPE += cpe:2.3:a:*:asio:1.38.0:*:*:*:*:*:*:*
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
