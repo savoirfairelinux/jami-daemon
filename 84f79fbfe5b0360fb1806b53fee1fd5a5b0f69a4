@@ -58,6 +58,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d2cdfe3_784aa57e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 2265,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-04T17:24:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7e1f8ad9_73bc54c2",
+      "range": {
+        "startLine": 2265,
+        "startChar": 17,
+        "endLine": 2265,
+        "endChar": 61
+      },
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e9783037_ed824576",
@@ -88,6 +112,30 @@
       "writtenOn": "2026-06-01T14:10:38Z",
       "side": 1,
       "message": "Calling `removeMember` should result in getting disconnected from the device/peer. It\u0027d be good to check this in the test as well.",
+      "range": {
+        "startLine": 148,
+        "startChar": 4,
+        "endLine": 148,
+        "endChar": 28
+      },
+      "revId": "84f79fbfe5b0360fb1806b53fee1fd5a5b0f69a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f72cdf74_abf3eefd",
+        "filename": "test/unitTest/conversation/conversationBanStatus.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-04T17:24:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7c4bab90_a162ba8f",
       "range": {
         "startLine": 148,
         "startChar": 4,
