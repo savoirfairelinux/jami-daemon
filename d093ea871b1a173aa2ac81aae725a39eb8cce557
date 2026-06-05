@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b9cf5661_f641fa08",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 1992,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:55:00Z",
+      "side": 1,
+      "message": "[Critical] Line 1992: 🔴 Critical Issues: body overwrite state is stored under the single shared key `pluginData[\"bodyOverwrite\"]`, but the plugin services are scoped per plugin and comments say unrelated plugins should not be affected. `clearBodyOverwrites()` clears that shared key for every loaded message in the conversation, so disabling or reconfiguring one plugin can remove another plugin\u0027s overwrite. Similarly, multiple active handlers overwrite each other in `transformSwarmMessages()`. Namespace overwrite data by plugin identity, or have the manager pass the calling plugin/handler id through update/clear/reload and only clear that plugin\u0027s key.\n\n```suggestion\nconst auto key \u003d fmt::format(\"bodyOverwrite:{}\", pluginId);\nmsg-\u003epluginData.erase(key);\n```",
+      "revId": "d093ea871b1a173aa2ac81aae725a39eb8cce557",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52a80433_f47b3ee6",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:55:00Z",
+      "side": 1,
+      "message": "Line 232: 🟡 Suggestion: `editMessageService` catches all `std::exception`s, logs them, and still returns success. Callers cannot distinguish a successful edit from a failed one, and validation failures for missing `body`/`edit` also return `0`. Return `-1` on invalid input or caught failures, and check `convModule()` before dereferencing.\n\n```suggestion\nconst auto bodyIt \u003d cm-\u003edata.find(CommitKey::BODY);\nconst auto editIt \u003d cm-\u003edata.find(CommitKey::EDIT);\nif (bodyIt \u003d\u003d cm-\u003edata.end() || editIt \u003d\u003d cm-\u003edata.end())\n    return -1;\nif (auto* convMod \u003d acc-\u003econvModule())\n    convMod-\u003eeditMessage(cm-\u003epeerId, bodyIt-\u003esecond, editIt-\u003esecond);\nelse\n    return -1;\n```",
+      "revId": "d093ea871b1a173aa2ac81aae725a39eb8cce557",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cad3be19_46b6beb4",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 269,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:55:00Z",
+      "side": 1,
+      "message": "Line 269: 🟡 Suggestion: `transformSwarmMessages()` holds `mtx_` while invoking plugin-controlled virtual code. Other paths in this patch explicitly avoid this because plugin callbacks may call back into `ChatServicesManager`; this path can deadlock or block all chat-service operations while a plugin performs slow work. Snapshot the eligible handlers under the lock, then invoke them after releasing it.\n\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToTransform;\n{\n    std::lock_guard const lk(mtx_);\n    // populate handlersToTransform from active/allowed handlers\n}\nfor (auto* handler : handlersToTransform) {\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "d093ea871b1a173aa2ac81aae725a39eb8cce557",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
