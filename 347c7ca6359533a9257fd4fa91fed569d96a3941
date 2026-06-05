@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8239d447_d8cb7e7d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 1908,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:09:36Z",
+      "side": 1,
+      "message": "Line 1908: 🟡 Suggestions - `loadMissingBodyOverwrites()` treats messages with no overwrite as permanently missing because it only writes `pluginData[\"bodyOverwrite\"]` when the transform returns a non-empty value. Conversations with many untranslated/plain messages will be reprocessed on every load or plugin attach, repeatedly invoking plugin transforms for messages that were already checked. Add a local processed marker, or cache negative results separately from the displayed `bodyOverwrite`.\n\n```suggestion\nit-\u003esecond-\u003epluginData[\"bodyOverwriteChecked\"] \u003d \"true\";\nif (!boIt-\u003esecond.empty())\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n```",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9145e970_aac46c75",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 2015,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:09:36Z",
+      "side": 1,
+      "message": "[Critical] Line 2015: 🔴 Critical Issues - `clearBodyOverwrites()` removes the single shared `pluginData[\"bodyOverwrite\"]` value for the whole conversation. The caller is scoped to one plugin, but the stored data is not, so disabling or reconfiguring one plugin can erase another plugin\u0027s overwrite for the same loaded messages. Store body overwrites with plugin ownership, or pass the plugin identity through to `Conversation` and clear only that plugin\u0027s entry before recomputing the effective `bodyOverwrite`.\n\n```suggestion\n// Example shape: keep per-plugin data separate, then derive the displayed value.\nmsg-\u003epluginData.erase(\"bodyOverwrite:\" + pluginId);\nmsg-\u003epluginData[\"bodyOverwrite\"] \u003d selectEffectiveBodyOverwrite(msg-\u003epluginData);\n```",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94da234a_ff689f0b",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:09:36Z",
+      "side": 1,
+      "message": "[Critical] Line 247: 🔴 Critical Issues - The scoped services `clearSwarmBodyOverwriteConversation` and `bodyOverwriteLoadedConversation` ignore the `DLPlugin*` argument and trust the caller-provided account/conversation pair. That lets any plugin clear or trigger body-overwrite processing for conversations where it is not enabled. Apply the same authorization check used by `updateMessageBodyOverwrite` before touching the conversation.\n\n```suggestion\nauto clearSwarmBodyOverwriteConversation \u003d [this](const DLPlugin* plugin, void* data) {\n    const auto* p \u003d static_cast\u003cstd::pair\u003cstd::string, std::string\u003e*\u003e(data);\n    if (!p)\n        return -1;\n    if (!getEnabledConversationsForPlugin(plugin).contains(*p))\n        return -1;\n    // existing lookup and clearBodyOverwrites()\n    return 0;\n};\n```",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa2e5a83_62de4263",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 321,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T14:09:36Z",
+      "side": 1,
+      "message": "[Critical] Line 321: 🔴 Critical Issues - `transformSwarmMessages` holds `mtx_` while calling plugin code. Other methods in this patch explicitly avoid this because plugin callbacks can invoke services that acquire the same mutex, causing deadlocks; plugins can also perform slow work and block all chat-service state. Snapshot the eligible handlers under the lock, then call `handler-\u003etransformSwarmMessages(...)` after releasing it.\n\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToCall;\n{\n    std::lock_guard const lk(mtx_);\n    // populate handlersToCall for toggled/allowed handlers\n}\nfor (auto* handler : handlersToCall)\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n```",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
