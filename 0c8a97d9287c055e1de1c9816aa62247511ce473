@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4069a4f2_678b5912",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 39
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "34699fd2_da8ac30b",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3a5bc716_88142925",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-03T14:44:08Z",
       "side": 1,
       "message": "[Good Practice] Line 502: Good concurrency pattern: the patch copies message snapshots under loadedHistory_.mutex, runs plugin transforms outside the lock, then reacquires the lock to write back and emit outside the lock. That avoids holding the history mutex across plugin code and signal emission.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc82c690_c119ad5f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "3a5bc716_88142925",
       "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9dd80cf4_75d881ee",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e05fc674_df884ccc",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3535bfa6_b0cd248a",
@@ -65,6 +119,24 @@
       "writtenOn": "2026-06-03T14:44:08Z",
       "side": 1,
       "message": "Line 2053: Messages for which a plugin does not produce bodyOverwrite are treated as missing forever. Every future load/reload will re-run plugin transformations for the same messages and editions, which can become expensive on large conversations and may repeatedly invoke external plugin work. Store an explicit processed/empty marker or track a generation/version so unchanged messages are not transformed repeatedly when no overwrite is produced.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "300b8fde_a5603862",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2053,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "3535bfa6_b0cd248a",
       "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8253931_8eac04e6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "ffa3eb37_9546c447",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "89fe80a3_4b88a570",
@@ -99,6 +189,24 @@
       "writtenOn": "2026-06-03T14:44:08Z",
       "side": 1,
       "message": "[Critical] Line 2287: loadSwarmUntil has the same ordering problem as loadConversation: SwarmLoaded is sent before plugin body overwrites are loaded, so callers of this API get unprocessed data first. Ensure transformations are completed before emitting the loaded batch, ideally by integrating the transformation into the loadMessages result path rather than sending corrective updates afterward.",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0751d23_56a837ed",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 2287,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "89fe80a3_4b88a570",
       "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -117,6 +225,24 @@
       "side": 1,
       "message": "INFO SonarQube violation:\n\n\nC++ Parser can\u0027t read code. Declaration is skipped (last token\u003d\u0027\"([a-zA-Z0-9_]+.(dylib|so|dll|lib).*)\"\u0027, line\u003d73, column\u003d55).\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dcxx%3AParsingErrorRecovery",
       "tag": "autogenerated:sonar",
+      "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2041ebfd_ab4a7f04",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T14:54:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fe44938d_00e0a5a7",
       "revId": "0c8a97d9287c055e1de1c9816aa62247511ce473",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
