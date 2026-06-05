@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d311b44_e77cfe70",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 1947,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:27:52Z",
+      "side": 1,
+      "message": "Line 1947: loadMissingBodyOverwrites() transforms every loaded TEXT commit without checking whether it is an edition commit or a visible parent message, then emits one update per transformed commit. On large histories this can synchronously call plugin code hundreds/thousands of times immediately after loading, which is expensive and can flood SwarmMessageUpdated signals. Batch messages into a single transform call and emit at most one update per affected parent message.\n```suggestion\nstd::vector\u003clibjami::SwarmMessage\u003e batch;\n// collect snapshots\npluginChatManager.transformSwarmMessages(batch, accountId_, convId);\n// write results back and collect unique parent ids to signal once\n```",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c0fe2ce4_5dd0d348",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:27:52Z",
+      "side": 1,
+      "message": "[Critical] Line 2256: SwarmLoaded is emitted before plugin body overwrites are loaded, so clients first receive unmodified message bodies and only later receive update signals. This contradicts the new ChatHandler contract that transformations happen before SwarmLoaded and can cause visible flicker/stale UI state. Load/apply overwrites before emitting SwarmLoaded, or transform the messages passed to the callback before emission.\n```suggestion\n#ifdef ENABLE_PLUGIN\nif (const auto convPtr \u003d convWeak.lock()) {\n    convPtr-\u003eloadMissingBodyOverwrites();\n}\n#endif\nemitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "791b1eec_cc378229",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:27:52Z",
+      "side": 1,
+      "message": "Line 127: updateMessageBodyOverwrite() accepts an arbitrary-size bodyOverwrite from plugin code and stores it in memory for the loaded conversation. A buggy or malicious plugin can repeatedly submit very large strings and force excessive daemon memory use. Enforce a reasonable size limit consistent with message body limits before storing/signalling the overwrite.\n```suggestion\nif (upd-\u003ebodyOverwrite.size() \u003e MAX_MESSAGE_BODY_SIZE) {\n    JAMI_WARNING(\"updateMessageBodyOverwrite: overwrite too large for {}/{}\", upd-\u003eaccountId, upd-\u003econversationId);\n    return -1;\n}\n```",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76569605_dcfbf274",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:27:52Z",
+      "side": 1,
+      "message": "[Critical] Line 282: transformSwarmMessages() holds ChatServicesManager::mtx_ while calling plugin code. Other paths in this patch explicitly avoid invoking plugin callbacks under this mutex because handlers can call back into ChatServicesManager services; this path reintroduces the same deadlock risk during loadMissingBodyOverwrites()/message processing. Snapshot the enabled handlers under the lock, then invoke transformSwarmMessages() after releasing it.\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToTransform;\n{\n    std::lock_guard const lk(mtx_);\n    // populate handlersToTransform from toggled/allowed handlers\n}\nfor (auto* handler : handlersToTransform) {\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
