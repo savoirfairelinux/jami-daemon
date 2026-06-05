@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95049dcd_b0dcb8ad",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 2256,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T15:07:55Z",
+      "side": 1,
+      "message": "[Major] Line 2256: SwarmLoaded is emitted before loadMissingBodyOverwrites() runs, so the initial payload sent to clients does not include the plugin body overwrites. Clients will render original bodies first and only later receive SwarmMessageUpdated, which contradicts the ChatHandler API comment saying transforms happen before SwarmLoaded. Apply transforms before emitting SwarmLoaded, or update the API/comment to make the async update behavior explicit.",
+      "revId": "67805d5f8d70aea3f9e25ba0bba0a9ce17262503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "472eaa24_7401c358",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T15:07:55Z",
+      "side": 1,
+      "message": "[Critical] Line 144: transformSwarmMessages() holds ChatServicesManager::mtx_ while invoking plugin code. Plugin transforms can be slow and can call back into registered services that acquire the same mutex, creating the same deadlock pattern this patch fixes elsewhere. Snapshot eligible handlers under the lock, then invoke them outside it.\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToTransform;\n{\n    std::lock_guard const lk(mtx_);\n    // populate handlersToTransform using chatHandlerToggled_/allowDenyList_\n}\nfor (auto* handler : handlersToTransform) {\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "67805d5f8d70aea3f9e25ba0bba0a9ce17262503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2344e92f_fbbd8375",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T15:07:55Z",
+      "side": 1,
+      "message": "[Critical] Line 239: The service authorization is per-plugin, but the stored value is a single shared pluginData[\"bodyOverwrite\"]. clearSwarmBodyOverwrite(), reloadBodyOverwriteConversations(), and updateMessageBodyOverwrite() can overwrite or clear another enabled plugin\u0027s body overwrite in the same conversation. This violates the stated isolation and will cause incorrect UI state when more than one chat plugin transforms bodies. Store overwrites under a plugin-scoped key or keep per-plugin overwrite state and resolve the active value deterministically before emitting updates.",
+      "revId": "67805d5f8d70aea3f9e25ba0bba0a9ce17262503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "307b5aad_ccb9a50b",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T15:07:55Z",
+      "side": 1,
+      "message": "[Major] Line 250: updateMessageBodyOverwrite() validates accountId/conversationId but not messageId. An enabled plugin can request an empty or arbitrary message id; the current Conversation method silently returns when not found, which makes plugin errors hard to diagnose and can hide misuse. Reject empty messageId at the service boundary and log not-found cases in Conversation::updateMessageBodyOverwrite().\n```suggestion\nif (!upd || upd-\u003eaccountId.empty() || upd-\u003econversationId.empty() || upd-\u003emessageId.empty()) {\n    return -1;\n}\n```",
+      "revId": "67805d5f8d70aea3f9e25ba0bba0a9ce17262503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
