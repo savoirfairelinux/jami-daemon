@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f05a274f_a5f64a51",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 46
+      },
+      "lineNbr": 2004,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T13:53:08Z",
+      "side": 1,
+      "message": "[Critical] Line 2004: Body-overwrite data is stored in one shared pluginData[\"bodyOverwrite\"] slot, but clearBodyOverwrites() is called for a single plugin and erases that shared slot from every affected message. If multiple chat plugins are enabled, unloading or changing one plugin can remove another plugin\u0027s overwrite, and updateMessageBodyOverwrite can overwrite another plugin\u0027s value. Namespace the cached overwrite by plugin identity or pass the plugin identity through Conversation so only that plugin\u0027s cached value is cleared/reloaded, then derive the displayed bodyOverwrite deterministically from enabled plugins.",
+      "revId": "e43c1b72177a5189dbf28e518c2477fb90dbc99d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74931c61_33873f48",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 46
+      },
+      "lineNbr": 2258,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T13:53:08Z",
+      "side": 1,
+      "message": "[Major] Line 2258: loadMissingBodyOverwrites() is run only after SwarmLoaded is emitted. That means clients first receive unmodified messages and then a burst of SwarmMessageUpdated signals, which conflicts with the new ChatHandler contract saying transforms happen before SwarmLoaded is emitted. Move the transform step before emitting SwarmLoaded, or update the API/comment to reflect the asynchronous update behavior.",
+      "revId": "e43c1b72177a5189dbf28e518c2477fb90dbc99d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a63d1bab_971af075",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 46
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T13:53:08Z",
+      "side": 1,
+      "message": "[Critical] Line 215: editMessageService validates that the plugin is enabled for the conversation, but it does not validate that the target message belongs to the plugin/handler or was authored by the local account before calling convModule()-\u003eeditMessage. A plugin enabled in a conversation can therefore attempt to edit any message id it knows. Add an ownership/authorization check before forwarding the edit, or constrain this service to plugin-created messages only.",
+      "revId": "e43c1b72177a5189dbf28e518c2477fb90dbc99d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36eb18fd_3feab748",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 46
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T13:53:08Z",
+      "side": 1,
+      "message": "[Critical] Line 239: The scoped body-overwrite services accept an account/conversation pair without checking that the calling plugin is enabled for that conversation. This bypasses the authorization checks added to updateMessageBodyOverwrite/editMessage and lets any plugin clear or trigger body-overwrite processing for arbitrary loaded conversations. Make these lambdas capture this and reject pairs not returned by getEnabledConversationsForPlugin(plugin).\n```suggestion\nauto clearSwarmBodyOverwriteConversation \u003d [this](const DLPlugin* plugin, void* data) {\n    const auto* p \u003d static_cast\u003cstd::pair\u003cstd::string, std::string\u003e*\u003e(data);\n    if (!p)\n        return -1;\n    if (const auto enabled \u003d getEnabledConversationsForPlugin(plugin); !enabled.contains(*p))\n        return -1;\n    ...\n};\n```",
+      "revId": "e43c1b72177a5189dbf28e518c2477fb90dbc99d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "136d6fab_8ac0c709",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 46
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T13:53:08Z",
+      "side": 1,
+      "message": "[Critical] Line 297: transformSwarmMessages holds mtx_ while invoking plugin code. This contradicts the surrounding deadlock fixes: plugin callbacks may call registered services that acquire the same mutex, and slow transforms block all chat-handler state. Snapshot the enabled handlers under the lock, then call transformSwarmMessages outside it.\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToTransform;\n{\n    std::lock_guard const lk(mtx_);\n    ...\n    if (toggled || allowed)\n        handlersToTransform.push_back(handler.get());\n}\nfor (auto* handler : handlersToTransform)\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n```",
+      "revId": "e43c1b72177a5189dbf28e518c2477fb90dbc99d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
