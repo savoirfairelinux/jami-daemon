@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "073469c7_bcd7a7de",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1320,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:20:13Z",
+      "side": 1,
+      "message": "[Major] Line 1320: When applying pending editions in handleMessage(), latestEditionId is set to peditIt-\u003esecond.front()-\u003eid before older pending editions are replayed, but the final visible body corresponds to the last pending edition applied. This can tag the next superseded body with the wrong edition id, causing bodyOverwrite injection to associate plugin data with the wrong historical body. Update latestEditionId to the id of the edition that actually produced the current body after all pending editions are processed.\n```suggestion\nauto latestEditionId \u003d peditIt-\u003esecond.front()-\u003eid;\n...\nfor (const auto\u0026 commit : peditIt-\u003esecond) {\n    auto edBody \u003d commit-\u003ebody;\n    edBody[\"id\"] \u003d latestEditionId;\n    sharedCommit-\u003eeditions.emplace_back(std::move(edBody));\n    latestEditionId \u003d commit-\u003eid;\n}\nsharedCommit-\u003elatestEditionId \u003d latestEditionId;\n```",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22eb652c_e07161ee",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:20:13Z",
+      "side": 1,
+      "message": "[Major] Line 1919: loadMissingBodyOverwrites() only stores successful non-empty overwrites. Messages for which the plugin returns no overwrite remain indistinguishable from messages that were never processed, so every later load/reload scans and retransforms the same history again. This can become expensive on large conversations and can repeatedly call plugin code for unchanged messages. Store a sentinel/processed state separately from the overwrite value, or explicitly mark empty results as processed while keeping them out of the API-visible payload.\n```suggestion\n// Example approach: track processed state separately from the displayed value.\nit-\u003esecond-\u003epluginData[\"bodyOverwriteLoaded\"] \u003d \"true\";\nif (!bodyOverwrite.empty())\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bodyOverwrite;\nelse\n    it-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n```",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05c7dd5b_3f8aacfc",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:20:13Z",
+      "side": 1,
+      "message": "[Critical] Line 68: sendTextMessage() dereferences cm without validating the service payload, unlike the new edit/update services. A malformed or buggy plugin can crash the daemon by invoking this service with a null pointer. Add a null check before accessing cm fields.\n```suggestion\nint\nChatServicesManager::sendTextMessage(const DLPlugin*, const JamiMessage* cm)\n{\n    if (!cm || cm-\u003eaccountId.empty() || cm-\u003epeerId.empty()) {\n        return -1;\n    }\n    if (const auto acc \u003d jami::Manager::instance().getAccount\u003cjami::JamiAccount\u003e(cm-\u003eaccountId)) {\n        ...\n    }\n    return 0;\n}\n```",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c1cbb14_42b19511",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-05T17:20:13Z",
+      "side": 1,
+      "message": "[Critical] Line 319: transformSwarmMessages() holds mtx_ while invoking ChatHandler::transformSwarmMessages(), which is plugin-controlled code. Other changes in this patch explicitly avoid calling plugin callbacks while holding this mutex because callbacks can invoke services that reacquire mtx_, so this reintroduces a deadlock path during message loading. Snapshot the enabled handlers under the lock, release it, then invoke the handlers.\n```suggestion\n    std::vector\u003cChatHandler*\u003e handlersToTransform;\n    {\n        std::lock_guard const lk(mtx_);\n        std::pair\u003cstd::string, std::string\u003e const key(accountId, conversationId);\n        const auto toggledIt \u003d chatHandlerToggled_.find(key);\n        const auto allowIt \u003d allowDenyList_.find(key);\n        for (auto\u0026 handler : chatHandlers_) {\n            const auto handlerName \u003d handler-\u003egetChatHandlerDetails().at(\"name\");\n            const bool toggled \u003d toggledIt !\u003d chatHandlerToggled_.end()\n                                 \u0026\u0026 toggledIt-\u003esecond.contains(reinterpret_cast\u003cuintptr_t\u003e(handler.get()));\n            const bool allowed \u003d allowIt !\u003d allowDenyList_.end()\n                                 \u0026\u0026 allowIt-\u003esecond.contains(handlerName)\n                                 \u0026\u0026 allowIt-\u003esecond.at(handlerName);\n            if (toggled || allowed)\n                handlersToTransform.push_back(handler.get());\n        }\n    }\n    for (auto* handler : handlersToTransform)\n        handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n```",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
