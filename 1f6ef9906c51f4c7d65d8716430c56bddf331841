@@ -52,6 +52,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ea496df_2b9770c0",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 2258,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-05T17:27:34Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "cbf8e6d8_623b873a",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "92a490e1_42f05fa7",
