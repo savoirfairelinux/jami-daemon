@@ -492,9 +492,17 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjam
         ->call(uri.authority(), mediaList, [this, uri](const auto& accountUri, const auto& deviceId, const auto& call) {
             if (!call)
                 return;
+
+            std::string peerId = accountUri;
+            if (uri.scheme() == Uri::Scheme::RENDEZVOUS) {
+                auto parts = jami::split_string(accountUri, '/');
+                if (parts.size() == 4)
+                    peerId = std::string(parts[1]);
+            }
+
             std::unique_lock lkSipConn(sipConnsMtx_);
             for (auto& [key, value] : sipConns_) {
-                if (key.first != accountUri || key.second != deviceId)
+                if (key.first != peerId || key.second != deviceId)
                     continue;
                 if (value.empty())
                     continue;
@@ -509,6 +517,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjam
                 if (!transport or !sipConn.channel)
                     continue;
                 call->setState(Call::ConnectionState::PROGRESSING);
+                call->setSipTransport(transport, getContactHeader(transport));
 
                 auto remoted_address = sipConn.channel->getRemoteAddress();
                 try {
@@ -532,7 +541,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjam
             // Else, ask for a channel (for future calls/text messages)
             auto type = call->hasVideo() ? "videoCall" : "audioCall";
             JAMI_WARNING("[call {}] No channeled socket with this peer. Send request", call->getCallId());
-            requestSIPConnection(accountUri, deviceId, type, true, call);
+            requestSIPConnection(peerId, deviceId, type, true, call);
         });
 }
 
