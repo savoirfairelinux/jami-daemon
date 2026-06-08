@@ -4009,8 +4009,22 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         "sip",
         [w = weak(), id = std::move(id), pc = std::move(pc)](const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                                                              const DeviceId&) {
-            if (socket)
+            if (socket) {
+                // connectDevice reused an existing channel (uniqueName path).
+                // onConnectionReady won't fire again, so we must wire up any
+                // pending calls to the existing SIP transport ourselves.
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                auto cert = socket->peerCertificate();
+                if (cert && cert->issuer) {
+                    auto peerId = cert->issuer->getId().toString();
+                    shared->cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>(socket),
+                                               peerId,
+                                               id.second);
+                }
                 return;
+            }
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -4149,7 +4163,25 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     auto& connections = sipConns_[key];
     auto conn = std::find_if(connections.begin(), connections.end(), [&](const auto& v) { return v.channel == socket; });
     if (conn != connections.end()) {
-        JAMI_WARNING("[Account {}] Channel socket already cached with this peer", getAccountID());
+        // Channel already cached. Still run forEachPendingCall in case new pending
+        // calls were queued after the initial cache (e.g. rejoin after hang-up when
+        // the uniqueName path reuses the existing channel).
+        JAMI_WARNING("[Account {}] Channel socket already cached with this peer — checking pending calls", getAccountID());
+        auto transport = conn->transport;
+        auto remote_address = socket->getRemoteAddress();
+        lk.unlock();
+        forEachPendingCall(deviceId, [&](const auto& pc) {
+            if (pc->getConnectionState() != Call::ConnectionState::TRYING
+                and pc->getConnectionState() != Call::ConnectionState::PROGRESSING)
+                return;
+            pc->setSipTransport(transport, getContactHeader(transport));
+            pc->setState(Call::ConnectionState::PROGRESSING);
+            if (remote_address) {
+                try {
+                    onConnectedOutgoingCall(pc, peerId, remote_address);
+                } catch (const VoipLinkException&) {}
+            }
+        });
         return;
     }
 
