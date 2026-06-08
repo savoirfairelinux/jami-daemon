@@ -2,6 +2,16 @@
 PJPROJECT_VERSION := 00ce02ff8c0c16d3570f7c33659c56b8b4dfebb9
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
+# pjproject's aconfigure locates the GnuTLS *library* through pkg-config, but it
+# probes the GnuTLS *header* under "<prefix>/include", where <prefix> is the value
+# passed to --with-gnutls (it adds -I<prefix>/include unconditionally).
+# Resolve the real GnuTLS prefix via pkg-config so both the header and library checks succeed;
+# fall back to the contrib prefix for cross builds where GnuTLS is built into contrib.
+ifndef IGNORE_SYSTEM_LIBS
+PJPROJECT_GNUTLS_PREFIX := $(shell $(PKG_CONFIG) --variable=prefix gnutls 2>/dev/null)
+endif
+PJPROJECT_GNUTLS_PREFIX ?= $(PREFIX)
+
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
                      --enable-ext-sound     \
@@ -22,7 +32,7 @@ PJPROJECT_OPTIONS := --disable-sound        \
                      --disable-openh264     \
                      --disable-resample     \
                      --disable-libwebrtc    \
-                     --with-gnutls=yes
+                     --with-gnutls=$(PJPROJECT_GNUTLS_PREFIX)
 
 PKGS += pjproject
 
