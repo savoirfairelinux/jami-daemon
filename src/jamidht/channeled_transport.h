@@ -22,13 +22,7 @@
 #include <dhtnet/multiplexed_socket.h>
 
 #include <atomic>
-#include <condition_variable>
-#include <chrono>
-#include <list>
 #include <memory>
-#include <thread>
-#include <type_traits>
-#include <utility>
 
 namespace jami {
 
