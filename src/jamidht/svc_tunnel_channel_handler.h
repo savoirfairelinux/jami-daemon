@@ -51,8 +51,14 @@ namespace jami {
  *    socket. The same tunnel can therefore serve multiple simultaneous TCP
  *    connections to the same remote service.
  *
- *  `closeTunnel()` shuts down the local acceptor; existing per-connection
- *  channels survive until they are closed by either side.
+ *  `closeTunnel()` shuts down the local acceptor and tears down every
+ *  per-connection relay currently serving the tunnel.
+ *
+ *  If a freshly-accepted local connection cannot reach the remote service
+ *  (e.g. the peer device is unreachable and `connectDevice` yields no
+ *  channel), the whole tunnel is closed automatically and `onClosed` is
+ *  invoked with the reason "connect-failed" so the client is notified
+ *  instead of being left with a dead listener.
  */
 class SvcTunnelChannelHandler : public ChannelHandlerInterface
 {
@@ -110,7 +116,8 @@ public:
                            OnTunnelClosed onClosed);
 
     /// Stop a tunnel previously created with openTunnel. Returns true if a
-    /// tunnel with this id was found.
+    /// tunnel with this id was found. `onClosed` is invoked with the reason
+    /// "closed".
     bool closeTunnel(const std::string& tunnelId);
 
     /// Server-side: shutdown every active tunnel channel currently serving
@@ -128,6 +135,10 @@ public:
 private:
     struct ClientTunnel;
     void acceptLoop(const std::shared_ptr<ClientTunnel>& tunnel);
+    /// Shared implementation behind closeTunnel(): removes the tunnel,
+    /// shuts down its acceptor and every live per-connection relay, then
+    /// fires `onClosed` with `reason`. Returns true if the tunnel existed.
+    bool closeTunnelInternal(const std::string& tunnelId, const std::string& reason);
     void onClientChannelReady(const std::shared_ptr<ClientTunnel>& tunnel,
                               std::shared_ptr<asio::ip::tcp::socket> tcp,
                               std::shared_ptr<dhtnet::ChannelSocket> channel);
