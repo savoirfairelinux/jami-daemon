@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cf1fba5_92c379ce",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-10T11:29:19Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 915: The catch parameter is named but never used. This project commonly builds with strict warning settings, so this can fail compilation under -Wunused-parameter/-Werror. Either omit the parameter or include the validation error text in the log. Suggested fix:\n```suggestion\n    } catch (const InvalidRepositoryError\u0026) {\n```",
+      "revId": "050bdd45b9d7464a56312993e0e1236088989d28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6935a9fc_8ea096a9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 947,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-10T11:29:19Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 947: The validation-failure retry path schedules fallbackClone without cancelling any existing pending wait. If multiple clone attempts fail close together, older waits can still fire and trigger extra clone attempts even after the conversation is close to or marked unrecoverable. Cancel the previous timer before arming a new one, matching the intended single backoff loop.\n```suggestion\n            conv-\u003efallbackClone-\u003ecancel();\n            conv-\u003efallbackClone-\u003eexpires_at(std::chrono::steady_clock::now() + conv-\u003efallbackTimer);\n```",
+      "revId": "050bdd45b9d7464a56312993e0e1236088989d28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe93f3be_acdab5de",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2898,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-10T11:29:19Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2898: Changing validation failure from an empty optional return to an exception changes the contract of cloneConversation for every caller. Please ensure all call sites that can reach this path catch InvalidRepositoryError; otherwise a validation failure outside handlePendingConversation can propagate unexpectedly and skip existing error handling. If handlePendingConversation is the only intended caller, consider documenting that in the declaration or keeping the exception translated at the closest boundary.",
+      "revId": "050bdd45b9d7464a56312993e0e1236088989d28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
