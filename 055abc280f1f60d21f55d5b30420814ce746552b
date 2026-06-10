@@ -342,6 +342,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "41c8a9d4_3e029642",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-10T20:57:26Z",
+      "side": 1,
+      "message": "JAMI_ERROR",
+      "range": {
+        "startLine": 256,
+        "startChar": 12,
+        "endLine": 256,
+        "endChar": 21
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "93a47667_a6783511",
         "filename": "src/plugin/pluginsutils.cpp",
         "patchSetId": 53
