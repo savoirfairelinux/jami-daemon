@@ -215,6 +215,18 @@ protected:
     void setHasNativeAEC(bool hasEAC);
     void setHasNativeNS(bool hasNS);
 
+    /**
+     * Hardware (analog) capture gain control, used by the audio processor's
+     * automatic gain control when the platform can drive the real microphone
+     * level. The level is expressed in webrtc's [0, 255] range.
+     *
+     * The default implementation reports no hardware support, so the audio
+     * processor emulates the analog gain internally.
+     */
+    virtual bool hasHardwareCaptureGain() const { return false; }
+    virtual int getHardwareCaptureGain() const { return 0; }
+    virtual void setHardwareCaptureGain(int /*level*/) {}
+
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
     std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples)
