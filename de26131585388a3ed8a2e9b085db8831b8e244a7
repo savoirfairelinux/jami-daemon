@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e019fa51_51662217",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3162,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-10T18:17:31Z",
+      "side": 1,
+      "message": "```suggestion\n        v[\"available\"] \u003d(forceAvailableDevice \u0026\u0026 *forceAvailableDevice \u003d\u003d s.deviceId) || std::find(onlineDevices.begin(), onlineDevices.end(), s.deviceId) !\u003d onlineDevices.end();\n```",
+      "range": {
+        "startLine": 3160,
+        "startChar": 1,
+        "endLine": 3162,
+        "endChar": 35
+      },
+      "revId": "de26131585388a3ed8a2e9b085db8831b8e244a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9b25d925_63b383f3",
         "filename": "src/jamidht/svc_tunnel_channel_handler.cpp",
         "patchSetId": 1
