@@ -148,12 +148,19 @@ private:
     static void source_input_info_callback(pa_context* c, const pa_source_info* i, int eol, void* userdata);
     static void sink_input_info_callback(pa_context* c, const pa_sink_info* i, int eol, void* userdata);
     static void server_info_callback(pa_context*, const pa_server_info* i, void* userdata);
+    static void source_volume_info_callback(pa_context* c, const pa_source_info* i, int eol, void* userdata);
 
     virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
 
     virtual int getIndexCapture() const;
     virtual int getIndexPlayback() const;
     virtual int getIndexRingtone() const;
+
+    // Analog gain control: drive the microphone (source) volume from the audio
+    // processor's automatic gain control.
+    bool hasHardwareCaptureGain() const override;
+    int getHardwareCaptureGain() const override;
+    void setHardwareCaptureGain(int level) override;
 
     void waitForDevices();
     void waitForDeviceList();
@@ -248,6 +255,11 @@ private:
     AudioPreference& preference_;
 
     pa_operation* subscribeOp_ {nullptr};
+
+    // Cached microphone (source) volume in webrtc's [0, 255] range, kept in
+    // sync with the hardware by the analog automatic gain control. -1 = unknown.
+    std::atomic_int captureAnalogLevel_ {-1};
+
     friend class AudioLayerTest;
 };
 

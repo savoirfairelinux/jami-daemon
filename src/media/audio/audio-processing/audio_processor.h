@@ -24,6 +24,7 @@
 #include "logger.h"
 
 #include <atomic>
+#include <functional>
 #include <memory>
 
 namespace jami {
@@ -87,6 +88,22 @@ public:
      */
     virtual void enableVoiceActivityDetection(bool enabled) = 0;
 
+    using AnalogLevelGetter = std::function<int()>;
+    using AnalogLevelSetter = std::function<void(int)>;
+
+    /**
+     * @brief Provide hooks to read and apply the hardware capture (microphone)
+     *        analog level, expressed in webrtc's [0, 255] range.
+     *
+     * When both hooks are set, an automatic gain control implementation may
+     * drive the real device gain (analog AGC) instead of emulating it.
+     */
+    void setAnalogLevelCallbacks(AnalogLevelGetter getter, AnalogLevelSetter setter)
+    {
+        getAnalogLevel_ = std::move(getter);
+        setAnalogLevel_ = std::move(setter);
+    }
+
 protected:
     AudioFrameResizer playbackQueue_;
     AudioFrameResizer recordQueue_;
@@ -97,6 +114,12 @@ protected:
     AudioFormat format_;
     unsigned int frameSize_;
     unsigned int frameDurationMs_;
+
+    // Optional hooks to read/apply the hardware microphone analog level, in the
+    // [0, 255] range. Set by the audio layer when it can drive the real device
+    // gain; left empty otherwise (the processor then emulates the analog gain).
+    AnalogLevelGetter getAnalogLevel_ {};
+    AnalogLevelSetter setAnalogLevel_ {};
 
     // artificially extend voice activity by this long
     unsigned int forceMinimumVoiceActivityMs {1000};

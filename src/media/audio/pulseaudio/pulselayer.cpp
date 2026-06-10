@@ -365,6 +365,15 @@ PulseLayer::onStreamReady()
         if (record_) {
             record_->start();
             recordChanged(true);
+            // Seed the cached microphone volume so the analog gain control
+            // starts from the level currently applied by the system.
+            if (context_) {
+                auto idx = pa_stream_get_device_index(record_->stream());
+                if (idx != PA_INVALID_INDEX) {
+                    if (auto* op = pa_context_get_source_info_by_index(context_, idx, source_volume_info_callback, this))
+                        pa_operation_unref(op);
+                }
+            }
         }
     }
 }
@@ -581,6 +590,51 @@ PulseLayer::readFromMic()
         JAMI_ERROR("Capture stream drop failed: {}", pa_strerror(pa_context_errno(context_)));
 
     putRecorded(std::move(out));
+}
+
+bool
+PulseLayer::hasHardwareCaptureGain() const
+{
+    // PulseAudio can drive the microphone (source) volume.
+    return record_ != nullptr;
+}
+
+int
+PulseLayer::getHardwareCaptureGain() const
+{
+    int level = captureAnalogLevel_.load();
+    // Until the real source volume is known, assume a sensible mid-high level.
+    return level < 0 ? 205 : level;
+}
+
+void
+PulseLayer::setHardwareCaptureGain(int level)
+{
+    level = std::clamp(level, 0, 255);
+    captureAnalogLevel_.store(level);
+    if (!record_ || !context_)
+        return;
+    uint32_t idx = pa_stream_get_device_index(record_->stream());
+    if (idx == PA_INVALID_INDEX)
+        return;
+    // Map webrtc's [0, 255] range to PulseAudio's [0, PA_VOLUME_NORM].
+    pa_volume_t vol = (pa_volume_t) ((level * (uint64_t) PA_VOLUME_NORM + 127) / 255);
+    pa_cvolume cvolume;
+    pa_cvolume_set(&cvolume, record_->channels(), vol);
+    if (auto* op = pa_context_set_source_volume_by_index(context_, idx, &cvolume, nullptr, nullptr))
+        pa_operation_unref(op);
+}
+
+void
+PulseLayer::source_volume_info_callback(pa_context*, const pa_source_info* i, int eol, void* userdata)
+{
+    if (eol || !i)
+        return;
+    // Map PulseAudio's [0, PA_VOLUME_NORM] volume back to webrtc's [0, 255].
+    auto* layer = static_cast<PulseLayer*>(userdata);
+    pa_volume_t avg = pa_cvolume_avg(&i->volume);
+    int level = (int) ((avg * 255ull + PA_VOLUME_NORM / 2) / PA_VOLUME_NORM);
+    layer->captureAnalogLevel_.store(std::clamp(level, 0, 255));
 }
 
 void

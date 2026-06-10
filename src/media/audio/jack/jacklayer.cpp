@@ -87,7 +87,7 @@ void
 JackLayer::capture()
 {
     if (auto buf = read())
-        mainRingBuffer_->put(std::move(buf));
+        putRecorded(std::move(buf));
 }
 
 size_t
@@ -145,12 +145,18 @@ JackLayer::ringbuffer_worker()
     flushMain();
     flushUrgent();
 
+    // Bring up the shared audio processor (echo cancellation, noise
+    // suppression, automatic gain control, ...) so that JACK capture and
+    // playback go through the same processing pipeline as every other layer.
+    playbackChanged(true);
+    recordChanged(true);
+
     while (true) {
         std::unique_lock lock(ringbuffer_thread_mutex_);
 
         // may have changed, we don't want to wait for a notification we won't get
         if (status_ != Status::Started)
-            return;
+            break;
 
         // FIXME this is all kinds of evil
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -165,6 +171,9 @@ JackLayer::ringbuffer_worker()
         data_ready_.wait(lock,
                          [&] { return status_ != Status::Started or ringbuffer_ready_for_read(in_ringbuffers_[0]); });
     }
+
+    playbackChanged(false);
+    recordChanged(false);
 }
 
 void

@@ -43,6 +43,8 @@ public:
 private:
     std::unique_ptr<ConfigImpl> config;
     std::unique_ptr<webrtc::AudioProcessing, void (*)(webrtc::AudioProcessing*)> apm;
-    int analogLevel_ {0};
+    // When true, the AGC drives the real microphone level through the
+    // analog-level callbacks instead of emulating the analog gain internally.
+    bool hardwareAnalogGain_ {false};
 };
 } // namespace jami
