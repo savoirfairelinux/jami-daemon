@@ -222,6 +222,14 @@ AudioLayer::createAudioProcessor()
     }
 
     if (audioProcessor) {
+        // Let the automatic gain control drive the real microphone level when
+        // the audio layer supports it (analog AGC); otherwise the processor
+        // emulates the analog gain internally.
+        if (hasHardwareCaptureGain()) {
+            audioProcessor->setAnalogLevelCallbacks([this] { return getHardwareCaptureGain(); },
+                                                    [this](int level) { setHardwareCaptureGain(level); });
+        }
+
         audioProcessor->enableNoiseSuppression(
             shouldUseAudioProcessorNoiseSuppression(hasNativeNS_, pref_.getNoiseReduce()));
 
