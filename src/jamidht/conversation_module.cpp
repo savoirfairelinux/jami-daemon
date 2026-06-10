@@ -53,15 +53,23 @@ struct PendingConversationFetch
 };
 
 constexpr std::chrono::seconds MAX_FALLBACK {12 * 3600s};
+// Maximum attempts at cloning a conversation whose repository fails validation
+// before giving up. Validation failures are permanent (the remote history is
+// immutable), so retrying is wasted work; the counter is kept in-memory only,
+// so a restart allows a new bounded round of attempts.
+constexpr unsigned MAX_VALIDATION_FAILURES {3};
 
 struct SyncedConversation
 {
     std::mutex mtx;
     std::unique_ptr<asio::steady_timer> fallbackClone;
     std::chrono::seconds fallbackTimer {5s};
+    unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
     std::shared_ptr<Conversation> conversation;
+
+    bool isUnrecoverable() const { return validationFailures >= MAX_VALIDATION_FAILURES; }
 
     SyncedConversation(const std::string& convId)
         : info {convId}
@@ -512,6 +520,14 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::shared_ptr<SyncedConversation>& conv)
 {
     // conv->mtx must be locked
+    if (conv->isUnrecoverable()) {
+        JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Conversation is marked unrecoverable, "
+                     "ignoring clone request",
+                     accountId_,
+                     conv->info.id,
+                     deviceId);
+        return;
+    }
     if (!conv->conversation) {
         // Note: here we don't return and connect to all members
         // the first that will successfully connect will be used for
@@ -900,6 +916,40 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             for (const auto& member : conversation->memberUris(username_)) {
                 acc->askForProfile(conversationId, deviceId, member);
             }
+        }
+    } catch (const InvalidRepositoryError& e) {
+        // Permanent failure: the remote repository contains malformed commits and
+        // its history is immutable, so every re-clone would fail the same way.
+        // Stop after a few attempts instead of retrying (and waking the peer's
+        // devices through the DHT proxy) indefinitely.
+        ++conv->validationFailures;
+        if (conv->isUnrecoverable()) {
+            JAMI_ERROR("[Account {}] [Conversation {}] Failed validation {} times, marking conversation "
+                       "as unrecoverable: remove it and ask the peer for a new invitation",
+                       accountId_,
+                       conversationId,
+                       conv->validationFailures);
+            emitSignal<libjami::ConversationSignal::OnConversationError>(
+                accountId_,
+                conversationId,
+                EUNRECOVERABLE,
+                "Conversation repository failed validation repeatedly");
+        } else {
+            JAMI_WARNING(
+                "[Account {}] [Conversation {}] Remote conversation failed validation ({}/{}). Re-clone in {}s",
+                accountId_,
+                conversationId,
+                conv->validationFailures,
+                MAX_VALIDATION_FAILURES,
+                conv->fallbackTimer.count());
+            conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
+            conv->fallbackTimer *= 2;
+            if (conv->fallbackTimer > MAX_FALLBACK)
+                conv->fallbackTimer = MAX_FALLBACK;
+            conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
+                                                      shared_from_this(),
+                                                      std::placeholders::_1,
+                                                      conversationId));
         }
     } catch (const std::exception& e) {
         JAMI_WARNING(
@@ -1339,6 +1389,14 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
 {
     std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
+    if (conv->isUnrecoverable()) {
+        JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Conversation is marked unrecoverable, "
+                     "ignoring clone request",
+                     accountId_,
+                     conversationId,
+                     deviceId);
+        return;
+    }
     if (!conv->startFetch(deviceId, true)) {
         JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
         return;

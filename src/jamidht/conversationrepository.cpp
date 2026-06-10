@@ -2894,7 +2894,10 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
         JAMI_ERROR("[Account {}] [Conversation {}] An error occurred while validating remote conversation.",
                    account->getAccountID(),
                    conversationId);
-        return {};
+        // Distinguish this permanent failure from transient (network) errors,
+        // which return an empty result: the remote history is immutable, so
+        // retrying the clone would re-download the same malformed repository.
+        throw InvalidRepositoryError("Remote conversation failed validation");
     }
 
     // Success: discard the backup.

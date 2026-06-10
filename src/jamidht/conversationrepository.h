@@ -24,6 +24,7 @@
 
 #include <optional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,8 +37,22 @@ constexpr auto EINVALIDMODE = 2;
 constexpr auto EVALIDFETCH = 3;
 constexpr auto EUNAUTHORIZED = 4;
 constexpr auto ECOMMIT = 5;
+constexpr auto EUNRECOVERABLE = 6;
 
 class JamiAccount;
+
+/**
+ * Exception thrown when a cloned conversation repository fails commit validation.
+ * Unlike network errors, this failure is permanent: the remote history is immutable,
+ * so cloning the same conversation again will fail the same way.
+ */
+class InvalidRepositoryError : public std::runtime_error
+{
+public:
+    explicit InvalidRepositoryError(const std::string& what)
+        : std::runtime_error(what)
+    {}
+};
 
 struct LogOptions
 {
