@@ -802,6 +802,14 @@ private:
     /// and JSON payload, then drop the request from the pending tables.
     void finalizeSvcQuery(uint32_t requestId, int status, const std::string& servicesJson);
 
+    /// Build the JSON array describing `peerUri`'s cached services, tagging each
+    /// entry's "available" flag from the presence system (a device is available
+    /// when it is currently announced online). `forceAvailableDevice`, when
+    /// non-null, is always flagged available -- used right after a device
+    /// answers a discovery query, before its DHT presence announcement has been
+    /// observed. Returns an empty string when the peer has no cached services.
+    std::string buildPeerServicesJson(const std::string& peerUri, const DeviceId* forceAvailableDevice = nullptr);
+
     mutable std::mutex pendingSvcQueriesMtx_;
     std::map<uint32_t, std::shared_ptr<PendingSvcQuery>> pendingSvcQueries_;
 
@@ -818,6 +826,7 @@ private:
     /* tracked buddies presence */
     std::unique_ptr<PresenceManager> presenceManager_;
     uint64_t presenceListenerToken_ {0};
+    uint64_t svcPresenceListenerToken_ {0};
 
     std::atomic_int syncCnt_ {0};
 

@@ -60,16 +60,22 @@ struct LIBJAMI_PUBLIC ServiceSignal
     };
 
     /**
-     * Asynchronous response to queryPeerServices(). Emitted exactly once per
-     * request id.
+     * Asynchronous response to queryPeerServices(). Emitted once per request id,
+     * and additionally with requestId == 0 as an unsolicited push whenever the
+     * peer's service list or device availability changes (cache update or
+     * presence change); such a push carries the peer's full current list.
      * @param requestId   Token returned by queryPeerServices() — first arg.
+     *                    0 for an unsolicited availability/cache update push.
      * @param accountId   Local account that issued the query.
      * @param peerId      URI of the peer that produced the response.
      * @param status      One of PeerServicesStatus, indicating success or
      *                    the failure mode.
-     * @param servicesJson JSON array describing visible services
-     *                    ([{"id":..,"name":..,"description":..,"proto":..}]).
-     *                    Empty `[]` for any non-OK status.
+     * @param servicesJson JSON array describing visible services. Each entry is
+     *                    {"id":..,"name":..,"description":..,"proto":..,
+     *                     "scheme":..,"device":..,"available":bool}. The
+     *                    "available" flag is true when the advertising device is
+     *                    currently online (presence system). Empty `[]` for any
+     *                    non-OK status.
      */
     struct LIBJAMI_PUBLIC PeerServicesReceived
     {
@@ -85,6 +91,15 @@ struct LIBJAMI_PUBLIC ServiceSignal
         constexpr static const char* name = "ServiceTunnelOpened";
         using cb_type = void(const std::string& /*accountId*/, const std::string& /*tunnelId*/, uint16_t /*localPort*/);
     };
+    /**
+     * Emitted when a tunnel created with openServiceTunnel() is torn down.
+     * @param reason  Why the tunnel closed. Known tokens:
+     *                - "closed"         : closed on request (closeServiceTunnel).
+     *                - "connect-failed" : a local connection could not reach the
+     *                                     remote service (peer device offline or
+     *                                     unreachable); the tunnel was closed
+     *                                     automatically.
+     */
     struct LIBJAMI_PUBLIC TunnelClosed
     {
         constexpr static const char* name = "ServiceTunnelClosed";
