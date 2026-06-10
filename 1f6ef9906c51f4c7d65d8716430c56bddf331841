@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "162dfe51_b36efffd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1909,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "17deb19b_e75f825c",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddc7fe81_03d59ac1",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-04T20:18:04Z",
       "side": 1,
       "message": "[Critical] Line 1994: clearBodyOverwrites removes the shared pluginData[\"bodyOverwrite\"] field for all messages in the conversation, even though the service is invoked for one plugin. With multiple enabled chat handlers, disabling or reconfiguring one plugin will clear another plugin\u0027s overwrite state. Store body overwrites per plugin/handler or pass a plugin identifier into Conversation so only that plugin\u0027s values are cleared.\n```suggestion\n// Example: namespace overwrite data by plugin id.\nit-\u003esecond-\u003epluginData.erase(\"bodyOverwrite:\" + pluginId);\n```",
+      "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cefeee7d_6b32843b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1994,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "ddc7fe81_03d59ac1",
       "revId": "1f6ef9906c51f4c7d65d8716430c56bddf331841",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

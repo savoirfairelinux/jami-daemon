@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b0c7d39_a3e74486",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 1908,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "8239d447_d8cb7e7d",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9145e970_aac46c75",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-05T14:09:36Z",
       "side": 1,
       "message": "[Critical] Line 2015: 🔴 Critical Issues - `clearBodyOverwrites()` removes the single shared `pluginData[\"bodyOverwrite\"]` value for the whole conversation. The caller is scoped to one plugin, but the stored data is not, so disabling or reconfiguring one plugin can erase another plugin\u0027s overwrite for the same loaded messages. Store body overwrites with plugin ownership, or pass the plugin identity through to `Conversation` and clear only that plugin\u0027s entry before recomputing the effective `bodyOverwrite`.\n\n```suggestion\n// Example shape: keep per-plugin data separate, then derive the displayed value.\nmsg-\u003epluginData.erase(\"bodyOverwrite:\" + pluginId);\nmsg-\u003epluginData[\"bodyOverwrite\"] \u003d selectEffectiveBodyOverwrite(msg-\u003epluginData);\n```",
+      "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cfb2cae_038f917b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 2015,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "9145e970_aac46c75",
       "revId": "347c7ca6359533a9257fd4fa91fed569d96a3941",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

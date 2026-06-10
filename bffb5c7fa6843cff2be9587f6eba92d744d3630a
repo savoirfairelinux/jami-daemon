@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7fa460eb_df404dd3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "6819909c_9e459b2f",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "71a41e35_176be51b",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-06-03T14:25:40Z",
       "side": 1,
       "message": "[🟡 Suggestions - Improvements to consider] Line 2150: `updateMessageBodyOverwrite()` returns silently when the target message or parent is not in `quickAccess`. Since this is now part of plugin-to-UI state propagation, silent drops make failures very hard to diagnose and can leave plugin UI state inconsistent. Log at debug/warn level following the surrounding pattern before returning.",
+      "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "993497ed_6cc27508",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2150,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "71a41e35_176be51b",
       "revId": "bffb5c7fa6843cff2be9587f6eba92d744d3630a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

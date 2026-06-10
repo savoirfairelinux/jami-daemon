@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f812522f_e8c1a36c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1320,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "073469c7_bcd7a7de",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22eb652c_e07161ee",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-05T17:20:13Z",
       "side": 1,
       "message": "[Major] Line 1919: loadMissingBodyOverwrites() only stores successful non-empty overwrites. Messages for which the plugin returns no overwrite remain indistinguishable from messages that were never processed, so every later load/reload scans and retransforms the same history again. This can become expensive on large conversations and can repeatedly call plugin code for unchanged messages. Store a sentinel/processed state separately from the overwrite value, or explicitly mark empty results as processed while keeping them out of the API-visible payload.\n```suggestion\n// Example approach: track processed state separately from the displayed value.\nit-\u003esecond-\u003epluginData[\"bodyOverwriteLoaded\"] \u003d \"true\";\nif (!bodyOverwrite.empty())\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bodyOverwrite;\nelse\n    it-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n```",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80ca7c0e_647f09a1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-10T15:55:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "22eb652c_e07161ee",
       "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
