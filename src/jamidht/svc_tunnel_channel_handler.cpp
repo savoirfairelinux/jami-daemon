@@ -397,9 +397,12 @@ SvcTunnelChannelHandler::acceptLoop(const std::shared_ptr<ClientTunnel>& tunnel)
                                          [this, self, sock](std::shared_ptr<dhtnet::ChannelSocket> channel,
                                                             const DeviceId&) {
                                              if (!channel) {
-                                                 JAMI_WARNING("[SvcTunnel] client-side connectDevice returned null");
+                                                 JAMI_WARNING("[SvcTunnel] tunnel id={}: connectDevice to peer "
+                                                              "returned null; closing tunnel",
+                                                              self->id);
                                                  std::error_code ig;
                                                  sock->close(ig);
+                                                 closeTunnelInternal(self->id, "connect-failed");
                                                  return;
                                              }
                                              onClientChannelReady(self, sock, std::move(channel));
@@ -414,6 +417,14 @@ SvcTunnelChannelHandler::onClientChannelReady(const std::shared_ptr<ClientTunnel
                                               std::shared_ptr<asio::ip::tcp::socket> tcp,
                                               std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
+    if (tunnel->closed) {
+        // The tunnel was torn down while connectDevice was in flight; drop
+        // this late connection instead of wiring up a dangling relay.
+        channel->shutdown();
+        std::error_code ig;
+        tcp->close(ig);
+        return;
+    }
     trackClientConnection(tunnel, channel, tcp);
     relay(std::move(channel), std::move(tcp));
 }
@@ -454,6 +465,12 @@ SvcTunnelChannelHandler::trackClientConnection(const std::shared_ptr<ClientTunne
 bool
 SvcTunnelChannelHandler::closeTunnel(const std::string& tunnelId)
 {
+    return closeTunnelInternal(tunnelId, "closed");
+}
+
+bool
+SvcTunnelChannelHandler::closeTunnelInternal(const std::string& tunnelId, const std::string& reason)
+{
     std::shared_ptr<ClientTunnel> t;
     {
         std::lock_guard lk(mtx_);
@@ -482,9 +499,12 @@ SvcTunnelChannelHandler::closeTunnel(const std::string& tunnelId)
             sock->close(ig);
         }
     }
-    JAMI_LOG("[SvcTunnel] closed tunnel id={} ({} live connection(s) torn down)", tunnelId, conns.size());
+    JAMI_LOG("[SvcTunnel] closed tunnel id={} reason={} ({} live connection(s) torn down)",
+             tunnelId,
+             reason,
+             conns.size());
     if (t->onClosed)
-        t->onClosed(tunnelId, "closed");
+        t->onClosed(tunnelId, reason);
     return true;
 }
 

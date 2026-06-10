@@ -331,6 +331,27 @@ JamiAccount::JamiAccount(const std::string& accountId)
             }
         });
     });
+    // When a device of a contact that advertises services changes presence,
+    // re-publish that peer's service list with refreshed availability so an
+    // already-open services menu greys out / re-enables entries live.
+    svcPresenceListenerToken_ = presenceManager_->addDeviceListener([this](const std::string& uri,
+                                                                           const dht::PkId&,
+                                                                           bool) {
+        runOnMainThread([w = weak(), uri] {
+            auto sthis = w.lock();
+            if (!sthis)
+                return;
+            auto servicesJson = sthis->buildPeerServicesJson(uri);
+            if (servicesJson.empty())
+                return;
+            emitSignal<libjami::ServiceSignal::PeerServicesReceived>(0u,
+                                                                     sthis->getAccountID(),
+                                                                     uri,
+                                                                     static_cast<int>(
+                                                                         libjami::ServiceSignal::PeerServicesStatus::OK),
+                                                                     servicesJson);
+        });
+    });
 }
 
 JamiAccount::~JamiAccount() noexcept
@@ -1195,27 +1216,18 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    time_t received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -2418,35 +2430,32 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
             fmt::format("git://{}/{}", deviceId, convId),
             [w, cb = std::move(cb), convId, requestedDeviceId = deviceId](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                                           const DeviceId&) {
-                dht::ThreadPool::io().run([w,
-                                          cb = std::move(cb),
-                                          socket = std::move(socket),
-                                          convId,
-                                          requestedDeviceId] {
-                    if (socket) {
-                        auto shared = w.lock();
-                        auto remoteCert = socket->peerCertificate();
-                        auto remoteDeviceId = socket->deviceId().toString();
-                        if (!shared || !remoteCert || !remoteCert->issuer || remoteDeviceId != requestedDeviceId
-                            || !shared->convModule()->isPeerAuthorized(convId,
-                                                                       remoteCert->issuer->getId().toString(),
-                                                                       remoteDeviceId,
-                                                                       true)) {
-                            socket->shutdown();
-                            cb({});
-                            return;
-                        }
-                        socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
-                            dht::ThreadPool::io().run([w, deviceId, convId] {
-                                if (auto shared = w.lock())
-                                    shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                dht::ThreadPool::io().run(
+                    [w, cb = std::move(cb), socket = std::move(socket), convId, requestedDeviceId] {
+                        if (socket) {
+                            auto shared = w.lock();
+                            auto remoteCert = socket->peerCertificate();
+                            auto remoteDeviceId = socket->deviceId().toString();
+                            if (!shared || !remoteCert || !remoteCert->issuer || remoteDeviceId != requestedDeviceId
+                                || !shared->convModule()->isPeerAuthorized(convId,
+                                                                           remoteCert->issuer->getId().toString(),
+                                                                           remoteDeviceId,
+                                                                           true)) {
+                                socket->shutdown();
+                                cb({});
+                                return;
+                            }
+                            socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
+                                dht::ThreadPool::io().run([w, deviceId, convId] {
+                                    if (auto shared = w.lock())
+                                        shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                                });
                             });
-                        });
-                        if (!cb(socket))
-                            socket->shutdown();
-                    } else
-                        cb({});
-                });
+                            if (!cb(socket))
+                                socket->shutdown();
+                        } else
+                            cb({});
+                    });
             },
             false,
             false,
@@ -3121,6 +3130,39 @@ JamiAccount::finalizeSvcQuery(uint32_t requestId, int status, const std::string&
     emitSignal<libjami::ServiceSignal::PeerServicesReceived>(requestId, getAccountID(), q->peerUri, status, servicesJson);
 }
 
+std::string
+JamiAccount::buildPeerServicesJson(const std::string& peerUri, const DeviceId* forceAvailableDevice)
+{
+    std::vector<SvcDiscoveryChannelHandler::CachedSvcInfo> services;
+    {
+        std::shared_lock lk(connManagerMtx_);
+        auto it = channelHandlers_.find(Uri::Scheme::SVC_DISCOVERY);
+        if (it == channelHandlers_.end() || !it->second)
+            return {};
+        services = static_cast<SvcDiscoveryChannelHandler*>(it->second.get())->getCachedServices(peerUri);
+    }
+    if (services.empty())
+        return {};
+
+    std::vector<DeviceId> onlineDevices;
+    if (presenceManager_)
+        onlineDevices = presenceManager_->getDevices(peerUri);
+
+    Json::Value arr(Json::arrayValue);
+    for (const auto& s : services) {
+        Json::Value v(Json::objectValue);
+        v["id"] = s.info.id;
+        v["name"] = s.info.name;
+        v["description"] = s.info.description;
+        v["proto"] = s.info.proto;
+        v["scheme"] = s.info.scheme;
+        v["device"] = s.deviceId.toString();
+        v["available"] =(forceAvailableDevice && *forceAvailableDevice == s.deviceId) || std::find(onlineDevices.begin(), onlineDevices.end(), s.deviceId) != onlineDevices.end();
+        arr.append(v);
+    }
+    return json::toString(arr);
+}
+
 uint32_t
 JamiAccount::queryPeerServices(const std::string& peerUri)
 {
@@ -3145,25 +3187,14 @@ JamiAccount::queryPeerServices(const std::string& peerUri)
         return 0;
     }
 
-    runOnMainThread([w = weak(), requestId, services = handler->getCachedServices(peerUri)] {
-        if (services.empty()) {
-            if (auto sthis = w.lock())
-                sthis->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::NoDevices), "");
-        } else {
-            Json::Value arr(Json::arrayValue);
-            for (const auto& s : services) {
-                Json::Value v(Json::objectValue);
-                v["id"] = s.info.id;
-                v["name"] = s.info.name;
-                v["description"] = s.info.description;
-                v["proto"] = s.info.proto;
-                v["scheme"] = s.info.scheme;
-                v["device"] = s.deviceId.toString();
-                arr.append(v);
-            }
-            if (auto sthis = w.lock())
-                sthis->finalizeSvcQuery(requestId, static_cast<int>(PSStatus::OK), json::toString(arr));
-        }
+    runOnMainThread([w = weak(), requestId, peerUri] {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        auto servicesJson = sthis->buildPeerServicesJson(peerUri);
+        sthis->finalizeSvcQuery(requestId,
+                                static_cast<int>(servicesJson.empty() ? PSStatus::NoDevices : PSStatus::OK),
+                                servicesJson);
     });
     return requestId;
 }
@@ -4668,28 +4699,22 @@ JamiAccount::initConnectionManager()
         static_cast<SvcDiscoveryChannelHandler*>(channelHandlers_[Uri::Scheme::SVC_DISCOVERY].get())
             ->onCacheUpdated([w = weak()](const std::string& peerUri,
                                           const DeviceId& deviceId,
-                                          const std::vector<svc_protocol::SvcInfo>& services) {
+                                          const std::vector<svc_protocol::SvcInfo>&) {
                 auto self = w.lock();
                 if (!self)
                     return;
-                auto deviceIdStr = deviceId.toString();
-                Json::Value arr(Json::arrayValue);
-                for (const auto& s : services) {
-                    Json::Value v(Json::objectValue);
-                    v["id"] = s.id;
-                    v["name"] = s.name;
-                    v["description"] = s.description;
-                    v["proto"] = s.proto;
-                    v["scheme"] = s.scheme;
-                    v["device"] = deviceIdStr;
-                    arr.append(v);
-                }
+                // Re-publish the peer's full service list. The device that just
+                // answered is flagged available immediately, even if its DHT
+                // presence announcement has not yet been observed. A cache
+                // update is always published, even when the peer's last service
+                // was removed (empty list), so listeners can clear it.
+                auto servicesJson = self->buildPeerServicesJson(peerUri, &deviceId);
                 emitSignal<libjami::ServiceSignal::PeerServicesReceived>(
                     0u,
                     self->getAccountID(),
                     peerUri,
                     static_cast<int>(libjami::ServiceSignal::PeerServicesStatus::OK),
-                    json::toString(arr));
+                    servicesJson.empty() ? "[]" : servicesJson);
             });
         serviceManager_->setOnChanged([w = weak()]() {
             auto self = w.lock();
