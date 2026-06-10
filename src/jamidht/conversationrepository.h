@@ -24,6 +24,7 @@
 
 #include <optional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,8 +37,22 @@ constexpr auto EINVALIDMODE = 2;
 constexpr auto EVALIDFETCH = 3;
 constexpr auto EUNAUTHORIZED = 4;
 constexpr auto ECOMMIT = 5;
+constexpr auto EUNRECOVERABLE = 6;
 
 class JamiAccount;
+
+/**
+ * Exception thrown when a cloned conversation repository fails commit validation.
+ * Unlike network errors, this failure is permanent: the remote history is immutable,
+ * so cloning the same conversation again will fail the same way.
+ */
+class InvalidRepositoryError : public std::runtime_error
+{
+public:
+    explicit InvalidRepositoryError(const std::string& what)
+        : std::runtime_error(what)
+    {}
+};
 
 struct LogOptions
 {
@@ -158,6 +173,11 @@ public:
      * @param account           The account getting the conversation
      * @param deviceId          Remote device
      * @param conversationId    Conversation to clone
+     * @throws InvalidRepositoryError if the cloned repository fails commit validation. This is a
+     *         permanent failure (the remote history is immutable); transient network errors do not
+     *         throw but return an empty repository instead. The sole caller,
+     *         ConversationModule::Impl::handlePendingConversation(), catches this to stop retrying;
+     *         any new caller must handle it as well.
      */
     static LIBJAMI_TEST_EXPORT std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>
     cloneConversation(const std::shared_ptr<JamiAccount>& account,
