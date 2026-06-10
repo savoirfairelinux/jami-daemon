@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc83582c_ef9e4f68",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-10T20:36:05Z",
+      "side": 1,
+      "message": "[Critical] Line 915: The retry counter is conversation-wide, but validation failures can be caused by one bad or malicious device serving an invalid clone while another member/device may still have a valid repository. After three failures from the same bad source, this permanently suppresses future clone attempts from all devices for this in-memory conversation, which can make a recoverable invitation unrecoverable. Track validation failures per source device/peer, or only mark unrecoverable after exhausting distinct clone sources. For example:\n```suggestion\nstd::map\u003cstd::string, unsigned\u003e validationFailuresByDevice {};\n\nbool isUnrecoverable(const std::string\u0026 deviceId) const\n{\n    auto it \u003d validationFailuresByDevice.find(deviceId);\n    return it !\u003d validationFailuresByDevice.end() \u0026\u0026 it-\u003esecond \u003e\u003d MAX_VALIDATION_FAILURES;\n}\n```",
+      "revId": "291e740044b039acc150436723d4ec7d23dffe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "440a8847_565f87d7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2895,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-10T20:36:05Z",
+      "side": 1,
+      "message": "[Critical] Line 2895: Throwing `InvalidRepositoryError` changes the error contract of `cloneConversation()` from returning an empty result to throwing, but this patch only documents one caller. Any existing or future caller that expects the documented pair-return behavior can now terminate the operation if the exception escapes. Either keep the return-value contract and surface the reason explicitly, or ensure every caller catches `InvalidRepositoryError`. A safer API would encode the failure mode in the return type instead of relying on an unchecked exception.",
+      "revId": "291e740044b039acc150436723d4ec7d23dffe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
