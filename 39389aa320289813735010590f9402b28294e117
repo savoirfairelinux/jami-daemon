@@ -16,6 +16,40 @@
       "message": "[Major] Line 1493: This clears and persists the local tombstone before the re-invited conversation has been successfully cloned. If the clone fails or the request is invalid/unreachable, the conversation can remain resurrected locally and `isAcceptedConversation()` will then block future legitimate invites. Defer persisting `removed \u003d 0` / `erased \u003d 0` until clone success, or ensure the failure path restores the tombstone.\n```suggestion\n// Keep the tombstone until the clone succeeds, then clear removed/erased\n// in the success path that finalizes the accepted conversation.\n```",
       "revId": "39389aa320289813735010590f9402b28294e117",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f40a5bb8_f10f34e1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1495,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T09:54:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1495: Re-accepting a tombstoned conversation clears `removed`/`erased` before the clone has completed. If the clone later fails, is interrupted, or the request is invalid, the local removal tombstone is lost and the conversation may appear accepted again without a valid re-invite completion. Consider deferring the persistent `addConvInfo(conv-\u003einfo)` until the repository has been successfully cloned, or preserve the old tombstone and restore it on clone failure. For example:\n```suggestion\n        auto oldInfo \u003d conv-\u003einfo;\n        conv-\u003einfo.created \u003d request.received ? request.received : std::time(nullptr);\n        conv-\u003einfo.removed \u003d 0;\n        conv-\u003einfo.erased \u003d 0;\n        conv-\u003einfo.members.emplace(username_);\n        conv-\u003einfo.members.emplace(request.from);\n        // Persist only after the clone succeeds, or restore oldInfo on failure.\n```",
+      "revId": "39389aa320289813735010590f9402b28294e117",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c16a2df0_6beb2c52",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T09:54:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1499: The re-invite path updates `created` and members but does not refresh `mode` from the incoming request, unlike the new-conversation path above. If a tombstone has stale or default metadata, the accepted conversation can be restored with inconsistent mode information. Mirror the initialization used for a new conversation unless the conversation mode is guaranteed immutable for a given id.\n```suggestion\n        conv-\u003einfo.mode \u003d request.mode();\n```",
+      "revId": "39389aa320289813735010590f9402b28294e117",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
