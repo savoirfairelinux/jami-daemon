@@ -45,7 +45,6 @@ struct PendingConversationFetch
     bool ready {false};
     bool cloning {false};
     std::string deviceId {};
-    std::string removeId {};
     std::map<std::string, std::string> preferences {};
     std::map<std::string, std::map<std::string, std::string>> status {};
     std::set<std::string> connectingTo {};
@@ -417,17 +416,13 @@ public:
                        const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv,
                        const std::set<std::string>& toRm);
 
-    void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv,
-                               const std::string& deviceId,
-                               const std::string& oldConvId = "");
+    void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId);
     void bootstrap(const std::string& convId);
     void fallbackClone(const asio::error_code& ec, const std::string& conversationId);
 
     void cloneConversationFrom(const ConversationRequest& request);
 
-    void cloneConversationFrom(const std::string& conversationId,
-                               const std::string& uri,
-                               const std::string& oldConvId = "");
+    void cloneConversationFrom(const std::string& conversationId, const std::string& uri);
 
     // While syncing, we do not want to lose metadata (avatar/title and mode)
     std::map<std::string, std::map<std::string, std::string>> syncingMetadatas_;
@@ -784,13 +779,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         return;
     std::unique_lock lk(conv->mtx, std::defer_lock);
     auto erasePending = [&] {
-        std::string toRm;
-        if (conv->pending && !conv->pending->removeId.empty())
-            toRm = std::move(conv->pending->removeId);
         conv->pending.reset();
         lk.unlock();
-        if (!toRm.empty())
-            removeConversation(toRm);
     };
     try {
         auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
@@ -1334,8 +1324,7 @@ ConversationModule::Impl::fixStructures(
 
 void
 ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv,
-                                                const std::string& deviceId,
-                                                const std::string& oldConvId)
+                                                const std::string& deviceId)
 {
     std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
@@ -1347,10 +1336,9 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
     onNeedSocket_(
         conversationId,
         deviceId,
-        [wthis = weak_from_this(), conv, conversationId, oldConvId, deviceId](const auto& channel) {
+        [wthis = weak_from_this(), conv, conversationId, deviceId](const auto& channel) {
             std::lock_guard lk(conv->mtx);
             if (conv->pending && !conv->pending->ready) {
-                conv->pending->removeId = oldConvId;
                 if (channel) {
                     conv->pending->ready = true;
                     conv->pending->deviceId = channel->deviceId().toString();
@@ -1483,9 +1471,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
 }
 
 void
-ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId,
-                                                const std::string& uri,
-                                                const std::string& oldConvId)
+ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
 {
     auto memberHash = dht::InfoHash(uri);
     if (!memberHash) {
@@ -1494,13 +1480,13 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
     }
     auto conv = startConversation(conversationId);
     accountManager_->forEachDevice(memberHash,
-                                   [w = weak(), conv, conversationId, oldConvId](
+                                   [w = weak(), conv, conversationId](
                                        const std::shared_ptr<dht::crypto::PublicKey>& pk) {
                                        auto sthis = w.lock();
                                        auto deviceId = pk->getLongId().toString();
                                        if (!sthis or deviceId == sthis->deviceId_)
                                            return;
-                                       sthis->cloneConversationFrom(conv, deviceId, oldConvId);
+                                       sthis->cloneConversationFrom(conv, deviceId);
                                    });
 }
 
@@ -2143,11 +2129,9 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
 }
 
 void
-ConversationModule::cloneConversationFrom(const std::string& conversationId,
-                                          const std::string& uri,
-                                          const std::string& oldConvId)
+ConversationModule::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
 {
-    pimpl_->cloneConversationFrom(conversationId, uri, oldConvId);
+    pimpl_->cloneConversationFrom(conversationId, uri);
 }
 
 // Message send/load
