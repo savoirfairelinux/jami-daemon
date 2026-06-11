@@ -195,7 +195,9 @@ public:
     /**
      * Bootstrap swarm manager to other peers
      * @param onBootstrapped     Callback called when connection is established successfully
-     * @param knownDevices       List of account's known devices
+     * @param knownDevices       Optional list of live devices to seed the DRT with.
+     *                           Normally empty: candidates are fed by the per-device
+     *                           presence monitoring through addKnownDevices().
      */
     void bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices = {});
 
