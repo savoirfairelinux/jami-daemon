@@ -37,6 +37,40 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bd0512e_41c76240",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T13:02:56Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 499: `tryConnect()` records a backoff failure for every `nullptr` callback, even if a successful channel for the same node was added before this stale callback runs. That can leave a live node in `connectionFailures_`, causing future bucket maintenance to skip it despite the active/successful connection. Before calling `noteConnectionFailure()`, verify that the node is still only in the connecting state and not already connected.\n```suggestion\n                if (!noNewSocket \u0026\u0026 !bucket-\u003ehasNode(nodeId))\n                    retryAt \u003d shared-\u003enoteConnectionFailure(nodeId);\n```",
+      "revId": "502568315a6cbe4671a57a7c9d14f86dbda3551b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3eaf2503_96bd482a",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 550,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T13:02:56Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 550: The test locks `mutex` before calling `sm-\u003esetKnownNodes(toTest)`, but `setKnownNodes()` can synchronously reach `needSocketCb_`, whose lambda tries to lock the same mutex. That makes the test deadlock before the first wait. Move the lock acquisition until after the call that triggers the callback.\n```suggestion\n    sm-\u003esetKnownNodes(toTest);\n    std::unique_lock lk(mutex);\n    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [\u0026] { return attempts.size() \u003d\u003d 1; }));\n```",
+      "revId": "502568315a6cbe4671a57a7c9d14f86dbda3551b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "5b0a3685_d4afa669",
