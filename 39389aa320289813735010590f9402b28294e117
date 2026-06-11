@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "748a2323_ee3691e9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1493,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T09:54:13Z",
+      "side": 1,
+      "message": "[Major] Line 1493: This clears and persists the local tombstone before the re-invited conversation has been successfully cloned. If the clone fails or the request is invalid/unreachable, the conversation can remain resurrected locally and `isAcceptedConversation()` will then block future legitimate invites. Defer persisting `removed \u003d 0` / `erased \u003d 0` until clone success, or ensure the failure path restores the tombstone.\n```suggestion\n// Keep the tombstone until the clone succeeds, then clear removed/erased\n// in the success path that finalizes the accepted conversation.\n```",
+      "revId": "39389aa320289813735010590f9402b28294e117",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
