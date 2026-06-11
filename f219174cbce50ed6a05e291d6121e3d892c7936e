@@ -38,6 +38,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "535ef71d_270f2f83",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2067,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:28:40Z",
+      "side": 1,
+      "message": "This path cannot overwrite a declined request: when oldReq exists the function returns unconditionally, declined or not (the line right below this comment). A declined entry is also protected in addConversationRequest(): when an entry already exists, an incoming non-declined request hits `if (!req.declined) return false;` and is ignored — only decline markers coming from device sync may update the entry. This patch did not change either guard: a tombstoned conversation now passes the initial isAcceptedConversation() check, but a previously declined request still blocks both the onConversationRequest path (unconditional return) and the onTrustRequest path (addConversationRequest returns false). A replayed or stale invite therefore cannot undo a local decline. The suggested diff would actually relax the current behavior by letting newer requests bypass a decline, which is the opposite of the stated concern.",
+      "parentUuid": "685952bd_d1556759",
+      "revId": "f219174cbce50ed6a05e291d6121e3d892c7936e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "a2c35627_74c4b3b3",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 5
