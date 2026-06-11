@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e2bafebb_81404ced",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1520,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:26:10Z",
+      "side": 1,
+      "message": "Done in patch set 5: the refreshed members/mode are now persisted via addConvInfo() at accept time (removed/erased left untouched, so the crash state remains a valid tombstone). A retry after restart therefore starts from the request-derived metadata, and the cloned repository remains the final authority.",
+      "parentUuid": "81a7d264_d723a9f3",
+      "revId": "f219174cbce50ed6a05e291d6121e3d892c7936e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2c35627_74c4b3b3",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2130,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:26:10Z",
+      "side": 1,
+      "message": "Done in patch set 5: every local removal now bumps a monotonic removalGeneration counter on SyncedConversation (in addition to resetting reinvitePending). acceptConversationRequest() snapshots the generation under conv-\u003emtx when it decides to defer the request removal, and cloneConversationFrom() re-validates it under conv-\u003emtx before arming the marker — if a removal raced in between, the clone is aborted and the newer removal wins.",
+      "parentUuid": "b5ee4f38_294b761c",
+      "revId": "f219174cbce50ed6a05e291d6121e3d892c7936e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
