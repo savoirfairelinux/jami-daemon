@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a24f605_b352d785",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 865,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:19:41Z",
+      "side": 1,
+      "message": "Done in patch set 4: the accepted conversation request is now kept (acceptConversationRequest defers rmConversationRequest when the conversation is tombstoned) and only dropped by handlePendingConversation() after clone success. The stored request is the persistent trace: after a daemon restart the invitation is listed again and can simply be re-accepted, re-arming the in-memory marker and the clone. On clone failure both the tombstone and the request are preserved.",
+      "parentUuid": "af895708_a159d015",
+      "revId": "16e3b89696606fd9ce8abe7c40dc2b0205364292",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c264fa3_b5feb0e3",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1510,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:19:41Z",
+      "side": 1,
+      "message": "Done in patch set 4: cloneConversationFrom(request) now refreshes members and mode from the incoming request (in memory) so the resurrected ConvInfo is not based on stale tombstone data; created is assigned at clone success. removed/erased stay untouched until then, and the cloned repository remains the final authority for mode/members.",
+      "parentUuid": "f351defd_fda95b15",
+      "revId": "16e3b89696606fd9ce8abe7c40dc2b0205364292",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
