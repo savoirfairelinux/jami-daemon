@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b882dca7_68be3dd1",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T13:08:50Z",
+      "side": 1,
+      "message": "Done in patch set 5: the failure path now checks isConnectedWith(nodeId) under the main lock before recording — a stale nullptr callback arriving after a successful (e.g. incoming) channel no longer penalizes the live node. (Used isConnectedWith rather than the suggested bucket-\u003ehasNode since the bucket variable at that point is re-resolved for the self bucket later; semantics are identical.)",
+      "parentUuid": "9bd0512e_41c76240",
+      "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aff2696f_7b4c32e1",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 550,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T13:08:50Z",
+      "side": 1,
+      "message": "Reworked as suggested in patch set 5 (lock acquired after setKnownNodes). For the record, the previous form did not deadlock in practice: needSocketCb_ is invoked from the ThreadPool::io() task queued by setKnownNodes, not synchronously, and wait_for releases the mutex while waiting — the suite passed repeatedly. But the reordering removes any dependence on that asynchrony, so it is strictly more robust.",
+      "parentUuid": "3eaf2503_96bd482a",
+      "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
