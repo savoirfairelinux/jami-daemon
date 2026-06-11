@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1abc9a29_f2d51fa1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T21:07:51Z",
+      "side": 1,
+      "message": "[Critical] Line 2148: The race protection relies on millisecond-resolution timestamps always changing, but two local removals can occur within the same millisecond. In that case handlePendingConversation() can treat an in-flight re-invite as still valid and clear a newer tombstone, resurrecting a conversation the user removed again. Use a monotonic per-conversation removal generation/token, or otherwise compare against state that is guaranteed to change on every removal rather than nowMs().\n```suggestion\n// Store and compare a removal generation/counter updated on every local removal,\n// not only the millisecond timestamp.\nstd::optional\u003cuint64_t\u003e removedGeneration;\n```",
+      "revId": "e2ff315a72900f80403afb3acca91bfd85d45ea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
