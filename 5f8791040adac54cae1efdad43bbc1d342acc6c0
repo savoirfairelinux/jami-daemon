@@ -1,0 +1,112 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd1b7341_bff25a7a",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Done in patch set 2: maintainBuckets() now tracks the earliest pending nextRetry among skipped nodes and arms a steady_timer (scheduleBackoffRetry) that re-runs maintainBuckets() at that deadline. noteConnectionFailure() also arms it directly, so expiry always triggers an actual retry even on a fully idle swarm. The timer is cancelled on shutdown() and re-armed only when an earlier deadline appears.",
+      "parentUuid": "5aa8d75e_c8916096",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "27aa928e_937a47d4",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Done — covered by the same retry timer: when every candidate is filtered out, the earliest skipped deadline is scheduled, so the bucket is refilled as soon as a window expires rather than waiting for an external event.",
+      "parentUuid": "33f3166c_1e86a675",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2df6002e_85dd3c78",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Done in patch set 2: maintenance now purges entries whose window expired a full max-backoff ago (nextRetry + backoffMax \u003c\u003d now). This keeps the map bounded to nodes with active backoff state, while not resetting the exponential ladder of nodes that are still being periodically retried (purging at mere expiry would have restarted every dead node at the 30s base on each retry).",
+      "parentUuid": "aec25587_031fce59",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0370d6c0_80ab62e1",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 354,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Partially addressed in patch set 2, deliberately without changing the dhtnet callback signature in this patch: SwarmManager::restart() now also clears all backoff state (in addition to connectivityChanged()), so failures caused by local conditions before a shutdown/re-bootstrap never delay the new bootstrap. Remaining exposure is bounded: a local-origin failure can delay retries of an otherwise reachable node by at most one backoff window until the next connectivity event or incoming channel from that node (which clears its entry), and the first attempt of any node is never gated. Plumbing an explicit failure reason through ConnectionManager::connectDevice() and its callbacks is a larger dhtnet API change, noted as follow-up work.",
+      "parentUuid": "7f1e17a2_c87a8659",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "21987b4e_dcabb181",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Done in patch set 2: setConnectionBackoffForTest() injects short windows (1s base) and the test now asserts that the retry timer triggers a second attempt by itself after expiry, with no external maintenance call.",
+      "parentUuid": "d414fb56_6cd9b655",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8c12d1e_3c5e8f80",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:50:06Z",
+      "side": 1,
+      "message": "Done — same test extension: timer-driven retry after expiry is asserted (attempts reaches 2 without any manual maintainBuckets()), then the connectivity reset path is verified on top (attempts \u003e\u003d 3).",
+      "parentUuid": "f1dbf47c_da72f8d2",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
