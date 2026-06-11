@@ -1552,8 +1552,12 @@ Conversation::shutdownConnections()
 void
 Conversation::connectivityChanged()
 {
-    if (pimpl_->swarmManager_)
+    if (pimpl_->swarmManager_) {
+        // Failures recorded while the network was down say nothing about
+        // the nodes' liveness: give every known node a fresh chance.
+        pimpl_->swarmManager_->resetConnectionBackoff();
         pimpl_->swarmManager_->maintainBuckets();
+    }
 }
 
 std::vector<jami::DeviceId>
