@@ -23,6 +23,7 @@
 #include "../common.h"
 #include "jamidht/swarm/swarm_manager.h"
 #include <algorithm>
+#include <thread>
 
 #include <dhtnet/multiplexed_socket.h>
 #include "nodes.h"
@@ -125,6 +126,7 @@ private:
     void testRoutingTableMainFunctions();
     void testBucketKnownNodes();
     void testSwarmManagerConnectingNodes_1b();
+    void testConnectionFailureBackoff();
     void testClosestNodes_1b();
     void testClosestNodes_multipleb();
     void testSendKnownNodes_1b();
@@ -151,6 +153,7 @@ private:
     CPPUNIT_TEST(testClosestNodes_1b);
     CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
     CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
+    CPPUNIT_TEST(testConnectionFailureBackoff);
     CPPUNIT_TEST(testRoutingTableForConnectingNode);
     CPPUNIT_TEST(testMobileNodeFunctions);
     CPPUNIT_TEST(testMobileNodeAnnouncement);
@@ -523,6 +526,60 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
     CPPUNIT_ASSERT(rt1.hasConnectingNode(nodeTestIds1.at(1)));
     CPPUNIT_ASSERT(!rt1.hasKnownNode(nodeTestIds1.at(0)));
     CPPUNIT_ASSERT(!rt1.hasKnownNode(nodeTestIds1.at(1)));
+}
+
+void
+RoutingTableTest::testConnectionFailureBackoff()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    std::vector<std::string> attempts;
+    std::condition_variable cv;
+    std::mutex mutex;
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, [](auto) { return false; });
+    sm->setConnectionBackoffForTest(std::chrono::milliseconds(1000), std::chrono::milliseconds(4000));
+    sm->needSocketCb_ = [&](const auto& n, auto onSocket, bool) {
+        {
+            std::lock_guard<std::mutex> lk(mutex);
+            attempts.emplace_back(n);
+        }
+        cv.notify_one();
+        // Simulate an unreachable node: no socket is ever provided.
+        onSocket(nullptr);
+    };
+
+    std::vector<NodeId> toTest({nodeTestIds1.at(1)});
+    std::unique_lock lk(mutex);
+    sm->setKnownNodes(toTest);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return attempts.size() == 1; }));
+
+    // The node failed: it goes back to known nodes, but a new
+    // maintainBuckets() must not retry it while in its backoff window.
+    auto& rt = sm->getRoutingTable();
+    lk.unlock();
+    auto start = std::chrono::steady_clock::now();
+    while (!rt.hasKnownNode(nodeTestIds1.at(1))
+           && std::chrono::steady_clock::now() - start < 500ms)
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    CPPUNIT_ASSERT(rt.hasKnownNode(nodeTestIds1.at(1)));
+    sm->maintainBuckets();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    lk.lock();
+    // Still within the backoff window: no second attempt yet.
+    CPPUNIT_ASSERT_EQUAL((size_t) 1, attempts.size());
+
+    // Once the backoff window expires, the retry timer armed by
+    // maintainBuckets() must trigger a new attempt by itself, without any
+    // external maintenance event.
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return attempts.size() == 2; }));
+
+    // After a connectivity change the backoff is reset: the node must be
+    // retried immediately, without waiting for the (now longer) window.
+    lk.unlock();
+    sm->resetConnectionBackoff();
+    sm->maintainBuckets();
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return attempts.size() >= 3; }));
 }
 
 void
