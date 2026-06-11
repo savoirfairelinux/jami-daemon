@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "230ab123_597a345c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:12:30Z",
+      "side": 1,
+      "message": "Done in patch set 3: replaced the timestamp comparison with a boolean reinvitePending marker on SyncedConversation, as suggested. Every local removal path (removeConversationImpl, the one-to-one contact-removal lambda, and the removal branch of onSyncData) now resets the marker under conv-\u003emtx, so a removal performed while the clone is in flight always wins regardless of timestamp granularity. handlePendingConversation() resurrects only if the marker still holds and clears it in all cases.",
+      "parentUuid": "25ab09bd_c773c673",
+      "revId": "dff5b2bdfdefcb508568836e5ea8a0a2565fd809",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
