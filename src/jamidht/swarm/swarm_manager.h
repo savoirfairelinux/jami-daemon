@@ -19,6 +19,8 @@
 #include "routing_table.h"
 #include "swarm_protocol.h"
 
+#include <chrono>
+#include <map>
 #include <memory>
 
 namespace jami {
@@ -169,6 +171,25 @@ public:
     void maintainBuckets(const std::set<NodeId>& toConnect = {});
 
     /**
+     * Clear the per-node connection failure backoff state, so the next
+     * maintainBuckets() considers every known node again. Called on
+     * connectivity changes: failures recorded while the network was down
+     * say nothing about the nodes' actual liveness.
+     */
+    void resetConnectionBackoff();
+
+    /**
+     * Override the connection backoff windows (tests only), so retry
+     * behavior can be verified without wall-clock delays.
+     */
+    void setConnectionBackoffForTest(std::chrono::milliseconds base, std::chrono::milliseconds max)
+    {
+        std::lock_guard lock(mutex);
+        backoffBase_ = base;
+        backoffMax_ = max;
+    }
+
+    /**
      * Proactively connect to a node, bypassing bucket capacity checks.
      * The node is registered as known and a connection is attempted with
      * noNewSocket=true (reuses an existing transport).
@@ -256,6 +277,65 @@ private:
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    /**
+     * Connection failure backoff, per node (guarded by mutex).
+     * Swarm candidates come from the conversation repository (every device
+     * that ever participated), so they routinely include devices that are
+     * long dead. Without backoff, maintainBuckets() re-picks them forever,
+     * and every attempt allocates ICE/UPnP/TURN resources before discovering
+     * that nobody answers. Failed nodes are retried with exponentially
+     * increasing delays; any successful connection (in either direction)
+     * clears the node's entry.
+     */
+    struct ConnectionFailure
+    {
+        unsigned consecutiveFailures {0};
+        std::chrono::steady_clock::time_point nextRetry {};
+    };
+    std::map<NodeId, ConnectionFailure> connectionFailures_;
+    static constexpr std::chrono::seconds CONNECT_BACKOFF_BASE {30};
+    static constexpr std::chrono::seconds CONNECT_BACKOFF_MAX {3600 * 6};
+    std::chrono::milliseconds backoffBase_ {CONNECT_BACKOFF_BASE};
+    std::chrono::milliseconds backoffMax_ {CONNECT_BACKOFF_MAX};
+
+    /**
+     * Timer re-running maintainBuckets() when the earliest pending backoff
+     * window expires, so a node skipped during maintenance is retried even
+     * if no other swarm activity triggers maintenance in the meantime.
+     * Timer state is guarded by its own retryMutex_ (never acquired while
+     * holding `mutex`): scheduleBackoffRetry() is safe to call from any
+     * context, and the expiry handler can take `mutex` without any
+     * lock-ordering hazard.
+     */
+    std::unique_ptr<asio::steady_timer> retryTimer_;
+    std::mutex retryMutex_;
+    bool retryArmed_ {false};
+    std::chrono::steady_clock::time_point retryAt_ {};
+
+    /**
+     * Arm (or re-arm, if `when` is earlier than the pending deadline) the
+     * backoff retry timer. Must NOT be called with `mutex` held.
+     */
+    void scheduleBackoffRetry(std::chrono::steady_clock::time_point when);
+
+    /**
+     * Cancel any pending backoff retry. Must NOT be called with `mutex` held.
+     */
+    void cancelBackoffRetry();
+
+    /**
+     * Record a failed connection attempt (mutex must be locked).
+     * @return the retry deadline, to pass to scheduleBackoffRetry() once
+     *         the lock has been released.
+     */
+    std::chrono::steady_clock::time_point noteConnectionFailure(const NodeId& nodeId);
+
+    /**
+     * Whether a connection to this node may be attempted now,
+     * i.e. it is not in a backoff window (mutex must be locked).
+     */
+    bool canTryConnect(const NodeId& nodeId) const;
 
     std::atomic_bool isShutdown_ {false};
 
