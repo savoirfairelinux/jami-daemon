@@ -371,6 +371,13 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                                     // So, retrigger the callback so upper layer will clone conversation if
                                     // needed instead of getting stuck in sync.
                                     info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
+                                    // Still confirm the request: receiving a non-confirmed trust
+                                    // request for an already-accepted conversation means the peer
+                                    // never got our confirmation (one-shot DHT put, lost if the
+                                    // peer was offline when it was sent). Without it, the peer
+                                    // stays unconfirmed and re-sends this request on every
+                                    // presence event, forever.
+                                    sendTrustRequestConfirm(peer_account, conversationId);
                                     return;
                                 }
                                 conversationId = details->conversationId;
