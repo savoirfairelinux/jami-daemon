@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5aa8d75e_c8916096",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:33Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 170: Nodes skipped by `canTryConnect()` are not scheduled for retry when `nextRetry` expires; they will only be retried if some unrelated event later calls `maintainBuckets()`. If the swarm becomes idle after all candidates enter backoff, a node can remain untried indefinitely even after the 30s/6h window expires. Track the earliest skipped `nextRetry` while maintaining buckets and schedule a timer/job to call `maintainBuckets()` then, or ensure the existing maintenance loop runs at a bounded interval shorter than the backoff base.",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f1e17a2_c87a8659",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 354,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:33Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 354: This records a backoff failure for every null socket callback, but `needSocketCb_` can fail for reasons unrelated to the peer being unreachable, such as local network setup/resource failures, account shutdown races, or ICE/TURN allocation errors. In those cases this change suppresses otherwise reachable bootstrap nodes for up to 6 hours and can make swarm recovery much worse. Backoff should only be applied when the callback can distinguish a completed remote reachability failure from a local/transient setup failure, or the callback should pass an explicit failure reason. For example:\n```suggestion\nif (!noNewSocket \u0026\u0026 reason \u003d\u003d ConnectFailureReason::UnreachablePeer)\n    shared-\u003enoteConnectionFailure(nodeId);\n```",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d414fb56_6cd9b655",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:33Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 552: The new test only verifies reset behavior and immediate suppression; it does not verify that a node is retried after the backoff delay expires. This misses the retry-scheduling issue above. Add a test with injectable clock/backoff constants or a test-only short backoff to assert that a failed known node is retried once `nextRetry` has passed without requiring a connectivity reset.",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
