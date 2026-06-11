@@ -20,6 +20,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "33f3166c_1e86a675",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:35Z",
+      "side": 1,
+      "message": "[Critical] Line 187: When every known node is in backoff, `getKnownNodesRandom()` returns an empty set and `maintainBuckets()` leaves the bucket underfilled until some external event calls it again. Since no retry timer is scheduled for `nextRetry`, a node whose backoff expires may never be retried, which breaks the intended exponential backoff behavior. Schedule maintenance for the earliest skipped retry time, or have this code arm an existing timer/event loop when filtered candidates are skipped.\n```suggestion\n// Track the earliest nextRetry among skipped nodes and schedule maintainBuckets()\n// for that time so backoff expiry causes an actual retry.\n````",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aec25587_031fce59",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:35Z",
+      "side": 1,
+      "message": "Line 208: `connectionFailures_` entries are never removed after their retry window expires unless a connection later succeeds or connectivity changes. Conversations can contain many historical devices, so this map can grow permanently and retain stale nodes. Remove expired entries when they become eligible, or erase entries after a retry is selected so only active backoff state is retained.\n```suggestion\nif (it !\u003d connectionFailures_.end() \u0026\u0026 it-\u003esecond.nextRetry \u003c\u003d std::chrono::steady_clock::now()) {\n    connectionFailures_.erase(it);\n    return true;\n}\n```",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7f1e17a2_c87a8659",
         "filename": "src/jamidht/swarm/swarm_manager.cpp",
         "patchSetId": 1
@@ -48,6 +82,23 @@
       "writtenOn": "2026-06-11T12:10:33Z",
       "side": 1,
       "message": "[🟡 Suggestions] Line 552: The new test only verifies reset behavior and immediate suppression; it does not verify that a node is retried after the backoff delay expires. This misses the retry-scheduling issue above. Add a test with injectable clock/backoff constants or a test-only short backoff to assert that a failed known node is retried once `nextRetry` has passed without requiring a connectivity reset.",
+      "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1dbf47c_da72f8d2",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:10:35Z",
+      "side": 1,
+      "message": "Line 558: The test only verifies manual `resetConnectionBackoff()`, not that backoff expiry actually causes a retry. Because production code does not schedule a retry when all candidates are filtered out, this gap misses the main behavioral risk. Add a deterministic test path with a short/injected backoff or clock so the test proves retries happen after expiry without relying on wall-clock sleeps.\n```suggestion\n// Inject a test backoff/clock, wait until the retry deadline, then assert\n// maintainBuckets or the scheduled maintenance retries the node.\n```",
       "revId": "2be8e862b0bbe766774876ff13e812e674b8f031",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
