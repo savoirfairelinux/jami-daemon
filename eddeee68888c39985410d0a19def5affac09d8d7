@@ -1,0 +1,58 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0bfc1ba_85e887f2",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1493,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:07:32Z",
+      "side": 1,
+      "message": "Done in patch set 2: the tombstone (and its persisted state) is now left untouched at accept time. cloneConversationFrom(request) only records the observed removed timestamp (SyncedConversation::reinviteRemoved); handlePendingConversation() clears the tombstone solely on clone success. On failure (exception path / fallback retries) the tombstone is preserved, so future invitations are never blocked.",
+      "parentUuid": "748a2323_ee3691e9",
+      "revId": "eddeee68888c39985410d0a19def5affac09d8d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f43e8fa_e8a1dcab",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1495,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:07:32Z",
+      "side": 1,
+      "message": "Done: no persistence happens before clone success anymore. The clear+addConvInfo now lives in handlePendingConversation(), guarded by reinviteRemoved \u003d\u003d info.removed so a removal performed while the clone was in flight is still honored (repository deleted, not announced).",
+      "parentUuid": "f40a5bb8_f10f34e1",
+      "revId": "eddeee68888c39985410d0a19def5affac09d8d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69929b46_8b3ddda9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1499,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T10:07:32Z",
+      "side": 1,
+      "message": "Mode is not copied from the request anymore: on clone success the existing mode-mismatch block in handlePendingConversation() refreshes conv-\u003einfo.mode from the cloned repository, which is the authoritative source; members are likewise re-synced from the repository via setConversationMembers/onMembersChanged.",
+      "parentUuid": "c16a2df0_6beb2c52",
+      "revId": "eddeee68888c39985410d0a19def5affac09d8d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
