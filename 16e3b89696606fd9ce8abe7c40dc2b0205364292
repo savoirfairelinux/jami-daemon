@@ -35,6 +35,40 @@
       "parentUuid": "f351defd_fda95b15",
       "revId": "16e3b89696606fd9ce8abe7c40dc2b0205364292",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81a7d264_d723a9f3",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1520,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:19:55Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1520: The re-invite path updates `conv-\u003einfo.members`, `conv-\u003einfo.mode`, and `conv-\u003ereinvitePending` without persisting the refreshed non-tombstone metadata. If the daemon restarts before the clone completes, the kept request allows retry, but the in-memory refresh is lost and the retry may run from stale tombstone metadata until the repository clone completes. Persist the request-derived metadata while preserving `removed`/`erased`, or explicitly refresh it again from the stored request before each retry path that depends on it.\n\n```suggestion\n        conv-\u003einfo.members.clear();\n        conv-\u003einfo.members.emplace(username_);\n        conv-\u003einfo.members.emplace(request.from);\n        conv-\u003einfo.mode \u003d request.mode();\n        conv-\u003ereinvitePending \u003d true;\n        addConvInfo(conv-\u003einfo);\n```",
+      "revId": "16e3b89696606fd9ce8abe7c40dc2b0205364292",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5ee4f38_294b761c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2130,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:19:55Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2130: `deferRequestRemoval` is computed before `cloneConversationFrom()` marks `reinvitePending`, leaving a race where another local removal can clear `reinvitePending` and then `cloneConversationFrom()` sets it back to true. That would allow the older re-invitation to win over a newer removal, contradicting the comment on `reinvitePending`. Move the decision and marker update into one critical section, or make `cloneConversationFrom()` only set `reinvitePending` when the tombstone state has not changed since acceptance began.",
+      "revId": "16e3b89696606fd9ce8abe7c40dc2b0205364292",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
