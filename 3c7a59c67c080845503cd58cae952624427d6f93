@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "311416ec_a9333cdd",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:55:08Z",
+      "side": 1,
+      "message": "Done in patch set 3: resetConnectionBackoff() now cancels the pending timer and clears retryArmed_/retryAt_, exactly as suggested.",
+      "parentUuid": "f85bc2bc_facb1070",
+      "revId": "3c7a59c67c080845503cd58cae952624427d6f93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ebc8b5f_af4d2600",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T12:55:08Z",
+      "side": 1,
+      "message": "Done in patch set 3: the delay now doubles iteratively with a clamp check before each multiplication, so the duration arithmetic cannot overflow regardless of configured base/max.",
+      "parentUuid": "95d5311c_ab21cc99",
+      "revId": "3c7a59c67c080845503cd58cae952624427d6f93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
