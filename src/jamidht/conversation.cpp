@@ -60,16 +60,39 @@ namespace jami {
 
 static const char* const LAST_MODIFIED = "lastModified";
 
+namespace {
+
+// Read a timestamp from JSON, preferring the millisecond key and falling
+// back to the legacy seconds key (written by older devices).
+TimePoint
+timePointFromJson(const Json::Value& json, const char* msKey, const char* secondsKey)
+{
+    if (json.isMember(msKey))
+        return timePointFromMilliseconds(json[msKey].asLargestInt());
+    return timePointFromSeconds(json[secondsKey].asLargestInt());
+}
+
+// Resolve a timestamp from msgpack values, preferring milliseconds.
+TimePoint
+resolveTimePoint(const std::optional<int64_t>& ms, int64_t seconds)
+{
+    return ms ? timePointFromMilliseconds(*ms) : timePointFromSeconds(seconds);
+}
+
+} // namespace
+
 ConvInfo::ConvInfo(const Json::Value& json)
 {
     id = json[ConversationMapKeys::ID].asString();
-    created = json[ConversationMapKeys::CREATED].asLargestUInt();
-    removed = json[ConversationMapKeys::REMOVED].asLargestUInt();
-    erased = json[ConversationMapKeys::ERASED].asLargestUInt();
+    created = timePointFromJson(json, ConversationMapKeys::CREATED_MS, ConversationMapKeys::CREATED);
+    removed = timePointFromJson(json, ConversationMapKeys::REMOVED_MS, ConversationMapKeys::REMOVED);
+    erased = timePointFromJson(json, ConversationMapKeys::ERASED_MS, ConversationMapKeys::ERASED);
     for (const auto& v : json[ConversationMapKeys::MEMBERS]) {
         members.emplace(v["uri"].asString());
     }
     lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
+    if (json.isMember(ConversationMapKeys::MODE))
+        mode = static_cast<ConversationMode>(json[ConversationMapKeys::MODE].asInt());
 }
 
 Json::Value
@@ -77,12 +100,15 @@ ConvInfo::toJson() const
 {
     Json::Value json;
     json[ConversationMapKeys::ID] = id;
-    json[ConversationMapKeys::CREATED] = Json::Int64(created);
-    if (removed) {
-        json[ConversationMapKeys::REMOVED] = Json::Int64(removed);
+    json[ConversationMapKeys::CREATED] = Json::Int64(toSecondsSinceEpoch(created));
+    json[ConversationMapKeys::CREATED_MS] = Json::Int64(toMillisecondsSinceEpoch(created));
+    if (removed != TimePoint {}) {
+        json[ConversationMapKeys::REMOVED] = Json::Int64(toSecondsSinceEpoch(removed));
+        json[ConversationMapKeys::REMOVED_MS] = Json::Int64(toMillisecondsSinceEpoch(removed));
     }
-    if (erased) {
-        json[ConversationMapKeys::ERASED] = Json::Int64(erased);
+    if (erased != TimePoint {}) {
+        json[ConversationMapKeys::ERASED] = Json::Int64(toSecondsSinceEpoch(erased));
+        json[ConversationMapKeys::ERASED_MS] = Json::Int64(toMillisecondsSinceEpoch(erased));
     }
     for (const auto& m : members) {
         Json::Value member;
@@ -90,14 +116,85 @@ ConvInfo::toJson() const
         json[ConversationMapKeys::MEMBERS].append(member);
     }
     json[ConversationMapKeys::LAST_DISPLAYED] = lastDisplayed;
+    json[ConversationMapKeys::MODE] = static_cast<int>(mode);
     return json;
+}
+
+void
+ConvInfo::msgpack_unpack(const msgpack::object& o)
+{
+    if (o.type != msgpack::type::MAP)
+        throw msgpack::type_error();
+    int64_t createdSec = 0, removedSec = 0, erasedSec = 0;
+    std::optional<int64_t> createdMs, removedMs, erasedMs;
+    for (uint32_t i = 0; i < o.via.map.size; ++i) {
+        const auto& kv = o.via.map.ptr[i];
+        if (kv.key.type != msgpack::type::STR)
+            continue;
+        std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+        if (key == ConversationMapKeys::ID)
+            kv.val.convert(id);
+        else if (key == ConversationMapKeys::CREATED)
+            kv.val.convert(createdSec);
+        else if (key == ConversationMapKeys::REMOVED)
+            kv.val.convert(removedSec);
+        else if (key == ConversationMapKeys::ERASED)
+            kv.val.convert(erasedSec);
+        else if (key == ConversationMapKeys::CREATED_MS)
+            createdMs = kv.val.as<int64_t>();
+        else if (key == ConversationMapKeys::REMOVED_MS)
+            removedMs = kv.val.as<int64_t>();
+        else if (key == ConversationMapKeys::ERASED_MS)
+            erasedMs = kv.val.as<int64_t>();
+        else if (key == ConversationMapKeys::MEMBERS)
+            kv.val.convert(members);
+        else if (key == ConversationMapKeys::LAST_DISPLAYED)
+            kv.val.convert(lastDisplayed);
+        else if (key == ConversationMapKeys::MODE)
+            kv.val.convert(mode);
+    }
+    created = resolveTimePoint(createdMs, createdSec);
+    removed = resolveTimePoint(removedMs, removedSec);
+    erased = resolveTimePoint(erasedMs, erasedSec);
+}
+
+void
+ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
+{
+    int64_t createdSec = toSecondsSinceEpoch(created);
+    int64_t removedSec = toSecondsSinceEpoch(removed);
+    int64_t erasedSec = toSecondsSinceEpoch(erased);
+    int64_t createdMs = toMillisecondsSinceEpoch(created);
+    int64_t removedMs = toMillisecondsSinceEpoch(removed);
+    int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+    msgpack::type::make_define_map(ConversationMapKeys::ID,
+                                   id,
+                                   ConversationMapKeys::CREATED,
+                                   createdSec,
+                                   ConversationMapKeys::REMOVED,
+                                   removedSec,
+                                   ConversationMapKeys::ERASED,
+                                   erasedSec,
+                                   ConversationMapKeys::MEMBERS,
+                                   members,
+                                   ConversationMapKeys::LAST_DISPLAYED,
+                                   lastDisplayed,
+                                   ConversationMapKeys::MODE,
+                                   mode,
+                                   ConversationMapKeys::CREATED_MS,
+                                   createdMs,
+                                   ConversationMapKeys::REMOVED_MS,
+                                   removedMs,
+                                   ConversationMapKeys::ERASED_MS,
+                                   erasedMs)
+        .msgpack_object(o, z);
 }
 
 // ConversationRequest
 ConversationRequest::ConversationRequest(const Json::Value& json)
 {
-    received = json[ConversationMapKeys::RECEIVED].asLargestUInt();
-    declined = json[ConversationMapKeys::DECLINED].asLargestUInt();
+    received = timePointFromJson(json, ConversationMapKeys::RECEIVED_MS, ConversationMapKeys::RECEIVED);
+    declined = timePointFromJson(json, ConversationMapKeys::DECLINED_MS, ConversationMapKeys::DECLINED);
     from = json[ConversationMapKeys::FROM].asString();
     conversationId = json[ConversationMapKeys::CONVERSATIONID].asString();
     auto& md = json[ConversationMapKeys::METADATAS];
@@ -112,9 +209,12 @@ ConversationRequest::toJson() const
     Json::Value json;
     json[ConversationMapKeys::CONVERSATIONID] = conversationId;
     json[ConversationMapKeys::FROM] = from;
-    json[ConversationMapKeys::RECEIVED] = static_cast<uint32_t>(received);
-    if (declined)
-        json[ConversationMapKeys::DECLINED] = static_cast<uint32_t>(declined);
+    json[ConversationMapKeys::RECEIVED] = Json::Int64(toSecondsSinceEpoch(received));
+    json[ConversationMapKeys::RECEIVED_MS] = Json::Int64(toMillisecondsSinceEpoch(received));
+    if (declined != TimePoint {}) {
+        json[ConversationMapKeys::DECLINED] = Json::Int64(toSecondsSinceEpoch(declined));
+        json[ConversationMapKeys::DECLINED_MS] = Json::Int64(toMillisecondsSinceEpoch(declined));
+    }
     for (const auto& [key, value] : metadatas) {
         json[ConversationMapKeys::METADATAS][key] = value;
     }
@@ -127,10 +227,65 @@ ConversationRequest::toMap() const
     auto result = metadatas;
     result[ConversationMapKeys::ID] = conversationId;
     result[ConversationMapKeys::FROM] = from;
-    if (declined)
-        result[ConversationMapKeys::DECLINED] = std::to_string(declined);
-    result[ConversationMapKeys::RECEIVED] = std::to_string(received);
+    if (declined != TimePoint {})
+        result[ConversationMapKeys::DECLINED] = std::to_string(toSecondsSinceEpoch(declined));
+    result[ConversationMapKeys::RECEIVED] = std::to_string(toSecondsSinceEpoch(received));
     return result;
+}
+
+void
+ConversationRequest::msgpack_unpack(const msgpack::object& o)
+{
+    if (o.type != msgpack::type::MAP)
+        throw msgpack::type_error();
+    int64_t receivedSec = 0, declinedSec = 0;
+    std::optional<int64_t> receivedMs, declinedMs;
+    for (uint32_t i = 0; i < o.via.map.size; ++i) {
+        const auto& kv = o.via.map.ptr[i];
+        if (kv.key.type != msgpack::type::STR)
+            continue;
+        std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+        if (key == ConversationMapKeys::FROM)
+            kv.val.convert(from);
+        else if (key == ConversationMapKeys::CONVERSATIONID)
+            kv.val.convert(conversationId);
+        else if (key == ConversationMapKeys::METADATAS)
+            kv.val.convert(metadatas);
+        else if (key == ConversationMapKeys::RECEIVED)
+            kv.val.convert(receivedSec);
+        else if (key == ConversationMapKeys::DECLINED)
+            kv.val.convert(declinedSec);
+        else if (key == ConversationMapKeys::RECEIVED_MS)
+            receivedMs = kv.val.as<int64_t>();
+        else if (key == ConversationMapKeys::DECLINED_MS)
+            declinedMs = kv.val.as<int64_t>();
+    }
+    received = resolveTimePoint(receivedMs, receivedSec);
+    declined = resolveTimePoint(declinedMs, declinedSec);
+}
+
+void
+ConversationRequest::msgpack_object(msgpack::object* o, msgpack::zone& z) const
+{
+    int64_t receivedSec = toSecondsSinceEpoch(received);
+    int64_t declinedSec = toSecondsSinceEpoch(declined);
+    int64_t receivedMs = toMillisecondsSinceEpoch(received);
+    int64_t declinedMs = toMillisecondsSinceEpoch(declined);
+    msgpack::type::make_define_map(ConversationMapKeys::FROM,
+                                   from,
+                                   ConversationMapKeys::CONVERSATIONID,
+                                   conversationId,
+                                   ConversationMapKeys::METADATAS,
+                                   metadatas,
+                                   ConversationMapKeys::RECEIVED,
+                                   receivedSec,
+                                   ConversationMapKeys::DECLINED,
+                                   declinedSec,
+                                   ConversationMapKeys::RECEIVED_MS,
+                                   receivedMs,
+                                   ConversationMapKeys::DECLINED_MS,
+                                   declinedMs)
+        .msgpack_object(o, z);
 }
 
 using MessageList = std::list<std::shared_ptr<libjami::SwarmMessage>>;

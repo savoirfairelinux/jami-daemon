@@ -342,7 +342,7 @@ public:
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
             // We only remove requests (if accepted) or change .declined
-            if (!req.declined)
+            if (req.declined == TimePoint {})
                 return false;
         } else if (req.isOneToOne()) {
             // Check that we're not adding a second one to one trust request
@@ -362,7 +362,7 @@ public:
             auto& md = syncingMetadatas_[id];
             md = it->second.metadatas;
             md["syncing"] = "true";
-            md["created"] = std::to_string(it->second.received);
+            md["created"] = std::to_string(toSecondsSinceEpoch(it->second.received));
         }
         saveMetadata();
         conversationsRequests_.erase(id);
@@ -595,7 +595,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             const bool isOneToOne = (itConvInfo->second.mode == ConversationMode::ONE_TO_ONE);
             auto contactInfo = accountManager_->getContactInfo(peer);
             const bool shouldReadd = isOneToOne && contactInfo && contactInfo->confirmed && contactInfo->isActive()
-                                     && !contactInfo->isBanned() && contactInfo->added > itConvInfo->second.removed
+                                     && !contactInfo->isBanned()
+                                     && timePointFromSeconds(contactInfo->added) > itConvInfo->second.removed
                                      && contactInfo->conversationId != conversationId;
 
             if (shouldReadd) {
@@ -603,8 +604,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     std::unique_lock lkSynced(conv->mtx);
 
                     if (!conv->conversation) {
-                        conv->info.created = std::time(nullptr);
-                        conv->info.erased = 0;
+                        conv->info.created = nowMs();
+                        conv->info.erased = TimePoint {};
                         convInfos_[conversationId] = conv->info;
                         saveConvInfos();
                         needReclone = true;
@@ -633,7 +634,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     {
         std::lock_guard lk(conversationsRequestsMtx_);
         oldReq = getRequest(conversationId);
-        if (oldReq != std::nullopt && oldReq->declined) {
+        if (oldReq != std::nullopt && oldReq->declined != TimePoint {}) {
             JAMI_DEBUG("[Account {}] [Conversation {}] Received a request for a conversation already declined.",
                        accountId_,
                        conversationId);
@@ -1013,11 +1014,11 @@ ConversationModule::Impl::declineOtherConversationWith(const std::string& uri)
 {
     // conversationsRequestsMtx_ MUST BE LOCKED
     for (auto& [id, request] : conversationsRequests_) {
-        if (request.declined)
+        if (request.declined != TimePoint {})
             continue; // Ignore already declined requests
         if (request.isOneToOne() && request.from == uri) {
             JAMI_WARNING("[Account {}] [Conversation {}] Decline conversation request from {}", accountId_, id, uri);
-            request.declined = std::time(nullptr);
+            request.declined = nowMs();
             syncingMetadatas_.erase(id);
             saveMetadata();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(accountId_, id);
@@ -1070,7 +1071,7 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         if (!sync)
             return;
 
-        conv.info.erased = std::time(nullptr);
+        conv.info.erased = nowMs();
         needsSyncingCb_({});
         addConvInfo(conv.info);
     }
@@ -1094,9 +1095,9 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
                                       [&](const auto& member) { return member.at("uri") == username_; })
                              != members.end() // We must be still a member
                       && members.size() != 1; // If there is only ourself
-    conv.info.removed = std::time(nullptr);
+    conv.info.removed = nowMs();
     if (isSyncing)
-        conv.info.erased = std::time(nullptr);
+        conv.info.erased = nowMs();
     if (conv.fallbackClone)
         conv.fallbackClone->cancel();
     // Sync now, because it can take some time to really removes the datas
@@ -1341,7 +1342,7 @@ ConversationModule::Impl::fixStructures(
             if (itConvId != request.end() && itConvFrom != request.end()) {
                 // Check if requests exists or is declined.
                 auto itReq = conversationsRequests_.find(itConvId->second);
-                auto declined = itReq == conversationsRequests_.end() || itReq->second.declined;
+                auto declined = itReq == conversationsRequests_.end() || itReq->second.declined != TimePoint {};
                 if (declined) {
                     JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
                     invalidPendingRequests.emplace_back(itConvFrom->second);
@@ -1511,7 +1512,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     }
     auto conv = startConversation(request.conversationId);
     std::lock_guard lk(conv->mtx);
-    if (conv->info.created == 0) {
+    if (conv->info.created == TimePoint {}) {
         conv->info = {request.conversationId};
         conv->info.created = request.received;
         conv->info.members.emplace(username_);
@@ -1733,7 +1734,7 @@ ConversationModule::loadConversations()
                         auto convInfo = pimpl_->convInfos_.find(repository);
                         if (convInfo == pimpl_->convInfos_.end()) {
                             JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
-                            sconv->info.created = std::time(nullptr);
+                            sconv->info.created = nowMs();
                             sconv->info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                         } else {
                             sconv->info = convInfo->second;
@@ -1821,7 +1822,7 @@ ConversationModule::loadConversations()
 
         ConvInfo newInfo;
         newInfo.id = contact.conversationId;
-        newInfo.created = std::time(nullptr);
+        newInfo.created = nowMs();
         newInfo.members.emplace(pimpl_->username_);
         newInfo.members.emplace(contactId.toString());
         pimpl_->conversations_.emplace(contact.conversationId, std::make_shared<SyncedConversation>(newInfo));
@@ -1971,7 +1972,7 @@ ConversationModule::getConversationRequests() const
     std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
     requests.reserve(pimpl_->conversationsRequests_.size());
     for (const auto& [id, request] : pimpl_->conversationsRequests_) {
-        if (request.declined)
+        if (request.declined != TimePoint {})
             continue; // Do not add declined requests
         requests.emplace_back(request.toMap());
     }
@@ -1988,7 +1989,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
-    req.received = std::time(nullptr);
+    req.received = nowMs();
     req.metadatas = ConversationRepository::infosFromVCard(
         vCard::utils::toMap(std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
     auto reqMap = req.toMap();
@@ -2036,10 +2037,10 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
         JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. "
                    "Ignore. Declined: {}",
                    pimpl_->accountId_,
-                   static_cast<int>(oldReq->declined));
+                   oldReq->declined != TimePoint {});
         return;
     }
-    req.received = std::time(nullptr);
+    req.received = nowMs();
     req.from = from;
 
     if (isOneToOne) {
@@ -2121,7 +2122,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
     std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
     auto it = pimpl_->conversationsRequests_.find(conversationId);
     if (it != pimpl_->conversationsRequests_.end()) {
-        it->second.declined = std::time(nullptr);
+        it->second.declined = nowMs();
         pimpl_->saveConvRequests();
     }
     pimpl_->syncingMetadatas_.erase(conversationId);
@@ -2173,7 +2174,7 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     auto convId = conversation->id();
     auto conv = pimpl_->startConversation(convId);
     std::unique_lock lk(conv->mtx);
-    conv->info.created = std::time(nullptr);
+    conv->info.created = nowMs();
     conv->info.members.emplace(pimpl_->username_);
     if (otherMember)
         conv->info.members.emplace(otherMember.toString());
@@ -2443,7 +2444,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
-            if (conv->info.removed) {
+            if (conv->info.removed != TimePoint {}) {
                 if (conv->info.removed >= convInfo.created) {
                     // Only reclone if re-added, else the peer is not synced yet (could be
                     // offline before)
@@ -2469,13 +2470,13 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->conversation->setRemovingFlag();
             }
             auto update = false;
-            if (!conv->info.removed) {
+            if (conv->info.removed == TimePoint {}) {
                 update = true;
-                conv->info.removed = std::time(nullptr);
+                conv->info.removed = nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
-            if (convInfo.erased && !conv->info.erased) {
-                conv->info.erased = std::time(nullptr);
+            if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+                conv->info.erased = nowMs();
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {
@@ -2508,7 +2509,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         if (!pimpl_->addConversationRequest(convId, req))
             continue;
 
-        if (req.declined != 0) {
+        if (req.declined != TimePoint {}) {
             // Request declined
             JAMI_LOG("[Account {:s}] Declined request detected for conversation {:s} (device {:s})",
                      pimpl_->accountId_,
@@ -2569,7 +2570,7 @@ ConversationModule::needsSyncingWith(const std::string& memberUri) const
         if (ci->conversation) {
             if (ci->conversation->isRemoving() && ci->conversation->isMember(memberUri, false))
                 return true;
-        } else if (!ci->info.removed
+        } else if (ci->info.removed == TimePoint {}
                    && std::find(ci->info.members.begin(), ci->info.members.end(), memberUri) != ci->info.members.end()) {
             // In this case the conversation was never cloned (can be after an import)
             return true;
@@ -2886,13 +2887,13 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
         auto update = false;
         for (auto it = pimpl_->conversationsRequests_.begin(); it != pimpl_->conversationsRequests_.end(); ++it) {
-            if (it->second.from == uri && !it->second.declined) {
+            if (it->second.from == uri && it->second.declined == TimePoint {}) {
                 JAMI_DEBUG("Declining conversation request {:s} from {:s}", it->first, uri);
                 pimpl_->syncingMetadatas_.erase(it->first);
                 pimpl_->saveMetadata();
                 emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_, it->first);
                 update = true;
-                it->second.declined = std::time(nullptr);
+                it->second.declined = nowMs();
             }
         }
         if (update) {
@@ -2917,7 +2918,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             || (!isSelf && std::find(members.begin(), members.end(), uri) != members.end())) {
             // Mark the conversation as removed if it wasn't already
             if (!conv->info.isRemoved()) {
-                conv->info.removed = std::time(nullptr);
+                conv->info.removed = nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conv->info.id);
                 pimpl_->addConvInfo(conv->info);
                 return true;
@@ -3057,7 +3058,7 @@ ConversationModule::findMatchingOneToOneConversation(const std::string& excluded
             continue;
 
         const auto& info = otherConvPtr->info;
-        if (info.removed != 0 && info.isRemoved())
+        if (info.removed != TimePoint {} && info.isRemoved())
             continue;
 
         auto otherUris = otherConvPtr->conversation->memberUris();
