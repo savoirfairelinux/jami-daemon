@@ -1,8 +1,13 @@
 # Nettle
 
-NETTLE_VERSION := 4.0
-PKG_CPE += cpe:2.3:a:nettle_project:nettle:$(NETTLE_VERSION):*:*:*:*:*:*:*
-NETTLE_URL := https://ftp.gnu.org/gnu/nettle/nettle-$(NETTLE_VERSION).tar.gz
+#NETTLE_VERSION := 4.0
+#NETTLE_URL := https://ftp.gnu.org/gnu/nettle/nettle-$(NETTLE_VERSION).tar.gz
+
+# Use GitHub to give the GNU servers a break
+NETTLE_VERSION := nettle_4.0_release_20260205
+NETTLE_URL := https://github.com/gnutls/nettle/archive/refs/tags/$(NETTLE_VERSION).tar.gz
+
+PKG_CPE += cpe:2.3:a:nettle_project:nettle:4.0:*:*:*:*:*:*:*
 PKGS += nettle
 
 ifeq ($(call need_pkg,"nettle >= 3.6"),)
@@ -17,10 +22,8 @@ $(TARBALLS)/nettle-$(NETTLE_VERSION).tar.gz:
 
 nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG)
+#	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
-
-
 
 .nettle: nettle
 ifdef HAVE_IOS
