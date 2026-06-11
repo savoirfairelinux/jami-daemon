@@ -342,51 +342,28 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(
-            *v.owner,
-            true,
-            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
-                             accountId_,
-                             v.owner->getLongId().toString(),
-                             v.confirm,
-                             peer_account.toString(),
-                             v.conversationId);
-                if (info_)
-                    if (info_->contacts->onTrustRequest(peer_account,
-                                                        v.owner,
-                                                        time(nullptr),
-                                                        v.confirm,
-                                                        v.conversationId,
-                                                        std::move(v.payload))) {
-                        if (v.confirm) // No need to send a confirmation as already accepted here
-                            return;
-                        auto conversationId = v.conversationId;
-                        // Check if there was an old active conversation.
-                        if (auto details = info_->contacts->getContactInfo(peer_account)) {
-                            if (!details->conversationId.empty()) {
-                                if (details->conversationId == conversationId) {
-                                    // Here, it's possible that we already have accepted the conversation
-                                    // but contact were offline and sync failed.
-                                    // So, retrigger the callback so upper layer will clone conversation if
-                                    // needed instead of getting stuck in sync.
-                                    info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
-                                    // Still confirm the request: receiving a non-confirmed trust
-                                    // request for an already-accepted conversation means the peer
-                                    // never got our confirmation (one-shot DHT put, lost if the
-                                    // peer was offline when it was sent). Without it, the peer
-                                    // stays unconfirmed and re-sends this request on every
-                                    // presence event, forever.
-                                    sendTrustRequestConfirm(peer_account, conversationId);
-                                    return;
-                                }
-                                conversationId = details->conversationId;
-                                JAMI_WARNING("Accept with old convId: {}", conversationId);
-                            }
-                        }
-                        sendTrustRequestConfirm(peer_account, conversationId);
-                    }
-            });
+        onPeerMessage(*v.owner,
+                      true,
+                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                          JAMI_WARNING(
+                              "[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                              accountId_,
+                              v.owner->getLongId().toString(),
+                              v.confirm,
+                              peer_account.toString(),
+                              v.conversationId);
+                          if (info_)
+                              if (info_->contacts->onTrustRequest(peer_account,
+                                                                  v.owner,
+                                                                  time(nullptr),
+                                                                  v.confirm,
+                                                                  v.conversationId,
+                                                                  std::move(v.payload))) {
+                                  if (v.confirm) // No need to send a confirmation as already accepted here
+                                      return;
+                                  sendTrustRequestConfirm(peer_account, v.conversationId);
+                              }
+                      });
         return true;
     });
 }
