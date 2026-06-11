@@ -90,6 +90,8 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         auto emit = false;
         {
             std::lock_guard lock(mutex);
+            // The node answered: it is alive, drop any backoff state.
+            connectionFailures_.erase(channel->deviceId());
             emit = routing_table.findBucket(getId())->isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
             if (routing_table.addNode(channel, bucket)) {
@@ -138,6 +140,7 @@ SwarmManager::shutdown()
         return;
     }
     isShutdown_ = true;
+    cancelBackoffRetry();
     std::lock_guard lock(mutex);
     routing_table.shutdownAllNodes();
 }
@@ -146,6 +149,10 @@ void
 SwarmManager::restart()
 {
     isShutdown_ = false;
+    // Fresh start: failures recorded before the shutdown (possibly caused
+    // by local conditions, e.g. the network going down) must not delay the
+    // new bootstrap.
+    resetConnectionBackoff();
 }
 
 bool
@@ -167,6 +174,26 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
     std::set<NodeId> nodes = toConnect;
     std::unique_lock lock(mutex);
+    // Purge long-expired backoff windows (no failure recorded for a full
+    // max window past expiry: the node is no longer being tried at all, or
+    // it succeeded). Keeps the map bounded to nodes with active state while
+    // preserving the exponential ladder of nodes still being probed.
+    auto now = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point earliestRetry {};
+    for (auto it = connectionFailures_.begin(); it != connectionFailures_.end();) {
+        if (it->second.nextRetry + backoffMax_ <= now) {
+            it = connectionFailures_.erase(it);
+        } else {
+            if (it->second.nextRetry > now
+                && (earliestRetry == std::chrono::steady_clock::time_point {}
+                    || it->second.nextRetry < earliestRetry))
+                earliestRetry = it->second.nextRetry;
+            ++it;
+        }
+    }
+    auto eligible = [this](const NodeId& nodeId) {
+        return canTryConnect(nodeId);
+    };
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         auto& bucket = *it;
@@ -174,16 +201,104 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
         auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
                                          : bucket.getConnectingNodesSize() + bucket.getNodesSize();
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
-            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes, rd);
+            // Nodes in a failure backoff window are skipped: candidates come
+            // from the conversation repository and may be long dead. A node
+            // that comes back online reaches us anyway (it bootstraps too,
+            // and any incoming channel clears its backoff), explicit
+            // connectNode() requests bypass this filter, and connectivity
+            // changes reset all backoff state.
+            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
+                                                         rd,
+                                                         eligible);
             for (auto& node : nodesToTry)
                 routing_table.addConnectingNode(node);
 
             nodes.insert(nodesToTry.begin(), nodesToTry.end());
         }
     }
+    // Some nodes are still backing off: make sure maintenance runs again
+    // when the earliest window expires, so they are retried even if the
+    // swarm stays otherwise idle. Armed after releasing the main lock:
+    // asio may run a cancelled handler inline, and that handler takes the
+    // main lock through maintainBuckets().
     lock.unlock();
+    if (earliestRetry != std::chrono::steady_clock::time_point {})
+        scheduleBackoffRetry(earliestRetry);
     for (const auto& node : nodes)
         tryConnect(node);
+}
+
+void
+SwarmManager::scheduleBackoffRetry(std::chrono::steady_clock::time_point when)
+{
+    std::lock_guard lock(retryMutex_);
+    if (retryArmed_ && retryAt_ <= when)
+        return;
+    if (!retryTimer_)
+        retryTimer_ = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
+    retryArmed_ = true;
+    retryAt_ = when;
+    retryTimer_->expires_at(when);
+    retryTimer_->async_wait([w = weak()](const asio::error_code& ec) {
+        if (ec == asio::error::operation_aborted)
+            return;
+        auto shared = w.lock();
+        if (!shared || shared->isShutdown_)
+            return;
+        {
+            std::lock_guard lock(shared->retryMutex_);
+            shared->retryArmed_ = false;
+        }
+        shared->maintainBuckets();
+    });
+}
+
+void
+SwarmManager::cancelBackoffRetry()
+{
+    std::lock_guard lock(retryMutex_);
+    if (retryTimer_)
+        retryTimer_->cancel();
+    retryArmed_ = false;
+    retryAt_ = {};
+}
+
+void
+SwarmManager::resetConnectionBackoff()
+{
+    {
+        std::lock_guard lock(mutex);
+        connectionFailures_.clear();
+    }
+    // Cancel any pending retry: with no backoff state left, a stale timer
+    // would only trigger spurious maintenance.
+    cancelBackoffRetry();
+}
+
+std::chrono::steady_clock::time_point
+SwarmManager::noteConnectionFailure(const NodeId& nodeId)
+{
+    auto& failure = connectionFailures_[nodeId];
+    failure.consecutiveFailures++;
+    // Double per consecutive failure, clamping before each multiplication
+    // so the duration arithmetic cannot overflow whatever the configured
+    // base and max are.
+    auto exponent = std::min(failure.consecutiveFailures - 1u, 31u);
+    auto delay = backoffBase_;
+    while (exponent-- > 0 && delay < backoffMax_)
+        delay *= 2;
+    if (delay > backoffMax_)
+        delay = backoffMax_;
+    failure.nextRetry = std::chrono::steady_clock::now() + delay;
+    return failure.nextRetry;
+}
+
+bool
+SwarmManager::canTryConnect(const NodeId& nodeId) const
+{
+    auto it = connectionFailures_.find(nodeId);
+    return it == connectionFailures_.end()
+           || it->second.nextRetry <= std::chrono::steady_clock::now();
 }
 
 void
@@ -307,7 +422,7 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
     if (needSocketCb_)
         needSocketCb_(
             nodeId.toString(),
-            [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
+            [w = weak(), nodeId, noNewSocket](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                 auto shared = w.lock();
                 if (!shared || shared->isShutdown_)
                     return true;
@@ -316,6 +431,13 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                     return true;
                 }
                 std::unique_lock lk(shared->mutex);
+                // Only a failed full connection attempt counts towards the
+                // backoff: with noNewSocket the failure only says that no
+                // reusable transport was available, not that the node is
+                // unreachable.
+                std::chrono::steady_clock::time_point retryAt {};
+                if (!noNewSocket)
+                    retryAt = shared->noteConnectionFailure(nodeId);
                 auto bucket = shared->routing_table.findBucket(nodeId);
                 bucket->removeConnectingNode(nodeId);
                 bucket->addKnownNode(nodeId);
@@ -324,7 +446,11 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                     lk.unlock();
                     JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
                     shared->onConnectionChanged_(false);
-                }
+                } else
+                    lk.unlock();
+                // Armed outside the main lock (see scheduleBackoffRetry).
+                if (retryAt != std::chrono::steady_clock::time_point {})
+                    shared->scheduleBackoffRetry(retryAt);
                 return true;
             },
             noNewSocket);

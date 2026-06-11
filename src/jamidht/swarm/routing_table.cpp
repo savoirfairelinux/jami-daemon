@@ -135,17 +135,37 @@ Bucket::addConnectingNode(const NodeId& nodeId)
 }
 
 std::set<NodeId>
-Bucket::getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const
+Bucket::getKnownNodesRandom(unsigned numberNodes,
+                            std::mt19937_64& rd,
+                            const std::function<bool(const NodeId&)>& eligible) const
 {
     std::set<NodeId> nodesToReturn;
 
-    if (getKnownNodesSize() <= numberNodes)
-        return getKnownNodes();
+    if (!eligible) {
+        if (getKnownNodesSize() <= numberNodes)
+            return getKnownNodes();
 
-    std::uniform_int_distribution<unsigned> distrib(0, getKnownNodesSize() - 1);
+        std::uniform_int_distribution<unsigned> distrib(0, getKnownNodesSize() - 1);
 
+        while (nodesToReturn.size() < numberNodes) {
+            nodesToReturn.emplace(getKnownNode(distrib(rd)));
+        }
+
+        return nodesToReturn;
+    }
+
+    std::vector<NodeId> candidates;
+    candidates.reserve(getKnownNodesSize());
+    for (const auto& node : getKnownNodes())
+        if (eligible(node))
+            candidates.emplace_back(node);
+
+    if (candidates.size() <= numberNodes)
+        return {candidates.begin(), candidates.end()};
+
+    std::uniform_int_distribution<unsigned> distrib(0, candidates.size() - 1);
     while (nodesToReturn.size() < numberNodes) {
-        nodesToReturn.emplace(getKnownNode(distrib(rd)));
+        nodesToReturn.emplace(candidates[distrib(rd)]);
     }
 
     return nodesToReturn;
