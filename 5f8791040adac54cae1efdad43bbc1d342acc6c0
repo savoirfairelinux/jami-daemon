@@ -55,6 +55,40 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f85bc2bc_facb1070",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:50:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 214: resetConnectionBackoff() clears the failure map but leaves any already armed retry timer active. After a connectivity change or restart, an old timer can still fire later and call maintainBuckets(), causing unexpected extra maintenance/connection attempts even though the backoff state was explicitly reset. Cancel the timer and clear retryArmed_/retryAt_ when resetting backoff.\n```suggestion\nvoid\nSwarmManager::resetConnectionBackoff()\n{\n    std::lock_guard lock(mutex);\n    connectionFailures_.clear();\n    if (retryTimer_)\n        retryTimer_-\u003ecancel();\n    retryArmed_ \u003d false;\n    retryAt_ \u003d {};\n}\n```",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95d5311c_ab21cc99",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T12:50:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 223: The exponential delay calculation can overflow before the clamp if backoffBase_ is large in tests or future configuration, because the duration multiplication is performed before comparing to backoffMax_. Compute the multiplier from the max/base ratio or clamp before multiplying to avoid undefined/implementation-dependent overflow behavior.\n```suggestion\n    auto exponent \u003d std::min(failure.consecutiveFailures - 1u, 31u);\n    auto delay \u003d backoffBase_;\n    while (exponent-- \u003e 0 \u0026\u0026 delay \u003c backoffMax_ / 2)\n        delay *\u003d 2;\n    if (delay \u003e backoffMax_)\n        delay \u003d backoffMax_;\n```",
+      "revId": "5f8791040adac54cae1efdad43bbc1d342acc6c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "0370d6c0_80ab62e1",
