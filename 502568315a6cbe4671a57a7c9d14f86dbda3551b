@@ -1,0 +1,58 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed450a6d_08711042",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T13:02:41Z",
+      "side": 1,
+      "message": "Done in patch set 4: timer state now lives behind a dedicated retryMutex_, never acquired while holding the main mutex. maintainBuckets() computes the earliest deadline under the main lock, releases it, then arms the timer; the tryConnect failure path does the same (noteConnectionFailure returns the deadline, armed after unlock). The expiry handler only takes retryMutex_ to clear the armed flag and then calls maintainBuckets() with no lock held — no lock-ordering hazard remains, even if asio runs a cancelled handler inline.",
+      "parentUuid": "7f632d9c_945d9f1c",
+      "revId": "502568315a6cbe4671a57a7c9d14f86dbda3551b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31d1d941_501116fb",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T13:02:41Z",
+      "side": 1,
+      "message": "Done in patch set 4: scheduleBackoffRetry()/cancelBackoffRetry() now take retryMutex_ themselves, so they are safe from any context; the locked-precondition footgun is gone. noteConnectionFailure() keeps the main-mutex precondition (documented) and returns the deadline for the caller to arm after unlocking.",
+      "parentUuid": "fbc91ee2_5717a468",
+      "revId": "502568315a6cbe4671a57a7c9d14f86dbda3551b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5b0a3685_d4afa669",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 560,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2026-06-11T13:02:41Z",
+      "side": 1,
+      "message": "Done in patch set 4: backoff shortened to 500ms base (kept ≥100ms no-retry margin with a 5x ratio so the within-window assertion stays meaningful under load) and the waits tightened to 5s upper bounds — they return as soon as the condition holds, so the test costs ~1s in practice. Suite passes 2/2 consecutive runs.",
+      "parentUuid": "a05d848f_642ae84c",
+      "revId": "502568315a6cbe4671a57a7c9d14f86dbda3551b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
