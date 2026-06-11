@@ -30,6 +30,7 @@
 #include <memory>
 #include <list>
 #include <set>
+#include <functional>
 
 using NodeId = dht::PkId;
 
@@ -204,9 +205,13 @@ public:
      * Returns random numberNodes NodeId from known_nodes
      * @param numberNodes
      * @param rd
+     * @param eligible   Optional filter; when set, only nodes for which it
+     *                   returns true are considered
      * @return set of numberNodes random known NodeIds
      */
-    std::set<NodeId> getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const;
+    std::set<NodeId> getKnownNodesRandom(unsigned numberNodes,
+                                         std::mt19937_64& rd,
+                                         const std::function<bool(const NodeId&)>& eligible = {}) const;
 
     /**
      * Returns random NodeId from known_nodes

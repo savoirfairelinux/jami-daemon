@@ -90,6 +90,8 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         auto emit = false;
         {
             std::lock_guard lock(mutex);
+            // The node answered: it is alive, drop any backoff state.
+            connectionFailures_.erase(channel->deviceId());
             emit = routing_table.findBucket(getId())->isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
             if (routing_table.addNode(channel, bucket)) {
@@ -167,6 +169,9 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
     std::set<NodeId> nodes = toConnect;
     std::unique_lock lock(mutex);
+    auto eligible = [this](const NodeId& nodeId) {
+        return canTryConnect(nodeId);
+    };
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         auto& bucket = *it;
@@ -174,7 +179,15 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
         auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
                                          : bucket.getConnectingNodesSize() + bucket.getNodesSize();
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
-            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes, rd);
+            // Nodes in a failure backoff window are skipped: candidates come
+            // from the conversation repository and may be long dead. A node
+            // that comes back online reaches us anyway (it bootstraps too,
+            // and any incoming channel clears its backoff), explicit
+            // connectNode() requests bypass this filter, and connectivity
+            // changes reset all backoff state.
+            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
+                                                         rd,
+                                                         eligible);
             for (auto& node : nodesToTry)
                 routing_table.addConnectingNode(node);
 
@@ -184,6 +197,33 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
     lock.unlock();
     for (const auto& node : nodes)
         tryConnect(node);
+}
+
+void
+SwarmManager::resetConnectionBackoff()
+{
+    std::lock_guard lock(mutex);
+    connectionFailures_.clear();
+}
+
+void
+SwarmManager::noteConnectionFailure(const NodeId& nodeId)
+{
+    auto& failure = connectionFailures_[nodeId];
+    failure.consecutiveFailures++;
+    auto delay = CONNECT_BACKOFF_BASE
+                 * (1ULL << std::min(failure.consecutiveFailures - 1u, 31u));
+    if (delay > CONNECT_BACKOFF_MAX)
+        delay = CONNECT_BACKOFF_MAX;
+    failure.nextRetry = std::chrono::steady_clock::now() + delay;
+}
+
+bool
+SwarmManager::canTryConnect(const NodeId& nodeId) const
+{
+    auto it = connectionFailures_.find(nodeId);
+    return it == connectionFailures_.end()
+           || it->second.nextRetry <= std::chrono::steady_clock::now();
 }
 
 void
@@ -307,7 +347,7 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
     if (needSocketCb_)
         needSocketCb_(
             nodeId.toString(),
-            [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
+            [w = weak(), nodeId, noNewSocket](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                 auto shared = w.lock();
                 if (!shared || shared->isShutdown_)
                     return true;
@@ -316,6 +356,12 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                     return true;
                 }
                 std::unique_lock lk(shared->mutex);
+                // Only a failed full connection attempt counts towards the
+                // backoff: with noNewSocket the failure only says that no
+                // reusable transport was available, not that the node is
+                // unreachable.
+                if (!noNewSocket)
+                    shared->noteConnectionFailure(nodeId);
                 auto bucket = shared->routing_table.findBucket(nodeId);
                 bucket->removeConnectingNode(nodeId);
                 bucket->addKnownNode(nodeId);
