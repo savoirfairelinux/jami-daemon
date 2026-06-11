@@ -68,6 +68,15 @@ struct SyncedConversation
     std::chrono::seconds fallbackTimer {5s};
     unsigned validationFailures {0};
     ConvInfo info;
+    // Set when accepting a re-invitation for a conversation that was removed
+    // locally (see cloneConversationFrom(request)): holds the value of
+    // info.removed observed at acceptance time. The tombstone
+    // (info.removed/erased) is kept untouched until the clone succeeds, then
+    // cleared by handlePendingConversation() if info.removed still matches.
+    // Any newer local removal updates info.removed (millisecond resolution),
+    // so a removal performed while the clone is in flight always wins over
+    // the pending re-invitation.
+    std::optional<TimePoint> reinvitePending {};
     std::unique_ptr<PendingConversationFetch> pending;
     std::shared_ptr<Conversation> conversation;
 
@@ -246,6 +255,21 @@ public:
         return c != conversations_.end() && c->second;
     }
 
+    /**
+     * Like isConversation(), but ignores conversations removed locally
+     * (tombstones kept for syncing the removal to other devices): a peer
+     * can legitimately re-invite us to a conversation we removed, and
+     * such invitations must not be blocked by the tombstone.
+     */
+    bool isAcceptedConversation(const std::string& convId) const
+    {
+        if (auto conv = getConversation(convId)) {
+            std::lock_guard lk(conv->mtx);
+            return !conv->info.isRemoved();
+        }
+        return false;
+    }
+
     void addConvInfo(const ConvInfo& info)
     {
         std::lock_guard lk(convInfosMtx_);
@@ -337,7 +361,9 @@ public:
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         // conversationsRequestsMtx_ MUST BE LOCKED
-        if (isConversation(id))
+        // Note: a removed conversation (local tombstone) must not block a
+        // new invitation with the same id: the peer is re-inviting us.
+        if (isAcceptedConversation(id))
             return false;
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
@@ -431,7 +457,8 @@ public:
     void bootstrap(const std::string& convId);
     void fallbackClone(const asio::error_code& ec, const std::string& conversationId);
 
-    void cloneConversationFrom(const ConversationRequest& request);
+    void cloneConversationFrom(const ConversationRequest& request,
+                               std::optional<TimePoint> expectedRemoved = std::nullopt);
 
     void cloneConversationFrom(const std::string& conversationId, const std::string& uri);
 
@@ -850,10 +877,26 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (conv->pending && conv->pending->socket)
             conversation->addGitSocket(DeviceId(deviceId), std::move(conv->pending->socket));
         auto removeRepo = false;
+        auto reinviteAccepted = false;
         // Note: a removeContact while cloning. In this case, the conversation
         // must not be announced and removed.
-        if (conv->info.isRemoved())
-            removeRepo = true;
+        if (conv->info.isRemoved()) {
+            if (conv->reinvitePending == conv->info.removed) {
+                // This clone comes from accepting a re-invitation for a
+                // conversation that was removed locally: the tombstone was
+                // deliberately kept until clone success, clear it now so the
+                // conversation is announced again. Any removal performed
+                // while the clone was in flight has updated info.removed,
+                // making the comparison fail, and is honored below.
+                conv->info.created = nowMs();
+                conv->info.removed = TimePoint {};
+                conv->info.erased = TimePoint {};
+                addConvInfo(conv->info);
+                reinviteAccepted = true;
+            } else
+                removeRepo = true;
+        }
+        conv->reinvitePending.reset();
         std::map<std::string, std::string> preferences;
         std::map<std::string, std::map<std::string, std::string>> status;
         if (conv->pending) {
@@ -871,6 +914,14 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (!commitId.empty())
             sendMessageNotification(*conversation, false, commitId);
         erasePending(); // Will unlock
+
+        // Re-invitation accepted and successfully cloned: drop the stored
+        // conversation request, kept until now as the persistent trace
+        // allowing a retry after a daemon restart.
+        if (reinviteAccepted) {
+            std::lock_guard lkCr(conversationsRequestsMtx_);
+            rmConversationRequest(conversationId);
+        }
 
 #ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(bootstrapCbTest_);
@@ -1525,7 +1576,8 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 }
 
 void
-ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& request)
+ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& request,
+                                                std::optional<TimePoint> expectedRemoved)
 {
     auto memberHash = dht::InfoHash(request.from);
     if (!memberHash) {
@@ -1540,6 +1592,32 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.members.emplace(username_);
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
+        addConvInfo(conv->info);
+    } else if (conv->info.isRemoved()) {
+        // Re-invitation for a conversation that was removed locally.
+        if (expectedRemoved && *expectedRemoved != conv->info.removed) {
+            // A new local removal happened between the acceptance decision
+            // and this point: the newer removal wins, do not resurrect.
+            JAMI_WARNING("[Account {}] [Conversation {}] Removed again while accepting a "
+                         "re-invitation, aborting the clone",
+                         accountId_,
+                         request.conversationId);
+            return;
+        }
+        // Refresh the request-derived metadata and persist it so a retry
+        // after a daemon restart does not run from stale tombstone data;
+        // the tombstone fields (removed/erased) stay untouched until the
+        // clone succeeds: clearing them now would leave the conversation
+        // wrongly resurrected if the clone fails, and block future
+        // invitations. handlePendingConversation() clears them on clone
+        // success, sets the new created timestamp, and mode/members are
+        // then also refreshed from the cloned repository, which is the
+        // authoritative source.
+        conv->info.members.clear();
+        conv->info.members.emplace(username_);
+        conv->info.members.emplace(request.from);
+        conv->info.mode = request.mode();
+        conv->reinvitePending = conv->info.removed;
         addConvInfo(conv->info);
     }
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
@@ -2051,8 +2129,9 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                from);
     auto convId = req.conversationId;
 
-    // Already accepted request, do nothing
-    if (pimpl_->isConversation(convId))
+    // Already accepted request, do nothing. Removed conversations
+    // (tombstones) do not count: the peer is re-inviting us.
+    if (pimpl_->isAcceptedConversation(convId))
         return;
     auto oldReq = pimpl_->getRequest(convId);
     if (oldReq != std::nullopt) {
@@ -2132,10 +2211,25 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
                      deviceId);
         return;
     }
-    pimpl_->rmConversationRequest(conversationId);
+    // For a re-invitation to a conversation that was removed locally, keep
+    // the stored request until the clone succeeds: it is the persistent
+    // trace that allows the user to retry after a daemon restart (the
+    // reinvitePending marker is in-memory only). handlePendingConversation()
+    // removes it on clone success. The removal timestamp observed here is
+    // passed along so a removal racing with this acceptance is detected
+    // before the re-invite marker is armed (removal timestamps have
+    // millisecond resolution, so a newer removal always differs).
+    std::optional<TimePoint> removedAt;
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->info.isRemoved())
+            removedAt = conv->info.removed;
+    }
+    if (!removedAt)
+        pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     pimpl_->accountManager_->acceptTrustRequest(request->from, true);
-    pimpl_->cloneConversationFrom(*request);
+    pimpl_->cloneConversationFrom(*request, removedAt);
 }
 
 void
