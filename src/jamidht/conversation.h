@@ -28,6 +28,7 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
+#include <chrono>
 #include <functional>
 #include <string>
 #include <vector>
@@ -43,6 +44,43 @@ class ChannelSocket;
 
 namespace jami {
 
+/**
+ * Millisecond-resolution timestamp used by ConvInfo and ConversationRequest.
+ * Serialized with dual keys for backward compatibility: legacy keys carry
+ * seconds (read by older devices), "*Ms" keys carry milliseconds.
+ */
+using TimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>;
+
+inline TimePoint
+nowMs()
+{
+    return std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+}
+
+constexpr TimePoint
+timePointFromSeconds(int64_t seconds)
+{
+    return TimePoint(std::chrono::seconds(seconds));
+}
+
+constexpr TimePoint
+timePointFromMilliseconds(int64_t milliseconds)
+{
+    return TimePoint(std::chrono::milliseconds(milliseconds));
+}
+
+constexpr int64_t
+toSecondsSinceEpoch(const TimePoint& t)
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
+}
+
+constexpr int64_t
+toMillisecondsSinceEpoch(const TimePoint& t)
+{
+    return t.time_since_epoch().count();
+}
+
 namespace ConversationMapKeys {
 static constexpr const char* ID {"id"};
 static constexpr const char* CREATED {"created"};
@@ -55,6 +93,14 @@ static constexpr const char* DECLINED {"declined"};
 static constexpr const char* FROM {"from"};
 static constexpr const char* CONVERSATIONID {"conversationId"};
 static constexpr const char* METADATAS {"metadatas"};
+static constexpr const char* MODE {"mode"};
+// Millisecond-resolution variants. Legacy keys above keep carrying seconds
+// so that older devices (which ignore unknown keys) remain compatible.
+static constexpr const char* CREATED_MS {"createdMs"};
+static constexpr const char* REMOVED_MS {"removedMs"};
+static constexpr const char* ERASED_MS {"erasedMs"};
+static constexpr const char* RECEIVED_MS {"receivedMs"};
+static constexpr const char* DECLINED_MS {"declinedMs"};
 } // namespace ConversationMapKeys
 
 namespace ConversationDirectories {
@@ -88,8 +134,8 @@ struct ConversationRequest
     std::string from;
     std::map<std::string, std::string> metadatas;
 
-    time_t received {0};
-    time_t declined {0};
+    TimePoint received {};
+    TimePoint declined {};
 
     ConversationRequest() = default;
     ConversationRequest(const Json::Value& json);
@@ -122,15 +168,42 @@ struct ConversationRequest
         return ConversationMode::ONE_TO_ONE;
     }
 
-    MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
+    // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
+    // dual keys: legacy seconds (received/declined) + milliseconds (receivedMs/declinedMs).
+    // Readers prefer the ms keys and fall back to seconds * 1000.
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        int64_t receivedSec = toSecondsSinceEpoch(received);
+        int64_t declinedSec = toSecondsSinceEpoch(declined);
+        int64_t receivedMs = toMillisecondsSinceEpoch(received);
+        int64_t declinedMs = toMillisecondsSinceEpoch(declined);
+        msgpack::type::make_define_map(ConversationMapKeys::FROM,
+                                       from,
+                                       ConversationMapKeys::CONVERSATIONID,
+                                       conversationId,
+                                       ConversationMapKeys::METADATAS,
+                                       metadatas,
+                                       ConversationMapKeys::RECEIVED,
+                                       receivedSec,
+                                       ConversationMapKeys::DECLINED,
+                                       declinedSec,
+                                       ConversationMapKeys::RECEIVED_MS,
+                                       receivedMs,
+                                       ConversationMapKeys::DECLINED_MS,
+                                       declinedMs)
+            .msgpack_pack(pk);
+    }
+    void msgpack_unpack(const msgpack::object& o);
+    void msgpack_object(msgpack::object* o, msgpack::zone& z) const;
 };
 
 struct ConvInfo
 {
     std::string id {};
-    time_t created {0};
-    time_t removed {0};
-    time_t erased {0};
+    TimePoint created {};
+    TimePoint removed {};
+    TimePoint erased {};
     std::set<std::string> members;
     std::string lastDisplayed {};
     ConversationMode mode {0};
@@ -149,7 +222,43 @@ struct ConvInfo
 
     Json::Value toJson() const;
 
-    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed, mode)
+    // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
+    // dual keys: legacy seconds (created/removed/erased) + milliseconds
+    // (createdMs/removedMs/erasedMs). Readers prefer the ms keys and fall back
+    // to seconds * 1000.
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        int64_t createdSec = toSecondsSinceEpoch(created);
+        int64_t removedSec = toSecondsSinceEpoch(removed);
+        int64_t erasedSec = toSecondsSinceEpoch(erased);
+        int64_t createdMs = toMillisecondsSinceEpoch(created);
+        int64_t removedMs = toMillisecondsSinceEpoch(removed);
+        int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+        msgpack::type::make_define_map(ConversationMapKeys::ID,
+                                       id,
+                                       ConversationMapKeys::CREATED,
+                                       createdSec,
+                                       ConversationMapKeys::REMOVED,
+                                       removedSec,
+                                       ConversationMapKeys::ERASED,
+                                       erasedSec,
+                                       ConversationMapKeys::MEMBERS,
+                                       members,
+                                       ConversationMapKeys::LAST_DISPLAYED,
+                                       lastDisplayed,
+                                       ConversationMapKeys::MODE,
+                                       mode,
+                                       ConversationMapKeys::CREATED_MS,
+                                       createdMs,
+                                       ConversationMapKeys::REMOVED_MS,
+                                       removedMs,
+                                       ConversationMapKeys::ERASED_MS,
+                                       erasedMs)
+            .msgpack_pack(pk);
+    }
+    void msgpack_unpack(const msgpack::object& o);
+    void msgpack_object(msgpack::object* o, msgpack::zone& z) const;
 };
 
 using OnPullCb = std::function<void(bool fetchOk)>;
