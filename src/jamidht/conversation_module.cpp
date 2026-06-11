@@ -236,6 +236,21 @@ public:
         return c != conversations_.end() && c->second;
     }
 
+    /**
+     * Like isConversation(), but ignores conversations removed locally
+     * (tombstones kept for syncing the removal to other devices): a peer
+     * can legitimately re-invite us to a conversation we removed, and
+     * such invitations must not be blocked by the tombstone.
+     */
+    bool isAcceptedConversation(const std::string& convId) const
+    {
+        if (auto conv = getConversation(convId)) {
+            std::lock_guard lk(conv->mtx);
+            return !conv->info.isRemoved();
+        }
+        return false;
+    }
+
     void addConvInfo(const ConvInfo& info)
     {
         std::lock_guard lk(convInfosMtx_);
@@ -327,7 +342,9 @@ public:
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         // conversationsRequestsMtx_ MUST BE LOCKED
-        if (isConversation(id))
+        // Note: a removed conversation (local tombstone) must not block a
+        // new invitation with the same id: the peer is re-inviting us.
+        if (isAcceptedConversation(id))
             return false;
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
@@ -1472,6 +1489,17 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
         addConvInfo(conv->info);
+    } else if (conv->info.isRemoved()) {
+        // Accepting a re-invitation for a conversation that was removed
+        // locally: reset the tombstone, otherwise handlePendingConversation()
+        // considers the freshly cloned repository as removed-while-cloning
+        // and deletes it right away.
+        conv->info.created = request.received ? request.received : std::time(nullptr);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        conv->info.members.emplace(username_);
+        conv->info.members.emplace(request.from);
+        addConvInfo(conv->info);
     }
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
         auto sthis = w.lock();
@@ -1984,8 +2012,9 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                from);
     auto convId = req.conversationId;
 
-    // Already accepted request, do nothing
-    if (pimpl_->isConversation(convId))
+    // Already accepted request, do nothing. Removed conversations
+    // (tombstones) do not count: the peer is re-inviting us.
+    if (pimpl_->isAcceptedConversation(convId))
         return;
     auto oldReq = pimpl_->getRequest(convId);
     if (oldReq != std::nullopt) {
