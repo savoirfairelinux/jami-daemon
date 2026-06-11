@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "25ab09bd_c773c673",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:07:50Z",
+      "side": 1,
+      "message": "[Critical] Line 869: The race detection relies on `time_t` equality, but `removed` has second-level granularity. If the user removes the conversation again within the same second while the re-invite clone is pending, `conv-\u003einfo.removed` can still equal `conv-\u003ereinviteRemoved`, causing the tombstone to be cleared and the conversation resurrected despite the newer local removal. Use a monotonic/local generation marker, clear `reinviteRemoved` in the removal path, or compare a value guaranteed to change on every removal rather than `time_t` alone.\n```suggestion\nif (conv-\u003ereinviteRemoved \u0026\u0026 conv-\u003ereinviteRemoved \u003d\u003d conv-\u003einfo.removed \u0026\u0026 !conv-\u003eremovalChangedDuringClone) {\n```\nThe exact fix should use the existing removal path to invalidate the pending re-invite marker whenever a local removal happens.",
+      "revId": "eddeee68888c39985410d0a19def5affac09d8d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "c0bfc1ba_85e887f2",
