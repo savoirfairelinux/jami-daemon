@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "340bee06_c9e81d57",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T13:09:12Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 151: restart() clears backoff state without cancelling the pending retry timer. resetConnectionBackoff() already clears the map and cancels the timer, but restart() only calls resetConnectionBackoff() while shutdown() separately calls cancelBackoffRetry(). If restart() is called without a prior shutdown path that cancelled the timer, an old timer can still fire and run maintainBuckets() unexpectedly on the restarted manager. Prefer making restart() explicitly cancel via resetConnectionBackoff() only if that method is guaranteed to cancel, or keep the cancellation here documented and covered by test.\n```suggestion\nvoid\nSwarmManager::restart()\n{\n    isShutdown_ \u003d false;\n    resetConnectionBackoff();\n}\n```",
+      "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "b882dca7_68be3dd1",
@@ -19,6 +36,23 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "53e2df90_99282cb4",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T13:09:12Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 181: setConnectionBackoffForTest() accepts zero or inverted durations, which can create immediate retry loops or make every failure expire incorrectly. Even for test-only hooks, this mutates production state and should enforce sane values so accidental misuse does not destabilize the retry timer.\n```suggestion\nvoid setConnectionBackoffForTest(std::chrono::milliseconds base, std::chrono::milliseconds max)\n{\n    if (base \u003c\u003d std::chrono::milliseconds::zero() || max \u003c base)\n        throw std::invalid_argument(\"invalid connection backoff window\");\n    std::lock_guard lock(mutex);\n    backoffBase_ \u003d base;\n    backoffMax_ \u003d max;\n}\n```",
+      "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "aff2696f_7b4c32e1",
@@ -33,6 +67,23 @@
       "side": 1,
       "message": "Reworked as suggested in patch set 5 (lock acquired after setKnownNodes). For the record, the previous form did not deadlock in practice: needSocketCb_ is invoked from the ThreadPool::io() task queued by setKnownNodes, not synchronously, and wait_for releases the mutex while waiting — the suite passed repeatedly. But the reordering removes any dependence on that asynchrony, so it is strictly more robust.",
       "parentUuid": "3eaf2503_96bd482a",
+      "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4d5e1a1_e019a69f",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T13:09:12Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 567: The test reads routing table state without synchronizing with SwarmManager\u0027s mutex while the async socket callback and retry timer can mutate the same routing table concurrently. That makes this test racy and can hide or introduce intermittent failures. Add a public/query helper that takes the manager lock, or structure the test around observable callbacks instead of directly reading getRoutingTable() while background handlers are active.",
       "revId": "290e5ffe0d22cb9a232e78b029fc05c89efe4b9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
