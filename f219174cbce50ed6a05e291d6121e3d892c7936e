@@ -19,6 +19,23 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "685952bd_d1556759",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2067,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:26:25Z",
+      "side": 1,
+      "message": "[Critical] Line 2067: This path can overwrite a previously declined re-invitation without requiring a fresh invitation. `addConversationRequest()` now allows a request when only a tombstone exists, but if `oldReq` exists and is declined, this code falls through and stores the new request regardless of whether the incoming request is actually newer. A replayed/stale invite can therefore undo a local decline and become acceptable again. Keep the existing declined request unless the incoming request is demonstrably newer, for example by comparing `received` or another request freshness marker before replacing it.\n```suggestion\n    if (oldReq !\u003d std::nullopt) {\n        JAMI_DEBUG(\"[Account {}] Received a request for a conversation already existing. \"\n                   \"Ignore. Declined: {}\",\n                   pimpl_-\u003eaccountId_,\n                   convId,\n                   oldReq-\u003edeclined);\n        if (!oldReq-\u003edeclined || req.received \u003c\u003d oldReq-\u003ereceived)\n            return;\n    }\n```",
+      "revId": "f219174cbce50ed6a05e291d6121e3d892c7936e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "a2c35627_74c4b3b3",
