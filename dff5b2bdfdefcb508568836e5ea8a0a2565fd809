@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "af895708_a159d015",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 865,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:12:55Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 865: `conv-\u003ereinvitePending` is an in-memory flag that determines whether a removed conversation is resurrected after clone success. If the daemon restarts after accepting the re-invitation but before `handlePendingConversation()` runs, the persisted tombstone remains and the clone completion path cannot distinguish an accepted re-invitation from a local removal. This can leave the accepted conversation removed even though the clone succeeded. Consider persisting an explicit pending-reinvite state, or clearing/retaining the invitation so the operation can be retried safely after restart.",
+      "revId": "dff5b2bdfdefcb508568836e5ea8a0a2565fd809",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "230ab123_597a345c",
@@ -15,6 +32,23 @@
       "side": 1,
       "message": "Done in patch set 3: replaced the timestamp comparison with a boolean reinvitePending marker on SyncedConversation, as suggested. Every local removal path (removeConversationImpl, the one-to-one contact-removal lambda, and the removal branch of onSyncData) now resets the marker under conv-\u003emtx, so a removal performed while the clone is in flight always wins regardless of timestamp granularity. handlePendingConversation() resurrects only if the marker still holds and clears it in all cases.",
       "parentUuid": "25ab09bd_c773c673",
+      "revId": "dff5b2bdfdefcb508568836e5ea8a0a2565fd809",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f351defd_fda95b15",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1510,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-11T10:12:55Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1510: Accepting a re-invitation for a removed conversation only sets `reinvitePending`, but it does not refresh the stored `ConvInfo` fields from the new request. If the previous tombstone has stale `members`, `mode`, or `created` values, `handlePendingConversation()` later persists that stale metadata when clearing `removed/erased`. At minimum, mirror the new-conversation initialization for request-derived fields while still leaving `removed/erased` intact until clone success.\n```suggestion\n    } else if (conv-\u003einfo.isRemoved()) {\n        conv-\u003einfo.created \u003d request.received;\n        conv-\u003einfo.members.clear();\n        conv-\u003einfo.members.emplace(username_);\n        conv-\u003einfo.members.emplace(request.from);\n        conv-\u003einfo.mode \u003d request.mode();\n        conv-\u003ereinvitePending \u003d true;\n```\nIf repository state later provides more authoritative metadata, it can still overwrite this, but the resurrected `ConvInfo` should not be based on the old tombstone.",
       "revId": "dff5b2bdfdefcb508568836e5ea8a0a2565fd809",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
