@@ -2479,6 +2479,7 @@ void
 Manager::setNoiseSuppressState(const std::string& state)
 {
     audioPreference.setNoiseReduce(state);
+    saveConfig();
 }
 
 std::string
@@ -2491,6 +2492,7 @@ void
 Manager::setEchoCancellationState(const std::string& state)
 {
     audioPreference.setEchoCancel(state);
+    saveConfig();
 }
 
 bool
@@ -2503,6 +2505,7 @@ void
 Manager::setVoiceActivityDetectionState(bool state)
 {
     audioPreference.setVad(state);
+    saveConfig();
 }
 
 bool
@@ -2515,6 +2518,7 @@ void
 Manager::setAGCState(bool state)
 {
     audioPreference.setAGCState(state);
+    saveConfig();
 }
 
 /**
