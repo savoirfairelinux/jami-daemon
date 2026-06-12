@@ -76,11 +76,14 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 void
 SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
 {
+    bool changed = false;
     {
         std::lock_guard lock(mutex);
         for (const auto& nodeId : mobile_nodes)
-            addMobileNodes(nodeId);
+            changed |= addMobileNodes(nodeId);
     }
+    if (changed)
+        emitMobileNodesChanged();
 }
 
 void
@@ -121,9 +124,12 @@ SwarmManager::removeNode(const NodeId& nodeId)
 void
 SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
 {
-    std::lock_guard lock(mutex);
-    auto bucket = routing_table.findBucket(nodeId);
-    bucket->changeMobility(nodeId, isMobile);
+    {
+        std::lock_guard lock(mutex);
+        auto bucket = routing_table.findBucket(nodeId);
+        bucket->changeMobility(nodeId, isMobile);
+    }
+    emitMobileNodesChanged();
 }
 
 bool
@@ -155,12 +161,20 @@ SwarmManager::addKnownNode(const NodeId& nodeId)
     return routing_table.addKnownNode(nodeId);
 }
 
-void
+bool
 SwarmManager::addMobileNodes(const NodeId& nodeId)
 {
     if (id_ != nodeId) {
-        routing_table.addMobileNode(nodeId);
+        return routing_table.addMobileNode(nodeId);
     }
+    return false;
+}
+
+void
+SwarmManager::emitMobileNodesChanged()
+{
+    if (onMobileNodesChanged_)
+        onMobileNodesChanged_(getKnownMobileNodes());
 }
 
 void
@@ -365,6 +379,20 @@ SwarmManager::getConnectedNodes() const
 {
     std::lock_guard lock(mutex);
     return routing_table.getConnectedNodes();
+}
+
+std::vector<NodeId>
+SwarmManager::getMobileNodesToNotify()
+{
+    std::lock_guard lock(mutex);
+    return routing_table.getMobileNodesToNotify();
+}
+
+std::vector<NodeId>
+SwarmManager::getKnownMobileNodes() const
+{
+    std::lock_guard lock(mutex);
+    return routing_table.getKnownMobileNodes();
 }
 
 std::vector<std::map<std::string, std::string>>

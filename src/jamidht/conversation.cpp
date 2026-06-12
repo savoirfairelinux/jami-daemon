@@ -329,6 +329,7 @@ private:
         , sendingPath_(conversationDataPath_ / ConversationDirectories::SENDING)
         , preferencesPath_(conversationDataPath_ / ConversationDirectories::PREFERENCES)
         , statusPath_(conversationDataPath_ / ConversationDirectories::STATUS)
+        , mobileNodesPath_(conversationDataPath_ / ConversationDirectories::MOBILE_NODES)
         , hostedCallsPath_(conversationDataPath_ / ConversationDirectories::HOSTED_CALLS)
         , activeCallsPath_(conversationDataPath_ / ConversationDirectories::ACTIVE_CALLS)
         , ioContext_(Manager::instance().ioContext())
@@ -337,6 +338,23 @@ private:
         if (!commits.empty())
             initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
+        // Restore mobility knowledge: in a swarm made of mostly mobile
+        // devices, gossip alone is unavailable after a restart (nobody is
+        // connected), so the persisted list is the only way to know which
+        // devices need a wake-up notification.
+        loadMobileNodes();
+        // Self-contained callback: the swarm manager can outlive this Impl
+        // (its timers hold shared_from_this), so do not capture `this`.
+        swarmManager_->onMobileNodesChanged(
+            [path = mobileNodesPath_, mtx = std::make_shared<std::mutex>()](const std::vector<NodeId>& mobileNodes) {
+                std::vector<std::string> nodes;
+                nodes.reserve(mobileNodes.size());
+                for (const auto& node : mobileNodes)
+                    nodes.emplace_back(node.toString());
+                std::lock_guard lk {*mtx};
+                std::ofstream file(path, std::ios::trunc | std::ios::binary);
+                msgpack::pack(file, nodes);
+            });
         setupMemberCallback();
     }
 
@@ -511,8 +529,8 @@ public:
                                device,
                                uri);
                     activeCalls_.emplace_back(std::map<std::string, std::string> {
-                        {"id",     confId},
-                        {"uri",    uri   },
+                        {"id", confId},
+                        {"uri", uri},
                         {"device", device},
                     });
                     saveActiveCalls();
@@ -634,6 +652,23 @@ public:
     {
         std::ofstream file(statusPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, messagesStatus_);
+    }
+
+    void loadMobileNodes()
+    {
+        std::vector<std::string> mobileNodes;
+        try {
+            auto file = fileutils::loadFile(mobileNodesPath_);
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            oh.get().convert(mobileNodes);
+        } catch (const std::exception& e) {
+            return;
+        }
+        std::vector<NodeId> nodes;
+        nodes.reserve(mobileNodes.size());
+        for (const auto& node : mobileNodes)
+            nodes.emplace_back(NodeId(node));
+        swarmManager_->setMobileNodes(nodes);
     }
 
     void loadActiveCalls() const
@@ -767,6 +802,10 @@ public:
     const std::filesystem::path sendingPath_ {};
     const std::filesystem::path preferencesPath_ {};
     const std::filesystem::path statusPath_ {};
+
+    // Devices known to be mobile, persisted so that wake-up notifications
+    // can be sent right after a restart, before any DRT gossip is received
+    const std::filesystem::path mobileNodesPath_ {};
 
     OnMembersChanged onMembersChanged_ {};
     struct TrackedMember
@@ -1859,6 +1898,12 @@ Conversation::peersToSyncWith() const
         if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
             s.emplace_back(deviceId);
     return s;
+}
+
+std::vector<NodeId>
+Conversation::mobileNodesToNotify() const
+{
+    return pimpl_->swarmManager_->getMobileNodesToNotify();
 }
 
 bool

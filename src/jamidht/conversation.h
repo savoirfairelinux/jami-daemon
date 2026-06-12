@@ -111,6 +111,7 @@ static constexpr std::string_view FETCHED {"fetched"};
 static constexpr std::string_view ACTIVE_CALLS {"activeCalls"};
 static constexpr std::string_view HOSTED_CALLS {"hostedCalls"};
 static constexpr std::string_view CACHED {"cached"};
+static constexpr std::string_view MOBILE_NODES {"mobileNodes"};
 } // namespace ConversationDirectories
 
 namespace ConversationPreferences {
@@ -389,9 +390,17 @@ public:
 
     /**
      * Get peers to sync with. This is mostly managed by the DRT
-     * @return some mobile nodes and all connected nodes
+     * @return all connected nodes and nodes with a git socket
      */
     std::vector<NodeId> peersToSyncWith() const;
+    /**
+     * Get the mobile nodes this device is responsible for waking up
+     * when a new message must be synced. Mobile nodes are not actively
+     * connected to the DRT, so they are notified via a DHT message
+     * (converted to a push notification by the proxy).
+     * @return mobile nodes we are closer to than any connected node
+     */
+    std::vector<NodeId> mobileNodesToNotify() const;
     /**
      * Check if we're at least connected to one node
      * @return if the DRT is connected
