@@ -1222,6 +1222,29 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto& refresh = refreshMessage[deviceIdStr];
         refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
     }
+
+    // And we wake up the mobile devices we are responsible for (i.e. closer
+    // to them than any connected node). They are not actively connected to
+    // the DRT, so the DHT message (converted to a push notification by the
+    // DHT proxy) is the only way for them to learn about the new commit.
+    // Note: the repository only contains certificates of devices that wrote
+    // commits, so for read-only devices we resolve the member URI through
+    // the certificate store (filled when the device was last connected).
+    for (const auto& device : conversation.mobileNodesToNotify()) {
+        auto deviceIdStr = device.toString();
+        if (deviceIdStr == deviceId)
+            continue;
+        auto memberUri = conversation.uriFromDevice(deviceIdStr);
+        if (memberUri.empty()) {
+            auto cert = acc->certStore().getCertificate(deviceIdStr);
+            if (cert && cert->issuer)
+                memberUri = cert->issuer->getId().toString();
+        }
+        if (memberUri.empty())
+            continue;
+        auto& refresh = refreshMessage[deviceIdStr];
+        refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
+    }
 }
 
 void
