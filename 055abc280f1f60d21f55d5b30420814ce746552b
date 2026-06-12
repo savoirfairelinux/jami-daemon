@@ -206,6 +206,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "695f16b9_7d6b4da3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1972,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "6e9c6f50_733f458a",
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1252e7a2_deefb2bb",
@@ -313,6 +331,24 @@
       "writtenOn": "2026-06-10T15:55:13Z",
       "side": 1,
       "message": "[Critical] Line 2048: 🔴 Critical Issues: `updateMessageBodyOverwrite()` writes an edition commit\u0027s overwrite onto the parent message. If `messageId` is an older edition, this corrupts the parent/current body overwrite and can make clients display the wrong text for the current message body. Store the overwrite only on the commit it belongs to, then emit the parent with edition overwrites injected.\n```suggestion\nif (const auto editIt \u003d it-\u003esecond-\u003ebody.find(CommitKey::EDIT);\n    editIt !\u003d it-\u003esecond-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n    const auto parentIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n    if (parentIt \u003d\u003d loadedHistory_.quickAccess.end()) {\n        return;\n    }\n    signalMsg \u003d injectEditionOverwrites(*parentIt-\u003esecond, loadedHistory_.quickAccess);\n} else {\n    signalMsg \u003d injectEditionOverwrites(*it-\u003esecond, loadedHistory_.quickAccess);\n}\n```",
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b06e2a24_c37aebd2",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2048,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "I think this is true: for a message with multiple editions, the code currently works only if `updateMessageBodyOverwrite` is called in the correct order (older editions before newer ones). Even if this is the case for the translation plugin, it\u0027s probably better not to assume it.",
+      "parentUuid": "483568a8_6c791956",
       "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -618,6 +654,24 @@
       "writtenOn": "2026-06-10T15:55:13Z",
       "side": 1,
       "message": "[Major] Line 73: 🟡 Suggestions: The new virtual method takes `libjami::SwarmMessage` by non-const reference and exposes the full message object to plugins, but the intended contract appears to be only setting `pluginData[\"bodyOverwrite\"]`. This broad mutable surface lets plugins alter ids, status, bodies, editions, or other fields before daemon code writes results back. Consider narrowing the plugin API to return per-message overwrite values or explicitly validate/copy only `pluginData[\"bodyOverwrite\"]` from transformed messages.",
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "23ceb53d_8d7b2bd0",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "12fa5a94_93ec54c5",
       "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

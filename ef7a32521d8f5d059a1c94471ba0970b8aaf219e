@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "805c4d6b_afb31bbc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "It\u0027d be good to explain why this matters.",
+      "range": {
+        "startLine": 66,
+        "startChar": 71,
+        "endLine": 67,
+        "endChar": 56
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c824c4e7_adcc7385",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 54
@@ -14,6 +37,24 @@
       "writtenOn": "2026-06-12T13:08:32Z",
       "side": 1,
       "message": "[🔴 Critical Issues] Line 2019: This uses `std::views::values`, which requires C++20 ranges support. The daemon is still built in configurations that do not enable C++20, so this will break compilation there. Use a regular map iteration instead.\n```suggestion\n        for (const auto\u0026 [_, msg] : loadedHistory_.quickAccess) {\n            if (msg-\u003etype \u003d\u003d CommitType::TEXT \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\")) {\n                batch.push_back(*msg);\n            }\n        }\n```",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f36abb3a_a4e09d67",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "C++20 is required to build the daemon.",
+      "parentUuid": "c824c4e7_adcc7385",
       "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -35,6 +76,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "09fb83a8_5f4b0de5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2092,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e390d8ad_530cd044",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e6a41844_958a2a0b",
@@ -48,6 +107,93 @@
       "writtenOn": "2026-06-12T13:08:32Z",
       "side": 1,
       "message": "[🟡 Suggestions] Line 2257: The patch emits `SwarmLoaded` before running `loadMissingBodyOverwrites()`, while the new handler documentation says transforms happen before `SwarmLoaded`. This exposes untransformed message bodies first and then sends updates, which can cause visible flicker and makes the API contract misleading. Apply the transform before emitting the loaded signal, or update the API contract if the two-phase delivery is intentional.\n```suggestion\n                    if (const auto convPtr \u003d convWeak.lock()) {\n                        convPtr-\u003eloadMissingBodyOverwrites();\n                    }\n                    emitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0d72fc6_13d665b4",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e6a41844_958a2a0b",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "636f14af_e921e715",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "No longer accurate.",
+      "range": {
+        "startLine": 76,
+        "startChar": 44,
+        "endLine": 76,
+        "endChar": 73
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8ed4e8b_55e82380",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "This is misleading because it suggests that arbitrary modifications are possible, but given the way the daemon code is currently written, setting `pluginData[\"bodyOverwrite\"]` is the only thing a plugin can actually do (any other modification won\u0027t be transmitted to the client).",
+      "range": {
+        "startLine": 77,
+        "startChar": 10,
+        "endLine": 79,
+        "endChar": 68
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82ac3d99_75f5dfea",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Same comments as in `chathandler.h` apply here.",
+      "range": {
+        "startLine": 72,
+        "startChar": 72,
+        "endLine": 73,
+        "endChar": 82
+      },
       "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -66,6 +212,24 @@
       "side": 1,
       "message": "INFO SonarQube violation:\n\n\nC++ Parser can\u0027t read code. Declaration is skipped (last token\u003d\u0027\"([a-zA-Z0-9_]+.(dylib|so|dll|lib).*)\"\u0027, line\u003d72, column\u003d88).\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dcxx%3AParsingErrorRecovery",
       "tag": "autogenerated:sonar",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e1fb0ab_0b99cbfc",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "20f8b613_1fc0004f",
       "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

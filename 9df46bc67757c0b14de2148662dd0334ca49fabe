@@ -90,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "da40995c_7a27c11d",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-12T21:08:46Z",
+      "side": 1,
+      "message": "I agree that adding a null check in `ChatServicesManager::sendTextMessage` would be good.",
+      "parentUuid": "05c7dd5b_3f8aacfc",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5c1cbb14_42b19511",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 50
