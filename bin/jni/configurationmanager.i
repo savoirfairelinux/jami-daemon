@@ -84,7 +84,7 @@ struct Message
 std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
-void setAccountActive(const std::string& accountId, bool active);
+void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 void monitor(bool continuous);
 std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& accountId, const std::string& conversationId);
