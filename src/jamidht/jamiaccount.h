@@ -643,7 +643,7 @@ private:
     void onIncomingTrustRequest(const std::string& uri,
                                 const std::string& conversationId,
                                 const std::vector<uint8_t>& payload,
-                                time_t received);
+                                TimePoint received);
     void onKnownDevicesChanged(const std::map<DeviceId, KnownDevice>& devices);
     void onConversationRequestAccepted(const std::string& conversationId, const std::string& deviceId);
     void onContactConfirmed(const std::string& uri, const std::string& convFromReq);

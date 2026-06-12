@@ -1275,7 +1275,7 @@ void
 JamiAccount::onIncomingTrustRequest(const std::string& uri,
                                     const std::string& conversationId,
                                     const std::vector<uint8_t>& payload,
-                                    time_t received)
+                                    TimePoint received)
 {
     if (!id_.first)
         return;
@@ -1288,7 +1288,7 @@ JamiAccount::onIncomingTrustRequest(const std::string& uri,
                                                                                conversationId,
                                                                                uri,
                                                                                payload,
-                                                                               received);
+                                                                               toSecondsSinceEpoch(received));
                 return;
             }
             // Here account can be initializing
@@ -2526,7 +2526,7 @@ JamiAccount::conversationOneToOneReceive(const std::string& convId, const std::s
                                              return;
                                          info->contacts->onTrustRequest(dht::InfoHash(from),
                                                                         cert->getSharedPublicKey(),
-                                                                        time(nullptr),
+                                                                        nowMs(),
                                                                         false,
                                                                         convId,
                                                                         {});

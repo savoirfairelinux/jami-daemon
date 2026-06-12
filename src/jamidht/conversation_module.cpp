@@ -595,8 +595,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             const bool isOneToOne = (itConvInfo->second.mode == ConversationMode::ONE_TO_ONE);
             auto contactInfo = accountManager_->getContactInfo(peer);
             const bool shouldReadd = isOneToOne && contactInfo && contactInfo->confirmed && contactInfo->isActive()
-                                     && !contactInfo->isBanned()
-                                     && timePointFromSeconds(contactInfo->added) > itConvInfo->second.removed
+                                     && !contactInfo->isBanned() && contactInfo->added > itConvInfo->second.removed
                                      && contactInfo->conversationId != conversationId;
 
             if (shouldReadd) {
@@ -978,7 +977,7 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     if (auto details = accountManager_->getContactInfo(uri)) {
         // If contact is removed there is no conversation
         // If banned, conversation is still on disk
-        if (details->removed != 0 && details->banned == 0) {
+        if (details->removed != TimePoint {} && details->banned == 0) {
             // Check if contact is removed
             if (details->removed > details->added)
                 return {};
@@ -1983,7 +1982,7 @@ void
 ConversationModule::onTrustRequest(const std::string& uri,
                                    const std::string& conversationId,
                                    const std::vector<uint8_t>& payload,
-                                   time_t received)
+                                   TimePoint received)
 {
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req;
@@ -2009,7 +2008,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                                                        conversationId,
                                                                        uri,
                                                                        payload,
-                                                                       received);
+                                                                       toSecondsSinceEpoch(received));
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_, conversationId, reqMap);
         pimpl_->needsSyncingCb_({});
     } else {

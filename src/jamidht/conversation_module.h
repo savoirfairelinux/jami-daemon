@@ -146,7 +146,7 @@ public:
     void onTrustRequest(const std::string& uri,
                         const std::string& conversationId,
                         const std::vector<uint8_t>& payload,
-                        time_t received);
+                        TimePoint received);
 
     /**
      * Called when receiving a new conversation's request

@@ -38,7 +38,7 @@ public:
     using OnContactAdded = std::function<void(const std::string&, bool)>;
     using OnContactRemoved = std::function<void(const std::string&, bool)>;
     using OnIncomingTrustRequest
-        = std::function<void(const std::string&, const std::string&, const std::vector<uint8_t>&, time_t)>;
+        = std::function<void(const std::string&, const std::string&, const std::vector<uint8_t>&, TimePoint)>;
     using OnAcceptConversation = std::function<void(const std::string&, const std::string&)>;
     using OnConfirmation = std::function<void(const std::string&, const std::string&)>;
     using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;
@@ -110,7 +110,7 @@ public:
      * (already a contact) */
     bool onTrustRequest(const dht::InfoHash& peer_account,
                         const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
-                        time_t received,
+                        TimePoint received,
                         bool confirm,
                         const std::string& conversationId,
                         std::vector<uint8_t>&& payload);
