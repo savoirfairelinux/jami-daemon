@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8870df6_4fa93df1",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-12T23:03:01Z",
+      "side": 1,
+      "message": "Line 299: The priority value is a magic number, which makes this behavior easy to misinterpret or accidentally change later. Please use an existing named constant/enum if available, or introduce a local named constant so the intended normal push priority is self-documenting.\n\n```suggestion\n            constexpr auto normalPushPriority \u003d 1;\n            info_-\u003eannounce-\u003epriority \u003d normalPushPriority;\n```",
+      "revId": "28e1f3851952c575a6aa555ae7b63eb39102e903",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
