@@ -323,8 +323,7 @@ RoutingTable::addMobileNode(const NodeId& nodeId)
     if (bucket == buckets.end())
         return false;
 
-    bucket->addMobileNode(nodeId);
-    return true;
+    return bucket->addMobileNode(nodeId);
 }
 
 void
@@ -469,6 +468,34 @@ RoutingTable::getMobileNodes() const
 }
 
 std::vector<NodeId>
+RoutingTable::getMobileNodesToNotify()
+{
+    std::vector<NodeId> ret;
+    for (const auto& mobile : getMobileNodes()) {
+        // We are responsible for waking up this mobile node if we are
+        // closer to it than every node we are connected to.
+        auto closest = closestNodes(mobile, 1);
+        if (closest.empty() || mobile.xorCmp(id_, closest.front()) < 0)
+            ret.emplace_back(mobile);
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getKnownMobileNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getMobileNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+        for (const auto& [nodeId, info] : b.getNodes())
+            if (info.isMobile_)
+                ret.emplace_back(nodeId);
+    }
+    return ret;
+}
+
+std::vector<NodeId>
 RoutingTable::getConnectingNodes() const
 {
     std::vector<NodeId> ret;
@@ -521,11 +548,9 @@ RoutingTable::getConnectedNodes() const
     std::vector<NodeId> ret;
     for (const auto& b : buckets) {
         const auto& nodes = b.getNodes();
-        const auto& mobiles = b.getMobileNodes();
-        ret.reserve(ret.size() + nodes.size() + mobiles.size());
+        ret.reserve(ret.size() + nodes.size());
         for (const auto& n : nodes)
             ret.emplace_back(n.first);
-        ret.insert(ret.end(), mobiles.begin(), mobiles.end());
     }
     return ret;
 }
