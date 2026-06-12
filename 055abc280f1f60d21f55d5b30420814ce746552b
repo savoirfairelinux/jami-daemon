@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4bf9f1cb_39a2ea76",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2b3db37d_2178afee",
+      "range": {
+        "startLine": 39,
+        "startChar": 50,
+        "endLine": 39,
+        "endChar": 63
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "03d6a342_01495024",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-06-10T20:55:21Z",
       "side": 1,
       "message": "The `TYPE` key is always present. Either leave this unchanged or do `type \u003d c.at(CommitKey::TYPE)` if you want to have the type in a variable.",
+      "range": {
+        "startLine": 452,
+        "startChar": 16,
+        "endLine": 453,
+        "endChar": 80
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "91d5d25c_d4a7b6b4",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 453,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "03d6a342_01495024",
       "range": {
         "startLine": 452,
         "startChar": 16,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc7ff196_a95ccd19",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 555,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ead37900_c2ceca1e",
+      "range": {
+        "startLine": 555,
+        "startChar": 37,
+        "endLine": 555,
+        "endChar": 45
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac2a0fe5_0d88c872",
@@ -83,6 +155,30 @@
       "writtenOn": "2026-06-10T20:55:21Z",
       "side": 1,
       "message": "As explained in another comment, the word \"parent\" shouldn\u0027t be used in this context.",
+      "range": {
+        "startLine": 1372,
+        "startChar": 34,
+        "endLine": 1373,
+        "endChar": 18
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58a85865_8c5f278a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1373,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac2a0fe5_0d88c872",
       "range": {
         "startLine": 1372,
         "startChar": 34,
@@ -133,6 +229,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df912668_4473e89a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1980,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1252e7a2_deefb2bb",
+      "range": {
+        "startLine": 1980,
+        "startChar": 45,
+        "endLine": 1980,
+        "endChar": 51
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5d41e1ae_af559f53",
@@ -146,6 +266,30 @@
       "writtenOn": "2026-06-10T20:55:21Z",
       "side": 1,
       "message": "No point in specifying the ordering explicitly like this, it\u0027s not meaningful for commit IDs.",
+      "range": {
+        "startLine": 1981,
+        "startChar": 24,
+        "endLine": 1981,
+        "endChar": 38
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "747924fc_6b136457",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 1981,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5d41e1ae_af559f53",
       "range": {
         "startLine": 1981,
         "startChar": 24,
@@ -196,6 +340,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b14533d_72eade6b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2065,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "494855fb_013866c7",
+      "range": {
+        "startLine": 2065,
+        "startChar": 45,
+        "endLine": 2065,
+        "endChar": 71
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0331a220_288a6159",
@@ -209,6 +377,30 @@
       "writtenOn": "2026-06-10T20:55:21Z",
       "side": 1,
       "message": "No point in specifying the ordering explicitly like this, it\u0027s not meaningful for commit IDs.",
+      "range": {
+        "startLine": 2099,
+        "startChar": 28,
+        "endLine": 2099,
+        "endChar": 42
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d263209d_393ffc51",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2099,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0331a220_288a6159",
       "range": {
         "startLine": 2099,
         "startChar": 28,
@@ -242,6 +434,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3485d682_8971248c",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "659a1b78_3c01b021",
+      "range": {
+        "startLine": 332,
+        "startChar": 69,
+        "endLine": 333,
+        "endChar": 74
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e2e6c057_0d6d5138",
@@ -265,6 +481,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "162fc65a_084ccb2f",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e2e6c057_0d6d5138",
+      "range": {
+        "startLine": 347,
+        "startChar": 7,
+        "endLine": 347,
+        "endChar": 13
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "623294df_d2a3bcdf",
@@ -278,6 +518,30 @@
       "writtenOn": "2026-06-10T20:55:21Z",
       "side": 1,
       "message": "As explained in another comment, the word \"parent\" shouldn\u0027t be used in this context.",
+      "range": {
+        "startLine": 354,
+        "startChar": 45,
+        "endLine": 355,
+        "endChar": 77
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f45b3b88_a6451ae6",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "623294df_d2a3bcdf",
       "range": {
         "startLine": 354,
         "startChar": 45,
@@ -323,6 +587,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "967cc1e7_008773ca",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 2255,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce565a82_a92e8d67",
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "12fa5a94_93ec54c5",
@@ -363,6 +645,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3a799068_5684ac55",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "41c8a9d4_3e029642",
+      "range": {
+        "startLine": 256,
+        "startChar": 12,
+        "endLine": 256,
+        "endChar": 21
+      },
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "93a47667_a6783511",
@@ -377,6 +683,24 @@
       "side": 1,
       "message": "INFO SonarQube violation:\n\n\nC++ Parser can\u0027t read code. Declaration is skipped (last token\u003d\u0027\"([a-zA-Z0-9_]+.(dylib|so|dll|lib).*)\"\u0027, line\u003d72, column\u003d88).\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dcxx%3AParsingErrorRecovery",
       "tag": "autogenerated:sonar",
+      "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce1a699d_e124f807",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-12T13:08:02Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "93a47667_a6783511",
       "revId": "055abc280f1f60d21f55d5b30420814ce746552b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
