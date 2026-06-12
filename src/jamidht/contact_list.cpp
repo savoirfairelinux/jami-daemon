@@ -27,9 +27,59 @@
 #include "account_const.h"
 
 #include <fstream>
+#include <string_view>
 #include <gnutls/ocsp.h>
 
 namespace jami {
+
+namespace {
+
+// On-disk representation of a known device entry. Older daemons stored it as a
+// msgpack array [name, lastSyncSeconds] (std::pair). The current format stores
+// a self-describing map carrying milliseconds; the reader accepts both layouts
+// so upgrading keeps existing knownDevices files working (a downgrade simply
+// fails to parse the new map and re-discovers devices through sync).
+struct KnownDeviceData
+{
+    std::string name;
+    int64_t lastSyncMs {0};
+
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        pk.pack_map(2);
+        pk.pack("name");
+        pk.pack(name);
+        pk.pack("syncMs");
+        pk.pack(lastSyncMs);
+    }
+
+    void msgpack_unpack(const msgpack::object& o)
+    {
+        if (o.type == msgpack::type::ARRAY) {
+            // Legacy layout: [name, lastSyncSeconds]
+            if (o.via.array.size > 0)
+                o.via.array.ptr[0].convert(name);
+            if (o.via.array.size > 1)
+                lastSyncMs = o.via.array.ptr[1].as<int64_t>() * 1000;
+        } else if (o.type == msgpack::type::MAP) {
+            for (uint32_t i = 0; i < o.via.map.size; ++i) {
+                const auto& kv = o.via.map.ptr[i];
+                if (kv.key.type != msgpack::type::STR)
+                    continue;
+                std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+                if (key == "name")
+                    kv.val.convert(name);
+                else if (key == "syncMs")
+                    lastSyncMs = kv.val.as<int64_t>();
+            }
+        } else {
+            throw msgpack::type_error();
+        }
+    }
+};
+
+} // namespace
 
 ContactList::ContactList(const std::string& accountId,
                          const std::shared_ptr<crypto::Certificate>& cert,
@@ -94,11 +144,11 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
         c = contacts_.emplace(h, Contact {}).first;
     else if (c->second.isActive() and c->second.confirmed == confirmed && c->second.conversationId == conversationId)
         return false;
-    c->second.added = std::time(nullptr);
+    c->second.added = nowMs();
     // NOTE: because we can re-add a contact after removing it
     // we should reset removed (as not removed anymore). This fix isActive()
-    // if addContact is called just after removeContact during the same second
-    c->second.removed = 0;
+    // if addContact is called just after removeContact within the same instant
+    c->second.removed = TimePoint {};
     c->second.conversationId = conversationId;
     c->second.confirmed |= confirmed;
     auto hStr = h.toString();
@@ -117,7 +167,7 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
     if (c != contacts_.end() && c->second.conversationId != conversationId) {
         c->second.conversationId = conversationId;
         if (added) {
-            c->second.added = std::time(nullptr);
+            c->second.added = nowMs();
         }
         saveContacts();
         return true;
@@ -133,7 +183,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact {}).first;
-    c->second.removed = std::time(nullptr);
+    c->second.removed = nowMs();
     c->second.confirmed = false;
     c->second.banned = ban;
     c->second.conversationId = "";
@@ -321,7 +371,7 @@ ContactList::loadTrustRequests()
 bool
 ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                             const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
-                            time_t received,
+                            TimePoint received,
                             bool confirm,
                             const std::string& conversationId,
                             std::vector<uint8_t>&& payload)
@@ -370,7 +420,10 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
     lk.unlock();
     // Note: call JamiAccount's callback to build ConversationRequest anyway
     if (!confirm)
-        callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received);
+        callbacks_.trustRequest(peer_account.toString(),
+                                conversationId,
+                                std::move(payload),
+                                toSecondsSinceEpoch(received));
     else if (active) {
         // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);
@@ -388,11 +441,12 @@ ContactList::getTrustRequests() const
     std::lock_guard lk(mutex_);
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
-        ret.emplace_back(Map {{libjami::Account::TrustRequest::FROM, r.first.toString()},
-                              {libjami::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
-                              {libjami::Account::TrustRequest::CONVERSATIONID, r.second.conversationId},
-                              {libjami::Account::TrustRequest::PAYLOAD,
-                               std::string(r.second.payload.begin(), r.second.payload.end())}});
+        ret.emplace_back(
+            Map {{libjami::Account::TrustRequest::FROM, r.first.toString()},
+                 {libjami::Account::TrustRequest::RECEIVED, std::to_string(toSecondsSinceEpoch(r.second.received))},
+                 {libjami::Account::TrustRequest::CONVERSATIONID, r.second.conversationId},
+                 {libjami::Account::TrustRequest::PAYLOAD,
+                  std::string(r.second.payload.begin(), r.second.payload.end())}});
     }
     return ret;
 }
@@ -406,7 +460,7 @@ ContactList::getTrustRequest(const dht::InfoHash& from) const
     if (r == trustRequests_.end())
         return {};
     return Map {{libjami::Account::TrustRequest::FROM, r->first.toString()},
-                {libjami::Account::TrustRequest::RECEIVED, std::to_string(r->second.received)},
+                {libjami::Account::TrustRequest::RECEIVED, std::to_string(toSecondsSinceEpoch(r->second.received))},
                 {libjami::Account::TrustRequest::CONVERSATIONID, r->second.conversationId},
                 {libjami::Account::TrustRequest::PAYLOAD,
                  std::string(r->second.payload.begin(), r->second.payload.end())}};
@@ -457,11 +511,12 @@ ContactList::loadKnownDevices()
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
 
-        std::map<dht::PkId, std::pair<std::string, uint64_t>> knownDevices;
+        std::map<dht::PkId, KnownDeviceData> knownDevices;
         oh.get().convert(knownDevices);
         for (const auto& d : knownDevices) {
             if (auto crt = certStore.getCertificate(d.first.toString())) {
-                if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second), false))
+                auto lastSync = clock::time_point(std::chrono::milliseconds(d.second.lastSyncMs));
+                if (not foundAccountDevice(crt, d.second.name, lastSync, false))
                     JAMI_WARNING("[Account {}] [Contacts] Unable to add device {}", accountId_, d.first);
             } else {
                 JAMI_WARNING("[Account {}] [Contacts] Unable to find certificate for device {}", accountId_, d.first);
@@ -481,9 +536,11 @@ ContactList::saveKnownDevices() const
 {
     std::ofstream file(path_ / "knownDevices", std::ios::trunc | std::ios::binary);
 
-    std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
+    std::map<dht::PkId, KnownDeviceData> devices;
     for (const auto& id : knownDevices_) {
-        devices.emplace(id.first, std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
+        auto lastSyncMs = std::chrono::duration_cast<std::chrono::milliseconds>(id.second.last_sync.time_since_epoch())
+                              .count();
+        devices.emplace(id.first, KnownDeviceData {id.second.name, lastSyncMs});
     }
 
     msgpack::pack(file, devices);

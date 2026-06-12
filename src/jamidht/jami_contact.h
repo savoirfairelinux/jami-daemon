@@ -17,6 +17,7 @@
 #pragma once
 
 #include "string_utils.h"
+#include "timestamp.h"
 
 #include <opendht/infohash.h>
 #include <opendht/value.h>
@@ -26,18 +27,35 @@
 #include <json/json.h>
 
 #include <map>
+#include <optional>
 #include <string>
-#include <ctime>
+#include <string_view>
 
 namespace jami {
+
+namespace ContactMapKeys {
+static constexpr const char* ADDED {"added"};
+static constexpr const char* REMOVED {"removed"};
+static constexpr const char* CONFIRMED {"confirmed"};
+static constexpr const char* BANNED {"banned"};
+static constexpr const char* CONVERSATIONID {"conversationId"};
+static constexpr const char* DEVICE {"device"};
+static constexpr const char* RECEIVED {"received"};
+static constexpr const char* PAYLOAD {"payload"};
+// Millisecond-resolution variants. Legacy keys above keep carrying seconds so
+// that older devices (which ignore unknown keys) remain compatible.
+static constexpr const char* ADDED_MS {"addedMs"};
+static constexpr const char* REMOVED_MS {"removedMs"};
+static constexpr const char* RECEIVED_MS {"receivedMs"};
+} // namespace ContactMapKeys
 
 struct Contact
 {
     /** Time of contact addition */
-    time_t added {0};
+    TimePoint added {};
 
     /** Time of contact removal */
-    time_t removed {0};
+    TimePoint removed {};
 
     /** True if we got confirmation that this contact also added us */
     bool confirmed {false};
@@ -55,11 +73,19 @@ struct Contact
     Contact() = default;
     Contact(const Json::Value& json)
     {
-        added = json["added"].asLargestUInt();
-        removed = json["removed"].asLargestUInt();
-        confirmed = json["confirmed"].asBool();
-        banned = json["banned"].asBool();
-        conversationId = json["conversationId"].asString();
+        // Prefer the millisecond keys, fall back to the legacy seconds keys
+        // (written by older devices).
+        if (json.isMember(ContactMapKeys::ADDED_MS))
+            added = timePointFromMilliseconds(json[ContactMapKeys::ADDED_MS].asLargestInt());
+        else
+            added = timePointFromSeconds(json[ContactMapKeys::ADDED].asLargestInt());
+        if (json.isMember(ContactMapKeys::REMOVED_MS))
+            removed = timePointFromMilliseconds(json[ContactMapKeys::REMOVED_MS].asLargestInt());
+        else
+            removed = timePointFromSeconds(json[ContactMapKeys::REMOVED].asLargestInt());
+        confirmed = json[ContactMapKeys::CONFIRMED].asBool();
+        banned = json[ContactMapKeys::BANNED].asBool();
+        conversationId = json[ContactMapKeys::CONVERSATIONID].asString();
     }
 
     /**
@@ -90,22 +116,24 @@ struct Contact
     Json::Value toJson() const
     {
         Json::Value json;
-        json["added"] = Json::Int64(added);
-        if (removed) {
-            json["removed"] = Json::Int64(removed);
+        json[ContactMapKeys::ADDED] = Json::Int64(toSecondsSinceEpoch(added));
+        json[ContactMapKeys::ADDED_MS] = Json::Int64(toMillisecondsSinceEpoch(added));
+        if (removed != TimePoint {}) {
+            json[ContactMapKeys::REMOVED] = Json::Int64(toSecondsSinceEpoch(removed));
+            json[ContactMapKeys::REMOVED_MS] = Json::Int64(toMillisecondsSinceEpoch(removed));
         }
         if (confirmed)
-            json["confirmed"] = confirmed;
+            json[ContactMapKeys::CONFIRMED] = confirmed;
         if (banned)
-            json["banned"] = banned;
-        json["conversationId"] = conversationId;
+            json[ContactMapKeys::BANNED] = banned;
+        json[ContactMapKeys::CONVERSATIONID] = conversationId;
         return json;
     }
 
     std::map<std::string, std::string> toMap() const
     {
-        std::map<std::string, std::string> result {{"added", std::to_string(added)},
-                                                   {"removed", std::to_string(removed)},
+        std::map<std::string, std::string> result {{"added", std::to_string(toSecondsSinceEpoch(added))},
+                                                   {"removed", std::to_string(toSecondsSinceEpoch(removed))},
                                                    {"conversationId", conversationId}};
 
         if (isActive())
@@ -116,16 +144,159 @@ struct Contact
         return result;
     }
 
-    MSGPACK_DEFINE_MAP(added, removed, confirmed, banned, conversationId)
+    // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
+    // dual keys: legacy seconds (added/removed) + milliseconds
+    // (addedMs/removedMs). Readers prefer the ms keys and fall back to
+    // seconds * 1000.
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        int64_t addedSec = toSecondsSinceEpoch(added);
+        int64_t removedSec = toSecondsSinceEpoch(removed);
+        int64_t addedMs = toMillisecondsSinceEpoch(added);
+        int64_t removedMs = toMillisecondsSinceEpoch(removed);
+        msgpack::type::make_define_map(ContactMapKeys::ADDED,
+                                       addedSec,
+                                       ContactMapKeys::REMOVED,
+                                       removedSec,
+                                       ContactMapKeys::CONFIRMED,
+                                       confirmed,
+                                       ContactMapKeys::BANNED,
+                                       banned,
+                                       ContactMapKeys::CONVERSATIONID,
+                                       conversationId,
+                                       ContactMapKeys::ADDED_MS,
+                                       addedMs,
+                                       ContactMapKeys::REMOVED_MS,
+                                       removedMs)
+            .msgpack_pack(pk);
+    }
+
+    void msgpack_unpack(const msgpack::object& o)
+    {
+        if (o.type != msgpack::type::MAP)
+            throw msgpack::type_error();
+        int64_t addedSec = 0, removedSec = 0;
+        std::optional<int64_t> addedMs, removedMs;
+        for (uint32_t i = 0; i < o.via.map.size; ++i) {
+            const auto& kv = o.via.map.ptr[i];
+            if (kv.key.type != msgpack::type::STR)
+                continue;
+            std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+            if (key == ContactMapKeys::ADDED)
+                kv.val.convert(addedSec);
+            else if (key == ContactMapKeys::REMOVED)
+                kv.val.convert(removedSec);
+            else if (key == ContactMapKeys::ADDED_MS)
+                addedMs = kv.val.as<int64_t>();
+            else if (key == ContactMapKeys::REMOVED_MS)
+                removedMs = kv.val.as<int64_t>();
+            else if (key == ContactMapKeys::CONFIRMED)
+                kv.val.convert(confirmed);
+            else if (key == ContactMapKeys::BANNED)
+                kv.val.convert(banned);
+            else if (key == ContactMapKeys::CONVERSATIONID)
+                kv.val.convert(conversationId);
+        }
+        added = addedMs ? timePointFromMilliseconds(*addedMs) : timePointFromSeconds(addedSec);
+        removed = removedMs ? timePointFromMilliseconds(*removedMs) : timePointFromSeconds(removedSec);
+    }
+
+    template<typename MSGPACK_OBJECT>
+    void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone& z) const
+    {
+        int64_t addedSec = toSecondsSinceEpoch(added);
+        int64_t removedSec = toSecondsSinceEpoch(removed);
+        int64_t addedMs = toMillisecondsSinceEpoch(added);
+        int64_t removedMs = toMillisecondsSinceEpoch(removed);
+        msgpack::type::make_define_map(ContactMapKeys::ADDED,
+                                       addedSec,
+                                       ContactMapKeys::REMOVED,
+                                       removedSec,
+                                       ContactMapKeys::CONFIRMED,
+                                       confirmed,
+                                       ContactMapKeys::BANNED,
+                                       banned,
+                                       ContactMapKeys::CONVERSATIONID,
+                                       conversationId,
+                                       ContactMapKeys::ADDED_MS,
+                                       addedMs,
+                                       ContactMapKeys::REMOVED_MS,
+                                       removedMs)
+            .msgpack_object(o, z);
+    }
 };
 
 struct TrustRequest
 {
     std::shared_ptr<dht::crypto::PublicKey> device;
     std::string conversationId;
-    time_t received;
+    TimePoint received {};
     std::vector<uint8_t> payload;
-    MSGPACK_DEFINE_MAP(device, conversationId, received, payload)
+
+    // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
+    // dual keys: legacy seconds (received) + milliseconds (receivedMs). Readers
+    // prefer the ms key and fall back to seconds * 1000.
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        int64_t receivedSec = toSecondsSinceEpoch(received);
+        int64_t receivedMs = toMillisecondsSinceEpoch(received);
+        msgpack::type::make_define_map(ContactMapKeys::DEVICE,
+                                       device,
+                                       ContactMapKeys::CONVERSATIONID,
+                                       conversationId,
+                                       ContactMapKeys::RECEIVED,
+                                       receivedSec,
+                                       ContactMapKeys::PAYLOAD,
+                                       payload,
+                                       ContactMapKeys::RECEIVED_MS,
+                                       receivedMs)
+            .msgpack_pack(pk);
+    }
+
+    void msgpack_unpack(const msgpack::object& o)
+    {
+        if (o.type != msgpack::type::MAP)
+            throw msgpack::type_error();
+        int64_t receivedSec = 0;
+        std::optional<int64_t> receivedMs;
+        for (uint32_t i = 0; i < o.via.map.size; ++i) {
+            const auto& kv = o.via.map.ptr[i];
+            if (kv.key.type != msgpack::type::STR)
+                continue;
+            std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+            if (key == ContactMapKeys::DEVICE)
+                kv.val.convert(device);
+            else if (key == ContactMapKeys::CONVERSATIONID)
+                kv.val.convert(conversationId);
+            else if (key == ContactMapKeys::RECEIVED)
+                kv.val.convert(receivedSec);
+            else if (key == ContactMapKeys::RECEIVED_MS)
+                receivedMs = kv.val.as<int64_t>();
+            else if (key == ContactMapKeys::PAYLOAD)
+                kv.val.convert(payload);
+        }
+        received = receivedMs ? timePointFromMilliseconds(*receivedMs) : timePointFromSeconds(receivedSec);
+    }
+
+    template<typename MSGPACK_OBJECT>
+    void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone& z) const
+    {
+        int64_t receivedSec = toSecondsSinceEpoch(received);
+        int64_t receivedMs = toMillisecondsSinceEpoch(received);
+        msgpack::type::make_define_map(ContactMapKeys::DEVICE,
+                                       device,
+                                       ContactMapKeys::CONVERSATIONID,
+                                       conversationId,
+                                       ContactMapKeys::RECEIVED,
+                                       receivedSec,
+                                       ContactMapKeys::PAYLOAD,
+                                       payload,
+                                       ContactMapKeys::RECEIVED_MS,
+                                       receivedMs)
+            .msgpack_object(o, z);
+    }
 };
 
 struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
