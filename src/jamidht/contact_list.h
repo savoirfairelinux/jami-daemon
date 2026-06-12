@@ -110,7 +110,7 @@ public:
      * (already a contact) */
     bool onTrustRequest(const dht::InfoHash& peer_account,
                         const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
-                        time_t received,
+                        TimePoint received,
                         bool confirm,
                         const std::string& conversationId,
                         std::vector<uint8_t>&& payload);

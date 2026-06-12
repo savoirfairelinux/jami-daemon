@@ -2526,7 +2526,7 @@ JamiAccount::conversationOneToOneReceive(const std::string& convId, const std::s
                                              return;
                                          info->contacts->onTrustRequest(dht::InfoHash(from),
                                                                         cert->getSharedPublicKey(),
-                                                                        time(nullptr),
+                                                                        nowMs(),
                                                                         false,
                                                                         convId,
                                                                         {});
