@@ -507,6 +507,24 @@ public:
     std::vector<NodeId> getMobileNodes() const;
 
     /**
+     * Returns the mobile nodes this table's owner is responsible for
+     * waking up, i.e. the mobile nodes to which we are closer than any
+     * connected node. Knowledge of a mobile node concentrates in its
+     * Kademlia region, so a small number of nodes self-select for each
+     * mobile node, keeping wake-up messages O(1) per mobile.
+     * @return vector of nodeIds
+     */
+    std::vector<NodeId> getMobileNodesToNotify();
+
+    /**
+     * Returns every node known to be mobile: disconnected mobile nodes
+     * (mobile_nodes) plus connected nodes flagged as mobile.
+     * Used to persist mobility knowledge across restarts.
+     * @return vector of nodeIds
+     */
+    std::vector<NodeId> getKnownMobileNodes() const;
+
+    /**
      * Returns all routing table's connecting nodes
      * @return vector of nodeIds
      */
