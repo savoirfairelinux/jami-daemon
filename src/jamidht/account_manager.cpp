@@ -302,8 +302,23 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                 {},
                 true);
         }
+        // Publish only the most recent CRL: a CRL is cumulative (the latest
+        // one lists every certificate currently revoked by this issuer), so
+        // older versions are strictly superseded. Identity archives can
+        // accumulate many re-signed CRL versions over time (75 observed on a
+        // single account); re-putting every version as a permanent put on
+        // each registration re-seeds them on the proxy for 24h, and every
+        // peer listening on the account key for presence receives the whole
+        // set again in each proxy catch-up dump — measured as the dominant
+        // source of push notification noise that ended up crowding genuine
+        // call pushes out of the FCM per-device budget.
+        std::shared_ptr<dht::crypto::RevocationList> latestCrl;
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists()) {
-            auto crlVal = std::make_shared<dht::Value>(*crl);
+            if (not latestCrl or crl->getUpdateTime() > latestCrl->getUpdateTime())
+                latestCrl = crl;
+        }
+        if (latestCrl) {
+            auto crlVal = std::make_shared<dht::Value>(*latestCrl);
             crlVal->priority = 1; // CRLs are not urgent — use normal priority
             dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
         }
