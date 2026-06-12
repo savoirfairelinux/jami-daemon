@@ -355,7 +355,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                 if (info_)
                     if (info_->contacts->onTrustRequest(peer_account,
                                                         v.owner,
-                                                        time(nullptr),
+                                                        nowMs(),
                                                         v.confirm,
                                                         v.conversationId,
                                                         std::move(v.payload))) {

@@ -24,6 +24,7 @@
 #include "jami/conversation_interface.h"
 #include "jamidht/typers.h"
 #include "string_utils.h"
+#include "timestamp.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -43,43 +44,6 @@ class ChannelSocket;
 } // namespace dhtnet
 
 namespace jami {
-
-/**
- * Millisecond-resolution timestamp used by ConvInfo and ConversationRequest.
- * Serialized with dual keys for backward compatibility: legacy keys carry
- * seconds (read by older devices), "*Ms" keys carry milliseconds.
- */
-using TimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>;
-
-inline TimePoint
-nowMs()
-{
-    return std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
-}
-
-constexpr TimePoint
-timePointFromSeconds(int64_t seconds)
-{
-    return TimePoint(std::chrono::seconds(seconds));
-}
-
-constexpr TimePoint
-timePointFromMilliseconds(int64_t milliseconds)
-{
-    return TimePoint(std::chrono::milliseconds(milliseconds));
-}
-
-constexpr int64_t
-toSecondsSinceEpoch(const TimePoint& t)
-{
-    return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
-}
-
-constexpr int64_t
-toMillisecondsSinceEpoch(const TimePoint& t)
-{
-    return t.time_since_epoch().count();
-}
 
 namespace ConversationMapKeys {
 static constexpr const char* ID {"id"};
