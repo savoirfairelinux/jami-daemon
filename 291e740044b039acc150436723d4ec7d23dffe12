@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d527530_80f30396",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-06-12T11:14:59Z",
+      "side": 1,
+      "message": "In the scenario this change addresses (issue #1185), the validation failure is a property of the conversation content, not of the serving device: the malformed commit is part of the replicated, immutable history, so every member device serves the same invalid repository. Counting per device multiplies the retry budget by the number of devices while every attempt is doomed, prolonging exactly the storm (git channel + ICE/TLS + one FCM push every ~5s) this change stops. And gating \"unrecoverable\" on distinct clone sources never converges for the most common topology: a peer with a single device -- the storm would then run forever.\n\nThe tampered-copy scenario (one malicious member device serving an invalid history while others hold a valid one) is possible in principle, but its blast radius is deliberately bounded and recoverable: the counter is in-memory only (a daemon restart grants a fresh bounded round), the clone source is whichever member device connects first (so three consecutive losses of that race by all honest devices is the corner of a corner case), and EUNRECOVERABLE gives the client an actionable recovery (remove + ask for a new invitation). Note also that a malicious conversation member can already deny service in simpler ways.\n\nA per-source blacklist (skip devices that served invalid data; give up once every announcing device is blacklisted) could be a follow-up hardening, but it adds dynamic state and edge cases for marginal gain over the restart recovery path.",
+      "parentUuid": "bc83582c_ef9e4f68",
+      "revId": "291e740044b039acc150436723d4ec7d23dffe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "440a8847_565f87d7",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-10T20:36:05Z",
       "side": 1,
       "message": "[Critical] Line 2895: Throwing `InvalidRepositoryError` changes the error contract of `cloneConversation()` from returning an empty result to throwing, but this patch only documents one caller. Any existing or future caller that expects the documented pair-return behavior can now terminate the operation if the exception escapes. Either keep the return-value contract and surface the reason explicitly, or ensure every caller catches `InvalidRepositoryError`. A safer API would encode the failure mode in the return type instead of relying on an unchecked exception.",
+      "revId": "291e740044b039acc150436723d4ec7d23dffe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "643ea79f_e5aa8571",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2895,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-06-12T11:14:59Z",
+      "side": 1,
+      "message": "The call-site contract is unchanged in practice: this path was already exception-based before this change. On validation failure cloneConversation() returned {} and its only production caller -- the Conversation cloning constructor (conversation.cpp:205, sole instantiation at conversation_module.cpp:812, inside the try block) -- immediately converted the empty result into a throw: conversation.cpp:156 `repository_(std::move(repository ? repository : throw std::logic_error(\"Invalid repository\")))`, caught by the pre-existing catch(const std::exception\u0026) in handlePendingConversation(). This change only refines the exception type on that already-throwing path so the catch site can tell permanent validation failures apart from transient ones.\n\nThe remaining callers on this revision are tests:\n- test/unitTest/conversationRepository/conversationRepository.cpp:1163 exercises a git_clone (network-type) failure, which still returns {} -- unaffected.\n- test/dst/dst.cpp:512 clones valid repositories; before this change a validation failure there would have null-dereferenced on repo-\u003ejoin(), now it throws -- same fatal outcome, better diagnosed.\n\nEncoding the failure mode in the return type cannot work for the production caller: it is a delegating constructor, which has no way to return a status -- the exception is the only channel that crosses it. The throw is documented in the header, including the requirement that new callers must handle it.",
+      "parentUuid": "440a8847_565f87d7",
       "revId": "291e740044b039acc150436723d4ec7d23dffe12",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
