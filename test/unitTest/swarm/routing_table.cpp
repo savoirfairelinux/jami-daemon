@@ -130,6 +130,7 @@ private:
     void testSendKnownNodes_1b();
     void testSendKnownNodes_multipleb();
     void testMobileNodeFunctions();
+    void testMobileNodeWakeUp();
     void testMobileNodeAnnouncement();
     void testMobileNodeSplit();
     void testSendMobileNodes();
@@ -153,6 +154,7 @@ private:
     CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
     CPPUNIT_TEST(testRoutingTableForConnectingNode);
     CPPUNIT_TEST(testMobileNodeFunctions);
+    CPPUNIT_TEST(testMobileNodeWakeUp);
     CPPUNIT_TEST(testMobileNodeAnnouncement);
     CPPUNIT_TEST(testMobileNodeSplit);
     CPPUNIT_TEST(testSendMobileNodes);
@@ -855,6 +857,36 @@ RoutingTableTest::testMobileNodeFunctions()
 
     CPPUNIT_ASSERT(!rt.hasMobileNode(node2));
     CPPUNIT_ASSERT(!rt.hasMobileNode(node3));
+}
+
+void
+RoutingTableTest::testMobileNodeWakeUp()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    RoutingTable rt;
+    rt.setId(nodeTestIds1.at(0)); // 0539...
+
+    NodeId closeMobile = nodeTestIds1.at(2); // 105b..., closer to us than to the connected node
+    NodeId farMobile = nodeTestIds2.at(5);   // e633..., closer to the connected node than to us
+    rt.addMobileNode(closeMobile);
+    rt.addMobileNode(farMobile);
+
+    // Without any connected node, we are responsible for all mobile nodes
+    auto toNotify = rt.getMobileNodesToNotify();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), toNotify.size());
+
+    // With a connected node (41a0...), we only keep the mobile nodes we are
+    // closer to than the connected node
+    rt.addNode(nodeTestChannels1_1.at(1));
+    toNotify = rt.getMobileNodesToNotify();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), toNotify.size());
+    CPPUNIT_ASSERT(toNotify.front() == closeMobile);
+
+    // Connected nodes are no longer responsible once removed from the table
+    rt.deleteNode(nodeTestChannels1_1.at(1)->deviceId());
+    toNotify = rt.getMobileNodesToNotify();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), toNotify.size());
 }
 
 void
