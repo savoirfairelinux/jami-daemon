@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c824c4e7_adcc7385",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2019,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-12T13:08:32Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 2019: This uses `std::views::values`, which requires C++20 ranges support. The daemon is still built in configurations that do not enable C++20, so this will break compilation there. Use a regular map iteration instead.\n```suggestion\n        for (const auto\u0026 [_, msg] : loadedHistory_.quickAccess) {\n            if (msg-\u003etype \u003d\u003d CommitType::TEXT \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\")) {\n                batch.push_back(*msg);\n            }\n        }\n```",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e390d8ad_530cd044",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2092,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-12T13:08:32Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 2092: When `messageId` is an edition commit, this copies that edition\u0027s `bodyOverwrite` onto the original message\u0027s `pluginData`. That can make clients render the current message body using an overwrite computed for an older edition, and clearing an edition overwrite can also erase the original message overwrite. Store the overwrite only on the commit it belongs to, then signal the original with injected edition overwrite data.\n```suggestion\n            const auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n            if (originalIt \u003d\u003d loadedHistory_.quickAccess.end()) {\n                return;\n            }\n            signalMsg \u003d injectEditionOverwrites(*originalIt-\u003esecond, loadedHistory_.quickAccess);\n```",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6a41844_958a2a0b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 2257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-12T13:08:32Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2257: The patch emits `SwarmLoaded` before running `loadMissingBodyOverwrites()`, while the new handler documentation says transforms happen before `SwarmLoaded`. This exposes untransformed message bodies first and then sends updates, which can cause visible flicker and makes the API contract misleading. Apply the transform before emitting the loaded signal, or update the API contract if the two-phase delivery is intentional.\n```suggestion\n                    if (const auto convPtr \u003d convWeak.lock()) {\n                        convPtr-\u003eloadMissingBodyOverwrites();\n                    }\n                    emitSignal\u003clibjami::ConversationSignal::SwarmLoaded\u003e(id, accountId, conversationId, messages);\n```",
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
