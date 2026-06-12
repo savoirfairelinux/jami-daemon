@@ -31,6 +31,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&, bool noNewSocket)>;
     using ToConnectCb = std::function<bool(const NodeId&)>;
     using OnConnectionChanged = std::function<void(bool ok)>;
+    using OnMobileNodesChanged = std::function<void(const std::vector<NodeId>&)>;
 
 public:
     explicit SwarmManager(const NodeId& nodeId, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb);
@@ -90,6 +91,25 @@ public:
     std::vector<NodeId> getAllNodes() const;
 
     std::vector<NodeId> getConnectedNodes() const;
+
+    /**
+     * Get the mobile nodes this device is responsible for waking up
+     * (i.e. closer to them than any connected node).
+     */
+    std::vector<NodeId> getMobileNodesToNotify();
+
+    /**
+     * Get every node known to be mobile (connected or not).
+     * Used to persist mobility knowledge across restarts.
+     */
+    std::vector<NodeId> getKnownMobileNodes() const;
+
+    /**
+     * Callback invoked when the set of known mobile nodes changes,
+     * with the updated set.
+     * @param cb
+     */
+    void onMobileNodesChanged(OnMobileNodesChanged cb) { onMobileNodesChanged_ = std::move(cb); }
 
     std::vector<std::map<std::string, std::string>> getRoutingTableInfo() const;
 
@@ -200,8 +220,15 @@ private:
     /**
      * Add node to the mobile_Nodes list
      * @param nodeId
+     * @return if node inserted
      */
-    void addMobileNodes(const NodeId& nodeId);
+    bool addMobileNodes(const NodeId& nodeId);
+
+    /**
+     * Notify the onMobileNodesChanged_ callback with the current set of
+     * known mobile nodes. Must be called without the mutex held.
+     */
+    void emitMobileNodesChanged();
 
     /**
      * Send nodes request to fill known_nodes list
@@ -260,6 +287,7 @@ private:
     std::atomic_bool isShutdown_ {false};
 
     OnConnectionChanged onConnectionChanged_ {};
+    OnMobileNodesChanged onMobileNodesChanged_ {};
 
     ToConnectCb toConnectCb_;
 };
