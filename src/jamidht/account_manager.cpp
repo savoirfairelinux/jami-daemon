@@ -288,6 +288,18 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         if (publishPresence) {
+            // Normal push priority: contacts listen on the account key for
+            // presence, so every (re)registration would otherwise wake all
+            // their devices with a high-priority push for a routine refresh
+            // of an unchanged announcement. High-priority noise that never
+            // produces a user-visible notification gets the app demoted by
+            // the FCM adaptive quota, and genuine incoming-call pushes are
+            // then silently dropped (observed: 3 reproductions, call pushes
+            // accepted by the gateway and never delivered while normal
+            // noise pushes were). Presence freshness is preserved: the value
+            // content is unchanged and deactivation-aware peers tolerate
+            // push delivery in the next batching window.
+            info_->announce->priority = 1;
             dht_->put(
                 h,
                 info_->announce,
