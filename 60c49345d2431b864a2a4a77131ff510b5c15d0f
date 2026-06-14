@@ -17,6 +17,40 @@
       "parentUuid": "7fa0e999_0d1e15b5",
       "revId": "60c49345d2431b864a2a4a77131ff510b5c15d0f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a613b3f6_c411d2d0",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1539,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-14T23:30:09Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 1539: The re-invite marker is persisted in memory before any fetch is actually started and is only cleared in handlePendingConversation(). If no peer device is found, startFetch() fails, or the clone setup fails before completion, conv-\u003ereinvitePending can remain true indefinitely. A later unrelated clone will copy that stale flag into pending-\u003eisReinviteClone at line 1405 and may clear the tombstone, resurrecting a conversation that was only supposed to be restored by the accepted re-invitation clone. Track whether a clone was actually started and clear reinvitePending on setup failure/no-device paths, or pass an explicit reinvite flag into cloneConversationFrom(conv, deviceId) instead of sampling mutable state. For example:\n```suggestion\nbool cloneStarted \u003d false;\naccountManager_-\u003eforEachDevice(memberHash, [w \u003d weak(), conv, \u0026cloneStarted](const auto\u0026 pk) {\n    auto sthis \u003d w.lock();\n    auto deviceId \u003d pk-\u003egetLongId().toString();\n    if (!sthis || deviceId \u003d\u003d sthis-\u003edeviceId_)\n        return;\n    cloneStarted \u003d true;\n    sthis-\u003ecloneConversationFrom(conv, deviceId, true);\n});\nif (conv-\u003ereinvitePending \u0026\u0026 !cloneStarted)\n    conv-\u003ereinvitePending \u003d false;\n```",
+      "revId": "60c49345d2431b864a2a4a77131ff510b5c15d0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a92ef95_20559b08",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2148,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-14T23:30:09Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2148: acceptConversationRequest() removes normal requests before cloneConversationFrom() validates the invitation sender. If request-\u003efrom is invalid, cloneConversationFrom() returns early, but the request has already been deleted and the user cannot retry. The re-invite path intentionally preserves the request until clone success; normal accepts should also only remove the request after clone startup succeeds, or cloneConversationFrom() should return a boolean indicating whether it accepted the request for processing.\n```suggestion\nif (!pimpl_-\u003ecloneConversationFrom(*request, removalGeneration))\n    return;\nif (!deferRequestRemoval)\n    pimpl_-\u003ermConversationRequest(conversationId);\n```",
+      "revId": "60c49345d2431b864a2a4a77131ff510b5c15d0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
