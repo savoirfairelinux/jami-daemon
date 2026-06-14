@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "30befdc2_11ffe472",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-06-14T23:20:36Z",
+      "side": 1,
+      "message": "Agreed this is a hardening opportunity rather than a correctness bug in the current flow. The window is bounded in practice: there is a single `conv-\u003epending` slot, `startFetch()` rejects a concurrent fetch for the same conversation (\"Already fetching\", line 1389), and every local removal resets `reinvitePending` and bumps `removalGeneration` under `conv-\u003emtx`. So the only clone that can observe `reinvitePending \u003d\u003d true` is the one armed by the accepted re-invitation.\n\nThat said, tying the marker to the specific clone attempt (e.g. an `isReinviteClone` flag carried in `PendingConversationFetch`, checked before clearing removed/erased) would make the invariant explicit and future-proof. Happy to add that if you prefer — leaving this open for Adrien / François-Simon to weigh in.",
+      "parentUuid": "7fa0e999_0d1e15b5",
+      "revId": "9999dbb63d598987fe7c563c763c4b3273f95f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cfbd7ce2_aaa6a01e",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 8
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-14T23:01:26Z",
       "side": 1,
       "message": "[🔴 Critical] Line 1518: The re-invitation state is read and mutated without holding `conv-\u003emtx`, while removal paths update `info.removed`, `reinvitePending`, and `removalGeneration` under that mutex. This creates a data race and can also miss the intended generation check if a local removal happens concurrently with acceptance. Guard the removed-state check, generation comparison, metadata refresh, and `reinvitePending` update with `conv-\u003emtx` before starting the clone.\n```suggestion\n    } else {\n        std::lock_guard lk(conv-\u003emtx);\n        if (conv-\u003einfo.isRemoved()) {\n            if (expectedRemovalGeneration \u0026\u0026 *expectedRemovalGeneration !\u003d conv-\u003eremovalGeneration) {\n                JAMI_WARNING(\"[Account {}] [Conversation {}] Removed again while accepting a re-invitation, aborting the clone\",\n                             accountId_,\n                             request.conversationId);\n                return;\n            }\n            conv-\u003einfo.members.clear();\n            conv-\u003einfo.members.emplace(username_);\n            conv-\u003einfo.members.emplace(request.from);\n            conv-\u003einfo.mode \u003d request.mode();\n            conv-\u003ereinvitePending \u003d true;\n            addConvInfo(conv-\u003einfo);\n        }\n    }\n```",
+      "revId": "9999dbb63d598987fe7c563c763c4b3273f95f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "74aba467_0857e0b6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1518,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-06-14T23:20:36Z",
+      "side": 1,
+      "message": "This is already guarded. `cloneConversationFrom(const ConversationRequest\u0026, std::optional\u003cuint64_t\u003e)` takes `std::lock_guard lk(conv-\u003emtx);` at the top of the function (line 1514, pre-existing context), and that lock covers the whole `else if (conv-\u003einfo.isRemoved())` branch: the `isRemoved()` test, the `expectedRemovalGeneration !\u003d conv-\u003eremovalGeneration` comparison, the members/mode refresh, and the `reinvitePending \u003d true` write. So the re-invitation state is read and mutated under `conv-\u003emtx` — the same mutex every removal path uses.\n\nThe generation check is exactly what closes the accept→clone window: `acceptConversationRequest()` snapshots `removalGeneration` under `conv-\u003emtx`, and this branch re-validates it under `conv-\u003emtx` before arming the marker, so a concurrent local removal is detected and the clone aborted, not missed.\n\nAlso note `SyncedConversation::mtx` is a non-recursive `std::mutex` (line 58): the suggested edit would take a second `std::lock_guard` on the already-held mutex in the same call stack and deadlock. Marking resolved as a false positive.",
+      "parentUuid": "cfbd7ce2_aaa6a01e",
       "revId": "9999dbb63d598987fe7c563c763c4b3273f95f8d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
