@@ -31,9 +31,6 @@ $(TARBALLS)/$(LIBRESSL_VERSION).tar.gz:
 
 libressl: $(LIBRESSL_VERSION).tar.gz
 	$(UNPACK)
-ifdef HAVE_IOS
-	$(APPLY) $(SRC)/libressl/ios-add-byte-order-macros.patch
-endif
 	$(MOVE)
 
 LIBRESSL_CONF := \
