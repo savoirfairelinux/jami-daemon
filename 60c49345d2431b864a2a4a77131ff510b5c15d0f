@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4102009_eb4736e2",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-06-14T23:30:02Z",
+      "side": 1,
+      "message": "Done in patch set 9: added an `isReinviteClone` marker on `PendingConversationFetch`, set in `cloneConversationFrom(conv, deviceId)` from `conv-\u003ereinvitePending` when the fetch starts. `handlePendingConversation()` now clears the tombstone only when `reinvitePending \u0026\u0026 conv-\u003epending \u0026\u0026 conv-\u003epending-\u003eisReinviteClone`, so the decision is tied to the specific clone attempt armed by the acceptance — an unrelated/bootstrap clone completing while a re-invitation is pending can no longer resurrect the conversation or drop the request. All of this runs under `conv-\u003emtx`. Commit message updated accordingly.",
+      "parentUuid": "7fa0e999_0d1e15b5",
+      "revId": "60c49345d2431b864a2a4a77131ff510b5c15d0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
