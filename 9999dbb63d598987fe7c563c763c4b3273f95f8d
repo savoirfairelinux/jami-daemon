@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7fa0e999_0d1e15b5",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-14T23:01:26Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 869: `handlePendingConversation()` clears the tombstone whenever `reinvitePending` is true, but it does not verify that the pending clone being finalized is the clone started by accepting the stored re-invitation. If another pending/bootstrap clone for the same removed conversation completes after `reinvitePending` is armed, it can resurrect the conversation and remove the request even though the accepted re-invite clone has not succeeded. Tie the marker to the accepted request/clone attempt, for example by storing the expected inviter/device or a clone attempt id in `PendingConversationFetch` and checking it before clearing `removed`/`erased`.\n```suggestion\n            if (conv-\u003ereinvitePending \u0026\u0026 conv-\u003epending \u0026\u0026 conv-\u003epending-\u003eisReinviteClone) {\n                conv-\u003einfo.created \u003d std::time(nullptr);\n                conv-\u003einfo.removed \u003d 0;\n                conv-\u003einfo.erased \u003d 0;\n                addConvInfo(conv-\u003einfo);\n                reinviteAccepted \u003d true;\n            } else {\n                removeRepo \u003d true;\n            }\n```",
+      "revId": "9999dbb63d598987fe7c563c763c4b3273f95f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfbd7ce2_aaa6a01e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1518,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-14T23:01:26Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 1518: The re-invitation state is read and mutated without holding `conv-\u003emtx`, while removal paths update `info.removed`, `reinvitePending`, and `removalGeneration` under that mutex. This creates a data race and can also miss the intended generation check if a local removal happens concurrently with acceptance. Guard the removed-state check, generation comparison, metadata refresh, and `reinvitePending` update with `conv-\u003emtx` before starting the clone.\n```suggestion\n    } else {\n        std::lock_guard lk(conv-\u003emtx);\n        if (conv-\u003einfo.isRemoved()) {\n            if (expectedRemovalGeneration \u0026\u0026 *expectedRemovalGeneration !\u003d conv-\u003eremovalGeneration) {\n                JAMI_WARNING(\"[Account {}] [Conversation {}] Removed again while accepting a re-invitation, aborting the clone\",\n                             accountId_,\n                             request.conversationId);\n                return;\n            }\n            conv-\u003einfo.members.clear();\n            conv-\u003einfo.members.emplace(username_);\n            conv-\u003einfo.members.emplace(request.from);\n            conv-\u003einfo.mode \u003d request.mode();\n            conv-\u003ereinvitePending \u003d true;\n            addConvInfo(conv-\u003einfo);\n        }\n    }\n```",
+      "revId": "9999dbb63d598987fe7c563c763c4b3273f95f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
