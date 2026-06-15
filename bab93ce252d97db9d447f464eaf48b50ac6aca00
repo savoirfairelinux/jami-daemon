@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0dd0e22d_ac02bee6",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-15T14:54:14Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 456: The edit notification path now depends on plugin transformation when handlers are present. If a handler throws or blocks inside transformSwarmMessages(), the normal SwarmMessageUpdated signal for edits is also lost/delayed. Editing a message should notify clients independently of optional plugin enrichment. Emit the base edit update first, then apply plugin overwrite updates as a separate best-effort follow-up, or ensure plugin manager failures cannot prevent the core edit signal.",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7782f2fb_eb3a9674",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-15T14:54:14Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 2024: loadMissingBodyOverwrites() only writes back non-empty plugin results and leaves messages with no overwrite unmarked. Because the selection criterion is `!msg-\u003epluginData.contains(\"bodyOverwrite\")`, plugins that legitimately return no overwrite will be called again on every load/reload path for the same messages, causing repeated unnecessary transforms and signals for large histories. Store a sentinel/empty entry or track that the message has already been processed separately from the overwrite value.\n\n```suggestion\nsignalMsg \u003d injectEditionOverwrites(transformed.id,\n    boIt !\u003d transformed.pluginData.end() ? boIt-\u003esecond : std::string_view {});\n```\nIf empty values mean \"processed but no overwrite\", update injectEditionOverwrites() or the selection predicate to distinguish that state from missing data.",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0df50be_4a5fe48b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 2072,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-15T14:54:14Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2072: clearBodyOverwrites() clears pluginData but leaves previously injected \"bodyOverwrite\" entries inside SwarmMessage::editions. The emitted message is copied directly from quickAccess, so clients can continue displaying stale overwritten edition bodies after plugins are disabled/reloaded. Clear bodyOverwrite from each edition entry or build the signal message through the same injection path that erases stale edition fields.\n\n```suggestion\nfor (auto\u0026 edition : msg-\u003eeditions) {\n    edition.erase(\"bodyOverwrite\");\n}\n```\nApply this while holding loadedHistory_.mutex before collecting messages to emit.",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
