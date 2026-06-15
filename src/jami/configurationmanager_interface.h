@@ -241,6 +241,7 @@ LIBJAMI_PUBLIC void removeContact(const std::string& accountId, const std::strin
 LIBJAMI_PUBLIC std::map<std::string, std::string> getContactDetails(const std::string& accountId,
                                                                     const std::string& uri);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getDeviceList(const std::string& accountId);
 
 /*
  * Network connectivity
