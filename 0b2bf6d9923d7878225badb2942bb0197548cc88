@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5075bcb_5417823c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-15T19:36:15Z",
+      "side": 1,
+      "message": "Use:\n```vcard\nKIND:application\nRELATED;TYPE\u003downer:jami:nvi\n```",
+      "revId": "0b2bf6d9923d7878225badb2942bb0197548cc88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
