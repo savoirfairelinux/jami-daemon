@@ -614,6 +614,14 @@ getContacts(const std::string& accountId)
     return {};
 }
 
+std::vector<std::map<std::string, std::string>>
+getDeviceList(const std::string& accountId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->getDeviceList();
+    return {};
+}
+
 /* contact requests */
 std::vector<std::map<std::string, std::string>>
 getTrustRequests(const std::string& accountId)
