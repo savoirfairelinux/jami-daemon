@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "23e60a34_55d410e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T14:23:26Z",
+      "side": 1,
+      "message": "We already merged a patch from you last month that changed the priority of DeviceAnnouncement values to normal: https://review.jami.net/c/jami-daemon/+/34059",
+      "revId": "6b3f8c9399cd9055014968689c7b06dc48251b28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
