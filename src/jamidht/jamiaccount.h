@@ -277,6 +277,14 @@ public:
     void removeContact(const std::string& uri, bool banned = true);
     std::vector<std::map<std::string, std::string>> getContacts(bool includeRemoved = false) const;
 
+    /**
+     * Obtain the list of known devices for this account, with metadata such as
+     * the device label and the time of the last received device sync.
+     * @return a vector of maps with keys "id", "label" and (optionally) "lastSync"
+     *         (seconds since epoch).
+     */
+    std::vector<std::map<std::string, std::string>> getDeviceList() const;
+
     ///
     /// Obtain details about one account contact in serializable form.
     ///
