@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2f560adf_616022b0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 55
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "The clang-format-daemon-ci job is currently failing. clang-format should be applied to all cpp and header files.",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0dd0e22d_ac02bee6",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 55
@@ -56,6 +73,75 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "54b84f27_2a4bba26",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 833,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "Do we actually need this? The code at lines 837-850 only sets \"bodyOverwrite\" on the editions of a copy. I think `pluginData` is the only field of messages in `loadedHistory_.quickAccess` that\u0027s used elsewhere in the code and needs to be directly modified...?",
+      "range": {
+        "startLine": 824,
+        "startChar": 8,
+        "endLine": 833,
+        "endChar": 9
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7f2e2a6_7e46c5c9",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 843,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "It\u0027s still not clear to me whether/why this line is needed.",
+      "range": {
+        "startLine": 843,
+        "startChar": 8,
+        "endLine": 843,
+        "endChar": 75
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3a46f7d_70ec17b3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1413,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "Out-of-date comment? This doesn\u0027t really make sense given that the current version of `injectEditionOverwrites` skips commit that don\u0027t have an \"id\"...",
+      "range": {
+        "startLine": 1413,
+        "startChar": 11,
+        "endLine": 1413,
+        "endChar": 88
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7782f2fb_eb3a9674",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 55
@@ -73,6 +159,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "94110645_5a014c8f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "@zelie.leydert@savoirfairelinux.com I think this is true: the code currently implicitly assumes that plugins will always set a non-empty overwrite. Do you think the suggested convention (empty values mean \"processed but no overwrite\") would make sense?",
+      "parentUuid": "7782f2fb_eb3a9674",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b0df50be_4a5fe48b",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 55
@@ -84,6 +188,52 @@
       "writtenOn": "2026-06-15T14:54:14Z",
       "side": 1,
       "message": "[🔴 Critical Issues - Must fix before merge] Line 2072: clearBodyOverwrites() clears pluginData but leaves previously injected \"bodyOverwrite\" entries inside SwarmMessage::editions. The emitted message is copied directly from quickAccess, so clients can continue displaying stale overwritten edition bodies after plugins are disabled/reloaded. Clear bodyOverwrite from each edition entry or build the signal message through the same injection path that erases stale edition fields.\n\n```suggestion\nfor (auto\u0026 edition : msg-\u003eeditions) {\n    edition.erase(\"bodyOverwrite\");\n}\n```\nApply this while holding loadedHistory_.mutex before collecting messages to emit.",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c484f0a_b459d13f",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "I\u0027d remove this, `ENABLE_PLUGIN` is a compile-time option and there could be no chat handlers registered at runtime even if it\u0027s true.",
+      "range": {
+        "startLine": 334,
+        "startChar": 56,
+        "endLine": 334,
+        "endChar": 78
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73f64409_7cd51345",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-15T20:08:53Z",
+      "side": 1,
+      "message": "The naming conventions here are inconsistent when it comes to distinguishing between functions that affect one conversation and those that affect multiple. Also, \"Swarm\" is included in some names but not others in a way that\u0027s arbitrary.\n\nMy suggestion would be to change to something along the following lines:\n`reloadBodyOverwriteConversations` -\u003e `reloadBodyOverwritesInAllConversations`\n`clearSwarmBodyOverwrite` -\u003e `clearBodyOverwritesInAllConversations`\n`bodyOverwriteLoadedConversations` -\u003e `loadMissingBodyOverwritesInAllConversations`\n`clearSwarmBodyOverwriteConversation` -\u003e `clearBodyOverwrites`\n`bodyOverwriteLoadedConversation` -\u003e `loadMissingBodyOverwrites`\n(Feel free to pick different names if you like, as long as they\u0027re consistent.)",
+      "range": {
+        "startLine": 136,
+        "startChar": 4,
+        "endLine": 147,
+        "endChar": 151
+      },
       "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
