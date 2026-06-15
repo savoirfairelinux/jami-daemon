@@ -39,7 +39,7 @@ public:
     {}
 };
 
-enum CipherMode : uint8_t { AESCounterMode, AESF8Mode };
+enum CipherMode : uint8_t { AESCounterMode };
 
 enum MACMode : uint8_t { HMACSHA1 };
 
@@ -60,16 +60,15 @@ struct CryptoSuiteDefinition
 };
 
 /**
- * List of accepted Crypto-Suites
- * as defined in RFC4568 (6.2)
+ * List of accepted Crypto-Suites as defined in RFC4568 (6.2).
+ * Keep this aligned with src/media/srtp.c::ff_srtp_set_crypto,
+ * which mirrors FFmpeg's libavformat/srtp.c implementation.
  */
 
 static std::vector<CryptoSuiteDefinition> CryptoSuites
     = {{"AES_CM_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
 
-       {"AES_CM_128_HMAC_SHA1_32"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
-
-       {"F8_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
+       {"AES_CM_128_HMAC_SHA1_32"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160}};
 
 class SdesNegotiator
 {

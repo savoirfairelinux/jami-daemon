@@ -41,7 +41,6 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
 
     static const std::regex cryptoSuitePattern {"(AES_CM_128_HMAC_SHA1_80|"
                                                 "AES_CM_128_HMAC_SHA1_32|"
-                                                "F8_128_HMAC_SHA1_80|"
                                                 "[A-Za-z0-9_]+)"}; // srtp-crypto-suite-ext
 
     static const std::regex keyParamsPattern {"(inline|[A-Za-z0-9_]+)\\:"
