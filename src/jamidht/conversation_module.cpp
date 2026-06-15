@@ -2771,9 +2771,22 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
                 }
             }
         }
-        if (conv->conversation)
-            return conv->conversation->infos();
-        else
+        if (conv->conversation) {
+            auto infos = conv->conversation->infos();
+            // Expose the locally-tracked conversation timestamps so that clients can
+            // display when the conversation was created/accepted (joined) and, when
+            // applicable, removed. Legacy keys carry seconds; *Ms keys carry
+            // milliseconds. Unknown keys are ignored by older devices.
+            if (conv->info.created != TimePoint {}) {
+                infos[ConversationMapKeys::CREATED] = std::to_string(toSecondsSinceEpoch(conv->info.created));
+                infos[ConversationMapKeys::CREATED_MS] = std::to_string(toMillisecondsSinceEpoch(conv->info.created));
+            }
+            if (conv->info.removed != TimePoint {}) {
+                infos[ConversationMapKeys::REMOVED] = std::to_string(toSecondsSinceEpoch(conv->info.removed));
+                infos[ConversationMapKeys::REMOVED_MS] = std::to_string(toMillisecondsSinceEpoch(conv->info.removed));
+            }
+            return infos;
+        } else
             return md;
     }
     JAMI_ERROR("Conversation {:s} does not exist", conversationId);
