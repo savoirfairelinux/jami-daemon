@@ -519,6 +519,11 @@ public:
         return libjami::getContacts(accountId);
     }
 
+    auto getDeviceList(const std::string& accountId) -> decltype(libjami::getDeviceList(accountId))
+    {
+        return libjami::getDeviceList(accountId);
+    }
+
     auto getCredentials(const std::string& accountID) -> decltype(libjami::getCredentials(accountID))
     {
         return libjami::getCredentials(accountID);
