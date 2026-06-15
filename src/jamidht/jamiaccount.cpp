@@ -3410,6 +3410,28 @@ JamiAccount::getContacts(bool includeRemoved) const
     return ret;
 }
 
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getDeviceList() const
+{
+    std::lock_guard lock(configurationMutex_);
+    if (not accountManager_ or not accountManager_->getInfo())
+        return {};
+    std::vector<std::map<std::string, std::string>> ret;
+    auto devices = accountManager_->getKnownDevices();
+    ret.reserve(devices.size());
+    for (const auto& d : devices) {
+        auto id = d.first.toString();
+        auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
+        std::map<std::string, std::string> device {{"id", std::move(id)}, {"label", std::move(label)}};
+        if (d.second.last_sync != KnownDevice::time_point::min()) {
+            device["lastSync"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(d.second.last_sync.time_since_epoch()).count());
+        }
+        ret.emplace_back(std::move(device));
+    }
+    return ret;
+}
+
 /* trust requests */
 
 std::vector<std::map<std::string, std::string>>
