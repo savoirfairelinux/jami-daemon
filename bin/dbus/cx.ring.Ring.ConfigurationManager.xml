@@ -1692,6 +1692,18 @@
             </arg>
         </method>
 
+        <method name="getDeviceList" tp:name-for-bindings="getDeviceList">
+            <tp:added version="3.0.0"/>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="devices" direction="out">
+                <tp:docstring>
+                 The list of known devices of given account, with their metadata.
+                </tp:docstring>
+            </arg>
+        </method>
+
         <signal name="contactAdded" tp:name-for-bindings="contactAdded">
             <tp:added version="2.2.0"/>
             <tp:docstring>
