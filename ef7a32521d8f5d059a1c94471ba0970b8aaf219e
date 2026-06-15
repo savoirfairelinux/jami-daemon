@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa5fc875_ff413bd0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-15T14:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "805c4d6b_afb31bbc",
+      "range": {
+        "startLine": 66,
+        "startChar": 71,
+        "endLine": 67,
+        "endChar": 56
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c824c4e7_adcc7385",
@@ -152,6 +176,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8bb2909d_2b081869",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-15T14:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "636f14af_e921e715",
+      "range": {
+        "startLine": 76,
+        "startChar": 44,
+        "endLine": 76,
+        "endChar": 73
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a8ed4e8b_55e82380",
@@ -175,6 +223,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6111106_1ad719b1",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-15T14:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a8ed4e8b_55e82380",
+      "range": {
+        "startLine": 77,
+        "startChar": 10,
+        "endLine": 79,
+        "endChar": 68
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "82ac3d99_75f5dfea",
@@ -188,6 +260,30 @@
       "writtenOn": "2026-06-12T21:08:46Z",
       "side": 1,
       "message": "Same comments as in `chathandler.h` apply here.",
+      "range": {
+        "startLine": 72,
+        "startChar": 72,
+        "endLine": 73,
+        "endChar": 82
+      },
+      "revId": "ef7a32521d8f5d059a1c94471ba0970b8aaf219e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d09298d_21fb193a",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-15T14:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "82ac3d99_75f5dfea",
       "range": {
         "startLine": 72,
         "startChar": 72,
