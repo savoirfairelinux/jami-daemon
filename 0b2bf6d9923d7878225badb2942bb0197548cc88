@@ -16,6 +16,29 @@
       "message": "Use:\n```vcard\nKIND:application\nRELATED;TYPE\u003downer:jami:nvi\n```",
       "revId": "0b2bf6d9923d7878225badb2942bb0197548cc88",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0d70014_59a40a33",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 418,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-15T19:37:09Z",
+      "side": 1,
+      "message": "* keep flag as last argument\n* const std::string\u0026 botOwner as third argument",
+      "range": {
+        "startLine": 413,
+        "startChar": 23,
+        "endLine": 418,
+        "endChar": 58
+      },
+      "revId": "0b2bf6d9923d7878225badb2942bb0197548cc88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
