@@ -38,7 +38,6 @@ RUN apt-get update && apt-get install -y \
     libvpx-dev \
     libx264-dev \
     libyaml-cpp-dev \
-    libhttp-parser-dev \
     libargon2-dev \
     libwebrtc-audio-processing-dev \
     libsecp256k1-dev \
