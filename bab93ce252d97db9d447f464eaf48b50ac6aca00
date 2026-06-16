@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3953e9ec_249d2556",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 55
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2f560adf_616022b0",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0dd0e22d_ac02bee6",
@@ -94,6 +112,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e86ba48a_9986b76d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 833,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "54b84f27_2a4bba26",
+      "range": {
+        "startLine": 824,
+        "startChar": 8,
+        "endLine": 833,
+        "endChar": 9
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f7f2e2a6_7e46c5c9",
@@ -117,6 +159,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "22179758_279c2036",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 843,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "wasn\u0027t needed anymore",
+      "parentUuid": "f7f2e2a6_7e46c5c9",
+      "range": {
+        "startLine": 843,
+        "startChar": 8,
+        "endLine": 843,
+        "endChar": 75
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b3a46f7d_70ec17b3",
@@ -130,6 +196,30 @@
       "writtenOn": "2026-06-15T20:08:53Z",
       "side": 1,
       "message": "Out-of-date comment? This doesn\u0027t really make sense given that the current version of `injectEditionOverwrites` skips commit that don\u0027t have an \"id\"...",
+      "range": {
+        "startLine": 1413,
+        "startChar": 11,
+        "endLine": 1413,
+        "endChar": 88
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa43262a_c21c7ada",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1413,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b3a46f7d_70ec17b3",
       "range": {
         "startLine": 1413,
         "startChar": 11,
@@ -175,6 +265,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba4761f1_64046d83",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94110645_5a014c8f",
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b0df50be_4a5fe48b",
@@ -215,6 +323,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ba10a81_347e5bd1",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c484f0a_b459d13f",
+      "range": {
+        "startLine": 334,
+        "startChar": 56,
+        "endLine": 334,
+        "endChar": 78
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "73f64409_7cd51345",
@@ -228,6 +360,30 @@
       "writtenOn": "2026-06-15T20:08:53Z",
       "side": 1,
       "message": "The naming conventions here are inconsistent when it comes to distinguishing between functions that affect one conversation and those that affect multiple. Also, \"Swarm\" is included in some names but not others in a way that\u0027s arbitrary.\n\nMy suggestion would be to change to something along the following lines:\n`reloadBodyOverwriteConversations` -\u003e `reloadBodyOverwritesInAllConversations`\n`clearSwarmBodyOverwrite` -\u003e `clearBodyOverwritesInAllConversations`\n`bodyOverwriteLoadedConversations` -\u003e `loadMissingBodyOverwritesInAllConversations`\n`clearSwarmBodyOverwriteConversation` -\u003e `clearBodyOverwrites`\n`bodyOverwriteLoadedConversation` -\u003e `loadMissingBodyOverwrites`\n(Feel free to pick different names if you like, as long as they\u0027re consistent.)",
+      "range": {
+        "startLine": 136,
+        "startChar": 4,
+        "endLine": 147,
+        "endChar": 151
+      },
+      "revId": "bab93ce252d97db9d447f464eaf48b50ac6aca00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8627abd_9d8e2c0e",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-16T17:40:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "73f64409_7cd51345",
       "range": {
         "startLine": 136,
         "startChar": 4,
