@@ -8,7 +8,7 @@ ifeq ($(call need_pkg,"libgit2 >= 1.6.4"),)
 PKGS_FOUND += libgit2
 endif
 
-DEPS_libgit2 += zlib http_parser
+DEPS_libgit2 += zlib llhttp
 
 $(TARBALLS)/libgit2-v$(LIBGIT2_VERSION).tar.gz:
 	$(call download,$(LIBGIT2_URL))
@@ -28,7 +28,7 @@ LIBGIT2_CONF = -DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_CLI=OFF \
 		-DUSE_HTTPS=OFF \
 		-DCURL=OFF \
-		-DUSE_HTTP_PARSER=system \
+		-DUSE_HTTP_PARSER=llhttp \
 		-DBUILD_CLAR=OFF \
 		-DUSE_SSH=OFF \
 		-DREGEX_BACKEND=regcomp \
