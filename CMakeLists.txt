@@ -165,6 +165,9 @@ if (BUILD_CONTRIB)
                 if (IGNORE_SYSTEM_LIBS)
                     list(APPEND BOOTSTRAP_COMMAND --ignore-system-libs)
                 endif()
+                if(DEFINED ENV{CACHE_DIR} AND IS_DIRECTORY "$ENV{CACHE_DIR}")
+                    list(APPEND BOOTSTRAP_COMMAND --cache-dir=$ENV{CACHE_DIR} --cache-builds)
+                endif()
                 execute_process(
                     COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} ${BOOTSTRAP_COMMAND}
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
@@ -218,6 +221,9 @@ if (BUILD_CONTRIB)
             endif()
             if (CMAKE_INTERPROCEDURAL_OPTIMIZATION)
                 list(APPEND BOOTSTRAP_COMMAND --enable-lto)
+            endif()
+            if(DEFINED ENV{CACHE_DIR} AND IS_DIRECTORY "$ENV{CACHE_DIR}")
+                list(APPEND BOOTSTRAP_COMMAND --cache-dir=$ENV{CACHE_DIR} --cache-builds)
             endif()
             execute_process(
                 COMMAND ${BOOTSTRAP_COMMAND}
