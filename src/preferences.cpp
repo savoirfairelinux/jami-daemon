@@ -311,7 +311,11 @@ AudioPreference::AudioPreference()
     , denoise_("auto")
     , agcEnabled_(true)
     , vadEnabled_(true)
+#ifdef __linux__
+    , echoCanceller_("audioProcessor")
+#else
     , echoCanceller_("auto")
+#endif // __linux__
     , captureMuted_(false)
     , playbackMuted_(false)
 {}
