@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b9a4a101_ac8dd032",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-06-17T14:39:22Z",
+      "side": 1,
+      "message": "We can also save mode in convinfo.",
+      "revId": "7bd3142e168fe84c2fbde29fac1b54eb13d5b023",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
