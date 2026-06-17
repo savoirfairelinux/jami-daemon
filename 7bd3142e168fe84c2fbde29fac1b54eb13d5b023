@@ -16,6 +16,52 @@
       "message": "We can also save mode in convinfo.",
       "revId": "7bd3142e168fe84c2fbde29fac1b54eb13d5b023",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06e738fd_df57423d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-06-17T14:46:10Z",
+      "side": 1,
+      "message": "can also be changed to Json::Int64 for consistency",
+      "range": {
+        "startLine": 207,
+        "startChar": 42,
+        "endLine": 207,
+        "endChar": 63
+      },
+      "revId": "7bd3142e168fe84c2fbde29fac1b54eb13d5b023",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab9fb3b6_2c562efc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-06-17T14:46:10Z",
+      "side": 1,
+      "message": "can also be changed to Json::Int64 for consistency",
+      "range": {
+        "startLine": 210,
+        "startChar": 46,
+        "endLine": 210,
+        "endChar": 67
+      },
+      "revId": "7bd3142e168fe84c2fbde29fac1b54eb13d5b023",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
