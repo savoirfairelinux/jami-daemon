@@ -20,6 +20,8 @@
 #include "chathandler.h"
 #include "pluginpreferencesutils.h"
 
+#include <mutex>
+
 namespace jami {
 
 class PluginManager;
@@ -147,5 +149,7 @@ private:
     // accountId, peerId pair.
     // A map of accountId, peerId pairs and ChatHandler-status pairs.
     ChatHandlerList allowDenyList_ {};
+
+    mutable std::mutex mutex_;
 };
 } // namespace jami

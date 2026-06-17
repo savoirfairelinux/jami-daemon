@@ -31,12 +31,15 @@ ChatServicesManager::ChatServicesManager(PluginManager& pluginManager)
     PluginPreferencesUtils::getAllowDenyListPreferences(allowDenyList_);
 }
 
+// TODO: we must come up with a cleaner and more robust concurrent access model for the
+// chatservicesmanager and more generally the entire plugin subsystem. Currently, we guard
+// the various chatservices functions via a global mutex to prevent. See daemon issue 1189.
 void
 ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     // registerChatHandler may be called by the PluginManager upon loading a plugin.
     auto registerChatHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard lk(pmMtx_);
+        std::scoped_lock lk(pmMtx_, mutex_);
         ChatHandlerPtr ptr {(static_cast<ChatHandler*>(data))};
 
         if (!ptr)
@@ -52,7 +55,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 
     // unregisterChatHandler may be called by the PluginManager while unloading.
     auto unregisterChatHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard lk(pmMtx_);
+        std::scoped_lock lk(pmMtx_, mutex_);
         auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(), [data](ChatHandlerPtr& handler) {
             return (handler.get() == data);
         });
@@ -106,12 +109,14 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
 bool
 ChatServicesManager::hasHandlers() const
 {
+    std::lock_guard lk(mutex_);
     return not chatHandlers_.empty();
 }
 
 std::vector<std::string>
 ChatServicesManager::getChatHandlers() const
 {
+    std::lock_guard lk(mutex_);
     std::vector<std::string> res;
     res.reserve(chatHandlers_.size());
     for (const auto& chatHandler : chatHandlers_) {
@@ -123,6 +128,7 @@ ChatServicesManager::getChatHandlers() const
 void
 ChatServicesManager::publishMessage(const pluginMessagePtr& message)
 {
+    std::lock_guard lk(mutex_);
     if (message->fromPlugin or chatHandlers_.empty())
         return;
 
@@ -164,6 +170,7 @@ ChatServicesManager::publishMessage(const pluginMessagePtr& message)
 void
 ChatServicesManager::cleanChatSubjects(const std::string& accountId, const std::string& peerId)
 {
+    std::lock_guard lk(mutex_);
     std::pair<std::string, std::string> mPair(accountId, peerId);
     for (auto it = chatSubjects_.begin(); it != chatSubjects_.end();) {
         if (peerId.empty() && it->first.first == accountId)
@@ -187,6 +194,7 @@ ChatServicesManager::toggleChatHandler(const std::string& chatHandlerId,
 std::vector<std::string>
 ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
 {
+    std::lock_guard lk(mutex_);
     std::pair<std::string, std::string> mPair(accountId, peerId);
     const auto& it = allowDenyList_.find(mPair);
     std::vector<std::string> ret;
@@ -205,6 +213,7 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
 std::map<std::string, std::string>
 ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 {
+    std::lock_guard lk(mutex_);
     auto chatHandlerId = std::stoull(chatHandlerIdStr);
     for (auto& chatHandler : chatHandlers_) {
         if ((uintptr_t) chatHandler.get() == chatHandlerId) {
@@ -217,6 +226,7 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 bool
 ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
 {
+    std::lock_guard lk(mutex_);
     bool status {true};
     for (auto& chatHandler : chatHandlers_) {
         if (chatHandler->id().find(rootPath) != std::string::npos) {
@@ -235,6 +245,7 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
                                        const std::string& peerId,
                                        const bool toggle)
 {
+    std::lock_guard lk(mutex_);
     std::pair<std::string, std::string> mPair(accountId, peerId);
     auto& handlers = chatHandlerToggled_[mPair];
     auto& chatAllowDenySet = allowDenyList_[mPair];
