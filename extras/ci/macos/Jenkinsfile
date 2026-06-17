@@ -1,0 +1,98 @@
+/*
+ * Copyright (C) 2025 Savoir-faire Linux Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+// Requirements:
+// - gerrit-trigger plugin
+// - macOS build node labelled 'macOS'
+//
+// Local node layout (persistent across runs):
+//   /Users/jenkins/jami-build-cache/  — contrib and daemon build cache
+//   /Users/jenkins/ring-contrib/      — source tarball mirror (pre-downloaded)
+
+node('macOS') {
+    def CACHE_BASE = '/Users/jenkins/jami-build-cache'
+    def TARBALLS_DIR = '/Users/jenkins/ring-contrib'
+    def cpuCount = sh(returnStdout: true,
+        script: 'sysctl -n machdep.cpu.thread_count || echo -n 4').trim()
+
+    stage('SCM Checkout') {
+        deleteDir()
+        sh """
+            git clone --depth=1 --branch=master https://\${RING_GERRIT_URL}/jami-daemon
+            cd jami-daemon
+            git fetch https://\${RING_GERRIT_URL}/jami-daemon ${GERRIT_REFSPEC}
+            git checkout FETCH_HEAD
+        """
+    }
+
+    stage('Build daemon and contrib') {
+        // CACHE_DIR is picked up by daemon/CMakeLists.txt at configure time and
+        // forwarded to contrib/bootstrap as --cache-dir + --cache-builds.
+        // The contrib Makefile then keys the build on a SHA-256 of its Makefile,
+        // symlinks the prefix to the cache entry, and skips rebuilding when the
+        // hash already exists — making repeated contrib builds take seconds.
+        withEnv([
+            "MACOSX_DEPLOYMENT_TARGET=12",
+            'PATH+JENKINSHOME=/usr/bin',
+            "BATCH_MODE=1",
+            "CACHE_DIR=${CACHE_BASE}",
+            "TARBALLS=${TARBALLS_DIR}"
+        ]) {
+            sh """
+                mkdir -p ${CACHE_BASE}
+                cd jami-daemon
+                mkdir build-local && cd build-local
+                cmake .. -DCMAKE_BUILD_TYPE=Release \\
+                    -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \\
+                    -DIGNORE_SYSTEM_LIBS=ON \\
+                    -DJAMI_DBUS=Off \\
+                    -DBUILD_TESTING=Off
+                make -j${cpuCount}
+            """
+        }
+    }
+
+    stage('Cache daemon install') {
+        // Save the daemon install output (libjami + contrib fat prefix) under a
+        // directory keyed by the daemon commit hash.  The client pipeline uses
+        // this to skip daemon compilation entirely when the submodule hasn't changed.
+        sh """
+            DAEMON_COMMIT=\$(git -C jami-daemon rev-parse HEAD)
+            DAEMON_CACHE=${CACHE_BASE}/daemon/\${DAEMON_COMMIT}
+
+            if [ ! -f "\${DAEMON_CACHE}/.done" ]; then
+                echo "Saving daemon build to cache: \${DAEMON_COMMIT}"
+                mkdir -p "\${DAEMON_CACHE}/install"
+                cmake --install jami-daemon/build-local --prefix "\${DAEMON_CACHE}/install"
+
+                # Copy the merged fat contrib prefix so the client can find headers and
+                # pkg-config files without re-running the contrib build.
+                mkdir -p "\${DAEMON_CACHE}/contrib"
+                # The fat prefix is named apple-darwin<kernel-version>
+                FAT_CONTRIB=\$(ls -d jami-daemon/contrib/apple-darwin*/ 2>/dev/null | head -1)
+                if [ -n "\${FAT_CONTRIB}" ]; then
+                    cp -r "\${FAT_CONTRIB}" "\${DAEMON_CACHE}/contrib/"
+                fi
+
+                touch "\${DAEMON_CACHE}/.done"
+                echo "Daemon cache saved."
+            else
+                echo "Daemon cache already up to date: \${DAEMON_COMMIT}"
+            fi
+        """
+    }
+}
