@@ -265,39 +265,38 @@ MigrationTest::testExpiredDeviceInSwarm()
             }
             cv.notify_one();
         }));
-    bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false, aliceRegistering = false;
+    std::string aliceState;
+    bool aliceAnnounced = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(
+        [&](const std::string& accountId, const std::string& state, int, const std::string&) {
+            if (accountId == aliceId) {
+                aliceState = state;
+                cv.notify_one();
+            }
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-        [&](const std::string&, const std::map<std::string, std::string>&) {
-            auto details = aliceAccount->getVolatileAccountDetails();
-            auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-            if (daemonStatus == "UNREGISTERED")
-                aliceStopped = true;
-            else if (daemonStatus == "REGISTERED")
-                aliceRegistered = true;
-            else if (daemonStatus == "TRYING")
-                aliceRegistering = true;
-            auto announced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-            if (announced == "true")
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId == aliceId && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true") {
                 aliceAnnounced = true;
-            cv.notify_one();
+                cv.notify_one();
+            }
         }));
     libjami::registerSignalHandlers(confHandlers);
 
     // NOTE: We must update certificate before announcing, else, there will be several
     // certificates on the DHT
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceRegistering; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceState == "REGISTERED"; }));
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
     CPPUNIT_ASSERT(aliceAccount->setValidity("", "", {}, 90));
     auto now = std::chrono::system_clock::now();
-    aliceRegistered = false;
+    aliceState.clear();
     aliceAccount->forceReloadAccount();
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceRegistered; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceState == "REGISTERED"; }));
     CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
 
-    aliceStopped = false;
     Manager::instance().sendRegister(aliceId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return aliceStopped; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return aliceState == "UNREGISTERED"; }));
     aliceAnnounced = false;
     Manager::instance().sendRegister(aliceId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return aliceAnnounced; }));
