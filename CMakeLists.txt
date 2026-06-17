@@ -170,6 +170,8 @@ if (BUILD_CONTRIB)
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
                 execute_process(COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} make list
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
+                execute_process(COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} make fetch
+                    WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
                 execute_process(COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} make ${CONTRIB_BUILD_FLAGS}
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
             endforeach()
@@ -223,6 +225,8 @@ if (BUILD_CONTRIB)
                 COMMAND ${BOOTSTRAP_COMMAND}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
             execute_process(COMMAND make list
+                WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+            execute_process(COMMAND make fetch
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
             execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
