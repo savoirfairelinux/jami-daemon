@@ -311,7 +311,7 @@ AudioPreference::AudioPreference()
     , denoise_("auto")
     , agcEnabled_(true)
     , vadEnabled_(true)
-    , echoCanceller_("auto")
+    , echoCanceller_("audioProcessor")
     , captureMuted_(false)
     , playbackMuted_(false)
 {}
