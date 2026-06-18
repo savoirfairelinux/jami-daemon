@@ -33,14 +33,18 @@ void
 SyncChannelHandler::connect(const DeviceId& deviceId,
                             const std::string&,
                             ConnectCb&& cb,
-                            const std::string& /*connectionType*/,
+                            const std::string& connectionType,
                             bool /*forceNewConnection*/)
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
+    dhtnet::ConnectDeviceOptions opts;
+    opts.forceNewSocket = false;
+    opts.uniqueName = true;
+    opts.connType = connectionType;
     connectionManager_.connectDevice(deviceId,
                                      channelName,
                                      std::move(cb),
-                                     dhtnet::ConnectDeviceOptions {.forceNewSocket = false, .uniqueName = true});
+                                     opts);
 }
 
 bool

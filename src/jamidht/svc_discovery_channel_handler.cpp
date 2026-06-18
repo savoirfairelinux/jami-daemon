@@ -138,19 +138,19 @@ void
 SvcDiscoveryChannelHandler::connect(const DeviceId& deviceId,
                                     const std::string& /*name*/,
                                     ConnectCb&& cb,
-                                    const std::string& /*connectionType*/,
+                                    const std::string& connectionType,
                                     bool /*forceNewConnection*/)
 {
     auto userCb = std::make_shared<ConnectCb>(std::move(cb));
     auto state = state_;
     auto wacc = account_;
+    dhtnet::ConnectDeviceOptions opts;
+    opts.connType = connectionType;
     connectionManager_.connectDevice(deviceId,
                                      std::string(svc_protocol::DiscoveryChannelName),
                                      [userCb, state, wacc, this](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                                  const DeviceId& dev) {
                                          if (socket) {
-                                             // Retain the channel for its full lifetime so the response
-                                             // can come back even if no one else holds it.
                                              auto cert = socket->peerCertificate();
                                              std::string peerAccountUri;
                                              if (cert && cert->issuer)
@@ -183,7 +183,8 @@ SvcDiscoveryChannelHandler::connect(const DeviceId& deviceId,
                                          }
                                          if (*userCb)
                                              (*userCb)(socket, dev);
-                                     });
+                                     },
+                                     opts);
 }
 
 bool

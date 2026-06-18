@@ -2467,10 +2467,10 @@ void
 JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
                                            const std::string& deviceId,
                                            ChannelCb&& cb,
-                                           const std::string& /*type*/,
+                                           const std::string& type,
                                            bool noNewSocket)
 {
-    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<ChannelCb&&>(cb), noNewSocket] {
+    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<ChannelCb&&>(cb), noNewSocket, type] {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -2483,7 +2483,7 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
         DeviceId device(deviceId);
         auto swarmUri = fmt::format("swarm://{}", convId);
         dhtnet::ConnectDeviceOptions opts;
-        opts.connType = "";
+        opts.connType = type;
         opts.noNewSocket = noNewSocket;
         opts.uniqueName = true;
         shared->connectionManager_->connectDevice(

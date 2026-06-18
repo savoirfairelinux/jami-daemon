@@ -34,11 +34,14 @@ void
 AuthChannelHandler::connect(const DeviceId& deviceId,
                             const std::string& name,
                             ConnectCb&& cb,
-                            const std::string& /*connectionType*/,
+                            const std::string& connectionType,
                             bool /*forceNewConnection*/)
 {
     JAMI_DEBUG("[AuthChannel {}] connecting to name = {}", deviceId.toString(), name);
-    connectionManager_.connectDevice(deviceId, name, std::move(cb));
+    connectionManager_.connectDevice(deviceId,
+                                     name,
+                                     std::move(cb),
+                                     dhtnet::ConnectDeviceOptions {.connType = connectionType});
 }
 
 bool
