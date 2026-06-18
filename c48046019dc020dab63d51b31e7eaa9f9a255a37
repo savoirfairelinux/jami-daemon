@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce46dde5_acc315b4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-18T15:12:52Z",
+      "side": 1,
+      "message": "Can you check if the test passes with Zélie\u0027s patch for the translation plugin (https://review.jami.net/c/jami-daemon/+/33801)? She also had to add a mutex in `ChatServicesManager`.",
+      "revId": "c48046019dc020dab63d51b31e7eaa9f9a255a37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
