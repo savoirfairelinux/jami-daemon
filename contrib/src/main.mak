@@ -589,8 +589,12 @@ ifdef HAVE_DARWIN_OS
 	echo "set(CMAKE_AR ar CACHE FILEPATH "Archiver")" >> $@
 ifdef HAVE_IOS
 	echo "set(CMAKE_OSX_SYSROOT $(IOS_SDK))" >> $@
+	echo "set(CMAKE_ASM_COMPILER \"$(shell xcrun --find clang)\")" >> $@
+	echo "set(CMAKE_ASM_FLAGS \"-arch $(ARCH) -isysroot $(IOS_SDK)\")" >> $@
 else
 	echo "set(CMAKE_OSX_SYSROOT $(MACOSX_SDK))" >> $@
+	echo "set(CMAKE_ASM_COMPILER \"$(shell xcrun --find clang)\")" >> $@
+	echo "set(CMAKE_ASM_FLAGS \"-arch $(ARCH) -isysroot $(MACOSX_SDK)\")" >> $@
 endif
 endif
 ifdef HAVE_CROSS_COMPILE
