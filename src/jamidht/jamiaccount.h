@@ -705,6 +705,22 @@ private:
     dht::DhtRunner::Context initDhtContext();
     void onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate>& crt);
     void onAccountDeviceAnnounced();
+
+    /**
+     * Open a sync connection to one of our account's devices. This wakes the
+     * device up, so it must only be called when there is something new to
+     * synchronize with it (see SyncModule::needsSync / onSyncListChanged).
+     */
+    void connectSyncDevice(const DeviceId& deviceId);
+
+    /**
+     * React to a contact or conversation-list change (local or learned from a
+     * peer): bump the local sync version, then (re)connect to and push the new
+     * state to the account's other devices that are not up to date. Offline
+     * devices are reached on their next presence announcement.
+     */
+    void onSyncListChanged();
+
     bool onICERequest(const DeviceId& deviceId);
     bool onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name);
     void onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificate>& cert);
@@ -954,6 +970,11 @@ private:
     std::shared_ptr<TransferManager> nonSwarmTransferManager_;
 
     std::atomic_bool deviceAnnounced_ {false};
+
+    // Debounce timer coalescing bursts of contact/conversation-list changes
+    // (e.g. during initial sync) into a single sync-propagation pass.
+    std::mutex syncListChangedMtx_;
+    std::shared_ptr<asio::steady_timer> syncListChangedTimer_;
     std::atomic_bool noSha3sumVerification_ {false};
 
     bool publishPresence_ {true};

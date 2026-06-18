@@ -1243,6 +1243,8 @@ JamiAccount::onContactAdded(const std::string& uri, bool confirmed)
                     if (!activeConv.empty())
                         cm->bootstrap(activeConv);
                 }
+                // Propagate the new contact to our other devices.
+                shared->onSyncListChanged();
                 emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(), uri, confirmed);
             }
         });
@@ -1265,6 +1267,8 @@ JamiAccount::onContactRemoved(const std::string& uri, bool banned)
             if (shared->connectionManager_ && uri != shared->getUsername()) {
                 shared->connectionManager_->closeConnectionsWith(uri);
             }
+            // Propagate the removal to our other devices.
+            shared->onSyncListChanged();
             // Update client.
             emitSignal<libjami::ConfigurationSignal::ContactRemoved>(shared->getAccountID(), uri, banned);
         }
@@ -2141,12 +2145,73 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
             auto shared = w.lock();
             if (!shared)
                 return;
+            // Only establish a sync connection if this device may be missing a
+            // local contact/conversation-list change. This avoids waking up
+            // devices (especially mobiles) when there is nothing new to sync.
+            if (auto* sm = shared->syncModule()) {
+                if (!sm->needsSync(crt->getLongId())) {
+                    JAMI_DEBUG("[Account {}] [device {}] up to date, skipping sync connection",
+                               shared->getAccountID(),
+                               crt->getLongId());
+                    return;
+                }
+            }
             // Initiate a message connection to create the first TCP link.
             // Once established, onNewDeviceConnection will set up sync and
             // swarm channels.
-            shared->requestMessageConnection(shared->getUsername(), crt->getLongId(), "sync");
+            shared->connectSyncDevice(crt->getLongId());
         });
     }
+}
+
+void
+JamiAccount::connectSyncDevice(const DeviceId& deviceId)
+{
+    requestMessageConnection(getUsername(), deviceId, "sync");
+}
+
+void
+JamiAccount::onSyncListChanged()
+{
+    if (!jami::Manager::instance().syncOnRegister)
+        return;
+    // Coalesce bursts of changes (e.g. initial sync delivering many contacts
+    // and conversations) into a single propagation pass. A single version bump
+    // already marks every device out of date, and sync is full-state, so
+    // collapsing many changes into one pass is also semantically correct.
+    std::lock_guard lk(syncListChangedMtx_);
+    if (!syncListChangedTimer_)
+        syncListChangedTimer_ = std::make_shared<asio::steady_timer>(*jami::Manager::instance().ioContext());
+    syncListChangedTimer_->expires_after(std::chrono::seconds(1));
+    syncListChangedTimer_->async_wait([w = weak()](const std::error_code& ec) {
+        if (ec) // cancelled by a more recent change (debounce) or shutting down
+            return;
+        dht::ThreadPool::io().run([w] {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            auto* sm = shared->syncModule();
+            if (!sm)
+                return;
+            // A list change makes every device potentially out of date.
+            sm->bumpVersion();
+            // (Re)connect to the account's other devices that are not up to
+            // date so the change is pushed. Offline ones are reached on their
+            // next presence announcement (onAccountDeviceFound).
+            auto am = shared->accountManager();
+            if (am && am->getInfo()) {
+                auto currentDevice = shared->currentDeviceId();
+                for (const auto& [deviceId, device] : am->getKnownDevices()) {
+                    if (deviceId.toString() == currentDevice)
+                        continue;
+                    if (sm->needsSync(deviceId))
+                        shared->connectSyncDevice(deviceId);
+                }
+            }
+            // Push immediately to already-connected devices.
+            sm->syncWithConnected();
+        });
+    });
 }
 
 void
@@ -2364,17 +2429,27 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
 void
 JamiAccount::conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg)
 {
-    dht::ThreadPool::computation().run([w = weak(), syncMsg] {
-        if (auto shared = w.lock()) {
-            const auto& config = shared->config();
-            // For JAMS account, we must update the server
-            // for now, only sync with the JAMS server for changes to the conversation list
-            if (!config.managerUri.empty() && !syncMsg)
-                if (auto am = shared->accountManager())
-                    am->syncDevices();
-            if (auto* sm = shared->syncModule())
-                sm->syncWithConnected(syncMsg);
-        }
+    if (syncMsg) {
+        // Metadata-only update (read status / preferences): ride the existing
+        // sync connections, never open new ones.
+        dht::ThreadPool::computation().run([w = weak(), syncMsg] {
+            if (auto shared = w.lock())
+                if (auto* sm = shared->syncModule())
+                    sm->syncWithConnected(syncMsg);
+        });
+        return;
+    }
+    // Conversation-list change: for JAMS accounts, update the server; then
+    // bump the local sync version and (re)connect/push to other devices.
+    dht::ThreadPool::computation().run([w = weak()] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        const auto& config = shared->config();
+        if (!config.managerUri.empty())
+            if (auto am = shared->accountManager())
+                am->syncDevices();
+        shared->onSyncListChanged();
     });
 }
 
