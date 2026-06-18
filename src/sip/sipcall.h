@@ -316,6 +316,8 @@ private:
 
     void deinitRecorder();
 
+    void updateRecordingMediaState(bool readyToRecord);
+
     void rtpSetupSuccess();
 
     void setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession);

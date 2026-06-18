@@ -2635,24 +2635,45 @@ SIPCall::reportMediaNegotiationStatus()
     auto callId = isSubcall() ? parent_->getCallId() : getCallId();
     emitSignal<libjami::CallSignal::MediaNegotiationStatus>(
         callId, libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS, currentMediaList());
-    std::lock_guard lk {mediaStateMutex_};
-    auto previousState = isAudioOnly_;
-    auto newState = !hasVideo();
 
-    if (!readyToRecord_) {
-        return;
+    updateRecordingMediaState(false);
+}
+
+void
+SIPCall::updateRecordingMediaState(bool readyToRecord)
+{
+    bool restartRecording = false;
+    bool startPendingRecording = false;
+
+    {
+        std::lock_guard lk {mediaStateMutex_};
+
+        if (readyToRecord)
+            readyToRecord_ = true;
+
+        auto previousState = isAudioOnly_;
+        auto newState = !hasVideo();
+
+        if (!readyToRecord_) {
+            return;
+        }
+
+        if (previousState != newState && Call::isRecording()) {
+            restartRecording = true;
+            pendingRecord_ = true;
+        }
+        isAudioOnly_ = newState;
+
+        startPendingRecording = pendingRecord_ && readyToRecord_;
     }
 
-    if (previousState != newState && Call::isRecording()) {
+    if (restartRecording) {
         deinitRecorder();
         toggleRecording();
-        pendingRecord_ = true;
     }
-    isAudioOnly_ = newState;
 
-    if (pendingRecord_ && readyToRecord_) {
+    if (startPendingRecording)
         toggleRecording();
-    }
 }
 
 void
@@ -3554,22 +3575,7 @@ SIPCall::newIceSocket(unsigned compId)
 void
 SIPCall::rtpSetupSuccess()
 {
-    std::lock_guard lk {mediaStateMutex_};
-
-    readyToRecord_ = true; // We're ready to record whenever a stream is ready
-
-    auto previousState = isAudioOnly_;
-    auto newState = !hasVideo();
-
-    if (previousState != newState && Call::isRecording()) {
-        deinitRecorder();
-        toggleRecording();
-        pendingRecord_ = true;
-    }
-    isAudioOnly_ = newState;
-
-    if (pendingRecord_ && readyToRecord_)
-        toggleRecording();
+    updateRecordingMediaState(true);
 }
 
 void
