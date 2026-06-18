@@ -1353,10 +1353,10 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        AUTOANSWER,
                                        PROXY_ENABLED,
                                        PROXY_SERVER,
-                                       PROXY_PUSH_TOKEN};
-
-    // Keys with meaning of file path where the contents has to be exported in base64
-    static const auto encoded_keys = {TLS::CA_LIST_FILE, TLS::CERTIFICATE_FILE, TLS::PRIVATE_KEY_FILE};
+                                       PROXY_PUSH_TOKEN,
+                                       TLS::CA_LIST_FILE,
+                                       TLS::CERTIFICATE_FILE,
+                                       TLS::PRIVATE_KEY_FILE};
 
     JAMI_LOG("[Account {}] [Auth] Building account archive", accountId_);
     for (const auto& it : onExportConfig_()) {
@@ -1366,16 +1366,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
             }))
             continue;
 
-        // file contents?
-        if (std::any_of(std::begin(encoded_keys), std::end(encoded_keys), [&](const auto& key) {
-                return key == it.first;
-            })) {
-            try {
-                archive.config.emplace(it.first, base64::encode(fileutils::loadFile(it.second)));
-            } catch (...) {
-            }
-        } else
-            archive.config[it.first] = it.second;
+        archive.config[it.first] = it.second;
     }
 
     // Note we do not know accountID_ here, use path
