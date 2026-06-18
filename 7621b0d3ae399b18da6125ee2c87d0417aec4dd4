@@ -49,6 +49,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7fdf16d4_4cb9db74",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3823,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T14:18:41Z",
+      "side": 1,
+      "message": "Is it expected that the user enters the URI type themselves, or should it be inferred from the account type (i.e. Jami vs SIP account)?",
+      "parentUuid": "94ce31a6_fae8b99b",
+      "range": {
+        "startLine": 3823,
+        "startChar": 63,
+        "endLine": 3823,
+        "endChar": 81
+      },
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5e72adc4_7c313527",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 6
