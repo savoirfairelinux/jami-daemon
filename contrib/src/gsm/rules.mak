@@ -18,7 +18,7 @@ gsm: libgsm_$(GSM_VERSION).tar.gz .sum-gsm
 	$(MOVE)
 
 .gsm: gsm
-	cd $< && $(HOSTVARS) $(MAKE)
+	+cd $< && $(HOSTVARS) $(MAKE)
 	mkdir -p "$(PREFIX)/include/gsm" "$(PREFIX)/lib"
 	cp $</inc/gsm.h "$(PREFIX)/include/gsm/"
 	cp $</lib/libgsm.a "$(PREFIX)/lib/"

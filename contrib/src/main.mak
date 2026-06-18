@@ -469,7 +469,7 @@ PKGS := $(PKGS_MANUAL) $(PKGS_DEPS)
 
 # Generic CMake rule
 $(foreach p,$(CMAKE_PKGS),.$(p)): .%: % toolchain.cmake .sum-%
-	$(BUILD_CMAKE)
+	+$(BUILD_CMAKE)
 	touch $@
 
 convert-static:

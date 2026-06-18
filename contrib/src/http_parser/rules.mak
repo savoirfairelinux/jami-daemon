@@ -21,7 +21,7 @@ http_parser: http-parser-$(HTTP_PARSER_VERSION).tar.gz
 	$(MOVE)
 
 .http_parser: http_parser toolchain.cmake .sum-http_parser
-	cd $< && $(HOSTVARS) $(MAKE) $(HTTP_PARSER_MAKECONF) package
+	+cd $< && $(HOSTVARS) $(MAKE) $(HTTP_PARSER_MAKECONF) package
 	mkdir -p $(PREFIX)/include
 	mkdir -p $(PREFIX)/lib
 	cd $< && cp -f http_parser.h $(PREFIX)/include && cp -f libhttp_parser.a $(PREFIX)/lib

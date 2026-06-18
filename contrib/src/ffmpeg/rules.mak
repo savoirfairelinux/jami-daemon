@@ -451,5 +451,5 @@ ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
 		--prefix="$(PREFIX)" --enable-static --disable-shared \
                 --pkg-config-flags="--static"
-	cd $< && $(MAKE) install-libs install-headers
+	+cd $< && $(MAKE) install-libs install-headers
 	touch $@

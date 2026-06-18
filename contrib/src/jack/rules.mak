@@ -25,5 +25,5 @@ endif
 .jack: jack
 	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

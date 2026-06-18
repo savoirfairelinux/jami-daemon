@@ -31,5 +31,5 @@ endif
 .speex: speex .sum-speex
 	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(SPEEX_CONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

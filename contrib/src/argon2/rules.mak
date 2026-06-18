@@ -32,8 +32,8 @@ ifdef HAVE_LINUX
 endif
 
 .argon2: argon2 .sum-argon2
-	cd $< && $(HOSTVARS) $(MAKE) libs $(ARGON2_CONF)
+	+cd $< && $(HOSTVARS) $(MAKE) libs $(ARGON2_CONF)
 	cd $< && $(RANLIB) libargon2.a
-	cd $< && $(HOSTVARS) $(MAKE) install $(ARGON2_CONF)
+	+cd $< && $(HOSTVARS) $(MAKE) install $(ARGON2_CONF)
 	rm -f $(PREFIX)/lib/libargon2.so* $(PREFIX)/lib/libargon2*.dylib
 	touch $@

@@ -21,5 +21,5 @@ liburcu: liburcu-$(LIBURCU_VERSION).tar.bz2 .sum-liburcu
 
 .liburcu: liburcu
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

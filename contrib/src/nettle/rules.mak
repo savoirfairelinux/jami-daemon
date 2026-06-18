@@ -31,5 +31,5 @@ ifdef HAVE_IOS
 endif
 	cd $< && autoreconf
 	cd $< && $(HOSTVARS) ./configure --disable-documentation $(HOSTCONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

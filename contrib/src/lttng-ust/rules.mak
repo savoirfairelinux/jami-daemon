@@ -28,5 +28,5 @@ LTTNG_UST_CONF :=           \
 
 .lttng-ust: lttng-ust
 	cd $< && $(HOSTVARS) ./configure $(LTTNG_UST_CONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

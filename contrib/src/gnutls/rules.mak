@@ -68,6 +68,6 @@ else
 endif
 endif
 endif
-	cd $</gl && $(MAKE) install
-	cd $</lib && $(MAKE) install
+	+cd $</gl && $(MAKE) install
+	+cd $</lib && $(MAKE) install
 	touch $@
