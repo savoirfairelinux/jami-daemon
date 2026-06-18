@@ -95,6 +95,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "10477ca5_53004145",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3823,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T15:26:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7fdf16d4_4cb9db74",
+      "range": {
+        "startLine": 3823,
+        "startChar": 63,
+        "endLine": 3823,
+        "endChar": 81
+      },
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e72adc4_7c313527",
