@@ -64,11 +64,15 @@ endif
 .libressl: libressl .sum-libressl
 	mkdir -p "$(PREFIX)/include"
 ifdef HAVE_WIN32
-	cd $< && $(HOSTVARS) CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
+	cd $< && $(HOSTVARS) CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure $(HOSTCONF)
+	+cd $< && $(MAKE)
+	+cd $< && $(MAKE) install
 else ifdef HAVE_WIN64
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
+	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	+cd $< && $(MAKE)
+	+cd $< && $(MAKE) install
 else
-	$(BUILD_CMAKE)
+	+$(BUILD_CMAKE)
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@

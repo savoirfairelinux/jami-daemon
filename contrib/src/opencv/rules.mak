@@ -121,8 +121,8 @@ opencv: opencv-$(OPENCV_VERSION).tar.gz
 
 .opencv: opencv toolchain.cmake .sum-opencv
 	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) .. $(OPENCV_CMAKECONF)
-	cd $< && cd build && $(MAKE) install
+	+cd $< && cd build && $(HOSTVARS) $(CMAKE) .. $(OPENCV_CMAKECONF)
+	+cd $< && cd build && $(MAKE) install
 ifdef HAVE_ANDROID
 	cp -R $(PREFIX)/sdk/native/jni/include/* $(PREFIX)/include
 	cp -R $(PREFIX)/sdk/native/staticlibs/$(ANDROID_ABI)/* $(PREFIX)/lib

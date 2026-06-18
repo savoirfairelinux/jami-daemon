@@ -70,5 +70,5 @@ else
 	cd $< && $(HOSTVARS) ./configure $(X264CONF)
 endif
 endif
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

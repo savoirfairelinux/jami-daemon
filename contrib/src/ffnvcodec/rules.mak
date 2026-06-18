@@ -18,5 +18,5 @@ ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.gz .sum-ffnvcodec
 	$(MOVE)
 
 .ffnvcodec: ffnvcodec
-	cd $< && $(HOSTVARS) DESTDIR=$(PREFIX) $(MAKE) install PREFIX=""
+	+cd $< && $(HOSTVARS) DESTDIR=$(PREFIX) $(MAKE) install PREFIX=""
 	touch $@

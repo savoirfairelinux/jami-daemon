@@ -45,8 +45,8 @@ whispercpp: whispercpp-$(WHISPERCPP_HASH).tar.xz .sum-whispercpp
 
 .whispercpp: whispercpp
 	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) .. $(WHISPER_CMAKECONF)
-	cd $< && cd build && $(MAKE)
-	cd $< && cd build && $(MAKE) install
+	+cd $< && cd build && $(HOSTVARS) $(CMAKE) .. $(WHISPER_CMAKECONF)
+	+cd $< && cd build && $(MAKE)
+	+cd $< && cd build && $(MAKE) install
 	sed -i 's|^Libs:.*|Libs: -L$${libdir} $(WHISPER_LIBS_BASE) -fopenmp|' $(PREFIX)/lib/pkgconfig/whisper.pc
 	touch $@

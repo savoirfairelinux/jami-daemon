@@ -36,5 +36,5 @@ else
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -std=gnu17" ./configure $(HOSTCONF)
 endif
 endif
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

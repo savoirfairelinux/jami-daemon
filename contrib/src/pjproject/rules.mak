@@ -68,5 +68,6 @@ else ifdef HAVE_MACOSX
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	+cd $< && EXCLUDE_APP=1 $(MAKE)
+	+cd $< && $(MAKE) install
 	touch $@

@@ -22,5 +22,5 @@ webrtc-audio-processing: webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz .sum-web
 .webrtc-audio-processing: webrtc-audio-processing
 	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) --enable-neon=no
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	touch $@

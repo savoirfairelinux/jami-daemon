@@ -18,7 +18,7 @@ asio: asio-$(ASIO_VERSION).tar.gz
 .asio: asio .sum-asio
 	cd $< && ./autogen.sh
 	cd $< && $(HOSTVARS) ./configure --without-boost $(HOSTCONF)
-	cd $< && $(MAKE) install
+	+cd $< && $(MAKE) install
 	mkdir -p $(PREFIX)/lib/pkgconfig
 	mv $(PREFIX)/share/pkgconfig/asio.pc $(PREFIX)/lib/pkgconfig/asio.pc
 	touch $@
