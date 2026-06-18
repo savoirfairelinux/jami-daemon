@@ -2413,6 +2413,10 @@ void
 ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, const std::string& deviceId)
 {
     std::vector<std::string> toClone;
+    // Set when the conversation list or requests actually change, so the change
+    // can be re-propagated to our other devices (relay). Metadata-only updates
+    // (preferences, message status) deliberately do not set it.
+    bool listChanged = false;
     for (const auto& [key, convInfo] : msg.c) {
         const auto& convId = convInfo.id;
         {
@@ -2438,6 +2442,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             }
             conv->info = convInfo;
             if (!conv->conversation) {
+                listChanged = true;
                 if (deviceId != "") {
                     pimpl_->cloneConversation(deviceId, peerId, conv);
                 } else {
@@ -2456,10 +2461,12 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             auto update = false;
             if (conv->info.removed == TimePoint {}) {
                 update = true;
+                listChanged = true;
                 conv->info.removed = nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+                listChanged = true;
                 conv->info.erased = nowMs();
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
@@ -2492,6 +2499,9 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         // New request
         if (!pimpl_->addConversationRequest(convId, req))
             continue;
+        // A request was added or transitioned to declined: the request list
+        // changed and must be re-propagated to our other devices.
+        listChanged = true;
 
         if (req.declined != TimePoint {}) {
             // Request declined
@@ -2542,6 +2552,12 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             }
         }
     }
+
+    // If the conversation list or requests changed as a result of this sync,
+    // re-propagate to our other devices (relay). Gating on an actual change
+    // prevents an endless echo between already-synced devices.
+    if (listChanged)
+        pimpl_->needsSyncingCb_({});
 }
 
 bool
