@@ -55,6 +55,19 @@ struct SyncMsg
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
 
     MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+
+    /**
+     * Whether this message carries contact/conversation *list* state, i.e.
+     * contacts, devices, trust requests, conversations or conversation
+     * requests. Propagating such a change may require (re)connecting to
+     * devices that are not currently connected. Metadata-only messages
+     * (preferences `p`, read/fetched status `ms`, deprecated last-displayed
+     * `ld`) return false and only need to ride existing connections.
+     */
+    bool affectsList() const
+    {
+        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty();
+    }
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;

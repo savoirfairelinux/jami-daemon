@@ -2428,6 +2428,10 @@ void
 ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, const std::string& deviceId)
 {
     std::vector<std::string> toClone;
+    // Set when the conversation list or requests actually change, so the change
+    // can be re-propagated to our other devices (relay). Metadata-only updates
+    // (preferences, message status) deliberately do not set it.
+    bool listChanged = false;
     for (const auto& [key, convInfo] : msg.c) {
         const auto& convId = convInfo.id;
         {
@@ -2435,6 +2439,11 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             pimpl_->rmConversationRequest(convId);
         }
 
+        // Whether this conversation is new to our list. Used to decide if the
+        // change must be relayed: a conversation we already know but have not
+        // finished cloning yet must not be treated as a change, otherwise it
+        // would re-trigger syncing on every received sync.
+        bool isNewConv = not pimpl_->isConversation(convId);
         auto conv = pimpl_->startConversation(convInfo);
         std::unique_lock lk(conv->mtx);
         // Skip outdated info
@@ -2453,6 +2462,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             }
             conv->info = convInfo;
             if (!conv->conversation) {
+                if (isNewConv)
+                    listChanged = true;
                 if (deviceId != "") {
                     pimpl_->cloneConversation(deviceId, peerId, conv);
                 } else {
@@ -2471,10 +2482,12 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             auto update = false;
             if (conv->info.removed == TimePoint {}) {
                 update = true;
+                listChanged = true;
                 conv->info.removed = nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+                listChanged = true;
                 conv->info.erased = nowMs();
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
@@ -2507,6 +2520,9 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         // New request
         if (!pimpl_->addConversationRequest(convId, req))
             continue;
+        // A request was added or transitioned to declined: the request list
+        // changed and must be re-propagated to our other devices.
+        listChanged = true;
 
         if (req.declined != TimePoint {}) {
             // Request declined
@@ -2557,6 +2573,15 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             }
         }
     }
+
+    // If the conversation list or requests changed as a result of this sync,
+    // re-propagate to our other devices (relay) so a change learned from one
+    // device reaches the others. This only applies to peer-to-peer syncs:
+    // when the data comes from the JAMS server (empty deviceId), the server is
+    // the synchronization hub and already holds the change, so re-propagating
+    // would push it straight back and cause an infinite sync loop.
+    if (listChanged && !deviceId.empty())
+        pimpl_->needsSyncingCb_({});
 }
 
 bool
