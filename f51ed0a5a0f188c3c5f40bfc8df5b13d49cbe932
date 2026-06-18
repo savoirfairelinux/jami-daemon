@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "211bfa5b_a6523651",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-18T19:33:33Z",
+      "side": 1,
+      "message": "Needs to update dbus interface and bump daemon API version",
+      "revId": "f51ed0a5a0f188c3c5f40bfc8df5b13d49cbe932",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
