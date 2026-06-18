@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f5ee1ed_32388c9a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3797,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T14:51:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "14ff3cc1_7ba28c76",
+      "range": {
+        "startLine": 3793,
+        "startChar": 4,
+        "endLine": 3797,
+        "endChar": 5
+      },
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "94ce31a6_fae8b99b",
@@ -107,6 +131,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8423692_04e76f2e",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T14:51:41Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "202acf78_214890c0",
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed2da710_a78433af",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T14:51:41Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "5e72adc4_7c313527",
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "00a3c00d_4ca254bd",
@@ -120,6 +180,30 @@
       "writtenOn": "2026-06-18T14:02:41Z",
       "side": 1,
       "message": "remove",
+      "range": {
+        "startLine": 78,
+        "startChar": 4,
+        "endLine": 78,
+        "endChar": 62
+      },
+      "revId": "7621b0d3ae399b18da6125ee2c87d0417aec4dd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5db7bf45_151739ca",
+        "filename": "src/vcard.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T14:51:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "00a3c00d_4ca254bd",
       "range": {
         "startLine": 78,
         "startChar": 4,
