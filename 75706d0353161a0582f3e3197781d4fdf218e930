@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "922daf11_9b5ed362",
+        "filename": "contrib/src/nettle/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T18:45:03Z",
+      "side": 1,
+      "message": "Can probably remove these if they\u0027re no longer relevant.",
+      "range": {
+        "startLine": 3,
+        "startChar": 0,
+        "endLine": 4,
+        "endChar": 77
+      },
+      "revId": "75706d0353161a0582f3e3197781d4fdf218e930",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "757f267d_8d7681a8",
+        "filename": "contrib/src/nettle/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T18:45:03Z",
+      "side": 1,
+      "message": "Can probably remove if no longer relevant.",
+      "range": {
+        "startLine": 24,
+        "startChar": 10,
+        "endLine": 25,
+        "endChar": 22
+      },
+      "revId": "75706d0353161a0582f3e3197781d4fdf218e930",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
