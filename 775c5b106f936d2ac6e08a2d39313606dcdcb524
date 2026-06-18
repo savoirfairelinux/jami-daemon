@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83a9b7ef_d31afab3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 799,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T19:37:25Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 799: injectEditionOverwrites() stores empty overwrites as pluginData[\\\"bodyOverwrite\\\"] \u003d \\\"\\\", but clearBodyOverwrites() removes the key. This creates two meanings for the same operation: an empty update marks a message as processed, while clear removes processing state entirely. That makes reload/clear behavior hard to reason about and can trigger unexpected reprocessing. Consider using one representation consistently, e.g. erase to mean no overwrite and add a separate processed flag if needed.",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc8bb14a_690dde30",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 2007,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T19:37:25Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2007: loadMissingBodyOverwrites() only records a message as processed when the plugin returns a non-empty or explicitly empty bodyOverwrite. If a handler leaves pluginData untouched for messages it does not transform, those messages remain missing the key and will be reprocessed on every loadMissingBodyOverwrites() call, causing repeated plugin work and repeated latency after each load. Mark absent results as processed as well, or make the handler contract require an explicit empty value and enforce that in ChatServicesManager. Suggested fix:\\n```suggestion\\nconst auto boIt \u003d transformed.pluginData.find(\\\"bodyOverwrite\\\");\\nconst auto overwrite \u003d boIt \u003d\u003d transformed.pluginData.end() ? std::string {} : boIt-\u003esecond;\\nif (auto signalMsg \u003d injectEditionOverwrites(transformed.id, overwrite);\\n    !signalMsg.id.empty() \u0026\u0026 !overwrite.empty()) {\\n    signalMap[signalMsg.id] \u003d std::move(signalMsg);\\n}\\n```",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79d8f794_1798c765",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 2018,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T19:37:25Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2018: Empty bodyOverwrite results are written only to the edition/original message itself and then skipped, so an edition that previously contributed bodyOverwrite inside the original message\u0027s editions array may not emit an update to remove that per-edition overwrite. Use injectEditionOverwrites() for empty values too and signal the affected original when the cleared entry changes client-visible data.\\n```suggestion\\nif (auto signalMsg \u003d injectEditionOverwrites(transformed.id, boIt-\u003esecond); !signalMsg.id.empty()) {\\n    signalMap[signalMsg.id] \u003d std::move(signalMsg);\\n}\\n```",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
