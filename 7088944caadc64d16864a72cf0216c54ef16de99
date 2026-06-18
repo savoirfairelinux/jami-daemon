@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9dce2a42_b33a27ce",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T20:09:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 125: This marks the CMake configure step as a recursive command. The `+` prefix is only needed on commands that invoke `$(MAKE)`; on non-make commands it also forces execution under `make -n/-t/-q`, so a dry-run can unexpectedly create/modify the build directory. Remove the prefix from the configure step and keep it only on the install make invocation.\n```suggestion\n\tcd $\u003c \u0026\u0026 cd build \u0026\u0026 $(HOSTVARS) $(CMAKE) .. $(OPENCV_CMAKECONF)\n```",
+      "revId": "7088944caadc64d16864a72cf0216c54ef16de99",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "833b241e_73f56459",
+        "filename": "contrib/src/whispercpp/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T20:09:11Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 49: This CMake configure command is not recursive make, so prefixing it with `+` changes make dry-run behavior and may execute configuration when the user requested no execution. Keep `+` only on the actual `$(MAKE)` lines.\n```suggestion\n\tcd $\u003c \u0026\u0026 cd build \u0026\u0026 $(HOSTVARS) $(CMAKE) .. $(WHISPER_CMAKECONF)\n```",
+      "revId": "7088944caadc64d16864a72cf0216c54ef16de99",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
