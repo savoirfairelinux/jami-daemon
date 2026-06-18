@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fcb97f1e_3c87bf50",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 475,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T18:56:42Z",
+      "side": 1,
+      "message": "Line 475: 🟡 Suggestions - The new plugin transform path runs synchronously inside the commit-processing callback. If a plugin transform is slow or performs I/O, it can block conversation update handling and delay member/status processing. Consider dispatching `transformSwarmMessages()` to the same asynchronous/plugin worker path used for other plugin processing, then calling `updateMessageBodyOverwrite()` when the result is available. This keeps the conversation ingestion path responsive.",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ffc3dad_63f9300c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 786,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T18:56:42Z",
+      "side": 1,
+      "message": "[Critical] Line 786: 🔴 Critical Issues - `injectEditionOverwrites()` documents that an empty `bodyOverwrite` clears the overwrite, but it actually stores `pluginData[\"bodyOverwrite\"] \u003d \"\"` on both the edited commit and, when latest, the original message. That leaves stale `bodyOverwrite` keys in the cached original and can make clients interpret an empty override differently from no override; it also conflicts with `clearBodyOverwrites()`, which erases the key. Make empty input erase the key consistently. Suggested fix:\n```suggestion\nif (bo.empty()) {\n    it-\u003esecond-\u003epluginData.erase(\"bodyOverwrite\");\n} else {\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bo;\n}\n```\nApply the same erase-vs-set behavior when propagating to `originalIt-\u003esecond-\u003epluginData`.",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74e41f0d_4b75b748",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 1999,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T18:56:42Z",
+      "side": 1,
+      "message": "[Critical] Line 1999: 🔴 Critical Issues - `loadMissingBodyOverwrites()` only writes back messages where the plugin returns a `bodyOverwrite` key. If a plugin decides a message needs no overwrite and leaves the key absent, that message remains permanently “missing” and will be sent through every future reload/load path, causing repeated plugin work and potentially repeated asynchronous transformations. Mark no-overwrite messages as processed with an empty value, matching the API documentation. Suggested fix:\n```suggestion\nconst auto boIt \u003d transformed.pluginData.find(\"bodyOverwrite\");\nif (boIt \u003d\u003d transformed.pluginData.end() || boIt-\u003esecond.empty()) {\n    if (const auto it \u003d loadedHistory_.quickAccess.find(transformed.id);\n        it !\u003d loadedHistory_.quickAccess.end()) {\n        it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n    }\n    continue;\n}\n```",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
