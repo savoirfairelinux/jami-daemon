@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0870de7f_ebd90aaa",
+        "filename": "bin/nodejs/npm/darwin-arm64/package.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T18:40:06Z",
+      "side": 1,
+      "message": "Address this",
+      "range": {
+        "startLine": 19,
+        "startChar": 17,
+        "endLine": 19,
+        "endChar": 53
+      },
+      "revId": "5cc3005acd067806e9d03015a922b01a87ec9160",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19018f19_2fee8684",
+        "filename": "bin/nodejs/npm/linux-arm64/package.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T18:40:06Z",
+      "side": 1,
+      "message": "Address this",
+      "range": {
+        "startLine": 19,
+        "startChar": 17,
+        "endLine": 19,
+        "endChar": 52
+      },
+      "revId": "5cc3005acd067806e9d03015a922b01a87ec9160",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4812b381_dab16ea2",
+        "filename": "bin/nodejs/npm/linux-x64/package.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-06-18T18:40:06Z",
+      "side": 1,
+      "message": "Address this",
+      "range": {
+        "startLine": 19,
+        "startChar": 17,
+        "endLine": 19,
+        "endChar": 50
+      },
+      "revId": "5cc3005acd067806e9d03015a922b01a87ec9160",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
