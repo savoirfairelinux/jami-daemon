@@ -256,7 +256,12 @@ FLOCK = flock
 endif
 endif
 ifneq ($(TARBALLS_DEFAULT),$(TARBALLS))
+ifdef HAVE_MACOSX
+# flock is not available by default on macOS; fall back to a mkdir-based emulation
+FLOCK ?= $(SRC)/flock-mkdir.sh
+else
 FLOCK ?= $(error custom TARBALLS location requires flock)
+endif
 endif
 
 FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
@@ -486,7 +491,7 @@ install: $(PREFIX)
 
 ifneq ($(PREFIX),$(CACHE_PREFIX))
 $(PREFIX): $(CACHE_PREFIX)
-	ln --symbolic $^ $@
+	ln -s $^ $@
 endif
 
 $(CACHE_PREFIX): $(ENTRY)/.build
@@ -494,8 +499,8 @@ $(CACHE_PREFIX): $(ENTRY)/.build
 ifeq ($(MAKELEVEL), 0)
 $(ENTRY)/.build:
 	unlink $(PREFIX) || true
-	mkdir --parents $(CACHE_PREFIX)
-	$(FLOCK) $(ENTRY) $(MAKE) PREFIX=$(CACHE_PREFIX)
+	mkdir -p $(CACHE_PREFIX)
+	$(if $(FLOCK),$(FLOCK) $(ENTRY)) $(MAKE) PREFIX=$(CACHE_PREFIX)
 	touch $@
 else
 $(ENTRY)/.build: $(PKGS:%=.%) convert-static
