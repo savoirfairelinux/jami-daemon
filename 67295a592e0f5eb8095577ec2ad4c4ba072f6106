@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0dde6906_163d955b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 61
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T20:31:33Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 494: The live-message path erases bodyOverwrite for original text messages when the plugin produces no overwrite. That conflicts with the documented empty-string sentinel used by updateMessageBodyOverwrite and causes loadMissingBodyOverwrites() to process the same message again later. Store an empty value instead of erasing so the message is recorded as processed.\n```suggestion\n                                        it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n```",
+      "revId": "67295a592e0f5eb8095577ec2ad4c4ba072f6106",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a59c053b_438424be",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 61
+      },
+      "lineNbr": 2004,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-18T20:31:33Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2004: When a plugin handler does not set pluginData[\"bodyOverwrite\"], the message remains \"missing\" forever, so every later load re-runs the plugin transform for the same loaded TEXT history. This is especially costly for translation-style plugins and makes the work grow with the full loaded history on each load. Mark the message as processed with an empty overwrite when the key is absent, and still use injectEditionOverwrites for edition commits so a latest edit with no overwrite clears any inherited overwrite.\n```suggestion\n            const auto boIt \u003d transformed.pluginData.find(\"bodyOverwrite\");\n            const auto bodyOverwrite \u003d boIt \u003d\u003d transformed.pluginData.end() ? std::string_view {} : std::string_view {boIt-\u003esecond};\n            if (auto signalMsg \u003d injectEditionOverwrites(transformed.id, bodyOverwrite); !signalMsg.id.empty()) {\n                signalMap[signalMsg.id] \u003d std::move(signalMsg);\n            }\n```",
+      "revId": "67295a592e0f5eb8095577ec2ad4c4ba072f6106",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
