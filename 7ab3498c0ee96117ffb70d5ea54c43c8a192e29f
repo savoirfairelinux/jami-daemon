@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1af9af09_08224b6c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 57
+      },
+      "lineNbr": 1401,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-18T18:40:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a908c6c5_b1d113e1",
+      "range": {
+        "startLine": 1401,
+        "startChar": 8,
+        "endLine": 1401,
+        "endChar": 110
+      },
+      "revId": "7ab3498c0ee96117ffb70d5ea54c43c8a192e29f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fb18f183_fa831fb1",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-06-18T18:09:01Z",
       "side": 1,
       "message": "This generates \"unused parameter\" warnings when compiling. Can be fixed by commenting them out:\n```\nvirtual void transformSwarmMessages(std::vector\u003clibjami::SwarmMessage\u003e\u0026 /* messages */,\n                                        const std::string\u0026 /* accountId */,\n                                        const std::string\u0026 /* conversationId */)\n```",
+      "range": {
+        "startLine": 85,
+        "startChar": 4,
+        "endLine": 88,
+        "endChar": 6
+      },
+      "revId": "7ab3498c0ee96117ffb70d5ea54c43c8a192e29f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d16c1179_7234e285",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 57
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-18T18:40:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fb18f183_fa831fb1",
       "range": {
         "startLine": 85,
         "startChar": 4,

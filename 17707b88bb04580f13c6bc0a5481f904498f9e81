@@ -86,6 +86,24 @@
       "parentUuid": "52f35330_98c4bf2b",
       "revId": "17707b88bb04580f13c6bc0a5481f904498f9e81",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6c12532_9fd33000",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-18T18:40:08Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "52f35330_98c4bf2b",
+      "revId": "17707b88bb04580f13c6bc0a5481f904498f9e81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
