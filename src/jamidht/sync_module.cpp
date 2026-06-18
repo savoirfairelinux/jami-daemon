@@ -19,10 +19,13 @@
 
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
+#include "fileutils.h"
 
 #include <dhtnet/multiplexed_socket.h>
 #include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
+
+#include <fstream>
 
 namespace jami {
 
@@ -38,26 +41,122 @@ public:
     std::recursive_mutex syncConnectionsMtx_;
     std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> syncConnections_;
 
+    // Local sync-version tracking (never transmitted, see header). Used to
+    // decide whether a sync connection must be (re)established with a device.
+    std::filesystem::path versionPath_;
+    mutable std::mutex versionMtx_;
+    uint64_t localVersion_ {0};
+    std::map<DeviceId, uint64_t> lastSynced_;
+
+    void loadVersions();
+    void saveVersions(); // versionMtx_ must be held
+    uint64_t bumpVersion();
+    uint64_t currentVersion() const;
+    bool needsSync(const DeviceId& deviceId) const;
+    void markSynced(const DeviceId& deviceId, uint64_t version);
+
     /**
      * Build SyncMsg and send it on socket
      * @param socket
+     * @return true if the whole state was written without error
      */
-    void syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const std::shared_ptr<SyncMsg>& syncMsg);
+    bool syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const std::shared_ptr<SyncMsg>& syncMsg);
     void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& device);
 };
+
+namespace {
+// On-disk representation of the local sync-version state.
+struct SyncVersionData
+{
+    uint64_t version {0};
+    std::map<DeviceId, uint64_t> synced;
+    MSGPACK_DEFINE_MAP(version, synced)
+};
+} // namespace
 
 SyncModule::Impl::Impl(const std::shared_ptr<JamiAccount>& account)
     : account_(account)
     , accountId_ {account->getAccountID()}
-{}
+{
+    versionPath_ = account->getPath() / "syncVersions";
+    loadVersions();
+}
 
 void
+SyncModule::Impl::loadVersions()
+{
+    try {
+        auto file = fileutils::loadFile(versionPath_);
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+        SyncVersionData data;
+        oh.get().convert(data);
+        std::lock_guard lk(versionMtx_);
+        localVersion_ = data.version;
+        lastSynced_ = std::move(data.synced);
+    } catch (const std::exception&) {
+        // No (or unreadable) file yet: start fresh. Every known device will be
+        // considered out-of-date and synced once on first contact.
+    }
+}
+
+void
+SyncModule::Impl::saveVersions()
+{
+    // versionMtx_ must be held
+    try {
+        std::ofstream file(versionPath_, std::ios::trunc | std::ios::binary);
+        SyncVersionData data;
+        data.version = localVersion_;
+        data.synced = lastSynced_;
+        msgpack::pack(file, data);
+    } catch (const std::exception& e) {
+        JAMI_WARNING("[Account {}] Unable to save sync versions: {:s}", accountId_, e.what());
+    }
+}
+
+uint64_t
+SyncModule::Impl::bumpVersion()
+{
+    std::lock_guard lk(versionMtx_);
+    ++localVersion_;
+    saveVersions();
+    return localVersion_;
+}
+
+uint64_t
+SyncModule::Impl::currentVersion() const
+{
+    std::lock_guard lk(versionMtx_);
+    return localVersion_;
+}
+
+bool
+SyncModule::Impl::needsSync(const DeviceId& deviceId) const
+{
+    std::lock_guard lk(versionMtx_);
+    auto it = lastSynced_.find(deviceId);
+    // Never synced, or synced at an older version than the current one.
+    return it == lastSynced_.end() || it->second < localVersion_;
+}
+
+void
+SyncModule::Impl::markSynced(const DeviceId& deviceId, uint64_t version)
+{
+    std::lock_guard lk(versionMtx_);
+    auto& synced = lastSynced_[deviceId];
+    if (synced < version) {
+        synced = version;
+        saveVersions();
+    }
+}
+
+bool
 SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                             const std::shared_ptr<SyncMsg>& syncMsg)
 {
     auto acc = account_.lock();
     if (!acc)
-        return;
+        return false;
     msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
     std::error_code ec;
     if (!syncMsg) {
@@ -72,7 +171,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                 socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
                 if (ec) {
                     JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
-                    return;
+                    return false;
                 }
             }
         }
@@ -86,7 +185,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
-                return;
+                return false;
             }
         }
         buffer.clear();
@@ -99,13 +198,13 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
-                return;
+                return false;
             }
         }
         buffer.clear();
         auto convModule = acc->convModule(true);
         if (!convModule)
-            return;
+            return false;
         // Sync conversation's preferences
         auto p = convModule->convPreferences();
         if (!p.empty()) {
@@ -115,7 +214,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
-                return;
+                return false;
             }
         }
         buffer.clear();
@@ -128,7 +227,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
-                return;
+                return false;
             }
         }
         buffer.clear();
@@ -136,9 +235,12 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     } else {
         msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec)
+        if (ec) {
             JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+            return false;
+        }
     }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -201,9 +303,16 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             shared->onChannelShutdown(s.lock(), device);
     });
 
-    dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket = std::move(socket)]() {
-        if (auto s = w.lock())
-            s->syncInfos(socket, nullptr);
+    // Capture the version we are about to deliver before sending the full
+    // state. On success, record that this device is synced up to that version
+    // so we don't reconnect to it until something changes again. Captured
+    // before the send so a concurrent change is never considered delivered.
+    auto version = pimpl_->currentVersion();
+    dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket = std::move(socket), device, version]() {
+        if (auto s = w.lock()) {
+            if (s->syncInfos(socket, nullptr))
+                s->markSynced(device, version);
+        }
     });
 }
 
@@ -236,6 +345,30 @@ SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const Dev
     } else {
         JAMI_DEBUG("[Account {}] [device {}] syncing with {:d} devices", pimpl_->accountId_, deviceId.to_view(), count);
     }
+}
+
+uint64_t
+SyncModule::bumpVersion()
+{
+    return pimpl_->bumpVersion();
+}
+
+uint64_t
+SyncModule::currentVersion() const
+{
+    return pimpl_->currentVersion();
+}
+
+bool
+SyncModule::needsSync(const DeviceId& deviceId) const
+{
+    return pimpl_->needsSync(deviceId);
+}
+
+void
+SyncModule::markSynced(const DeviceId& deviceId, uint64_t version)
+{
+    pimpl_->markSynced(deviceId, version);
 }
 
 } // namespace jami
