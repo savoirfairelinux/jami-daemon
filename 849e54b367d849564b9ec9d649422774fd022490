@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0ec05c4_e7ffeb75",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1659,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:28:21Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 1659: The corrupted conversation is still inserted into pimpl_-\u003econversations_ before fallbackClone() is scheduled. That leaves an active Conversation backed by the invalid repository, and can also make the clone path treat the conversation as already loaded instead of replacing it. Keep only the metadata needed for recovery, remove/avoid publishing the invalid Conversation, and let the successful clone install the new instance.\n```suggestion\nsconv-\u003einfo \u003d convInfo-\u003esecond;\nctx-\u003etoReclone.insert(repository);\nreturn;\n```",
+      "revId": "849e54b367d849564b9ec9d649422774fd022490",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5344cfac_9d3bf984",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3893,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:28:21Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 3893: validate() only checks that HEAD\u0027s commit and root tree exist, but the comment and recovery decision imply the repository is usable. A missing subtree or blob will still pass and can fail later when history/files are read, potentially leaving the daemon in the same retry loop. Walk the HEAD tree recursively, or use libgit2 object database/fsck-style validation, and fail if any referenced object is missing.\n```suggestion\n// After resolving the root tree, walk it recursively and verify every referenced\n// tree/blob can be looked up before reporting the repository as valid.\n```",
+      "revId": "849e54b367d849564b9ec9d649422774fd022490",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5094d134_74634065",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2341,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:28:21Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2341: This test has the same loose-object assumption for HEAD and will be flaky once the repository has packed objects. Make the corruption helper handle both loose and packed storage so the recovery behavior, not the object layout, is what the test validates.",
+      "revId": "849e54b367d849564b9ec9d649422774fd022490",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a409c29_0ba97072",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1205,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:28:21Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1205: The corruption test assumes the HEAD commit is stored as a loose object. If libgit2 or the environment packs objects, this assertion fails even though the repository is valid. Corrupt the object database in a storage-format-independent way, for example by moving the object if it is loose and otherwise moving/removing the pack that contains it, or by using libgit2 APIs/test helpers to create a dangling HEAD.",
+      "revId": "849e54b367d849564b9ec9d649422774fd022490",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
