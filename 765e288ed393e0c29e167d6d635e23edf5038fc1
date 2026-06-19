@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13222d74_f4c15f25",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1903,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:40:11Z",
+      "side": 1,
+      "message": "[Critical] Line 1903: `cloneConversationFrom(convId, uri)` is scheduled once per remote member. If a conversation has multiple remote members, this can launch concurrent recovery clones for the same corrupted repository, racing over the same on-disk path/backups and potentially replacing a successful clone with another in-flight attempt. Schedule one recovery operation per conversation, or serialize attempts so the next member is tried only after the previous source fails.\n```suggestion\n                    scheduled \u003d true;\n                    shared-\u003ecloneConversationFrom(convId, uriIt-\u003esecond);\n                    break;\n```",
+      "revId": "765e288ed393e0c29e167d6d635e23edf5038fc1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5cc5d144_e7083fb5",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 3929,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:40:11Z",
+      "side": 1,
+      "message": "[Critical] Line 3929: The tree-walk callback returns `1` for an already-visited object. In libgit2, any non-zero callback return aborts the whole walk, so a valid repository with a shared blob/subtree can either be reported invalid or stop traversal early and miss later corrupt objects. Continue the walk for duplicates instead of aborting it.\n```suggestion\n        if (!ctx-\u003evisited-\u003einsert(*id).second)\n            return 0; // already verified; keep walking the remaining entries\n```",
+      "revId": "765e288ed393e0c29e167d6d635e23edf5038fc1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
