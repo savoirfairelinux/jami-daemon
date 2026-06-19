@@ -39,6 +39,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4383047f_d6e0a204",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2434,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T19:53:06Z",
+      "side": 1,
+      "message": "This assumes that `needsSyncingCb_` is only called with a non-null argument for status and preferences changes, which is true currently but could easily break in the future.\n\nIf `syncMsg` is non-null, I think we should directly check if it contains information that justifies opening a new connection.",
+      "range": {
+        "startLine": 2432,
+        "startChar": 4,
+        "endLine": 2434,
+        "endChar": 49
+      },
+      "revId": "bb2244aa141155e4ae9c2eec173a71e66dfe94d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "749807a9_643c783e",
         "filename": "src/jamidht/sync_module.cpp",
         "patchSetId": 2
@@ -285,6 +308,29 @@
       "side": 1,
       "message": "Acknowledged",
       "parentUuid": "43f64885_95afeca7",
+      "revId": "bb2244aa141155e4ae9c2eec173a71e66dfe94d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1d761c7_8c2445c9",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T19:53:06Z",
+      "side": 1,
+      "message": "Is there a reason for not calling `markSynced` if `syncInfos` succeeds here?",
+      "range": {
+        "startLine": 339,
+        "startChar": 20,
+        "endLine": 339,
+        "endChar": 49
+      },
       "revId": "bb2244aa141155e4ae9c2eec173a71e66dfe94d5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
