@@ -83,6 +83,9 @@ private:
     void testInvalidFile();
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
+    void testValidateDetectsCorruptedRepository();
+    void testValidateDetectsCorruptedHistory();
+    void testMergeReportsMissingObject();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -108,6 +111,9 @@ private:
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
+    CPPUNIT_TEST(testValidateDetectsCorruptedRepository);
+    CPPUNIT_TEST(testValidateDetectsCorruptedHistory);
+    CPPUNIT_TEST(testMergeReportsMissingObject);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1182,6 +1188,138 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
     CPPUNIT_ASSERT(reopened != nullptr);
     CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
+}
+
+void
+ConversationRepositoryTest::testValidateDetectsCorruptedRepository()
+{
+    // A repository with an object missing from its database (e.g. after a
+    // truncated or missing pack following a hard power loss) must be reported
+    // as invalid, so the daemon can recover it by re-cloning instead of looping
+    // forever trying to walk a dangling HEAD.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+    const auto objectsDir = repoPath / ".git" / "objects";
+
+    // A freshly created conversation must be valid.
+    CPPUNIT_ASSERT(repository->validate());
+
+    // Corruption deeper than HEAD must also be detected: take an object
+    // referenced by HEAD's root tree (one level below HEAD) and make it
+    // unreachable. validate() must walk the whole tree and reject the
+    // repository; otherwise the missing object would only surface later when
+    // files are read, preserving the retry loop this change prevents.
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    git_oid headOid;
+    CPPUNIT_ASSERT(git_reference_name_to_id(&headOid, repo, "HEAD") == 0);
+    git_commit* commit = nullptr;
+    CPPUNIT_ASSERT(git_commit_lookup(&commit, repo, &headOid) == 0);
+    git_tree* tree = nullptr;
+    CPPUNIT_ASSERT(git_commit_tree(&tree, commit) == 0);
+    CPPUNIT_ASSERT(git_tree_entrycount(tree) > 0);
+    std::string childObj = git_oid_tostr_s(git_tree_entry_id(git_tree_entry_byindex(tree, 0)));
+    git_tree_free(tree);
+    git_commit_free(commit);
+    git_repository_free(repo);
+    CPPUNIT_ASSERT(!childObj.empty());
+
+    // Precise corruption: the object must be loose so only it is removed.
+    CPPUNIT_ASSERT(makeGitObjectUnreachable(objectsDir, childObj));
+    CPPUNIT_ASSERT(!repository->validate());
+
+    // Don't leave the corrupted repository on disk for other test cases.
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
+}
+
+void
+ConversationRepositoryTest::testValidateDetectsCorruptedHistory()
+{
+    // A missing object reachable only through history (an older commit, or a
+    // tree/blob it introduced) must also be rejected: HEAD and its current tree
+    // can be intact while an ancestor pack is gone, which still breaks log
+    // traversal and would resume the retry loop.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+    const auto objectsDir = repoPath / ".git" / "objects";
+
+    // Remember the initial commit, then add a second one so HEAD moves past it
+    // and the first commit becomes pure history.
+    const auto firstCommit = repository->getHead();
+    CPPUNIT_ASSERT(!firstCommit.empty());
+    CPPUNIT_ASSERT(!repository->commitMessage(R"({"body":"second","type":"text/plain"})").empty());
+    CPPUNIT_ASSERT(repository->getHead() != firstCommit);
+    CPPUNIT_ASSERT(repository->validate());
+
+    // Drop the historical commit: HEAD and its tree are still present, but the
+    // ancestry is now broken. The commit object is loose, so only it is removed.
+    CPPUNIT_ASSERT(makeGitObjectUnreachable(objectsDir, firstCommit));
+    CPPUNIT_ASSERT(!repository->validate());
+
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
+}
+
+void
+ConversationRepositoryTest::testMergeReportsMissingObject()
+{
+    // A merge whose common ancestor is missing must be reported as repository
+    // corruption through consumeMissingObjectError(), so the module can recover
+    // on the failing path instead of looping on the merge. HEAD stays readable
+    // here, so the empty-HEAD recovery path does not apply: only the failing
+    // merge, which has to read the missing ancestor, reveals the corruption.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+    const auto objectsDir = repoPath / ".git" / "objects";
+
+    // Build two branches that diverge right after the initial commit, so that
+    // commit is their only common ancestor and merging them must read it.
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    addCommit(repo, aliceAccount, "main", R"({"body":"on main","type":"text/plain"})");
+
+    git_reference* ref = nullptr;
+    git_commit* commit = nullptr;
+    git_oid commit_id;
+    git_oid_fromstr(&commit_id, convId.c_str());
+    git_commit_lookup(&commit, repo, &commit_id);
+    git_branch_create(&ref, repo, "to_merge", commit, false);
+    git_commit_free(commit);
+    git_reference_free(ref);
+    git_repository_set_head(repo, "refs/heads/to_merge");
+    auto id2 = addCommit(repo, aliceAccount, "to_merge", R"({"body":"on branch","type":"text/plain"})");
+    git_repository_free(repo);
+
+    // Nothing has failed yet, so no corruption is recorded.
+    CPPUNIT_ASSERT(!repository->consumeMissingObjectError());
+
+    // Drop the shared ancestor (the initial commit). HEAD is still readable.
+    CPPUNIT_ASSERT(makeGitObjectUnreachable(objectsDir, convId));
+    CPPUNIT_ASSERT(!repository->validate());
+
+    // Merging the diverged branch must read the now-missing ancestor, fail, and
+    // record the corruption.
+    auto [merged, mergeCommit] = repository->merge(id2);
+    CPPUNIT_ASSERT(!merged);
+    CPPUNIT_ASSERT(repository->consumeMissingObjectError());
+    // Reading the flag clears it.
+    CPPUNIT_ASSERT(!repository->consumeMissingObjectError());
+
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
 }
 
 } // namespace test

@@ -1759,6 +1759,18 @@ Conversation::id() const
     return pimpl_->repository_ ? pimpl_->repository_->id() : "";
 }
 
+bool
+Conversation::isValid() const
+{
+    return pimpl_->repository_ && pimpl_->repository_->validate();
+}
+
+bool
+Conversation::consumeMissingObjectError() const
+{
+    return pimpl_->repository_ && pimpl_->repository_->consumeMissingObjectError();
+}
+
 void
 Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
 {

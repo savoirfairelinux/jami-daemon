@@ -55,6 +55,9 @@
 #include <memory>
 #include <cstdint>
 #include <utility>
+#include <unordered_set>
+#include <atomic>
+#include <vector>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -539,6 +542,22 @@ public:
     }
 
     std::mutex opMtx_; // Mutex for operations
+
+    // Set when a fetch or merge fails because a local object is missing or
+    // unreadable (a libgit2 object-database error), as opposed to a benign
+    // failure such as an unreachable peer. Lets the module trigger recovery on
+    // the failing path and confirm with validate() only then, instead of
+    // walking the object graph after every operation failure.
+    mutable std::atomic_bool missingObjectError_ {false};
+
+    // Record a libgit2 object-database error (missing/unreadable object) from
+    // the most recent failed operation. Must be called before any other libgit2
+    // call clears the thread-local error state.
+    void recordIfObjectMissing()
+    {
+        if (const git_error* err = git_error_last(); err && err->klass == GIT_ERROR_ODB)
+            missingObjectError_ = true;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -3376,6 +3395,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
                          pimpl_->id_,
                          err->message);
         }
+        pimpl_->recordIfObjectMissing();
         return false;
     }
 
@@ -3625,6 +3645,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
         JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: repository analysis failed",
                    pimpl_->accountId_,
                    pimpl_->id_);
+        pimpl_->recordIfObjectMissing();
         return {false, ""};
     }
 
@@ -3649,6 +3670,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                            pimpl_->accountId_,
                            pimpl_->id_,
                            err->message);
+            pimpl_->recordIfObjectMissing();
             return {false, ""};
         }
         return {true, ""}; // fast forward so no commit generated;
@@ -3691,6 +3713,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                        pimpl_->accountId_,
                        pimpl_->id_,
                        err->message);
+        pimpl_->recordIfObjectMissing();
         return {false, ""};
     }
     GitIndex index {index_ptr};
@@ -3877,6 +3900,107 @@ ConversationMode
 ConversationRepository::mode() const
 {
     return pimpl_->mode();
+}
+
+namespace {
+// Verify that every object reachable from HEAD - all ancestor commits and the
+// full tree each of them points at - is present and readable in the object
+// database. A truncated or missing pack can drop objects anywhere in history
+// (older commits, sub-trees or blobs) while leaving HEAD resolvable; such a gap
+// would only surface later, and resume the fetch/merge retry loop, when that
+// part of the conversation is walked. Each reachable object is checked with
+// git_odb_read_header, which reads the object's type and size - failing if the
+// pack entry is truncated or unreadable - without inflating the blob payload
+// into memory. Visited object ids are remembered (by raw value, avoiding any
+// per-object string formatting) so the trees and ancestors shared across
+// commits are checked only once.
+struct GitOidHash
+{
+    std::size_t operator()(const git_oid& oid) const noexcept
+    {
+        std::size_t h = 14695981039346656037ULL; // FNV-1a
+        for (unsigned char b : oid.id) {
+            h ^= b;
+            h *= 1099511628211ULL;
+        }
+        return h;
+    }
+};
+struct GitOidEqual
+{
+    bool operator()(const git_oid& a, const git_oid& b) const noexcept { return git_oid_equal(&a, &b) != 0; }
+};
+using GitOidSet = std::unordered_set<git_oid, GitOidHash, GitOidEqual>;
+
+bool
+allObjectsReachableFromHeadPresent(git_repository* repo, git_odb* odb, const git_oid& headOid)
+{
+    GitOidSet visited;
+    struct WalkContext
+    {
+        git_odb* odb;
+        GitOidSet* visited;
+    } walkCtx {odb, &visited};
+    auto checkEntry = [](const char*, const git_tree_entry* entry, void* payload) -> int {
+        auto* ctx = static_cast<WalkContext*>(payload);
+        const git_oid* id = git_tree_entry_id(entry);
+        if (!ctx->visited->insert(*id).second)
+            return 0; // already verified; keep walking the remaining entries
+        std::size_t len = 0;
+        git_object_t type = GIT_OBJECT_ANY;
+        if (git_odb_read_header(&len, &type, ctx->odb, id) < 0)
+            return -1; // missing or unreadable object: stop the walk, report corruption
+        return 0;
+    };
+
+    std::vector<git_oid> pending {headOid};
+    while (!pending.empty()) {
+        auto oid = pending.back();
+        pending.pop_back();
+        if (!visited.insert(oid).second)
+            continue; // commit already verified through another branch
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo, &oid) < 0)
+            return false; // a reachable commit object is missing
+        GitCommit commit {commit_ptr};
+        git_tree* tree_ptr = nullptr;
+        if (git_commit_tree(&tree_ptr, commit.get()) < 0)
+            return false;
+        GitTree tree {tree_ptr};
+        if (visited.insert(*git_tree_id(tree.get())).second
+            && git_tree_walk(tree.get(), GIT_TREEWALK_PRE, checkEntry, &walkCtx) < 0)
+            return false;
+        for (unsigned i = 0, n = git_commit_parentcount(commit.get()); i < n; ++i)
+            pending.push_back(*git_commit_parent_id(commit.get(), i));
+    }
+    return true;
+}
+} // namespace
+
+bool
+ConversationRepository::validate() const
+{
+    // Serialize with mutating repository operations (commits, fetches, merges):
+    // validate() walks the whole object graph, so a concurrent update could
+    // otherwise make it traverse inconsistent state and report false corruption.
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+    git_oid headOid;
+    if (git_reference_name_to_id(&headOid, repo.get(), "HEAD") < 0)
+        return false;
+    git_odb* odbPtr = nullptr;
+    if (git_repository_odb(&odbPtr, repo.get()) < 0)
+        return false;
+    std::unique_ptr<git_odb, decltype(&git_odb_free)> odb {odbPtr, git_odb_free};
+    return allObjectsReachableFromHeadPresent(repo.get(), odb.get(), headOid);
+}
+
+bool
+ConversationRepository::consumeMissingObjectError() const
+{
+    return pimpl_->missingObjectError_.exchange(false);
 }
 
 std::string

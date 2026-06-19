@@ -187,6 +187,16 @@ public:
                          const std::string& conversationId,
                          const std::string& commitId = "");
     /**
+     * Recover a conversation whose local repository was found corrupted by
+     * re-cloning a fresh copy from a member device. The members are resolved
+     * from the persisted metadata (independent of the broken repository) and
+     * the existing clone path is reused (atomic staging keeps the old copy
+     * until a valid clone lands). Must be called without the conversation's
+     * mutex held.
+     * @param conversationId
+     */
+    void scheduleConversationRecovery(const std::string& conversationId);
+    /**
      * Handle events to receive new commits
      */
     void handlePendingConversation(const std::string& conversationId, const std::string& deviceId);
@@ -577,6 +587,36 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
 }
 
 void
+ConversationModule::Impl::scheduleConversationRecovery(const std::string& conversationId)
+{
+    // The conversation's mutex must NOT be held here: cloneConversationFrom()
+    // re-locks it. Members come from the persisted metadata (convInfos_), which
+    // is kept independently of the corrupted git repository, so a valid clone
+    // source is targeted. Re-cloning from the known peers reuses the regular
+    // clone path; cloneConversationFrom() shares a single pending fetch per
+    // conversation and retries with backoff until a peer is reachable.
+    bool scheduled = false;
+    for (const auto& member : getConversationMembers(conversationId)) {
+        auto uriIt = member.find("uri");
+        if (uriIt == member.end() || uriIt->second.empty()) {
+            JAMI_WARNING("[Account {}] [Conversation {}] Ignoring malformed member metadata during recovery",
+                         accountId_,
+                         conversationId);
+            continue;
+        }
+        if (uriIt->second != username_) {
+            scheduled = true;
+            cloneConversationFrom(conversationId, uriIt->second);
+        }
+    }
+    if (!scheduled)
+        JAMI_WARNING("[Account {}] [Conversation {}] No remote member available to recover the corrupted "
+                     "repository from",
+                     accountId_,
+                     conversationId);
+}
+
+void
 ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& deviceId,
                                           const std::string& conversationId,
@@ -682,6 +722,23 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         // Retrieve current last message
         auto lastMessageId = conv->conversation->lastCommitId();
         if (lastMessageId.empty()) {
+            // A loaded conversation with no readable last commit means its local
+            // repository can no longer be walked from HEAD - typically a missing
+            // or truncated pack after a hard power loss. Validate only here, when
+            // an operation has actually failed, so healthy conversations pay
+            // nothing at load time. If the repository is indeed corrupted, drop
+            // the in-memory conversation and re-clone a fresh copy from a peer
+            // instead of looping on the failing fetch forever.
+            if (!conv->conversation->isValid()) {
+                JAMI_ERROR("[Account {}] [Conversation {}] Local repository is corrupted, recovering by "
+                           "re-cloning",
+                           accountId_,
+                           conversationId);
+                conv->conversation.reset();
+                lk.unlock();
+                scheduleConversationRecovery(conversationId);
+                return;
+            }
             JAMI_ERROR("[Account {}] [Conversation {}] No message detected. This is a bug", accountId_, conversationId);
             return;
         }
@@ -722,6 +779,29 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                          shared->accountId_,
                                          conversationId,
                                          deviceId);
+                            // A fetch/merge that failed because a local object is
+                            // missing means the repository is corrupted, not just
+                            // that the peer is unreachable. Confirm with validate()
+                            // - only now, on the failing path, never on healthy
+                            // syncs - and recover by re-cloning a fresh copy from a
+                            // peer instead of looping on the failing fetch forever.
+                            std::unique_lock lk(conv->mtx);
+                            auto conversation = conv->conversation;
+                            if (conversation && conversation->consumeMissingObjectError() && !conversation->isValid()) {
+                                JAMI_ERROR("[Account {}] [Conversation {}] Local repository is corrupted, "
+                                           "recovering by re-cloning",
+                                           shared->accountId_,
+                                           conversationId);
+                                conv->conversation.reset();
+                                conv->pending.reset();
+                                lk.unlock();
+                                shared->scheduleConversationRecovery(conversationId);
+                                if (shared->syncCnt.fetch_sub(1) == 1)
+                                    emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(
+                                        shared->accountId_);
+                                return;
+                            }
+                            lk.unlock();
                             JAMI_LOG("[Account {}] [Conversation {}] Relaunch sync with {}",
                                      shared->accountId_,
                                      conversationId,

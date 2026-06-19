@@ -364,6 +364,27 @@ public:
     std::pair<std::vector<ConversationCommit>, bool> validClone() const;
 
     /**
+     * Check that the repository is structurally complete: every object reachable
+     * from HEAD (all ancestor commits and the full tree each of them points at)
+     * must be present and readable in the object database. A truncated or
+     * missing pack (e.g. after a hard power loss) can drop or truncate objects
+     * anywhere in history while leaving HEAD resolvable, which would otherwise
+     * only fail later when the conversation is walked.
+     * @return true if the whole history reachable from HEAD is present
+     */
+    bool validate() const;
+
+    /**
+     * Whether a fetch or merge has failed because a local object was missing or
+     * unreadable (a libgit2 object-database error) since this was last called.
+     * Reading the flag clears it. This is a cheap O(1) check: it lets callers
+     * confirm corruption with validate() and recover only on the failing path,
+     * instead of walking the whole object graph after every operation failure.
+     * @return true if an object-database error was recorded
+     */
+    bool consumeMissingObjectError() const;
+
+    /**
      * Verify the signature against the given commit
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit
