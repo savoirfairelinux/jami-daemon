@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c1e916b7_7086573c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1927,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-06-19T20:55:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6de1aed4_25f7f8d1",
+      "range": {
+        "startLine": 1927,
+        "startChar": 32,
+        "endLine": 1927,
+        "endChar": 51
+      },
+      "revId": "e42622a66a61c3fc39c7afb144a922528354770b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9993d42a_0086e4a6",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-06-17T15:33:54Z",
       "side": 1,
       "message": "This also can be refactored to timepoint",
+      "range": {
+        "startLine": 1278,
+        "startChar": 35,
+        "endLine": 1278,
+        "endChar": 52
+      },
+      "revId": "e42622a66a61c3fc39c7afb144a922528354770b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ed7724a_afa7fd9d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1278,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-06-19T20:55:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9993d42a_0086e4a6",
       "range": {
         "startLine": 1278,
         "startChar": 35,
