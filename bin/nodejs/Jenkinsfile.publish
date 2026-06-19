@@ -195,6 +195,7 @@ void buildNativeAddonOnHost(String platform, String arch) {
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
             -DCMAKE_OSX_ARCHITECTURES=${arch} \
+            -DIGNORE_SYSTEM_LIBS=ON \
             -GNinja
         cmake --build build --config Release --parallel 4
         cp bin/nodejs/build/Release/jamid.node jamid.node
