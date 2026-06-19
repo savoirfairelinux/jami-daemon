@@ -1222,7 +1222,7 @@ JamiAccount::setupAccountCallbacks()
         [this](const std::string& uri,
                const std::string& conversationId,
                const std::vector<uint8_t>& payload,
-               time_t received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
+               TimePoint received) { onIncomingTrustRequest(uri, conversationId, payload, received); },
         [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
         [this](const std::string& conversationId, const std::string& deviceId) {
             onConversationRequestAccepted(conversationId, deviceId);
