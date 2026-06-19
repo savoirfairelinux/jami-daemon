@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c08c4c98_15e36401",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1901,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T21:08:19Z",
+      "side": 1,
+      "message": "Line 1901: Recovery schedules cloneConversationFrom() for every remote member immediately. The comment says only one clone actually runs, but if cloneConversationFrom only deduplicates pending fetches after asynchronous setup, this can create duplicated network attempts and repeated recovery logs on startup for large groups. Prefer selecting a bounded set of candidates or stop scheduling once one recovery has been queued successfully.",
+      "revId": "29bb42d7b5817df625a6c82dd4dbd7ea2dd79151",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16840498_1d52a2e5",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3910,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T21:08:19Z",
+      "side": 1,
+      "message": "Line 3910: validate() now walks every reachable commit, tree, and blob header synchronously during loadConversations(). For long-lived conversations this can make daemon startup proportional to full repository history. Consider using libgit2\u0027s revwalk plus git_fsck-like object validation, caching a last-validated HEAD, or validating only after repository open failures/fetch-loop symptoms to avoid penalizing every clean startup.",
+      "revId": "29bb42d7b5817df625a6c82dd4dbd7ea2dd79151",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5816776_0fe2cd78",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3934,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T21:08:19Z",
+      "side": 1,
+      "message": "[Critical] Line 3934: This only walks the tree for the first commit that owns a root-tree id. If a later commit reuses the same root tree but points to a parent whose commit object is missing, the commit lookup catches that; however, shared subtree ids are inserted by checkEntry before libgit2 descends into them. If the same subtree is referenced later after an earlier walk was interrupted by a missing object, it can be treated as already verified. Track verified objects only after successful traversal/read, or keep separate \u0027seen\u0027 and \u0027verified\u0027 sets so a failed traversal cannot mark entries valid.",
+      "revId": "29bb42d7b5817df625a6c82dd4dbd7ea2dd79151",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
