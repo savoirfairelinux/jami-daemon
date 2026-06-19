@@ -71,6 +71,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b275092_9e1c2d7b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 786,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-19T17:01:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "340a6c16_eeb238e5",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "74e41f0d_4b75b748",
@@ -102,6 +120,24 @@
       "side": 1,
       "message": "@zelie.leydert@savoirfairelinux.com I think this is correct, please check and fix if needed.",
       "parentUuid": "74e41f0d_4b75b748",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "592f2ac1_a35284ac",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 1999,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-19T17:01:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a8599607_6aab7d17",
       "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
