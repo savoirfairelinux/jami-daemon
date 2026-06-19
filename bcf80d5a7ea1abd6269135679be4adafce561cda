@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "288723e7_eed0526d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "I think this needs to be removed with the current convention for empty overwrites...?",
+      "range": {
+        "startLine": 825,
+        "startChar": 53,
+        "endLine": 825,
+        "endChar": 78
+      },
+      "revId": "bcf80d5a7ea1abd6269135679be4adafce561cda",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

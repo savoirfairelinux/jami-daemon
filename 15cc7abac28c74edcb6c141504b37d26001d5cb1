@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "336e65d0_ef16b91e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 1990,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "c00ffeaa_ddf29b56",
+      "revId": "15cc7abac28c74edcb6c141504b37d26001d5cb1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4f3cc987_ba5fd0e3",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-18T18:40:33Z",
       "side": 1,
       "message": "[🟡 Suggestions] Line 1998: Messages for which the plugin returns no `bodyOverwrite` are never marked as processed. Because the selection condition is `!msg-\u003epluginData.contains(\"bodyOverwrite\")`, every subsequent load/reload will send the same messages back through the plugin indefinitely, which can be expensive and may repeatedly trigger external translation/service calls. Store an empty sentinel when the transform does not provide an overwrite, just like the empty-overwrite branch already does. Suggested fix:\n```suggestion\n            const auto boIt \u003d transformed.pluginData.find(\"bodyOverwrite\");\n            if (boIt \u003d\u003d transformed.pluginData.end() || boIt-\u003esecond.empty()) {\n                if (const auto it \u003d loadedHistory_.quickAccess.find(transformed.id);\n                    it !\u003d loadedHistory_.quickAccess.end()) {\n                    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n                }\n                continue;\n            }\n```",
+      "revId": "15cc7abac28c74edcb6c141504b37d26001d5cb1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0399092e_01f67462",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 1998,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "4f3cc987_ba5fd0e3",
       "revId": "15cc7abac28c74edcb6c141504b37d26001d5cb1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

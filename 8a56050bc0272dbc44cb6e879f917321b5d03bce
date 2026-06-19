@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e106bd7_d4280c1d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 475,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fcb97f1e_3c87bf50",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0ffc3dad_63f9300c",
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "340a6c16_eeb238e5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 786,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "@zelie.leydert@savoirfairelinux.com The function\u0027s documentation is indeed out-of-date.",
+      "parentUuid": "0ffc3dad_63f9300c",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "74e41f0d_4b75b748",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 59
@@ -48,6 +84,24 @@
       "writtenOn": "2026-06-18T18:56:42Z",
       "side": 1,
       "message": "[Critical] Line 1999: 🔴 Critical Issues - `loadMissingBodyOverwrites()` only writes back messages where the plugin returns a `bodyOverwrite` key. If a plugin decides a message needs no overwrite and leaves the key absent, that message remains permanently “missing” and will be sent through every future reload/load path, causing repeated plugin work and potentially repeated asynchronous transformations. Mark no-overwrite messages as processed with an empty value, matching the API documentation. Suggested fix:\n```suggestion\nconst auto boIt \u003d transformed.pluginData.find(\"bodyOverwrite\");\nif (boIt \u003d\u003d transformed.pluginData.end() || boIt-\u003esecond.empty()) {\n    if (const auto it \u003d loadedHistory_.quickAccess.find(transformed.id);\n        it !\u003d loadedHistory_.quickAccess.end()) {\n        it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d \"\";\n    }\n    continue;\n}\n```",
+      "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8599607_6aab7d17",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 1999,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "@zelie.leydert@savoirfairelinux.com I think this is correct, please check and fix if needed.",
+      "parentUuid": "74e41f0d_4b75b748",
       "revId": "8a56050bc0272dbc44cb6e879f917321b5d03bce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

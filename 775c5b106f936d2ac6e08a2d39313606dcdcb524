@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e77ae92_0cbac6ab",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 799,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "83a9b7ef_d31afab3",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dc8bb14a_690dde30",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "561e0732_34a41501",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 2007,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "dc8bb14a_690dde30",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "79d8f794_1798c765",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-06-18T19:37:25Z",
       "side": 1,
       "message": "[🔴 Critical] Line 2018: Empty bodyOverwrite results are written only to the edition/original message itself and then skipped, so an edition that previously contributed bodyOverwrite inside the original message\u0027s editions array may not emit an update to remove that per-edition overwrite. Use injectEditionOverwrites() for empty values too and signal the affected original when the cleared entry changes client-visible data.\\n```suggestion\\nif (auto signalMsg \u003d injectEditionOverwrites(transformed.id, boIt-\u003esecond); !signalMsg.id.empty()) {\\n    signalMap[signalMsg.id] \u003d std::move(signalMsg);\\n}\\n```",
+      "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f86523ad_b9c1408c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 60
+      },
+      "lineNbr": 2018,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T16:13:30Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "79d8f794_1798c765",
       "revId": "775c5b106f936d2ac6e08a2d39313606dcdcb524",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
