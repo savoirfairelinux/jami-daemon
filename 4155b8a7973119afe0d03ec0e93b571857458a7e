@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "389bf73a_b3297e13",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1887,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:54:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1887: Recovery can never be scheduled for corrupted one-to-one conversations whose only persisted member is the remote peer but whose URI is equal to `username_` after account/device normalization differences are not handled here. This code compares raw strings and may skip the only viable source or schedule cloning from self if formats differ. Use the same URI normalization/comparison helper used elsewhere for member identity checks before deciding whether a member is local. Suggested fix: normalize both sides before comparing, e.g. ```suggestion\nif (normalizeUri(uriIt-\u003esecond) !\u003d normalizeUri(shared-\u003eusername_)) {\n    scheduled \u003d true;\n    shared-\u003ecloneConversationFrom(convId, uriIt-\u003esecond);\n}\n```",
+      "revId": "4155b8a7973119afe0d03ec0e93b571857458a7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ee537d0_a1a14fbc",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:54:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 57: `makeGitObjectUnreachable()` silently ignores errors from `remove_all(packDir, ec)` and returns `false` for both expected packed-object fallback and actual filesystem failures. That makes future tests hard to diagnose and can leave partially corrupted state behind. Return an explicit status/error or assert that fallback removal succeeded in callers that intentionally use it. Suggested fix: ```suggestion\nif (std::filesystem::is_directory(packDir, ec)) {\n    ec.clear();\n    std::filesystem::remove_all(packDir, ec);\n    CPPUNIT_ASSERT_MESSAGE(ec.message(), !ec);\n}\nreturn false;\n```",
+      "revId": "4155b8a7973119afe0d03ec0e93b571857458a7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
