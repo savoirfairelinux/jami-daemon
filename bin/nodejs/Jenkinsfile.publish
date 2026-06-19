@@ -76,7 +76,6 @@ pipeline {
                     agent { label 'darwin && arm64' }
                     steps {
                         checkout scm
-                        sh 'npm ci --ignore-scripts'
                         buildNativeAddonOnHost('darwin', 'arm64')
                         stash includes: 'jamid.node', name: 'native-darwin-arm64'
                     }
@@ -149,12 +148,34 @@ pipeline {
 
 /**
  * Build the native daemon addon inside Docker using the existing
- * bin/nodejs/Dockerfile, then extract jamid.node to the workspace root.
+ * bin/nodejs/Dockerfile for the requested target architecture (using QEMU
+ * emulation when cross-building), then extract jamid.node to the workspace
+ * root.
  */
 void buildNativeAddonInDocker(String platform, String arch) {
-    sh "docker build -f bin/nodejs/Dockerfile -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
+    // Map the Node.js arch to the Docker platform arch so the image is built
+    // for the requested target rather than the host architecture.
+    def dockerArch = (arch == 'x64') ? 'amd64' : arch
+    def dockerPlatform = "${platform}/${dockerArch}"
+
+    // When building for a non-native architecture (e.g. arm64 on an x64 host),
+    // register QEMU emulators so the cross-build does not silently fall back to
+    // the host architecture.
     sh """
-        container_id=\$(docker create jami-daemon-${platform}-${arch}:${env.BUILD_ID})
+        host_arch=\$(uname -m)
+        case "\${host_arch}" in
+            x86_64) host_docker_arch=amd64 ;;
+            aarch64|arm64) host_docker_arch=arm64 ;;
+            *) host_docker_arch=\${host_arch} ;;
+        esac
+        if [ "\${host_docker_arch}" != "${dockerArch}" ]; then
+            docker run --privileged --rm tonistiigi/binfmt --install ${dockerArch}
+        fi
+    """
+
+    sh "docker build --platform ${dockerPlatform} -f bin/nodejs/Dockerfile -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
+    sh """
+        container_id=\$(docker create --platform ${dockerPlatform} jami-daemon-${platform}-${arch}:${env.BUILD_ID})
         docker cp \${container_id}:/daemon/bin/nodejs/build/Release/jamid.node jamid.node
         docker rm \${container_id}
     """
