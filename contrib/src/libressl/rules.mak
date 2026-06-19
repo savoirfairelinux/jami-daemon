@@ -38,18 +38,19 @@ LIBRESSL_CONF := \
 	-DLIBRESSL_TESTS=Off \
 	-DLIBRESSL_APPS=Off
 
+# GnuTLS keeps its own crypto acceleration, which exports OpenSSL-derived symbols
+# (sha1/sha256/sha512_block_data_order). LibreSSL exports the same symbol names --
+# from its asm, and from the C fallback too -- causing "duplicate symbol" link
+# errors against libgnutls.a. Rename LibreSSL's internal SHA block functions at
+# compile time (works with thin LTO), so GnuTLS remains the provider of the
+# hardware-accelerated crypto.
+LIBRESSL_RENAME_SHA := -Dsha1_block_data_order=libressl_sha1_block_data_order -Dsha256_block_data_order=libressl_sha256_block_data_order -Dsha512_block_data_order=libressl_sha512_block_data_order
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
-LIBRESSL_CONF += -DENABLE_ASM=Off
+LIBRESSL_CONF += -DENABLE_ASM=Off -DCMAKE_C_FLAGS="$(CFLAGS) $(LIBRESSL_RENAME_SHA)"
 endif
-# arm64-v8a: GnuTLS keeps its own ARMv8 crypto acceleration, which exports
-# OpenSSL-derived symbols (sha1/sha256/sha512_block_data_order). LibreSSL exports
-# the same symbol names -- from its asm, and from the C fallback too -- causing
-# "duplicate symbol" link errors against libgnutls.a. Disable LibreSSL's asm and
-# rename its internal SHA block functions at compile time (works with thin LTO),
-# so GnuTLS remains the provider of the hardware-accelerated crypto.
 ifeq ($(ARCH),arm64)
-LIBRESSL_CONF += -DENABLE_ASM=On -DCMAKE_C_FLAGS="$(CFLAGS) -Dsha1_block_data_order=libressl_sha1_block_data_order -Dsha256_block_data_order=libressl_sha256_block_data_order -Dsha512_block_data_order=libressl_sha512_block_data_order"
+LIBRESSL_CONF += -DENABLE_ASM=On -DCMAKE_C_FLAGS="$(CFLAGS) $(LIBRESSL_RENAME_SHA)"
 endif
 endif
 
