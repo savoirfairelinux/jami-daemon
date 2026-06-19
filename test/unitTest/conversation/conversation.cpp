@@ -158,6 +158,7 @@ private:
     void testLoadPartiallyRemovedConversation();
     void testReactionsOnEditedMessage();
     void testUpdateProfileMultiDevice();
+    void testRecoverCorruptedConversation();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -210,6 +211,7 @@ private:
     CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST(testReactionsOnEditedMessage);
     CPPUNIT_TEST(testUpdateProfileMultiDevice);
+    CPPUNIT_TEST(testRecoverCorruptedConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2307,6 +2309,66 @@ ConversationTest::testUpdateProfileMultiDevice()
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
     bob2Account->convModule()->updateConversationInfos(bob2Data.conversationId, {{"title", "My awesome swarm"}});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+}
+
+void
+ConversationTest::testRecoverCorruptedConversation()
+{
+    std::cout << "\nRunning test: " << __func__ << '\n';
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
+
+    // Alice creates a conversation, Bob joins and they exchange messages so Bob
+    // has real history.
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    auto bobMsgSize = bobData.messages.size();
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() > bobMsgSize; }));
+
+    // Bob replies so his current HEAD is a locally-created (loose) commit, which
+    // lets us corrupt exactly that object rather than a packed one.
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "pong"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() > aliceMsgSize; }));
+
+    // Corrupt Bob's local repository the way a hard power loss does: drop the
+    // object HEAD points at from the database.
+    auto repoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+    std::string head;
+    {
+        ConversationRepository repo(bobAccount, convId);
+        head = repo.getHead();
+    }
+    CPPUNIT_ASSERT(!head.empty());
+    // Bob's HEAD is the loose "pong" commit, so removal is precise.
+    CPPUNIT_ASSERT(makeGitObjectUnreachable(repoPath / ".git" / "objects", head));
+    CPPUNIT_ASSERT(!ConversationRepository(bobAccount, convId).validate());
+
+    // Reload Bob so the in-memory history cache is cleared (as after a restart)
+    // and the broken HEAD is read from disk on the next operation. Reloading
+    // itself must NOT validate or recover: integrity is only checked when an
+    // operation actually fails, so the corrupted repository is still on disk.
+    bobData.conversationId.clear();
+    bobAccount->convModule()->loadConversations();
+    std::this_thread::sleep_for(2s);
+    CPPUNIT_ASSERT(!ConversationRepository(bobAccount, convId).validate());
+
+    // Simulate a new-commit notification from Alice. Fetching it reads Bob's
+    // broken HEAD, which fails, triggers validation, and recovers the
+    // conversation by re-cloning a valid copy from Alice.
+    bobAccount->convModule()->fetchNewCommits(aliceUri, aliceDevice, convId, head);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(ConversationRepository(bobAccount, convId).validate());
 }
 
 } // namespace test
