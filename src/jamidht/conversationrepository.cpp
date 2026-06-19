@@ -3879,6 +3879,30 @@ ConversationRepository::mode() const
     return pimpl_->mode();
 }
 
+bool
+ConversationRepository::validate() const
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+    git_oid oid;
+    if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0)
+        return false;
+    // HEAD must point at a commit object that is actually present in the
+    // object database: a truncated or missing pack leaves the reference
+    // dangling over an absent object.
+    git_commit* commit_ptr = nullptr;
+    if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+        return false;
+    GitCommit commit {commit_ptr};
+    // The commit's root tree (and therefore its content) must be present too.
+    git_tree* tree_ptr = nullptr;
+    if (git_commit_tree(&tree_ptr, commit.get()) < 0)
+        return false;
+    GitTree tree {tree_ptr};
+    return true;
+}
+
 std::string
 ConversationRepository::voteKick(const std::string& uri, const std::string& type)
 {

@@ -364,6 +364,15 @@ public:
     std::pair<std::vector<ConversationCommit>, bool> validClone() const;
 
     /**
+     * Check that the repository is structurally usable: HEAD must resolve to a
+     * commit whose object and root tree are present in the object database. A
+     * truncated or missing pack (e.g. after a hard power loss) leaves HEAD
+     * pointing at an absent object, which this detects cheaply.
+     * @return true if the repository can be walked from HEAD
+     */
+    bool validate() const;
+
+    /**
      * Verify the signature against the given commit
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit
