@@ -55,6 +55,8 @@
 #include <memory>
 #include <cstdint>
 #include <utility>
+#include <unordered_set>
+#include <vector>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -3877,6 +3879,64 @@ ConversationMode
 ConversationRepository::mode() const
 {
     return pimpl_->mode();
+}
+
+bool
+ConversationRepository::validate() const
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+    git_oid headOid;
+    if (git_reference_name_to_id(&headOid, repo.get(), "HEAD") < 0)
+        return false;
+
+    // Verify that every object reachable from HEAD - all ancestor commits and
+    // the full tree each of them points at - is present in the database. A
+    // truncated or missing pack can drop objects anywhere in history (older
+    // commits, sub-trees or blobs) while leaving HEAD resolvable; such a gap
+    // would only surface later, and resume the fetch/merge retry loop, when
+    // that part of the conversation is walked. Verified object ids are
+    // remembered so the trees that message commits share, and shared ancestor
+    // commits, are checked only once.
+    std::unordered_set<std::string> verified;
+    struct WalkContext
+    {
+        git_repository* repo;
+        std::unordered_set<std::string>* verified;
+    } walkCtx {repo.get(), &verified};
+    auto checkEntry = [](const char*, const git_tree_entry* entry, void* payload) -> int {
+        auto* ctx = static_cast<WalkContext*>(payload);
+        if (!ctx->verified->emplace(git_oid_tostr_s(git_tree_entry_id(entry))).second)
+            return 1; // already verified: don't look it up or recurse again
+        git_object* obj = nullptr;
+        if (git_object_lookup(&obj, ctx->repo, git_tree_entry_id(entry), GIT_OBJECT_ANY) < 0)
+            return -1; // missing object: stop the walk and report corruption
+        git_object_free(obj);
+        return 0;
+    };
+
+    std::vector<git_oid> pending {headOid};
+    while (!pending.empty()) {
+        auto oid = pending.back();
+        pending.pop_back();
+        if (!verified.emplace(git_oid_tostr_s(&oid)).second)
+            continue; // commit already verified through another branch
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+            return false; // a reachable commit object is missing
+        GitCommit commit {commit_ptr};
+        git_tree* tree_ptr = nullptr;
+        if (git_commit_tree(&tree_ptr, commit.get()) < 0)
+            return false;
+        GitTree tree {tree_ptr};
+        if (verified.emplace(git_oid_tostr_s(git_tree_id(tree.get()))).second
+            && git_tree_walk(tree.get(), GIT_TREEWALK_PRE, checkEntry, &walkCtx) < 0)
+            return false;
+        for (unsigned i = 0, n = git_commit_parentcount(commit.get()); i < n; ++i)
+            pending.push_back(*git_commit_parent_id(commit.get(), i));
+    }
+    return true;
 }
 
 std::string

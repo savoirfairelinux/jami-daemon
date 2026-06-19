@@ -158,6 +158,7 @@ private:
     void testLoadPartiallyRemovedConversation();
     void testReactionsOnEditedMessage();
     void testUpdateProfileMultiDevice();
+    void testRecoverCorruptedConversation();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -210,6 +211,7 @@ private:
     CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST(testReactionsOnEditedMessage);
     CPPUNIT_TEST(testUpdateProfileMultiDevice);
+    CPPUNIT_TEST(testRecoverCorruptedConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2307,6 +2309,54 @@ ConversationTest::testUpdateProfileMultiDevice()
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
     bob2Account->convModule()->updateConversationInfos(bob2Data.conversationId, {{"title", "My awesome swarm"}});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+}
+
+void
+ConversationTest::testRecoverCorruptedConversation()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    // Alice creates a conversation, Bob joins and exchanges a message so he has
+    // real history to recover.
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    auto bobMsgSize = bobData.messages.size();
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() > bobMsgSize; }));
+
+    // Corrupt Bob's local repository the way a hard power loss does: make HEAD
+    // unreachable in the object database, independently of whether the object
+    // is stored loose or packed.
+    auto repoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+    std::string head;
+    {
+        ConversationRepository repo(bobAccount, convId);
+        head = repo.getHead();
+    }
+    CPPUNIT_ASSERT(!head.empty());
+    auto objectsDir = repoPath / ".git" / "objects";
+    std::error_code ec;
+    auto loosePath = objectsDir / head.substr(0, 2) / head.substr(2);
+    if (std::filesystem::exists(loosePath, ec))
+        std::filesystem::remove(loosePath, ec);
+    else
+        std::filesystem::remove_all(objectsDir / "pack", ec);
+    CPPUNIT_ASSERT(!ConversationRepository(bobAccount, convId).validate());
+
+    // Reloading must detect the corruption and re-clone a fresh, valid copy
+    // from Alice instead of looping forever on the dangling HEAD.
+    bobData.conversationId.clear();
+    bobAccount->convModule()->loadConversations();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(ConversationRepository(bobAccount, convId).validate());
 }
 
 } // namespace test

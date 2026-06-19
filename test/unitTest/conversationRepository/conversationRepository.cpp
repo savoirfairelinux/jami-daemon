@@ -83,6 +83,8 @@ private:
     void testInvalidFile();
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
+    void testValidateDetectsCorruptedRepository();
+    void testValidateDetectsCorruptedHistory();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -108,6 +110,8 @@ private:
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
+    CPPUNIT_TEST(testValidateDetectsCorruptedRepository);
+    CPPUNIT_TEST(testValidateDetectsCorruptedHistory);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1182,6 +1186,102 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
     CPPUNIT_ASSERT(reopened != nullptr);
     CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
+}
+
+// Make a git object unreachable regardless of its storage layout: drop the
+// loose object if present, otherwise remove the packs that may contain it (the
+// on-disk signature of the power-loss case). This keeps the corruption tests
+// independent of whether libgit2 stored the object loose or packed.
+static void
+makeObjectUnreachable(const std::filesystem::path& gitObjectsDir, const std::string& oid)
+{
+    std::error_code ec;
+    auto loose = gitObjectsDir / oid.substr(0, 2) / oid.substr(2);
+    if (std::filesystem::exists(loose, ec)) {
+        std::filesystem::remove(loose, ec);
+        return;
+    }
+    auto packDir = gitObjectsDir / "pack";
+    if (std::filesystem::is_directory(packDir, ec))
+        std::filesystem::remove_all(packDir, ec);
+}
+
+void
+ConversationRepositoryTest::testValidateDetectsCorruptedRepository()
+{
+    // A repository with an object missing from its database (e.g. after a
+    // truncated or missing pack following a hard power loss) must be reported
+    // as invalid, so the daemon can recover it by re-cloning instead of looping
+    // forever trying to walk a dangling HEAD.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+    const auto objectsDir = repoPath / ".git" / "objects";
+
+    // A freshly created conversation must be valid.
+    CPPUNIT_ASSERT(repository->validate());
+
+    // Corruption deeper than HEAD must also be detected: take an object
+    // referenced by HEAD's root tree (one level below HEAD) and make it
+    // unreachable. validate() must walk the whole tree and reject the
+    // repository; otherwise the missing object would only surface later when
+    // files are read, preserving the retry loop this change prevents.
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    git_oid headOid;
+    CPPUNIT_ASSERT(git_reference_name_to_id(&headOid, repo, "HEAD") == 0);
+    git_commit* commit = nullptr;
+    CPPUNIT_ASSERT(git_commit_lookup(&commit, repo, &headOid) == 0);
+    git_tree* tree = nullptr;
+    CPPUNIT_ASSERT(git_commit_tree(&tree, commit) == 0);
+    CPPUNIT_ASSERT(git_tree_entrycount(tree) > 0);
+    std::string childObj = git_oid_tostr_s(git_tree_entry_id(git_tree_entry_byindex(tree, 0)));
+    git_tree_free(tree);
+    git_commit_free(commit);
+    git_repository_free(repo);
+    CPPUNIT_ASSERT(!childObj.empty());
+
+    makeObjectUnreachable(objectsDir, childObj);
+    CPPUNIT_ASSERT(!repository->validate());
+
+    // Don't leave the corrupted repository on disk for other test cases.
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
+}
+
+void
+ConversationRepositoryTest::testValidateDetectsCorruptedHistory()
+{
+    // A missing object reachable only through history (an older commit, or a
+    // tree/blob it introduced) must also be rejected: HEAD and its current tree
+    // can be intact while an ancestor pack is gone, which still breaks log
+    // traversal and would resume the retry loop.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+    const auto objectsDir = repoPath / ".git" / "objects";
+
+    // Remember the initial commit, then add a second one so HEAD moves past it
+    // and the first commit becomes pure history.
+    const auto firstCommit = repository->getHead();
+    CPPUNIT_ASSERT(!firstCommit.empty());
+    CPPUNIT_ASSERT(!repository->commitMessage(R"({"body":"second","type":"text/plain"})").empty());
+    CPPUNIT_ASSERT(repository->getHead() != firstCommit);
+    CPPUNIT_ASSERT(repository->validate());
+
+    // Drop the historical commit: HEAD and its tree are still present, but the
+    // ancestry is now broken.
+    makeObjectUnreachable(objectsDir, firstCommit);
+    CPPUNIT_ASSERT(!repository->validate());
+
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
 }
 
 } // namespace test
