@@ -15,8 +15,8 @@
   "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://git.jami.net/savoirfairelinux/jami-web.git",
-    "directory": "daemon/bin/nodejs/npm/linux-arm64"
+    "url": "https://git.jami.net/savoirfairelinux/jami-daemon.git",
+    "directory": "bin/nodejs/npm/linux-arm64"
   },
   "keywords": [
     "jami",
