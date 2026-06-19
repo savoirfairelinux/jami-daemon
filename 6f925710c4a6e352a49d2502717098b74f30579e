@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4877dba5_4e999df8",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1889,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:30:47Z",
+      "side": 1,
+      "message": "[Critical] Line 1889: 🔴 Critical Issues - The recovery loop skips cloning when the only persisted member is the local account. That is a common case after a 1:1 conversation was accepted but member metadata was not fully populated or was partially stale. The corrupted conversation is left unloaded, no clone is scheduled, and the user permanently loses access until another startup path repairs metadata. Track whether at least one remote clone source was scheduled and either fall back to the conversation request/contact metadata or keep the conversation in a recoverable pending state with an explicit retry source. Example:\n```suggestion\nbool scheduled \u003d false;\nfor (const auto\u0026 member : shared-\u003egetConversationMembers(convId)) {\n    auto uriIt \u003d member.find(\"uri\");\n    if (uriIt \u003d\u003d member.end() || uriIt-\u003esecond.empty() || uriIt-\u003esecond \u003d\u003d shared-\u003eusername_)\n        continue;\n    scheduled \u003d true;\n    shared-\u003ecloneConversationFrom(convId, uriIt-\u003esecond);\n}\nif (!scheduled)\n    JAMI_WARNING(\"[Account {}] [Conversation {}] No remote member available for repository recovery\", shared-\u003eaccountId_, convId);\n```",
+      "revId": "6f925710c4a6e352a49d2502717098b74f30579e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b345530_ed68757d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3900,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:30:47Z",
+      "side": 1,
+      "message": "[Critical] Line 3900: 🔴 Critical Issues - `validate()` checks blob/subtree presence with `git_odb_exists()`, which can succeed from the pack index even when the pack data is truncated or unreadable. The new API documentation explicitly claims it detects truncated packs, but this implementation may still mark such repositories valid and re-enter the fetch/merge failure loop later when content is inflated. Read object headers for every reachable object instead of only checking index presence, while still avoiding blob payload inflation. Suggested fix:\n```suggestion\nsize_t len \u003d 0;\ngit_object_t type \u003d GIT_OBJECT_ANY;\nif (git_odb_read_header(\u0026len, \u0026type, ctx-\u003eodb, id) \u003c 0)\n    return -1;\n```",
+      "revId": "6f925710c4a6e352a49d2502717098b74f30579e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "687aa49b_aa9a86b4",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:30:47Z",
+      "side": 1,
+      "message": "[Medium] Line 57: 🟡 Suggestions - `makeGitObjectUnreachable()` returns true even if `std::filesystem::remove()` fails, because the error code is ignored. That can make corruption tests pass the setup assertion while the object still exists, leaving the test to fail later with a misleading `validate()` assertion. Check the remove result and error code explicitly.\n```suggestion\nif (std::filesystem::exists(loose, ec)) {\n    ec.clear();\n    return std::filesystem::remove(loose, ec) \u0026\u0026 !ec;\n}\n```",
+      "revId": "6f925710c4a6e352a49d2502717098b74f30579e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
