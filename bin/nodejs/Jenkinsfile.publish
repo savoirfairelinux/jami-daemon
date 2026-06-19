@@ -60,7 +60,6 @@ pipeline {
                     agent { label 'linux-builder && amd64' }
                     steps {
                         checkout scm
-                        sh 'git submodule update --init --recursive'
                         buildNativeAddonInDocker('linux', 'x64')
                         stash includes: 'jamid.node', name: 'native-linux-x64'
                     }
@@ -69,7 +68,6 @@ pipeline {
                     agent { label 'linux-builder' }
                     steps {
                         checkout scm
-                        sh 'git submodule update --init --recursive'
                         buildNativeAddonInDocker('linux', 'arm64')
                         stash includes: 'jamid.node', name: 'native-linux-arm64'
                     }
@@ -78,7 +76,6 @@ pipeline {
                     agent { label 'darwin && arm64' }
                     steps {
                         checkout scm
-                        sh 'git submodule update --init --recursive'
                         sh 'npm ci --ignore-scripts'
                         buildNativeAddonOnHost('darwin', 'arm64')
                         stash includes: 'jamid.node', name: 'native-darwin-arm64'
@@ -99,7 +96,6 @@ pipeline {
                 stage('Checkout & setup') {
                     steps {
                         checkout scm
-                        sh 'git submodule update --init --recursive'
                         sh 'npm ci --ignore-scripts'
                         setVersionIfRequested()
                     }
@@ -157,7 +153,7 @@ pipeline {
  */
 void buildNativeAddonInDocker(String platform, String arch) {
     dir('daemon') {
-        sh "docker build -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
+        sh "docker build -f bin/nodejs/Dockerfile -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
     }
     sh """
         container_id=\$(docker create jami-daemon-${platform}-${arch}:${env.BUILD_ID})
