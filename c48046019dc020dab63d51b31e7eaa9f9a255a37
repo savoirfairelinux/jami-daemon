@@ -34,6 +34,24 @@
       "parentUuid": "ce46dde5_acc315b4",
       "revId": "c48046019dc020dab63d51b31e7eaa9f9a255a37",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c9b44a0_0786026f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T20:49:39Z",
+      "side": 1,
+      "message": "I merged her patch. On the current master I only get one plugin test failure (`testCall` on line 665) which doesn\u0027t seem related to the patch. There could be other non-deterministic failures remaining of course. In any case, they\u0027ll have to be fixed in separate commits.",
+      "parentUuid": "df20608a_3b6a878b",
+      "revId": "c48046019dc020dab63d51b31e7eaa9f9a255a37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
