@@ -127,7 +127,7 @@ pipeline {
 
                 stage('Publish jami-core') {
                     steps {
-                        dir('daemon/bin/nodejs') {
+                        dir('bin/nodejs') {
                             npmPublishOrPack()
                         }
                     }
@@ -149,12 +149,10 @@ pipeline {
 
 /**
  * Build the native daemon addon inside Docker using the existing
- * daemon/Dockerfile, then extract jamid.node to the workspace root.
+ * bin/nodejs/Dockerfile, then extract jamid.node to the workspace root.
  */
 void buildNativeAddonInDocker(String platform, String arch) {
-    dir('daemon') {
-        sh "docker build -f bin/nodejs/Dockerfile -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
-    }
+    sh "docker build -f bin/nodejs/Dockerfile -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
     sh """
         container_id=\$(docker create jami-daemon-${platform}-${arch}:${env.BUILD_ID})
         docker cp \${container_id}:/daemon/bin/nodejs/build/Release/jamid.node jamid.node
@@ -169,16 +167,16 @@ void buildNativeAddonInDocker(String platform, String arch) {
 void buildNativeAddonOnHost(String platform, String arch) {
     sh """
         node -e "if (process.platform !== '${platform}' || process.arch !== '${arch}') { console.error('Expected ${platform}-${arch}, got ' + process.platform + '-' + process.arch); process.exit(1); }"
-        rm -rf daemon/build daemon/bin/nodejs/build
-        cmake -S daemon -B daemon/build \
+        rm -rf build bin/nodejs/build
+        cmake -S . -B build \
             -DJAMI_NODEJS=ON \
             -DBUILD_TESTING=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
             -DCMAKE_OSX_ARCHITECTURES=${arch} \
             -GNinja
-        cmake --build daemon/build --config Release --parallel 4
-        cp daemon/bin/nodejs/build/Release/jamid.node jamid.node
+        cmake --build build --config Release --parallel 4
+        cp bin/nodejs/build/Release/jamid.node jamid.node
     """
 }
 
@@ -187,7 +185,7 @@ void buildNativeAddonOnHost(String platform, String arch) {
  * from the stashed jamid.node binary, then publish it.
  */
 void publishPlatformPackage(String os, String arch) {
-    def pkgDir = "daemon/bin/nodejs/npm/${os}-${arch}"
+    def pkgDir = "bin/nodejs/npm/${os}-${arch}"
 
     dir(pkgDir) {
         sh 'rm -f jamid.node'
@@ -204,19 +202,19 @@ void setVersionIfRequested() {
 
     def version = params.RELEASE_VERSION.trim()
     def packageDirs = [
-        'daemon/bin/nodejs',
-        'daemon/bin/nodejs/npm/darwin-arm64',
-        'daemon/bin/nodejs/npm/linux-arm64',
-        'daemon/bin/nodejs/npm/linux-x64',
+        'bin/nodejs',
+        'bin/nodejs/npm/darwin-arm64',
+        'bin/nodejs/npm/linux-arm64',
+        'bin/nodejs/npm/linux-x64',
     ]
 
     for (packageDir in packageDirs) {
         sh "npm version '${version}' --no-git-tag-version --prefix '${packageDir}'"
     }
 
-    // Keep optionalDependencies in daemon/bin/nodejs/package.json in sync.
+    // Keep optionalDependencies in bin/nodejs/package.json in sync.
     sh """
-        cd daemon/bin/nodejs
+        cd bin/nodejs
         node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
