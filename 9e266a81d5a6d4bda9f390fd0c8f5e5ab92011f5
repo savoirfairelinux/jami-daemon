@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "602750c2_6898ee57",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 1251,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T17:01:55Z",
+      "side": 1,
+      "message": "[🟢 Good Practice] Line 1251: Good handling of out-of-order edition transforms: tagging superseded edition bodies with the commit id and only propagating an overwrite when messageId \u003d\u003d latestEditionId prevents stale async plugin results from replacing the newest displayed body.",
+      "revId": "9e266a81d5a6d4bda9f390fd0c8f5e5ab92011f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92a00b56_ab7a77cd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 1988,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T17:01:55Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1988: loadMissingBodyOverwrites() calls transformSwarmMessages() synchronously from the loadMessages callback path. Plugin transforms can be expensive or plugin-controlled, so this can block delivery of SwarmLoaded follow-up processing and potentially stall the conversation thread/UI-facing signal flow for large histories. Consider dispatching the transform work asynchronously, similar to other plugin work, and only taking loadedHistory_.mutex for snapshot/writeback.\n```suggestion\n// Queue plugin transform work off the load callback thread, then emit updates when complete.\ndht::ThreadPool::io().run([w \u003d weak_from_this()] {\n    if (auto self \u003d w.lock())\n        self-\u003eloadMissingBodyOverwrites();\n});\n```",
+      "revId": "9e266a81d5a6d4bda9f390fd0c8f5e5ab92011f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "888041ef_0b47a018",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 2004,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T17:01:55Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 2004: The batch includes every loaded TEXT message missing bodyOverwrite, including local messages. Earlier publishMessage() is constructed with the incoming/outgoing flag, but transformSwarmMessages() receives only SwarmMessage and cannot distinguish direction unless it infers from author. If body overwrites are intended only for remote messages, this may unexpectedly translate/replace the user\u0027s own messages. Filter on author before adding to the batch or document that plugins must handle both directions.\n```suggestion\nif (msg-\u003etype \u003d\u003d CommitType::TEXT\n    \u0026\u0026 msg-\u003ebody.at(CommitKey::AUTHOR) !\u003d userId_\n    \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\")) {\n    batch.push_back(*msg);\n}\n```",
+      "revId": "9e266a81d5a6d4bda9f390fd0c8f5e5ab92011f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2024eff3_83b79c6e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 63
+      },
+      "lineNbr": 2025,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T17:01:55Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 2025: A plugin can return an arbitrarily large bodyOverwrite, which is then stored in memory and emitted to clients without any bound. Since this is plugin-controlled data, a buggy or malicious plugin could cause high memory usage or oversized IPC payloads. Apply the same maximum body-size constraints used for chat bodies, or reject/truncate with a logged warning before storing pluginData.",
+      "revId": "9e266a81d5a6d4bda9f390fd0c8f5e5ab92011f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
