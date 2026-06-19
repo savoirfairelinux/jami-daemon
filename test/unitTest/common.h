@@ -40,3 +40,25 @@ extern void wait_for_removal_of(const std::string& account,
 extern std::map<std::string, std::string> load_actors(const std::filesystem::path& from_yaml);
 
 extern std::map<std::string, std::string> load_actors_and_wait_for_announcement(const std::string& from_yaml);
+
+// Make a git object unreachable. Removes the loose object if present (precise:
+// only the target object disappears) and returns true. If the object is packed,
+// falls back to removing the pack directory and returns false; callers that
+// assert on a specific missing object should check the return value so they
+// fail loudly rather than silently corrupting unrelated objects. The freshly
+// created repositories used by the precision tests store objects loose, so the
+// precise path is taken there.
+inline bool
+makeGitObjectUnreachable(const std::filesystem::path& gitObjectsDir, const std::string& oid)
+{
+    std::error_code ec;
+    auto loose = gitObjectsDir / oid.substr(0, 2) / oid.substr(2);
+    if (std::filesystem::exists(loose, ec)) {
+        ec.clear();
+        return std::filesystem::remove(loose, ec) && !ec;
+    }
+    auto packDir = gitObjectsDir / "pack";
+    if (std::filesystem::is_directory(packDir, ec))
+        std::filesystem::remove_all(packDir, ec);
+    return false;
+}
