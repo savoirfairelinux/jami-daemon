@@ -364,6 +364,17 @@ public:
     std::pair<std::vector<ConversationCommit>, bool> validClone() const;
 
     /**
+     * Check that the repository is structurally complete: every object reachable
+     * from HEAD (all ancestor commits and the full tree each of them points at)
+     * must be present in the object database. A truncated or missing pack (e.g.
+     * after a hard power loss) can drop objects anywhere in history while leaving
+     * HEAD resolvable, which would otherwise only fail later when the
+     * conversation is walked.
+     * @return true if the whole history reachable from HEAD is present
+     */
+    bool validate() const;
+
+    /**
      * Verify the signature against the given commit
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit

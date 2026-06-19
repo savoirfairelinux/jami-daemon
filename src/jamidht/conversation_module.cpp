@@ -1646,6 +1646,10 @@ ConversationModule::loadConversations()
         size_t convNb;
         std::map<dht::InfoHash, Contact> contacts;
         std::vector<std::tuple<std::string, std::string, std::string>> updateContactConv;
+        // Conversations whose on-disk repository was found corrupted and must
+        // be recovered by re-cloning from another member device. Guarded by
+        // convMtx.
+        std::set<std::string> toReclone;
     };
     struct PendingConvCounter
     {
@@ -1691,6 +1695,35 @@ ConversationModule::loadConversations()
                         });
                     });
                     conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
+                    if (!conv->isValid()) {
+                        // The on-disk repository is structurally broken (e.g. a
+                        // missing or truncated pack after a hard power loss
+                        // leaves HEAD pointing at an absent object). Operating
+                        // on it would trap the daemon in an endless fetch/merge
+                        // retry loop, so do not load it as an active
+                        // conversation. Keep its metadata (members come from
+                        // convInfos_, stored independently of the git
+                        // repository) and schedule a fresh clone from another
+                        // member device. The atomic-staging clone backs up the
+                        // corrupted copy and only swaps a valid repository into
+                        // place, so nothing is lost if no peer is reachable yet.
+                        JAMI_ERROR("[Account {}] [Conversation {}] Local repository is corrupted, "
+                                   "scheduling recovery",
+                                   pimpl_->accountId_,
+                                   repository);
+                        std::lock_guard lkMtx {ctx->convMtx};
+                        if (pimpl_->convInfos_.find(repository) == pimpl_->convInfos_.end()) {
+                            JAMI_WARNING("[Account {}] [Conversation {}] No metadata to recover from",
+                                         pimpl_->accountId_,
+                                         repository);
+                            return;
+                        }
+                        // Don't publish the invalid Conversation: leave it unloaded
+                        // (the metadata-only pass below registers it from convInfos_)
+                        // and let the successful re-clone install a fresh instance.
+                        ctx->toReclone.insert(repository);
+                        return;
+                    }
                     auto members = conv->memberUris(acc->getUsername(), {});
                     // NOTE: The following if is here to protect against any incorrect state
                     // that can be introduced
@@ -1836,6 +1869,46 @@ ConversationModule::loadConversations()
             if (auto shared = w.lock())
                 shared->fixStructures(acc, updateContactConv, toRm);
         });
+
+    // Recover conversations whose repository was found corrupted by fetching a
+    // fresh copy from another member device, reusing the regular clone fallback
+    // (which retries with exponential backoff if no peer is reachable yet).
+    if (!ctx->toReclone.empty()) {
+        dht::ThreadPool::io().run([w = pimpl_->weak(), toReclone = std::move(ctx->toReclone)]() {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            for (const auto& convId : toReclone) {
+                // Recovery clones from another member's device. If the persisted
+                // metadata lists no member other than us, there is no source to
+                // clone from: retrying would only replace the endless fetch/merge
+                // loop with an endless clone loop, so surface the conversation as
+                // unrecoverable instead (mirroring the validation-failure cap).
+                auto members = shared->getConversationMembers(convId);
+                bool hasRemoteMember = std::any_of(members.begin(), members.end(), [&](const auto& m) {
+                    auto it = m.find("uri");
+                    return it != m.end() && it->second != shared->username_;
+                });
+                if (!hasRemoteMember) {
+                    JAMI_ERROR("[Account {}] [Conversation {}] Local repository is corrupted and no other "
+                               "member is known to recover from; marking unrecoverable",
+                               shared->accountId_,
+                               convId);
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->accountId_,
+                        convId,
+                        EUNRECOVERABLE,
+                        "Conversation repository is corrupted and cannot be recovered");
+                    continue;
+                }
+                // fallbackClone() takes a default (no-error) asio::error_code and
+                // resolves the source devices itself from the members persisted in
+                // convInfos_, so recovery targets the known peers of the
+                // conversation, retrying with backoff until one is reachable.
+                shared->fallbackClone({}, convId);
+            }
+        });
+    }
 }
 
 void
