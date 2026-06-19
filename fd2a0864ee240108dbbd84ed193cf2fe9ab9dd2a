@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99f6d4dc_d662cd37",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1902,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T01:27:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 1902: fallbackClone({}, convId) is invoked with an empty peer/device hint for every corrupted conversation. If fallbackClone relies on the provided contact/device to select a source, this can repeatedly schedule recovery without ever targeting known members from convInfos_, leaving the corrupted conversation unloaded. Use the persisted conversation metadata to pass known member URIs/devices, or add an explicit recovery helper that deterministically enumerates members before retrying.\n```suggestion\nfor (const auto\u0026 convId : toReclone) {\n    // Resolve recovery candidates from convInfos_ / members metadata instead of\n    // relying on an empty hint.\n    shared-\u003efallbackClone(recoveryCandidateUri, convId);\n}\n```",
+      "revId": "fd2a0864ee240108dbbd84ed193cf2fe9ab9dd2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24b54fe2_4590ad2d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3897,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T01:27:22Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 3897: validate() only verifies the HEAD commit and the objects reachable from HEAD\u0027s tree, but it does not verify parent commits/history. Conversation operations such as log traversal, merge-base checks, validClone(), or signature validation can still fail or loop if a pack containing older commits is missing while HEAD and its current tree remain present. Walk the commit graph from HEAD and verify each commit and its tree, or run an equivalent libgit2 object connectivity check before considering the repository valid.\n```suggestion\n// Pseudocode: walk all commits reachable from HEAD and validate each tree.\ngit_revwalk* walk \u003d nullptr;\nif (git_revwalk_new(\u0026walk, repo.get()) \u003c 0)\n    return false;\nGitRevwalk revwalk {walk};\nif (git_revwalk_push_head(revwalk.get()) \u003c 0)\n    return false;\n\ngit_oid commitOid;\nwhile (git_revwalk_next(\u0026commitOid, revwalk.get()) \u003d\u003d 0) {\n    git_commit* commitPtr \u003d nullptr;\n    if (git_commit_lookup(\u0026commitPtr, repo.get(), \u0026commitOid) \u003c 0)\n        return false;\n    GitCommit commit {commitPtr};\n    git_tree* treePtr \u003d nullptr;\n    if (git_commit_tree(\u0026treePtr, commit.get()) \u003c 0)\n        return false;\n    GitTree tree {treePtr};\n    if (git_tree_walk(tree.get(), GIT_TREEWALK_PRE, checkEntry, repo.get()) \u003c 0)\n        return false;\n}\n```",
+      "revId": "fd2a0864ee240108dbbd84ed193cf2fe9ab9dd2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca7831e1_59596fa6",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1227,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T01:27:22Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 1227: The corruption test only removes an object directly referenced by HEAD\u0027s root tree, so it does not cover the important case where HEAD and the current tree are intact but an older commit or parent tree/blob is missing. Add a test that creates at least two commits, removes an object reachable only through history, and asserts validate() fails; this would catch the current connectivity gap.\n```suggestion\n// After creating a second commit, remove an object reachable from the first\n// commit only, then assert validate() rejects the repository.\nmakeObjectUnreachable(objectsDir, historicalCommitOrTreeOid);\nCPPUNIT_ASSERT(!repository-\u003evalidate());\n```",
+      "revId": "fd2a0864ee240108dbbd84ed193cf2fe9ab9dd2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
