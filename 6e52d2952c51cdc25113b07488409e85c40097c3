@@ -88,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf886f3c_48fffedc",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T14:08:33Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "791b1eec_cc378229",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "76569605_dcfbf274",
@@ -101,6 +119,24 @@
       "writtenOn": "2026-06-05T17:27:52Z",
       "side": 1,
       "message": "[Critical] Line 282: transformSwarmMessages() holds ChatServicesManager::mtx_ while calling plugin code. Other paths in this patch explicitly avoid invoking plugin callbacks under this mutex because handlers can call back into ChatServicesManager services; this path reintroduces the same deadlock risk during loadMissingBodyOverwrites()/message processing. Snapshot the enabled handlers under the lock, then invoke transformSwarmMessages() after releasing it.\n```suggestion\nstd::vector\u003cChatHandler*\u003e handlersToTransform;\n{\n    std::lock_guard const lk(mtx_);\n    // populate handlersToTransform from toggled/allowed handlers\n}\nfor (auto* handler : handlersToTransform) {\n    handler-\u003etransformSwarmMessages(messages, accountId, conversationId);\n}\n```",
+      "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a50e2675_929f40c9",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T14:08:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "76569605_dcfbf274",
       "revId": "6e52d2952c51cdc25113b07488409e85c40097c3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

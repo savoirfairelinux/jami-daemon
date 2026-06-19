@@ -141,6 +141,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c28be60c_edb6d409",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T14:08:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c1cbb14_42b19511",
+      "revId": "9df46bc67757c0b14de2148662dd0334ca49fabe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "51059d42_5451d1cb",
