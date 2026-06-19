@@ -333,6 +333,30 @@
       },
       "revId": "bb2244aa141155e4ae9c2eec173a71e66dfe94d5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4af36fa_7c0c751f",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T19:57:02Z",
+      "side": 1,
+      "message": "Never mind, I get it now.",
+      "parentUuid": "b1d761c7_8c2445c9",
+      "range": {
+        "startLine": 339,
+        "startChar": 20,
+        "endLine": 339,
+        "endChar": 49
+      },
+      "revId": "bb2244aa141155e4ae9c2eec173a71e66dfe94d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
