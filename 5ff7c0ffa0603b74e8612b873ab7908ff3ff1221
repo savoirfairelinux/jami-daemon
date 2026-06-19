@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5266eddb_44c3e4ec",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1910,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:48:23Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 1910: Recovery only schedules cloning from the first non-self member and then breaks. If that member is offline, stale, or has no reachable devices, the corrupted repository remains unrecovered even when other members could provide a valid clone. Try all remote members, or make cloneConversationFrom() explicitly continue to the next candidate on failure.\n\n```suggestion\n                    if (uriIt-\u003esecond !\u003d shared-\u003eusername_) {\n                        scheduled \u003d true;\n                        shared-\u003ecloneConversationFrom(convId, uriIt-\u003esecond);\n                    }\n```",
+      "revId": "5ff7c0ffa0603b74e8612b873ab7908ff3ff1221",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e27ffd4_31fef62c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 3937,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:48:23Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 3937: The validation only calls git_odb_read_header() for tree entries, which can succeed for packed blobs even when the object payload is truncated. That means validate() may return true for exactly the kind of corrupted repository this change is meant to recover, and the daemon can still fail later when reading the object. Fully read or stream each object so payload corruption is detected.\n\n```suggestion\n        git_odb_object* object \u003d nullptr;\n        if (git_odb_read(\u0026object, ctx-\u003eodb, id) \u003c 0)\n            return -1; // missing, truncated, or unreadable object\n        git_odb_object_free(object);\n```",
+      "revId": "5ff7c0ffa0603b74e8612b873ab7908ff3ff1221",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
