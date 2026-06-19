@@ -83,6 +83,7 @@ private:
     void testInvalidFile();
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
+    void testValidateDetectsCorruptedRepository();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -108,6 +109,7 @@ private:
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
+    CPPUNIT_TEST(testValidateDetectsCorruptedRepository);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1182,6 +1184,41 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
     CPPUNIT_ASSERT(reopened != nullptr);
     CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
+}
+
+void
+ConversationRepositoryTest::testValidateDetectsCorruptedRepository()
+{
+    // A repository whose HEAD points at an object missing from the object
+    // database (e.g. after a truncated or missing pack following a hard power
+    // loss) must be reported as invalid, so the daemon can recover it by
+    // re-cloning instead of looping forever trying to walk a dangling HEAD.
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    const auto convId = repository->id();
+    const auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / convId;
+
+    // A freshly created conversation must be valid.
+    CPPUNIT_ASSERT(repository->validate());
+
+    // Make HEAD point at an object missing from the database: the on-disk
+    // signature of a truncated or missing pack after a hard power loss.
+    const auto head = repository->getHead();
+    CPPUNIT_ASSERT(!head.empty());
+    const auto loosePath = repoPath / ".git" / "objects" / head.substr(0, 2) / head.substr(2);
+    CPPUNIT_ASSERT_MESSAGE("Expected a loose object for HEAD",
+                           std::filesystem::is_regular_file(loosePath));
+    std::filesystem::remove(loosePath);
+
+    // validate() opens a fresh repository handle on each call, so the corruption
+    // is detected without rebuilding the (now unusable) repository object.
+    CPPUNIT_ASSERT(!repository->validate());
+
+    // Don't leave the corrupted repository on disk for other test cases.
+    repository.reset();
+    std::filesystem::remove_all(repoPath);
 }
 
 } // namespace test

@@ -242,6 +242,15 @@ public:
      */
     std::string id() const;
 
+    /**
+     * Check that the underlying repository is structurally usable (HEAD can be
+     * resolved to a present commit). A corrupted repository (e.g. a missing
+     * pack after a hard power loss) must not be operated on, as it would trap
+     * the daemon in an endless fetch/merge retry loop.
+     * @return true if the conversation repository is valid
+     */
+    bool isValid() const;
+
     // Member management
     /**
      * Add conversation member
