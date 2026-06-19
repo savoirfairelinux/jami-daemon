@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f0e6df1_8d0aaa02",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1884,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:14:23Z",
+      "side": 1,
+      "message": "[Critical] Line 1884: Calling `fallbackClone({}, convId)` after rejecting the corrupted repository can fail to find peers because the active `Conversation` was deliberately not published, and an empty sender gives the clone path no known source device to target. In that case recovery becomes a no-op even though `convInfos_` still has member metadata. Build the source list from the stored metadata before scheduling the clone, or add an overload that re-clones from `convInfos_` explicitly.\n\n```suggestion\nfor (const auto\u0026 convId : toReclone) {\n    const auto members \u003d shared-\u003econversationMembersFromInfos(convId);\n    shared-\u003efallbackClone(members, convId);\n}\n```",
+      "revId": "5883f25b54ceafe8e5b83a7f5e47953730a04da1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9580bec_05f73db5",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2341,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:14:23Z",
+      "side": 1,
+      "message": "Line 2341: The test ignores the return value from `makeGitObjectUnreachable()`. If the HEAD object is packed, the helper may remove the whole pack directory and still return false, which makes the test less precise and can hide that it did not corrupt exactly the object the scenario describes. Assert the return value here, as the repository tests do.\n\n```suggestion\nCPPUNIT_ASSERT(makeGitObjectUnreachable(repoPath / \".git\" / \"objects\", head));\n```",
+      "revId": "5883f25b54ceafe8e5b83a7f5e47953730a04da1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
