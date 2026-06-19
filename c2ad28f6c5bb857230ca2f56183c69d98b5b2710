@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6443f7a3_13b8b70e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3897,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:51:51Z",
+      "side": 1,
+      "message": "[Critical] Line 3897: validate() only verifies that HEAD and its root tree exist, but a repository can still be corrupted with missing subtrees/blobs or parent commits while passing this check. That would still leave later history/file walking operations failing and could preserve the fetch/merge retry loop this change is meant to avoid. Walk the HEAD tree and, if conversation operations depend on history traversal, the reachable commits as well. For example:\n```suggestion\n    // Verify the full tree reachable from HEAD, not only the root tree object.\n    git_tree* tree_ptr \u003d nullptr;\n    if (git_commit_tree(\u0026tree_ptr, commit.get()) \u003c 0)\n        return false;\n    GitTree tree {tree_ptr};\n    git_diff_options opts \u003d GIT_DIFF_OPTIONS_INIT;\n    // Alternatively use git_revwalk + git_commit_tree/git_tree_walk to ensure every\n    // reachable commit/tree/blob needed by the conversation can be loaded.\n```\nUse the existing RAII wrappers/patterns in this file to implement a complete object reachability check.",
+      "revId": "c2ad28f6c5bb857230ca2f56183c69d98b5b2710",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe2ad75c_6574fc68",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1206,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T00:51:51Z",
+      "side": 1,
+      "message": "[Critical] Line 1206: The corruption test only removes a loose HEAD object, matching the current implementation but not the documented failure mode of a missing/truncated pack. This can let validate() pass for repositories with missing blobs/subtrees or packed history corruption. Add a test that removes or makes unreachable an object below HEAD\u0027s tree, or a packed reachable object, and assert validate() fails.\n```suggestion\n    // Also corrupt an object reachable from HEAD\u0027s tree/history, not only HEAD itself,\n    // and assert validate() rejects the repository.\n```",
+      "revId": "c2ad28f6c5bb857230ca2f56183c69d98b5b2710",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
