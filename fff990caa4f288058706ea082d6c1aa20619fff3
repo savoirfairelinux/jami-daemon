@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bdd96305_5670362a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1872,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:17:06Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 1872: The recovery scheduling reads `ctx-\u003etoReclone` immediately after the load loop, but entries are inserted from the per-conversation async load callbacks. If those callbacks are still running, corrupted repositories can be missed and never re-cloned. Move the re-clone dispatch into the same completion path that runs after `PendingConvCounter` observes all conversations loaded, or otherwise ensure all loaders have completed before moving `toReclone`.\n```suggestion\n// In the all-conversations-loaded completion path, after pending loaders finish:\nif (!ctx-\u003etoReclone.empty()) {\n    dht::ThreadPool::io().run([w \u003d pimpl_-\u003eweak(), toReclone \u003d std::move(ctx-\u003etoReclone)]() {\n        // existing recovery loop\n    });\n}\n```",
+      "revId": "fff990caa4f288058706ea082d6c1aa20619fff3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c884957_d048b213",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3915,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:17:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 3915: Running a full reachable-history/blob validation during every conversation load can become expensive for large conversations and many accounts, because it walks every commit/tree/blob reachable from HEAD before startup can publish the conversation. Consider using libgit2\u0027s object database/graph validation primitives if available, limiting this deep validation to suspected repositories, or persisting a successful validation marker keyed by HEAD/pack state so unchanged repositories do not pay the full cost every startup.",
+      "revId": "fff990caa4f288058706ea082d6c1aa20619fff3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1833428b_8f4a47c4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3919,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:17:06Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 3919: `validate()` stores `git_oid_tostr_s(...)` directly in `std::string` keys. `git_oid_tostr_s` returns a libgit2 thread-local/static buffer, so this is only safe because `emplace` copies immediately; it is easy to misuse and obscures intent. Prefer formatting into a fixed buffer helper and reuse it for all OID keys.\n```suggestion\nauto oidToString \u003d [](const git_oid* oid) {\n    std::array\u003cchar, GIT_OID_HEXSZ + 1\u003e buf {};\n    git_oid_tostr(buf.data(), buf.size(), oid);\n    return std::string {buf.data()};\n};\n```",
+      "revId": "fff990caa4f288058706ea082d6c1aa20619fff3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
