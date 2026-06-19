@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6977018_18ef687d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 64
+      },
+      "lineNbr": 1207,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T18:17:46Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 1207: Edition update signals were removed from `handleEdition()` and are now only emitted from the plugin-handling branch in `conversationDataLoaded()`. Edits applied through `handleMessage()` from already-pending editions still update `sharedCommit-\u003ebody` and `editions` but never emit `SwarmMessageUpdated`, so clients can miss the final edited body when the edit was seen before the original message. Keep the existing signal after pending editions are applied, or emit an update from `handleMessage()` after the pending-edition block.\n```suggestion\n    if (messageReceived)\n        emitSignal\u003clibjami::ConversationSignal::SwarmMessageUpdated\u003e(accountId_, repository_-\u003eid(), *sharedCommit);\n```",
+      "revId": "37baa34feee6241852b56181a84c4a0edc6d1f3d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26fa2be1_48c0c091",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 64
+      },
+      "lineNbr": 1969,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T18:17:46Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 1969: This patch introduces `\u003cranges\u003e`/`std::views::values`, but jami-daemon is built as C++17 in this tree. This will fail to compile on supported toolchains. Replace the ranges iteration with ordinary map iteration, e.g.:\n```suggestion\n        for (const auto\u0026 [id, msg] : loadedHistory_.quickAccess) {\n            if (msg-\u003etype \u003d\u003d CommitType::TEXT \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\")) {\n                batch.push_back(*msg);\n            }\n        }\n```",
+      "revId": "37baa34feee6241852b56181a84c4a0edc6d1f3d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
