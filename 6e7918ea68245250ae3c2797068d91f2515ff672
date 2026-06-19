@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "691c8b0e_5dd67aad",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1878,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:04:46Z",
+      "side": 1,
+      "message": "[Critical] Line 1878: 🔴 Critical: `fallbackClone({}, convId)` is invoked for every corrupted conversation without excluding conversations that have no persisted members or where the current device is the only member. In those cases the recovery path may repeatedly schedule clone attempts that can never succeed, replacing the previous endless fetch/merge retry loop with an endless re-clone retry loop. Gate recovery on recoverable metadata and at least one remote member device, or mark the conversation as unrecoverable until metadata changes.\n```suggestion\nfor (const auto\u0026 convId : toReclone) {\n    const auto it \u003d shared-\u003econvInfos_.find(convId);\n    if (it \u003d\u003d shared-\u003econvInfos_.end() || !shared-\u003ehasRemoteCloneSource(convId))\n        continue;\n    shared-\u003efallbackClone({}, convId);\n}\n```",
+      "revId": "6e7918ea68245250ae3c2797068d91f2515ff672",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4551470b_292383a6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3931,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:04:46Z",
+      "side": 1,
+      "message": "Line 3931: 🟡 Suggestion: `validate()` walks every commit and every tree/blob reachable from `HEAD` synchronously during startup for every conversation. Large conversations can make `loadConversations()` significantly slower, especially because this repeats work on every daemon start. Consider using libgit2\u0027s object database/graph verification primitives if available, or limiting the expensive full-history validation to cases where prior repository operations failed and using a cheaper `HEAD`/tree check on normal startup.",
+      "revId": "6e7918ea68245250ae3c2797068d91f2515ff672",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f379ee26_0208d80b",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2345,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T02:04:46Z",
+      "side": 1,
+      "message": "Line 2345: 🟡 Suggestion: the corruption helper removes the whole `objects/pack` directory when the `HEAD` object is packed. That can also remove unrelated objects required by the local repository and makes the test depend on clone recovery from Alice being available rather than specifically proving recovery from a single missing object. Reuse the narrower helper added in the repository test, or make it shared, so this test corrupts the intended object consistently.",
+      "revId": "6e7918ea68245250ae3c2797068d91f2515ff672",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
