@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bae809a_07a30fec",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1896,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:06:49Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 1896: Recovery is skipped for conversations whose persisted member list only contains the local account. That makes valid one-to-one conversations unrecoverable if only the remote device URI is missing from convInfos_, even though fallbackClone() already knows how to resolve clone sources from conversation metadata/devices. This also changes behavior from retrying until a peer is reachable to permanently emitting EUNRECOVERABLE. Please avoid this pre-filter or base it on the same source resolution fallbackClone() uses.\n```suggestion\n                shared-\u003efallbackClone({}, convId);\n```",
+      "revId": "23a183d8abd91d7f95fc4c5c8df5e5c798768371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17fffc16_a8cc19f3",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3881,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:06:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 3881: validate() performs a full traversal of every commit and tree reachable from HEAD, and loadConversations() calls it synchronously for every conversation at startup. For large histories this can make startup unexpectedly expensive and scale with total repository history, even for healthy repositories. Consider using libgit2 object database consistency primitives where available, limiting validation to failure recovery paths, or moving the expensive validation fully off the load path with bounded work/backoff.",
+      "revId": "23a183d8abd91d7f95fc4c5c8df5e5c798768371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b472cd2e_4b40b365",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T12:06:49Z",
+      "side": 1,
+      "message": "[🟡 Suggestions - Improvements to consider] Line 55: makeGitObjectUnreachable() removes the entire pack directory when the target object is packed. That can corrupt many unrelated objects and may make tests pass for a stronger corruption than intended, masking whether validate() detects the specific missing reachable object. Prefer creating loose-object test repositories explicitly, or remove/rename only the pack/index known to contain the target object after checking it with libgit2.",
+      "revId": "23a183d8abd91d7f95fc4c5c8df5e5c798768371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
