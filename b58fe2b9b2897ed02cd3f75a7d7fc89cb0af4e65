@@ -271,6 +271,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e8a7b86_87ad8510",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-19T20:58:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79ce49b1_888ec0b8",
+      "revId": "b58fe2b9b2897ed02cd3f75a7d7fc89cb0af4e65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5232b91a_596b4923",
