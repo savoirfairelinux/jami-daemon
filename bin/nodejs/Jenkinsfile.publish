@@ -57,7 +57,7 @@ pipeline {
         stage('Build native modules') {
             parallel {
                 stage('linux-x64') {
-                    agent { label 'linux && x86_64' }
+                    agent { label 'linux-builder && amd64' }
                     steps {
                         checkout scm
                         sh 'git submodule update --init --recursive'
@@ -66,7 +66,7 @@ pipeline {
                     }
                 }
                 stage('linux-arm64') {
-                    agent { label 'linux && aarch64' }
+                    agent { label 'linux-builder' }
                     steps {
                         checkout scm
                         sh 'git submodule update --init --recursive'
@@ -90,7 +90,7 @@ pipeline {
         // 2. Assemble and publish packages.
 
         stage('Publish') {
-            agent { label 'linux' }
+            agent { label 'linux-builder' }
             environment {
                 NODE_AUTH_TOKEN = credentials('npm-token')
             }
@@ -142,7 +142,7 @@ pipeline {
 
     post {
         always {
-            node('linux') {
+            node('linux-builder') {
                 cleanWs()
             }
         }
@@ -157,7 +157,7 @@ pipeline {
  */
 void buildNativeAddonInDocker(String platform, String arch) {
     dir('daemon') {
-        sh "docker build --build-arg cmake_args='-DJAMI_NODEJS=ON -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON' -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
+        sh "docker build -t jami-daemon-${platform}-${arch}:${env.BUILD_ID} ."
     }
     sh """
         container_id=\$(docker create jami-daemon-${platform}-${arch}:${env.BUILD_ID})
