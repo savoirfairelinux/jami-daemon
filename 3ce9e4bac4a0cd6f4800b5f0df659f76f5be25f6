@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "45051c95_cbf3f91b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T22:02:07Z",
+      "side": 1,
+      "message": "[Critical] Line 725: Recovery is only attempted when lastCommitId() returns empty, but a missing object deeper in history or in HEAD\u0027s tree can leave HEAD readable and make lastCommitId() non-empty. The new validate() explicitly detects those cases, yet fetch/merge will still continue into the old retry loop because validation is not run on fetch/merge failure paths. Trigger repository validation when git operations fail due to object lookup/read errors, not only when lastCommitId() is empty, and schedule recovery on invalid repositories there as well.",
+      "revId": "3ce9e4bac4a0cd6f4800b5f0df659f76f5be25f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "198aa8e2_13e5ff6c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 3938,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T22:02:07Z",
+      "side": 1,
+      "message": "Line 3938: validate() can be very expensive because it walks every commit and tree reachable from HEAD while holding opMtx_. A large conversation history will block all repository mutations and fetch/merge work for the duration of a full object graph scan. Since recovery is only needed after an operation failure, consider using libgit2\u0027s object walk/fsck-style validation only on the failing path with bounded logging, or short-circuit based on the exact missing object error when available.",
+      "revId": "3ce9e4bac4a0cd6f4800b5f0df659f76f5be25f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63dfcadb_9e2e2cb9",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-19T22:02:07Z",
+      "side": 1,
+      "message": "Line 56: makeGitObjectUnreachable() silently removes the whole pack directory when the requested object is packed, which can corrupt far more data than the caller intended and make tests pass for the wrong reason. This helper is shared test infrastructure, so it should either fail when precise loose-object removal is not possible or expose a separate explicit helper for pack-level corruption.",
+      "revId": "3ce9e4bac4a0cd6f4800b5f0df659f76f5be25f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
