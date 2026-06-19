@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d27b7a0_66652d32",
+        "filename": "contrib/src/whispercpp/package.json",
+        "patchSetId": 33
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T18:15:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "eec605bc_8e3c6b9d",
+      "revId": "f0fcbfc1194a37ab15945d5a015b733eb90d9de1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7ba6353f_ede59030",

@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "29221465_e3fa1545",
+        "filename": "contrib/src/harfbuzz/rules.mak",
+        "patchSetId": 34
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T18:15:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e98f87fe_49083073",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aab662ac_2cb8d2ce",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-06-02T14:48:16Z",
       "side": 1,
       "message": "[Major] Line 10: project.patch is still modified and kept in the tree, but package.json no longer applies it. This creates two divergent sources of truth for whisper.vcxproj and makes future updates ambiguous. Remove project.patch from the change if the copied vcxproj is now the intended source, or keep patches enabled and do not copy a separate project file.",
+      "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9f4ac6e_c2fa2ae6",
+        "filename": "contrib/src/whispercpp/package.json",
+        "patchSetId": 34
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-19T18:15:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "aab662ac_2cb8d2ce",
       "revId": "1988cfe0f995f80694f069557c5397f9a68462b3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
