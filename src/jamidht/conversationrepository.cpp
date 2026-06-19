@@ -55,6 +55,8 @@
 #include <memory>
 #include <cstdint>
 #include <utility>
+#include <unordered_set>
+#include <vector>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -3877,6 +3879,85 @@ ConversationMode
 ConversationRepository::mode() const
 {
     return pimpl_->mode();
+}
+
+bool
+ConversationRepository::validate() const
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+    git_oid headOid;
+    if (git_reference_name_to_id(&headOid, repo.get(), "HEAD") < 0)
+        return false;
+    git_odb* odbPtr = nullptr;
+    if (git_repository_odb(&odbPtr, repo.get()) < 0)
+        return false;
+    std::unique_ptr<git_odb, decltype(&git_odb_free)> odb {odbPtr, git_odb_free};
+
+    // Verify that every object reachable from HEAD - all ancestor commits and
+    // the full tree each of them points at - is present in the database. A
+    // truncated or missing pack can drop objects anywhere in history (older
+    // commits, sub-trees or blobs) while leaving HEAD resolvable; such a gap
+    // would only surface later, and resume the fetch/merge retry loop, when
+    // that part of the conversation is walked. Presence is checked with
+    // git_odb_exists, which does not inflate object content (blobs are never
+    // loaded into memory), and visited object ids are remembered (by raw value,
+    // avoiding any per-object string formatting) so the trees and ancestors
+    // shared across commits are checked only once.
+    struct GitOidHash
+    {
+        std::size_t operator()(const git_oid& oid) const noexcept
+        {
+            std::size_t h = 14695981039346656037ULL; // FNV-1a
+            for (unsigned char b : oid.id) {
+                h ^= b;
+                h *= 1099511628211ULL;
+            }
+            return h;
+        }
+    };
+    struct GitOidEqual
+    {
+        bool operator()(const git_oid& a, const git_oid& b) const noexcept { return git_oid_equal(&a, &b) != 0; }
+    };
+    std::unordered_set<git_oid, GitOidHash, GitOidEqual> visited;
+    struct WalkContext
+    {
+        git_odb* odb;
+        std::unordered_set<git_oid, GitOidHash, GitOidEqual>* visited;
+    } walkCtx {odb.get(), &visited};
+    auto checkEntry = [](const char*, const git_tree_entry* entry, void* payload) -> int {
+        auto* ctx = static_cast<WalkContext*>(payload);
+        const git_oid* id = git_tree_entry_id(entry);
+        if (!ctx->visited->insert(*id).second)
+            return 1; // already verified: don't check it or recurse again
+        if (!git_odb_exists(ctx->odb, id))
+            return -1; // missing object: stop the walk and report corruption
+        return 0;
+    };
+
+    std::vector<git_oid> pending {headOid};
+    while (!pending.empty()) {
+        auto oid = pending.back();
+        pending.pop_back();
+        if (!visited.insert(oid).second)
+            continue; // commit already verified through another branch
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+            return false; // a reachable commit object is missing
+        GitCommit commit {commit_ptr};
+        git_tree* tree_ptr = nullptr;
+        if (git_commit_tree(&tree_ptr, commit.get()) < 0)
+            return false;
+        GitTree tree {tree_ptr};
+        if (visited.insert(*git_tree_id(tree.get())).second
+            && git_tree_walk(tree.get(), GIT_TREEWALK_PRE, checkEntry, &walkCtx) < 0)
+            return false;
+        for (unsigned i = 0, n = git_commit_parentcount(commit.get()); i < n; ++i)
+            pending.push_back(*git_commit_parent_id(commit.get(), i));
+    }
+    return true;
 }
 
 std::string
