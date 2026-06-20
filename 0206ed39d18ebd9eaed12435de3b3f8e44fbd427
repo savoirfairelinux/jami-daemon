@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c62ea0a_1435a4d1",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 766,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T18:39:33Z",
+      "side": 1,
+      "message": "[Major] Line 766: mallopt(M_ARENA_MAX, 2) is called after Manager::init has already performed substantial initialization and possibly after other threads/allocations have created arenas. Existing arenas are not removed by lowering the cap, so this may fail to bound RSS in the cases this patch is intended to fix. Move this as early as possible in process startup, before thread pools or allocation-heavy subsystems are initialized, and check/log failure so deployments can tell whether the setting was applied.\n\n```suggestion\n    if (mallopt(M_ARENA_MAX, 2) \u003d\u003d 0)\n        JAMI_WARN(\"Failed to set glibc malloc arena limit\");\n```",
+      "revId": "0206ed39d18ebd9eaed12435de3b3f8e44fbd427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a534734a_3b62ee2e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1778,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T18:39:33Z",
+      "side": 1,
+      "message": "[Major] Line 1778: Calling malloc_trim(0) directly from the daemon io_context can block the event loop while glibc walks arenas and acquires allocator locks. Since this io_context also drives asynchronous daemon work, a trim after call teardown can introduce latency or stalls in unrelated signaling/timer operations. Run the trim on a background/thread-pool context and only use the io_context for debouncing.\n\n```suggestion\n        timer-\u003easync_wait([](const asio::error_code\u0026 ec) {\n            if (!ec) {\n                dht::ThreadPool::io().run([] { malloc_trim(0); });\n            }\n        });\n```",
+      "revId": "0206ed39d18ebd9eaed12435de3b3f8e44fbd427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
