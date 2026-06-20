@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e92619dc_5bd56056",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 758,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T18:48:07Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 758: Hard-capping glibc arenas to 2 is a process-wide allocator policy change with potential throughput impact on multi-threaded systems. The rationale is clear, but this would be safer if made configurable or documented as an intentional fixed policy, especially for deployments with many concurrent calls or plugin workloads sharing the daemon process.",
+      "revId": "aec32800fe7f964911f8ee6b15b2bb74d7039bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b681b726_b89eda30",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1779,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T18:48:07Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1779: The debounce only coalesces calls until the first timer fires; once the timer fires, every later call teardown schedules another malloc_trim(). In workloads with frequent short calls this can run malloc_trim() repeatedly every few seconds, and malloc_trim() walks arenas and takes allocator locks, so it can become a recurring process-wide latency source. Consider tracking whether a trim is already pending/running and enforcing a minimum interval between trims, or only scheduling when the last active call is removed.",
+      "revId": "aec32800fe7f964911f8ee6b15b2bb74d7039bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
