@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a86b0fa7_c7b9c39b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1748,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:27:04Z",
+      "side": 1,
+      "message": "[Critical] Line 1748: This gate uses Manager::autoLoad, but the conversation module\u0027s normal startup loading is controlled by autoLoadConversations_. If autoLoadConversations_ is false, doRegister() can still synchronously load conversations for a deferred disabled account, violating lazy-loading mode and the comment above. Use the same flag as convModule() so disabled accounts preserve the client\u0027s explicit no-autoload behavior.\n```suggestion\n    if (autoLoadConversations_ \u0026\u0026 isUsable())\n        if (auto* cm \u003d convModule())\n            cm-\u003eloadConversationsIfNeeded();\n```",
+      "revId": "8b31849d7598e0564771dcc7bdb6c58e16a0f8e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
