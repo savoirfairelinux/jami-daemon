@@ -78,6 +78,41 @@ MessageEngine::sendMessage(const std::string& to,
 void
 MessageEngine::onPeerOnline(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
+    // Presence can flap rapidly (an unstable relay path torn down and rebuilt
+    // every few seconds, or a connectivity change such as a VPN toggle that
+    // reconnects every account at once). Resending every pending message on each
+    // notification then produces a connection/retry storm that wastes CPU and
+    // memory. Throttle the retry passes per peer/device: run immediately when no
+    // pass happened recently, otherwise coalesce the burst into a single retry
+    // deferred to the end of the current interval.
+    const auto key = deviceId.empty() ? peer : deviceId;
+    {
+        std::lock_guard lock(messagesMutex_);
+        const auto now = clock::now();
+        if (auto it = lastRetry_.find(key);
+            it != lastRetry_.end() && now - it->second < RETRY_DEBOUNCE_INTERVAL) {
+            if (retryTimers_.find(key) == retryTimers_.end()) {
+                auto timer = std::make_shared<asio::steady_timer>(*ioContext_);
+                timer->expires_after(RETRY_DEBOUNCE_INTERVAL - (now - it->second));
+                retryTimers_[key] = timer;
+                timer->async_wait([this, key, peer, deviceId, retryOnTimeout, timer,
+                                   w = account_.weak_from_this()](const std::error_code& ec) {
+                    if (ec)
+                        return;
+                    if (auto acc = w.lock()) {
+                        {
+                            std::lock_guard lock(messagesMutex_);
+                            lastRetry_[key] = clock::now();
+                            retryTimers_.erase(key);
+                        }
+                        retrySend(peer, deviceId, retryOnTimeout);
+                    }
+                });
+            }
+            return;
+        }
+        lastRetry_[key] = now;
+    }
     retrySend(peer, deviceId, retryOnTimeout);
 }
 
