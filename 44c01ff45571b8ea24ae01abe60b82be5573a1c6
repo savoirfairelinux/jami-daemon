@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d61cab6_1ec541cf",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T17:33:16Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 88: The debounce timestamps use `std::chrono::system_clock`, which can jump forwards/backwards if the wall clock is adjusted. That can make retries fire too early, be delayed much longer than 5 seconds, or repeatedly bypass the debounce. Since this is measuring elapsed time and driving a `steady_timer`, use `std::chrono::steady_clock` for `lastRetry_`.\n```suggestion\nusing clock \u003d std::chrono::steady_clock;\n```",
+      "revId": "44c01ff45571b8ea24ae01abe60b82be5573a1c6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4a12932_79806039",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T17:33:16Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 96: When a retry is already scheduled, later `onPeerOnline()` calls for the same key are dropped entirely, including a potentially different `retryOnTimeout` value. If the first coalesced notification used `retryOnTimeout \u003d\u003d false` and a later one requires timeout retries, the deferred pass will run with the weaker behavior and may leave timed-out messages unsent. Store/update the pending retry parameters, or at minimum OR the flag for an existing timer so the coalesced retry preserves the strongest requested behavior.\n```suggestion\n// Example shape: keep pending retry state per key and update it here.\npendingRetryOnTimeout_[key] \u003d pendingRetryOnTimeout_[key] || retryOnTimeout;\n```",
+      "revId": "44c01ff45571b8ea24ae01abe60b82be5573a1c6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
