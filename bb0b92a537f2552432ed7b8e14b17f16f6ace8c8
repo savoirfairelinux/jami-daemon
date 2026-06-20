@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e8bfe30_3bd1e936",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T04:11:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 221: Filtering deferred nodes after getKnownNodesRandom() can under-fill buckets even when other eligible known nodes exist, because skipped nodes are not replaced by additional candidates. If a bucket contains several backoff/on-demand nodes, proactive mesh maintenance may stop trying enough healthy peers. Consider fetching more candidates and selecting until the target count is reached, or adding a RoutingTable/Bucket helper that returns eligible nodes after applying shouldDeferReconnect().",
+      "revId": "bb0b92a537f2552432ed7b8e14b17f16f6ace8c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2667f55a_2c25c2f3",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T04:11:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 396: The failure counter is allowed to grow to RECONNECT_ONDEMAND_THRESHOLD + 1 because the increment condition uses \u003c\u003d. The comment says it saturates at the threshold, but on the 7th failure failures becomes 7, which is inconsistent state and makes the on-demand transition depend on an off-by-one value. Saturate at the threshold and derive onDemand from \u003e\u003d threshold, e.g. ```suggestion\nif (info.failures \u003c RECONNECT_ONDEMAND_THRESHOLD)\n    info.failures++;\n...\nif (info.failures \u003e\u003d RECONNECT_ONDEMAND_THRESHOLD) {\n    info.onDemand \u003d true;\n    delay \u003d RECONNECT_MAX_DELAY;\n}\n```",
+      "revId": "bb0b92a537f2552432ed7b8e14b17f16f6ace8c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb20fc78_65bec432",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 426,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T04:11:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 426: Expired retry state is never cleared after a timer fires. nextRetry remains in the past and timer remains allocated, so reconnectInfos_ can retain entries forever for nodes that eventually disappear from known buckets. Consider erasing or resetting the backoff entry once the scheduled retry is handed off, unless the node is still connected/backing off.",
+      "revId": "bb0b92a537f2552432ed7b8e14b17f16f6ace8c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
