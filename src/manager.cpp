@@ -81,12 +81,17 @@
 
 #include <asio/io_context.hpp>
 #include <asio/executor_work_guard.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <git2.h>
 
 #ifndef WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
+#endif
+
+#ifdef __GLIBC__
+#include <malloc.h>
 #endif
 
 #ifdef TARGET_OS_IOS
@@ -351,6 +356,10 @@ struct Manager::ManagerPimpl
     std::shared_ptr<AudioFrame> dtmfBuf_;
 
     std::shared_ptr<asio::steady_timer> dtmfTimer_;
+
+    // Debounced timer that returns memory freed when calls end back to the OS
+    // (malloc_trim). Armed by Manager::scheduleMemoryTrim().
+    std::shared_ptr<asio::steady_timer> memoryTrimTimer_;
 
     // To handle volume control
     // short speakerVolume_;
@@ -757,6 +766,16 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
             setrlimit(RLIMIT_NOFILE, &nofiles);
         }
     }
+#endif
+
+#ifdef __GLIBC__
+    // Bound the number of malloc arenas. glibc creates up to 8 * nproc arenas by
+    // default; on many-core hosts a call's transient allocations (video
+    // encoder/decoder buffers, etc.) get spread across many arenas that are not
+    // returned to the OS once freed, so RSS stays inflated after the call ends.
+    // A small arena count keeps the heap compact; scheduleMemoryTrim() releases
+    // the remainder shortly after calls end.
+    mallopt(M_ARENA_MAX, 2);
 #endif
 
 #define PJSIP_TRY(ret) \
@@ -1744,6 +1763,27 @@ std::shared_ptr<asio::io_context>
 Manager::ioContext() const
 {
     return pimpl_->ioContext_;
+}
+
+void
+Manager::scheduleMemoryTrim()
+{
+#ifdef __GLIBC__
+    // Calls can end in bursts (e.g. a conference tearing down) and a call's
+    // resources are released slightly after Call::removeCall() returns. Defer
+    // and debounce so a single malloc_trim() runs a few seconds after the last
+    // call ends, returning the freed memory to the OS.
+    asio::post(*pimpl_->ioContext_, [this] {
+        auto& timer = pimpl_->memoryTrimTimer_;
+        if (!timer)
+            timer = std::make_shared<asio::steady_timer>(*pimpl_->ioContext_);
+        timer->expires_after(std::chrono::seconds(5));
+        timer->async_wait([](const asio::error_code& ec) {
+            if (!ec)
+                malloc_trim(0);
+        });
+    });
+#endif
 }
 
 std::shared_ptr<dhtnet::upnp::UPnPContext>
