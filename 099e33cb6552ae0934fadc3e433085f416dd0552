@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a61b8e6_828ec98f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1632,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T13:46:48Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 1632: loadConversations() now sets loaded_ before verifying that loading can actually proceed successfully. This makes direct callers mark the module as loaded even if the method exits before completing or fails partway through. Move the state transition to the end of a successful load, or document/enforce that loadConversations() cannot fail before conversations are usable.",
+      "revId": "099e33cb6552ae0934fadc3e433085f416dd0552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "33f71393_6cef0712",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1848,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T13:46:48Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues] Line 1848: loadConversationsIfNeeded() marks conversations as loaded before loadConversations() has actually completed. If loadConversations() returns early or throws/fails during repository loading, all future calls will skip loading permanently for this account. Use a separate in-progress guard or only publish the loaded state after successful completion. For example:\n```suggestion\nvoid\nConversationModule::loadConversationsIfNeeded()\n{\n    bool expected \u003d false;\n    if (!pimpl_-\u003eloaded_.compare_exchange_strong(expected, true))\n        return;\n\n    try {\n        loadConversations();\n    } catch (...) {\n        pimpl_-\u003eloaded_ \u003d false;\n        throw;\n    }\n}\n```",
+      "revId": "099e33cb6552ae0934fadc3e433085f416dd0552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5944165_2ea4dcdf",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1545,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T13:46:48Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1545: Calling enableAutoLoadConversations(false) for disabled accounts may mutate account state rather than just deferring this startup load. If that flag is persisted or observed elsewhere, enabling the account later can leave conversation autoload disabled unexpectedly. Prefer a local skip of the initial load path, or restore the previous autoload value when the account is enabled.",
+      "revId": "099e33cb6552ae0934fadc3e433085f416dd0552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
