@@ -836,6 +836,12 @@ public:
     std::shared_ptr<asio::io_context> ioContext() const;
     std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext() const;
 
+    /**
+     * Schedule a debounced malloc_trim() (glibc only) to return memory freed
+     * when calls end back to the OS. No-op on other platforms.
+     */
+    void scheduleMemoryTrim();
+
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
 #ifdef ENABLE_VIDEO

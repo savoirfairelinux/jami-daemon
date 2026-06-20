@@ -138,6 +138,7 @@ Call::removeCall(int code)
         account->detach(this_);
     parent_.reset();
     subcalls_.clear();
+    Manager::instance().scheduleMemoryTrim();
 }
 
 std::string
