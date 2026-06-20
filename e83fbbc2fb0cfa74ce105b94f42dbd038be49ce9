@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a793202_ec3fb4ff",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1843,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:36:24Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1843: loaded_ is only set on the normal path, but if loadConversations() throws after partially populating in-memory state, the next loadConversationsIfNeeded() retry can run against partially loaded state. That may duplicate work or leave inconsistent conversation state depending on which stage threw. Either make loadConversations() internally transactional/idempotent for retry, or clear/rollback the partially populated structures before propagating the failure.",
+      "revId": "e83fbbc2fb0cfa74ce105b94f42dbd038be49ce9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0adbe40_dcb3021b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1749,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:36:24Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1749: The enable state is snapshotted before loading, but it is not revalidated before performing the deferred load. If another thread disables the account after this block releases configurationMutex_, doRegister() will still synchronously load conversations for a disabled account, which violates the new deferral behavior and can reintroduce startup/work cost for disabled accounts. Recheck the state immediately before loading, or keep the load decision tied to a stable registration transition. For example:\n```suggestion\n    if (shouldLoadConversations) {\n        std::lock_guard lock(configurationMutex_);\n        shouldLoadConversations \u003d autoLoadConversations_ \u0026\u0026 isUsable();\n    }\n    if (shouldLoadConversations) {\n        if (auto* cm \u003d convModule())\n            cm-\u003eloadConversationsIfNeeded();\n    }\n```",
+      "revId": "e83fbbc2fb0cfa74ce105b94f42dbd038be49ce9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
