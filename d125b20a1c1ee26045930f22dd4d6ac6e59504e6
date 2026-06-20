@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e824b3f6_cbfd6a49",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 388,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T02:29:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 388: scheduleReconnect() increments failures for every disconnect, including stable connections that were just reset to failures \u003d 0 in removeNode(). This makes clean/stable drops count as a new failure and delays the next reconnect by RECONNECT_BASE_DELAY, contradicting the intended \u0027allow a quick reconnection\u0027 behavior. Split the stable-drop path from the failure path, or let scheduleReconnect accept whether the drop should increment backoff.\n```suggestion\nvoid\nSwarmManager::scheduleReconnect(const NodeId\u0026 nodeId, bool countFailure)\n{\n    std::lock_guard lock(mutex);\n    if (isShutdown_)\n        return;\n    auto\u0026 info \u003d reconnectInfos_[nodeId];\n    if (countFailure)\n        info.failures++;\n    else\n        info.failures \u003d 0;\n    auto delay \u003d countFailure ? computeReconnectDelay(info.failures) : std::chrono::seconds {0};\n    ...\n}\n```",
+      "revId": "d125b20a1c1ee26045930f22dd4d6ac6e59504e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b9fb08c_74551f96",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 405,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T02:29:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 405: The timer callback checks isShutdown_ without synchronizing with shutdown() clearing reconnectInfos_ and cancelling timers. isShutdown_ is atomic, but a shutdown can occur immediately after the check and before maintainBuckets(), allowing a cancelled/stale timer to schedule new connection work during shutdown. Move the shutdown check under SwarmManager\u0027s mutex or make maintainBuckets() itself return immediately when shutdown is set.\n```suggestion\ninfo.timer-\u003easync_wait([w \u003d weak(), nodeId](const asio::error_code\u0026 ec) {\n    if (ec)\n        return;\n    if (auto shared \u003d w.lock()) {\n        std::lock_guard lock(shared-\u003emutex);\n        if (shared-\u003eisShutdown_)\n            return;\n        // release before calling maintainBuckets(), or add a shutdown guard there\n    }\n    shared-\u003emaintainBuckets({nodeId});\n});\n```",
+      "revId": "d125b20a1c1ee26045930f22dd4d6ac6e59504e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffeedcd7_001d1d28",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T02:29:18Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 276: The markConnected() documentation says it resets backoff once a node has \u0027proven stable\u0027, but the implementation only records connectedAt, clears nextRetry, and cancels the timer. The actual reset happens later in removeNode(). This mismatch is likely to confuse future maintenance; update the comment to describe the actual behavior.\n```suggestion\n/**\n * Record that a node is currently connected and cancel any pending reconnect\n * timer. The failure count is reset later only if the connection remains stable\n * long enough before disconnecting. Must be called WITH mutex held.\n */\n```",
+      "revId": "d125b20a1c1ee26045930f22dd4d6ac6e59504e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
