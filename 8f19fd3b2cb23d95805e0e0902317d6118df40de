@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7359c61e_6e05d6e3",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T23:29:12Z",
+      "side": 1,
+      "message": "[Critical] Line 94: A deferred retry timer can still be armed when a later onPeerOnline call observes that RETRY_DEBOUNCE_INTERVAL has elapsed. In that case this path updates lastRetry_ and runs retrySend immediately, but leaves the existing timer queued, so the timer handler can also run and trigger a second retry pass for the same peer/device. Treat an existing retryTimers_[key] as authoritative and coalesce into it, or cancel/erase it before running the immediate retry.\n```suggestion\nif (auto tit \u003d retryTimers_.find(key); tit !\u003d retryTimers_.end()) {\n    auto\u0026 pending \u003d pendingRetryOnTimeout_[key];\n    pending \u003d pending || retryOnTimeout;\n    return;\n}\n```",
+      "revId": "8f19fd3b2cb23d95805e0e0902317d6118df40de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
