@@ -19,6 +19,8 @@
 #include "routing_table.h"
 #include "swarm_protocol.h"
 
+#include <chrono>
+#include <map>
 #include <memory>
 
 namespace jami {
@@ -251,11 +253,54 @@ private:
      */
     void removeNodeInternal(const NodeId& nodeId);
 
+    /**
+     * Record a dropped connection to a node and (re)schedule a proactive
+     * reconnection attempt. When countFailure is true the attempt is delayed
+     * with an exponential backoff and, after RECONNECT_ONDEMAND_THRESHOLD
+     * consecutive failures, the node is no longer eagerly maintained in the
+     * swarm mesh: it is excluded from proactive bucket filling and only retried
+     * slowly (and reconnected immediately on demand, e.g. when a message must be
+     * sent). When countFailure is false the drop is treated as clean: the
+     * backoff is reset and the node is reconnected without delay. Must be called
+     * WITHOUT mutex.
+     * @param nodeId
+     * @param countFailure
+     */
+    void scheduleReconnect(const NodeId& nodeId, bool countFailure);
+
+    /**
+     * Whether a node must not be proactively (re)connected right now because it
+     * is in reconnection backoff or has been moved to on-demand mode. Must be
+     * called WITH mutex held.
+     * @param nodeId
+     */
+    bool shouldDeferReconnect(const NodeId& nodeId) const;
+
+    /**
+     * Record that a node is currently connected and cancel any pending
+     * reconnection timer. The failure counter itself is reset later, in
+     * removeNode(), only if the connection stays up long enough to be considered
+     * stable. Must be called WITH mutex held.
+     * @param nodeId
+     */
+    void markConnected(const NodeId& nodeId);
+
     const NodeId id_;
     bool isMobile_ {false};
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    // Per-node reconnection backoff state, guarded by mutex.
+    struct ReconnectInfo
+    {
+        unsigned failures {0};
+        bool onDemand {false};
+        std::chrono::steady_clock::time_point connectedAt {};
+        std::chrono::steady_clock::time_point nextRetry {};
+        std::shared_ptr<asio::steady_timer> timer;
+    };
+    std::map<NodeId, ReconnectInfo> reconnectInfos_;
 
     std::atomic_bool isShutdown_ {false};
 
