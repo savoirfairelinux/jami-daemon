@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17a2d9b9_ae828c5f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1735,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:31:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1735: The new pre-lock `isUsable()` / `convModule()` path reads account configuration state before `configurationMutex_` is held. `doRegister()` previously made the usability decision under the mutex; moving part of it outside can race with concurrent enable/disable or active-state changes, and may create/load the conversation module using a stale `isEnabled()` value. Snapshot the required state under `configurationMutex_`, release it before loading conversations, then reacquire and revalidate before continuing.\n```suggestion\n    bool shouldLoadConversations \u003d false;\n    {\n        std::lock_guard lock(configurationMutex_);\n        shouldLoadConversations \u003d autoLoadConversations_ \u0026\u0026 isUsable();\n    }\n    if (shouldLoadConversations)\n        if (auto* cm \u003d convModule())\n            cm-\u003eloadConversationsIfNeeded();\n\n    std::lock_guard lock(configurationMutex_);\n```",
+      "revId": "2c3b6d02546f464bacba726dc3e532ef3b1ad042",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a847f2d0_04ef0c0d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2577,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:31:36Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 2577: `convModule()` now uses `isEnabled()` while constructing the module, but this method can be called from different contexts and not all callers necessarily hold `configurationMutex_`. If `isEnabled()` reads mutable account configuration, this introduces an unsynchronized read and makes the initial auto-load decision nondeterministic. Prefer passing an already-synchronized value from the caller that owns the account state, or document/enforce that `convModule()` is only called with the configuration lock held when the module can be created.\n```suggestion\n            autoLoadConversations_ \u0026\u0026 isEnabled()); // only if caller holds configurationMutex_\n```",
+      "revId": "2c3b6d02546f464bacba726dc3e532ef3b1ad042",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
