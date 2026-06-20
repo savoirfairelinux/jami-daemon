@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44eaa87f_51d2e148",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T03:20:18Z",
+      "side": 1,
+      "message": "[Critical] Line 381: Each failure increments `info.failures` without an upper bound. A long-running daemon repeatedly failing to reconnect the same peer can eventually overflow the unsigned counter, resetting the backoff calculation and re-enabling eager reconnect behavior. Clamp the counter once it reaches the threshold/cap.\n```suggestion\n        if (info.failures \u003c RECONNECT_ONDEMAND_THRESHOLD + 1)\n            info.failures++;\n```",
+      "revId": "157a63aa76b20739bc0a7654d4cae6d59f087df4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fd1e8b3_a3f5c195",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T03:20:18Z",
+      "side": 1,
+      "message": "[Critical] Line 396: The async timer handler does not verify that the fired wait still corresponds to the current retry generation. If a timer expiry races with `markConnected()` cancelling the timer, a stale successful handler can still run and proactively reconnect a node that is already connected or whose retry was superseded. Capture the expected retry time/generation and re-check state under the mutex before connecting.\n```suggestion\n    auto retryAt \u003d info.nextRetry;\n    info.timer-\u003easync_wait([w \u003d weak(), nodeId, retryAt](const asio::error_code\u0026 ec) {\n        if (ec)\n            return;\n        if (auto shared \u003d w.lock()) {\n            std::lock_guard lock(shared-\u003emutex);\n            auto it \u003d shared-\u003ereconnectInfos_.find(nodeId);\n            if (it \u003d\u003d shared-\u003ereconnectInfos_.end() || it-\u003esecond.nextRetry !\u003d retryAt || shared-\u003eisConnectedWith(nodeId))\n                return;\n            // unlock before tryConnect in the final implementation\n        }\n    });\n```",
+      "revId": "157a63aa76b20739bc0a7654d4cae6d59f087df4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a29c214_cb3f7b71",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T03:20:18Z",
+      "side": 1,
+      "message": "[Critical] Line 397: The reconnect timer only calls maintainBuckets({nodeId}), but maintainBuckets does not actually attempt the explicit node if the bucket is already full. Because `nodes` starts with `toConnect` but bucket iteration may skip/ignore the node\u0027s bucket when full, the delayed reconnect may be lost or delayed indefinitely until unrelated maintenance happens. A scheduled retry should attempt the target node directly after the timer fires, while still allowing normal bucket maintenance separately.\n```suggestion\n        if (auto shared \u003d w.lock())\n            shared-\u003etryConnect(nodeId);\n```",
+      "revId": "157a63aa76b20739bc0a7654d4cae6d59f087df4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
