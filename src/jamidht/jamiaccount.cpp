@@ -1539,6 +1539,15 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             config_->username = info->accountId;
             JAMI_WARNING("[Account {:s}] Loaded account identity", getAccountID());
 
+            // A disabled account must not eagerly load all its conversation git
+            // repositories at startup; that is the heaviest part of loading an
+            // account and is useless while it stays disabled. Defer it until the
+            // account is enabled (see doRegister()). Only force this off for
+            // disabled accounts so the mobile lazy-loading mode
+            // (LIBJAMI_FLAG_NO_AUTOLOAD) is preserved.
+            if (not isEnabled())
+                enableAutoLoadConversations(false);
+
             if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
                 JAMI_WARNING("[Account {:s}] Identity changed", getAccountID());
                 {
@@ -1737,6 +1746,21 @@ JamiAccount::registerAsyncOps()
 void
 JamiAccount::doRegister()
 {
+    // Conversations are not loaded at startup for disabled accounts (see
+    // loadAccount()). Load them now, synchronously and *before* taking
+    // configurationMutex_, mirroring the normal startup path where convModule()
+    // loads them during loadAccount. This must happen off the configuration lock
+    // and before registerAsyncOps()/doRegister_(), which call
+    // convModule()->clearPendingFetch() (needs conversationsMtx_ while holding
+    // configurationMutex_): a concurrent load would deadlock because
+    // loadConversations() holds conversationsMtx_ and then needs
+    // configurationMutex_ via unlinkConversations(). No-op once loaded, and
+    // skipped in lazy-loading mode (LIBJAMI_FLAG_NO_AUTOLOAD) where the client
+    // drives conversation loading.
+    if (Manager::autoLoad && isUsable())
+        if (auto* cm = convModule())
+            cm->loadConversationsIfNeeded();
+
     std::lock_guard lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARNING("[Account {:s}] Account must be enabled and active to register, ignoring", getAccountID());

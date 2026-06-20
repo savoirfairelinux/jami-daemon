@@ -403,6 +403,11 @@ public:
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
 
+    // Whether loadConversations() has run at least once for this account, so the
+    // (possibly heavy) loading can be deferred for disabled accounts and done
+    // once when the account is enabled.
+    std::atomic_bool loaded_ {false};
+
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
@@ -1626,6 +1631,7 @@ ConversationModule::loadConversations()
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
+    pimpl_->loaded_ = true;
     JAMI_LOG("[Account {}] Start loading conversations…", pimpl_->accountId_);
     auto conversationPath = fileutils::get_data_dir() / pimpl_->accountId_ / "conversations";
 
@@ -1836,6 +1842,14 @@ ConversationModule::loadConversations()
             if (auto shared = w.lock())
                 shared->fixStructures(acc, updateContactConv, toRm);
         });
+}
+
+void
+ConversationModule::loadConversationsIfNeeded()
+{
+    // Claim the load atomically so concurrent callers load at most once.
+    if (not pimpl_->loaded_.exchange(true))
+        loadConversations();
 }
 
 void
