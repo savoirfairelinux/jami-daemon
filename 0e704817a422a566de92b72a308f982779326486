@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "410db102_5f12e0ed",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1853,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:20:32Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 1853: loadConversationsIfNeeded() is not atomic despite the public contract: two concurrent callers can both observe loaded_ \u003d\u003d false and run loadConversations() simultaneously. That can duplicate the heavy load and risks racing on conversation state. Guard the check/load transition with compare_exchange or a mutex, and reset the flag if loading fails.\n```suggestion\nbool expected \u003d false;\nif (!pimpl_-\u003eloaded_.compare_exchange_strong(expected, true))\n    return;\ntry {\n    loadConversations();\n} catch (...) {\n    pimpl_-\u003eloaded_ \u003d false;\n    throw;\n}\n```",
+      "revId": "0e704817a422a566de92b72a308f982779326486",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08a44e09_dabe07d9",
+        "filename": "src/jamidht/conversation_module.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-20T14:20:32Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 88: The comment promises concurrent callers load at most once, but the implementation only performs a non-atomic check-then-act. Either implement that guarantee or weaken the documentation. The safer fix is to make the implementation match this contract.",
+      "revId": "0e704817a422a566de92b72a308f982779326486",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
