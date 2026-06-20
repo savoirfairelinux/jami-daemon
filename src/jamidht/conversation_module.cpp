@@ -403,6 +403,15 @@ public:
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
 
+    // Serializes loadConversationsIfNeeded() so the deferred load runs at most
+    // once even with concurrent callers.
+    std::mutex loadMtx_;
+
+    // Set to true at the end of a successful loadConversations(). Lets the
+    // (possibly heavy) loading be deferred for disabled accounts and run once
+    // they are enabled, while a failed or partial load stays retryable.
+    std::atomic_bool loaded_ {false};
+
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
@@ -1836,6 +1845,27 @@ ConversationModule::loadConversations()
             if (auto shared = w.lock())
                 shared->fixStructures(acc, updateContactConv, toRm);
         });
+
+    // Publish the loaded state only here, after a successful load: an early
+    // return or an exception above leaves loaded_ false so the load is retried.
+    pimpl_->loaded_ = true;
+}
+
+void
+ConversationModule::loadConversationsIfNeeded()
+{
+    // Serialize concurrent callers so the (heavy) load runs at most once.
+    // loadConversations() publishes loaded_ only after a successful load, so a
+    // failed or partial load is retried on the next call rather than suppressed.
+    // A dedicated mutex is used rather than reserving loaded_ up front with a
+    // compare-exchange: a second caller must wait for the in-progress load to
+    // finish, not skip ahead and register. Skipping ahead would let it take
+    // configurationMutex_ and then block on conversationsMtx_ held by the loader,
+    // deadlocking against the loader's unlinkConversations() (which needs
+    // configurationMutex_).
+    std::lock_guard lk(pimpl_->loadMtx_);
+    if (not pimpl_->loaded_)
+        loadConversations();
 }
 
 void
