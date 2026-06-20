@@ -1737,6 +1737,21 @@ JamiAccount::registerAsyncOps()
 void
 JamiAccount::doRegister()
 {
+    // Conversations are not loaded at startup for disabled accounts (see
+    // convModule()). Load them now, synchronously and *before* taking
+    // configurationMutex_, mirroring the normal startup path where convModule()
+    // loads them during loadAccount. This must happen off the configuration lock
+    // and before registerAsyncOps()/doRegister_(), which call
+    // convModule()->clearPendingFetch() (needs conversationsMtx_ while holding
+    // configurationMutex_): a concurrent load would deadlock because
+    // loadConversations() holds conversationsMtx_ and then needs
+    // configurationMutex_ via unlinkConversations(). No-op once loaded, and
+    // skipped in lazy-loading mode (LIBJAMI_FLAG_NO_AUTOLOAD) where the client
+    // drives conversation loading.
+    if (Manager::autoLoad && isUsable())
+        if (auto* cm = convModule())
+            cm->loadConversationsIfNeeded();
+
     std::lock_guard lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARNING("[Account {:s}] Account must be enabled and active to register, ignoring", getAccountID());
@@ -2563,7 +2578,10 @@ JamiAccount::convModule(bool noCreation)
                                               noNewSocket);
             },
             [this](const auto& convId, const auto& from) { conversationOneToOneReceive(convId, from); },
-            autoLoadConversations_);
+            // A disabled account defers the heavy initial conversation load until
+            // it is enabled (loaded then from doRegister()). Computing the flag
+            // here avoids mutating autoLoadConversations_ just to skip the load.
+            autoLoadConversations_ && isEnabled());
     }
     return convModule_.get();
 }

@@ -85,6 +85,13 @@ public:
      */
     void loadConversations();
 
+    /**
+     * Load conversations only if they have not been loaded yet (atomically, so
+     * concurrent callers load at most once). Used to lazily load a disabled
+     * account's conversations when it gets enabled.
+     */
+    void loadConversationsIfNeeded();
+
     void initPresence();
 
     void loadSingleConversation(const std::string& convId);

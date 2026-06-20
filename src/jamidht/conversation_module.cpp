@@ -403,6 +403,11 @@ public:
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
 
+    // Set to true at the end of a successful loadConversations(). Lets the
+    // (possibly heavy) loading be deferred for disabled accounts and run once
+    // they are enabled, while a failed or partial load stays retryable.
+    std::atomic_bool loaded_ {false};
+
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
@@ -1836,6 +1841,19 @@ ConversationModule::loadConversations()
             if (auto shared = w.lock())
                 shared->fixStructures(acc, updateContactConv, toRm);
         });
+
+    // Publish the loaded state only here, after a successful load: an early
+    // return or an exception above leaves loaded_ false so the load is retried.
+    pimpl_->loaded_ = true;
+}
+
+void
+ConversationModule::loadConversationsIfNeeded()
+{
+    // loadConversations() sets loaded_ only after a successful load, so a failed
+    // or partial load is retried on the next call rather than suppressed.
+    if (not pimpl_->loaded_)
+        loadConversations();
 }
 
 void
