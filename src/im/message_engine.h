@@ -22,6 +22,7 @@
 #include <mutex>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 
 #include <msgpack.hpp>
 #include <asio/steady_timer.hpp>
@@ -75,6 +76,12 @@ public:
 
 private:
     static const constexpr unsigned MAX_RETRIES = 20;
+    // Minimum delay between two retry passes for the same peer/device. Used to
+    // coalesce bursts of onPeerOnline() notifications (flapping presence, e.g. an
+    // unstable relay path or a connectivity change reconnecting every account at
+    // once) into a single retry instead of resending every pending message on
+    // each notification.
+    static const constexpr std::chrono::seconds RETRY_DEBOUNCE_INTERVAL {5};
     using clock = std::chrono::system_clock;
 
     void retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout);
@@ -101,6 +108,14 @@ private:
 
     std::map<std::string, std::list<Message>> messages_;
     std::map<std::string, std::list<Message>> messagesDevices_;
+
+    // Retry throttling per peer/device (guarded by messagesMutex_): the time of
+    // the last retry pass (steady_clock, to measure elapsed time regardless of
+    // wall-clock adjustments), a pending coalesced retry timer if one is armed,
+    // and the strongest retryOnTimeout requested while that timer is armed.
+    std::map<std::string, std::chrono::steady_clock::time_point> lastRetry_;
+    std::map<std::string, std::shared_ptr<asio::steady_timer>> retryTimers_;
+    std::map<std::string, bool> pendingRetryOnTimeout_;
 
     mutable std::mutex messagesMutex_ {};
 };

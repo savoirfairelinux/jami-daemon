@@ -78,6 +78,56 @@ MessageEngine::sendMessage(const std::string& to,
 void
 MessageEngine::onPeerOnline(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
+    // Presence can flap rapidly (an unstable relay path torn down and rebuilt
+    // every few seconds, or a connectivity change such as a VPN toggle that
+    // reconnects every account at once). Resending every pending message on each
+    // notification then produces a connection/retry storm that wastes CPU and
+    // memory. Throttle the retry passes per peer/device: run immediately when no
+    // pass happened recently, otherwise coalesce the burst into a single retry
+    // deferred to the end of the current interval.
+    const auto key = deviceId.empty() ? peer : deviceId;
+    {
+        std::lock_guard lock(messagesMutex_);
+        // If a deferred retry is already armed for this key, coalesce into it
+        // (keeping the strongest retryOnTimeout requested during the burst) and
+        // let that timer run the single pass. This is authoritative even once
+        // RETRY_DEBOUNCE_INTERVAL has elapsed, so a delayed timer handler and an
+        // immediate retry can never both fire for the same peer/device.
+        if (retryTimers_.find(key) != retryTimers_.end()) {
+            auto& pending = pendingRetryOnTimeout_[key];
+            pending = pending || retryOnTimeout;
+            return;
+        }
+        const auto now = std::chrono::steady_clock::now();
+        if (auto it = lastRetry_.find(key); it != lastRetry_.end() && now - it->second < RETRY_DEBOUNCE_INTERVAL) {
+            // A pass ran recently: defer a single coalesced retry to the end of
+            // the current interval instead of resending on every notification.
+            pendingRetryOnTimeout_[key] = retryOnTimeout;
+            auto timer = std::make_shared<asio::steady_timer>(*ioContext_);
+            timer->expires_after(RETRY_DEBOUNCE_INTERVAL - (now - it->second));
+            retryTimers_[key] = timer;
+            timer->async_wait(
+                [this, key, peer, deviceId, timer, w = account_.weak_from_this()](const std::error_code& ec) {
+                    if (ec)
+                        return;
+                    if (auto acc = w.lock()) {
+                        bool retryOnTimeout = false;
+                        {
+                            std::lock_guard lock(messagesMutex_);
+                            lastRetry_[key] = std::chrono::steady_clock::now();
+                            retryTimers_.erase(key);
+                            if (auto pit = pendingRetryOnTimeout_.find(key); pit != pendingRetryOnTimeout_.end()) {
+                                retryOnTimeout = pit->second;
+                                pendingRetryOnTimeout_.erase(pit);
+                            }
+                        }
+                        retrySend(peer, deviceId, retryOnTimeout);
+                    }
+                });
+            return;
+        }
+        lastRetry_[key] = now;
+    }
     retrySend(peer, deviceId, retryOnTimeout);
 }
 
