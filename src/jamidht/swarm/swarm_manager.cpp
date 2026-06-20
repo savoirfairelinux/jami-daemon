@@ -20,9 +20,25 @@
 #include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
 
+#include <algorithm>
+
 namespace jami {
 
 using namespace swarm_protocol;
+
+// Reconnection backoff for swarm nodes whose link keeps dropping (typically
+// peers behind a restrictive NAT relying on relayed paths that tear down every
+// few seconds). Instead of reconnecting immediately and indefinitely, attempts
+// are spaced out exponentially. Past RECONNECT_ONDEMAND_THRESHOLD consecutive
+// failures the node stops being eagerly maintained in the mesh and is only
+// retried slowly (it is still reconnected immediately on demand, e.g. when a
+// message must be sent, through the regular channel handlers).
+static constexpr std::chrono::seconds RECONNECT_BASE_DELAY {5};
+static constexpr std::chrono::seconds RECONNECT_MAX_DELAY {300};
+static constexpr unsigned RECONNECT_ONDEMAND_THRESHOLD {6};
+// A connection must stay up at least this long to be considered stable; a
+// shorter-lived link counts as a failure for backoff escalation purposes.
+static constexpr std::chrono::seconds RECONNECT_STABLE_MIN {60};
 
 SwarmManager::SwarmManager(const NodeId& id, const std::mt19937_64& rand, ToConnectCb&& toConnectCb)
     : id_(id)
@@ -96,6 +112,11 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
                 std::error_code ec;
                 resetNodeExpiry(ec, channel, id_);
             }
+            // Record that we are connected and cancel any pending reconnection
+            // backoff. The failure counter is only reset once the connection
+            // proves stable (see removeNode), so a peer that connects then drops
+            // within seconds keeps escalating toward on-demand mode.
+            markConnected(channel->deviceId());
         }
         receiveMessage(channel);
         if (emit && onConnectionChanged_) {
@@ -112,7 +133,18 @@ SwarmManager::removeNode(const NodeId& nodeId)
     std::unique_lock lk(mutex);
     if (isConnectedWith(nodeId)) {
         removeNodeInternal(nodeId);
+        // If the connection stayed up long enough, treat this as a clean drop
+        // and allow a quick reconnection; otherwise keep escalating the backoff
+        // so an unstable peer that drops every few seconds is not hammered.
+        auto it = reconnectInfos_.find(nodeId);
+        if (it != reconnectInfos_.end() && it->second.connectedAt != std::chrono::steady_clock::time_point {}
+            && std::chrono::steady_clock::now() - it->second.connectedAt >= RECONNECT_STABLE_MIN) {
+            it->second.failures = 0;
+            it->second.onDemand = false;
+        }
         lk.unlock();
+        scheduleReconnect(nodeId);
+        // Other buckets are still maintained.
         maintainBuckets();
     }
 }
@@ -139,6 +171,11 @@ SwarmManager::shutdown()
     }
     isShutdown_ = true;
     std::lock_guard lock(mutex);
+    for (auto& [id, info] : reconnectInfos_) {
+        if (info.timer)
+            info.timer->cancel();
+    }
+    reconnectInfos_.clear();
     routing_table.shutdownAllNodes();
 }
 
@@ -175,10 +212,14 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
                                          : bucket.getConnectingNodesSize() + bucket.getNodesSize();
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
             auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes, rd);
-            for (auto& node : nodesToTry)
+            for (auto& node : nodesToTry) {
+                // Skip nodes that are in reconnection backoff or on-demand mode:
+                // they must not be eagerly reconnected here.
+                if (shouldDeferReconnect(node))
+                    continue;
                 routing_table.addConnectingNode(node);
-
-            nodes.insert(nodesToTry.begin(), nodesToTry.end());
+                nodes.insert(node);
+            }
         }
     }
     lock.unlock();
@@ -319,9 +360,12 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                 auto bucket = shared->routing_table.findBucket(nodeId);
                 bucket->removeConnectingNode(nodeId);
                 bucket->addKnownNode(nodeId);
-                bucket = shared->routing_table.findBucket(shared->getId());
-                if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty() && shared->onConnectionChanged_) {
-                    lk.unlock();
+                auto myBucket = shared->routing_table.findBucket(shared->getId());
+                bool allFailed = myBucket->getConnectingNodesSize() == 0 && myBucket->isEmpty();
+                lk.unlock();
+                // The attempt failed: back off before trying this node again.
+                shared->scheduleReconnect(nodeId);
+                if (allFailed && shared->onConnectionChanged_) {
                     JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
                     shared->onConnectionChanged_(false);
                 }
@@ -334,6 +378,58 @@ void
 SwarmManager::removeNodeInternal(const NodeId& nodeId)
 {
     routing_table.removeNode(nodeId);
+}
+
+void
+SwarmManager::scheduleReconnect(const NodeId& nodeId)
+{
+    std::lock_guard lock(mutex);
+    if (isShutdown_)
+        return;
+    auto& info = reconnectInfos_[nodeId];
+    info.failures++;
+    // Exponential backoff capped at RECONNECT_MAX_DELAY (cap the exponent to
+    // avoid shifting past the width of the operand).
+    unsigned shift = std::min(info.failures - 1, 16u);
+    auto delay = std::min(RECONNECT_BASE_DELAY * (1u << shift), RECONNECT_MAX_DELAY);
+    if (info.failures > RECONNECT_ONDEMAND_THRESHOLD) {
+        // Stop eagerly maintaining this peer in the mesh: it is excluded from
+        // proactive bucket filling and only retried at the (slow) max interval.
+        // Real traffic still reconnects it immediately via the channel handlers.
+        info.onDemand = true;
+        delay = RECONNECT_MAX_DELAY;
+    }
+    info.nextRetry = std::chrono::steady_clock::now() + delay;
+    if (!info.timer)
+        info.timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext());
+    info.timer->expires_after(delay);
+    info.timer->async_wait([w = weak(), nodeId](const asio::error_code& ec) {
+        if (ec)
+            return;
+        if (auto shared = w.lock()) {
+            if (!shared->isShutdown_)
+                shared->maintainBuckets({nodeId});
+        }
+    });
+}
+
+bool
+SwarmManager::shouldDeferReconnect(const NodeId& nodeId) const
+{
+    auto it = reconnectInfos_.find(nodeId);
+    if (it == reconnectInfos_.end())
+        return false;
+    return it->second.onDemand || it->second.nextRetry > std::chrono::steady_clock::now();
+}
+
+void
+SwarmManager::markConnected(const NodeId& nodeId)
+{
+    auto& info = reconnectInfos_[nodeId];
+    info.connectedAt = std::chrono::steady_clock::now();
+    info.nextRetry = {};
+    if (info.timer)
+        info.timer->cancel();
 }
 
 void
