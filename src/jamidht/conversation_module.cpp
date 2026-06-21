@@ -1907,6 +1907,20 @@ ConversationModule::bootstrap(const std::string& convId)
 }
 
 void
+ConversationModule::syncConversationsWith(const std::string& uri)
+{
+    for (const auto& conv : pimpl_->getConversations()) {
+        if (conv->isMember(uri, false)) {
+            JAMI_DEBUG("[Account {}] Syncing conversation {} with peer {}",
+                       pimpl_->accountId_,
+                       conv->id(),
+                       uri);
+            pimpl_->bootstrap(conv->id());
+        }
+    }
+}
+
+void
 ConversationModule::monitor()
 {
     for (auto& conv : pimpl_->getConversations())

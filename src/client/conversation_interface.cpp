@@ -271,4 +271,14 @@ reloadConversationsAndRequests(const std::string& accountId)
     }
 }
 
+void
+syncConversationsWith(const std::string& accountId, const std::string& uri)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (auto* convModule = acc->convModule(true)) {
+            convModule->syncConversationsWith(uri);
+        }
+    }
+}
+
 } // namespace libjami

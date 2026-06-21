@@ -2691,8 +2691,12 @@ Conversation::Impl::updateStatus(const std::string& uri,
                                  const std::string& ts,
                                  bool emit)
 {
-    // This method can be called if peer send us a status or if another device sync. Emit will be true if a peer
-    // send us a status and will emit to other connected devices.
+    // Updates our local view of `uri`'s message status. It is called either when we locally
+    // observe a status change (a peer fetched a commit from us -> SENT, or we displayed a
+    // message -> DISPLAYED), or when another device/peer syncs a status to us. Pass emit=true
+    // only for locally-observed changes: it propagates the new status to our other connected
+    // devices/peers via messageStatusCb_. Statuses received from others are applied with
+    // emit=false to avoid re-broadcasting them.
     LogOptions options;
     std::map<std::string, std::map<std::string, std::string>> newStatus;
     {

@@ -114,6 +114,15 @@ public:
     void bootstrap(const std::string& convId = "");
 
     /**
+     * Re-bootstrap (reconnect + sync) every conversation shared with a given peer.
+     * Used to proactively fetch new commits from that peer even when no message push was
+     * sent for them — e.g. on an incoming call, so the call-history interaction reaches
+     * "delivered" although the device only woke up to handle the call.
+     * @param uri   the peer (contact) URI
+     */
+    void syncConversationsWith(const std::string& uri);
+
+    /**
      * Clear not removed fetch
      */
     void clearPendingFetch();
