@@ -82,7 +82,7 @@ PresenceManager::isOnline(const std::string& uri) const
         return false;
     std::lock_guard lock(mutex_);
     auto it = trackedBuddies_.find(h);
-    return it != trackedBuddies_.end() && !it->second.devices.empty();
+    return it != trackedBuddies_.end() && !it->second.deviceValues.empty();
 }
 
 std::map<std::string, bool>
@@ -91,7 +91,7 @@ PresenceManager::getTrackedBuddyPresence() const
     std::lock_guard lock(mutex_);
     std::map<std::string, bool> presence_info;
     for (const auto& [h, buddy] : trackedBuddies_) {
-        presence_info.emplace(h.toString(), !buddy.devices.empty());
+        presence_info.emplace(h.toString(), !buddy.deviceValues.empty());
     }
     return presence_info;
 }
@@ -106,7 +106,11 @@ PresenceManager::getDevices(const std::string& uri) const
     auto it = trackedBuddies_.find(h);
     if (it == trackedBuddies_.end())
         return {};
-    return {it->second.devices.begin(), it->second.devices.end()};
+    std::vector<dht::PkId> devices;
+    devices.reserve(it->second.deviceValues.size());
+    for (const auto& [deviceId, valueIds] : it->second.deviceValues)
+        devices.emplace_back(deviceId);
+    return devices;
 }
 
 uint64_t
@@ -147,7 +151,7 @@ PresenceManager::refresh()
     std::lock_guard lock(mutex_);
     for (auto& [h, buddy] : trackedBuddies_) {
         buddy.listenToken = {};
-        buddy.devices.clear();
+        buddy.deviceValues.clear();
         trackPresence(h, buddy);
     }
 }
@@ -163,36 +167,71 @@ PresenceManager::trackPresence(const dht::InfoHash& h, TrackedBuddy& buddy)
         return;
     }
 
-    buddy.listenToken = dht_->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired) {
-        if (!dev.pk) {
-            JAMI_WARNING("PresenceManager: Received DeviceAnnouncement without public key for {}", h.toString());
-            return true;
-        }
-        bool wasConnected, isConnected;
-        auto deviceId = dev.pk->getLongId();
-        bool deviceOnline = !expired;
-        {
-            std::lock_guard lock(mutex_);
-            auto it = trackedBuddies_.find(h);
-            if (it == trackedBuddies_.end())
-                return true;
+    buddy.listenToken = dht_->listen(
+        h,
+        [this, h](const std::vector<std::shared_ptr<dht::Value>>& values, bool expired) {
+            // A contact device can be advertised by more than one DeviceAnnouncement
+            // value at the same time (e.g. a freshly re-generated announcement coexisting
+            // with a previous one that is still living out its DHT TTL). All of them
+            // decode to the same device id. We therefore reference-count, per device, the
+            // set of live announcement value ids: a device stays present as long as at
+            // least one of its announcement values is alive, and only goes offline once
+            // the last one expires. Toggling the device on every single value expiry would
+            // mark the contact offline while a healthy announcement is still on the DHT.
+            std::vector<std::pair<dht::PkId, bool>> deviceChanges;
+            bool wasConnected, isConnected;
+            {
+                std::lock_guard lock(mutex_);
+                auto it = trackedBuddies_.find(h);
+                if (it == trackedBuddies_.end())
+                    return true;
 
-            wasConnected = !it->second.devices.empty();
-            if (expired) {
-                it->second.devices.erase(deviceId);
-            } else {
-                it->second.devices.insert(deviceId);
+                auto& deviceValues = it->second.deviceValues;
+                wasConnected = !deviceValues.empty();
+
+                for (const auto& value : values) {
+                    try {
+                        auto dev = dht::Value::unpack<DeviceAnnouncement>(*value);
+                        if (!dev.pk) {
+                            JAMI_WARNING("PresenceManager: Received DeviceAnnouncement without public "
+                                         "key for {}",
+                                         h.toString());
+                            continue;
+                        }
+                        const auto& deviceId = dev.pk->getLongId();
+                        if (expired) {
+                            auto dit = deviceValues.find(deviceId);
+                            if (dit != deviceValues.end()) {
+                                dit->second.erase(value->id);
+                                if (dit->second.empty()) {
+                                    deviceValues.erase(dit);
+                                    deviceChanges.emplace_back(deviceId, false);
+                                }
+                            }
+                        } else {
+                            auto& ids = deviceValues[deviceId];
+                            bool deviceWasAbsent = ids.empty();
+                            ids.insert(value->id);
+                            if (deviceWasAbsent)
+                                deviceChanges.emplace_back(deviceId, true);
+                        }
+                    } catch (const std::exception&) {
+                        continue;
+                    }
+                }
+
+                isConnected = !deviceValues.empty();
             }
-            isConnected = !it->second.devices.empty();
-        }
 
-        notifyDeviceListeners(h.toString(), deviceId, deviceOnline);
+            for (const auto& [deviceId, deviceOnline] : deviceChanges)
+                notifyDeviceListeners(h.toString(), deviceId, deviceOnline);
 
-        if (isConnected != wasConnected) {
-            notifyListeners(h.toString(), isConnected);
-        }
-        return true;
-    });
+            if (isConnected != wasConnected) {
+                notifyListeners(h.toString(), isConnected);
+            }
+            return true;
+        },
+        dht::getFilterSet<DeviceAnnouncement>());
 }
 
 void
