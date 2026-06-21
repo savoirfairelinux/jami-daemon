@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cbd88ef_0b96d0a1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1919,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T23:59:24Z",
+      "side": 1,
+      "message": "[Critical] Line 1919: syncConversationsWith() is documented and named as syncing with a specific peer, but bootstrap(conv-\u003eid()) re-bootstraps the whole conversation. For group conversations this can contact/fetch from unrelated members when the wake-up was caused by one peer, which is a privacy and performance regression. Route the sync to the requested member/device only, or add a peer-scoped bootstrap path before exposing this public API.\n```suggestion\n            pimpl_-\u003ebootstrap(conv-\u003eid(), uri);\n```",
+      "revId": "ecb61edc263adf5fe2f11690f92b33a2364e4936",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
