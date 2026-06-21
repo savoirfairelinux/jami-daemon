@@ -104,7 +104,11 @@ private:
     struct TrackedBuddy
     {
         dht::InfoHash id;
-        std::set<dht::PkId> devices;
+        // Per device, the set of live DeviceAnnouncement value ids announcing it.
+        // A device is present as long as it has at least one live announcement value,
+        // so that the expiry of a single (e.g. superseded) announcement does not mark
+        // the device offline while another announcement is still alive on the DHT.
+        std::map<dht::PkId, std::set<dht::Value::Id>> deviceValues;
         std::future<size_t> listenToken;
         int refCount {0};
 
