@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2ba6511_b474dce5",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T22:17:09Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 213: Malformed or unexpected DeviceAnnouncement values are now silently ignored, which makes DHT data issues very hard to diagnose and can mask repeated bad announcements. Please log the exception at debug/warning level with the value id and contact hash before continuing.\n```suggestion\n                    } catch (const std::exception\u0026 e) {\n                        JAMI_WARNING(\"PresenceManager: Failed to decode DeviceAnnouncement {} for {}: {}\",\n                                     value-\u003eid,\n                                     h.toString(),\n                                     e.what());\n                        continue;\n                    }\n```",
+      "revId": "aef5fe28a2b443fbe6d5ca609db215c9777feb2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
