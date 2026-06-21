@@ -3,6 +3,57 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a5ea631d_ac5845f6",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T23:59:29Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 273: Failures are silent when the account is missing or the conversation module is unavailable. Since this is an on-demand sync API, callers have no way to know that the sync was not scheduled. Consider returning a boolean/status or logging the rejected request consistently with nearby public API entry points.",
+      "revId": "ecb61edc263adf5fe2f11690f92b33a2364e4936",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d2ee937_5725908e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1910,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T23:59:29Z",
+      "side": 1,
+      "message": "[🔴 Critical] Line 1910: The public API can trigger a re-bootstrap of every shared conversation with `uri` on every call, with no validation, throttling, or deduplication. A client repeatedly calling this for a contact with many swarms could create excessive network activity and duplicate sync work. Please reject empty/invalid peer URIs and gate repeated syncs per peer/conversation, or reuse an existing pending-bootstrap/fetch mechanism before calling `bootstrap`.\\n```suggestion\\nif (uri.empty()) {\\n    JAMI_WARN(\\\"[Account {}] Ignoring sync request with empty peer URI\\\", pimpl_-\u003eaccountId_);\\n    return;\\n}\\n// Also skip conversations already being bootstrapped/fetched for this peer.\\n```",
+      "revId": "ecb61edc263adf5fe2f11690f92b33a2364e4936",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd1d3712_f9460558",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1911,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T23:59:29Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 1911: `uri` is matched directly against conversation membership. If callers pass a prefixed URI, username, device URI, or otherwise non-canonical identifier, this may silently fail to sync the intended conversations. Normalize/validate the peer identifier at the API boundary or here before calling `isMember`, using the same canonical form used when members are stored.",
+      "revId": "ecb61edc263adf5fe2f11690f92b33a2364e4936",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2cbd88ef_0b96d0a1",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 1
