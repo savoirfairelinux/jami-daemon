@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e94feef_dfca72bc",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T00:01:29Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 86: The debounce key mixes peer IDs and device IDs in the same namespace (`deviceId.empty() ? peer : deviceId`). If a peer ID and a device ID ever have the same string value, retry throttling for one conversation can suppress or coalesce retries for another. Use a composite key that includes both the peer and device dimensions, or at least namespace the two key types.\n\n```suggestion\n    const auto key \u003d deviceId.empty() ? \"peer:\" + peer : \"device:\" + peer + \":\" + deviceId;\n```",
+      "revId": "20b2a3df4e7fa717fc11c385d7ece3e48499ae95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81fec26e_db505da8",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T00:01:29Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 98: `lastRetry_` is updated for every peer/device that comes online but entries are never removed. Over long-running clients with many contacts/devices, this can grow indefinitely even after there are no pending messages for those keys. Consider pruning debounce state when the corresponding message queues become empty, or expiring old `lastRetry_` entries before inserting new ones.",
+      "revId": "20b2a3df4e7fa717fc11c385d7ece3e48499ae95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
