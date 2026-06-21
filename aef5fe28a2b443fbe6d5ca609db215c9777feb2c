@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0d866c24_b986303b",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T22:17:09Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 199: The unpack failure is silently ignored, which makes malformed or unexpected DHT values impossible to diagnose and can hide data corruption or protocol compatibility issues. Please log at least a warning with the value id/contact before continuing, consistent with the nearby missing-public-key warning.\n```suggestion\n                    } catch (const std::exception\u0026 e) {\n                        JAMI_WARNING(\"PresenceManager: Failed to unpack DeviceAnnouncement for {}: {}\",\n                                     h.toString(),\n                                     e.what());\n                        continue;\n                    }\n```",
+      "revId": "aef5fe28a2b443fbe6d5ca609db215c9777feb2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c2ba6511_b474dce5",
         "filename": "src/jamidht/presence_manager.cpp",
         "patchSetId": 1
