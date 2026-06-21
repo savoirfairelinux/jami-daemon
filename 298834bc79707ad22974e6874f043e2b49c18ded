@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a42e30f_fb024717",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T22:31:33Z",
+      "side": 1,
+      "message": "[🟡 Suggestion] Line 183: The new raw-value listener decodes every received DeviceAnnouncement while holding mutex_. This can unnecessarily block unrelated presence queries/listener updates, especially because the callback may receive multiple values and also logs decode failures in the locked section. Consider decoding and validating the values before taking mutex_, then only mutate deviceValues under the lock.\n\n```suggestion\nstd::vector\u003cstd::pair\u003cdht::PkId, dht::Value::Id\u003e\u003e decodedValues;\ndecodedValues.reserve(values.size());\nfor (const auto\u0026 value : values) {\n    try {\n        auto dev \u003d dht::Value::unpack\u003cDeviceAnnouncement\u003e(*value);\n        if (!dev.pk) {\n            JAMI_WARNING(\"PresenceManager: Received DeviceAnnouncement without public key for {}\", h.toString());\n            continue;\n        }\n        decodedValues.emplace_back(dev.pk-\u003egetLongId(), value-\u003eid);\n    } catch (const std::exception\u0026 e) {\n        JAMI_WARNING(\"PresenceManager: Failed to decode DeviceAnnouncement {} for {}: {}\",\n                     value-\u003eid,\n                     h.toString(),\n                     e.what());\n    }\n}\n\n{\n    std::lock_guard lock(mutex_);\n    // update deviceValues from decodedValues\n}\n```",
+      "revId": "298834bc79707ad22974e6874f043e2b49c18ded",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
