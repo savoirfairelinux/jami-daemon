@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32311709_8f95603f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 593,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T16:18:32Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 593: scheduleConversationRecovery() can schedule duplicate clone attempts for the same member URI if persisted member metadata contains multiple devices or duplicate entries for a peer. That can amplify recovery traffic and race through the shared clone path unnecessarily. Deduplicate remote URIs before calling cloneConversationFrom().\n```suggestion\n    std::unordered_set\u003cstd::string\u003e scheduledMembers;\n    for (const auto\u0026 member : getConversationMembers(conversationId)) {\n        auto uriIt \u003d member.find(\"uri\");\n        if (uriIt \u003d\u003d member.end() || uriIt-\u003esecond.empty()) {\n            JAMI_WARNING(\"[Account {}] [Conversation {}] Ignoring malformed member metadata during recovery\",\n                         accountId_,\n                         conversationId);\n            continue;\n        }\n        if (uriIt-\u003esecond !\u003d username_ \u0026\u0026 scheduledMembers.insert(uriIt-\u003esecond).second) {\n            scheduled \u003d true;\n            cloneConversationFrom(conversationId, uriIt-\u003esecond);\n        }\n    }\n```",
+      "revId": "3645c0d9d7421fc3ed776b9c2fb02e618041d723",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2afcda43_eab5488f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 3917,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-21T16:18:32Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 3917: validate() never checks the root tree object with git_odb_read_header(): git_commit_tree() loads it before the id is inserted into visited, then git_tree_walk() only validates child entries. This misses truncated/unreadable root tree objects in cases where libgit2 can still create the tree handle but the ODB header/read check would fail, and it is inconsistent with the stated guarantee that every reachable object is present and readable. Explicitly validate the root tree before walking it.\n```suggestion\n        const git_oid* treeId \u003d git_tree_id(tree.get());\n        if (visited.insert(*treeId).second) {\n            std::size_t len \u003d 0;\n            git_object_t type \u003d GIT_OBJECT_ANY;\n            if (git_odb_read_header(\u0026len, \u0026type, odb, treeId) \u003c 0)\n                return false;\n            if (git_tree_walk(tree.get(), GIT_TREEWALK_PRE, checkEntry, \u0026walkCtx) \u003c 0)\n                return false;\n        }\n```",
+      "revId": "3645c0d9d7421fc3ed776b9c2fb02e618041d723",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
