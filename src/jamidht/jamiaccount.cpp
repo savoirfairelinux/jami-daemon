@@ -1527,7 +1527,14 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getAccountID(),
                 getPath(),
-                [this]() { return getAccountDetails(); },
+                [w = weak()]() -> std::map<std::string, std::string> {
+                    // The account manager may outlive this account when an
+                    // authentication task is still running on a worker thread.
+                    // Capture a weak ref to avoid using a destroyed account.
+                    if (auto this_ = w.lock())
+                        return this_->getAccountDetails();
+                    return {};
+                },
                 [this](DeviceSync&& syncData) {
                     if (auto* sm = syncModule()) {
                         auto syncDataPtr = std::make_shared<SyncMsg>();
