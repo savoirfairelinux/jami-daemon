@@ -88,7 +88,6 @@ pipeline {
                 stage('Checkout & setup') {
                     steps {
                         checkout scm
-                        sh "docker build --platform linux/amd64 -f bin/nodejs/Dockerfile -t jami-daemon-publish:${env.BUILD_ID} ."
                     }
                 }
 
@@ -98,7 +97,7 @@ pipeline {
                             docker run --rm \\
                                 -v \${WORKSPACE}:\${WORKSPACE} \\
                                 -w \${WORKSPACE} \\
-                                jami-daemon-publish:${env.BUILD_ID} \\
+                                node:24-slim \\
                                 npm run build --workspace=common --workspace=@savoirfairelinux/jami-core
                         """
                     }
@@ -228,7 +227,7 @@ void npmPublishOrPack() {
                     -v \${WORKSPACE}:\${WORKSPACE} \\
                     -w \$(pwd) \\
                     -e NPM_TOKEN \\
-                    jami-daemon-publish:${env.BUILD_ID} \\
+                    node:24-slim \\
                     npm pack
             """
             archiveArtifacts artifacts: '*.tgz', fingerprint: true
@@ -238,7 +237,7 @@ void npmPublishOrPack() {
                     -v \${WORKSPACE}:\${WORKSPACE} \\
                     -w \$(pwd) \\
                     -e NPM_TOKEN \\
-                    jami-daemon-publish:${env.BUILD_ID} \\
+                    node:24-slim \\
                     npm publish --access public
             """
         }
