@@ -96,7 +96,7 @@ pipeline {
                         sh """
                             docker run --rm \\
                                 -v \${WORKSPACE}:\${WORKSPACE} \\
-                                -w \${WORKSPACE} \\
+                                -w \${WORKSPACE}/bin/nodejs \\
                                 node:24-slim \\
                                 npm run build --workspace=common --workspace=@savoirfairelinux/jami-core
                         """
