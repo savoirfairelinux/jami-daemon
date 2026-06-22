@@ -1,6 +1,6 @@
 # ONNX
-ONNX_VERSION := v1.16.3
-PKG_CPE += cpe:2.3:a:*:onnx:1.16.3:*:*:*:*:*:*:*
+ONNX_VERSION := v1.27.0
+PKG_CPE += cpe:2.3:a:*:onnx:1.27.0:*:*:*:*:*:*:*
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
@@ -14,11 +14,10 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 	rm -Rf $@
 	mkdir -p $@
 	(cd $@ && tar x --strip-components=1 -f $<)
-	cd $@ && patch -flp1 < $(SRC)/onnx/fix-eigen-hash.patch
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
-	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended --allow_running_as_root
+	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended --allow_running_as_root --compile_no_warning_as_error
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
 ifdef HAVE_MACOSX
