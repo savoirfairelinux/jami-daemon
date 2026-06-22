@@ -88,12 +88,19 @@ pipeline {
                 stage('Checkout & setup') {
                     steps {
                         checkout scm
+                        sh "docker build --platform linux/amd64 -f bin/nodejs/Dockerfile -t jami-daemon-publish:${env.BUILD_ID} ."
                     }
                 }
 
                 stage('Build TypeScript') {
                     steps {
-                        sh 'npm run build --workspace=common --workspace=@savoirfairelinux/jami-core'
+                        sh """
+                            docker run --rm \\
+                                -v \${WORKSPACE}:\${WORKSPACE} \\
+                                -w \${WORKSPACE} \\
+                                jami-daemon-publish:${env.BUILD_ID} \\
+                                npm run build --workspace=common --workspace=@savoirfairelinux/jami-core
+                        """
                     }
                 }
 
@@ -214,12 +221,26 @@ void publishPlatformPackage(String os, String arch) {
  */
 void npmPublishOrPack() {
     withCredentials([string(credentialsId: 'npm-token', variable: 'NPM_TOKEN')]) {
-        writeFile file: '.npmrc', text: "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}\n"
+        writeFile file: '.npmrc', text: '//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n'
         if (params.DRY_RUN) {
-            sh 'npm pack'
+            sh """
+                docker run --rm \\
+                    -v \${WORKSPACE}:\${WORKSPACE} \\
+                    -w \$(pwd) \\
+                    -e NPM_TOKEN \\
+                    jami-daemon-publish:${env.BUILD_ID} \\
+                    npm pack
+            """
             archiveArtifacts artifacts: '*.tgz', fingerprint: true
         } else {
-            sh 'npm publish --access public'
+            sh """
+                docker run --rm \\
+                    -v \${WORKSPACE}:\${WORKSPACE} \\
+                    -w \$(pwd) \\
+                    -e NPM_TOKEN \\
+                    jami-daemon-publish:${env.BUILD_ID} \\
+                    npm publish --access public
+            """
         }
     }
 }
