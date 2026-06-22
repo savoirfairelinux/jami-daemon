@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a27a900d_f220b963",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-22T14:39:16Z",
+      "side": 1,
+      "message": "In Jami, \"disabling\" an account prevents it from being active on the network, but the user should still be able to browse their conversations locally. This patch completely breaks that.",
+      "revId": "e83fbbc2fb0cfa74ce105b94f42dbd038be49ce9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3a793202_ec3fb4ff",
