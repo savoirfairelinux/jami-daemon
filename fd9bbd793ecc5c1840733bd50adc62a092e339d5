@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af33967c_0bad9a64",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1918,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-22T12:19:07Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1918: This public API accepts any non-empty URI authority and uses it directly to select conversations. That means callers can pass malformed or non-Jami URIs, or differently formatted identifiers, and still trigger bootstraps for every matching conversation member. This should validate/canonicalize to the expected Jami account identifier format before using it. Suggested fix:\n```suggestion\n    auto peer \u003d std::string(jami::trim(Uri(uri).authority()));\n    if (peer.empty() || !jami::isValidId(peer)) {\n        JAMI_WARNING(\"[Account {}] syncConversationsWith ignored: invalid peer URI \u0027{}\u0027\",\n                     pimpl_-\u003eaccountId_,\n                     uri);\n        return;\n    }\n```",
+      "revId": "fd9bbd793ecc5c1840733bd50adc62a092e339d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ebafb42f_71c0bd5a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1926,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-22T12:19:07Z",
+      "side": 1,
+      "message": "[🟡 Suggestions] Line 1926: Each matching conversation is bootstrapped immediately, with no de-duplication or rate limiting. Because this is exposed through libjami and intended to be called on wake/call events, repeated calls for the same peer can fan out into many reconnect/sync operations and cause avoidable network and CPU load. Consider queuing or coalescing per-peer/per-conversation bootstraps, or skipping conversations already being bootstrapped.",
+      "revId": "fd9bbd793ecc5c1840733bd50adc62a092e339d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
