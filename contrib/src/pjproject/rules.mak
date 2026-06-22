@@ -7,8 +7,10 @@ PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJE
 # passed to --with-gnutls (it adds -I<prefix>/include unconditionally).
 # Resolve the real GnuTLS prefix via pkg-config so both the header and library checks succeed;
 # fall back to the contrib prefix for cross builds where GnuTLS is built into contrib.
+ifndef HAVE_CROSS_COMPILE
 ifndef IGNORE_SYSTEM_LIBS
 PJPROJECT_GNUTLS_PREFIX := $(shell $(PKG_CONFIG) --variable=prefix gnutls 2>/dev/null)
+endif
 endif
 PJPROJECT_GNUTLS_PREFIX ?= $(PREFIX)
 
