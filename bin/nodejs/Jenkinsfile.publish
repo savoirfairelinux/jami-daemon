@@ -39,10 +39,6 @@ pipeline {
     }
 
     parameters {
-        string(
-            name: 'RELEASE_VERSION',
-            description: 'Semver version to publish (e.g. 0.1.0). Leave empty to use version from package.json.'
-        )
         booleanParam(
             name: 'DRY_RUN',
             defaultValue: true,
@@ -95,8 +91,6 @@ pipeline {
                 stage('Checkout & setup') {
                     steps {
                         checkout scm
-                        sh 'npm ci --ignore-scripts'
-                        setVersionIfRequested()
                     }
                 }
 
@@ -219,44 +213,13 @@ void publishPlatformPackage(String os, String arch) {
 }
 
 /**
- * Apply RELEASE_VERSION to all publishable package.json files.
- */
-void setVersionIfRequested() {
-    if (!params.RELEASE_VERSION?.trim()) return
-
-    def version = params.RELEASE_VERSION.trim()
-    def packageDirs = [
-        'bin/nodejs',
-        'bin/nodejs/npm/darwin-arm64',
-        'bin/nodejs/npm/linux-arm64',
-        'bin/nodejs/npm/linux-x64',
-    ]
-
-    for (packageDir in packageDirs) {
-        sh "npm version '${version}' --no-git-tag-version --prefix '${packageDir}'"
-    }
-
-    // Keep optionalDependencies in bin/nodejs/package.json in sync.
-    sh """
-        cd bin/nodejs
-        node -e "
-            const fs = require('fs');
-            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-            for (const key of Object.keys(pkg.optionalDependencies || {})) {
-                pkg.optionalDependencies[key] = '${version}';
-            }
-            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\\n');
-        "
-    """
-}
-
-/**
  * Publish if not DRY_RUN, otherwise just pack for inspection.
  */
 void npmPublishOrPack() {
     writeFile file: '.npmrc', text: "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}\n"
     if (params.DRY_RUN) {
-        sh 'npm pack --dry-run'
+        sh 'npm pack'
+        archiveArtifacts artifacts: '*.tgz', fingerprint: true
     } else {
         sh 'npm publish --access public'
     }
