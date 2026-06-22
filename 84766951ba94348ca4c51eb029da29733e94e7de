@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "664403bf_580434de",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-22T00:06:30Z",
+      "side": 1,
+      "message": "Line 274: Invalid or unsupported peer input is silently ignored all the way down the stack. That makes caller bugs hard to diagnose and hides why an on-demand sync did not happen. Please log at least the invalid/empty normalized peer case in `ConversationModule::syncConversationsWith`, consistent with existing JAMI logging patterns, rather than returning silently.",
+      "revId": "84766951ba94348ca4c51eb029da29733e94e7de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92ced2e4_5c9aafa3",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1913,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-22T00:06:30Z",
+      "side": 1,
+      "message": "[Critical] Line 1913: The URI normalization likely rejects valid bare peer IDs and may also mishandle scheme-only forms such as `jami:\u003chash\u003e` if `Uri::authority()` only returns the RFC authority component. The new public API documents `uri` as a contact URI, and callers commonly pass either a bare account ID or a `jami:` URI; returning early here makes the sync silently do nothing. Normalize with the same helper used elsewhere for Jami identifiers, or explicitly fall back to the raw/bare value when the authority is empty. Example:\n```suggestion\nauto peer \u003d Uri(uri).authority();\nif (peer.empty())\n    peer \u003d uri;\npeer \u003d jami::trim(peer);\nif (peer.empty())\n    return;\n```",
+      "revId": "84766951ba94348ca4c51eb029da29733e94e7de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15b0a4d7_98908b05",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1915,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-22T00:06:30Z",
+      "side": 1,
+      "message": "Line 1915: This loops over every conversation and starts a bootstrap for each match without any throttling or deduplication. Because this is exposed as a public libjami API, a buggy or hostile client can repeatedly trigger potentially expensive network syncs for all shared conversations with a peer. Consider reusing existing pending-fetch/bootstrap coalescing if available, or adding a small per-peer/per-conversation guard so repeated calls while a bootstrap is already in progress are ignored.",
+      "revId": "84766951ba94348ca4c51eb029da29733e94e7de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
