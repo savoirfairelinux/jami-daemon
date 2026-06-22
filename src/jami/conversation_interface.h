@@ -117,6 +117,16 @@ LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                            const int32_t& flag);
 LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId);
 
+/**
+ * Proactively (re)synchronize every conversation shared with a peer, fetching any new
+ * commits from that peer. Useful when a device woke up for a reason that does not carry a
+ * conversation push (e.g. an incoming call): it lets the call-history interaction reach
+ * "delivered" without depending on a separate message notification.
+ * @param accountId   the local account id
+ * @param uri         the peer (contact) URI to synchronize conversations with
+ */
+LIBJAMI_PUBLIC void syncConversationsWith(const std::string& accountId, const std::string& uri);
+
 struct LIBJAMI_PUBLIC ConversationSignal
 {
     struct LIBJAMI_PUBLIC SwarmLoaded
