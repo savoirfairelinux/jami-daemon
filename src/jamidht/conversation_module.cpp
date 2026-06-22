@@ -21,6 +21,7 @@
 #include "call.h"
 #include "client/jami_signal.h"
 #include "fileutils.h"
+#include "uri.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
@@ -1904,6 +1905,25 @@ void
 ConversationModule::bootstrap(const std::string& convId)
 {
     pimpl_->bootstrap(convId);
+}
+
+void
+ConversationModule::syncConversationsWith(const std::string& uri)
+{
+    // Conversation members are stored as the bare account authority, so accept any URI form
+    // (e.g. "jami:<hash>") by canonicalizing first.
+    auto peer = Uri(uri).authority();
+    if (peer.empty())
+        return;
+    for (const auto& conv : pimpl_->getConversations()) {
+        if (conv->isMember(peer, false)) {
+            JAMI_DEBUG("[Account {}] Bootstrapping conversation {} shared with peer {}",
+                       pimpl_->accountId_,
+                       conv->id(),
+                       peer);
+            pimpl_->bootstrap(conv->id());
+        }
+    }
 }
 
 void
