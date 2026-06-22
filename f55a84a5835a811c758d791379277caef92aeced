@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9749005_278cd1e3",
+        "filename": ".agents/skills/contrib/SKILL.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-22T20:36:12Z",
+      "side": 1,
+      "message": "The daemon is often a submodule so this gives more context, and agents are smart enough to figure this out. But agreed, done.",
+      "parentUuid": "be537de9_e177ceeb",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 150
+      },
+      "revId": "f55a84a5835a811c758d791379277caef92aeced",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0dd9f303_2a72b24f",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-06-22T20:30:51Z",
       "side": 1,
       "message": "askQuestions is framework-specific, the tool either doesn\u0027t exist or is under a different name on other agentic coding tools",
+      "range": {
+        "startLine": 25,
+        "startChar": 11,
+        "endLine": 25,
+        "endChar": 23
+      },
+      "revId": "f55a84a5835a811c758d791379277caef92aeced",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58f56a95_76d0319c",
+        "filename": "AGENTS.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-06-22T20:36:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0dd9f303_2a72b24f",
       "range": {
         "startLine": 25,
         "startChar": 11,
