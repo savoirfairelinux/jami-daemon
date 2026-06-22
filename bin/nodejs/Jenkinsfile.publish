@@ -188,13 +188,15 @@ void buildNativeAddonInDocker(String platform, String arch) {
 void buildNativeAddonOnHost(String platform, String arch) {
     sh """
         node -e "if (process.platform !== '${platform}' || process.arch !== '${arch}') { console.error('Expected ${platform}-${arch}, got ' + process.platform + '-' + process.arch); process.exit(1); }"
-        rm -rf build bin/nodejs/build
+        export MACOSX_DEPLOYMENT_TARGET=13.0
+        rm -rf build bin/nodejs/build contrib/build-*
         cmake -S . -B build \
             -DJAMI_NODEJS=ON \
             -DBUILD_TESTING=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
             -DCMAKE_OSX_ARCHITECTURES=${arch} \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
             -DIGNORE_SYSTEM_LIBS=ON \
             -GNinja
         cmake --build build --config Release --parallel 4
