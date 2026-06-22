@@ -83,9 +83,6 @@ pipeline {
 
         stage('Publish') {
             agent { label 'linux-builder' }
-            environment {
-                NODE_AUTH_TOKEN = credentials('npm-token')
-            }
             stages {
 
                 stage('Checkout & setup') {
@@ -216,11 +213,13 @@ void publishPlatformPackage(String os, String arch) {
  * Publish if not DRY_RUN, otherwise just pack for inspection.
  */
 void npmPublishOrPack() {
-    writeFile file: '.npmrc', text: "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}\n"
-    if (params.DRY_RUN) {
-        sh 'npm pack'
-        archiveArtifacts artifacts: '*.tgz', fingerprint: true
-    } else {
-        sh 'npm publish --access public'
+    withCredentials([string(credentialsId: 'npm-token', variable: 'NPM_TOKEN')]) {
+        writeFile file: '.npmrc', text: "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}\n"
+        if (params.DRY_RUN) {
+            sh 'npm pack'
+            archiveArtifacts artifacts: '*.tgz', fingerprint: true
+        } else {
+            sh 'npm publish --access public'
+        }
     }
 }
