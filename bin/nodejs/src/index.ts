@@ -186,7 +186,7 @@ export interface JamiSwig {
   setAccountDetails(accountId: string, details: StringMap): void
   addAccount(details: StringMap): string
   removeAccount(accountId: string): void
-  updateProfile(accountId: string, displayName: string, avatarPath: string, fileType: string, flag: number): void
+  updateProfile(accountId: string, displayName: string, avatarPath: string, fileType: string, botOwner: string, flag: number): void
   getAccountList(): StringVect
 
   // Account text messages

@@ -200,9 +200,10 @@ public:
                        const std::string& displayName,
                        const std::string& avatar,
                        const std::string& fileType,
+                       const std::string& botOwner,
                        const int32_t& flag)
     {
-        libjami::updateProfile(accountID, displayName, avatar, fileType, flag);
+        libjami::updateProfile(accountID, displayName, avatar, fileType, botOwner, flag);
     }
 
     auto getMessageStatus(const uint64_t& id) -> decltype(libjami::getMessageStatus(id))
