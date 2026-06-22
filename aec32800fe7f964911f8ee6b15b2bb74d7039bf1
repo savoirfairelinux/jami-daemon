@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee24304c_f5aadc51",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-22T15:08:08Z",
+      "side": 1,
+      "message": "This is at best a hack and could easily end up having a net negative impact on Jami\u0027s performance. If calls truly make Jami\u0027s memory usage grow more than it should, then this is almost certainly due to a memory leak or poor memory management practices, neither of which can be fixed by tuning malloc.",
+      "revId": "aec32800fe7f964911f8ee6b15b2bb74d7039bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e92619dc_5bd56056",
