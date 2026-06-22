@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be537de9_e177ceeb",
+        "filename": ".agents/skills/contrib/SKILL.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-22T20:30:51Z",
+      "side": 1,
+      "message": "path bug: File lives in daemon/.agents/..., so repo root is daemon/. But skill says daemon/contrib/build-{arch} that\u0027d be daemon/daemon/contrib/... which doesn\u0027t exist.",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 13,
+        "endChar": 150
+      },
+      "revId": "f55a84a5835a811c758d791379277caef92aeced",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0dd9f303_2a72b24f",
+        "filename": "AGENTS.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-06-22T20:30:51Z",
+      "side": 1,
+      "message": "askQuestions is framework-specific, the tool either doesn\u0027t exist or is under a different name on other agentic coding tools",
+      "range": {
+        "startLine": 25,
+        "startChar": 11,
+        "endLine": 25,
+        "endChar": 23
+      },
+      "revId": "f55a84a5835a811c758d791379277caef92aeced",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
