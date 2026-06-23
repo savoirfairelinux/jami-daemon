@@ -98,7 +98,7 @@ pipeline {
                                 -v \${WORKSPACE}:\${WORKSPACE} \\
                                 -w \${WORKSPACE}/bin/nodejs \\
                                 node:24-slim \\
-                                npm run build --workspace=common --workspace=@savoirfairelinux/jami-core
+                                sh -c 'npm ci --ignore-scripts && npm run build'
                         """
                     }
                 }
