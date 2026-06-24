@@ -870,6 +870,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
             context->run();
         } catch (const std::exception& ex) {
             JAMI_ERROR("[io] Unexpected io_context thread exception: {}", ex.what());
+            throw;
         }
     });
 
