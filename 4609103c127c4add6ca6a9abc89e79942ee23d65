@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80227d48_e595bfab",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2216,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-25T15:44:19Z",
+      "side": 1,
+      "message": "[🔴 Critical Issues - Must fix before merge] Line 2216: The race guard assumes a newer local removal will always have a different millisecond timestamp. That is not guaranteed: accepting a re-invite and removing the conversation again within the same millisecond can leave `conv-\u003einfo.removed` unchanged, making `handlePendingConversation()` clear the tombstone and resurrect a conversation the user just removed. Use an explicit generation/nonce for the removal state, or compare against an in-memory monotonic marker updated on every removal instead of relying on wall-clock millisecond uniqueness.\n\n```suggestion\n// Store and compare a monotonic removal generation instead of relying on\n// millisecond timestamp uniqueness.\nstd::optional\u003cuint64_t\u003e removalGeneration;\n```",
+      "revId": "4609103c127c4add6ca6a9abc89e79942ee23d65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
