@@ -66,6 +66,11 @@ public:
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
     virtual void messageSend(const std::string& /*message*/){}
+    virtual void collaborativeDocumentChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, int /*index*/, int /*deleteLen*/, const std::string& /*insert*/){}
+    virtual void collaborativeCursorChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, int /*position*/, int /*anchor*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*peerId*/){}
+    virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
+    virtual void collaborativeDocumentDelta(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*deltaJson*/){}
 };
 %}
 
@@ -291,4 +296,9 @@ public:
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
     virtual void messageSend(const std::string& /*message*/){}
+    virtual void collaborativeDocumentChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, int /*index*/, int /*deleteLen*/, const std::string& /*insert*/){}
+    virtual void collaborativeCursorChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, int /*position*/, int /*anchor*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*peerId*/){}
+    virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
+    virtual void collaborativeDocumentDelta(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*documentId*/, const std::string& /*deltaJson*/){}
 };

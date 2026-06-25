@@ -28,6 +28,7 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/conversation_module.h"
+#include "jamidht/collaborative_editing.h"
 
 namespace libjami {
 
@@ -269,6 +270,109 @@ reloadConversationsAndRequests(const std::string& accountId)
             convModule->loadConversations();
         }
     }
+}
+
+std::string
+createCollaborativeDocument(const std::string& accountId,
+                            const std::string& conversationId,
+                            const std::string& name,
+                            const std::string& kind)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->createDocument(conversationId, name, kind);
+    return {};
+}
+
+std::string
+openCollaborativeDocument(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->openDocument(conversationId, documentId);
+    return {};
+}
+
+void
+closeCollaborativeDocument(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->closeDocument(conversationId, documentId);
+}
+
+void
+editCollaborativeDocument(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& documentId,
+                          uint32_t index,
+                          uint32_t deleteLen,
+                          const std::string& insert)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->edit(conversationId, documentId, index, deleteLen, insert);
+}
+
+void
+setCollaborativeCursor(const std::string& accountId,
+                       const std::string& conversationId,
+                       const std::string& documentId,
+                       int position,
+                       int anchor)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->setCursor(conversationId, documentId, position, anchor);
+}
+
+std::string
+collaborativeDocumentText(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentText(conversationId, documentId);
+    return {};
+}
+
+void
+setCollaborativeDocumentName(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& documentId,
+                             const std::string& name)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->setName(conversationId, documentId, name);
+}
+
+std::string
+collaborativeDocumentName(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentName(conversationId, documentId);
+    return {};
+}
+
+void
+applyCollaborativeDelta(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::string& documentId,
+                        const std::string& deltaJson)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->applyDelta(conversationId, documentId, deltaJson);
+}
+
+std::string
+collaborativeDocumentContentDelta(const std::string& accountId,
+                                  const std::string& conversationId,
+                                  const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentContentDelta(conversationId, documentId);
+    return {};
 }
 
 } // namespace libjami

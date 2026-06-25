@@ -81,6 +81,7 @@ class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
 class PresenceManager;
+class CollaborativeEditing;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -489,6 +490,12 @@ public:
      */
     ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
+
+    /**
+     * Retrieve the (lazily created) collaborative editing manager, which handles
+     * real-time shared text documents inside this account's conversations.
+     */
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing();
 
     /**
      * Check (via the cache) if we need to send our profile to a specific device
@@ -976,6 +983,7 @@ private:
     std::unique_ptr<ConversationModule> convModule_;
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing_;
 
     std::mutex rdvMtx_;
 

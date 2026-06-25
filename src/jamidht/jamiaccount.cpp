@@ -32,6 +32,7 @@
 #include "server_account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
+#include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "message_channel_handler.h"
@@ -2664,6 +2665,15 @@ JamiAccount::syncModule()
     return syncModule_.get();
 }
 
+std::shared_ptr<CollaborativeEditing>
+JamiAccount::collaborativeEditing()
+{
+    std::lock_guard lk(moduleMtx_);
+    if (!collaborativeEditing_)
+        collaborativeEditing_ = std::make_shared<CollaborativeEditing>(shared());
+    return collaborativeEditing_;
+}
+
 void
 JamiAccount::onTextMessage(const std::string& id,
                            const std::string& from,
@@ -4003,6 +4013,9 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
         } catch (const std::exception& e) {
             JAMI_WARNING("Error parsing composing state: {}", e.what());
         }
+    } else if (m.first == MIME_TYPE_COLLAB) {
+        collaborativeEditing()->onRemotePayload(from, m.second);
+        return true;
     } else if (m.first == MIME_TYPE_IMDN) {
         try {
             static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");

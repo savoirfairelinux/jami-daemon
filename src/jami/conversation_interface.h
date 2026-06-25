@@ -117,6 +117,51 @@ LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                            const int32_t& flag);
 LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId);
 
+/**
+ * Real-time collaborative editing of a shared text document inside a conversation.
+ * The document content is a CRDT, so concurrent edits from several members
+ * converge. Remote changes are delivered through the
+ * ConfigurationSignal::CollaborativeDocumentChanged signal.
+ */
+LIBJAMI_PUBLIC std::string createCollaborativeDocument(const std::string& accountId,
+                                                       const std::string& conversationId,
+                                                       const std::string& name,
+                                                       const std::string& kind);
+LIBJAMI_PUBLIC std::string openCollaborativeDocument(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& documentId);
+LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
+                                               const std::string& conversationId,
+                                               const std::string& documentId);
+LIBJAMI_PUBLIC void editCollaborativeDocument(const std::string& accountId,
+                                              const std::string& conversationId,
+                                              const std::string& documentId,
+                                              uint32_t index,
+                                              uint32_t deleteLen,
+                                              const std::string& insert);
+LIBJAMI_PUBLIC void setCollaborativeCursor(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& documentId,
+                                           int position,
+                                           int anchor);
+LIBJAMI_PUBLIC std::string collaborativeDocumentText(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& documentId);
+LIBJAMI_PUBLIC void setCollaborativeDocumentName(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& documentId,
+                                                 const std::string& name);
+LIBJAMI_PUBLIC std::string collaborativeDocumentName(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& documentId);
+LIBJAMI_PUBLIC void applyCollaborativeDelta(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& documentId,
+                                            const std::string& deltaJson);
+LIBJAMI_PUBLIC std::string collaborativeDocumentContentDelta(const std::string& accountId,
+                                                             const std::string& conversationId,
+                                                             const std::string& documentId);
+
 struct LIBJAMI_PUBLIC ConversationSignal
 {
     struct LIBJAMI_PUBLIC SwarmLoaded

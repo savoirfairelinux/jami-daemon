@@ -43,6 +43,7 @@ constexpr const char* const TOTAL_SIZE {"totalSize"};
 constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
+constexpr const char* const KIND {"kind"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -57,6 +58,11 @@ constexpr const char* const MERGE {"merge"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
+// Real-time collaborative editing. COLLAB_DOC announces a new editable document
+// (shown in the conversation like a file); COLLAB_UPDATE carries a persisted
+// CRDT state snapshot so offline members and late joiners converge.
+constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
+constexpr const char* const COLLAB_UPDATE {"application/collab-update+json"};
 } // namespace CommitType
 
 namespace CommitAction {
@@ -96,6 +102,8 @@ struct CommitMessage
     std::string sha3sum {};
     int mode {-1};
     std::string invited {};
+    // COLLAB_DOC documents carry a "kind": "text" (plain) or "rich" (WYSIWYG/HTML).
+    std::string kind {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -157,6 +165,32 @@ struct CommitMessage
         msg.type = CommitType::TEXT;
         msg.body = newBody;
         msg.editedId = editedId;
+        return msg;
+    }
+
+    // Collaborative editing commits reuse generic fields: "uri" holds the document
+    // id, "displayName" its name, "kind" its editing mode ("text"|"rich"), and
+    // "body" a base64-encoded CRDT payload (the initial state for COLLAB_DOC, a
+    // state snapshot for COLLAB_UPDATE).
+    static CommitMessage collabDocCreated(const std::string& documentId,
+                                          const std::string& name,
+                                          const std::string& kind,
+                                          const std::string& base64State)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.uri = documentId;
+        msg.displayName = name;
+        msg.kind = kind;
+        msg.body = base64State;
+        return msg;
+    }
+    static CommitMessage collabUpdate(const std::string& documentId, const std::string& base64Update)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_UPDATE;
+        msg.uri = documentId;
+        msg.body = base64Update;
         return msg;
     }
 
