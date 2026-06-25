@@ -65,7 +65,7 @@ struct JamiAccountConfig : public SipAccountBaseConfig
     bool allowPeersFromHistory {true};
     bool allowPeersFromContact {true};
     bool allowPeersFromTrusted {true};
-    bool allowPublicIncoming {true};
+    bool allowPublicIncoming {false};
 
     std::string managerUri {};
     std::string managerUsername {};
@@ -84,8 +84,6 @@ struct JamiAccountConfig : public SipAccountBaseConfig
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
-
-    bool dhtPublicInCalls {false};
 };
 
 } // namespace jami
