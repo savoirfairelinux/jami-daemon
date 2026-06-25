@@ -19,6 +19,7 @@
 
 #include "account_const.h"
 #include "jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
@@ -1335,6 +1336,27 @@ Conversation::Impl::addToHistory(History& history,
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        // Collaborative editing: a persisted CRDT snapshot is applied to the
+        // document and never shown as a message. A document-creation commit is
+        // applied too, but falls through to be displayed like a shared file.
+        if (typeIt != commit.end()
+            && (typeIt->second == CommitType::COLLAB_UPDATE
+                || typeIt->second == CommitType::COLLAB_DOC)) {
+            auto didIt = commit.find(CommitKey::URI);
+            auto bodyIt = commit.find(CommitKey::BODY);
+            auto documentId = didIt != commit.end() ? didIt->second : std::string {};
+            auto body = bodyIt != commit.end() ? bodyIt->second : std::string {};
+            if (!documentId.empty()) {
+                if (typeIt->second == CommitType::COLLAB_UPDATE) {
+                    acc->collaborativeEditing()->applyPersistedUpdate(repository_->id(),
+                                                                      documentId,
+                                                                      body,
+                                                                      messageReceived && !commitFromSelf);
+                    continue;
+                }
+                acc->collaborativeEditing()->onDocumentCommit(repository_->id(), documentId, body);
+            }
+        }
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
@@ -1808,6 +1830,33 @@ Conversation::getCommit(const std::string& commitId) const
     return pimpl_->repository_->getCommit(commitId);
 }
 
+std::vector<std::map<std::string, std::string>>
+Conversation::collaborativeCommits(const std::string& documentId) const
+{
+    if (!pimpl_->repository_)
+        return {};
+    // Read straight from git so we get the document's commits even when they are already
+    // in the loaded history (loadMessages would dedup them away) or the daemon was
+    // restarted (the in-memory session was lost). Order does not matter: applying the
+    // resulting CRDT snapshots is idempotent and commutative.
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
+    std::vector<std::map<std::string, std::string>> result;
+    for (auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end()
+            || (typeIt->second != CommitType::COLLAB_DOC
+                && typeIt->second != CommitType::COLLAB_UPDATE))
+            continue;
+        auto uriIt = commit.find(CommitKey::URI);
+        if (uriIt == commit.end() || uriIt->second != documentId)
+            continue;
+        result.emplace_back(std::move(commit));
+    }
+    return result;
+}
+
 void
 Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
 {
@@ -2247,8 +2296,12 @@ Conversation::Impl::updateStatus(const std::string& uri,
                                  const std::string& ts,
                                  bool emit)
 {
-    // This method can be called if peer send us a status or if another device sync. Emit will be true if a peer
-    // send us a status and will emit to other connected devices.
+    // Updates our local view of `uri`'s message status. It is called either when we locally
+    // observe a status change (a peer fetched a commit from us -> SENT, or we displayed a
+    // message -> DISPLAYED), or when another device/peer syncs a status to us. Pass emit=true
+    // only for locally-observed changes: it propagates the new status to our other connected
+    // devices/peers via messageStatusCb_. Statuses received from others are applied with
+    // emit=false to avoid re-broadcasting them.
     LogOptions options;
     std::map<std::string, std::map<std::string, std::string>> newStatus;
     {

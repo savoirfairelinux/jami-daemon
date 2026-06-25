@@ -345,6 +345,16 @@ public:
      */
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
     /**
+     * Read the persisted collaborative-editing commits for a document directly from the
+     * repository, bypassing the loaded-history dedup. Used to (re)seed a document's CRDT
+     * session when it is opened, independently of whether the commits passed through the
+     * message-history load path (which skips commits already known to the client).
+     * @param   documentId  the collaborative document id
+     * @return  the matching COLLAB_DOC/COLLAB_UPDATE commit maps (with "type"/"uri"/"body")
+     */
+    std::vector<std::map<std::string, std::string>> collaborativeCommits(
+        const std::string& documentId) const;
+    /**
      * Get last commit id
      * @return last commit id
      */

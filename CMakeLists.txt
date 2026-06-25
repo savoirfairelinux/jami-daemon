@@ -648,6 +648,7 @@ else()
     pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
+    pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)
     pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
     pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
     pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
@@ -671,6 +672,7 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE
         PkgConfig::dhtnet
         PkgConfig::opendht
+        PkgConfig::yrs
         PkgConfig::pjproject
         PkgConfig::git2
         PkgConfig::gnutls

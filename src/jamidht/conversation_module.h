@@ -108,6 +108,18 @@ public:
     void bootstrap(const std::string& convId = "");
 
     /**
+     * Re-bootstrap (reconnect + sync) every conversation the given peer is a member of, so
+     * any new commit is fetched. The URI is canonicalized, so any scheme (e.g. "jami:") is
+     * accepted. This syncs the whole conversation (and therefore all of its members); for a
+     * 1:1 conversation that is only the requested peer. Used to proactively fetch
+     * interactions for which no conversation push was sent — e.g. on an incoming call, so the
+     * call-history interaction reaches "delivered" although the device only woke up to handle
+     * the call.
+     * @param uri   the peer (contact) URI to synchronize conversations with
+     */
+    void syncConversationsWith(const std::string& uri);
+
+    /**
      * Clear not removed fetch
      */
     void clearPendingFetch();

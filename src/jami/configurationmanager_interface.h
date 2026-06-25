@@ -439,6 +439,50 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*from*/,
                              int /*status*/);
     };
+    struct LIBJAMI_PUBLIC CollaborativeDocumentChanged
+    {
+        constexpr static const char* name = "CollaborativeDocumentChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             int /*index*/,
+                             int /*deleteLen*/,
+                             const std::string& /*insert*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeCursorChanged
+    {
+        constexpr static const char* name = "CollaborativeCursorChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/,
+                             int /*position*/,
+                             int /*anchor*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeParticipantLeft
+    {
+        constexpr static const char* name = "CollaborativeParticipantLeft";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeDocumentRenamed
+    {
+        constexpr static const char* name = "CollaborativeDocumentRenamed";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*name*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeDocumentDelta
+    {
+        constexpr static const char* name = "CollaborativeDocumentDelta";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*deltaJson*/);
+    };
     struct LIBJAMI_PUBLIC IncomingTrustRequest
     {
         constexpr static const char* name = "IncomingTrustRequest";
