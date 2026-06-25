@@ -490,8 +490,11 @@ CACHE_PREFIX=$(ENTRY)/$(shell basename $(PREFIX))
 install: $(PREFIX)
 
 ifneq ($(PREFIX),$(CACHE_PREFIX))
-$(PREFIX): $(CACHE_PREFIX)
-	ln -s $^ $@
+# aclocal --install can leave $(PREFIX) as a real dir mid-build; FORCE the relink so a
+# timestamp-gated rule never skips the cleanup
+$(PREFIX): $(CACHE_PREFIX) FORCE
+	rm -rf "$@" && ln -s "$<" "$@"
+FORCE:
 endif
 
 $(CACHE_PREFIX): $(ENTRY)/.build
