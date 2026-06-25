@@ -256,8 +256,8 @@ FLOCK = flock
 endif
 endif
 ifneq ($(TARBALLS_DEFAULT),$(TARBALLS))
-ifdef HAVE_MACOSX
-# flock is not available by default on macOS; fall back to a mkdir-based emulation
+ifdef HAVE_DARWIN_OS
+# flock is not available by default on Apple platforms; fall back to a mkdir-based emulation
 FLOCK ?= $(SRC)/flock-mkdir.sh
 else
 FLOCK ?= $(error custom TARBALLS location requires flock)
