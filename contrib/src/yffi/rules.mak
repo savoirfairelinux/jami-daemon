@@ -41,6 +41,7 @@ $(TARBALLS)/yffi-$(YFFI_VERSION).tar.gz:
 yffi: yffi-$(YFFI_VERSION).tar.gz
 	$(UNPACK)
 	mv y-crdt-$(YFFI_VERSION) yffi-$(YFFI_VERSION)
+	$(APPLY) $(SRC)/yffi/0001-avoid-if-let-guard.patch
 	$(MOVE)
 
 # Builds the static library for the active (native or Android cross) target. Only
