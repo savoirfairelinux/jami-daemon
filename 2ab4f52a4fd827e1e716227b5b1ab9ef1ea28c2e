@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "118e15bc_c4d7edce",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-25T20:53:21Z",
+      "side": 1,
+      "message": "This also needs to be deleted.",
+      "range": {
+        "startLine": 729,
+        "startChar": 7,
+        "endLine": 730,
+        "endChar": 52
+      },
+      "revId": "2ab4f52a4fd827e1e716227b5b1ab9ef1ea28c2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
