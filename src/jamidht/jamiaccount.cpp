@@ -1472,6 +1472,7 @@ JamiAccount::onAuthenticationSuccess(bool migrating,
         }
     }
 
+    updateTrustedCa();
     doRegister();
     scheduleAccountReady();
 }
@@ -1567,6 +1568,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (not isEnabled())
                 setRegistrationState(RegistrationState::UNREGISTERED);
 
+            updateTrustedCa();
             scheduleAccountReady();
             return;
         }
@@ -2293,6 +2295,38 @@ JamiAccount::onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificat
     });
 }
 
+void
+JamiAccount::updateTrustedCa()
+{
+    if (!accountManager_)
+        return;
+    const auto* info = accountManager_->getInfo();
+    if (!info || !info->identity.second)
+        return;
+
+    // Our certificate chain is: device cert -> account cert -> [organization CA].
+    // The organization CA is the issuer of our account certificate. A plain Jami
+    // account is its own self-signed root (no issuer), so there is no CA to trust.
+    auto accountCert = info->identity.second->issuer;
+    if (!accountCert)
+        return;
+    auto caCert = accountCert->issuer;
+    if (!caCert)
+        return; // self-signed account certificate => no organization CA
+
+    // Trust (or stop trusting) every peer whose certificate chains up to the same
+    // organization CA. The peer certificate chain is still cryptographically
+    // verified by TrustStore::isAllowed, so this cannot be forged without the CA
+    // private key, and an explicitly banned certificate still takes precedence.
+    auto status = config().allowPeersFromTrusted ? dhtnet::tls::TrustStore::PermissionStatus::ALLOWED
+                                                 : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED;
+    JAMI_LOG("[Account {}] {} organization CA {}",
+             getAccountID(),
+             config().allowPeersFromTrusted ? "Trusting" : "Untrusting",
+             caCert->getId().toString());
+    setCertificateStatus(caCert, status, false);
+}
+
 bool
 JamiAccount::onICERequest(const DeviceId& deviceId)
 {
@@ -2304,7 +2338,7 @@ JamiAccount::onICERequest(const DeviceId& deviceId)
             return;
         }
         dht::InfoHash peer_account_id;
-        auto res = accountManager_->onPeerCertificate(cert, this->config().dhtPublicInCalls, peer_account_id);
+        auto res = accountManager_->onPeerCertificate(cert, this->config().allowPublicIncoming, peer_account_id);
         JAMI_LOG("[Account {}] [device {}] {} ICE request from {}",
                  getAccountID(),
                  cert->getLongId(),
