@@ -39,7 +39,7 @@ JamiAccountConfig::serialize(YAML::Emitter& out) const
     out << YAML::BeginMap;
     SipAccountBaseConfig::serializeDiff(out, DEFAULT_CONFIG);
     SERIALIZE_CONFIG(Conf::DHT_PORT_KEY, dhtPort);
-    SERIALIZE_CONFIG(Conf::DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, allowPublicIncoming);
     SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory);
     SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact);
     SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted);
@@ -59,7 +59,6 @@ JamiAccountConfig::serialize(YAML::Emitter& out) const
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
 
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt;
     if (receiptSignature.size() > 0)
@@ -109,7 +108,6 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    parseValueOptional(node, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
 
     parsePathOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath, path);
     parseValueOptional(node, libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword);
@@ -127,7 +125,11 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
     parseValueOptional(node, libjami::Account::ConfProperties::Nameserver::URI, nameServer);
     parseValueOptional(node, libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
+    // Whether to accept incoming calls from unknown peers. Read the legacy YAML
+    // key first, then the canonical one so the latter takes precedence when both
+    // are present (migration from configs that stored both).
     parseValueOptional(node, Conf::DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, allowPublicIncoming);
 }
 
 std::map<std::string, std::string>
@@ -150,7 +152,10 @@ JamiAccountConfig::toMap() const
     a.emplace(Conf::CONFIG_TLS_PASSWORD, tlsPassword);
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact ? TRUE_STR : FALSE_STR);
+    // Emit the trusted-peers flag under both the canonical DHT.AllowFromTrusted
+    // key and the legacy Account.allowCertFromTrusted key for old-client compat.
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::DHT::ALLOW_FROM_TRUSTED, allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
@@ -161,7 +166,6 @@ JamiAccountConfig::toMap() const
 
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::Nameserver::URI, nameServer);
     return a;
 }
@@ -186,11 +190,13 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
     parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory);
     parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact);
+    // DHT.AllowFromTrusted is the canonical key; parse the legacy
+    // Account.allowCertFromTrusted first so the canonical one wins when present.
     parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted);
+    parseBool(details, libjami::Account::ConfProperties::DHT::ALLOW_FROM_TRUSTED, allowPeersFromTrusted);
 
     parseString(details, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseString(details, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    parseBool(details, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
     // parseString(details, libjami::Account::ConfProperties::USERNAME, username);
 
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, credentials.archive_password);

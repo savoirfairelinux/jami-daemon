@@ -715,6 +715,13 @@ private:
     void onSyncListChanged();
 
     bool onICERequest(const DeviceId& deviceId);
+
+    /**
+     * Pin (or unpin) the account's organization certificate authority in the
+     * trust store according to the allowPeersFromTrusted setting.
+     */
+    void updateTrustedCa();
+
     bool onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name);
     void onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificate>& cert);
     void onConnectionReady(const DeviceId& deviceId,
