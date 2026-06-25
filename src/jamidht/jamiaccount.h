@@ -715,6 +715,22 @@ private:
     void onSyncListChanged();
 
     bool onICERequest(const DeviceId& deviceId);
+
+    /**
+     * Pin (or unpin) the account's organization certificate authority in the
+     * trust store according to the allowPeersFromTrusted setting.
+     *
+     * Managed (JAMS) accounts — and accounts using their own PKI — have their
+     * account certificate issued by an organization CA shared by all members.
+     * Pinning that CA as trusted makes every peer whose certificate chains up
+     * to it allowed to connect (e.g. to call a rendezvous point) even when they
+     * are not in the contact list and allowPublicIncoming is disabled.
+     *
+     * Plain Jami accounts are their own self-signed root and have no
+     * organization CA, so this is a no-op for them.
+     */
+    void updateTrustedCa();
+
     bool onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name);
     void onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificate>& cert);
     void onConnectionReady(const DeviceId& deviceId,
