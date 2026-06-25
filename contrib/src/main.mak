@@ -490,8 +490,9 @@ CACHE_PREFIX=$(ENTRY)/$(shell basename $(PREFIX))
 install: $(PREFIX)
 
 ifneq ($(PREFIX),$(CACHE_PREFIX))
+# aclocal --install can create $(PREFIX) as a real dir mid-build; clear it so the symlink replaces it
 $(PREFIX): $(CACHE_PREFIX)
-	ln -s $^ $@
+	rm -rf $@ && ln -s $^ $@
 endif
 
 $(CACHE_PREFIX): $(ENTRY)/.build
