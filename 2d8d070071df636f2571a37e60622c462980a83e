@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "77a545cf_c228354b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-06-26T14:26:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46f85696_e5f1411d",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 11,
+        "endChar": 60
+      },
+      "revId": "2d8d070071df636f2571a37e60622c462980a83e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d9a129c2_ee37823e",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-06-26T13:55:59Z",
       "side": 1,
       "message": "```suggestion\n# aclocal --install can leave $(PREFIX) as a real dir mid-build; FORCE the relink so a\n# timestamp-gated rule never skips the cleanup\n$(PREFIX): $(CACHE_PREFIX) FORCE\n\ttest -n \"$@\" \u0026\u0026 test \"$@\" !\u003d \"/\"\n\trm -rf \"$@\"\n\tln -s \"$\u003c\" \"$@\"\nFORCE:\n```",
+      "range": {
+        "startLine": 493,
+        "startChar": 0,
+        "endLine": 497,
+        "endChar": 6
+      },
+      "revId": "2d8d070071df636f2571a37e60622c462980a83e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da0b6ef4_6955ded6",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 497,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-06-26T14:26:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9a129c2_ee37823e",
       "range": {
         "startLine": 493,
         "startChar": 0,
