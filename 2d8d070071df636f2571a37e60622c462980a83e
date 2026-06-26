@@ -22,6 +22,29 @@
       },
       "revId": "2d8d070071df636f2571a37e60622c462980a83e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9a129c2_ee37823e",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 497,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-06-26T13:55:59Z",
+      "side": 1,
+      "message": "```suggestion\n# aclocal --install can leave $(PREFIX) as a real dir mid-build; FORCE the relink so a\n# timestamp-gated rule never skips the cleanup\n$(PREFIX): $(CACHE_PREFIX) FORCE\n\ttest -n \"$@\" \u0026\u0026 test \"$@\" !\u003d \"/\"\n\trm -rf \"$@\"\n\tln -s \"$\u003c\" \"$@\"\nFORCE:\n```",
+      "range": {
+        "startLine": 493,
+        "startChar": 0,
+        "endLine": 497,
+        "endChar": 6
+      },
+      "revId": "2d8d070071df636f2571a37e60622c462980a83e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
