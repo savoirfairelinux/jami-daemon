@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c06f57fc_73b48916",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-29T17:45:59Z",
+      "side": 1,
+      "message": "[warning] Line 86: The debounce key uses either peer or deviceId in the same namespace, so a peer id can collide with another notification\u0027s device id and make unrelated retry paths throttle each other. Use an unambiguous composite key that preserves the request scope, for example:\n```suggestion\n    const auto key \u003d deviceId.empty() ? \"peer:\" + peer : \"device:\" + peer + \u0027:\u0027 + deviceId;\n```",
+      "revId": "0f7c5c8dd3e6f79a5675801e7a749bdb87fa57d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
