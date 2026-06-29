@@ -285,11 +285,13 @@ FFMPEGCONF += --disable-asm
 endif
 else
 # Desktop Linux
-DEPS_ffmpeg += ffnvcodec
-FFMPEGCONF += \
-	--target-os=linux \
+
+FFMPEGCONF += --target-os=linux \
 	--enable-indev=v4l2 \
-	--enable-indev=xcbgrab \
+	--enable-indev=xcbgrab
+
+ifndef DISABLE_LINUX_HWACCEL
+FFMPEGCONF += \
 	--enable-vdpau \
 	--enable-hwaccel=h264_vdpau \
 	--enable-hwaccel=mpeg4_vdpau \
@@ -304,8 +306,11 @@ FFMPEGCONF += \
 	--enable-encoder=vp8_vaapi \
 	--enable-encoder=mjpeg_vaapi \
 	--enable-encoder=hevc_vaapi
+endif
+
 # ffnvcodec is not supported on ARM then we enable it here for i386 and x86_64
 ifeq ($(ARCH),$(filter $(ARCH),i386 x86_64))
+DEPS_ffmpeg += ffnvcodec
 FFMPEGCONF += --enable-cuvid \
 	      --enable-ffnvcodec \
 	      --enable-nvdec \
