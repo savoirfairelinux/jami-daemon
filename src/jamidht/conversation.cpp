@@ -944,13 +944,10 @@ Conversation::Impl::injectEditionOverwrites(const std::string& messageId, const 
         return {};
     }
 
-    const std::string bo {bodyOverwrite};
-
-    it->second->pluginData["bodyOverwrite"] = bo;
-
-    const libjami::SwarmMessage* signalTarget = it->second.get();
+    libjami::SwarmMessage* signalTarget = it->second.get();
 
     if (const auto editIt = it->second->body.find(CommitKey::EDIT); editIt != it->second->body.end()) {
+        it->second->pluginData["bodyOverwrite"] = bodyOverwrite;
         if (editIt->second.empty()) {
             return {};
         }
@@ -958,27 +955,24 @@ Conversation::Impl::injectEditionOverwrites(const std::string& messageId, const 
         if (originalIt == loadedHistory_.quickAccess.end()) {
             return {};
         }
-        // Only propagate to original when this is the latest edition — older async plugin
-        // responses finishing late must not overwrite the correct (newest) translation.
-        if (messageId == originalIt->second->latestEditionId) {
-            originalIt->second->pluginData["bodyOverwrite"] = bo;
-        }
         signalTarget = originalIt->second.get();
+    } else if (it->second->editions.empty()) {
+        it->second->pluginData["bodyOverwrite"] = bodyOverwrite;
+    }
+
+    if (const auto msgEditionIt = std::ranges::find_if(signalTarget->editions, [&](const auto& e) {
+            const auto idIt = e.find("id");
+            return idIt != e.end() && idIt->second == messageId;
+        }); msgEditionIt != signalTarget->editions.end()) {
+        (*msgEditionIt)["bodyOverwrite"] = bodyOverwrite;
     }
 
     libjami::SwarmMessage copy = *signalTarget;
-    for (auto& edition : copy.editions) {
-        const auto idIt = edition.find("id");
-        if (idIt == edition.end()) {
-            continue;
-        }
-        const auto edMsgIt = loadedHistory_.quickAccess.find(idIt->second);
-        if (edMsgIt == loadedHistory_.quickAccess.end()) {
-            continue;
-        }
-        if (const auto boIt = edMsgIt->second->pluginData.find("bodyOverwrite");
-            boIt != edMsgIt->second->pluginData.end()) {
-            edition["bodyOverwrite"] = boIt->second;
+    if (const auto latestEdIt = loadedHistory_.quickAccess.find(copy.latestEditionId);
+        latestEdIt != loadedHistory_.quickAccess.end()) {
+        if (const auto latestEdBoIt = latestEdIt->second->pluginData.find("bodyOverwrite");
+            latestEdBoIt != latestEdIt->second->pluginData.end() && !latestEdBoIt->second.empty()) {
+            copy.pluginData["bodyOverwrite"] = latestEdBoIt->second;
         }
     }
     return copy;
@@ -2136,7 +2130,8 @@ Conversation::Impl::loadMissingBodyOverwrites()
     {
         std::lock_guard const lk(loadedHistory_.mutex);
         for (const auto& msg : loadedHistory_.quickAccess | std::views::values) {
-            if (msg->type == CommitType::TEXT && !msg->pluginData.contains("bodyOverwrite")) {
+            if (msg->type == CommitType::TEXT &&
+                (!msg->pluginData.contains("bodyOverwrite") || !msg->latestEditionId.empty())) {
                 batch.push_back(*msg);
             }
         }
