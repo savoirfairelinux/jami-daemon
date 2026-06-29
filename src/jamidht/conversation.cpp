@@ -972,6 +972,11 @@ Conversation::Impl::injectEditionOverwrites(const std::string& messageId, const 
         if (idIt == edition.end()) {
             continue;
         }
+        // So the original message in the edition history doesn't have the bodyOverwrite of the latest edition,
+        // but the first message in the edition history isn't bodyOverwritten
+        if (idIt->second == copy.id) {
+            continue;
+        }
         const auto edMsgIt = loadedHistory_.quickAccess.find(idIt->second);
         if (edMsgIt == loadedHistory_.quickAccess.end()) {
             continue;
