@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2cf5ad0_3e8d8c20",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-29T17:44:54Z",
+      "side": 1,
+      "message": "[warning] Line 123: Clearing body overwrites unconditionally for every conversation that contained the removed handler can erase overwrites that are still owned by other enabled chat handlers. At this point `toggledSet.erase(...)` may leave `toggledSet` non-empty, so another plugin remains toggled for the same conversation. Please only clear when the removed handler was the last toggled handler for that conversation, or make the clear operation handler-scoped if overwrites are per handler.\n\n```suggestion\n                    if (toggledSet.empty()) {\n                        toClearOverwrites.push_back(key);\n                    }\n```",
+      "revId": "d621794713b4a6fb8fca4fc9102df48d40515057",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
