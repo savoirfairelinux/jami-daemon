@@ -214,7 +214,7 @@ VideoReceiveThread::decodeFrame()
         JAMI_LOG("[{:p}] End of file", fmt::ptr(this));
         loop_.stop();
     } else if (status == MediaDemuxer::Status::ReadError) {
-        JAMI_ERROR("[{:p}] Decoding error: %s", fmt::ptr(this), MediaDemuxer::getStatusStr(status));
+        JAMI_ERROR("[{:p}] Decoding error: {}", fmt::ptr(this), MediaDemuxer::getStatusStr(status));
     } else if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
             keyFrameRequestCallback_();
