@@ -50,6 +50,7 @@ COPY . .
 
 # Build the daemon
 ENV DISABLE_PIPEWIRE=1
+ENV DISABLE_LINUX_HWACCEL=1
 RUN mkdir -p build && \
     cd build && \
     cmake .. -DBUILD_TESTING=Off -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -DJAMI_NODEJS=ON -GNinja && \
