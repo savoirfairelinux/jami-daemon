@@ -949,6 +949,7 @@ Conversation::Impl::injectEditionOverwrites(const std::string& messageId, const 
     it->second->pluginData["bodyOverwrite"] = bo;
 
     const libjami::SwarmMessage* signalTarget = it->second.get();
+    bool propagateToOriginalCopy = false;
 
     if (const auto editIt = it->second->body.find(CommitKey::EDIT); editIt != it->second->body.end()) {
         if (editIt->second.empty()) {
@@ -958,18 +959,29 @@ Conversation::Impl::injectEditionOverwrites(const std::string& messageId, const 
         if (originalIt == loadedHistory_.quickAccess.end()) {
             return {};
         }
-        // Only propagate to original when this is the latest edition — older async plugin
-        // responses finishing late must not overwrite the correct (newest) translation.
+        // Only propagate bodyOverwrite to the returned copy when this is the latest edition —
+        // older async responses finishing late must not overwrite the newest translation on copy.
+        // Do NOT write to originalIt->second in loadedHistory_: that would discard the original
+        // message's own translation (bodyOverwrite), which we still need.
         if (messageId == originalIt->second->latestEditionId) {
-            originalIt->second->pluginData["bodyOverwrite"] = bo;
+            // originalIt->second->pluginData["bodyOverwrite"] = bo;
+            propagateToOriginalCopy = true;
         }
         signalTarget = originalIt->second.get();
     }
 
     libjami::SwarmMessage copy = *signalTarget;
+    if (propagateToOriginalCopy) {
+        copy.pluginData["bodyOverwrite"] = bo;
+    }
     for (auto& edition : copy.editions) {
         const auto idIt = edition.find("id");
         if (idIt == edition.end()) {
+            continue;
+        }
+        // So the original message in the edition history doesn't have the bodyOverwrite of the latest edition,
+        // but the first message in the edition history isn't bodyOverwritten
+        if (idIt->second == copy.id) {
             continue;
         }
         const auto edMsgIt = loadedHistory_.quickAccess.find(idIt->second);
@@ -1414,6 +1426,19 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
     ret.reserve(msgList.size());
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
+#ifdef ENABLE_PLUGIN
+        // For edited messages, the display bodyOverwrite comes from the latest edition commit,
+        // not from the original message's own pluginData (which holds the pre-edit translation).
+        if (!ret.back().latestEditionId.empty()) {
+            if (const auto edIt = history->quickAccess.find(ret.back().latestEditionId);
+                edIt != history->quickAccess.end()) {
+                if (const auto boIt = edIt->second->pluginData.find("bodyOverwrite");
+                    boIt != edIt->second->pluginData.end()) {
+                    ret.back().pluginData["bodyOverwrite"] = boIt->second;
+                }
+            }
+        }
+#endif
     }
     return ret;
 }
@@ -2136,7 +2161,11 @@ Conversation::Impl::loadMissingBodyOverwrites()
     {
         std::lock_guard const lk(loadedHistory_.mutex);
         for (const auto& msg : loadedHistory_.quickAccess | std::views::values) {
-            if (msg->type == CommitType::TEXT && !msg->pluginData.contains("bodyOverwrite")) {
+            // Skip edited originals: their display translation comes from the edition commit
+            // (latestEditionId). The edition commit itself is TEXT type with empty
+            // latestEditionId, so it is picked up instead.
+            if (msg->type == CommitType::TEXT && msg->latestEditionId.empty()
+                && !msg->pluginData.contains("bodyOverwrite")) {
                 batch.push_back(*msg);
             }
         }
