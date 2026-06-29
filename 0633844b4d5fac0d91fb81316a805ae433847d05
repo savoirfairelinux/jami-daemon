@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc5ae079_1b1040a3",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 9
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-29T17:45:56Z",
+      "side": 1,
+      "message": "[error] Line 109: The macOS-specific assignment replaces LOCAL_HOSTVARS with only MACOSX_DEPLOYMENT_TARGET, so the libvpx configure invocation no longer receives the standard HOSTVARS toolchain environment on macOS. That can select host tools/compilers instead of the intended contrib toolchain and matches the current macOS build failure risk. Preserve HOSTVARS when adding the deployment target.\n\n```suggestion\nLOCAL_HOSTVARS\u003d$(HOSTVARS) MACOSX_DEPLOYMENT_TARGET\u003d$(MIN_OSX_VERSION)\n```",
+      "revId": "0633844b4d5fac0d91fb81316a805ae433847d05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
