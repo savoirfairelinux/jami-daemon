@@ -274,11 +274,11 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
-        // JAMI_DBG("[Contacts] New contact: %s", id.toString().c_str());
+        // JAMI_LOG("[Contacts] New contact: {}", id);
         c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
-        // JAMI_DBG("[Contacts] Updated contact: %s", id.toString().c_str());
+        // JAMI_LOG("[Contacts] Updated contact: {}", id);
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
