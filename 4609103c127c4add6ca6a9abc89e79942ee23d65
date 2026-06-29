@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5d09c157_f2a799e5",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1590,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-06-29T17:45:25Z",
+      "side": 1,
+      "message": "[error] Line 1590: This race guard still depends on `info.removed` being unique at millisecond resolution. If `acceptConversationRequest()` observes the tombstone and a newer local removal updates `info.removed` within the same millisecond before `cloneConversationFrom()`/`handlePendingConversation()`, the equality check can pass and the clone-success path will clear the newer tombstone, resurrecting a conversation the user removed. Use a monotonic generation/token updated under the conversation lock on every local removal, store that token with the pending re-invite, and compare the token instead of the timestamp.\n```suggestion\n// Pseudocode: compare a monotonic removal generation, not info.removed.\nif (expectedRemovalGeneration \u0026\u0026 *expectedRemovalGeneration !\u003d conv-\u003eremovalGeneration) {\n    JAMI_WARNING(\"[Account {}] [Conversation {}] Removed again while accepting a re-invitation, aborting the clone\",\n                 accountId_,\n                 request.conversationId);\n    return;\n}\nconv-\u003ereinvitePending \u003d conv-\u003eremovalGeneration;\n```",
+      "revId": "4609103c127c4add6ca6a9abc89e79942ee23d65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "80227d48_e595bfab",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 10
