@@ -1,6 +1,6 @@
 {
   "name": "@savoirfairelinux/jami-core",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Jami daemon Node.js bindings \u2014 native SWIG N-API addon with TypeScript types.",
   "type": "module",
   "gypfile": false,
@@ -29,9 +29,9 @@
     "publish-platform": "node scripts/pack-native.mjs && npm publish --workspace npm/$(node -e \"process.stdout.write(process.platform+'-'+process.arch)\")"
   },
   "optionalDependencies": {
-    "@savoirfairelinux/jami-core-darwin-arm64": "0.3.3",
-    "@savoirfairelinux/jami-core-linux-x64": "0.3.3",
-    "@savoirfairelinux/jami-core-linux-arm64": "0.3.3"
+    "@savoirfairelinux/jami-core-darwin-arm64": "0.4.0",
+    "@savoirfairelinux/jami-core-linux-x64": "0.4.0",
+    "@savoirfairelinux/jami-core-linux-arm64": "0.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.4.0",
