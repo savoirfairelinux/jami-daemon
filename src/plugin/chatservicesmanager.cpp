@@ -93,6 +93,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
         ChatHandlerPtr handlerToDestroy;
         using DetachItem = std::pair<ChatHandler*, chatSubjectPtr>;
         std::vector<DetachItem> toDetach;
+        std::vector<std::pair<std::string, std::string>> toClearOverwrites;
         {
             std::lock_guard const guard(mtx_);
             const auto handlerIt = std::ranges::find_if(chatHandlers_,
@@ -104,6 +105,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
                         if (auto subjIt = chatSubjects_.find(key); subjIt != chatSubjects_.end()) {
                             toDetach.emplace_back(handlerIt->get(), subjIt->second);
                         }
+                        toClearOverwrites.push_back(key);
                     }
                 }
                 handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
@@ -114,6 +116,16 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 
         for (auto& [handler, subject] : toDetach) {
             handler->detach(subject);
+        }
+
+        for (const auto& [accountId, convId] : toClearOverwrites) {
+            if (const auto acc = Manager::instance().getAccount<JamiAccount>(accountId)) {
+                if (auto* convMod = acc->convModule()) {
+                    if (const auto conv = convMod->getConversation(convId)) {
+                        conv->clearBodyOverwrites();
+                    }
+                }
+            }
         }
         handlerToDestroy.reset(); // destructor acquires mtx_ via getEnabledConversationsForPlugin
 
