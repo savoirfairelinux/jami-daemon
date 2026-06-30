@@ -990,12 +990,11 @@ void
 JamiAccount::saveConfig() const
 {
     try {
-        YAML::Emitter accountOut;
-        config().serialize(accountOut);
         auto accountConfig = config().path / "config.yml";
         std::lock_guard lock(dhtnet::fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
-        fout.write(accountOut.c_str(), static_cast<std::streamsize>(accountOut.size()));
+        YAML::Emitter accountOut(fout);
+        config().serialize(accountOut);
         JAMI_LOG("Saved account config to {}", accountConfig);
     } catch (const std::exception& e) {
         JAMI_ERROR("Error saving account config: {}", e.what());
