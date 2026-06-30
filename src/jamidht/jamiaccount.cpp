@@ -1935,7 +1935,9 @@ JamiAccount::doRegister_()
 
         dht::DhtRunner::Context context = initDhtContext();
 
+        accountManager_->setDht(dht_);
         dht_->run(conf.dhtPort, config, std::move(context));
+
         dhtBoundPort_ = dht_->getBoundPort();
 
         // Now that the DHT is running and we know the actual bound port,
@@ -1978,8 +1980,6 @@ JamiAccount::doRegister_()
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
-
-        accountManager_->setDht(dht_);
 
         if (conf.dhtProxyServerEnabled) {
             dht::ProxyServerConfig proxyConfig;
