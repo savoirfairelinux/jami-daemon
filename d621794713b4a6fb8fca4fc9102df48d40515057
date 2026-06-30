@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9931ed52_a4a5dc90",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-30T16:42:21Z",
+      "side": 1,
+      "message": "There\u0027s no reason for the daemon to go through `invokeService` anyway. I\u0027d rephrase or delete this comment, it seems more misleading than useful at the moment.",
+      "range": {
+        "startLine": 120,
+        "startChar": 31,
+        "endLine": 120,
+        "endChar": 48
+      },
+      "revId": "d621794713b4a6fb8fca4fc9102df48d40515057",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e2cf5ad0_3e8d8c20",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 2
@@ -14,6 +37,24 @@
       "writtenOn": "2026-06-29T17:44:54Z",
       "side": 1,
       "message": "[warning] Line 123: Clearing body overwrites unconditionally for every conversation that contained the removed handler can erase overwrites that are still owned by other enabled chat handlers. At this point `toggledSet.erase(...)` may leave `toggledSet` non-empty, so another plugin remains toggled for the same conversation. Please only clear when the removed handler was the last toggled handler for that conversation, or make the clear operation handler-scoped if overwrites are per handler.\n\n```suggestion\n                    if (toggledSet.empty()) {\n                        toClearOverwrites.push_back(key);\n                    }\n```",
+      "revId": "d621794713b4a6fb8fca4fc9102df48d40515057",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce41d018_4eb48cff",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-30T16:42:21Z",
+      "side": 1,
+      "message": "Having multiple handlers that overwrite messages is not supported currently.",
+      "parentUuid": "e2cf5ad0_3e8d8c20",
       "revId": "d621794713b4a6fb8fca4fc9102df48d40515057",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
