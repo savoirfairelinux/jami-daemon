@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff2c5819_c50da146",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 979,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-06-30T17:48:30Z",
+      "side": 1,
+      "message": "As pointed out in the comment, this only solves half of the issue. To fully fix it, I think we need to fix the plugin bug I pointed out [here](https://review.jami.net/c/jami-plugins/+/33804/comment/0ec63f2a_dab8f85a/), and also stop doing the \"propagation\" at line 964 (it does need to be done for `copy`, but overwriting the `bodyOverwrite` of the original message in `loadedHistory_.quickAccess` means we no longer have access to it afterwards).",
+      "range": {
+        "startLine": 977,
+        "startChar": 8,
+        "endLine": 979,
+        "endChar": 9
+      },
+      "revId": "e31d27654fa8422373f0772d6d731825ae432a6c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
