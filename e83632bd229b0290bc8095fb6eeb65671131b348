@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15f30b3d_42794755",
+        "filename": "test/unitTest/media/video/test_video_scaler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T21:29:23Z",
+      "side": 1,
+      "message": "[warning] Line 120: This test can pass even if `scale()` fails, because the assertions only verify the dimensions already assigned by `output.reserve(...)`. Assert the return value from each scaling call so the test actually covers the cached-context invalidation path.\n```suggestion\n    CPPUNIT_ASSERT(scaler_-\u003escale(input, output));\n    scaler_-\u003esetScalingAlgorithm(SWS_AREA);\n    CPPUNIT_ASSERT(scaler_-\u003escale(input, output));\n```",
+      "revId": "e83632bd229b0290bc8095fb6eeb65671131b348",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c26ccf6_3d4ad304",
+        "filename": "test/unitTest/media/video/test_video_scaler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T21:29:23Z",
+      "side": 1,
+      "message": "[warning] Line 127: Same issue here: `scale_and_pad()` may fail while the test still passes because `output.format()` was set during `reserve()`. Assert the scaling operation succeeds.\n```suggestion\n    CPPUNIT_ASSERT(scaler_-\u003escale_and_pad(input, output, 0, 0, 320, 180, true));\n```",
+      "revId": "e83632bd229b0290bc8095fb6eeb65671131b348",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
