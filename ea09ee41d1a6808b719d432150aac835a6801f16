@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a477550b_343f7a24",
+        "filename": "contrib/src/yffi/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T13:34:22Z",
+      "side": 1,
+      "message": "[warning] Line 70: This unconditionally runs `$(YFFI_RUSTUP) target add` for cross builds, but `YFFI_RUSTUP` is empty when a system `cargo` exists without `rustup`. That makes the rule execute `target add ...` and fail on hosts that package Rust without rustup. Gate this command on rustup being available, or make the no-system-cargo/bootstrap case the only one that requires rustup. For example:\n```suggestion\nifneq ($(YFFI_CARGO_TARGET_ARG),)\nifneq ($(YFFI_RUSTUP),)\n\t$(YFFI_RUST_ENV) $(YFFI_RUSTUP) target add $(YFFI_RUST_TARGET)\nendif\nendif\n```",
+      "revId": "ea09ee41d1a6808b719d432150aac835a6801f16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
