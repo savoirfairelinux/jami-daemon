@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1995851_17f30436",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T03:27:06Z",
+      "side": 1,
+      "message": "[error] Line 31: This unconditionally includes Android logging APIs, so non-Android builds of the daemon will fail because `\u003candroid/log.h\u003e` and `__android_log_print` are unavailable. Use the existing logger or guard this behind `HAVE_ANDROID`.\n```suggestion\n#ifdef HAVE_ANDROID\n#include \u003candroid/log.h\u003e\n#define COLLAB_DBG(...) __android_log_print(ANDROID_LOG_DEBUG, \"JAMICOLLAB\", __VA_ARGS__)\n#else\n#define COLLAB_DBG(...) JAMI_DBG(__VA_ARGS__)\n#endif\n```",
+      "revId": "bc5e3c8c6fc7451b62fe7b358da4eca9fe7a39ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bcac5c38_76eb705f",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T03:27:06Z",
+      "side": 1,
+      "message": "[warning] Line 126: `std::hash\u003cstd::string\u003e` is not specified to be stable across standard-library implementations or versions, but the comment requires a stable per-device Y-CRDT client id. Use a deterministic hash already available in the project, or derive fixed bytes from the device id, so replica identity does not change unexpectedly after runtime/toolchain changes.\n```suggestion\n            auto digest \u003d dht::crypto::sha256(deviceId);\n            clientId_ \u003d load_53_bits_from_digest(digest);\n```",
+      "revId": "bc5e3c8c6fc7451b62fe7b358da4eca9fe7a39ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "947175b6_7c9432a7",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T03:27:06Z",
+      "side": 1,
+      "message": "[error] Line 343: The remote payload trusts `cid` and `did` from untrusted JSON. A malicious peer can send a collaborative-editing IM that names a different conversation/document and have this daemon apply updates or emit cursor/document signals for that target. The authenticated/envelope conversation id should be passed into `onRemotePayload` and used as the authority, rejecting mismatches.\n```suggestion\nvoid CollaborativeEditing::onRemotePayload(const std::string\u0026 from,\n                                           const std::string\u0026 conversationId,\n                                           const std::string\u0026 jsonPayload)\n{\n    Json::Value root;\n    if (!json::parse(jsonPayload, root))\n        return;\n    if (root.get(\"cid\", \"\").asString() !\u003d conversationId)\n        return;\n    auto documentId \u003d root[\"did\"].asString();\n    if (documentId.empty())\n        return;\n```",
+      "revId": "bc5e3c8c6fc7451b62fe7b358da4eca9fe7a39ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa13c444_cdc03232",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 367,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T03:27:06Z",
+      "side": 1,
+      "message": "[warning] Line 367: Remote CRDT updates are decoded and applied with no size limit. Since this is reachable from peer messages, a large base64 payload can force large allocations and expensive CRDT processing. Enforce a maximum payload/update size before decoding/applying, consistent with the IM/message limits.\n```suggestion\n    const auto encoded \u003d root[\"u\"].asString();\n    if (encoded.size() \u003e MAX_COLLAB_UPDATE_BASE64_SIZE)\n        return;\n    auto update \u003d base64::decode(encoded);\n    if (update.empty() || update.size() \u003e MAX_COLLAB_UPDATE_SIZE)\n        return;\n```",
+      "revId": "bc5e3c8c6fc7451b62fe7b358da4eca9fe7a39ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bdd14687_43a4195f",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T03:27:06Z",
+      "side": 1,
+      "message": "[warning] Line 535: `persistNow` creates a full CRDT snapshot commit every debounce interval. For active editing on large documents this grows the conversation repository by repeatedly storing the entire document state, which can quickly degrade sync and storage. Persist incremental updates for normal edits and reserve full snapshots for compaction/checkpoints.\n```suggestion\n// Store the incremental update received in onLocalUpdate(), and checkpoint full\n// state only after N updates or when compacting the document history.\ncm-\u003ecreateCommit(session-\u003econversationId,\n                 CommitMessage::collabUpdate(session-\u003edocumentId, base64::encode(update)));\n```",
+      "revId": "bc5e3c8c6fc7451b62fe7b358da4eca9fe7a39ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
