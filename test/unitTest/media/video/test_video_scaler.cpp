@@ -19,6 +19,10 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+extern "C" {
+#include <libswscale/swscale.h>
+}
+
 #include "jami.h"
 #include "videomanager_interface.h"
 #include "media/video/video_scaler.h"
@@ -41,11 +45,13 @@ private:
     void testConvertFrame();
     void testScale();
     void testScaleWithAspect();
+    void testSetScalingAlgorithm();
 
     CPPUNIT_TEST_SUITE(VideoScalerTest);
     CPPUNIT_TEST(testConvertFrame);
     CPPUNIT_TEST(testScale);
     CPPUNIT_TEST(testScaleWithAspect);
+    CPPUNIT_TEST(testSetScalingAlgorithm);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<VideoScaler> scaler_;
@@ -102,6 +108,29 @@ VideoScalerTest::testScaleWithAspect()
     CPPUNIT_ASSERT(static_cast<AVPixelFormat>(output.format()) == AV_PIX_FMT_YUV420P);
     CPPUNIT_ASSERT(output.width() == 640);
     CPPUNIT_ASSERT(output.height() == 360);
+}
+
+void
+VideoScalerTest::testSetScalingAlgorithm()
+{
+    scaler_.reset(new VideoScaler);
+
+    libjami::VideoFrame input, output;
+    input.reserve(AV_PIX_FMT_YUV420P, 1280, 720);
+    output.reserve(AV_PIX_FMT_YUV420P, 640, 360);
+
+    // Create a context with the default algorithm, then switch: the cached
+    // context must be dropped and scaling must keep working.
+    scaler_->scale(input, output);
+    scaler_->setScalingAlgorithm(SWS_AREA);
+    scaler_->scale(input, output);
+    CPPUNIT_ASSERT(output.width() == 640);
+    CPPUNIT_ASSERT(output.height() == 360);
+
+    // Setting the same algorithm again is a no-op and must not break scaling.
+    scaler_->setScalingAlgorithm(SWS_AREA);
+    scaler_->scale_and_pad(input, output, 0, 0, 320, 180, true);
+    CPPUNIT_ASSERT(static_cast<AVPixelFormat>(output.format()) == AV_PIX_FMT_YUV420P);
 }
 
 } // namespace test
