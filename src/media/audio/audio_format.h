@@ -20,7 +20,7 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <string>
 #include <cstddef> // for size_t
 
