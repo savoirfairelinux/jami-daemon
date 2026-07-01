@@ -355,6 +355,15 @@ public:
     std::vector<std::map<std::string, std::string>> collaborativeCommits(
         const std::string& documentId) const;
     /**
+     * List every collaborative document announced in the conversation by scanning the
+     * repository for COLLAB_DOC creation commits, independently of the loaded message
+     * history. Lets a client show a conversation's editable documents without first
+     * paging in the (possibly old) announcing messages.
+     * @return  one map per COLLAB_DOC commit (with "uri" = document id, "displayName",
+     *          "kind", "author", "timestamp"), newest first
+     */
+    std::vector<std::map<std::string, std::string>> collaborativeDocuments() const;
+    /**
      * Get last commit id
      * @return last commit id
      */
