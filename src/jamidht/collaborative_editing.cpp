@@ -282,6 +282,21 @@ CollaborativeEditing::documentContentDelta(const std::string& conversationId,
     return session ? session->doc->contentDelta() : std::string {};
 }
 
+std::vector<std::map<std::string, std::string>>
+CollaborativeEditing::documents(const std::string& conversationId)
+{
+    auto account = account_.lock();
+    if (!account)
+        return {};
+    auto* cm = account->convModule();
+    if (!cm)
+        return {};
+    auto conversation = cm->getConversation(conversationId);
+    if (!conversation)
+        return {};
+    return conversation->collaborativeDocuments();
+}
+
 std::string
 CollaborativeEditing::openDocument(const std::string& conversationId, const std::string& documentId)
 {

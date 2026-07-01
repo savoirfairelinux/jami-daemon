@@ -165,6 +165,9 @@ LIBJAMI_PUBLIC void applyCollaborativeDelta(const std::string& accountId,
 LIBJAMI_PUBLIC std::string collaborativeDocumentContentDelta(const std::string& accountId,
                                                              const std::string& conversationId,
                                                              const std::string& documentId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(
+    const std::string& accountId,
+    const std::string& conversationId);
 
 struct LIBJAMI_PUBLIC ConversationSignal
 {

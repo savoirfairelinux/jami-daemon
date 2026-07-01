@@ -385,4 +385,12 @@ collaborativeDocumentContentDelta(const std::string& accountId,
     return {};
 }
 
+std::vector<std::map<std::string, std::string>>
+getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documents(conversationId);
+    return {};
+}
+
 } // namespace libjami
