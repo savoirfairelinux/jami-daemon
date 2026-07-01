@@ -27,6 +27,9 @@
 #ifdef ENABLE_VIDEO
 #include "call.h"
 #include "video/video_mixer.h"
+#ifdef ENABLE_HWACCEL
+#include "video/accel.h"
+#endif
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -42,6 +45,8 @@
 #include "json_utils.h"
 
 #include <opendht/thread_pool.h>
+
+#include <thread>
 
 using namespace std::literals;
 
@@ -66,6 +71,34 @@ Conference::Conference(const std::shared_ptr<Account>& account, const std::strin
 }
 
 #ifdef ENABLE_VIDEO
+namespace {
+
+/**
+ * Choose the conference composition surface.
+ *
+ * The mixer output is software-encoded once per participant when no hardware
+ * encoder is available, so the surface must stay in line with what the host
+ * can actually sustain:
+ * - hardware H.264 encoder believed usable -> 2560x1440
+ * - software encoding on 8+ hardware threads -> 1920x1080
+ * - otherwise -> 1280x720
+ */
+std::pair<int, int>
+chooseConferenceResolution()
+{
+#ifdef ENABLE_HWACCEL
+    if (jami::Manager::instance().videoPreferences.getEncodingAccelerated()
+        and video::HardwareAccel::isEncoderAvailable(AV_CODEC_ID_H264, 2560, 1440)) {
+        return {2560, 1440};
+    }
+#endif
+    if (std::thread::hardware_concurrency() >= 8)
+        return {1920, 1080};
+    return {1280, 720};
+}
+
+} // namespace
+
 void
 Conference::setupVideoMixer()
 {
@@ -77,16 +110,24 @@ Conference::setupVideoMixer()
         });
     });
 
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
-    if (conf_res.size() == 2u) {
-#if defined(__APPLE__) && TARGET_OS_MAC
-        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]), AV_PIX_FMT_NV12);
-#else
-        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]));
-#endif
+    // "auto" (the default) sizes the surface from the host capabilities; an
+    // explicit "WxH" preference remains a manual override.
+    const auto& resolutionPref = jami::Manager::instance().videoPreferences.getConferenceResolution();
+    std::pair<int, int> conf_res;
+    auto res = split_string_to_unsigned(resolutionPref, 'x');
+    if (res.size() == 2u and res[0] > 0 and res[1] > 0) {
+        conf_res = {static_cast<int>(res[0]), static_cast<int>(res[1])};
     } else {
-        JAMI_ERROR("[conf:{}] Conference resolution is invalid", id_);
+        if (resolutionPref != "auto")
+            JAMI_WARNING("[conf:{}] Invalid conference resolution '{}', using auto", id_, resolutionPref);
+        conf_res = chooseConferenceResolution();
     }
+    JAMI_LOG("[conf:{}] Video mixer surface: {}x{}", id_, conf_res.first, conf_res.second);
+#if defined(__APPLE__) && TARGET_OS_MAC
+    videoMixer_->setParameters(conf_res.first, conf_res.second, AV_PIX_FMT_NV12);
+#else
+    videoMixer_->setParameters(conf_res.first, conf_res.second);
+#endif
 }
 
 void

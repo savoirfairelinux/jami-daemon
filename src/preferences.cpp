@@ -72,7 +72,7 @@ using yaml_utils::parseValue;
 constexpr const char* const Preferences::CONFIG_LABEL;
 const char* const Preferences::DFT_ZONE = "North America";
 const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
-constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"1280x720"};
+constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"auto"};
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
@@ -587,6 +587,11 @@ VideoPreferences::unserialize(const YAML::Node& in)
 #endif
     try {
         parseValue(node, CONFERENCE_RESOLUTION_KEY, conferenceResolution_);
+        // The conference resolution is not exposed through any client API, so a
+        // stored "1280x720" is the previous fixed default rather than a user
+        // choice: migrate it to the adaptive default.
+        if (conferenceResolution_ == "1280x720")
+            conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
     } catch (...) {
         conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
     }
