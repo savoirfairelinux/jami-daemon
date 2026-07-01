@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "86cab224_579a6618",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T21:10:54Z",
+      "side": 1,
+      "message": "[warning] Line 200: The mixer bitrate is seeded only once per conference, so if the mixer surface is not initialized yet, starts at a placeholder size, or later changes resolution as participants/layout change, the encoder budget remains stuck at the old value. Track the seeded mixer dimensions and reseed only when they actually change, while still preserving RTCP adaptation for unchanged dimensions.\n```suggestion\n                const auto mixerPixels \u003d static_cast\u003cunsigned\u003e(ms.width) * static_cast\u003cunsigned\u003e(ms.height);\n                if (codecVideo \u0026\u0026 (!confBitrateSeeded_ || mixerPixels !\u003d confBitrateSeededPixels_)) {\n                    codecVideo-\u003ebitrate \u003d std::max((unsigned int) (mixerPixels * 0.001),\n                                                   SystemCodecInfo::DEFAULT_VIDEO_BITRATE);\n                    codecVideo-\u003emaxBitrate \u003d std::max((unsigned int) (mixerPixels * 0.0015),\n                                                      SystemCodecInfo::DEFAULT_MAX_BITRATE);\n                    videoBitrateInfo_.videoBitrateCurrent \u003d codecVideo-\u003ebitrate;\n                    videoBitrateInfo_.videoBitrateMax \u003d codecVideo-\u003emaxBitrate;\n                    confBitrateSeededPixels_ \u003d mixerPixels;\n                    confBitrateSeeded_ \u003d true;\n                }\n```",
+      "revId": "c34455018dc07729931bd2420974f5dc193cb6c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da124d1e_c1b397ef",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T21:10:54Z",
+      "side": 1,
+      "message": "[warning] Line 202: `ms.width * ms.height` is evaluated as signed `int` before being cast to `unsigned`, which can overflow or produce a huge unsigned value if either dimension is negative. Cast before multiplying, as done in `updateMedia()`.\n```suggestion\n                    const auto pixels \u003d static_cast\u003cunsigned\u003e(ms.width) * static_cast\u003cunsigned\u003e(ms.height);\n```",
+      "revId": "c34455018dc07729931bd2420974f5dc193cb6c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
