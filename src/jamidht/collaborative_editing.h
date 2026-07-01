@@ -84,6 +84,11 @@ public:
     std::string documentContentDelta(const std::string& conversationId,
                                      const std::string& documentId);
 
+    /// List all collaborative documents that exist in @c conversationId, read from the
+    /// conversation history (as COLLAB_DOC commit maps). Lets a client show the document
+    /// list without paging in the announcing messages.
+    std::vector<std::map<std::string, std::string>> documents(const std::string& conversationId);
+
     /// Broadcast this device's cursor position (UTF-16 code units) to other members.
     void setCursor(const std::string& conversationId,
                    const std::string& documentId,

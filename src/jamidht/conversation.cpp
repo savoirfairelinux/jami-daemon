@@ -1889,6 +1889,29 @@ Conversation::collaborativeCommits(const std::string& documentId) const
     return result;
 }
 
+std::vector<std::map<std::string, std::string>>
+Conversation::collaborativeDocuments() const
+{
+    if (!pimpl_->repository_)
+        return {};
+    // Read straight from git so documents are found even when their announcing commit
+    // is not (or no longer) in the loaded message window.
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
+    std::vector<std::map<std::string, std::string>> result;
+    for (auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        auto uriIt = commit.find(CommitKey::URI);
+        if (uriIt == commit.end() || uriIt->second.empty())
+            continue;
+        result.emplace_back(std::move(commit));
+    }
+    return result;
+}
+
 void
 Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
 {
