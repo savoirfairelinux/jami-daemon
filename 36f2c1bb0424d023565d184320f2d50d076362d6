@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12e82d5e_e9a08f47",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1916,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T02:59:33Z",
+      "side": 1,
+      "message": "[warning] Line 1916: This returns every COLLAB_DOC commit with a URI, so a duplicate creation commit for the same document id will surface duplicate editable documents to clients. Since conversation history is peer-controlled, this also lets a later/malicious commit shadow the same URI with different metadata. Track seen URIs and return only one entry per document id, preferably preserving the newest-first order documented here.\n```suggestion\n    std::set\u003cstd::string\u003e seenUris;\n    for (auto\u0026 commit : commits) {\n        auto typeIt \u003d commit.find(CommitKey::TYPE);\n        if (typeIt \u003d\u003d commit.end() || typeIt-\u003esecond !\u003d CommitType::COLLAB_DOC)\n            continue;\n        auto uriIt \u003d commit.find(CommitKey::URI);\n        if (uriIt \u003d\u003d commit.end() || uriIt-\u003esecond.empty())\n            continue;\n        if (!seenUris.emplace(uriIt-\u003esecond).second)\n            continue;\n        result.emplace_back(std::move(commit));\n    }\n```",
+      "revId": "36f2c1bb0424d023565d184320f2d50d076362d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
