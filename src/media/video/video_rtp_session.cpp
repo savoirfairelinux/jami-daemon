@@ -89,7 +89,11 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
     // adjust send->codec bitrate info for higher video resolutions
     auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
     if (codecVideo) {
-        auto const pixels = localVideoParams_.height * localVideoParams_.width;
+        // In a conference the sent stream is the mixer composite, so size the
+        // budget from the mixer surface; otherwise use the capture size.
+        const auto pixels = videoMixer_ ? static_cast<unsigned>(videoMixer_->getWidth())
+                                              * static_cast<unsigned>(videoMixer_->getHeight())
+                                        : localVideoParams_.height * localVideoParams_.width;
         codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
         codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     }
@@ -191,6 +195,26 @@ VideoRtpSession::startSender()
                                                static_cast<int>(send_.bitrate),
                                                static_cast<rational<int>>(localVideoParams_.framerate))
                                  : videoMixer_->getStream("Video Sender");
+            if (videoMixer_) {
+                // The mixer stream carries no bitrate. Size the encoder budget
+                // from the composited surface instead of letting it fall back
+                // to the default bitrate, which starves the conference stream.
+                // Seed once per conference so later RTCP-driven adaptations
+                // (including congestion decreases) survive sender restarts.
+                auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
+                if (codecVideo and not confBitrateSeeded_) {
+                    const auto pixels = static_cast<unsigned>(ms.width * ms.height);
+                    codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001),
+                                                   SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+                    codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015),
+                                                      SystemCodecInfo::DEFAULT_MAX_BITRATE);
+                    videoBitrateInfo_.videoBitrateCurrent = codecVideo->bitrate;
+                    videoBitrateInfo_.videoBitrateMax = codecVideo->maxBitrate;
+                    confBitrateSeeded_ = true;
+                }
+                send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
+                ms.bitrate = static_cast<int>(send_.bitrate);
+            }
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
@@ -437,6 +461,7 @@ VideoRtpSession::stop()
         videoBitrateInfo_.videoQualityCurrent = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
 
     videoBitrateInfo_.videoBitrateCurrent = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+    confBitrateSeeded_ = false;
     storeVideoBitrateInfo();
 
     socketPair_.reset();
@@ -601,6 +626,7 @@ VideoRtpSession::exitConference()
     }
 
     conference_ = nullptr;
+    confBitrateSeeded_ = false;
 }
 
 bool

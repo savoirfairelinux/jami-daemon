@@ -126,6 +126,9 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
+    // Whether the encoder bitrate was already sized from the mixer surface for
+    // the current conference (seed once, then let RTCP adaptation drive it).
+    bool confBitrateSeeded_ {false};
 
     std::function<void(void)> requestKeyFrameCallback_;
 
