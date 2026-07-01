@@ -85,11 +85,13 @@ private:
     void testSyncFetch();
     void testSyncAfterDisconnection();
     void testDisplayedOnLoad();
+    void testDisplayedWithCollabUpdateTip();
 
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
     CPPUNIT_TEST(testSyncFetch);
     CPPUNIT_TEST(testSyncAfterDisconnection);
     CPPUNIT_TEST(testDisplayedOnLoad);
+    CPPUNIT_TEST(testDisplayedWithCollabUpdateTip);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -572,6 +574,109 @@ ConversationFetchSentTest::testDisplayedOnLoad()
     bobAccount->convModule()->loadConversations(); // Reset data
     bobData.messages.clear();
     // Load messages, messages should be displayed
+    CPPUNIT_ASSERT(getMsgStatus(bobData, msgId1, aliceUri) != libjami::Account::MessageStates::DISPLAYED);
+    libjami::loadConversation(bobId, bobData.conversationId, "", 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
+               && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
+    }));
+}
+
+void
+ConversationFetchSentTest::testDisplayedWithCollabUpdateTip()
+{
+    // Regression test: when the conversation tip is an internal collaborative-editing
+    // commit (COLLAB_UPDATE, which is never surfaced as a message), a member's read/fetched
+    // high-water-mark can point at it. On reload the per-message status is recomputed from
+    // that pointer and must still resolve to the right message instead of staying stuck on
+    // SENDING (which showed up in the client as messages without a read receipt).
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    // Create conversation between alice and bob
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+
+    std::this_thread::sleep_for(5s); // Wait for all join messages to be received
+
+    // Bob sends 2 messages
+    auto aliceMsgSize = aliceData.messages.size(), bobMsgSize = bobData.messages.size();
+    libjami::sendMessage(bobId, bobData.conversationId, "1"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.messages.size() == aliceMsgSize + 1 && bobData.messages.size() == bobMsgSize + 1;
+    }));
+    auto msgId1 = aliceData.messages.rbegin()->id;
+    libjami::sendMessage(bobId, bobData.conversationId, "2"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.messages.size() == aliceMsgSize + 2 && bobData.messages.size() == bobMsgSize + 2;
+    }));
+    auto msgId2 = aliceData.messages.rbegin()->id;
+
+    auto getMsgStatus = [&](const auto& data, const auto& id, const auto& peer) {
+        for (const auto& msg : data.messages) {
+            if (msg.id == id && msg.status.find(peer) != msg.status.end()) {
+                return static_cast<libjami::Account::MessageStates>(msg.status.at(peer));
+            }
+        }
+        return libjami::Account::MessageStates::UNKNOWN;
+    };
+
+    // Alice creates and edits a collaborative document. Closing forces an immediate persist,
+    // so the conversation ends on a COLLAB_UPDATE commit rather than on a message.
+    auto docId = libjami::createCollaborativeDocument(aliceId, aliceData.conversationId, "doc"s, "text"s);
+    CPPUNIT_ASSERT(!docId.empty());
+    libjami::editCollaborativeDocument(aliceId, aliceData.conversationId, docId, 0, 0, "hello"s);
+    libjami::closeCollaborativeDocument(aliceId, aliceData.conversationId, docId);
+
+    // Wait for a collaborative commit to land, then let the edit's persist settle so the tip
+    // is the COLLAB_UPDATE commit.
+    for (int i = 0; i < 80; ++i) {
+        if (auto conv = aliceAccount->convModule()->getConversation(aliceData.conversationId)) {
+            auto cur = conv->lastCommitId();
+            if (!cur.empty() && cur != msgId2)
+                break;
+        }
+        std::this_thread::sleep_for(500ms);
+    }
+    std::this_thread::sleep_for(3s);
+    std::string tip;
+    if (auto conv = aliceAccount->convModule()->getConversation(aliceData.conversationId))
+        tip = conv->lastCommitId();
+    CPPUNIT_ASSERT(!tip.empty() && tip != msgId2);
+
+    // Wait for Bob to sync those commits so his repository can resolve the pointer on reload.
+    bool bobSynced = false;
+    for (int i = 0; i < 80; ++i) {
+        if (auto bconv = bobAccount->convModule()->getConversation(bobData.conversationId)) {
+            if (bconv->lastCommitId() == tip) {
+                bobSynced = true;
+                break;
+            }
+        }
+        std::this_thread::sleep_for(500ms);
+    }
+    CPPUNIT_ASSERT(bobSynced);
+
+    // Alice marks the conversation read up to the (collab) tip, so aliceUri's read
+    // high-water-mark points at a COLLAB_UPDATE commit.
+    aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, tip, 3);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
+               && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
+    }));
+
+    // Reload bob's conversation: the status is recomputed from the persisted high-water-mark
+    // (a COLLAB_UPDATE commit). It must still resolve to DISPLAYED for the messages.
+    bobAccount->convModule()->loadConversations();
+    bobData.messages.clear();
     CPPUNIT_ASSERT(getMsgStatus(bobData, msgId1, aliceUri) != libjami::Account::MessageStates::DISPLAYED);
     libjami::loadConversation(bobId, bobData.conversationId, "", 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
