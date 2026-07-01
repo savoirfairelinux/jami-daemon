@@ -437,5 +437,24 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
     return l;
 }
 
+bool
+HardwareAccel::isEncoderAvailable(AVCodecID id, int width, int height)
+{
+    for (auto& accel : getCompatibleAccel(id, width, height, CODEC_ENCODER)) {
+        for (const auto& device : *accel.possible_devices_) {
+            if (device.second == DeviceState::USABLE)
+                return true;
+        }
+        // Not validated yet: actually probe the devices. init_device_type()
+        // creates the hardware device context and persistently marks each
+        // device USABLE or NOT_USABLE in the shared table, so the cost is
+        // paid at most once per process.
+        std::string dev;
+        if (accel.init_device_type(dev) == 0)
+            return true;
+    }
+    return false;
+}
+
 } // namespace video
 } // namespace jami

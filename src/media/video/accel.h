@@ -143,6 +143,15 @@ public:
     bool linkHardware(AVBufferRef* framesCtx);
 
     static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
+    /**
+     * @brief Checks whether a hardware encoder is usable for the given codec and size.
+     *
+     * Devices already validated during this session are trusted directly;
+     * otherwise the compatible devices are probed (hardware device context
+     * creation) and their state is recorded, so the probe runs at most once
+     * per process. Devices probed unusable are ignored.
+     */
+    static bool isEncoderAvailable(AVCodecID id, int width, int height);
     int initAPI(bool linkable, AVBufferRef* framesCtx);
     bool dynBitrate() { return dynBitrate_; }
 
