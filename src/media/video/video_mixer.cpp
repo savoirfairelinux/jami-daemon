@@ -81,6 +81,9 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
+    // Participant frames are mostly downscaled into their cell: area averaging
+    // gives a much cleaner result than the default fast bilinear.
+    scaler_.setScalingAlgorithm(SWS_AREA);
     // Local video camera is the main participant
     if (not localInput.empty() && attachHost) {
         auto videoInput = getVideoInput(localInput);

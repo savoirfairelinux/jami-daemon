@@ -36,6 +36,11 @@ public:
     VideoScaler();
     ~VideoScaler();
     void reset();
+    /**
+     * Set the libswscale scaling algorithm (SWS_* flags).
+     * Takes effect on the next (re)created scaler context.
+     */
+    void setScalingAlgorithm(int algorithm);
     void scale(const AVFrame* input, AVFrame* output);
     void scale(const VideoFrame& input, VideoFrame& output);
     void scale_with_aspect(const VideoFrame& input, VideoFrame& output);
