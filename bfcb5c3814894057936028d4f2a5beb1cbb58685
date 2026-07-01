@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "941fce98_df946541",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-01T23:43:54Z",
+      "side": 1,
+      "message": "Screen content actually requires a lower bitrate than camera video (large same-color surfaces, low entropy).",
+      "revId": "bfcb5c3814894057936028d4f2a5beb1cbb58685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
