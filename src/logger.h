@@ -117,29 +117,29 @@ void fini();
 
 namespace log {
 
-template<typename S, typename... Args>
+template<typename... Args>
 void
-info(const char* file, unsigned line, S&& format, Args&&... args)
+info(const char* file, unsigned line, fmt::format_string<Args...> format, Args&&... args)
 {
-    Logger::write(LOG_INFO, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_INFO, file, line, true, {}, fmt::format(format, std::forward<Args>(args)...));
 }
-template<typename S, typename... Args>
+template<typename... Args>
 void
-dbg(const char* file, unsigned line, S&& format, Args&&... args)
+dbg(const char* file, unsigned line, fmt::format_string<Args...> format, Args&&... args)
 {
-    Logger::write(LOG_DEBUG, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_DEBUG, file, line, true, {}, fmt::format(format, std::forward<Args>(args)...));
 }
-template<typename S, typename... Args>
+template<typename... Args>
 void
-warn(const char* file, unsigned line, S&& format, Args&&... args)
+warn(const char* file, unsigned line, fmt::format_string<Args...> format, Args&&... args)
 {
-    Logger::write(LOG_WARNING, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_WARNING, file, line, true, {}, fmt::format(format, std::forward<Args>(args)...));
 }
-template<typename S, typename... Args>
+template<typename... Args>
 void
-error(const char* file, unsigned line, S&& format, Args&&... args)
+error(const char* file, unsigned line, fmt::format_string<Args...> format, Args&&... args)
 {
-    Logger::write(LOG_ERR, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_ERR, file, line, true, {}, fmt::format(format, std::forward<Args>(args)...));
 }
 
 template<typename S, typename... Args>
@@ -175,12 +175,12 @@ xerror(const char* file, unsigned line, S&& format, Args&&... args)
 #define JAMI_XWARN(formatstr, ...) ::jami::log::xwarn(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 #define JAMI_XERR(formatstr, ...)  ::jami::log::xerror(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 
-#define JAMI_LOG(formatstr, ...) ::jami::log::info(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
+#define JAMI_LOG(formatstr, ...) ::jami::log::info(__FILE__, __LINE__, formatstr, ##__VA_ARGS__)
 #define JAMI_DEBUG(formatstr, ...) \
     if (::jami::Logger::debugEnabled()) { \
-        ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); \
+        ::jami::log::dbg(__FILE__, __LINE__, formatstr, ##__VA_ARGS__); \
     }
-#define JAMI_WARNING(formatstr, ...) ::jami::log::warn(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
-#define JAMI_ERROR(formatstr, ...)   ::jami::log::error(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
+#define JAMI_WARNING(formatstr, ...) ::jami::log::warn(__FILE__, __LINE__, formatstr, ##__VA_ARGS__)
+#define JAMI_ERROR(formatstr, ...)   ::jami::log::error(__FILE__, __LINE__, formatstr, ##__VA_ARGS__)
 
 } // namespace jami
