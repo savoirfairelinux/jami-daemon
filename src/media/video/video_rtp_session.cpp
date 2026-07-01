@@ -94,8 +94,15 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
         const auto pixels = videoMixer_ ? static_cast<unsigned>(videoMixer_->getWidth())
                                               * static_cast<unsigned>(videoMixer_->getHeight())
                                         : localVideoParams_.height * localVideoParams_.width;
-        codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-        codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+        // Screen content (text, UI) needs roughly twice the bitrate of camera
+        // video at the same resolution to stay legible.
+        const bool isDisplay = !videoMixer_ && input_.rfind("display://", 0) == 0;
+        const double rateFactor = isDisplay ? 0.002 : 0.001;
+        const double maxRateFactor = isDisplay ? 0.003 : 0.0015;
+        codecVideo->bitrate = std::max((unsigned int) (pixels * rateFactor),
+                                       SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        codecVideo->maxBitrate = std::max((unsigned int) (pixels * maxRateFactor),
+                                          SystemCodecInfo::DEFAULT_MAX_BITRATE);
     }
     setupVideoBitrateInfo();
 }
