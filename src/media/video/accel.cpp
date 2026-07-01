@@ -437,5 +437,17 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
     return l;
 }
 
+bool
+HardwareAccel::isEncoderAvailable(AVCodecID id, int width, int height)
+{
+    for (const auto& accel : getCompatibleAccel(id, width, height, CODEC_ENCODER)) {
+        for (const auto& device : *accel.possible_devices_) {
+            if (device.second != DeviceState::NOT_USABLE)
+                return true;
+        }
+    }
+    return false;
+}
+
 } // namespace video
 } // namespace jami
