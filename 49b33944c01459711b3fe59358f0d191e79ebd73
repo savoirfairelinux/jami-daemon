@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0349d09_5abf810b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1401,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-01T02:59:36Z",
+      "side": 1,
+      "message": "[warning] Line 1401: The resolver only scans the first 1024 commits when walking back from a status high-water-mark. A collaborative document can produce more than 1024 consecutive COLLAB_UPDATE commits after the last surfaced message, so the read/fetched pointer would remain unresolved and the regression can reappear for active documents. Please make this walk unbounded or paginate until a non-COLLAB_UPDATE commit or history end is reached.\n\n```suggestion\n            logOptions.nbOfCommits \u003d 0;\n```\n\nIf `0` is not the repository API\u0027s unbounded value, use the existing pagination/walk API instead of a fixed cap.",
+      "revId": "49b33944c01459711b3fe59358f0d191e79ebd73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
