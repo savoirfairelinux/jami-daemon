@@ -1378,6 +1378,36 @@ Conversation::Impl::addToHistory(History& history,
         constexpr int32_t SENT = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
         constexpr int32_t DISPLAYED = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
 
+        // A member's "fetched"/"read" high-water-mark is a commit id, but it can land on an
+        // internal collaborative-editing commit (COLLAB_UPDATE), which is filtered out of the
+        // message list below. The exact-id match would then never succeed and every message
+        // would stay stuck on SENDING. Resolve such a pointer to the most recent actual message
+        // commit at or before it. Results are memoized as several members often share the same
+        // high-water-mark, and once a status transition is recorded below the stored pointer is
+        // rewritten to a message commit, so this walk is only paid until then.
+        std::map<std::string, std::string> resolvedStatusCommit;
+        auto messageStatusCommit = [&](const std::string& commitId) -> std::string {
+            if (commitId.empty() || !repository_)
+                return commitId;
+            auto itc = resolvedStatusCommit.find(commitId);
+            if (itc != resolvedStatusCommit.end())
+                return itc->second;
+            std::string resolved = commitId;
+            LogOptions logOptions;
+            logOptions.from = commitId;
+            logOptions.skipMerge = true;
+            logOptions.logIfNotFound = false;
+            logOptions.nbOfCommits = 1024;
+            for (const auto& c : repository_->log(logOptions)) {
+                if (c.commitMsg.type == CommitType::COLLAB_UPDATE)
+                    continue;
+                resolved = c.id;
+                break;
+            }
+            resolvedStatusCommit[commitId] = resolved;
+            return resolved;
+        };
+
         std::lock_guard lk(messageStatusMtx_);
         for (const auto& member : repository_->members()) {
             // For each member, we iterate over the commits to add in reverse chronological
@@ -1402,6 +1432,8 @@ Conversation::Impl::addToHistory(History& history,
                     status = cache;
             }
             auto& messagesStatus = messagesStatus_[member.uri];
+            const auto fetchedCommit = messageStatusCommit(messagesStatus["fetched"]);
+            const auto readCommit = messageStatusCommit(messagesStatus["read"]);
 
             for (auto it = sharedCommits.rbegin(); it != sharedCommits.rend(); it++) {
                 auto sharedCommit = *it;
@@ -1409,10 +1441,10 @@ Conversation::Impl::addToHistory(History& history,
                 auto& commitStatus = sharedCommit->status[member.uri];
 
                 // Compute status for the current commit.
-                if (status < SENT && messagesStatus["fetched"] == sharedCommit->id) {
+                if (status < SENT && fetchedCommit == sharedCommit->id) {
                     status = SENT;
                 }
-                if (messagesStatus["read"] == sharedCommit->id) {
+                if (readCommit == sharedCommit->id) {
                     status = DISPLAYED;
                 }
                 if (member.uri == sharedCommit->body.at("author")) {
