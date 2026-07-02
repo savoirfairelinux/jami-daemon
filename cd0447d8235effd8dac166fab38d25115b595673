@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa44f769_d49d4bfe",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-02T10:10:12Z",
+      "side": 1,
+      "message": "[warning] Line 101: The clang-format CI is failing on this patchset, and this long assignment is likely one of the formatting violations. Please run clang-format on the touched files before merge. For example:\n```suggestion\n                codecVideo-\u003ebitrate \u003d std::max((unsigned int) (pixels * 0.001),\n                                               SystemCodecInfo::DEFAULT_VIDEO_BITRATE);\n```",
+      "revId": "cd0447d8235effd8dac166fab38d25115b595673",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
