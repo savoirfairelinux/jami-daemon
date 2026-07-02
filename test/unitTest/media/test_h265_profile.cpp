@@ -39,6 +39,7 @@ private:
     void testPixelFormat();
     void testSetLevelId();
     void testNegotiableHighProfiles();
+    void testProfileName();
 
     CPPUNIT_TEST_SUITE(H265ProfileTest);
     CPPUNIT_TEST(testParseFmtp);
@@ -47,6 +48,7 @@ private:
     CPPUNIT_TEST(testPixelFormat);
     CPPUNIT_TEST(testSetLevelId);
     CPPUNIT_TEST(testNegotiableHighProfiles);
+    CPPUNIT_TEST(testProfileName);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -178,6 +180,20 @@ H265ProfileTest::testNegotiableHighProfiles()
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main10));
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main444));
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main422_10));
+}
+
+void
+H265ProfileTest::testProfileName()
+{
+    // Human-readable profile name for the advanced call information
+    CPPUNIT_ASSERT_EQUAL(std::string("Main"), h265::profileName("profile-id=1;level-id=123"));
+    CPPUNIT_ASSERT_EQUAL(std::string("Main 10"), h265::profileName("profile-id=2;level-id=123"));
+    CPPUNIT_ASSERT_EQUAL(std::string("Main 4:4:4"),
+                         h265::profileName("profile-id=4;level-id=123;interop-constraints=BE0800000000"));
+    CPPUNIT_ASSERT_EQUAL(std::string("Main 4:2:2 10"),
+                         h265::profileName("profile-id=4;level-id=123;interop-constraints=BD0800000000"));
+    // RFC 7798 §7.1: absent parameters imply the Main profile
+    CPPUNIT_ASSERT_EQUAL(std::string("Main"), h265::profileName(""));
 }
 
 } // namespace test

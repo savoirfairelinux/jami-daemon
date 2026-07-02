@@ -74,6 +74,13 @@ FmtpInfo parseFmtp(std::string_view fmtpParams);
 std::optional<Profile> profileFromFmtp(const FmtpInfo& info);
 
 /**
+ * Human-readable name of the profile signaled by fmtp parameters
+ * (e.g. "Main 10"), for display in the advanced call information.
+ * An absent profile-id implies Main.
+ */
+std::string profileName(std::string_view fmtpParams);
+
+/**
  * Build the fmtp parameters advertising a profile at the given level-id.
  */
 std::string fmtpParams(Profile profile, int levelId);

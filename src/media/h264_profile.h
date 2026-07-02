@@ -49,6 +49,13 @@ struct ProfileLevel
 std::optional<ProfileLevel> parseProfileLevelId(std::string_view fmtpParams);
 
 /**
+ * Human-readable name of the profile signaled by fmtp parameters
+ * (e.g. "High 4:4:4 Predictive"), for display in the advanced call
+ * information. An absent profile-level-id implies Constrained Baseline.
+ */
+std::string profileName(std::string_view fmtpParams);
+
+/**
  * Build a "profile-level-id=XXXXXX" fmtp parameter for the given
  * AV_PROFILE_H264_* profile and level_idc.
  */

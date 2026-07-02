@@ -43,6 +43,8 @@
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
+#include "media/h264_profile.h"
+#include "media/h265_profile.h"
 #include <chrono>
 #include <libavutil/display.h>
 #include <video/sinkclient.h>
@@ -3012,6 +3014,23 @@ SIPCall::getDetails() const
                     details.emplace(libjami::Call::Details::VIDEO_CODEC, codec->name);
                     details.emplace(libjami::Call::Details::VIDEO_MIN_BITRATE, std::to_string(codec->minBitrate));
                     details.emplace(libjami::Call::Details::VIDEO_MAX_BITRATE, std::to_string(codec->maxBitrate));
+                    // Negotiated profile per direction (RFC 6184 / RFC 7798):
+                    // the sent profile follows the parameters our encoder
+                    // uses, the received one those our decoder expects.
+                    auto profileFor = [](const std::string& name, const std::string& params) -> std::string {
+                        if (name == "H264")
+                            return h264::profileName(params);
+                        if (name == "H265")
+                            return h265::profileName(params);
+                        return {};
+                    };
+                    if (auto sent = profileFor(codec->name, rtpSession->getSendParameters()); not sent.empty())
+                        details.emplace(libjami::Call::Details::VIDEO_PROFILE_SENT, sent);
+                    if (auto recvCodec = rtpSession->getReceiveCodec()) {
+                        if (auto received = profileFor(recvCodec->name, rtpSession->getReceiveParameters());
+                            not received.empty())
+                            details.emplace(libjami::Call::Details::VIDEO_PROFILE_RECEIVED, received);
+                    }
                     if (const auto& curvideoRtpSession = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)) {
                         details.emplace(libjami::Call::Details::VIDEO_BITRATE,
                                         std::to_string(curvideoRtpSession->getVideoBitrateInfo().videoBitrateCurrent));

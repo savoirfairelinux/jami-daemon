@@ -75,6 +75,18 @@ parseProfileLevelId(std::string_view fmtpParams)
 }
 
 std::string
+profileName(std::string_view fmtpParams)
+{
+    // RFC 6184 §8.1: an absent profile-level-id implies Constrained Baseline
+    int profile = AV_PROFILE_H264_CONSTRAINED_BASELINE;
+    if (auto pl = parseProfileLevelId(fmtpParams))
+        profile = pl->profile;
+    if (const char* name = avcodec_profile_name(AV_CODEC_ID_H264, profile))
+        return name;
+    return "Unknown";
+}
+
+std::string
 makeProfileLevelId(int profile, int level)
 {
     const unsigned char profile_idc = profile & ~(AV_PROFILE_H264_CONSTRAINED | AV_PROFILE_H264_INTRA);

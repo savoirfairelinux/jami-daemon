@@ -38,6 +38,7 @@ private:
     void testPixelFormat();
     void testNegotiableHighProfiles();
     void testLevelHelpers();
+    void testProfileName();
 
     CPPUNIT_TEST_SUITE(H264ProfileTest);
     CPPUNIT_TEST(testParseProfileLevelId);
@@ -45,6 +46,7 @@ private:
     CPPUNIT_TEST(testPixelFormat);
     CPPUNIT_TEST(testNegotiableHighProfiles);
     CPPUNIT_TEST(testLevelHelpers);
+    CPPUNIT_TEST(testProfileName);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -124,6 +126,18 @@ H264ProfileTest::testPixelFormat()
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV420P, h264::pixelFormat(AV_PROFILE_H264_HIGH));
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV422P, h264::pixelFormat(AV_PROFILE_H264_HIGH_422));
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV444P, h264::pixelFormat(AV_PROFILE_H264_HIGH_444_PREDICTIVE));
+}
+
+void
+H264ProfileTest::testProfileName()
+{
+    // Human-readable profile name for the advanced call information
+    CPPUNIT_ASSERT_EQUAL(std::string("Constrained Baseline"), h264::profileName("profile-level-id=42e01f"));
+    CPPUNIT_ASSERT_EQUAL(std::string("High"), h264::profileName("profile-level-id=640029"));
+    CPPUNIT_ASSERT_EQUAL(std::string("High 4:2:2"), h264::profileName("profile-level-id=7a0029"));
+    CPPUNIT_ASSERT_EQUAL(std::string("High 4:4:4 Predictive"), h264::profileName("profile-level-id=f40029"));
+    // RFC 6184 §8.1: an absent profile-level-id implies Constrained Baseline
+    CPPUNIT_ASSERT_EQUAL(std::string("Constrained Baseline"), h264::profileName(""));
 }
 
 void

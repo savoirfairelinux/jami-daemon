@@ -104,6 +104,23 @@ profileFromFmtp(const FmtpInfo& info)
 }
 
 std::string
+profileName(std::string_view fmtpParams)
+{
+    // RFC 7798 §7.1: an absent profile-id implies Main
+    switch (profileFromFmtp(parseFmtp(fmtpParams)).value_or(Profile::Main)) {
+    case Profile::Main10:
+        return "Main 10";
+    case Profile::Main444:
+        return "Main 4:4:4";
+    case Profile::Main422_10:
+        return "Main 4:2:2 10";
+    case Profile::Main:
+    default:
+        return "Main";
+    }
+}
+
+std::string
 fmtpParams(Profile profile, int levelId)
 {
     switch (profile) {

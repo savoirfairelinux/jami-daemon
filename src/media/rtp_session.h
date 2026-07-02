@@ -63,6 +63,9 @@ public:
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;
     std::shared_ptr<SystemCodecInfo> getCodec() const { return send_.codec; }
+    std::shared_ptr<SystemCodecInfo> getReceiveCodec() const { return receive_.codec; }
+    const std::string& getSendParameters() const { return send_.parameters; }
+    const std::string& getReceiveParameters() const { return receive_.parameters; }
     const dhtnet::IpAddr& getSendAddr() const { return send_.addr; };
     const dhtnet::IpAddr& getRecvAddr() const { return receive_.addr; };
 
