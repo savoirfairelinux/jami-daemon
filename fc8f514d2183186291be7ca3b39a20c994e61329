@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92abb646_f3bf3c95",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-02T02:28:25Z",
+      "side": 1,
+      "message": "[warning] Line 93: `updateMedia()` still unconditionally recalculates `codecVideo-\u003ebitrate` from the mixer whenever media is renegotiated, but it does not use the new `confBitrateSeeded_`/`confSeededPixels_` guard. That means a later SDP update in an active conference can overwrite an RTCP-constrained `videoBitrateInfo_` and jump the encoder budget back up even if the mixer surface has not changed. Apply the same seed-only-on-resolution-change rule here before calling `setupVideoBitrateInfo()`, so renegotiation preserves congestion adaptation.\n```suggestion\n        const auto pixels \u003d videoMixer_ ? static_cast\u003cunsigned\u003e(videoMixer_-\u003egetWidth())\n                                              * static_cast\u003cunsigned\u003e(videoMixer_-\u003egetHeight())\n                                        : localVideoParams_.height * localVideoParams_.width;\n        if (!videoMixer_ || !confBitrateSeeded_ || pixels !\u003d confSeededPixels_) {\n            codecVideo-\u003ebitrate \u003d std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);\n            codecVideo-\u003emaxBitrate \u003d std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);\n            if (videoMixer_) {\n                confBitrateSeeded_ \u003d true;\n                confSeededPixels_ \u003d pixels;\n            }\n        }\n```",
+      "revId": "fc8f514d2183186291be7ca3b39a20c994e61329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
