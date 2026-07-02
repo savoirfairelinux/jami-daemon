@@ -832,16 +832,16 @@ ConversationRequestTest::testBanContactRestartAccount()
             }
             cv.notify_one();
         }));
-    auto bobConnected = false;
+    auto aliceConnected = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
         [&](const std::string&, const std::map<std::string, std::string>&) {
-            auto details = bobAccount->getVolatileAccountDetails();
+            auto details = aliceAccount->getVolatileAccountDetails();
             auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
             std::lock_guard lk {mtx};
             if (daemonStatus == "REGISTERED") {
-                bobConnected = true;
+                aliceConnected = true;
             } else if (daemonStatus == "UNREGISTERED") {
-                bobConnected = false;
+                aliceConnected = false;
             }
             cv.notify_one();
         }));
@@ -871,23 +871,22 @@ ConversationRequestTest::testBanContactRestartAccount()
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactRemoved; }));
     }
-    std::this_thread::sleep_for(10s); // Wait a bit to ensure that everything is updated
-    bobConnected = true;
-    Manager::instance().sendRegister(bobId, false);
+
+    aliceConnected = true;
+    Manager::instance().sendRegister(aliceId, false);
     {
         std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobConnected; }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceConnected; }));
     }
-    std::this_thread::sleep_for(5s); // Wait a bit to ensure that everything is updated
 
-    // Connect bob, it will trigger the bootstrap
+    // Connect alice, it will trigger the bootstrap
     auto statusBootstrap = Conversation::BootstrapStatus::SUCCESS;
     // alice is banned so bootstrap MUST fail
-    bobAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
         statusBootstrap = status;
         cv.notify_one();
     });
-    Manager::instance().sendRegister(bobId, true);
+    Manager::instance().sendRegister(aliceId, true);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return statusBootstrap == Conversation::BootstrapStatus::FAILED; }));
