@@ -46,12 +46,14 @@ private:
     void testPassthroughRtpTimestampsStayMonotonic();
     void testExtractProfileLevelID();
     void testH264HighChromaEncoding();
+    void testExtractH265Profile();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
     CPPUNIT_TEST(testPassthroughRtpTimestampsStayMonotonic);
     CPPUNIT_TEST(testExtractProfileLevelID);
     CPPUNIT_TEST(testH264HighChromaEncoding);
+    CPPUNIT_TEST(testExtractH265Profile);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -320,6 +322,38 @@ MediaEncoderTest::testExtractProfileLevelID()
     // Unknown profile falls back to Constrained Baseline
     MediaEncoder::extractProfileLevelID("profile-level-id=ff0029", ctx);
     CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_CONSTRAINED_BASELINE, ctx->profile);
+
+    avcodec_free_context(&ctx);
+}
+
+void
+MediaEncoderTest::testExtractH265Profile()
+{
+    AVCodecContext* ctx = avcodec_alloc_context3(nullptr);
+    CPPUNIT_ASSERT(ctx);
+
+    // RFC 7798: absent parameters imply the Main profile, level 3.1
+    MediaEncoder::extractH265Profile("", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_MAIN, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(93, ctx->level);
+
+    MediaEncoder::extractH265Profile("profile-id=1;level-id=123", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_MAIN, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(123, ctx->level);
+
+    // Main 4:4:4 (Range Extensions)
+    MediaEncoder::extractH265Profile("profile-id=4;level-id=123;interop-constraints=BE0800000000", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_REXT, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(123, ctx->level);
+
+    // Main 4:2:2 10 (Range Extensions)
+    MediaEncoder::extractH265Profile("profile-id=4;level-id=120;interop-constraints=BD0800000000", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_REXT, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(120, ctx->level);
+
+    // Unknown profile falls back to Main
+    MediaEncoder::extractH265Profile("profile-id=7", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_MAIN, ctx->profile);
 
     avcodec_free_context(&ctx);
 }

@@ -19,6 +19,7 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "h264_profile.h"
+#include "h265_profile.h"
 
 #include "client/jami_signal.h"
 #include "fileutils.h"
@@ -750,6 +751,20 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
              ctx->level);
 }
 
+void
+MediaEncoder::extractH265Profile(const std::string& parameters, AVCodecContext* ctx)
+{
+    // RFC 7798 §7.1: absent parameters imply the Main profile, level 3.1
+    const auto info = h265::parseFmtp(parameters);
+    const auto profile = h265::profileFromFmtp(info);
+    ctx->profile = (profile && *profile != h265::Profile::Main) ? AV_PROFILE_HEVC_REXT : AV_PROFILE_HEVC_MAIN;
+    ctx->level = info.levelId;
+    JAMI_LOG("Using profile {} ({:x}) and level {}",
+             avcodec_profile_name(AV_CODEC_ID_HEVC, ctx->profile),
+             ctx->profile,
+             ctx->level);
+}
+
 #ifdef ENABLE_HWACCEL
 void
 MediaEncoder::enableAccel(bool enableAccel)
@@ -881,7 +896,35 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_HEVC) {
-        encoderCtx->profile = AV_PROFILE_HEVC_MAIN;
+        const auto* fmtpParams = libav_utils::getDictValue(options_, "parameters");
+        extractH265Profile(fmtpParams ? fmtpParams : "", encoderCtx);
+        // Encode with the chroma sampling of the negotiated profile (RFC 7798)
+        const auto info = h265::parseFmtp(fmtpParams ? fmtpParams : "");
+        const auto profile = h265::profileFromFmtp(info);
+        const auto requiredFormat = profile ? h265::pixelFormat(*profile) : AV_PIX_FMT_YUV420P;
+        if (requiredFormat != AV_PIX_FMT_YUV420P) {
+#ifdef ENABLE_HWACCEL
+            if (accel_) {
+                // The hardware frames context software format determines
+                // the chroma sampling given to the hardware encoder.
+                accel_->setSoftwareFormat(requiredFormat);
+            } else
+#endif
+            {
+                bool supported = false;
+                if (outputCodec_->pix_fmts)
+                    for (const auto* p = outputCodec_->pix_fmts; *p != AV_PIX_FMT_NONE; ++p)
+                        supported |= (*p == requiredFormat);
+                if (supported) {
+                    encoderCtx->pix_fmt = requiredFormat;
+                } else {
+                    JAMI_ERROR("[{}] Encoder does not support {}, falling back to 4:2:0",
+                               outputCodec_->name,
+                               av_get_pix_fmt_name(requiredFormat));
+                    encoderCtx->profile = AV_PROFILE_HEVC_MAIN;
+                }
+            }
+        }
         forcePresetX2645(encoderCtx);
         initH265(encoderCtx, br);
         av_opt_set_int(encoderCtx, "b_ref_mode", 0, AV_OPT_SEARCH_CHILDREN);

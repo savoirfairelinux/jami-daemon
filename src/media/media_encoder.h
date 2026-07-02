@@ -117,6 +117,13 @@ public:
      */
     static void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
 
+    /**
+     * Parse the H.265 profile parameters from SDP fmtp parameters
+     * (RFC 7798) and configure the codec context profile and level
+     * accordingly. Defaults to the Main profile, level 3.1, when absent.
+     */
+    static void extractH265Profile(const std::string& parameters, AVCodecContext* ctx);
+
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
