@@ -110,6 +110,13 @@ public:
 
     static std::string testH265Accel();
 
+    /**
+     * Parse the H.264 profile-level-id from SDP fmtp parameters (RFC 6184)
+     * and configure the codec context profile and level accordingly.
+     * Defaults to Constrained Baseline level 1.3 when absent.
+     */
+    static void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
+
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
@@ -119,7 +126,6 @@ private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
-    void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
     int initVideoStream(AVBufferRef* framesCtx = {});
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx = {});
     void openIOContext();

@@ -763,19 +763,26 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     ctx->level = result & 0xff;                               // xxxx0d -> 0d
     switch (profile_idc) {
     case AV_PROFILE_H264_BASELINE:
+        ctx->profile = profile_idc;
         // check constraint_set_1_flag
         if ((profile_iop & 0x40) >> 6)
             ctx->profile |= AV_PROFILE_H264_CONSTRAINED;
         break;
+    case AV_PROFILE_H264_MAIN:
+    case AV_PROFILE_H264_EXTENDED:
+    case AV_PROFILE_H264_HIGH:
+        ctx->profile = profile_idc;
+        break;
     case AV_PROFILE_H264_HIGH_10:
     case AV_PROFILE_H264_HIGH_422:
     case AV_PROFILE_H264_HIGH_444_PREDICTIVE:
+        ctx->profile = profile_idc;
         // check constraint_set_3_flag
         if ((profile_iop & 0x10) >> 4)
             ctx->profile |= AV_PROFILE_H264_INTRA;
         break;
     default:
-        JAMI_LOG("Unrecognized H264 profile byte");
+        JAMI_LOG("Unrecognized H264 profile byte, using Constrained Baseline");
     }
     JAMI_LOG("Using profile {} ({:x}) and level {}",
              avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile),

@@ -44,10 +44,12 @@ public:
 private:
     void testMultiStream();
     void testPassthroughRtpTimestampsStayMonotonic();
+    void testExtractProfileLevelID();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
     CPPUNIT_TEST(testPassthroughRtpTimestampsStayMonotonic);
+    CPPUNIT_TEST(testExtractProfileLevelID);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -272,6 +274,48 @@ MediaEncoderTest::testPassthroughRtpTimestampsStayMonotonic()
     } catch (const MediaEncoderException& e) {
         CPPUNIT_FAIL(e.what());
     }
+}
+
+void
+MediaEncoderTest::testExtractProfileLevelID()
+{
+    AVCodecContext* ctx = avcodec_alloc_context3(nullptr);
+    CPPUNIT_ASSERT(ctx);
+
+    // RFC 6184: no profile-level-id implies Constrained Baseline
+    MediaEncoder::extractProfileLevelID("", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_CONSTRAINED_BASELINE, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(0x0d, ctx->level);
+
+    // Constrained Baseline (profile_idc 0x42, constraint_set1_flag) level 4.1
+    MediaEncoder::extractProfileLevelID("profile-level-id=42e029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_CONSTRAINED_BASELINE, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(0x29, ctx->level);
+
+    // High profile (profile_idc 0x64)
+    MediaEncoder::extractProfileLevelID("profile-level-id=640029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_HIGH, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(0x29, ctx->level);
+
+    // High 4:2:2 profile (profile_idc 0x7A)
+    MediaEncoder::extractProfileLevelID("profile-level-id=7a0029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_HIGH_422, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(0x29, ctx->level);
+
+    // High 4:4:4 Predictive profile (profile_idc 0xF4)
+    MediaEncoder::extractProfileLevelID("profile-level-id=f40029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_HIGH_444_PREDICTIVE, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(0x29, ctx->level);
+
+    // High 4:4:4 Intra (profile_idc 0xF4, constraint_set3_flag)
+    MediaEncoder::extractProfileLevelID("profile-level-id=f41029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_HIGH_444_PREDICTIVE | AV_PROFILE_H264_INTRA, ctx->profile);
+
+    // Unknown profile falls back to Constrained Baseline
+    MediaEncoder::extractProfileLevelID("profile-level-id=ff0029", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_CONSTRAINED_BASELINE, ctx->profile);
+
+    avcodec_free_context(&ctx);
 }
 
 } // namespace test
