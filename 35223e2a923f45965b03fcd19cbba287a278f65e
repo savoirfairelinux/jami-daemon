@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb295250_298a5681",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 444,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-02T02:28:25Z",
+      "side": 1,
+      "message": "[warning] Line 444: This treats any device state other than `NOT_USABLE` as an available encoder, including devices that have never been probed. With hardware acceleration enabled, an untested VAAPI/VideoToolbox/NVENC entry can make conferences pick a 2560x1440 mixer surface even if encoder initialization later fails and falls back to software, which is exactly the overload this adaptive sizing is trying to avoid. Please only return true for a state that has actually been validated usable, or perform/provide a real availability probe before selecting the 1440p preset.\n```suggestion\n            if (device.second \u003d\u003d DeviceState::USABLE)\n                return true;\n```",
+      "revId": "35223e2a923f45965b03fcd19cbba287a278f65e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
