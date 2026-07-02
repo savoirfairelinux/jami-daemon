@@ -3322,6 +3322,14 @@ ConversationRepository::addMember(const std::string& uri)
     // First, we need to add the member file to the repository if not present
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
 
+    auto crt = fmt::format("{}.crt", uri);
+    auto adminFile = repoPath / MemberPath::ADMINS / crt;
+    auto memberFile = repoPath / MemberPath::MEMBERS / crt;
+    if (std::filesystem::is_regular_file(adminFile) || std::filesystem::is_regular_file(memberFile)) {
+        JAMI_WARNING("Peer {} is already a member", uri);
+        return {};
+    }
+
     std::filesystem::path invitedPath = repoPath / MemberPath::INVITED;
     if (!dhtnet::fileutils::recursive_mkdir(invitedPath, 0700)) {
         JAMI_ERROR("Error when creating {}.", invitedPath);
