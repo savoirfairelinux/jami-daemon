@@ -18,6 +18,7 @@
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"
+#include "h264_profile.h"
 
 #include "client/jami_signal.h"
 #include "fileutils.h"
@@ -739,50 +740,9 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     ctx->profile = AV_PROFILE_H264_CONSTRAINED_BASELINE;
     ctx->level = 0x0d;
     // ctx->level = 0x0d; // => 13 aka 1.3
-    if (parameters.empty())
-        return;
-
-    const std::string target("profile-level-id=");
-    size_t needle = parameters.find(target);
-    if (needle == std::string::npos)
-        return;
-
-    needle += target.length();
-    const size_t id_length = 6; /* digits */
-    const std::string profileLevelID(parameters.substr(needle, id_length));
-    if (profileLevelID.length() != id_length)
-        return;
-
-    int result;
-    std::stringstream ss;
-    ss << profileLevelID;
-    ss >> std::hex >> result;
-    // profile-level id consists of three bytes
-    const unsigned char profile_idc = result >> 16;           // 42xxxx -> 42
-    const unsigned char profile_iop = ((result >> 8) & 0xff); // xx80xx -> 80
-    ctx->level = result & 0xff;                               // xxxx0d -> 0d
-    switch (profile_idc) {
-    case AV_PROFILE_H264_BASELINE:
-        ctx->profile = profile_idc;
-        // check constraint_set_1_flag
-        if ((profile_iop & 0x40) >> 6)
-            ctx->profile |= AV_PROFILE_H264_CONSTRAINED;
-        break;
-    case AV_PROFILE_H264_MAIN:
-    case AV_PROFILE_H264_EXTENDED:
-    case AV_PROFILE_H264_HIGH:
-        ctx->profile = profile_idc;
-        break;
-    case AV_PROFILE_H264_HIGH_10:
-    case AV_PROFILE_H264_HIGH_422:
-    case AV_PROFILE_H264_HIGH_444_PREDICTIVE:
-        ctx->profile = profile_idc;
-        // check constraint_set_3_flag
-        if ((profile_iop & 0x10) >> 4)
-            ctx->profile |= AV_PROFILE_H264_INTRA;
-        break;
-    default:
-        JAMI_LOG("Unrecognized H264 profile byte, using Constrained Baseline");
+    if (auto pl = h264::parseProfileLevelId(parameters)) {
+        ctx->profile = pl->profile;
+        ctx->level = pl->level;
     }
     JAMI_LOG("Using profile {} ({:x}) and level {}",
              avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile),
