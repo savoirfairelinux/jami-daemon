@@ -29,6 +29,8 @@
 #include "manager.h"
 #include "logger.h"
 #include "libav_utils.h"
+#include "media/h264_profile.h"
+#include "jami/media_const.h"
 
 #include "media_codec.h"
 #include "sdes_negotiator.h"
@@ -37,6 +39,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <mutex>
 
 namespace jami {
 
@@ -51,6 +54,46 @@ static std::map<MediaDirection, const char*> DIRECTION_STR {{MediaDirection::SEN
                                                             {MediaDirection::RECVONLY, "recvonly"},
                                                             {MediaDirection::INACTIVE, "inactive"}};
 
+#ifdef ENABLE_VIDEO
+/**
+ * RFC 6184 §8.2.2: within an offered H.264 payload type, the profile part of
+ * profile-level-id is symmetric; the answer must use the same profile.
+ * pjmedia only matches payload types by encoding name and clock rate, which
+ * can pair payload types of different profiles when several H.264 payloads
+ * are offered. Reject pairings whose profile_idc differ.
+ */
+static pj_status_t
+sdpH264FormatMatch(pj_pool_t* /*pool*/,
+                   pjmedia_sdp_media* offer,
+                   unsigned o_fmt_idx,
+                   pjmedia_sdp_media* answer,
+                   unsigned a_fmt_idx,
+                   unsigned /*option*/)
+{
+    auto profileIdc = [](pjmedia_sdp_media* media, unsigned fmtIdx) -> int {
+        auto* attr = pjmedia_sdp_media_find_attr2(media, "fmtp", &media->desc.fmt[fmtIdx]);
+        if (attr && attr->value.ptr && attr->value.slen) {
+            if (auto pl = h264::parseProfileLevelId(std::string_view(attr->value.ptr, attr->value.slen)))
+                return pl->profile & 0xff; // strip constraint flags, keep profile_idc
+        }
+        // RFC 6184: no profile-level-id implies the Baseline profile
+        return 0x42;
+    };
+    return profileIdc(offer, o_fmt_idx) == profileIdc(answer, a_fmt_idx) ? PJ_SUCCESS : PJMEDIA_SDP_EFORMATNOTEQUAL;
+}
+
+static void
+registerH264FormatMatchCallback()
+{
+    static std::once_flag once;
+    std::call_once(once, [] {
+        static constexpr pj_str_t h264Name = sip_utils::CONST_PJ_STR("H264");
+        if (pjmedia_sdp_neg_register_fmt_match_cb(const_cast<pj_str_t*>(&h264Name), sdpH264FormatMatch) != PJ_SUCCESS)
+            JAMI_ERROR("Failed to register H264 SDP format matching callback");
+    });
+}
+#endif
+
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , publishedIpAddr_()
@@ -58,6 +101,9 @@ Sdp::Sdp(const std::string& id)
     , telephoneEventPayload_(101) // same as asterisk
     , sessionName_("Call ID " + id)
 {
+#ifdef ENABLE_VIDEO
+    registerH264FormatMatchCallback();
+#endif
     memPool_.reset(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                   id.c_str(),
                                   POOL_INITIAL_SIZE,
@@ -234,6 +280,49 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     pjmedia_sdp_media* med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
+#ifdef ENABLE_VIDEO
+    // One payload type per (codec, format parameters) pair. For H.264,
+    // offer one payload type per encodable and decodable profile
+    // (RFC 6184 §8.2.2 requires symmetric profile support per payload
+    // type, RFC 3264 §6.1 lets the sender pick any negotiated payload).
+    // The preferred payload is listed first: high chroma profiles when
+    // sharing a screen, the interop-safe baseline profile otherwise.
+    struct VideoPayload
+    {
+        std::shared_ptr<SystemCodecInfo> codec;
+        std::string parameters;
+    };
+    std::vector<VideoPayload> videoPayloads;
+    if (type == MediaType::MEDIA_VIDEO) {
+        static const std::string displayPrefix = std::string(libjami::Media::VideoProtocolPrefix::DISPLAY)
+                                                 + libjami::Media::VideoProtocolPrefix::SEPARATOR;
+        const bool screenShare = mediaAttr.sourceUri_.rfind(displayPrefix, 0) == 0;
+        for (const auto& codec : video_codec_list_) {
+            if (codec->name != "H264") {
+                videoPayloads.emplace_back(VideoPayload {codec, {}});
+                continue;
+            }
+            const auto videoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(codec);
+            const std::string baseline = videoCodec->parameters.empty() ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
+                                                                        : videoCodec->parameters;
+            // Advertise high profiles with the same level as the baseline payload
+            int level = 0x29;
+            if (auto pl = h264::parseProfileLevelId(baseline))
+                level = pl->level;
+            std::vector<std::string> highProfiles;
+            for (int profile : h264::negotiableHighProfiles())
+                highProfiles.emplace_back(h264::makeProfileLevelId(profile, level));
+
+            if (not screenShare)
+                videoPayloads.emplace_back(VideoPayload {codec, baseline});
+            for (auto& params : highProfiles)
+                videoPayloads.emplace_back(VideoPayload {codec, std::move(params)});
+            if (screenShare)
+                videoPayloads.emplace_back(VideoPayload {codec, baseline});
+        }
+    }
+#endif
+
     switch (type) {
     case MediaType::MEDIA_AUDIO:
         med->desc.media = sip_utils::CONST_PJ_STR("audio");
@@ -243,7 +332,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     case MediaType::MEDIA_VIDEO:
         med->desc.media = sip_utils::CONST_PJ_STR("video");
         med->desc.port = mediaAttr.enabled_ ? localVideoRtpPort_ : 0;
+#ifdef ENABLE_VIDEO
+        med->desc.fmt_count = videoPayloads.size();
+#else
         med->desc.fmt_count = video_codec_list_.size();
+#endif
         break;
     default:
         throw SdpException("Unsupported media type! Only audio and video are supported");
@@ -284,7 +377,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         } else {
             // FIXME: get this key from header
             payload = dynamic_payload++;
+#ifdef ENABLE_VIDEO
+            enc_name = videoPayloads[i].codec->name;
+#else
             enc_name = video_codec_list_[i]->name;
+#endif
             rtpmap.clock_rate = 90000;
         }
 
@@ -303,15 +400,13 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         med->attr[med->attr_count++] = attr;
 
 #ifdef ENABLE_VIDEO
-        if (enc_name == "H264") {
-            // FIXME: this should not be hardcoded, it will determine what profile and level
-            // our peer will send us
-            const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(video_codec_list_[i]);
-            const auto& profileLevelID = accountVideoCodec->parameters.empty()
-                                             ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
-                                             : accountVideoCodec->parameters;
-            auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
-            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), value.c_str(), NULL);
+        if (type == MediaType::MEDIA_VIDEO and not videoPayloads[i].parameters.empty()) {
+            // Create a proper fmtp attribute (name "fmtp", value "<pt> <params>")
+            // so it can be found back by pjmedia_sdp_media_find_attr, in
+            // particular by the H264 format matching callback during negotiation.
+            auto value = fmt::format("{} {}", payload, videoPayloads[i].parameters);
+            auto pjValue = sip_utils::CONST_PJ_STR(value);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "fmtp", &pjValue);
         }
 #endif
     }
