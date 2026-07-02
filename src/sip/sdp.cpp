@@ -418,16 +418,28 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
                 // encoders and decoders support. level-id 123 = level 4.1.
                 static constexpr int levelId = 123;
                 const std::string main = h265::fmtpParams(h265::Profile::Main, levelId);
-                std::vector<std::string> highProfiles;
-                for (auto profile : h265::negotiableHighProfiles())
-                    highProfiles.emplace_back(h265::fmtpParams(profile, levelId));
+                auto highProfiles = h265::negotiableHighProfiles();
 
-                if (not screenShare)
+                if (not screenShare) {
+                    // Camera: prefer Main 10 by default when the hardware
+                    // supports it (less banding, better compression at
+                    // conferencing bitrates), then the interop-safe Main
+                    // profile; high chroma payloads are capability adverts.
+                    if (auto it = std::find(highProfiles.begin(), highProfiles.end(), h265::Profile::Main10);
+                        it != highProfiles.end()) {
+                        highProfiles.erase(it);
+                        videoPayloads.emplace_back(
+                            VideoPayload {codec, h265::fmtpParams(h265::Profile::Main10, levelId)});
+                    }
                     videoPayloads.emplace_back(VideoPayload {codec, main});
-                for (auto& params : highProfiles)
-                    videoPayloads.emplace_back(VideoPayload {codec, std::move(params)});
-                if (screenShare)
+                    for (auto profile : highProfiles)
+                        videoPayloads.emplace_back(VideoPayload {codec, h265::fmtpParams(profile, levelId)});
+                } else {
+                    // Screen share: highest chroma first, Main last
+                    for (auto profile : highProfiles)
+                        videoPayloads.emplace_back(VideoPayload {codec, h265::fmtpParams(profile, levelId)});
                     videoPayloads.emplace_back(VideoPayload {codec, main});
+                }
             } else {
                 videoPayloads.emplace_back(VideoPayload {codec, {}});
             }

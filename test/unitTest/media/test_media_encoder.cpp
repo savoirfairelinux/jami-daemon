@@ -341,6 +341,11 @@ MediaEncoderTest::testExtractH265Profile()
     CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_MAIN, ctx->profile);
     CPPUNIT_ASSERT_EQUAL(123, ctx->level);
 
+    // Main 10
+    MediaEncoder::extractH265Profile("profile-id=2;level-id=123", ctx);
+    CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_MAIN_10, ctx->profile);
+    CPPUNIT_ASSERT_EQUAL(123, ctx->level);
+
     // Main 4:4:4 (Range Extensions)
     MediaEncoder::extractH265Profile("profile-id=4;level-id=123;interop-constraints=BE0800000000", ctx);
     CPPUNIT_ASSERT_EQUAL(AV_PROFILE_HEVC_REXT, ctx->profile);

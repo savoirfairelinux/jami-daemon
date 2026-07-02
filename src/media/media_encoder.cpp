@@ -757,7 +757,12 @@ MediaEncoder::extractH265Profile(const std::string& parameters, AVCodecContext* 
     // RFC 7798 §7.1: absent parameters imply the Main profile, level 3.1
     const auto info = h265::parseFmtp(parameters);
     const auto profile = h265::profileFromFmtp(info);
-    ctx->profile = (profile && *profile != h265::Profile::Main) ? AV_PROFILE_HEVC_REXT : AV_PROFILE_HEVC_MAIN;
+    if (profile && *profile == h265::Profile::Main10)
+        ctx->profile = AV_PROFILE_HEVC_MAIN_10;
+    else if (profile && *profile != h265::Profile::Main)
+        ctx->profile = AV_PROFILE_HEVC_REXT;
+    else
+        ctx->profile = AV_PROFILE_HEVC_MAIN;
     ctx->level = info.levelId;
     JAMI_LOG("Using profile {} ({:x}) and level {}",
              avcodec_profile_name(AV_CODEC_ID_HEVC, ctx->profile),

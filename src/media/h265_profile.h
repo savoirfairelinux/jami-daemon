@@ -41,6 +41,7 @@ namespace h265 {
 
 enum class Profile {
     Main,      ///< profile-id 1, 4:2:0 8-bit
+    Main10,    ///< profile-id 2, 4:2:0 10-bit
     Main444,   ///< profile-id 4, Main 4:4:4 (RExt)
     Main422_10 ///< profile-id 4, Main 4:2:2 10 (RExt)
 };
@@ -93,9 +94,10 @@ bool canEncode(Profile profile);
 bool canDecode(Profile profile);
 
 /**
- * High chroma profiles that can be both encoded and decoded locally,
+ * Profiles beyond Main that can be both encoded and decoded locally,
  * hence offered as additional payload types (RFC 7798 §7.2.2 requires
- * symmetric profile support per payload type). Best chroma first.
+ * symmetric profile support per payload type). Best chroma first;
+ * Main 10 (same 4:2:0 chroma as Main, higher bit depth) comes last.
  */
 std::vector<Profile> negotiableHighProfiles();
 

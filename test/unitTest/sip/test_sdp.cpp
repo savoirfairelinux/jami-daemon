@@ -19,6 +19,8 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
+
 #include "jami.h"
 #include "manager.h"
 #include "media/media_attribute.h"
@@ -377,27 +379,37 @@ SDPTest::testH265OfferAdvertisesProfiles()
     auto* media = videoMedia(sdp->getLocalSdpSession());
     CPPUNIT_ASSERT(media);
     // One payload per negotiable profile: Main + locally supported
-    // high chroma profiles (hardware encoder dependent)
+    // higher profiles (hardware encoder dependent)
     const auto highProfiles = h265::negotiableHighProfiles();
     CPPUNIT_ASSERT_EQUAL(unsigned(1 + highProfiles.size()), media->desc.fmt_count);
     for (unsigned i = 0; i < media->desc.fmt_count; i++)
         CPPUNIT_ASSERT_EQUAL(std::string("H265"), encodingName(media, i));
 
-    // Camera: interop-safe Main profile first, explicit parameters
-    CPPUNIT_ASSERT(fmtpParams(media, 0).find("profile-id=1") != std::string::npos);
-    CPPUNIT_ASSERT(fmtpParams(media, 0).find("level-id=123") != std::string::npos);
+    // Camera: Main 10 is preferred by default when the hardware
+    // supports it (better fidelity at conferencing bitrates), then the
+    // interop-safe Main profile.
+    const bool main10 = std::find(highProfiles.begin(), highProfiles.end(), h265::Profile::Main10)
+                        != highProfiles.end();
+    unsigned mainIdx = 0;
+    if (main10) {
+        CPPUNIT_ASSERT(fmtpParams(media, 0).find("profile-id=2") != std::string::npos);
+        mainIdx = 1;
+    }
+    CPPUNIT_ASSERT(fmtpParams(media, mainIdx).find("profile-id=1") != std::string::npos);
+    CPPUNIT_ASSERT(fmtpParams(media, mainIdx).find("level-id=123") != std::string::npos);
     // High chroma profiles advertised after, as Range Extensions payloads
-    for (unsigned i = 1; i < media->desc.fmt_count; i++)
+    for (unsigned i = mainIdx + 1; i < media->desc.fmt_count; i++)
         CPPUNIT_ASSERT(fmtpParams(media, i).find("profile-id=4") != std::string::npos);
 
-    // Screen share: high profiles first when available
+    // Screen share: highest chroma first when available, Main last
     if (!highProfiles.empty()) {
         auto screenSdp = createH265Sdp("h265-offer-screen");
         CPPUNIT_ASSERT(screenSdp->createOffer({videoAttribute(SCREEN_URI)}));
         auto* screenMedia = videoMedia(screenSdp->getLocalSdpSession());
         CPPUNIT_ASSERT(screenMedia);
-        CPPUNIT_ASSERT(fmtpParams(screenMedia, 0).find("profile-id=4") != std::string::npos);
-        CPPUNIT_ASSERT(fmtpParams(screenMedia, screenMedia->desc.fmt_count - 1).find("profile-id=1")
+        const auto preferred = h265::fmtpParams(highProfiles.front(), 123);
+        CPPUNIT_ASSERT(fmtpParams(screenMedia, 0).find(preferred) != std::string::npos);
+        CPPUNIT_ASSERT(fmtpParams(screenMedia, screenMedia->desc.fmt_count - 1).find("profile-id=1;")
                        != std::string::npos);
     }
 }

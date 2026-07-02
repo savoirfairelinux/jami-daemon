@@ -88,6 +88,8 @@ profileFromFmtp(const FmtpInfo& info)
     switch (info.profileId) {
     case 1:
         return Profile::Main;
+    case 2:
+        return Profile::Main10;
     case 4:
         // Compare the Range Extensions constraint flags, ignoring the
         // source flags and the reserved bits.
@@ -109,6 +111,8 @@ fmtpParams(Profile profile, int levelId)
         return fmt::format("profile-id=4;level-id={};interop-constraints={:012X}", levelId, MAIN_444_CONSTRAINTS);
     case Profile::Main422_10:
         return fmt::format("profile-id=4;level-id={};interop-constraints={:012X}", levelId, MAIN_422_10_CONSTRAINTS);
+    case Profile::Main10:
+        return fmt::format("profile-id=2;level-id={}", levelId);
     case Profile::Main:
     default:
         return fmt::format("profile-id=1;level-id={}", levelId);
@@ -123,6 +127,10 @@ pixelFormat(Profile profile)
         return AV_PIX_FMT_YUV444P;
     case Profile::Main422_10:
         return AV_PIX_FMT_YUV422P;
+    case Profile::Main10:
+        // Semi-planar 10-bit 4:2:0: the input format of hardware HEVC
+        // 10-bit encoders (NVENC, VideoToolbox, QSV)
+        return AV_PIX_FMT_P010;
     default:
         return AV_PIX_FMT_YUV420P;
     }
@@ -134,9 +142,10 @@ canEncode(Profile profile)
     if (profile == Profile::Main)
         return avcodec_find_encoder(AV_CODEC_ID_HEVC) != nullptr;
 
-    // No software HEVC encoder is bundled: high chroma requires a
-    // hardware encoder (e.g. NVENC) accepting the corresponding
-    // software input format. Attempt-open to probe actual availability.
+    // No software HEVC encoder is bundled: higher chroma or bit depth
+    // requires a hardware encoder (e.g. NVENC, VideoToolbox) accepting
+    // the corresponding software input format. Attempt-open to probe
+    // actual availability.
     const auto format = pixelFormat(profile);
     static std::mutex mutex;
     static std::map<AVPixelFormat, bool> cache;
@@ -187,7 +196,7 @@ std::vector<Profile>
 negotiableHighProfiles()
 {
     std::vector<Profile> profiles;
-    for (auto profile : {Profile::Main444, Profile::Main422_10}) {
+    for (auto profile : {Profile::Main444, Profile::Main422_10, Profile::Main10}) {
         if (canEncode(profile) && canDecode(profile))
             profiles.push_back(profile);
     }

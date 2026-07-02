@@ -68,6 +68,10 @@ H265ProfileTest::testParseFmtp()
     CPPUNIT_ASSERT_EQUAL(123, info.levelId);
     CPPUNIT_ASSERT_EQUAL(uint64_t(0xBE0800000000), info.interopConstraints);
 
+    info = h265::parseFmtp("profile-id=2;level-id=123");
+    CPPUNIT_ASSERT_EQUAL(2, info.profileId);
+    CPPUNIT_ASSERT_EQUAL(123, info.levelId);
+
     // level-id must not be confused with max-recv-level-id or profile-id
     info = h265::parseFmtp("max-recv-level-id=150;profile-id=1;level-id=120");
     CPPUNIT_ASSERT_EQUAL(1, info.profileId);
@@ -91,6 +95,11 @@ H265ProfileTest::testProfileFromFmtp()
     CPPUNIT_ASSERT(profile.has_value());
     CPPUNIT_ASSERT(*profile == h265::Profile::Main);
 
+    // Main 10
+    profile = h265::profileFromFmtp(h265::parseFmtp("profile-id=2;level-id=123"));
+    CPPUNIT_ASSERT(profile.has_value());
+    CPPUNIT_ASSERT(*profile == h265::Profile::Main10);
+
     // Main 4:4:4 (Range Extensions)
     profile = h265::profileFromFmtp(h265::parseFmtp("profile-id=4;interop-constraints=BE0800000000"));
     CPPUNIT_ASSERT(profile.has_value());
@@ -113,13 +122,15 @@ void
 H265ProfileTest::testFmtpParams()
 {
     CPPUNIT_ASSERT_EQUAL(std::string("profile-id=1;level-id=123"), h265::fmtpParams(h265::Profile::Main, 123));
+    CPPUNIT_ASSERT_EQUAL(std::string("profile-id=2;level-id=123"), h265::fmtpParams(h265::Profile::Main10, 123));
     CPPUNIT_ASSERT_EQUAL(std::string("profile-id=4;level-id=123;interop-constraints=BE0800000000"),
                          h265::fmtpParams(h265::Profile::Main444, 123));
     CPPUNIT_ASSERT_EQUAL(std::string("profile-id=4;level-id=123;interop-constraints=BD0800000000"),
                          h265::fmtpParams(h265::Profile::Main422_10, 123));
 
     // Round-trip
-    for (auto profile : {h265::Profile::Main, h265::Profile::Main444, h265::Profile::Main422_10}) {
+    for (auto profile :
+         {h265::Profile::Main, h265::Profile::Main10, h265::Profile::Main444, h265::Profile::Main422_10}) {
         auto parsed = h265::profileFromFmtp(h265::parseFmtp(h265::fmtpParams(profile, 120)));
         CPPUNIT_ASSERT(parsed.has_value());
         CPPUNIT_ASSERT(*parsed == profile);
@@ -130,6 +141,9 @@ void
 H265ProfileTest::testPixelFormat()
 {
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV420P, h265::pixelFormat(h265::Profile::Main));
+    // 10-bit 4:2:0, semi-planar: the input format of hardware HEVC
+    // 10-bit encoders (NVENC, VideoToolbox, QSV)
+    CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_P010, h265::pixelFormat(h265::Profile::Main10));
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV422P, h265::pixelFormat(h265::Profile::Main422_10));
     CPPUNIT_ASSERT_EQUAL(AV_PIX_FMT_YUV444P, h265::pixelFormat(h265::Profile::Main444));
 }
@@ -153,13 +167,15 @@ H265ProfileTest::testNegotiableHighProfiles()
     // Only profiles that the local encoders and decoders actually
     // support may be advertised (RFC 7798 §7.2.2 symmetric use).
     for (auto profile : h265::negotiableHighProfiles()) {
-        CPPUNIT_ASSERT(profile == h265::Profile::Main444 || profile == h265::Profile::Main422_10);
+        CPPUNIT_ASSERT(profile == h265::Profile::Main444 || profile == h265::Profile::Main422_10
+                       || profile == h265::Profile::Main10);
         CPPUNIT_ASSERT(h265::canEncode(profile));
         CPPUNIT_ASSERT(h265::canDecode(profile));
     }
     // Main is always encodable when an H265 encoder is present at all;
     // the software decoder handles every negotiable profile.
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main));
+    CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main10));
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main444));
     CPPUNIT_ASSERT(h265::canDecode(h265::Profile::Main422_10));
 }
