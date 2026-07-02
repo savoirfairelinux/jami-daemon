@@ -24,6 +24,7 @@
 #include "media/media_attribute.h"
 #include "media/system_codec_container.h"
 #include "sip/sdp.h"
+#include "sip/sipvoiplink.h"
 #include "connectivity/sip_utils.h"
 
 #include "../../test_runner.h"
@@ -44,20 +45,30 @@ private:
     void testScreenShareOfferOrdersHighProfileFirst();
     void testScreenShareNegotiatesHighProfile();
     void testCameraNegotiationKeepsBaseline();
+    void testOfferAdvertisesLevelAsymmetry();
+    void testAnswerClampsLevelWithoutAsymmetry();
+    void testAnswerKeepsLevelWithAsymmetry();
+    void testSendLevelClampedWhenSymmetric();
 
     CPPUNIT_TEST_SUITE(SDPTest);
     CPPUNIT_TEST(testCameraOfferOrdersBaselineFirst);
     CPPUNIT_TEST(testScreenShareOfferOrdersHighProfileFirst);
     CPPUNIT_TEST(testScreenShareNegotiatesHighProfile);
     CPPUNIT_TEST(testCameraNegotiationKeepsBaseline);
+    CPPUNIT_TEST(testOfferAdvertisesLevelAsymmetry);
+    CPPUNIT_TEST(testAnswerClampsLevelWithoutAsymmetry);
+    CPPUNIT_TEST(testAnswerKeepsLevelWithAsymmetry);
+    CPPUNIT_TEST(testSendLevelClampedWhenSymmetric);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<Sdp> createSdp(const std::string& id);
     static const pjmedia_sdp_media* videoMedia(const pjmedia_sdp_session* session);
     static std::string encodingName(const pjmedia_sdp_media* media, unsigned fmtIdx);
     static std::string fmtpParams(const pjmedia_sdp_media* media, unsigned fmtIdx);
+    const pjmedia_sdp_session* parseRemoteOffer(const std::string& h264Fmtp);
 
     std::vector<std::shared_ptr<SystemCodecInfo>> videoCodecs_;
+    sip_utils::PoolPtr testPool_;
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SDPTest, SDPTest::name());
@@ -88,6 +99,7 @@ void
 SDPTest::tearDown()
 {
     videoCodecs_.clear();
+    testPool_.reset();
 }
 
 std::unique_ptr<Sdp>
@@ -136,6 +148,33 @@ static MediaAttribute
 videoAttribute(const char* source)
 {
     return MediaAttribute(MediaType::MEDIA_VIDEO, false, false, true, source, "video_0");
+}
+
+const pjmedia_sdp_session*
+SDPTest::parseRemoteOffer(const std::string& h264Fmtp)
+{
+    if (!testPool_)
+        testPool_.reset(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
+                                       "sdpTest",
+                                       4096,
+                                       4096,
+                                       nullptr));
+    auto body = "v=0\r\n"
+                "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                "s=-\r\n"
+                "c=IN IP4 127.0.0.1\r\n"
+                "t=0 0\r\n"
+                "m=video 60000 RTP/AVP 96\r\n"
+                "a=rtpmap:96 H264/90000\r\n"
+                "a=fmtp:96 "
+                + h264Fmtp
+                + "\r\n"
+                  "a=sendrecv\r\n";
+    pjmedia_sdp_session* session = nullptr;
+    auto status = pjmedia_sdp_parse(testPool_.get(), body.data(), body.size(), &session);
+    CPPUNIT_ASSERT(status == PJ_SUCCESS);
+    // The parsed session points into `body`; clone it before the buffer dies
+    return pjmedia_sdp_session_clone(testPool_.get(), session);
 }
 
 void
@@ -215,6 +254,86 @@ SDPTest::testCameraNegotiationKeepsBaseline()
     CPPUNIT_ASSERT_EQUAL(size_t(1), localDescrs.size());
     CPPUNIT_ASSERT(localDescrs[0].enabled);
     CPPUNIT_ASSERT(localDescrs[0].parameters.find("profile-level-id=428029") != std::string::npos);
+}
+
+void
+SDPTest::testOfferAdvertisesLevelAsymmetry()
+{
+    // RFC 6184 §8.1: level asymmetry must be explicitly allowed on both
+    // sides; advertise it on every H264 payload we offer.
+    auto sdp = createSdp("offer-laa");
+    CPPUNIT_ASSERT(sdp->createOffer({videoAttribute(CAMERA_URI)}));
+
+    auto* media = videoMedia(sdp->getLocalSdpSession());
+    CPPUNIT_ASSERT(media);
+    for (unsigned i = 0; i < media->desc.fmt_count; i++)
+        CPPUNIT_ASSERT(fmtpParams(media, i).find("level-asymmetry-allowed=1") != std::string::npos);
+}
+
+void
+SDPTest::testAnswerClampsLevelWithoutAsymmetry()
+{
+    // Remote offer at level 3.1 without level-asymmetry-allowed: the level
+    // is symmetric (RFC 6184 §8.1), so our answer must not exceed it.
+    auto answerer = createSdp("laa-clamp");
+    answerer->setReceivedOffer(parseRemoteOffer("profile-level-id=42801f"));
+    CPPUNIT_ASSERT(answerer->processIncomingOffer({videoAttribute(CAMERA_URI)}));
+    CPPUNIT_ASSERT(answerer->startNegotiation());
+
+    auto* answerMedia = videoMedia(answerer->getActiveLocalSdpSession());
+    CPPUNIT_ASSERT(answerMedia);
+    auto params = fmtpParams(answerMedia, 0);
+    CPPUNIT_ASSERT(params.find("profile-level-id=42801f") != std::string::npos);
+    CPPUNIT_ASSERT(params.find("level-asymmetry-allowed=1") == std::string::npos);
+
+    // The sending level follows the (lower) symmetric level
+    auto remoteDescrs = answerer->getActiveMediaDescription(true);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), remoteDescrs.size());
+    CPPUNIT_ASSERT(remoteDescrs[0].parameters.find("profile-level-id=42801f") != std::string::npos);
+}
+
+void
+SDPTest::testAnswerKeepsLevelWithAsymmetry()
+{
+    // Remote offer at level 3.1 WITH level-asymmetry-allowed: our answer
+    // advertises our own receive level, and we may send up to the
+    // remote receive level (RFC 6184 §8.1).
+    auto answerer = createSdp("laa-keep");
+    answerer->setReceivedOffer(parseRemoteOffer("profile-level-id=42801f;level-asymmetry-allowed=1"));
+    CPPUNIT_ASSERT(answerer->processIncomingOffer({videoAttribute(CAMERA_URI)}));
+    CPPUNIT_ASSERT(answerer->startNegotiation());
+
+    auto* answerMedia = videoMedia(answerer->getActiveLocalSdpSession());
+    CPPUNIT_ASSERT(answerMedia);
+    auto params = fmtpParams(answerMedia, 0);
+    CPPUNIT_ASSERT(params.find("profile-level-id=428029") != std::string::npos);
+    CPPUNIT_ASSERT(params.find("level-asymmetry-allowed=1") != std::string::npos);
+
+    // Sending parameters keep the remote receive level
+    auto remoteDescrs = answerer->getActiveMediaDescription(true);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), remoteDescrs.size());
+    CPPUNIT_ASSERT(remoteDescrs[0].parameters.find("profile-level-id=42801f") != std::string::npos);
+}
+
+void
+SDPTest::testSendLevelClampedWhenSymmetric()
+{
+    // Remote offer at level 5.1 without level-asymmetry-allowed: our answer
+    // keeps our lower level 4.1 and the symmetric sending level is 4.1,
+    // even though the remote advertised a higher one.
+    auto answerer = createSdp("laa-send-clamp");
+    answerer->setReceivedOffer(parseRemoteOffer("profile-level-id=428033"));
+    CPPUNIT_ASSERT(answerer->processIncomingOffer({videoAttribute(CAMERA_URI)}));
+    CPPUNIT_ASSERT(answerer->startNegotiation());
+
+    auto* answerMedia = videoMedia(answerer->getActiveLocalSdpSession());
+    CPPUNIT_ASSERT(answerMedia);
+    CPPUNIT_ASSERT(fmtpParams(answerMedia, 0).find("profile-level-id=428029") != std::string::npos);
+
+    // The sending level is the lower of both levels
+    auto remoteDescrs = answerer->getActiveMediaDescription(true);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), remoteDescrs.size());
+    CPPUNIT_ASSERT(remoteDescrs[0].parameters.find("profile-level-id=428029") != std::string::npos);
 }
 
 } // namespace test

@@ -37,12 +37,14 @@ private:
     void testMakeProfileLevelId();
     void testPixelFormat();
     void testNegotiableHighProfiles();
+    void testLevelHelpers();
 
     CPPUNIT_TEST_SUITE(H264ProfileTest);
     CPPUNIT_TEST(testParseProfileLevelId);
     CPPUNIT_TEST(testMakeProfileLevelId);
     CPPUNIT_TEST(testPixelFormat);
     CPPUNIT_TEST(testNegotiableHighProfiles);
+    CPPUNIT_TEST(testLevelHelpers);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -140,6 +142,24 @@ H264ProfileTest::testNegotiableHighProfiles()
         CPPUNIT_ASSERT(h264::canEncode(profile));
         CPPUNIT_ASSERT(h264::canDecode(profile));
     }
+}
+
+void
+H264ProfileTest::testLevelHelpers()
+{
+    // level-asymmetry-allowed detection (RFC 6184 §8.1)
+    CPPUNIT_ASSERT(h264::levelAsymmetryAllowed("profile-level-id=428029;level-asymmetry-allowed=1"));
+    CPPUNIT_ASSERT(h264::levelAsymmetryAllowed("level-asymmetry-allowed=1;profile-level-id=428029"));
+    CPPUNIT_ASSERT(!h264::levelAsymmetryAllowed("profile-level-id=428029;level-asymmetry-allowed=0"));
+    CPPUNIT_ASSERT(!h264::levelAsymmetryAllowed("profile-level-id=428029"));
+    CPPUNIT_ASSERT(!h264::levelAsymmetryAllowed(""));
+
+    // setLevel rewrites the level part of profile-level-id in place
+    CPPUNIT_ASSERT_EQUAL(std::string("profile-level-id=42801f;level-asymmetry-allowed=1"),
+                         h264::setLevel("profile-level-id=428029;level-asymmetry-allowed=1", 0x1f));
+    CPPUNIT_ASSERT_EQUAL(std::string("profile-level-id=f40033"), h264::setLevel("profile-level-id=f40029", 0x33));
+    // No profile-level-id: parameters returned unchanged
+    CPPUNIT_ASSERT_EQUAL(std::string("packetization-mode=1"), h264::setLevel("packetization-mode=1", 0x1f));
 }
 
 } // namespace test

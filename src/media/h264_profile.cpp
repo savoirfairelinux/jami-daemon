@@ -105,6 +105,32 @@ makeProfileLevelId(int profile, int level)
     return fmt::format("profile-level-id={:02x}{:02x}{:02x}", profile_idc, profile_iop, level & 0xff);
 }
 
+bool
+levelAsymmetryAllowed(std::string_view fmtpParams)
+{
+    static constexpr std::string_view target = "level-asymmetry-allowed=";
+    auto needle = fmtpParams.find(target);
+    if (needle == std::string_view::npos)
+        return false;
+    needle += target.size();
+    return needle < fmtpParams.size() && fmtpParams[needle] == '1';
+}
+
+std::string
+setLevel(std::string_view fmtpParams, int level)
+{
+    std::string result(fmtpParams);
+    static constexpr std::string_view target = "profile-level-id=";
+    static constexpr size_t idLength = 6; /* hex digits */
+    auto needle = result.find(target);
+    if (needle == std::string::npos || result.size() - (needle + target.size()) < idLength)
+        return result;
+    const auto hex = fmt::format("{:02x}", level & 0xff);
+    result[needle + target.size() + 4] = hex[0];
+    result[needle + target.size() + 5] = hex[1];
+    return result;
+}
+
 AVPixelFormat
 pixelFormat(int profile)
 {

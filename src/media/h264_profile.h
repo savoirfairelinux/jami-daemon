@@ -55,6 +55,17 @@ std::optional<ProfileLevel> parseProfileLevelId(std::string_view fmtpParams);
 std::string makeProfileLevelId(int profile, int level);
 
 /**
+ * Whether the fmtp parameters signal level-asymmetry-allowed=1 (RFC 6184 §8.1).
+ */
+bool levelAsymmetryAllowed(std::string_view fmtpParams);
+
+/**
+ * Rewrite the level part of the profile-level-id parameter.
+ * Returns the parameters unchanged when no profile-level-id is present.
+ */
+std::string setLevel(std::string_view fmtpParams, int level);
+
+/**
  * Chroma sampling (pixel format) mandated by an H.264 profile.
  */
 AVPixelFormat pixelFormat(int profile);
