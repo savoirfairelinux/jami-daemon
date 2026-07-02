@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "libav_utils.h"
 #include "media/h264_profile.h"
+#include "media/h265_profile.h"
 #include "jami/media_const.h"
 
 #include "media_codec.h"
@@ -104,8 +105,7 @@ sdpH264FormatMatch(pj_pool_t* /*pool*/,
         char* p = answerAttr->value.ptr;
         const std::string_view answerParams(p, answerAttr->value.slen);
         static constexpr std::string_view laa = "level-asymmetry-allowed=";
-        if (auto pos = answerParams.find(laa);
-            pos != std::string_view::npos && pos + laa.size() < answerParams.size())
+        if (auto pos = answerParams.find(laa); pos != std::string_view::npos && pos + laa.size() < answerParams.size())
             p[pos + laa.size()] = '0';
         const auto offerPl = h264::parseProfileLevelId(offerParams);
         const auto answerPl = h264::parseProfileLevelId(answerParams);
@@ -130,6 +130,55 @@ registerH264FormatMatchCallback()
             JAMI_ERROR("Failed to register H264 SDP format matching callback");
     });
 }
+
+/**
+ * RFC 7798 §7.2.2: the H.265 configuration parameters (profile-space,
+ * profile-id, tier-flag, interop-constraints) are symmetric per payload
+ * type; only level-id may be lowered in the answer. Reject pairings of
+ * different profiles and conform the answer level.
+ */
+static pj_status_t
+sdpH265FormatMatch(pj_pool_t* pool,
+                   pjmedia_sdp_media* offer,
+                   unsigned o_fmt_idx,
+                   pjmedia_sdp_media* answer,
+                   unsigned a_fmt_idx,
+                   unsigned option)
+{
+    auto fmtpValue = [](pjmedia_sdp_media* media, unsigned fmtIdx) -> std::string_view {
+        auto* attr = pjmedia_sdp_media_find_attr2(media, "fmtp", &media->desc.fmt[fmtIdx]);
+        if (attr && attr->value.ptr && attr->value.slen)
+            return std::string_view(attr->value.ptr, attr->value.slen);
+        return {};
+    };
+
+    const auto offerInfo = h265::parseFmtp(fmtpValue(offer, o_fmt_idx));
+    const auto answerInfo = h265::parseFmtp(fmtpValue(answer, a_fmt_idx));
+    if (h265::profileFromFmtp(offerInfo) != h265::profileFromFmtp(answerInfo)
+        || offerInfo.tierFlag != answerInfo.tierFlag)
+        return PJMEDIA_SDP_EFORMATNOTEQUAL;
+
+    if ((option & PJMEDIA_SDP_NEG_FMT_MATCH_ALLOW_MODIFY_ANSWER) && answerInfo.levelId > offerInfo.levelId) {
+        // level-id is decimal and variable length: rebuild the answer
+        // fmtp value in the negotiation pool.
+        if (auto* attr = pjmedia_sdp_media_find_attr2(answer, "fmtp", &answer->desc.fmt[a_fmt_idx])) {
+            auto conformed = h265::setLevelId(std::string_view(attr->value.ptr, attr->value.slen), offerInfo.levelId);
+            pj_strdup2(pool, &attr->value, conformed.c_str());
+        }
+    }
+    return PJ_SUCCESS;
+}
+
+static void
+registerH265FormatMatchCallback()
+{
+    static std::once_flag once;
+    std::call_once(once, [] {
+        static constexpr pj_str_t h265Name = sip_utils::CONST_PJ_STR("H265");
+        if (pjmedia_sdp_neg_register_fmt_match_cb(const_cast<pj_str_t*>(&h265Name), sdpH265FormatMatch) != PJ_SUCCESS)
+            JAMI_ERROR("Failed to register H265 SDP format matching callback");
+    });
+}
 #endif
 
 Sdp::Sdp(const std::string& id)
@@ -141,6 +190,7 @@ Sdp::Sdp(const std::string& id)
 {
 #ifdef ENABLE_VIDEO
     registerH264FormatMatchCallback();
+    registerH265FormatMatchCallback();
 #endif
     memPool_.reset(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                   id.c_str(),
@@ -336,35 +386,51 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
                                                  + libjami::Media::VideoProtocolPrefix::SEPARATOR;
         const bool screenShare = mediaAttr.sourceUri_.rfind(displayPrefix, 0) == 0;
         for (const auto& codec : video_codec_list_) {
-            if (codec->name != "H264") {
-                videoPayloads.emplace_back(VideoPayload {codec, {}});
-                continue;
-            }
-            const auto videoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(codec);
-            // RFC 6184 §8.1: advertise support for level asymmetry so both
-            // directions can use their own level when the peer supports it.
-            auto withLevelAsymmetry = [](std::string params) {
-                if (params.find("level-asymmetry-allowed=") == std::string::npos)
-                    params += ";level-asymmetry-allowed=1";
-                return params;
-            };
-            const std::string baseline = withLevelAsymmetry(videoCodec->parameters.empty()
-                                                                ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
-                                                                : videoCodec->parameters);
-            // Advertise high profiles with the same level as the baseline payload
-            int level = 0x29;
-            if (auto pl = h264::parseProfileLevelId(baseline))
-                level = pl->level;
-            std::vector<std::string> highProfiles;
-            for (int profile : h264::negotiableHighProfiles())
-                highProfiles.emplace_back(withLevelAsymmetry(h264::makeProfileLevelId(profile, level)));
+            if (codec->name == "H264") {
+                const auto videoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(codec);
+                // RFC 6184 §8.1: advertise support for level asymmetry so both
+                // directions can use their own level when the peer supports it.
+                auto withLevelAsymmetry = [](std::string params) {
+                    if (params.find("level-asymmetry-allowed=") == std::string::npos)
+                        params += ";level-asymmetry-allowed=1";
+                    return params;
+                };
+                const std::string baseline = withLevelAsymmetry(videoCodec->parameters.empty()
+                                                                    ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
+                                                                    : videoCodec->parameters);
+                // Advertise high profiles with the same level as the baseline payload
+                int level = 0x29;
+                if (auto pl = h264::parseProfileLevelId(baseline))
+                    level = pl->level;
+                std::vector<std::string> highProfiles;
+                for (int profile : h264::negotiableHighProfiles())
+                    highProfiles.emplace_back(withLevelAsymmetry(h264::makeProfileLevelId(profile, level)));
 
-            if (not screenShare)
-                videoPayloads.emplace_back(VideoPayload {codec, baseline});
-            for (auto& params : highProfiles)
-                videoPayloads.emplace_back(VideoPayload {codec, std::move(params)});
-            if (screenShare)
-                videoPayloads.emplace_back(VideoPayload {codec, baseline});
+                if (not screenShare)
+                    videoPayloads.emplace_back(VideoPayload {codec, baseline});
+                for (auto& params : highProfiles)
+                    videoPayloads.emplace_back(VideoPayload {codec, std::move(params)});
+                if (screenShare)
+                    videoPayloads.emplace_back(VideoPayload {codec, baseline});
+            } else if (codec->name == "H265") {
+                // RFC 7798 §7.2.2: profile parameters are symmetric per
+                // payload type; advertise one payload per profile the local
+                // encoders and decoders support. level-id 123 = level 4.1.
+                static constexpr int levelId = 123;
+                const std::string main = h265::fmtpParams(h265::Profile::Main, levelId);
+                std::vector<std::string> highProfiles;
+                for (auto profile : h265::negotiableHighProfiles())
+                    highProfiles.emplace_back(h265::fmtpParams(profile, levelId));
+
+                if (not screenShare)
+                    videoPayloads.emplace_back(VideoPayload {codec, main});
+                for (auto& params : highProfiles)
+                    videoPayloads.emplace_back(VideoPayload {codec, std::move(params)});
+                if (screenShare)
+                    videoPayloads.emplace_back(VideoPayload {codec, main});
+            } else {
+                videoPayloads.emplace_back(VideoPayload {codec, {}});
+            }
         }
     }
 #endif
@@ -936,18 +1002,20 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (descr.type == MEDIA_VIDEO) {
                 auto* const fmtpAttr = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &media->desc.fmt[j]);
                 // descr.bitrate = getOutgoingVideoField(codec, "bitrate");
+                descr.parameters.clear();
                 if (fmtpAttr && fmtpAttr->value.ptr && fmtpAttr->value.slen) {
                     const auto& v = fmtpAttr->value;
                     descr.parameters = std::string(v.ptr, v.ptr + v.slen);
                 }
 #ifdef ENABLE_VIDEO
-                if (remote and descr.codec->name == "H264" and activeLocalSession_
-                    and i < activeLocalSession_->media_count) {
-                    // RFC 6184 §8.1: level asymmetry requires
-                    // level-asymmetry-allowed=1 in both the offer and the
-                    // answer; otherwise the level is symmetric, i.e. the
-                    // lower of both advertised levels. The remote fmtp
-                    // drives our encoder, clamp its level accordingly.
+                if (remote and activeLocalSession_ and i < activeLocalSession_->media_count
+                    and (descr.codec->name == "H264" or descr.codec->name == "H265")) {
+                    // The active remote session may list several payload
+                    // types per codec (one per profile); the negotiated
+                    // one is the payload whose profile matches our own
+                    // active payload (RFC 6184 §8.2.2, RFC 7798 §7.2.2).
+                    // Its fmtp drives our encoder: clamp the level to the
+                    // negotiated (symmetric) level when applicable.
                     auto* localMedia = activeLocalSession_->media[i];
                     std::string_view localParams;
                     if (localMedia->desc.fmt_count > 0) {
@@ -958,12 +1026,34 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                                 localParams = std::string_view(localFmtp->value.ptr, localFmtp->value.slen);
                         }
                     }
-                    if (not(h264::levelAsymmetryAllowed(localParams)
-                            and h264::levelAsymmetryAllowed(descr.parameters))) {
-                        const auto localPl = h264::parseProfileLevelId(localParams);
-                        const auto remotePl = h264::parseProfileLevelId(descr.parameters);
-                        if (localPl && remotePl && localPl->level < remotePl->level)
-                            descr.parameters = h264::setLevel(descr.parameters, localPl->level);
+                    if (descr.codec->name == "H264") {
+                        auto profileIdc = [](std::string_view params) -> int {
+                            if (auto pl = h264::parseProfileLevelId(params))
+                                return pl->profile & 0xff;
+                            return 0x42; // RFC 6184: default Baseline
+                        };
+                        if (profileIdc(localParams) != profileIdc(descr.parameters))
+                            continue; // profile mismatch: not the negotiated payload
+                        // RFC 6184 §8.1: level asymmetry requires
+                        // level-asymmetry-allowed=1 in both the offer and
+                        // the answer; otherwise the level is symmetric,
+                        // i.e. the lower of both advertised levels.
+                        if (not(h264::levelAsymmetryAllowed(localParams)
+                                and h264::levelAsymmetryAllowed(descr.parameters))) {
+                            const auto localPl = h264::parseProfileLevelId(localParams);
+                            const auto remotePl = h264::parseProfileLevelId(descr.parameters);
+                            if (localPl && remotePl && localPl->level < remotePl->level)
+                                descr.parameters = h264::setLevel(descr.parameters, localPl->level);
+                        }
+                    } else {
+                        const auto localInfo = h265::parseFmtp(localParams);
+                        const auto remoteInfo = h265::parseFmtp(descr.parameters);
+                        if (h265::profileFromFmtp(localInfo) != h265::profileFromFmtp(remoteInfo))
+                            continue; // profile mismatch: not the negotiated payload
+                        // RFC 7798 §7.2.2: level-id is symmetric up to the
+                        // lower of both advertised levels.
+                        if (localInfo.levelId < remoteInfo.levelId)
+                            descr.parameters = h265::setLevelId(descr.parameters, localInfo.levelId);
                     }
                 }
 #endif
