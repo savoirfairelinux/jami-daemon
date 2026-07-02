@@ -20,6 +20,8 @@
 
 #include <fmt/format.h>
 
+#include <charconv>
+
 namespace jami {
 namespace h264 {
 
@@ -36,19 +38,10 @@ parseProfileLevelId(std::string_view fmtpParams)
     if (fmtpParams.size() - needle < idLength)
         return std::nullopt;
     unsigned value = 0;
-    for (size_t i = 0; i < idLength; i++) {
-        const char c = fmtpParams[needle + i];
-        int digit;
-        if (c >= '0' && c <= '9')
-            digit = c - '0';
-        else if (c >= 'a' && c <= 'f')
-            digit = c - 'a' + 10;
-        else if (c >= 'A' && c <= 'F')
-            digit = c - 'A' + 10;
-        else
-            return std::nullopt;
-        value = (value << 4) | digit;
-    }
+    const char* first = fmtpParams.data() + needle;
+    const auto [ptr, ec] = std::from_chars(first, first + idLength, value, 16);
+    if (ec != std::errc() || ptr != first + idLength)
+        return std::nullopt;
 
     const unsigned char profile_idc = value >> 16;
     const unsigned char profile_iop = (value >> 8) & 0xff;

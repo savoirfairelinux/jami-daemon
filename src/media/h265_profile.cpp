@@ -47,29 +47,12 @@ parseFmtp(std::string_view fmtpParams)
     if (auto space = fmtpParams.find(' '); space != std::string_view::npos && fmtpParams.find('=') > space)
         fmtpParams.remove_prefix(space + 1);
 
-    auto parseInt = [](std::string_view value, int& out) {
-        int result;
-        auto [p, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
+    auto parse = [](std::string_view value, auto& out, int base) {
+        using T = std::decay_t<decltype(out)>;
+        T result;
+        auto [p, ec] = std::from_chars(value.data(), value.data() + value.size(), result, base);
         if (ec == std::errc())
             out = result;
-    };
-    auto parseHex48 = [](std::string_view value, uint64_t& out) {
-        if (value.size() != 12)
-            return;
-        uint64_t result = 0;
-        for (char c : value) {
-            int digit;
-            if (c >= '0' && c <= '9')
-                digit = c - '0';
-            else if (c >= 'a' && c <= 'f')
-                digit = c - 'a' + 10;
-            else if (c >= 'A' && c <= 'F')
-                digit = c - 'A' + 10;
-            else
-                return;
-            result = (result << 4) | digit;
-        }
-        out = result;
     };
 
     while (!fmtpParams.empty()) {
@@ -84,15 +67,15 @@ parseFmtp(std::string_view fmtpParams)
         auto name = token.substr(0, eq);
         auto value = token.substr(eq + 1);
         if (name == "profile-space")
-            parseInt(value, info.profileSpace);
+            parse(value, info.profileSpace, 10);
         else if (name == "profile-id")
-            parseInt(value, info.profileId);
+            parse(value, info.profileId, 10);
         else if (name == "tier-flag")
-            parseInt(value, info.tierFlag);
+            parse(value, info.tierFlag, 10);
         else if (name == "level-id")
-            parseInt(value, info.levelId);
+            parse(value, info.levelId, 10);
         else if (name == "interop-constraints")
-            parseHex48(value, info.interopConstraints);
+            parse(value, info.interopConstraints, 16);
     }
     return info;
 }
