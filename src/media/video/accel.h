@@ -95,6 +95,15 @@ public:
     AVPixelFormat getSoftwareFormat() const { return swFormat_; }
 
     /**
+     * @brief Override the software format.
+     *
+     * For encoding, sets the chroma sampling the hardware frames context
+     * will carry (e.g. YUV444P for H.264 High 4:4:4 Predictive).
+     * Must be called before initAPI().
+     */
+    void setSoftwareFormat(AVPixelFormat fmt) { swFormat_ = fmt; }
+
+    /**
      * @brief Gets the name of the codec.
      *
      * Decoding: avcodec_get_name(id_)

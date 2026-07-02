@@ -289,7 +289,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             // vaapi for example) in this case we don't want link the APIs
             if (framesCtx) {
                 auto* hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
-                if (encoderCtx->pix_fmt != hw->format)
+                if (encoderCtx->pix_fmt != hw->format or accel_->getSoftwareFormat() != hw->sw_format)
                     linkableHW_ = false;
             }
             auto ret = accel_->initAPI(linkableHW_, framesCtx);
@@ -852,6 +852,31 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     if (avcodecId == AV_CODEC_ID_H264) {
         const auto* profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
+        // Encode with the chroma sampling mandated by the negotiated profile (RFC 6184)
+        auto requiredFormat = h264::pixelFormat(encoderCtx->profile);
+        if (requiredFormat != AV_PIX_FMT_YUV420P) {
+#ifdef ENABLE_HWACCEL
+            if (accel_) {
+                // The hardware frames context software format determines
+                // the chroma sampling given to the hardware encoder.
+                accel_->setSoftwareFormat(requiredFormat);
+            } else
+#endif
+            {
+                bool supported = false;
+                if (outputCodec_->pix_fmts)
+                    for (const auto* p = outputCodec_->pix_fmts; *p != AV_PIX_FMT_NONE; ++p)
+                        supported |= (*p == requiredFormat);
+                if (supported) {
+                    encoderCtx->pix_fmt = requiredFormat;
+                } else {
+                    JAMI_ERROR("[{}] Encoder does not support {}, falling back to 4:2:0",
+                               outputCodec_->name,
+                               av_get_pix_fmt_name(requiredFormat));
+                    encoderCtx->profile = AV_PROFILE_H264_HIGH;
+                }
+            }
+        }
         forcePresetX2645(encoderCtx);
         encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
         initH264(encoderCtx, br);
@@ -1314,7 +1339,9 @@ MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
     AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
     std::shared_ptr<VideoFrame> framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
     if (!accel_) {
-        framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+        auto* encoderCtx = getCurrentVideoAVCtx();
+        auto encoderFormat = encoderCtx ? encoderCtx->pix_fmt : AV_PIX_FMT_YUV420P;
+        framePtr = scaler_.convertFormat(*framePtr, encoderFormat);
     } else {
         framePtr = accel_->transfer(*framePtr);
     }

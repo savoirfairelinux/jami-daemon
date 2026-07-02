@@ -45,11 +45,13 @@ private:
     void testMultiStream();
     void testPassthroughRtpTimestampsStayMonotonic();
     void testExtractProfileLevelID();
+    void testH264HighChromaEncoding();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
     CPPUNIT_TEST(testPassthroughRtpTimestampsStayMonotonic);
     CPPUNIT_TEST(testExtractProfileLevelID);
+    CPPUNIT_TEST(testH264HighChromaEncoding);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -77,14 +79,14 @@ MediaEncoderTest::tearDown()
 }
 
 static AVFrame*
-getVideoFrame(int width, int height, int frame_index)
+getVideoFrame(int width, int height, int frame_index, AVPixelFormat format = AV_PIX_FMT_YUV420P)
 {
     int x, y;
     AVFrame* frame = av_frame_alloc();
     if (!frame)
         return nullptr;
 
-    frame->format = AV_PIX_FMT_YUV420P;
+    frame->format = format;
     frame->width = width;
     frame->height = height;
 
@@ -93,14 +95,18 @@ getVideoFrame(int width, int height, int frame_index)
         return nullptr;
     }
 
+    const auto* desc = av_pix_fmt_desc_get(format);
+    const int chromaWidth = AV_CEIL_RSHIFT(width, desc->log2_chroma_w);
+    const int chromaHeight = AV_CEIL_RSHIFT(height, desc->log2_chroma_h);
+
     /* Y */
     for (y = 0; y < height; y++)
         for (x = 0; x < width; x++)
             frame->data[0][y * frame->linesize[0] + x] = x + y + frame_index * 3;
 
     /* Cb and Cr */
-    for (y = 0; y < height / 2; y++) {
-        for (x = 0; x < width / 2; x++) {
+    for (y = 0; y < chromaHeight; y++) {
+        for (x = 0; x < chromaWidth; x++) {
             frame->data[1][y * frame->linesize[1] + x] = 128 + y + frame_index * 2;
             frame->data[2][y * frame->linesize[2] + x] = 64 + x + frame_index * 5;
         }
@@ -316,6 +322,47 @@ MediaEncoderTest::testExtractProfileLevelID()
     CPPUNIT_ASSERT_EQUAL(AV_PROFILE_H264_CONSTRAINED_BASELINE, ctx->profile);
 
     avcodec_free_context(&ctx);
+}
+
+void
+MediaEncoderTest::testH264HighChromaEncoding()
+{
+    const constexpr int width = 320;
+    const constexpr int height = 240;
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
+        codecs->searchCodecByName("H264", jami::MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
+    MediaDescription args;
+    args.parameters = "profile-level-id=f40029"; // High 4:4:4 Predictive, level 4.1
+
+    files_.push_back("test444.h264");
+    try {
+        encoder_->openOutput("test444.h264");
+        encoder_->setOptions(v);
+        encoder_->setOptions(args);
+        int videoIdx = encoder_->addStream(*h264Codec.get());
+        CPPUNIT_ASSERT(videoIdx >= 0);
+        encoder_->setIOContext(nullptr);
+
+        for (int i = 0; i < 5; ++i) {
+            AVFrame* video = getVideoFrame(width, height, i, AV_PIX_FMT_YUV444P);
+            CPPUNIT_ASSERT(video);
+            video->pts = i;
+            CPPUNIT_ASSERT(encoder_->encode(video, videoIdx) >= 0);
+            av_frame_free(&video);
+        }
+        CPPUNIT_ASSERT(encoder_->flush() >= 0);
+
+        // The negotiated High 4:4:4 profile must select 4:4:4 chroma sampling
+        auto ms = encoder_->getStream("v", videoIdx);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(AV_PIX_FMT_YUV444P), ms.format);
+    } catch (const MediaEncoderException& e) {
+        CPPUNIT_FAIL(e.what());
+    }
 }
 
 } // namespace test
