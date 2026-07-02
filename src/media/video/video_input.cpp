@@ -509,7 +509,10 @@ VideoInput::initAVFoundation(const std::string& display)
 
     clearOptions();
     decOpts_.format = "avfoundation";
-    decOpts_.pixel_format = "nv12";
+    // Capture the screen in full-chroma 32BGRA: requesting nv12 would
+    // subsample the chroma at the source, defeating the High 4:4:4/4:2:2
+    // H.264 profiles negotiated for screen sharing.
+    decOpts_.pixel_format = "bgr0";
     decOpts_.name = "Capture screen 0";
     decOpts_.input = "Capture screen 0";
     decOpts_.framerate = deviceMonitor->getDeviceParams(DEVICE_DESKTOP).framerate;
