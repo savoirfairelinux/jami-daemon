@@ -399,10 +399,7 @@ ConversationDST::validateEvent(const Event& event)
         // The instigator should only be able to add the receiver if:
         // 1. The instigator is not trying to add themselves (this occurs in the very first event)
         // 2. The instigator is already part of of the conversation
-        // 3. The receiver is not already part of the conversation
-        if (event.instigatorAccountIndex == event.receivingAccountIndex || !instigatorRepoAcc.repository
-            || receiverRepoAcc.repository
-            || instigatorRepoAcc.conversation->isMember(receiverRepoAcc.account->getUsername(), true)) {
+        if (event.instigatorAccountIndex == event.receivingAccountIndex || !instigatorRepoAcc.repository) {
             return false;
         }
         break;
@@ -490,16 +487,21 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
     case ConversationEvent::ADD_MEMBER: {
         // Add the account as a member within the context of the instigator's repository
         dht::InfoHash h(receivingAccount.account->getUsername());
-        const std::string commitID = instigatorAccount.repository->addMember(h.toString());
 
-        assert(!commitID.empty());
-        instigatorAccount.conversation->announce(commitID, true);
-        if (queue) {
-            scheduleGitEvent(*queue,
-                             ConversationEvent::CLONE,
-                             event.instigatorAccountIndex,
-                             event.receivingAccountIndex,
-                             event.timeOfOccurrence);
+        // The operation should succeed if and only if the receiving account was not already a member.
+        bool wasAlreadyMember = instigatorAccount.conversation->isMember(receivingAccount.account->getUsername(), true);
+        const std::string commitID = instigatorAccount.repository->addMember(h.toString());
+        assert(commitID.empty() == wasAlreadyMember);
+
+        if (!commitID.empty()) {
+            instigatorAccount.conversation->announce(commitID, true);
+            if (queue) {
+                scheduleGitEvent(*queue,
+                                 ConversationEvent::CLONE,
+                                 event.instigatorAccountIndex,
+                                 event.receivingAccountIndex,
+                                 event.timeOfOccurrence);
+            }
         }
         break;
     }
