@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e2a84d2_08287232",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-02T20:29:06Z",
+      "side": 1,
+      "message": "[error] Line 951: For non-edition TEXT messages, this no longer stores the computed bodyOverwrite in the message\u0027s pluginData. The assignment was moved inside the EDIT branch, so original/un-edited messages can be re-queued by loadMissingBodyOverwrites() and returned without their own translation. Keep the local message update unconditional, and only gate propagation to the original copy for edit commits. ```suggestion\n    it-\u003esecond-\u003epluginData[\"bodyOverwrite\"] \u003d bo;\n\n    libjami::SwarmMessage* signalTarget \u003d it-\u003esecond.get();\n    bool propagateToOriginalCopy \u003d false;\n\n    if (const auto editIt \u003d it-\u003esecond-\u003ebody.find(CommitKey::EDIT); editIt !\u003d it-\u003esecond-\u003ebody.end()) {\n```",
+      "revId": "b88f496548d61831834c1187d51ed7a1b21d5e82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "744d173c_1a203ddc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-02T20:29:06Z",
+      "side": 1,
+      "message": "[warning] Line 962: This now mutates signalTarget-\u003eeditions in loadedHistory_ instead of only enriching the returned copy. Once an edition map has a bodyOverwrite, later calls where the corresponding commit lacks pluginData will leave the stale value in place because this loop never erases it. Build the copy first and update copy.editions, or explicitly erase edition[\"bodyOverwrite\"] when no current value exists. ```suggestion\n    libjami::SwarmMessage copy \u003d *signalTarget;\n    for (auto\u0026 edition : copy.editions) {\n```",
+      "revId": "b88f496548d61831834c1187d51ed7a1b21d5e82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
