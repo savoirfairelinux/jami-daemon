@@ -155,7 +155,16 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             return formats[i];
         }
     }
-    return AV_PIX_FMT_NONE;
+
+    // Hardware does not support this stream (e.g. high chroma H.264
+    // profiles): fall back to software decoding using the last format of
+    // the list, which is the software format of the stream.
+    int last = 0;
+    while (formats[last + 1] != AV_PIX_FMT_NONE)
+        ++last;
+    JAMI_WARNING("Hardware decoding unsupported for this stream, falling back to software format {}",
+                 av_get_pix_fmt_name(formats[last]));
+    return formats[last];
 }
 
 int
