@@ -606,24 +606,11 @@ ConversationDST::verifyLoadConversationFromScratch()
             auto messages = conversation->loadMessagesSync(options);
             emitSignal<libjami::ConversationSignal::SwarmLoaded>(0, accountId, conversationId, messages);
 
-            // Now we compare the number of messages received via the SwarmLoaded signal to that of
-            // the ones logged in the repository
-            LogOptions repoLogOptions;
-            repoLogOptions.skipMerge = true; // Merge commits dont get SwarmLoaded signals, so we
-                                             // disabled their logging here
-            repoLogOptions.fastLog = true;
-            std::vector<jami::ConversationCommit> loggedMessages = repositoryAccount.repository->log(repoLogOptions);
-
-            auto numRepoMessages = loggedMessages.size();
-            auto numClientMessages = repositoryAccount.client.getMessages().size();
-            if (numClientMessages != numRepoMessages) {
-                fmt::print(
-                    fg(fmt::color::red),
-                    "Number of messages received via SwarmLoaded signal does not match the number of messages in "
-                    "the repository for account {}! Received {}, expected {}.",
-                    repositoryAccount.account->getAccountID(),
-                    numClientMessages,
-                    numRepoMessages);
+            // Compare the messages the client received via the SwarmLoaded signal against the ones
+            // we expect based on the repository history.
+            auto expected = computeExpectedMessages(repositoryAccount);
+            auto actual = repositoryAccount.client.getMessages();
+            if (!checkMessagesMatch(repositoryAccount, expected, actual)) {
                 return false;
             }
         }
@@ -803,84 +790,166 @@ ConversationDST::checkAllAccounts()
 }
 
 /**
- * @param accountsToCheck The specific repostiory accounts to be checked. Passing in an empty vector will check all accounts
- * @brief Checks whether all the messages for each account were actually displayed
+ * Compares two SwarmMessage objects for the purposes of DST validation. Only the fields that are
+ * derived from the shared conversation history are considered. The per-account "status" map, as
+ * well as the local-only "pluginData" and "latestEditionId" fields, are intentionally ignored
+ * since they are not a property of the (shared) history being validated.
+ */
+static bool
+swarmMessagesEqual(const libjami::SwarmMessage& a, const libjami::SwarmMessage& b)
+{
+    // The "linearizedParent" and "reannounce" keys in the body are not guaranteed to match (the
+    // former is also compared separately as a top-level field), so we exclude them.
+    auto strippedBody = [](std::map<std::string, std::string> body) {
+        body.erase("linearizedParent");
+        body.erase("reannounce");
+        return body;
+    };
+    return a.id == b.id && a.type == b.type && a.linearizedParent == b.linearizedParent
+           && strippedBody(a.body) == strippedBody(b.body) && a.reactions == b.reactions && a.editions == b.editions;
+}
+
+/**
+ * Reconstructs the vector of SwarmMessage objects that a client is expected to hold for a given
+ * account, based solely on the contents of its conversation repository. This acts as an
+ * independent oracle used to validate the messages actually accumulated by the SimClient, both
+ * from the incremental signals emitted during the simulation (see checkAppearances) and from a
+ * fresh load of the conversation (see verifyLoadConversationFromScratch).
+ *
+ * The commit map for each message is obtained from ConversationRepository::convCommitToMap, i.e.
+ * the same function the daemon uses to build the SwarmMessage bodies. This keeps the comparison
+ * focused on the higher-level linearization (and, later, folding) logic rather than on git/JSON
+ * parsing, which is not what the DST is meant to test.
+ *
+ * @note The messages are returned in reverse chronological order (newest first), matching
+ *       SimClient::getMessages.
+ */
+std::vector<libjami::SwarmMessage>
+ConversationDST::computeExpectedMessages(const RepositoryAccount& repoAcc) const
+{
+    std::vector<libjami::SwarmMessage> expected;
+    if (!repoAcc.repository) {
+        return expected;
+    }
+
+    // Merge commits are not materialized as messages, so we skip them. The remaining commits are
+    // returned in reverse chronological order (newest first).
+    LogOptions options;
+    options.skipMerge = true;
+    std::vector<jami::ConversationCommit> commits = repoAcc.repository->log(options);
+
+    for (const auto& commit : commits) {
+        // Reactions and editions don't materialize as standalone messages: they are folded into
+        // the message they target (as entries in its "reactions"/"editions" vectors). The DST
+        // does not generate such commits yet, so we assert their absence here. When the
+        // corresponding events are added, this is where the folding logic will need to live.
+        assert(commit.commitMsg.reactTo.empty() && commit.commitMsg.editedId.empty());
+
+        auto commitMap = repoAcc.repository->convCommitToMap(commit);
+        assert(commitMap.has_value());
+
+        libjami::SwarmMessage message;
+        message.fromMapStringString(*commitMap);
+        expected.emplace_back(std::move(message));
+    }
+
+    // The linearized parent of each message is the id of the next (older) materialized message,
+    // mirroring Conversation::loadMessagesSync. The oldest message (the initial commit) keeps the
+    // empty linearized parent set by convCommitToMap.
+    for (size_t i = 0; i + 1 < expected.size(); ++i) {
+        expected[i].linearizedParent = expected[i + 1].id;
+    }
+
+    return expected;
+}
+
+/**
+ * Compares the messages a client is expected to have (as computed by computeExpectedMessages) with
+ * the ones it actually has. On mismatch, details are printed when git logging is enabled.
  */
 bool
-ConversationDST::checkAppearances(const RepositoryAccount& repoAcc)
+ConversationDST::checkMessagesMatch(const RepositoryAccount& repoAcc,
+                                    const std::vector<libjami::SwarmMessage>& expected,
+                                    const std::vector<libjami::SwarmMessage>& actual)
 {
-    auto clientMessages = repoAcc.client.getMessages();
+    auto name = repoAcc.account->getDisplayName();
 
-    if (!repoAcc.repository) {
-        if (!clientMessages.empty()) {
-            JAMI_ERROR("[{}] Account has messages in its history but no repository", repoAcc.account->getDisplayName());
-            return false;
-        }
-        return true;
-    }
-    // Get the commits as they seen in the repository
-    LogOptions logOptions;
-    logOptions.skipMerge = true;
-    std::vector<jami::ConversationCommit> repoCommits = repoAcc.repository->log(logOptions);
-    // The number of messages "displayed" on the client should be identical to that of the actual number of messages
-    // in the repo for the same account
-    if (repoCommits.size() != clientMessages.size()) {
-        if (enableGitLogging_) {
-            fmt::print(fg(fmt::color::red),
-                       "[{}] Repo and client don't have the same number of messages ({} vs {})\n",
-                       repoAcc.account->getDisplayName(),
-                       repoCommits.size(),
-                       clientMessages.size());
-            fmt::print("Repo commits:\n");
-            for (const auto& commit : repoCommits) {
-                bool clientHasCommit = false;
-                for (const auto& message : clientMessages) {
-                    if (commit.id == message.id) {
-                        clientHasCommit = true;
-                        break;
-                    }
-                }
-                if (clientHasCommit) {
-                    fmt::print("Message: {}, Author: {}, ID: {}\n",
-                               commit.commitMsg.toString(),
-                               commit.author.name,
-                               commit.id);
-                } else {
-                    fmt::print(fg(fmt::color::red),
-                               "Message: {}, Author: {}, ID: {}\n",
-                               commit.commitMsg.toString(),
-                               commit.author.name,
-                               commit.id);
-                }
+    // Format a single message's body, reactions and editions as a human-readable string.
+    auto formatMaps = [](const std::vector<std::map<std::string, std::string>>& maps) {
+        std::string out;
+        for (const auto& map : maps) {
+            out += "\n      {";
+            bool first = true;
+            for (const auto& [key, value] : map) {
+                out += fmt::format("{}{}={}", first ? "" : ", ", key, value);
+                first = false;
             }
+            out += "}";
+        }
+        return out;
+    };
+    auto formatMessage = [&](const libjami::SwarmMessage& message) {
+        std::string body;
+        bool first = true;
+        for (const auto& [key, value] : message.body) {
+            body += fmt::format("{}{}={}", first ? "" : ", ", key, value);
+            first = false;
+        }
+        return fmt::format("id={}, type={}, linearizedParent={}\n    body: {{{}}}\n    reactions:{}\n    editions:{}",
+                           message.id,
+                           message.type,
+                           message.linearizedParent,
+                           body,
+                           formatMaps(message.reactions),
+                           formatMaps(message.editions));
+    };
+
+    auto dumpMessages = [&](const char* label, const std::vector<libjami::SwarmMessage>& messages) {
+        fmt::print("{}:\n", label);
+        for (const auto& message : messages) {
+            fmt::print("  {}\n", formatMessage(message));
+        }
+    };
+
+    if (expected.size() != actual.size()) {
+        fmt::print(fg(fmt::color::red),
+                   "[{}] Client has {} messages but {} were expected\n",
+                   name,
+                   actual.size(),
+                   expected.size());
+        if (enableGitLogging_) {
+            dumpMessages("Expected messages", expected);
+            dumpMessages("Actual messages", actual);
         }
         return false;
     }
 
-    // We can safely access both vectors' content using the same index
-    bool orderingCorrect = true;
-    for (size_t i = 0; i < clientMessages.size(); i++) {
-        if (clientMessages[i].id != repoCommits[i].id) {
-            orderingCorrect = false;
-            break;
-        }
-    }
-    if (enableGitLogging_ && !orderingCorrect) {
-        fmt::print(fg(fmt::color::red),
-                   "[{}] Client messages are not in the correct order\n",
-                   repoAcc.account->getDisplayName());
-        for (size_t i = 0; i < clientMessages.size(); i++) {
-            if (clientMessages[i].id == repoCommits[i].id) {
-                fmt::print("Repo commit ID: {}, Client message ID: {}\n", repoCommits[i].id, clientMessages[i].id);
-            } else {
-                fmt::print(fg(fmt::color::red),
-                           "Repo commit ID: {}, Client message ID: {}\n",
-                           repoCommits[i].id,
-                           clientMessages[i].id);
+    for (size_t i = 0; i < expected.size(); i++) {
+        if (!swarmMessagesEqual(expected[i], actual[i])) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Client message at index {} does not match the expected message\n",
+                       name,
+                       i);
+            if (enableGitLogging_) {
+                fmt::print(fg(fmt::color::red), "  Expected: {}\n", formatMessage(expected[i]));
+                fmt::print(fg(fmt::color::red), "  Actual:   {}\n", formatMessage(actual[i]));
             }
+            return false;
         }
     }
-    return orderingCorrect;
+    return true;
+}
+
+/**
+ * @brief Checks that the messages accumulated by the client during the simulation match the ones
+ * reconstructed from the repository history.
+ */
+bool
+ConversationDST::checkAppearances(const RepositoryAccount& repoAcc)
+{
+    auto expected = computeExpectedMessages(repoAcc);
+    auto actual = repoAcc.client.getMessages();
+    return checkMessagesMatch(repoAcc, expected, actual);
 }
 
 bool

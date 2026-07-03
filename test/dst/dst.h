@@ -130,6 +130,10 @@ public:
 
     // Checkers
     bool verifyLoadConversationFromScratch();
+    std::vector<libjami::SwarmMessage> computeExpectedMessages(const RepositoryAccount& repoAcc) const;
+    bool checkMessagesMatch(const RepositoryAccount& repoAcc,
+                            const std::vector<libjami::SwarmMessage>& expected,
+                            const std::vector<libjami::SwarmMessage>& actual);
     bool checkAppearances(const RepositoryAccount& repoAcc);
     bool checkConversationMembers(const RepositoryAccount& repoAcc);
     bool checkAllAccounts();
