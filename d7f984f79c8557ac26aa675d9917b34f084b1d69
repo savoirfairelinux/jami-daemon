@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2da438a2_3e8d17fa",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T20:08:40Z",
+      "side": 1,
+      "message": "When the function is called, there always is a mutex locked for the loadedHistory_",
+      "parentUuid": "3a0ecba1_4dab7b00",
+      "revId": "d7f984f79c8557ac26aa675d9917b34f084b1d69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "681690e3_4137b6c4",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-03T20:02:17Z",
       "side": 1,
       "message": "[warning] Line 2242: Edition commits are cleared without emitting an update for their original message. For an edited message, clients render the original message containing the edition list, not the edition commit itself; after clearing the edition commit\u0027s `pluginData`, no signal is queued for the original unless the original also has `editions`. Preserve the original-message notification path when a cleared commit has `CommitKey::EDIT`.\n```suggestion\n            if (msg-\u003eeditions.empty()) {\n                msg-\u003epluginData.erase(\"bodyOverwrite\");\n                if (auto editIt \u003d msg-\u003ebody.find(CommitKey::EDIT);\n                    editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n                    if (auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n                        originalIt !\u003d loadedHistory_.quickAccess.end()) {\n                        signalMap[editIt-\u003esecond] \u003d *originalIt-\u003esecond;\n                    }\n                } else {\n                    signalMap[id] \u003d *msg;\n                }\n            }\n```",
+      "revId": "d7f984f79c8557ac26aa675d9917b34f084b1d69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7d0ec9a9_a51d4021",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2242,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T20:08:40Z",
+      "side": 1,
+      "message": "We clear all bodyOverwrites, the original from the edition commit emits its own signal",
+      "parentUuid": "681690e3_4137b6c4",
       "revId": "d7f984f79c8557ac26aa675d9917b34f084b1d69",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
