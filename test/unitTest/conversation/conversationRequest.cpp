@@ -74,6 +74,7 @@ public:
     void acceptConvReqAlsoAddContact();
     void testGetRequests();
     void testDeclineRequest();
+    void testSyncDeclinedRequestTwiceDoesNotRetrigger();
     void testAddContact();
     void testDeclineConversationRequestRemoveTrustRequest();
     void testMalformedTrustRequest();
@@ -116,6 +117,7 @@ private:
     CPPUNIT_TEST(acceptConvReqAlsoAddContact);
     CPPUNIT_TEST(testGetRequests);
     CPPUNIT_TEST(testDeclineRequest);
+    CPPUNIT_TEST(testSyncDeclinedRequestTwiceDoesNotRetrigger);
     CPPUNIT_TEST(testAddContact);
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
     CPPUNIT_TEST(testMalformedTrustRequest);
@@ -439,6 +441,51 @@ ConversationRequestTest::testDeclineRequest()
     // Decline request
     auto requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 0);
+}
+
+void
+ConversationRequestTest::testSyncDeclinedRequestTwiceDoesNotRetrigger()
+{
+    // Receiving the same declined conversation request from another device
+    // multiple times must be a no-op after the first time, otherwise two
+    // devices keep re-detecting a "change" and re-syncing it to each other,
+    // ping-ponging declined requests forever.
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    // Count declined signals for bob (overrides the handler from connectSignals())
+    int declinedCount = 0;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
+        [&](const std::string& accountId, const std::string&) {
+            std::lock_guard lk {mtx};
+            if (accountId == bobId)
+                ++declinedCount;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Simulate sync data from another of bob's devices carrying an already
+    // declined conversation request.
+    ConversationRequest req;
+    req.conversationId = "0000000000000000000000000000000000000000";
+    req.from = aliceUri;
+    req.received = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    req.declined = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    SyncMsg msg;
+    msg.cr[req.conversationId] = req;
+
+    auto fakeDeviceId = "7e7c131d49795db3c9e8b864029826bc8e5fbf9d36082093999bdc5741e2898e"s;
+    bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
+    CPPUNIT_ASSERT_EQUAL(1, declinedCount);
+
+    // Re-receiving the exact same declined request must not re-detect a change
+    bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
+    CPPUNIT_ASSERT_EQUAL(1, declinedCount);
 }
 
 void

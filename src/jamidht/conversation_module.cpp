@@ -344,6 +344,12 @@ public:
             // We only remove requests (if accepted) or change .declined
             if (req.declined == TimePoint {})
                 return false;
+            if (it->second.declined != TimePoint {}) {
+                // Already declined: nothing changed. Reporting a change here
+                // would make devices re-propagate declined requests to each
+                // other forever (sync ping-pong).
+                return false;
+            }
         } else if (req.isOneToOne()) {
             // Check that we're not adding a second one to one trust request
             // NOTE: If a new one to one request is received, we can decline the previous one.
