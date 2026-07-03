@@ -16,6 +16,24 @@
       "message": "[warning] Line 1498: This unconditionally indexes `pluginData[\"bodyOverwrite\"]`, so creating an edition for a message that has not been translated yet mutates `pluginData` by inserting an empty overwrite and exposes an empty `bodyOverwrite` field in the edition history. It can also make later missing-overwrite scans think the original already has overwrite data. Only copy the field when it exists.\\n```suggestion\\n                if (const auto boIt \u003d it-\u003esecond-\u003epluginData.find(\"bodyOverwrite\");\\n                    boIt !\u003d it-\u003esecond-\u003epluginData.end()) {\\n                    it-\u003esecond-\u003eeditions.front()[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\\n                }\\n```",
       "revId": "8f679a73e0352356ace9357d5cc63cf7649793d2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4a67b32_2e2c7ed0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1498,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T20:01:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b904818f_9aea2f86",
+      "revId": "8f679a73e0352356ace9357d5cc63cf7649793d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
