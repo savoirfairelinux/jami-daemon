@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79e4796c_3b15d576",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1493,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-03T19:53:25Z",
+      "side": 1,
+      "message": "[warning] Line 1493: This copies every pluginData entry into the public edition history body, not just the translated body overwrite. If plugins store other metadata there, it can be exposed to clients as edition fields and may also collide with normal message body keys. Copy only the `bodyOverwrite` entry that this feature needs.\n```suggestion\n                if (const auto boIt \u003d it-\u003esecond-\u003epluginData.find(\"bodyOverwrite\"); boIt !\u003d it-\u003esecond-\u003epluginData.end()) {\n                    it-\u003esecond-\u003eeditions.front()[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n                }\n```",
+      "revId": "3bd73a63bedea1e90e25f06e4e994a9a4b2c4360",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
