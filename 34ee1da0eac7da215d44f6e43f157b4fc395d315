@@ -16,6 +16,24 @@
       "message": "[warning] Line 1435: When an edited original already has its own bodyOverwrite but the latest edition has not been translated yet, this leaves the old original translation in the returned message. That reintroduces the stale-body problem during the async window or if the latest edition lookup fails. Clear the original copy\u0027s bodyOverwrite before conditionally applying the latest edition\u0027s value.\n```suggestion\n            ret.back().pluginData.erase(\"bodyOverwrite\");\n            if (const auto edIt \u003d history-\u003equickAccess.find(ret.back().latestEditionId);\n                edIt !\u003d history-\u003equickAccess.end()) {\n                if (const auto boIt \u003d edIt-\u003esecond-\u003epluginData.find(\"bodyOverwrite\");\n                    boIt !\u003d edIt-\u003esecond-\u003epluginData.end()) {\n                    ret.back().pluginData[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n                }\n            }\n```",
       "revId": "34ee1da0eac7da215d44f6e43f157b4fc395d315",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d4c038c2_2746312e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1435,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-03T17:29:10Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "a5c7deb9_21c68730",
+      "revId": "34ee1da0eac7da215d44f6e43f157b4fc395d315",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

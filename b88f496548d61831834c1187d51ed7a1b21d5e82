@@ -33,6 +33,24 @@
       "message": "[warning] Line 962: This now mutates signalTarget-\u003eeditions in loadedHistory_ instead of only enriching the returned copy. Once an edition map has a bodyOverwrite, later calls where the corresponding commit lacks pluginData will leave the stale value in place because this loop never erases it. Build the copy first and update copy.editions, or explicitly erase edition[\"bodyOverwrite\"] when no current value exists. ```suggestion\n    libjami::SwarmMessage copy \u003d *signalTarget;\n    for (auto\u0026 edition : copy.editions) {\n```",
       "revId": "b88f496548d61831834c1187d51ed7a1b21d5e82",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d975c89d_b5b37b48",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-03T17:29:10Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "744d173c_1a203ddc",
+      "revId": "b88f496548d61831834c1187d51ed7a1b21d5e82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
