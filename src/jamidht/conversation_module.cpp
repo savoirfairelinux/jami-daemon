@@ -420,6 +420,7 @@ public:
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
     std::function<void(const std::string&, const std::string&)> cloneRequestedCbTest_;
+    std::function<void(const std::string&, const std::string&, bool)> cloneFailedCbTest_;
 #endif
 
     uint64_t presenceListenerToken_ {0};
@@ -969,6 +970,32 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                                                       std::placeholders::_1,
                                                       conversationId));
         }
+    } catch (const RemoteNotFoundError& e) {
+        // The remote peer explicitly reported it does not have this conversation
+        // (missing or without a valid HEAD on its side). Retrying the same device
+        // is pointless, but another member's device may still have it, so keep the
+        // bounded backoff: fallbackClone() rotates through every member's devices.
+        JAMI_WARNING(
+            "[Account {}] [Conversation {}] [device {}] Remote does not have the conversation ({}). Re-clone in {}s",
+            accountId_,
+            conversationId,
+            deviceId,
+            e.what(),
+            conv->fallbackTimer.count());
+#ifdef LIBJAMI_TEST
+        if (cloneFailedCbTest_)
+            cloneFailedCbTest_(conversationId, deviceId, true);
+#endif
+        auto deadline = std::chrono::steady_clock::now() + conv->fallbackTimer;
+        conv->nextCloneAttempt = deadline;
+        conv->fallbackClone->expires_at(deadline);
+        conv->fallbackTimer *= 2;
+        if (conv->fallbackTimer > MAX_FALLBACK)
+            conv->fallbackTimer = MAX_FALLBACK;
+        conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
+                                                  shared_from_this(),
+                                                  std::placeholders::_1,
+                                                  conversationId));
     } catch (const std::exception& e) {
         JAMI_WARNING(
             "[Account {}] [Conversation {}] Something went wrong when cloning conversation: {}. Re-clone in {}s",
@@ -976,6 +1003,10 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             conversationId,
             e.what(),
             conv->fallbackTimer.count());
+#ifdef LIBJAMI_TEST
+        if (cloneFailedCbTest_)
+            cloneFailedCbTest_(conversationId, deviceId, false);
+#endif
         auto deadline = std::chrono::steady_clock::now() + conv->fallbackTimer;
         conv->nextCloneAttempt = deadline;
         conv->fallbackClone->expires_at(deadline);
@@ -1670,6 +1701,13 @@ void
 ConversationModule::onCloneRequested(const std::function<void(const std::string&, const std::string&)>& cb)
 {
     pimpl_->cloneRequestedCbTest_ = cb;
+}
+
+void
+ConversationModule::onCloneFailed(
+    const std::function<void(const std::string&, const std::string&, bool)>& cb)
+{
+    pimpl_->cloneFailedCbTest_ = cb;
 }
 #endif
 

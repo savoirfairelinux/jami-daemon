@@ -56,10 +56,19 @@ public:
         // Check at least if repository is correct
         git_repository* repo;
         if (git_repository_open(&repo, repository_.c_str()) != 0) {
-            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
-            return;
+            // The repository is not available locally (e.g. lost after a crash,
+            // or never cloned). Do not shut down silently: keep the connection
+            // so the peer's upload-pack request reaches sendReferenceCapabilities(),
+            // which answers with a git "ERR" pkt-line. This lets the remote tell
+            // "we don't have this conversation" from a transient network error.
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Repository {} is not available",
+                         accountId_,
+                         repositoryId_,
+                         fmt::ptr(this),
+                         repository_);
+        } else {
+            git_repository_free(repo);
         }
-        git_repository_free(repo);
 
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
             std::lock_guard lk(destroyMtx_);
@@ -91,6 +100,9 @@ public:
     void ACKCommon();
     bool ACKFirst();
     void sendPackData();
+    // Send a git "ERR <message>" pkt-line to the peer, then close the socket.
+    // Used to report that the requested repository cannot be served.
+    void sendErr(std::string_view message);
     std::map<std::string, std::string> getParameters(std::string_view pkt_line);
 
     std::string accountId_ {};
@@ -263,7 +275,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                      repositoryId_,
                      fmt::ptr(this),
                      repository_);
-        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+        sendErr(GIT_SERVER_REPO_UNAVAILABLE);
         return;
     }
     GitRepository rep {repo};
@@ -293,7 +305,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                    accountId_,
                    repositoryId_,
                    fmt::ptr(this));
-        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+        sendErr(GIT_SERVER_REPO_UNAVAILABLE);
         return;
     }
     std::string_view currentHead = git_oid_tostr_s(&commit_id);
@@ -383,6 +395,19 @@ GitServer::Impl::ACKFirst()
         }
     }
     return true;
+}
+
+void
+GitServer::Impl::sendErr(std::string_view message)
+{
+    // Report an error to the peer with a git "ERR <message>" pkt-line so the
+    // client's libgit2 surfaces it (as "remote error: <message>") instead of a
+    // generic transport failure, then close the socket.
+    // pkt-line length = 4 (length header) + 4 ("ERR ") + message length.
+    std::error_code ec;
+    auto toSend = fmt::format(FMT_COMPILE("{:04x}ERR {}"), 8 + message.size(), message);
+    socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
+    dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
 }
 
 bool

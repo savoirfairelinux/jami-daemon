@@ -134,6 +134,7 @@ private:
     void testETooBigClone();
     void testETooBigFetch();
     void testCloneFailureRespectsBackoff();
+    void testCloneReportsRemoteNotFound();
     void testUnknownModeDetected();
     void testUpdateProfile();
     void testGetProfileRequest();
@@ -187,6 +188,7 @@ private:
     CPPUNIT_TEST(testETooBigClone);
     CPPUNIT_TEST(testETooBigFetch);
     CPPUNIT_TEST(testCloneFailureRespectsBackoff);
+    CPPUNIT_TEST(testCloneReportsRemoteNotFound);
     CPPUNIT_TEST(testUnknownModeDetected);
     CPPUNIT_TEST(testUpdateProfile);
     CPPUNIT_TEST(testGetProfileRequest);
@@ -1507,6 +1509,53 @@ ConversationTest::testCloneFailureRespectsBackoff()
     CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return cloneAttempts->load() >= 2; }));
 
     bobAccount->convModule()->onCloneRequested({});
+}
+
+void
+ConversationTest::testCloneReportsRemoteNotFound()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+
+    auto failed = std::make_shared<std::atomic_int>(0);
+    auto remoteNotFound = std::make_shared<std::atomic_bool>(false);
+    bobAccount->convModule()->onCloneFailed(
+        [this, failed, remoteNotFound, convId](const std::string& conversationId,
+                                               const std::string&,
+                                               bool notFound) {
+            if (conversationId == convId) {
+                remoteNotFound->store(notFound);
+                ++(*failed);
+            }
+            cv.notify_one();
+        });
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    // Remove the git metadata of Alice's repository while keeping the working
+    // tree (members/ etc.). Alice still authorizes Bob's git channel (membership
+    // is checked from the working tree) but her Git server can no longer open the
+    // repository, so it answers Bob's clone with an "ERR" pkt-line. Bob must
+    // surface this as a remote-not-found failure rather than an opaque transport
+    // error.
+    auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    std::error_code ec;
+    std::filesystem::remove_all(repoPath / ".git", ec);
+    CPPUNIT_ASSERT(!ec);
+    CPPUNIT_ASSERT(!std::filesystem::exists(repoPath / ".git"));
+
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return failed->load() >= 1; }));
+    CPPUNIT_ASSERT(remoteNotFound->load());
+
+    bobAccount->convModule()->onCloneFailed({});
 }
 
 void

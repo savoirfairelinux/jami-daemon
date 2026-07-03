@@ -54,6 +54,20 @@ public:
     {}
 };
 
+/**
+ * Exception thrown when the remote peer explicitly reports (via a git "ERR"
+ * pkt-line) that it does not have the requested conversation repository.
+ * Unlike a transient network error, retrying the clone from the same device is
+ * pointless: the caller should try another member's device instead.
+ */
+class RemoteNotFoundError : public std::runtime_error
+{
+public:
+    explicit RemoteNotFoundError(const std::string& what)
+        : std::runtime_error(what)
+    {}
+};
+
 struct LogOptions
 {
     std::string from {};

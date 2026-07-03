@@ -54,6 +54,11 @@ struct P2PSubTransport
 using namespace std::string_view_literals;
 constexpr auto UPLOAD_PACK_CMD = "git-upload-pack"sv;
 constexpr auto HOST_TAG = "host="sv;
+// Message sent by the git server as a pkt-line ("ERR <msg>") when the requested
+// conversation repository is not available locally (missing or without a valid
+// HEAD). It lets the cloning peer distinguish "the remote does not have this
+// conversation" from a transient network error.
+constexpr auto GIT_SERVER_REPO_UNAVAILABLE = "conversation repository not available"sv;
 
 /**
  * Send a git command on the linked socket

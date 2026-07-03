@@ -108,6 +108,13 @@ public:
      * Called each time a clone attempt is started (test only)
      */
     void onCloneRequested(const std::function<void(const std::string& conversationId, const std::string& deviceId)>& cb);
+    /**
+     * Called each time a clone attempt fails, with whether the remote peer
+     * explicitly reported it does not have the conversation (test only)
+     */
+    void onCloneFailed(
+        const std::function<void(const std::string& conversationId, const std::string& deviceId, bool remoteNotFound)>&
+            cb);
 #endif
 
     void monitor();

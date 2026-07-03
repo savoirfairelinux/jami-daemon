@@ -2814,13 +2814,15 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                tmpClonePath);
     git_repository* rep = nullptr;
     if (auto err = git_clone(&rep, url.c_str(), tmpClonePath.string().c_str(), &opts)) {
-        if (const git_error* gerr = giterr_last())
+        std::string errMessage;
+        if (const git_error* gerr = giterr_last()) {
+            errMessage = gerr->message;
             JAMI_ERROR("[Account {}] [Conversation {}] Error when retrieving remote conversation: {:s} {}",
                        account->getAccountID(),
                        conversationId,
-                       gerr->message,
+                       errMessage,
                        path);
-        else
+        } else
             JAMI_ERROR("[Account {}] [Conversation {}] Unknown error {:d} when retrieving remote conversation",
                        account->getAccountID(),
                        conversationId,
@@ -2829,6 +2831,12 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
         // pre-existing conversation at `path` (if any) untouched.
         if (std::filesystem::exists(tmpClonePath, ec))
             dhtnet::fileutils::removeAll(tmpClonePath, true);
+        // The remote explicitly reported (via a git "ERR" pkt-line) that it does
+        // not have this conversation. Distinguish it from a transient network
+        // error so the caller can try another member's device instead of
+        // pointlessly retrying the same one.
+        if (errMessage.find(GIT_SERVER_REPO_UNAVAILABLE) != std::string::npos)
+            throw RemoteNotFoundError(errMessage);
         return {};
     }
     git_repository_free(rep);
