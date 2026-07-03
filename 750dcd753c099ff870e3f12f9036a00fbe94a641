@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "96fe7645_7d66d46b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2140,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-03T20:42:12Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "c2b95b61_4471fb9a",
+      "revId": "750dcd753c099ff870e3f12f9036a00fbe94a641",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cd281a4f_4b505edc",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-03T20:18:48Z",
       "side": 1,
       "message": "[warning] Line 2243: Clearing an edition commit\u0027s `bodyOverwrite` no longer emits an update for the original message. Edition commits have `editions.empty()` and `CommitKey::EDIT`, so this branch erases their plugin data but intentionally skips adding anything to `signalMap`; clients render the original message with its edition list, so they can keep showing the stale overwrite until another refresh. When clearing a commit with `CommitKey::EDIT`, enqueue its original message.\n```suggestion\n                if (auto editIt \u003d msg-\u003ebody.find(CommitKey::EDIT);\n                    editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n                    if (auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n                        originalIt !\u003d loadedHistory_.quickAccess.end()) {\n                        signalMap[editIt-\u003esecond] \u003d *originalIt-\u003esecond;\n                    }\n                } else {\n                    signalMap[id] \u003d *msg;\n                }\n```",
+      "revId": "750dcd753c099ff870e3f12f9036a00fbe94a641",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4bec2a71_a1f30e5f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2243,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-03T20:42:12Z",
+      "side": 1,
+      "message": "The original message enqueues itself.",
+      "parentUuid": "cd281a4f_4b505edc",
       "revId": "750dcd753c099ff870e3f12f9036a00fbe94a641",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
