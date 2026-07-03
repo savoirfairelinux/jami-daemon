@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78fad7b1_e1536a42",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2129,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-03T19:17:26Z",
+      "side": 1,
+      "message": "[warning] Line 2129: This selection checks `editions.back()` instead of the message identified by `latestEditionId`, so it can skip loading the currently displayed edition if the vector order is not guaranteed to match the latest edit. It also only tests the embedded edition map, which can be stale relative to the edition commit\u0027s `pluginData`. Use `latestEditionId` to find the actual latest edition commit and check its overwrite state instead.\n```suggestion\n            if (msg-\u003etype \u003d\u003d CommitType::TEXT\n                \u0026\u0026 (msg-\u003ebody.contains(CommitKey::EDIT)\n                    || (msg-\u003eeditions.empty() \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\"))\n                    || (!msg-\u003elatestEditionId.empty()\n                        \u0026\u0026 loadedHistory_.quickAccess.contains(msg-\u003elatestEditionId)\n                        \u0026\u0026 !loadedHistory_.quickAccess.at(msg-\u003elatestEditionId)-\u003epluginData.contains(\"bodyOverwrite\")))) {\n```",
+      "revId": "25b384e45eaadcd1fd241cfe0fee0c34eb19785e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dff73271_a965c82a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2240,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-03T19:17:26Z",
+      "side": 1,
+      "message": "[warning] Line 2240: Edited messages with `editions.empty()` are cleared but no update is emitted for their original message, so consumers can keep displaying the old bodyOverwrite until another event refreshes that original. The previous implementation explicitly mapped edition commits back to their original id before signaling. Preserve that behavior when clearing an edition commit.\n```suggestion\n            if (msg-\u003eeditions.empty()) {\n                msg-\u003epluginData.erase(\"bodyOverwrite\");\n                if (auto editIt \u003d msg-\u003ebody.find(CommitKey::EDIT);\n                    editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n                    if (auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n                        originalIt !\u003d loadedHistory_.quickAccess.end()) {\n                        signalMap[editIt-\u003esecond] \u003d *originalIt-\u003esecond;\n                    }\n                } else {\n                    signalMap[id] \u003d *msg;\n                }\n```",
+      "revId": "25b384e45eaadcd1fd241cfe0fee0c34eb19785e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
