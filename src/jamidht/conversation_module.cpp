@@ -66,6 +66,11 @@ struct SyncedConversation
     std::mutex mtx;
     std::unique_ptr<asio::steady_timer> fallbackClone;
     std::chrono::seconds fallbackTimer {5s};
+    // Deadline before which no new clone attempt may start (backoff armed by a
+    // failed attempt). Externally triggered attempts (peer commit notifications,
+    // sync messages, ...) are gated on it; the fallbackClone timer fires at the
+    // deadline, so timer-driven retries pass the gate.
+    std::chrono::steady_clock::time_point nextCloneAttempt {};
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
@@ -414,6 +419,7 @@ public:
 
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
+    std::function<void(const std::string&, const std::string&)> cloneRequestedCbTest_;
 #endif
 
     uint64_t presenceListenerToken_ {0};
@@ -538,6 +544,14 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // cloning.
         // This avoid the case when we try to clone from convInfos + sync message
         // at the same time.
+        if (std::chrono::steady_clock::now() < conv->nextCloneAttempt) {
+            JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Ignoring clone request: "
+                       "waiting for the retry delay after a failed clone",
+                       accountId_,
+                       conv->info.id,
+                       deviceId);
+            return;
+        }
         if (!conv->startFetch(deviceId, true)) {
             JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Already fetching conversation",
                          accountId_,
@@ -546,6 +560,10 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             addConvInfo(conv->info);
             return;
         }
+#ifdef LIBJAMI_TEST
+        if (cloneRequestedCbTest_)
+            cloneRequestedCbTest_(conv->info.id, deviceId);
+#endif
         onNeedSocket_(
             conv->info.id,
             deviceId,
@@ -867,6 +885,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             status = std::move(conv->pending->status);
         }
         conv->conversation = conversation;
+        conv->fallbackTimer = 5s;
+        conv->nextCloneAttempt = {};
         if (removeRepo) {
             removeRepositoryImpl(*conv, false, true);
             erasePending();
@@ -938,7 +958,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                 conv->validationFailures,
                 MAX_VALIDATION_FAILURES,
                 conv->fallbackTimer.count());
-            conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
+            auto deadline = std::chrono::steady_clock::now() + conv->fallbackTimer;
+            conv->nextCloneAttempt = deadline;
+            conv->fallbackClone->expires_at(deadline);
             conv->fallbackTimer *= 2;
             if (conv->fallbackTimer > MAX_FALLBACK)
                 conv->fallbackTimer = MAX_FALLBACK;
@@ -954,7 +976,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             conversationId,
             e.what(),
             conv->fallbackTimer.count());
-        conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
+        auto deadline = std::chrono::steady_clock::now() + conv->fallbackTimer;
+        conv->nextCloneAttempt = deadline;
+        conv->fallbackClone->expires_at(deadline);
         conv->fallbackTimer *= 2;
         if (conv->fallbackTimer > MAX_FALLBACK)
             conv->fallbackTimer = MAX_FALLBACK;
@@ -1392,10 +1416,22 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                      deviceId);
         return;
     }
+    if (std::chrono::steady_clock::now() < conv->nextCloneAttempt) {
+        JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Ignoring clone request: "
+                   "waiting for the retry delay after a failed clone",
+                   accountId_,
+                   conversationId,
+                   deviceId);
+        return;
+    }
     if (!conv->startFetch(deviceId, true)) {
         JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
         return;
     }
+#ifdef LIBJAMI_TEST
+    if (cloneRequestedCbTest_)
+        cloneRequestedCbTest_(conversationId, deviceId);
+#endif
 
     onNeedSocket_(
         conversationId,
@@ -1422,7 +1458,9 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                                  conversationId,
                                  deviceId,
                                  conv->fallbackTimer.count());
-                    conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
+                    auto deadline = std::chrono::steady_clock::now() + conv->fallbackTimer;
+                    conv->nextCloneAttempt = deadline;
+                    conv->fallbackClone->expires_at(deadline);
                     conv->fallbackTimer *= 2;
                     if (conv->fallbackTimer > MAX_FALLBACK)
                         conv->fallbackTimer = MAX_FALLBACK;
@@ -1626,6 +1664,12 @@ ConversationModule::onBootstrapStatus(const std::function<void(std::string, Conv
     pimpl_->bootstrapCbTest_ = cb;
     for (auto& c : pimpl_->getConversations())
         c->onBootstrapStatus(pimpl_->bootstrapCbTest_);
+}
+
+void
+ConversationModule::onCloneRequested(const std::function<void(const std::string&, const std::string&)>& cb)
+{
+    pimpl_->cloneRequestedCbTest_ = cb;
 }
 #endif
 

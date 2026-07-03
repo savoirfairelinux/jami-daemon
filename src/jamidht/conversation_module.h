@@ -104,6 +104,10 @@ public:
 
 #ifdef LIBJAMI_TEST
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
+    /**
+     * Called each time a clone attempt is started (test only)
+     */
+    void onCloneRequested(const std::function<void(const std::string& conversationId, const std::string& deviceId)>& cb);
 #endif
 
     void monitor();

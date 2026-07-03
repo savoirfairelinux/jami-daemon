@@ -35,6 +35,7 @@
 #include <msgpack.hpp>
 #include <git2.h>
 
+#include <atomic>
 #include <condition_variable>
 #include <string>
 #include <fstream>
@@ -132,6 +133,7 @@ private:
     void testVoteNoBadFile();
     void testETooBigClone();
     void testETooBigFetch();
+    void testCloneFailureRespectsBackoff();
     void testUnknownModeDetected();
     void testUpdateProfile();
     void testGetProfileRequest();
@@ -184,6 +186,7 @@ private:
     CPPUNIT_TEST(testVoteNoBadFile);
     CPPUNIT_TEST(testETooBigClone);
     CPPUNIT_TEST(testETooBigFetch);
+    CPPUNIT_TEST(testCloneFailureRespectsBackoff);
     CPPUNIT_TEST(testUnknownModeDetected);
     CPPUNIT_TEST(testUpdateProfile);
     CPPUNIT_TEST(testGetProfileRequest);
@@ -1455,6 +1458,55 @@ ConversationTest::testETooBigFetch()
 
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
+}
+
+void
+ConversationTest::testCloneFailureRespectsBackoff()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+
+    auto cloneAttempts = std::make_shared<std::atomic_int>(0);
+    bobAccount->convModule()->onCloneRequested(
+        [this, cloneAttempts, convId](const std::string& conversationId, const std::string&) {
+            if (conversationId == convId)
+                ++(*cloneAttempts);
+            cv.notify_one();
+        });
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    // Remove Alice's repository so that Bob's clone fails with a transient
+    // error (the Git server is unable to serve the conversation).
+    auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    std::error_code ec;
+    std::filesystem::remove_all(repoPath, ec);
+    CPPUNIT_ASSERT(!ec);
+
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return cloneAttempts->load() >= 1; }));
+
+    // The failed clone arms a retry timer (5s backoff at first). Externally
+    // triggered clone requests during that window (e.g. commit notifications
+    // or sync messages from peers) must not start new clone attempts.
+    for (int i = 0; i < 10; ++i) {
+        bobAccount->convModule()->cloneConversationFrom(convId, aliceUri);
+        std::this_thread::sleep_for(200ms);
+    }
+    CPPUNIT_ASSERT_EQUAL(1, cloneAttempts->load());
+
+    // The retry timer must still re-attempt the clone once the backoff expires.
+    CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return cloneAttempts->load() >= 2; }));
+
+    bobAccount->convModule()->onCloneRequested({});
 }
 
 void
