@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a0ecba1_4dab7b00",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-03T20:02:17Z",
+      "side": 1,
+      "message": "[warning] Line 958: This writes `bodyOverwrite` into the embedded edition entry before verifying that the plugin response belongs to the latest edition. If an older async plugin request finishes after a newer edit, it can overwrite that historical edition entry in `loadedHistory_` and the returned update with a stale value. Only update the embedded edition when `messageId` still matches the edition commit being rendered, or build a copy and populate all edition overwrites from the current commit `pluginData` state.\n```suggestion\n    libjami::SwarmMessage copy \u003d *signalTarget;\n    for (auto\u0026 edition : copy.editions) {\n        const auto idIt \u003d edition.find(\"id\");\n        if (idIt \u003d\u003d edition.end()) {\n            continue;\n        }\n        const auto edMsgIt \u003d loadedHistory_.quickAccess.find(idIt-\u003esecond);\n        if (edMsgIt \u003d\u003d loadedHistory_.quickAccess.end()) {\n            edition.erase(\"bodyOverwrite\");\n            continue;\n        }\n        if (const auto boIt \u003d edMsgIt-\u003esecond-\u003epluginData.find(\"bodyOverwrite\");\n            boIt !\u003d edMsgIt-\u003esecond-\u003epluginData.end()) {\n            edition[\"bodyOverwrite\"] \u003d boIt-\u003esecond;\n        } else {\n            edition.erase(\"bodyOverwrite\");\n        }\n    }\n```",
+      "revId": "d7f984f79c8557ac26aa675d9917b34f084b1d69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "681690e3_4137b6c4",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2242,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-03T20:02:17Z",
+      "side": 1,
+      "message": "[warning] Line 2242: Edition commits are cleared without emitting an update for their original message. For an edited message, clients render the original message containing the edition list, not the edition commit itself; after clearing the edition commit\u0027s `pluginData`, no signal is queued for the original unless the original also has `editions`. Preserve the original-message notification path when a cleared commit has `CommitKey::EDIT`.\n```suggestion\n            if (msg-\u003eeditions.empty()) {\n                msg-\u003epluginData.erase(\"bodyOverwrite\");\n                if (auto editIt \u003d msg-\u003ebody.find(CommitKey::EDIT);\n                    editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n                    if (auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n                        originalIt !\u003d loadedHistory_.quickAccess.end()) {\n                        signalMap[editIt-\u003esecond] \u003d *originalIt-\u003esecond;\n                    }\n                } else {\n                    signalMap[id] \u003d *msg;\n                }\n            }\n```",
+      "revId": "d7f984f79c8557ac26aa675d9917b34f084b1d69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
