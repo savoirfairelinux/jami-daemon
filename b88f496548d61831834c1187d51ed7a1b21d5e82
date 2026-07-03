@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc8f8807_39778f0f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T19:56:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7e2a84d2_08287232",
+      "revId": "b88f496548d61831834c1187d51ed7a1b21d5e82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "744d173c_1a203ddc",

@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dbb65fde_c8d0a223",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2129,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T19:56:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "78fad7b1_e1536a42",
+      "revId": "25b384e45eaadcd1fd241cfe0fee0c34eb19785e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dff73271_a965c82a",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-03T19:17:26Z",
       "side": 1,
       "message": "[warning] Line 2240: Edited messages with `editions.empty()` are cleared but no update is emitted for their original message, so consumers can keep displaying the old bodyOverwrite until another event refreshes that original. The previous implementation explicitly mapped edition commits back to their original id before signaling. Preserve that behavior when clearing an edition commit.\n```suggestion\n            if (msg-\u003eeditions.empty()) {\n                msg-\u003epluginData.erase(\"bodyOverwrite\");\n                if (auto editIt \u003d msg-\u003ebody.find(CommitKey::EDIT);\n                    editIt !\u003d msg-\u003ebody.end() \u0026\u0026 !editIt-\u003esecond.empty()) {\n                    if (auto originalIt \u003d loadedHistory_.quickAccess.find(editIt-\u003esecond);\n                        originalIt !\u003d loadedHistory_.quickAccess.end()) {\n                        signalMap[editIt-\u003esecond] \u003d *originalIt-\u003esecond;\n                    }\n                } else {\n                    signalMap[id] \u003d *msg;\n                }\n```",
+      "revId": "25b384e45eaadcd1fd241cfe0fee0c34eb19785e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac758c1f_27011253",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2240,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T19:56:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "dff73271_a965c82a",
       "revId": "25b384e45eaadcd1fd241cfe0fee0c34eb19785e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

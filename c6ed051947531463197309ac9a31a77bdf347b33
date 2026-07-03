@@ -16,6 +16,24 @@
       "message": "[warning] Line 2132: This makes every edited original message eligible for `loadMissingBodyOverwrites()` even when its own `bodyOverwrite` is already present, because `latestEditionId` remains non-empty permanently. That can repeatedly enqueue already-processed messages on each reload/pass and issue unnecessary plugin work. Keep the selection tied to missing overwrite data, or explicitly check the latest edition\u0027s overwrite instead of using `latestEditionId` alone.\n```suggestion\n            if (msg-\u003etype \u003d\u003d CommitType::TEXT \u0026\u0026 !msg-\u003epluginData.contains(\"bodyOverwrite\")) {\n```",
       "revId": "c6ed051947531463197309ac9a31a77bdf347b33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1d9e793_edc29489",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2132,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-03T19:56:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2a314a0c_c1503dbf",
+      "revId": "c6ed051947531463197309ac9a31a77bdf347b33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
