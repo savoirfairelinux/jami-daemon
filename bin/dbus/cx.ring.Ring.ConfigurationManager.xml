@@ -2119,6 +2119,25 @@
             <arg type="s" name="conversationId" direction="in"/>
         </method>
 
+        <method name="getConversationConnectivity" tp:name-for-bindings="getConversationConnectivity">
+            <tp:docstring>
+               Get the connectivity state of a conversation's members
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="connectivity" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <method name="getConversationTrackedMembers" tp:name-for-bindings="getConversationTrackedMembers">
+            <tp:docstring>
+               Get the presence-tracked members of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="members" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
 
         <method name="sendMessage" tp:name-for-bindings="sendMessage">
             <tp:added version="13.6.0"/>
