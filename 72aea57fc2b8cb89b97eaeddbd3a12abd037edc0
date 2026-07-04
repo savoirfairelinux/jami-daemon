@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "33479852_bba13e7b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T01:34:54Z",
+      "side": 1,
+      "message": "[error] Line 127: The new patchset still narrows parsed unsigned dimensions to `int` without checking `INT_MAX`, so values above `INT_MAX` can become invalid negative mixer dimensions instead of falling back to auto. Please keep the bounds check before the cast.\n```suggestion\n    if (res.size() \u003d\u003d 2u and res[0] \u003e 0 and res[1] \u003e 0\n        and res[0] \u003c\u003d static_cast\u003cunsigned\u003e(std::numeric_limits\u003cint\u003e::max())\n        and res[1] \u003c\u003d static_cast\u003cunsigned\u003e(std::numeric_limits\u003cint\u003e::max())) {\n        conf_res \u003d {static_cast\u003cint\u003e(res[0]), static_cast\u003cint\u003e(res[1])};\n```\nThis also requires including `\u003climits\u003e`.",
+      "revId": "72aea57fc2b8cb89b97eaeddbd3a12abd037edc0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
