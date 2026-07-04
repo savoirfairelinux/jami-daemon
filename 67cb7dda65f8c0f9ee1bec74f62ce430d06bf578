@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35f0c76a_b19b0bea",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T02:12:33Z",
+      "side": 1,
+      "message": "[warning] Line 784: `getStream()` can now race with the mixer loop while dynamic format changes update `width_`, `height_`, and `frameRate_`. Before this change the mixer format was effectively fixed after setup, but `checkDynamicFormat()` can call `setParameters()` and assign `frameRate_` from the process thread while sender/session code reads the stream format here, which is undefined behavior and can also expose an inconsistent `width/height/frameRate` tuple. Please protect the format state with the existing mixer mutex or make the whole stream-format snapshot atomic under one lock. For example:\n```suggestion\n    std::shared_lock lock(rwMutex_);\n    ms.format \u003d format_;\n    ms.isVideo \u003d true;\n    ms.height \u003d height_;\n    ms.width \u003d width_;\n    ms.frameRate \u003d {frameRate_, 1};\n    ms.timeBase \u003d {1, frameRate_};\n```\nCorresponding writes in `setParameters()`/frame-rate updates should take the matching exclusive lock or otherwise use the same synchronization discipline.",
+      "revId": "67cb7dda65f8c0f9ee1bec74f62ce430d06bf578",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
