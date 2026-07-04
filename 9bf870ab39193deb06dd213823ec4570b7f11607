@@ -1,6 +1,60 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8af4142c_352d0fc3",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:58:24Z",
+      "side": 1,
+      "message": "Done in PS5 (same bounds check).",
+      "parentUuid": "6a3753cf_1535a345",
+      "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3046d8e9_b16a983f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:58:24Z",
+      "side": 1,
+      "message": "Done in PS5: parsed dimensions are now checked against INT_MAX before the cast, falling back to auto otherwise.",
+      "parentUuid": "33479852_bba13e7b",
+      "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfb67a9b_84411b27",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 444,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:58:24Z",
+      "side": 1,
+      "message": "The code does not treat unprobed devices as available: it only returns true early for devices already marked USABLE, and otherwise calls init_device_type(), which actually creates the hardware device context and persistently marks each device USABLE/NOT_USABLE. An untested VAAPI entry is therefore probed for real before the 1440p tier can be selected.",
+      "parentUuid": "cb295250_298a5681",
+      "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "67ac31f8_45cdfeba",
@@ -14,6 +68,24 @@
       "writtenOn": "2026-07-04T01:58:11Z",
       "side": 1,
       "message": "[warning] Line 700: Changing only `frameRate_` leaves `nextProcess_` anchored to the old schedule. When the mixer drops from 60 fps back to 30 fps, the next iteration still uses the accumulated 60 fps deadline, so the loop can run one immediate/near-immediate frame before settling; after repeated changes this can produce avoidable bursts. Reset the scheduler when applying a frame-rate change, similar to a discontinuity. ```suggestion\n    if (fpsChanged) {\n        frameRate_ \u003d targetFps;\n        nextProcess_ \u003d std::chrono::steady_clock::now();\n    }\n```",
+      "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cad46c05_dc19445e",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:58:24Z",
+      "side": 1,
+      "message": "There is no migration: unserialize() only falls back to the compiled default (auto) when the key is missing or unparsable. A stored 1280x720 - explicit or legacy - is preserved as-is (this is covered by the video_preferences unit test in the tests change).",
+      "parentUuid": "bcaa251d_8e2f2225",
       "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
