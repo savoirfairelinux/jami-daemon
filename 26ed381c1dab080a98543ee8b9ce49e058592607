@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "89c72137_740dc80c",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 655,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:30:49Z",
+      "side": 1,
+      "message": "Done: dimensions are validated (width/height \u003c\u003d 0 returns early) before computing newPixels with per-operand unsigned casts, consistent with the seeding sites.",
+      "parentUuid": "be621e29_76a41cb2",
+      "revId": "26ed381c1dab080a98543ee8b9ce49e058592607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c097c966_5a1114df",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:30:49Z",
+      "side": 1,
+      "message": "Done: sentSurfacePixels_ is now unsigned and both assignment sites use per-operand unsigned casts.",
+      "parentUuid": "72e334c3_93ea282b",
+      "revId": "26ed381c1dab080a98543ee8b9ce49e058592607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
