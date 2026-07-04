@@ -665,6 +665,18 @@ public:
         return libjami::getConversationMembers(accountId, conversationId);
     }
 
+    std::vector<std::map<std::string, std::string>> getConversationConnectivity(const std::string& accountId,
+                                                                                const std::string& conversationId)
+    {
+        return libjami::getConversationConnectivity(accountId, conversationId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getConversationTrackedMembers(const std::string& accountId,
+                                                                                  const std::string& conversationId)
+    {
+        return libjami::getConversationTrackedMembers(accountId, conversationId);
+    }
+
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
