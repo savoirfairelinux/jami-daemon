@@ -26,6 +26,9 @@
 #include <chrono>
 #include <memory>
 #include <shared_mutex>
+#include <atomic>
+#include <utility>
+#include <vector>
 
 namespace jami {
 namespace video {
@@ -50,19 +53,58 @@ struct SourceInfo
     std::string streamId;
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
+using OnFormatChangedCb = std::function<void(int width, int height, int frameRate)>;
 
 enum class Layout : uint8_t { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 
 class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {
 public:
+    /**
+     * Format of a mixer input, as seen by the dynamic-format policy.
+     */
+    struct SourceSpec
+    {
+        int width;
+        int height;
+        int frameRate;
+        bool active; ///< matches the mixer active stream
+    };
+
     VideoMixer(const std::string& id, const std::string& localInput = {}, bool attachHost = false);
     ~VideoMixer();
 
     void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
 
+    /**
+     * Let the mixer adapt its composition surface and frame rate to its
+     * sources (shrink-to-fit), within the given caps.
+     *
+     * @param baseCap   Surface never exceeded by the grid layouts
+     * @param bigCap    Surface allowed for active-source layouts with at most
+     *                  MAX_BIG_CAP_SOURCES sources (e.g. a 4K screen share)
+     * @param maxFrameRate  Upper bound for the source-following frame rate
+     */
+    void enableDynamicFormat(std::pair<int, int> baseCap, std::pair<int, int> bigCap, int maxFrameRate);
+    void setOnFormatChanged(OnFormatChangedCb&& cb) { onFormatChanged_ = std::move(cb); }
+
+    /**
+     * Compute the composition surface for the given sources (pure policy).
+     * Returns {0, 0} when no source provides a usable resolution.
+     */
+    static std::pair<int, int> computeTargetSurface(Layout layout,
+                                                    const std::vector<SourceSpec>& sources,
+                                                    std::pair<int, int> baseCap,
+                                                    std::pair<int, int> bigCap);
+
+    /**
+     * Frame rate following the fastest source, in [MIXER_FRAMERATE, maxFrameRate].
+     */
+    static int computeTargetFrameRate(const std::vector<SourceSpec>& sources, int maxFrameRate);
+
     int getWidth() const override;
     int getHeight() const override;
+    int getFrameRate() const;
     AVPixelFormat getPixelFormat() const override;
 
     // as VideoFramePassiveReader
@@ -161,6 +203,12 @@ private:
 
     void process();
 
+    /**
+     * Periodically evaluate the dynamic format and apply it (with hysteresis)
+     * from the process loop. Returns true when the surface was resized.
+     */
+    void checkDynamicFormat();
+
     const std::string id_;
     int width_ = 0;
     int height_ = 0;
@@ -191,6 +239,16 @@ private:
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
+
+    // Dynamic (source-following) format state, owned by the process loop.
+    std::atomic_bool dynamicFormat_ {false};
+    std::pair<int, int> baseCap_ {0, 0};
+    std::pair<int, int> bigCap_ {0, 0};
+    int maxFrameRate_ {0};
+    int frameRate_;
+    std::chrono::steady_clock::time_point nextFormatCheck_ {};
+    std::chrono::steady_clock::time_point lastFormatChange_ {};
+    OnFormatChangedCb onFormatChanged_ {};
 
     int64_t startTime_;
     int64_t lastTimestamp_;
