@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "992b5f82_4d03035d",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 912,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T23:03:07Z",
+      "side": 1,
+      "message": "[warning] Line 912: The text-change signal exposes `index` and `deleteLen` as signed 32-bit integers, while the corresponding edit API uses unsigned values. This makes the D-Bus contract inconsistent and can deliver negative positions/lengths to clients or truncate unsigned callback values depending on the generated binding. Please use the same unsigned signature as `editCollaborativeDocument`.\n```suggestion\n            \u003carg type\u003d\"u\" name\u003d\"index\"/\u003e\n            \u003carg type\u003d\"u\" name\u003d\"deleteLen\"/\u003e\n```",
+      "revId": "fe0edbec668f870dfde301a7d2b8c9ddcf11c3ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
