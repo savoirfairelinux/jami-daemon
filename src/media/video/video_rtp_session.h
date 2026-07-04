@@ -94,6 +94,13 @@ public:
     void enterConference(Conference& conference);
     void exitConference();
 
+    /**
+     * The conference mixer surface or frame rate changed: rescale the
+     * bitrate budget with the new surface and restart the sender when the
+     * frame rate changed (the encoder follows size changes on its own).
+     */
+    void conferenceFormatChanged();
+
     void setChangeOrientationCallback(std::function<void(int)> cb);
     void initRecorder() override;
     void deinitRecorder() override;
@@ -132,6 +139,10 @@ private:
     // Mixer surface (in pixels) the budget was seeded with; a mixer
     // resolution change triggers a re-seed.
     unsigned confSeededPixels_ {0};
+    // Composition format the sender was last started with, to detect mixer
+    // dynamic-format changes.
+    unsigned sentSurfacePixels_ {0};
+    int sentFrameRate_ {0};
 
     std::function<void(void)> requestKeyFrameCallback_;
 
