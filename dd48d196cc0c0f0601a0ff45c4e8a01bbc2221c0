@@ -3,6 +3,60 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ad70a9c7_704e93e2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:59:31Z",
+      "side": 1,
+      "message": "You are right that the average bitrate of screen content is lower (static, low entropy): the encoder undershoots the budget massively while nothing moves. What these factors raise is the rate-control cap, which only matters on transients (scroll, window switch, page change): with the camera-sized cap, small text after a transition smears and takes a long time to become legible at 4:2:0. Camera video spends close to its budget continuously, screen capture is bursty: high peak on change, near-zero average. So the higher cap improves transition legibility without raising the average much, and RTCP adaptation still brings it down when the link cannot sustain it. Happy to drop it if you prefer to handle this differently (e.g. tuning the encoder for screen content instead).",
+      "parentUuid": "941fce98_df946541",
+      "revId": "dd48d196cc0c0f0601a0ff45c4e8a01bbc2221c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b45239cf_12ef05d0",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:59:31Z",
+      "side": 1,
+      "message": "Done in PS6: the conference branch is seeded once again (guarded by confBitrateSeeded_), so an SDP renegotiation no longer overwrites the RTCP-adapted budget. Surface changes are handled by conferenceFormatChanged() which rescales proportionally.",
+      "parentUuid": "dfef5666_a6286e2c",
+      "revId": "dd48d196cc0c0f0601a0ff45c4e8a01bbc2221c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee1b5a64_879c0a93",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:59:31Z",
+      "side": 1,
+      "message": "Done in PS6: operands are cast to unsigned before the multiplication and a positive-size guard prevents a 0x0 stream from marking the budget as seeded.",
+      "parentUuid": "88affef5_3661a6af",
+      "revId": "dd48d196cc0c0f0601a0ff45c4e8a01bbc2221c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cf94cd0e_7b130316",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 6
@@ -14,6 +68,24 @@
       "writtenOn": "2026-07-04T01:58:12Z",
       "side": 1,
       "message": "[warning] Line 656: conferenceFormatChanged() is added but this patchset does not wire it to any mixer/conference format-change notification, so the new rescale/restart path is currently dead code and conference dynamic-format changes will keep using the old bitrate/sender state. Please hook this method from the code path that changes the mixer composition format, e.g. when the conference mixer updates its output stream format:\n```suggestion\n// When the conference mixer output format changes:\nfor (auto\u0026 session : participantVideoSessions)\n    session-\u003econferenceFormatChanged();\n```",
+      "revId": "dd48d196cc0c0f0601a0ff45c4e8a01bbc2221c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b219ed46_b48419eb",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 656,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T01:59:31Z",
+      "side": 1,
+      "message": "The wiring lives in the child change of this series (34676, conference: size the mixer surface adaptively): VideoMixer::setOnFormatChanged -\u003e Conference::onMixerFormatChanged() iterates the calls\u0027 video RTP sessions and calls conferenceFormatChanged(). This change only introduces the RTP-side mechanism so each change stays buildable and focused.",
+      "parentUuid": "cf94cd0e_7b130316",
       "revId": "dd48d196cc0c0f0601a0ff45c4e8a01bbc2221c0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
