@@ -3238,6 +3238,7 @@ SIPCall::createSinks(ConfInfo& infos)
 std::vector<std::shared_ptr<RtpSession>>
 SIPCall::getRtpSessionList(MediaType type) const
 {
+    std::lock_guard lk {callMutex_};
     std::vector<std::shared_ptr<RtpSession>> rtpList;
     rtpList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_) {
