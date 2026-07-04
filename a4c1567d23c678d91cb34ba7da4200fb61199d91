@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23877a70_79740c40",
+        "filename": "contrib/src/opendht/0001-value-serialize-pushType-in-JSON.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T16:17:11Z",
+      "side": 1,
+      "message": "[warning] Line 37: The new JSON parser path calls `asString()` whenever `pt` is present, but this JSON is client-controlled. If a malformed value such as an array/object is provided, JsonCpp can throw/assert instead of rejecting only that field. Please validate the type before reading it, matching the defensive handling used for other optional JSON data.\n\n```suggestion\n+    if (val.isMember(VALUE_KEY_PUSHTYPE)) {\n+        const auto\u0026 pt \u003d val[VALUE_KEY_PUSHTYPE];\n+        if (pt.isString())\n+            pushType \u003d pt.asString();\n+    }\n+\n```",
+      "revId": "a4c1567d23c678d91cb34ba7da4200fb61199d91",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
