@@ -3238,6 +3238,10 @@ SIPCall::createSinks(ConfInfo& infos)
 std::vector<std::shared_ptr<RtpSession>>
 SIPCall::getRtpSessionList(MediaType type) const
 {
+    // rtpStreams_ is mutated under callMutex_ (media renegotiation): hold it
+    // while copying the shared_ptrs so callers on other threads (e.g. the
+    // conference following mixer format changes) get stable references.
+    std::lock_guard lk {callMutex_};
     std::vector<std::shared_ptr<RtpSession>> rtpList;
     rtpList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_) {
