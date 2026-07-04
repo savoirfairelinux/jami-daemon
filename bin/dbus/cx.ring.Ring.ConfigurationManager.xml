@@ -813,6 +813,173 @@
             </arg>
         </signal>
 
+        <method name="createCollaborativeDocument" tp:name-for-bindings="createCollaborativeDocument">
+            <tp:docstring>
+               Create a collaborative document in a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+            <arg type="s" name="kind" direction="in"/>
+            <arg type="s" name="documentId" direction="out"/>
+        </method>
+
+        <method name="openCollaborativeDocument" tp:name-for-bindings="openCollaborativeDocument">
+            <tp:docstring>
+               Open a collaborative document and start receiving its updates
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="content" direction="out"/>
+        </method>
+
+        <method name="closeCollaborativeDocument" tp:name-for-bindings="closeCollaborativeDocument">
+            <tp:docstring>
+               Close a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+        </method>
+
+        <method name="editCollaborativeDocument" tp:name-for-bindings="editCollaborativeDocument">
+            <tp:docstring>
+               Apply a local edit to a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="u" name="index" direction="in"/>
+            <arg type="u" name="deleteLen" direction="in"/>
+            <arg type="s" name="insert" direction="in"/>
+        </method>
+
+        <method name="setCollaborativeCursor" tp:name-for-bindings="setCollaborativeCursor">
+            <tp:docstring>
+               Share the local cursor position in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="i" name="position" direction="in"/>
+            <arg type="i" name="anchor" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentText" tp:name-for-bindings="collaborativeDocumentText">
+            <tp:docstring>
+               Get the current text of a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="text" direction="out"/>
+        </method>
+
+        <method name="setCollaborativeDocumentName" tp:name-for-bindings="setCollaborativeDocumentName">
+            <tp:docstring>
+               Rename a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentName" tp:name-for-bindings="collaborativeDocumentName">
+            <tp:docstring>
+               Get the name of a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="out"/>
+        </method>
+
+        <method name="applyCollaborativeDelta" tp:name-for-bindings="applyCollaborativeDelta">
+            <tp:docstring>
+               Apply a rich-content delta (JSON) to a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="deltaJson" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentContentDelta" tp:name-for-bindings="collaborativeDocumentContentDelta">
+            <tp:docstring>
+               Get the full rich content of a collaborative document as a delta (JSON)
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="deltaJson" direction="out"/>
+        </method>
+
+        <method name="getCollaborativeDocuments" tp:name-for-bindings="getCollaborativeDocuments">
+            <tp:docstring>
+               List the collaborative documents of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="documents" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <signal name="collaborativeDocumentChanged" tp:name-for-bindings="collaborativeDocumentChanged">
+            <tp:docstring>
+               Notify clients that a collaborative document received a remote text change
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="i" name="index"/>
+            <arg type="i" name="deleteLen"/>
+            <arg type="s" name="insert"/>
+        </signal>
+
+        <signal name="collaborativeCursorChanged" tp:name-for-bindings="collaborativeCursorChanged">
+            <tp:docstring>
+               Notify clients that a peer moved its cursor in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+            <arg type="i" name="position"/>
+            <arg type="i" name="anchor"/>
+        </signal>
+
+        <signal name="collaborativeParticipantLeft" tp:name-for-bindings="collaborativeParticipantLeft">
+            <tp:docstring>
+               Notify clients that a peer left a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+        </signal>
+
+        <signal name="collaborativeDocumentRenamed" tp:name-for-bindings="collaborativeDocumentRenamed">
+            <tp:docstring>
+               Notify clients that a collaborative document was renamed
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="name"/>
+        </signal>
+
+        <signal name="collaborativeDocumentDelta" tp:name-for-bindings="collaborativeDocumentDelta">
+            <tp:docstring>
+               Notify clients that a collaborative document received a remote rich-content delta (JSON)
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="deltaJson"/>
+        </signal>
+
         <method name="setVolume" tp:name-for-bindings="setVolume">
             <tp:docstring>
                 <p>Sets the volume using a linear scale [0,100].</p>
@@ -1951,6 +2118,7 @@
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
         </method>
+
 
         <method name="sendMessage" tp:name-for-bindings="sendMessage">
             <tp:added version="13.6.0"/>

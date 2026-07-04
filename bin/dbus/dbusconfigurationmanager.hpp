@@ -664,6 +664,90 @@ public:
         return libjami::getConversationMembers(accountId, conversationId);
     }
 
+    std::string createCollaborativeDocument(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& name,
+                                            const std::string& kind)
+    {
+        return libjami::createCollaborativeDocument(accountId, conversationId, name, kind);
+    }
+
+    std::string openCollaborativeDocument(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::string& documentId)
+    {
+        return libjami::openCollaborativeDocument(accountId, conversationId, documentId);
+    }
+
+    void closeCollaborativeDocument(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& documentId)
+    {
+        libjami::closeCollaborativeDocument(accountId, conversationId, documentId);
+    }
+
+    void editCollaborativeDocument(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& documentId,
+                                   const uint32_t& index,
+                                   const uint32_t& deleteLen,
+                                   const std::string& insert)
+    {
+        libjami::editCollaborativeDocument(accountId, conversationId, documentId, index, deleteLen, insert);
+    }
+
+    void setCollaborativeCursor(const std::string& accountId,
+                                const std::string& conversationId,
+                                const std::string& documentId,
+                                const int32_t& position,
+                                const int32_t& anchor)
+    {
+        libjami::setCollaborativeCursor(accountId, conversationId, documentId, position, anchor);
+    }
+
+    std::string collaborativeDocumentText(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::string& documentId)
+    {
+        return libjami::collaborativeDocumentText(accountId, conversationId, documentId);
+    }
+
+    void setCollaborativeDocumentName(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::string& documentId,
+                                      const std::string& name)
+    {
+        libjami::setCollaborativeDocumentName(accountId, conversationId, documentId, name);
+    }
+
+    std::string collaborativeDocumentName(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::string& documentId)
+    {
+        return libjami::collaborativeDocumentName(accountId, conversationId, documentId);
+    }
+
+    void applyCollaborativeDelta(const std::string& accountId,
+                                 const std::string& conversationId,
+                                 const std::string& documentId,
+                                 const std::string& deltaJson)
+    {
+        libjami::applyCollaborativeDelta(accountId, conversationId, documentId, deltaJson);
+    }
+
+    std::string collaborativeDocumentContentDelta(const std::string& accountId,
+                                                  const std::string& conversationId,
+                                                  const std::string& documentId)
+    {
+        return libjami::collaborativeDocumentContentDelta(accountId, conversationId, documentId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId,
+                                                                              const std::string& conversationId)
+    {
+        return libjami::getCollaborativeDocuments(accountId, conversationId);
+    }
+
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
@@ -784,6 +868,16 @@ private:
                 std::bind(&DBusConfigurationManager::emitActiveCallsChanged, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ComposingStatusChanged>(
                 std::bind(&DBusConfigurationManager::emitComposingStatusChanged, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentChanged>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentChanged, this, _1, _2, _3, _4, _5, _6)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeCursorChanged>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeCursorChanged, this, _1, _2, _3, _4, _5, _6)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeParticipantLeft>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeParticipantLeft, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentRenamed>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRenamed, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentDelta>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentDelta, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
                 std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ContactAdded>(
