@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dfef5666_a6286e2c",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T01:34:51Z",
+      "side": 1,
+      "message": "[error] Line 101: This now unconditionally rewrites the conference codec bitrate on every updateMedia() call. That regresses the seed-once behavior discussed earlier: an SDP renegotiation while in conference can overwrite the RTCP-adapted bitrate budget even when the mixer surface has not changed. Keep the conference branch guarded by the seeded surface state, and only apply the display/capture sizing to the non-mixer case.\n```suggestion\n        if (videoMixer_) {\n            const auto pixels \u003d static_cast\u003cunsigned\u003e(videoMixer_-\u003egetWidth())\n                                * static_cast\u003cunsigned\u003e(videoMixer_-\u003egetHeight());\n            if (pixels \u003e 0 and not confBitrateSeeded_) {\n                codecVideo-\u003ebitrate \u003d std::max((unsigned int) (pixels * 0.001),\n                                               SystemCodecInfo::DEFAULT_VIDEO_BITRATE);\n                codecVideo-\u003emaxBitrate \u003d std::max((unsigned int) (pixels * 0.0015),\n                                                  SystemCodecInfo::DEFAULT_MAX_BITRATE);\n                confBitrateSeeded_ \u003d true;\n            }\n        } else {\n            const auto pixels \u003d localVideoParams_.height * localVideoParams_.width;\n            const bool isDisplay \u003d input_.rfind(\"display://\", 0) \u003d\u003d 0;\n            const double rateFactor \u003d isDisplay ? 0.002 : 0.001;\n            const double maxRateFactor \u003d isDisplay ? 0.003 : 0.0015;\n            codecVideo-\u003ebitrate \u003d std::max((unsigned int) (pixels * rateFactor),\n                                           SystemCodecInfo::DEFAULT_VIDEO_BITRATE);\n            codecVideo-\u003emaxBitrate \u003d std::max((unsigned int) (pixels * maxRateFactor),\n                                              SystemCodecInfo::DEFAULT_MAX_BITRATE);\n        }\n```",
+      "revId": "3d8f4f4d8e20df203ff5c38242d2e113154bc9f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88affef5_3661a6af",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T01:34:51Z",
+      "side": 1,
+      "message": "[warning] Line 214: The multiplication happens before the cast to unsigned, so large mixer dimensions can overflow signed int first. This reintroduces the issue fixed in the previous patchset. Cast each operand before multiplying, and preferably keep the positive-size guard so a 0x0 mixer stream does not mark the conference budget as seeded.\n```suggestion\n                    const auto pixels \u003d static_cast\u003cunsigned\u003e(ms.width) * static_cast\u003cunsigned\u003e(ms.height);\n                    if (pixels \u003d\u003d 0)\n                        return;\n```",
+      "revId": "3d8f4f4d8e20df203ff5c38242d2e113154bc9f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
