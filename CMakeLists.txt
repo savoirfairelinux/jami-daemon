@@ -892,6 +892,9 @@ else()
     if (JAMI_DBUS)
         find_program(DBusXml2Cpp sdbus-c++-xml2cpp REQUIRED)
         pkg_search_module (DBusCpp REQUIRED IMPORTED_TARGET sdbus-c++)
+        # SHM video sinks are the rendering channel for out-of-process (D-Bus)
+        # clients (mirrors the meson option: ENABLE_SHM when dbus is enabled).
+        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SHM)
         configure_file(
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/net.jami.daemon.service.in
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service
@@ -935,6 +938,13 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+        target_compile_definitions(jamid PRIVATE ENABLE_SHM)
+        if (JAMI_VIDEO)
+            target_compile_definitions(jamid PRIVATE ENABLE_VIDEO)
+        endif()
+        if (JAMI_PLUGIN)
+            target_compile_definitions(jamid PRIVATE ENABLE_PLUGIN)
+        endif()
         install (TARGETS jamid DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 
         # Install service file
