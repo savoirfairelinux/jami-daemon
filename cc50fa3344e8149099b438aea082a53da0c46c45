@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1b784ec_b242bae7",
+        "filename": "test/unitTest/media/video/test_video_scaler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:12:24Z",
+      "side": 1,
+      "message": "scale() returns void, so asserting a return value is not possible. The test instead fills the input plane with a known luma (0xAB), zeroes the output plane before each call, and asserts the output pixels carry that luma afterwards (CPPUNIT_ASSERT_EQUAL(int(LUMA), int(out-\u003edata[0][0]))): if scaling did nothing the plane stays zero and the assertion fails, so the cached-context switch is actually exercised.",
+      "parentUuid": "15f30b3d_42794755",
+      "revId": "cc50fa3344e8149099b438aea082a53da0c46c45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0383d8b_3565aa3a",
+        "filename": "test/unitTest/media/video/test_video_scaler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:12:24Z",
+      "side": 1,
+      "message": "Same as above: scale_and_pad() returns void; the zero-fill + luma assertion after the call covers the failure case.",
+      "parentUuid": "0c26ccf6_3d4ad304",
+      "revId": "cc50fa3344e8149099b438aea082a53da0c46c45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
