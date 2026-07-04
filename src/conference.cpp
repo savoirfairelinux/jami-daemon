@@ -27,6 +27,9 @@
 #ifdef ENABLE_VIDEO
 #include "call.h"
 #include "video/video_mixer.h"
+#ifdef ENABLE_HWACCEL
+#include "video/accel.h"
+#endif
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -42,6 +45,8 @@
 #include "json_utils.h"
 
 #include <opendht/thread_pool.h>
+
+#include <thread>
 
 using namespace std::literals;
 
@@ -66,6 +71,44 @@ Conference::Conference(const std::shared_ptr<Account>& account, const std::strin
 }
 
 #ifdef ENABLE_VIDEO
+namespace {
+
+/**
+ * Whether a hardware H.264 encoder is believed usable on this host.
+ */
+bool
+hasUsableHwEncoder()
+{
+#ifdef ENABLE_HWACCEL
+    return jami::Manager::instance().videoPreferences.getEncodingAccelerated()
+           and video::HardwareAccel::isEncoderAvailable(AV_CODEC_ID_H264, 2560, 1440);
+#else
+    return false;
+#endif
+}
+
+/**
+ * Choose the initial conference composition surface.
+ *
+ * The mixer output is software-encoded once per participant when no hardware
+ * encoder is available, so the surface must stay in line with what the host
+ * can actually sustain:
+ * - hardware H.264 encoder believed usable -> 2560x1440
+ * - software encoding on 8+ hardware threads -> 1920x1080
+ * - otherwise -> 1280x720
+ */
+std::pair<int, int>
+chooseConferenceResolution()
+{
+    if (hasUsableHwEncoder())
+        return {2560, 1440};
+    if (std::thread::hardware_concurrency() >= 8)
+        return {1920, 1080};
+    return {1280, 720};
+}
+
+} // namespace
+
 void
 Conference::setupVideoMixer()
 {
@@ -77,16 +120,56 @@ Conference::setupVideoMixer()
         });
     });
 
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
-    if (conf_res.size() == 2u) {
-#if defined(__APPLE__) && TARGET_OS_MAC
-        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]), AV_PIX_FMT_NV12);
-#else
-        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]));
-#endif
+    // "auto" (the default) sizes the surface from the host capabilities; an
+    // explicit "WxH" preference remains a manual override and pins the format.
+    const auto& resolutionPref = jami::Manager::instance().videoPreferences.getConferenceResolution();
+    std::pair<int, int> conf_res;
+    bool dynamicFormat = false;
+    auto res = split_string_to_unsigned(resolutionPref, 'x');
+    if (res.size() == 2u and res[0] > 0 and res[1] > 0) {
+        conf_res = {static_cast<int>(res[0]), static_cast<int>(res[1])};
     } else {
-        JAMI_ERROR("[conf:{}] Conference resolution is invalid", id_);
+        if (resolutionPref != "auto")
+            JAMI_WARNING("[conf:{}] Invalid conference resolution '{}', using auto", id_, resolutionPref);
+        conf_res = chooseConferenceResolution();
+        dynamicFormat = true;
     }
+    JAMI_LOG("[conf:{}] Video mixer surface: {}x{}", id_, conf_res.first, conf_res.second);
+#if defined(__APPLE__) && TARGET_OS_MAC
+    videoMixer_->setParameters(conf_res.first, conf_res.second, AV_PIX_FMT_NV12);
+#else
+    videoMixer_->setParameters(conf_res.first, conf_res.second);
+#endif
+    if (dynamicFormat) {
+        // Let the surface follow the sources (shrink-to-fit) under the tier
+        // cap. With a hardware encoder, a promoted 4K source (typically a
+        // screen share) may raise it up to 2160p, and the frame rate may
+        // follow the fastest source up to 60 fps.
+        const bool hwEncoder = hasUsableHwEncoder();
+        const auto bigCap = hwEncoder ? std::pair<int, int> {3840, 2160} : conf_res;
+        const int maxFps = hwEncoder ? 60 : 30;
+        videoMixer_->setOnFormatChanged([this](int width, int height, int frameRate) {
+            // Called from the mixer loop: defer, and only resolve weak()
+            // once the conference is owned by a shared_ptr (never in the
+            // constructor, where shared_from_this() is not available yet).
+            runOnMainThread([w = weak(), width, height, frameRate]() {
+                if (auto shared = w.lock())
+                    shared->onMixerFormatChanged(width, height, frameRate);
+            });
+        });
+        videoMixer_->enableDynamicFormat(conf_res, bigCap, maxFps);
+    }
+}
+
+void
+Conference::onMixerFormatChanged(int width, int height, int frameRate)
+{
+    JAMI_LOG("[conf:{}] Mixer format changed to {}x{}@{}, updating senders", id_, width, height, frameRate);
+    foreachCall([&](const auto& call) {
+        if (auto sipCall = std::dynamic_pointer_cast<SIPCall>(call))
+            for (const auto& videoRtp : sipCall->getRtpSessionList(MediaType::MEDIA_VIDEO))
+                std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->conferenceFormatChanged();
+    });
 }
 
 void

@@ -510,6 +510,12 @@ private:
     void setupVideoMixer();
 
     /**
+     * Callback for when the mixer dynamic format (surface or frame rate)
+     * changed: senders must follow the new composition format.
+     */
+    void onMixerFormatChanged(int width, int height, int frameRate);
+
+    /**
      * Callback for when video sources are updated.
      * @param infos The updated source information
      */
