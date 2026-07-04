@@ -1,0 +1,53 @@
+From 98a81e52a3d68da06c0c70fb65d1304a749074e7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cyrille=20B=C3=A9raud?=
+ <cyrille.beraud@savoirfairelinux.com>
+Date: Sat, 4 Jul 2026 11:35:59 -0400
+Subject: [PATCH] value: serialize pushType in JSON
+
+The pushType field (593e59e0) lets the DHT proxy server tag push
+notifications with the connection type ("pt" in the FCM payload), so
+mobile clients can tell incoming calls apart from background noise.
+
+It was only serialized in msgpack. Clients using DhtProxyClient
+send their puts as JSON (Value::toJson()), where the field was
+silently dropped, and the proxy server parsed the incoming JSON with
+Value(const Json::Value&), which never read it back. As a result any
+value put through a proxy (e.g. a call request from a mobile device)
+reached the recipient's device with an empty "pt", was classified as
+noise, and did not wake up the callee: calls from proxied devices
+never rang, while the same call from a full DHT node (desktop) did.
+
+Serialize pushType as "pt" in Value::toJson() when set, and parse it
+back in the JSON constructor, mirroring the msgpack behavior.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/value.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/value.cpp b/src/value.cpp
+index 9a088515..182635d2 100644
+--- a/src/value.cpp
++++ b/src/value.cpp
+@@ -202,6 +202,9 @@ Value::Value(const Json::Value& json)
+     const auto& jprio = json["prio"];
+     if (jprio.isIntegral())
+         priority = jprio.asUInt();
++    const auto& jpt = json[VALUE_KEY_PUSHTYPE];
++    if (jpt.isString())
++        pushType = jpt.asString();
+ }
+ 
+ Json::Value
+@@ -228,6 +231,8 @@ Value::toJson() const
+     }
+     if (priority)
+         val["prio"] = priority;
++    if (not pushType.empty())
++        val[VALUE_KEY_PUSHTYPE] = pushType;
+     return val;
+ }
+ 
+-- 
+2.53.0
+

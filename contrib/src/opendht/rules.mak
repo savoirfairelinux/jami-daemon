@@ -25,6 +25,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/0001-value-serialize-pushType-in-JSON.patch
 	$(MOVE)
 
 CMAKE_PKGS += opendht
