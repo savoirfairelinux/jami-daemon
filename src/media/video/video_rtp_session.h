@@ -94,6 +94,13 @@ public:
     void enterConference(Conference& conference);
     void exitConference();
 
+    /**
+     * The conference mixer surface or frame rate changed: rescale the
+     * bitrate budget with the new surface and restart the sender when the
+     * frame rate changed (the encoder follows size changes on its own).
+     */
+    void conferenceFormatChanged();
+
     void setChangeOrientationCallback(std::function<void(int)> cb);
     void initRecorder() override;
     void deinitRecorder() override;
@@ -126,6 +133,13 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
+    // Whether the encoder bitrate was already sized from the mixer surface for
+    // the current conference (seed once, then let RTCP adaptation drive it).
+    bool confBitrateSeeded_ {false};
+    // Composition format the sender was last started with, to detect mixer
+    // dynamic-format changes.
+    unsigned sentSurfacePixels_ {0};
+    int sentFrameRate_ {0};
 
     std::function<void(void)> requestKeyFrameCallback_;
 
