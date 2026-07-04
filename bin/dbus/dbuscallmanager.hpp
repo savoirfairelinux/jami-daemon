@@ -83,6 +83,15 @@ public:
         return libjami::hangUp(accountId, callId);
     }
 
+    bool end(const std::string& accountId, const std::string& callId) { return libjami::hangUp(accountId, callId); }
+
+    bool endConference(const std::string& accountId, const std::string& confId)
+    {
+        return libjami::hangUpConference(accountId, confId);
+    }
+
+    bool decline(const std::string& accountId, const std::string& callId) { return libjami::refuse(accountId, callId); }
+
     auto hold(const std::string& accountId, const std::string& callId) -> decltype(libjami::hold(accountId, callId))
     {
         return libjami::hold(accountId, callId);
@@ -336,6 +345,14 @@ public:
                            const std::string& confId,
                            const std::string& peerId,
                            const std::string& deviceId)
+    {
+        libjami::hangupParticipant(accountId, confId, peerId, deviceId);
+    }
+
+    void disconnectParticipant(const std::string& accountId,
+                               const std::string& confId,
+                               const std::string& peerId,
+                               const std::string& deviceId)
     {
         libjami::hangupParticipant(accountId, confId, peerId, deviceId);
     }

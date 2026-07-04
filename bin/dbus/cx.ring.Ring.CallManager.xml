@@ -154,6 +154,33 @@
             <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
+        <method name="end" tp:name-for-bindings="end">
+            <tp:docstring>
+              End a call (alias of hangUp).
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in"/>
+            <arg type="b" name="endSucceeded" direction="out"/>
+        </method>
+
+        <method name="endConference" tp:name-for-bindings="endConference">
+            <tp:docstring>
+              End a conference (alias of hangUpConference).
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="b" name="endSucceeded" direction="out"/>
+        </method>
+
+        <method name="decline" tp:name-for-bindings="decline">
+            <tp:docstring>
+              Decline an incoming call (alias of refuse).
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in"/>
+            <arg type="b" name="declineSucceeded" direction="out"/>
+        </method>
+
         <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
@@ -388,6 +415,16 @@
 
         <method name="hangupParticipant" tp:name-for-bindings="hangupParticipant">
             <tp:added version="11.0.0"/>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
+            <arg type="s" name="deviceId" direction="in"/>
+        </method>
+
+        <method name="disconnectParticipant" tp:name-for-bindings="disconnectParticipant">
+            <tp:docstring>
+              Disconnect a participant from a conference (alias of hangupParticipant).
+            </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confId" direction="in"/>
             <arg type="s" name="peerId" direction="in"/>
