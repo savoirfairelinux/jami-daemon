@@ -36,6 +36,7 @@
 
 #include <string>
 #include <chrono>
+#include <algorithm>
 
 namespace jami {
 namespace video {
@@ -93,8 +94,8 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
             // In a conference the sent stream is the mixer composite: size the
             // budget from the mixer surface. Seed once per mixer resolution
             // (same rule as startSender()) so an SDP renegotiation does not
-            // undo RTCP-driven adaptation; storeVideoBitrateInfo() keeps
-            // codecVideo->bitrate in sync with the adapted value meanwhile.
+            // undo RTCP-driven adaptation; conferenceFormatChanged() rescales
+            // it when the composition format changes.
             const auto pixels = static_cast<unsigned>(videoMixer_->getWidth())
                                 * static_cast<unsigned>(videoMixer_->getHeight());
             if (pixels > 0 and (not confBitrateSeeded_ or pixels != confSeededPixels_)) {
@@ -106,8 +107,14 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
             }
         } else {
             const auto pixels = localVideoParams_.height * localVideoParams_.width;
-            codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-            codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+            // Screen content (text, UI) needs roughly twice the bitrate of
+            // camera video at the same resolution to stay legible.
+            const bool isDisplay = input_.rfind("display://", 0) == 0;
+            const double rateFactor = isDisplay ? 0.002 : 0.001;
+            const double maxRateFactor = isDisplay ? 0.003 : 0.0015;
+            codecVideo->bitrate = std::max((unsigned int) (pixels * rateFactor), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+            codecVideo->maxBitrate = std::max((unsigned int) (pixels * maxRateFactor),
+                                              SystemCodecInfo::DEFAULT_MAX_BITRATE);
         }
     }
     setupVideoBitrateInfo();
@@ -229,6 +236,8 @@ VideoRtpSession::startSender()
                 }
                 send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
                 ms.bitrate = static_cast<int>(send_.bitrate);
+                sentSurfacePixels_ = pixels;
+                sentFrameRate_ = static_cast<int>(ms.frameRate.real());
             }
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
@@ -644,6 +653,62 @@ VideoRtpSession::exitConference()
     conference_ = nullptr;
     confBitrateSeeded_ = false;
     confSeededPixels_ = 0;
+}
+
+void
+VideoRtpSession::conferenceFormatChanged()
+{
+    std::lock_guard lock(mutex_);
+
+    if (not conference_ or not videoMixer_ or not send_.enabled or send_.hold or not sender_)
+        return;
+
+    const auto ms = videoMixer_->getStream("Video Sender");
+    if (ms.width <= 0 or ms.height <= 0)
+        return;
+    const auto newPixels = static_cast<unsigned>(ms.width) * static_cast<unsigned>(ms.height);
+    const auto newFrameRate = static_cast<int>(ms.frameRate.real());
+    if (newPixels == sentSurfacePixels_ and newFrameRate == sentFrameRate_)
+        return;
+
+    // Rescale the bitrate budget with the surface, preserving the position
+    // reached by RTCP adaptation as a fraction of the allowed range. Mark the
+    // new surface as seeded so a later sender restart does not overwrite the
+    // preserved position with a fresh seed.
+    if (newPixels != sentSurfacePixels_ and videoBitrateInfo_.videoBitrateMax > 0) {
+        const double position = static_cast<double>(videoBitrateInfo_.videoBitrateCurrent)
+                                / videoBitrateInfo_.videoBitrateMax;
+        const auto newMax = std::max((unsigned int) (newPixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+        const auto newCurrent = std::clamp(static_cast<unsigned>(position * newMax),
+                                           videoBitrateInfo_.videoBitrateMin,
+                                           newMax);
+        videoBitrateInfo_.videoBitrateMax = newMax;
+        videoBitrateInfo_.videoBitrateCurrent = newCurrent;
+        confBitrateSeeded_ = true;
+        confSeededPixels_ = newPixels;
+        storeVideoBitrateInfo();
+    }
+
+    JAMI_LOG("[{}] Conference format changed ({} px @ {} -> {} px @ {}), bitrate {} kbit/s",
+             fmt::ptr(this),
+             sentSurfacePixels_,
+             sentFrameRate_,
+             newPixels,
+             newFrameRate,
+             videoBitrateInfo_.videoBitrateCurrent);
+
+    if (newFrameRate != sentFrameRate_) {
+        // The encoder time base is fixed at stream creation: follow frame
+        // rate changes with a full sender restart (it re-attaches to the
+        // mixer and re-reads the mixer stream format).
+        restartSender();
+    } else {
+        // The encoder follows surface changes on its own (stream reset on
+        // next frame); only the bitrate needs to be pushed.
+        sentSurfacePixels_ = newPixels;
+        if (sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent) == 0)
+            restartSender();
+    }
 }
 
 bool
