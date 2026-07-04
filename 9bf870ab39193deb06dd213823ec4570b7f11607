@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67ac31f8_45cdfeba",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 700,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T01:58:11Z",
+      "side": 1,
+      "message": "[warning] Line 700: Changing only `frameRate_` leaves `nextProcess_` anchored to the old schedule. When the mixer drops from 60 fps back to 30 fps, the next iteration still uses the accumulated 60 fps deadline, so the loop can run one immediate/near-immediate frame before settling; after repeated changes this can produce avoidable bursts. Reset the scheduler when applying a frame-rate change, similar to a discontinuity. ```suggestion\n    if (fpsChanged) {\n        frameRate_ \u003d targetFps;\n        nextProcess_ \u003d std::chrono::steady_clock::now();\n    }\n```",
+      "revId": "9bf870ab39193deb06dd213823ec4570b7f11607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
