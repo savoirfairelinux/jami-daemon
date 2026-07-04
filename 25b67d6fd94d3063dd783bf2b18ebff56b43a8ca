@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be621e29_76a41cb2",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 655,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T02:12:34Z",
+      "side": 1,
+      "message": "[warning] Line 655: newPixels is computed with signed int multiplication before any validity check, and sentSurfacePixels_ is also stored as int. This can overflow/UB for large or invalid mixer dimensions before the `\u003c\u003d 0` guard runs, and it also makes the comparison inconsistent with the unsigned pixel calculations used when seeding the bitrate. Use per-operand unsigned casts and store the tracked pixel count as unsigned. ```suggestion\nconst auto newPixels \u003d static_cast\u003cunsigned\u003e(ms.width) * static_cast\u003cunsigned\u003e(ms.height);\n```",
+      "revId": "25b67d6fd94d3063dd783bf2b18ebff56b43a8ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72e334c3_93ea282b",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-04T02:12:34Z",
+      "side": 1,
+      "message": "[warning] Line 140: sentSurfacePixels_ tracks an area in pixels but is declared as signed int, while the surrounding bitrate sizing code uses unsigned pixel counts. Keeping this signed forces signed multiplications at assignment/comparison sites and can overflow before invalid dimensions are filtered. Make this unsigned and update the corresponding local calculations in startSender()/conferenceFormatChanged() to cast each operand before multiplying. ```suggestion\nunsigned sentSurfacePixels_ {0};\n```",
+      "revId": "25b67d6fd94d3063dd783bf2b18ebff56b43a8ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
