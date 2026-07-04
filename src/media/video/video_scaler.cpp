@@ -175,5 +175,15 @@ VideoScaler::reset()
     }
 }
 
+void
+VideoScaler::setScalingAlgorithm(int algorithm)
+{
+    if (mode_ == algorithm)
+        return;
+    mode_ = algorithm;
+    // Drop the cached context so the new algorithm is used on next scale.
+    reset();
+}
+
 } // namespace video
 } // namespace jami
