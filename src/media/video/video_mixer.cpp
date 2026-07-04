@@ -31,6 +31,7 @@
 #include "connectivity/sip_utils.h"
 
 #include <cmath>
+#include <algorithm>
 #include <unistd.h>
 #include <mutex>
 
@@ -47,12 +48,17 @@ struct VideoMixer::VideoMixerSource
     int rotation {0};
     std::unique_ptr<MediaFilter> rotationFilter {nullptr};
     std::shared_ptr<VideoFrame> render_frame;
+    // Frames received since the last dynamic-format check, to measure the
+    // source frame rate.
+    std::atomic<unsigned> framesSinceCheck {0};
+    int measuredFps {0};
     void atomic_copy(const VideoFrame& other)
     {
         std::lock_guard lock(mutex_);
         auto newFrame = std::make_shared<VideoFrame>();
         newFrame->copyFrom(other);
         render_frame = newFrame;
+        framesSinceCheck.fetch_add(1, std::memory_order_relaxed);
     }
 
     std::shared_ptr<VideoFrame> getRenderFrame()
@@ -75,10 +81,84 @@ private:
 static constexpr const auto MIXER_FRAMERATE = 30;
 static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / MIXER_FRAMERATE);
 
+// Dynamic-format policy constants.
+static constexpr int MAX_CELL_WIDTH = 1280; // A composed grid cell never needs more than 720p
+static constexpr int MAX_CELL_HEIGHT = 720;
+static constexpr int MIN_SURFACE_WIDTH = 640;
+static constexpr int MIN_SURFACE_HEIGHT = 360;
+static constexpr size_t MAX_BIG_CAP_SOURCES = 3; // bigCap allowed only for small conferences
+static constexpr auto FORMAT_CHECK_PERIOD = std::chrono::seconds(2);
+static constexpr auto MIN_FORMAT_CHANGE_INTERVAL = std::chrono::seconds(5);
+static constexpr double GROW_AREA_RATIO = 1.25;
+static constexpr double SHRINK_AREA_RATIO = 0.8;
+
+static int
+alignDown16(int v)
+{
+    return v & ~15;
+}
+
+static std::pair<int, int>
+clampSurface(int w, int h, std::pair<int, int> cap)
+{
+    if (w > cap.first || h > cap.second) {
+        // Fit in the cap, keeping the aspect ratio.
+        const double ratio = std::min(static_cast<double>(cap.first) / w, static_cast<double>(cap.second) / h);
+        w = static_cast<int>(w * ratio);
+        h = static_cast<int>(h * ratio);
+    }
+    w = std::max(alignDown16(w), MIN_SURFACE_WIDTH);
+    h = std::max(alignDown16(h), MIN_SURFACE_HEIGHT);
+    return {w, h};
+}
+
+static const VideoMixer::SourceSpec*
+findActiveSource(const std::vector<VideoMixer::SourceSpec>& sources)
+{
+    for (const auto& s : sources)
+        if (s.active && s.width > 0 && s.height > 0)
+            return &s;
+    return nullptr;
+}
+
+// Largest cell any (optionally inactive-only) source can fill, up to 720p.
+static std::pair<int, int>
+largestCell(const std::vector<VideoMixer::SourceSpec>& sources, bool inactiveOnly)
+{
+    int cellW = 0, cellH = 0;
+    for (const auto& s : sources) {
+        if (inactiveOnly && s.active)
+            continue;
+        cellW = std::max(cellW, std::min(s.width, MAX_CELL_WIDTH));
+        cellH = std::max(cellH, std::min(s.height, MAX_CELL_HEIGHT));
+    }
+    return {cellW, cellH};
+}
+
+// In ONE_BIG_WITH_SMALL the top preview line stays usable: each preview only
+// gets a 1/zoom-th of the surface (see calc_position), so a promoted
+// low-definition source must not collapse the whole composite below what the
+// previews can fill. Previews alone never push the surface past the base cap.
+static std::pair<int, int>
+growForPreviews(std::pair<int, int> target,
+                const std::vector<VideoMixer::SourceSpec>& sources,
+                std::pair<int, int> baseCap)
+{
+    const int zoom = std::max(MIN_LINE_ZOOM, static_cast<int>(sources.size()));
+    const auto [cellW, cellH] = largestCell(sources, true);
+    if (cellW > 0 && cellH > 0) {
+        const auto previews = clampSurface(zoom * cellW, zoom * cellH, baseCap);
+        target.first = std::max(target.first, previews.first);
+        target.second = std::max(target.second, previews.second);
+    }
+    return target;
+}
+
 VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
+    , frameRate_(MIXER_FRAMERATE)
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Participant frames are mostly downscaled into their cell: area averaging
@@ -263,10 +343,14 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::share
 void
 VideoMixer::process()
 {
-    nextProcess_ += std::chrono::duration_cast<std::chrono::microseconds>(FRAME_DURATION);
+    nextProcess_ += std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::duration<double>(1. / frameRate_));
     const auto delay = nextProcess_ - std::chrono::steady_clock::now();
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
+
+    if (dynamicFormat_)
+        checkDynamicFormat();
 
     // Nothing to do.
     if (width_ == 0 or height_ == 0) {
@@ -394,7 +478,7 @@ VideoMixer::process()
 
     output.pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                              {1, AV_TIME_BASE},
-                                             {1, MIXER_FRAMERATE},
+                                             {1, frameRate_},
                                              static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
     lastTimestamp_ = output.pointer()->pts;
     publishFrame();
@@ -566,13 +650,22 @@ VideoMixer::stopSink()
 int
 VideoMixer::getWidth() const
 {
+    std::shared_lock lock(rwMutex_);
     return width_;
 }
 
 int
 VideoMixer::getHeight() const
 {
+    std::shared_lock lock(rwMutex_);
     return height_;
+}
+
+int
+VideoMixer::getFrameRate() const
+{
+    std::shared_lock lock(rwMutex_);
+    return frameRate_;
 }
 
 AVPixelFormat
@@ -581,17 +674,150 @@ VideoMixer::getPixelFormat() const
     return format_;
 }
 
+std::pair<int, int>
+VideoMixer::computeTargetSurface(Layout layout,
+                                 const std::vector<SourceSpec>& sources,
+                                 std::pair<int, int> baseCap,
+                                 std::pair<int, int> bigCap)
+{
+    const size_t n = sources.size();
+    if (n == 0)
+        return {0, 0};
+
+    if (layout == Layout::ONE_BIG || layout == Layout::ONE_BIG_WITH_SMALL) {
+        // The surface follows the promoted source (typically a screen share).
+        // The large cap is only allowed while the conference stays small: the
+        // composite is encoded once per participant.
+        const auto* active = findActiveSource(sources);
+        if (!active)
+            return {0, 0};
+        const auto& cap = (n <= MAX_BIG_CAP_SOURCES) ? bigCap : baseCap;
+        auto target = clampSurface(active->width, active->height, cap);
+        if (layout == Layout::ONE_BIG_WITH_SMALL)
+            target = growForPreviews(target, sources, baseCap);
+        return target;
+    }
+
+    // GRID: give each cell what the best source can fill, up to 720p per cell.
+    const auto [cellW, cellH] = largestCell(sources, false);
+    if (cellW <= 0 || cellH <= 0)
+        return {0, 0};
+    const int zoom = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(n))));
+    return clampSurface(zoom * cellW, zoom * cellH, baseCap);
+}
+
+int
+VideoMixer::computeTargetFrameRate(const std::vector<SourceSpec>& sources, int maxFrameRate)
+{
+    int fastest = 0;
+    for (const auto& s : sources)
+        fastest = std::max(fastest, s.frameRate);
+    // Quantize to the standard rates so that measurement jitter (a 30 fps
+    // camera measured at 28-32) never triggers a format change.
+    const int target = fastest > 45 ? 60 : MIXER_FRAMERATE;
+    return std::clamp(target, MIXER_FRAMERATE, std::max(MIXER_FRAMERATE, maxFrameRate));
+}
+
+void
+VideoMixer::enableDynamicFormat(std::pair<int, int> baseCap, std::pair<int, int> bigCap, int maxFrameRate)
+{
+    baseCap_ = baseCap;
+    bigCap_ = bigCap;
+    maxFrameRate_ = maxFrameRate;
+    nextFormatCheck_ = std::chrono::steady_clock::now() + FORMAT_CHECK_PERIOD;
+    lastFormatChange_ = std::chrono::steady_clock::now();
+    dynamicFormat_ = true;
+    JAMI_LOG("[mixer:{}] Dynamic format enabled: base {}x{}, big {}x{}, max {} fps",
+             id_,
+             baseCap.first,
+             baseCap.second,
+             bigCap.first,
+             bigCap.second,
+             maxFrameRate);
+}
+
+void
+VideoMixer::checkDynamicFormat()
+{
+    const auto now = std::chrono::steady_clock::now();
+    if (now < nextFormatCheck_)
+        return;
+    const auto elapsed = std::chrono::duration<double>(now - (nextFormatCheck_ - FORMAT_CHECK_PERIOD)).count();
+    nextFormatCheck_ = now + FORMAT_CHECK_PERIOD;
+
+    std::vector<SourceSpec> specs;
+    {
+        std::shared_lock lock(rwMutex_);
+        specs.reserve(sources_.size());
+        for (auto& x : sources_) {
+            const auto frames = x->framesSinceCheck.exchange(0, std::memory_order_relaxed);
+            if (elapsed > 0.5)
+                x->measuredFps = static_cast<int>(std::lround(frames / elapsed));
+            auto frame = x->getRenderFrame();
+            const bool active = verifyActive(streamInfo(x->source).streamId);
+            if (frame && frame->width() > 0 && frame->height() > 0)
+                specs.push_back(SourceSpec {frame->width(), frame->height(), x->measuredFps, active});
+            else
+                specs.push_back(SourceSpec {0, 0, x->measuredFps, active});
+        }
+    }
+
+    if (now - lastFormatChange_ < MIN_FORMAT_CHANGE_INTERVAL)
+        return;
+
+    const auto target = computeTargetSurface(currentLayout_, specs, baseCap_, bigCap_);
+    const auto targetFps = computeTargetFrameRate(specs, maxFrameRate_);
+
+    bool surfaceChanged = false;
+    if (target.first > 0 && target.second > 0 && width_ > 0 && height_ > 0) {
+        const double ratio = static_cast<double>(target.first) * target.second
+                             / (static_cast<double>(width_) * height_);
+        surfaceChanged = ratio >= GROW_AREA_RATIO || ratio <= SHRINK_AREA_RATIO;
+    }
+    // Measured frame rates are quantized to standard rates, so a plain
+    // comparison is stable against measurement jitter.
+    const bool fpsChanged = targetFps != frameRate_;
+    if (!surfaceChanged && !fpsChanged)
+        return;
+
+    JAMI_LOG("[mixer:{}] Format change: {}x{}@{} -> {}x{}@{}",
+             id_,
+             width_,
+             height_,
+             frameRate_,
+             surfaceChanged ? target.first : width_,
+             surfaceChanged ? target.second : height_,
+             targetFps);
+    if (fpsChanged) {
+        // Re-anchor the pacing schedule so the next frame follows the new
+        // rate instead of an accumulated deadline from the previous one.
+        nextProcess_ = std::chrono::steady_clock::now();
+    }
+    {
+        // Readers (getStream and the getters) take the same lock: keep the
+        // published width/height/frameRate tuple consistent.
+        std::unique_lock lock(rwMutex_);
+        frameRate_ = targetFps;
+    }
+    if (surfaceChanged)
+        setParameters(target.first, target.second, format_);
+    lastFormatChange_ = std::chrono::steady_clock::now();
+    if (onFormatChanged_)
+        onFormatChanged_(width_, height_, frameRate_);
+}
+
 MediaStream
 VideoMixer::getStream(const std::string& name) const
 {
+    std::shared_lock lock(rwMutex_);
     MediaStream ms;
     ms.name = name;
     ms.format = format_;
     ms.isVideo = true;
     ms.height = height_;
     ms.width = width_;
-    ms.frameRate = {MIXER_FRAMERATE, 1};
-    ms.timeBase = {1, MIXER_FRAMERATE};
+    ms.frameRate = {frameRate_, 1};
+    ms.timeBase = {1, frameRate_};
     ms.firstTimestamp = lastTimestamp_;
 
     return ms;
