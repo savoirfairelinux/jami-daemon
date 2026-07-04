@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b5e5df2_97534682",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 700,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:30:49Z",
+      "side": 1,
+      "message": "Done: the pacing schedule is re-anchored to now() when the frame rate changes, so the next iteration follows the new rate instead of the accumulated deadline.",
+      "parentUuid": "67ac31f8_45cdfeba",
+      "revId": "88ee4bd65f48c2095fde4696b6ba4cdd28419079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aec0b092_a06a1348",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-04T02:30:49Z",
+      "side": 1,
+      "message": "Done: getStream() and the width/height/frameRate getters now take a shared_lock on rwMutex_ (made mutable), and checkDynamicFormat() publishes the frame-rate change under the unique lock (setParameters already held it for surface changes), so external readers get a consistent tuple.",
+      "parentUuid": "35f0c76a_b19b0bea",
+      "revId": "88ee4bd65f48c2095fde4696b6ba4cdd28419079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
