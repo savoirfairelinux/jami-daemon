@@ -59,6 +59,11 @@
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
 constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
+// Collaborative-document snapshots (side refs) are base64 CRDT states; anything
+// bigger than this is rejected as abnormal.
+constexpr size_t MAX_COLLAB_PAYLOAD_SIZE {8 * 1024 * 1024}; // 8Mb
+// SHA-1 of the canonical empty git tree.
+constexpr auto EMPTY_TREE_ID = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"sv;
 
 namespace jami {
 
@@ -233,6 +238,10 @@ public:
                              const std::string& commitId,
                              const git_buf& sig,
                              const git_buf& sig_data) const;
+    bool isValidCollabCommit(const std::string& docId,
+                             const std::string& refDevice,
+                             const std::string& certCommitId,
+                             const ConversationCommit& commit) const;
     bool checkInitialCommit(const std::string& userDevice,
                             const std::string& commitId,
                             const CommitMessage& commitMsg) const;
@@ -1866,6 +1875,77 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 }
 
 bool
+ConversationRepository::Impl::isValidCollabCommit(const std::string& docId,
+                                                  const std::string& refDevice,
+                                                  const std::string& certCommitId,
+                                                  const ConversationCommit& commit) const
+{
+    // Collaborative side-ref commits (refs/collab/<docId>/<deviceId>) are written
+    // by unpatched-client-invisible code paths only, but they are fetched from
+    // peers, so verify them before use.
+    // Must carry a collaborative snapshot for this very document…
+    if (commit.commitMsg.type != CommitType::COLLAB_UPDATE || commit.commitMsg.uri != docId) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} has unexpected content",
+                     accountId_,
+                     id_,
+                     commit.id);
+        return false;
+    }
+    // …of bounded size…
+    if (commit.commitMsg.body.size() > MAX_COLLAB_PAYLOAD_SIZE) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} payload too large ({})",
+                     accountId_,
+                     id_,
+                     commit.id,
+                     commit.commitMsg.body.size());
+        return false;
+    }
+    // …authored by the device owning the ref (each device only writes its own ref)…
+    if (commit.author.email != refDevice) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} authored by {} on ref of {}",
+                     accountId_,
+                     id_,
+                     commit.id,
+                     commit.author.email,
+                     refDevice);
+        return false;
+    }
+    // …touching no file (canonical empty tree, the payload lives in the message)…
+    auto repo = repository();
+    if (!repo)
+        return false;
+    git_oid oid;
+    git_commit* commit_ptr = nullptr;
+    if (git_oid_fromstr(&oid, commit.id.c_str()) < 0 || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+        return false;
+    GitCommit gitCommit {commit_ptr};
+    if (std::string_view(git_oid_tostr_s(git_commit_tree_id(gitCommit.get()))) != EMPTY_TREE_ID) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} has a non-empty tree",
+                     accountId_,
+                     id_,
+                     commit.id);
+        return false;
+    }
+    // …and signed by a device of a current conversation member. Side-ref commits
+    // have an empty tree, so the device/member certificates are resolved against
+    // the conversation branch tip instead of the commit's own tree.
+    GitBuf sig(new git_buf {});
+    GitBuf sig_data(new git_buf {});
+    if (git_commit_extract_signature(sig.get(), sig_data.get(), repo.get(), &oid, "signature") != 0) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} has no signature", accountId_, id_, commit.id);
+        return false;
+    }
+    if (!isValidUserAtCommit(refDevice, certCommitId, *sig, *sig_data)) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Collab ref commit {} not from a valid member device",
+                     accountId_,
+                     id_,
+                     commit.id);
+        return false;
+    }
+    return true;
+}
+
+bool
 ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
                                                  const std::string& commitId,
                                                  const CommitMessage& commitMsg) const
@@ -3353,6 +3433,32 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     }
     GitRemote remote {remote_ptr};
 
+    // Also fetch collaborative-document side refs (refs/collab/<docId>/<deviceId>).
+    // The refspec is intentionally not forced: each device only appends to its own
+    // ref, so legitimate updates are always fast-forward, and a peer serving a
+    // stale copy of our own ref is simply ignored. Remotes unaware of these refs
+    // advertise nothing matching, making this a no-op with older peers.
+    static constexpr std::string_view collabRefspec = "refs/collab/*:refs/collab/*";
+    {
+        git_strarray refspecs {nullptr, 0};
+        bool hasCollabSpec = false;
+        if (git_remote_get_fetch_refspecs(&refspecs, remote.get()) == 0) {
+            for (size_t i = 0; i < refspecs.count; ++i) {
+                if (refspecs.strings[i] && std::string_view(refspecs.strings[i]) == collabRefspec) {
+                    hasCollabSpec = true;
+                    break;
+                }
+            }
+            git_strarray_dispose(&refspecs);
+        }
+        if (!hasCollabSpec && git_remote_add_fetch(repo.get(), remoteDeviceId.c_str(), collabRefspec.data()) == 0) {
+            // Reload the remote so the added refspec is taken into account.
+            git_remote* reloaded_ptr = nullptr;
+            if (git_remote_lookup(&reloaded_ptr, repo.get(), remoteDeviceId.c_str()) == 0)
+                remote.reset(reloaded_ptr);
+        }
+    }
+
     fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
@@ -3536,6 +3642,146 @@ ConversationRepository::commitMessages(const std::vector<std::string>& msgs)
     ret.reserve(msgs.size());
     for (const auto& msg : msgs)
         ret.emplace_back(pimpl_->commit(msg));
+    return ret;
+}
+
+std::string
+ConversationRepository::commitToCollabRef(const std::string& docId, const std::string& msg)
+{
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    if (!pimpl_->validateDevice()) {
+        JAMI_ERROR("[Account {}] [Conversation {}] collab commit failed: Invalid device",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
+        return {};
+    }
+    GitSignature sig = pimpl_->signature();
+    if (!sig)
+        return {};
+
+    std::string refName = fmt::format("refs/collab/{}/{}", docId, pimpl_->deviceId_);
+
+    // Collaborative payloads live entirely in the commit message; the tree is
+    // kept empty so these side refs never carry nor modify any file.
+    git_treebuilder* tb_ptr = nullptr;
+    if (git_treebuilder_new(&tb_ptr, repo.get(), nullptr) < 0)
+        return {};
+    GitTreeBuilder tb {tb_ptr};
+    git_oid tree_id;
+    if (git_treebuilder_write(&tree_id, tb.get()) < 0)
+        return {};
+    git_tree* tree_ptr = nullptr;
+    if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0)
+        return {};
+    GitTree tree {tree_ptr};
+
+    // Parent: this device's current tip for the document, if any. Each device
+    // only ever appends to its own ref, so the branch stays linear and every
+    // sync is a fast-forward.
+    git_oid parent_id;
+    git_commit* parent_ptr = nullptr;
+    bool hasParent = git_reference_name_to_id(&parent_id, repo.get(), refName.c_str()) == 0
+                     && git_commit_lookup(&parent_ptr, repo.get(), &parent_id) == 0;
+    GitCommit parent {parent_ptr};
+
+    git_buf to_sign = {};
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+    git_commit* const parent_ref[1] = {parent.get()};
+#else
+    const git_commit* parent_ref[1] = {parent.get()};
+#endif
+    if (git_commit_create_buffer(&to_sign,
+                                 repo.get(),
+                                 sig.get(),
+                                 sig.get(),
+                                 nullptr,
+                                 msg.c_str(),
+                                 tree.get(),
+                                 hasParent ? 1 : 0,
+                                 hasParent ? &parent_ref[0] : nullptr)
+        < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to create collab commit buffer",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
+        return {};
+    }
+
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf);
+    git_oid commit_id;
+    if (git_commit_create_with_signature(&commit_id, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to sign collab commit", pimpl_->accountId_, pimpl_->id_);
+        git_buf_dispose(&to_sign);
+        return {};
+    }
+    git_buf_dispose(&to_sign);
+
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_create(&ref_ptr, repo.get(), refName.c_str(), &commit_id, true, nullptr) < 0) {
+        const git_error* err = giterr_last();
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to update {}: {}",
+                   pimpl_->accountId_,
+                   pimpl_->id_,
+                   refName,
+                   err ? err->message : "");
+        return {};
+    }
+    git_reference_free(ref_ptr);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    return commit_str ? commit_str : "";
+}
+
+std::vector<ConversationCommit>
+ConversationRepository::logCollabRefs(const std::string& docId) const
+{
+    std::vector<ConversationCommit> ret;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return ret;
+
+    // Certificates for validation are resolved against the conversation branch
+    // tip: side-ref commits carry an empty tree on purpose.
+    git_oid head;
+    if (git_reference_name_to_id(&head, repo.get(), "refs/heads/main") < 0)
+        return ret;
+    std::string certCommitId = git_oid_tostr_s(&head);
+
+    auto glob = fmt::format("refs/collab/{}/*", docId);
+    git_reference_iterator* it_ptr = nullptr;
+    if (git_reference_iterator_glob_new(&it_ptr, repo.get(), glob.c_str()) < 0)
+        return ret;
+
+    // Snapshots are cumulative (full CRDT state), so only the tip of each device
+    // ref matters; validate it and ignore the ref entirely if it does not pass.
+    git_reference* ref_ptr = nullptr;
+    while (git_reference_next(&ref_ptr, it_ptr) == 0) {
+        GitReference ref {ref_ptr};
+        ref_ptr = nullptr;
+        std::string_view refName = git_reference_name(ref.get());
+        auto sep = refName.rfind('/');
+        if (sep == std::string_view::npos)
+            continue;
+        std::string refDevice {refName.substr(sep + 1)};
+        git_oid tip;
+        if (git_reference_name_to_id(&tip, repo.get(), refName.data()) < 0)
+            continue;
+        auto commit = pimpl_->getCommit(git_oid_tostr_s(&tip));
+        if (!commit)
+            continue;
+        if (!pimpl_->isValidCollabCommit(docId, refDevice, certCommitId, *commit))
+            continue;
+        ret.emplace_back(std::move(*commit));
+    }
+    git_reference_iterator_free(it_ptr);
     return ret;
 }
 
