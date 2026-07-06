@@ -63,6 +63,12 @@ struct GitTreeDeleter
 };
 using GitTree = std::unique_ptr<git_tree, GitTreeDeleter>;
 
+struct GitTreeBuilderDeleter
+{
+    inline void operator()(git_treebuilder* p) const { git_treebuilder_free(p); }
+};
+using GitTreeBuilder = std::unique_ptr<git_treebuilder, GitTreeBuilderDeleter>;
+
 struct GitRemoteDeleter
 {
     inline void operator()(git_remote* p) const { git_remote_free(p); }

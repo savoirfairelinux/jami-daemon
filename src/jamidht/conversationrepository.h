@@ -241,6 +241,25 @@ public:
     std::vector<std::string> commitMessages(const std::vector<std::string>& msgs);
 
     /**
+     * Commit a message on this device's side ref for a collaborative document
+     * (refs/collab/<docId>/<deviceId>), outside the conversation's main branch,
+     * so that history-agnostic data never reaches clients unaware of it.
+     * @param docId  The document identifier
+     * @param msg    The commit message (serialized CommitMessage)
+     * @return <empty> on failure, else the commit id
+     */
+    std::string commitToCollabRef(const std::string& docId, const std::string& msg);
+
+    /**
+     * Return the validated tip of every device ref of a collaborative document
+     * (refs/collab/<docId>/ *). Snapshots are cumulative CRDT states, so only
+     * tips matter; a tip is dropped unless it is an empty-tree COLLAB_UPDATE for
+     * this document, of bounded size, authored and signed by the device owning
+     * the ref, which must belong to a current conversation member.
+     */
+    std::vector<ConversationCommit> logCollabRefs(const std::string& docId) const;
+
+    /**
      * Amend a commit message
      * @param id      The commit to amend
      * @param msg     The commit message of the commit
