@@ -588,6 +588,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& conversationId,
                                           const std::string& commitId)
 {
+    auto emitFetchFinished = [accountId = accountId_, conversationId]() {
+        emitSignal<libjami::ConversationSignal::ConversationFetchFinished>(
+            accountId, conversationId);
+    };
+
     auto conv = getConversation(conversationId);
     {
         bool needReclone = false;
@@ -595,8 +600,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
         auto itConvInfo = convInfos_.find(conversationId);
         if (itConvInfo != convInfos_.end() && itConvInfo->second.isRemoved()) {
-            if (!conv)
+            if (!conv) {
+                lkInfos.unlock();
+                emitFetchFinished();
                 return;
+            }
 
             const bool isOneToOne = (itConvInfo->second.mode == ConversationMode::ONE_TO_ONE);
             auto contactInfo = accountManager_->getContactInfo(peer);
@@ -626,23 +634,28 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     }
                 }
 
+                emitFetchFinished();
                 return;
             }
 
             JAMI_WARNING("[Account {:s}] [Conversation {}] Received a commit, but conversation is removed",
                          accountId_,
                          conversationId);
+            lkInfos.unlock();
+            emitFetchFinished();
             return;
         }
     }
     std::optional<ConversationRequest> oldReq;
     {
-        std::lock_guard lk(conversationsRequestsMtx_);
+        std::unique_lock lk(conversationsRequestsMtx_);
         oldReq = getRequest(conversationId);
         if (oldReq != std::nullopt && oldReq->declined != TimePoint {}) {
             JAMI_DEBUG("[Account {}] [Conversation {}] Received a request for a conversation already declined.",
                        accountId_,
                        conversationId);
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
     }
@@ -663,6 +676,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                          conversationId);
             sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0);
         }
+        emitFetchFinished();
         return;
     }
     std::unique_lock lk(conv->mtx);
@@ -670,10 +684,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     if (conv->conversation) {
         // Check if we already have the commit
         if (not commitId.empty() && conv->conversation->hasCommit(commitId)) {
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
         if (conv->conversation->isRemoving()) {
             JAMI_WARNING("[Account {}] [Conversation {}] conversaton is being removed", accountId_, conversationId);
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
         if (!conv->conversation->isPeerAuthorized(peer, deviceId, true)) {
@@ -682,6 +700,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                          conversationId,
                          deviceId,
                          peer);
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
 
@@ -689,6 +709,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         auto lastMessageId = conv->conversation->lastCommitId();
         if (lastMessageId.empty()) {
             JAMI_ERROR("[Account {}] [Conversation {}] No message detected. This is a bug", accountId_, conversationId);
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
 
@@ -701,7 +723,13 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         onNeedSocket_(
             conversationId,
             deviceId,
-            [w = weak(), conv, conversationId, peer = std::move(peer), deviceId, commitId = std::move(commitId)](
+            [w = weak(),
+             conv,
+             conversationId,
+             peer = std::move(peer),
+             deviceId,
+             commitId = std::move(commitId),
+             emitFetchFinished](
                 const auto& channel) {
                 auto sthis = w.lock();
                 auto acc = sthis ? sthis->account_.lock() : nullptr;
@@ -709,8 +737,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 auto conversation = conv->conversation;
                 if (!channel || !acc || !conversation) {
                     conv->stopFetch(deviceId);
-                    if (sthis)
-                        sthis->syncCnt.fetch_sub(1);
+                    lk.unlock();
+                    emitFetchFinished();
+                    if (sthis && sthis->syncCnt.fetch_sub(1) == 1) {
+                        emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(sthis->accountId_);
+                    }
                     return false;
                 }
                 conversation->addGitSocket(channel->deviceId(), channel);
@@ -718,7 +749,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 conversation->sync(
                     peer,
                     deviceId,
-                    [w, conv, conversationId = std::move(conversationId), peer, deviceId, commitId](bool ok) {
+                    [w, conv, conversationId = std::move(conversationId), peer, deviceId, commitId, emitFetchFinished](bool ok) {
                         auto shared = w.lock();
                         if (!shared)
                             return;
@@ -742,6 +773,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
+                        emitFetchFinished();
                         if (shared->syncCnt.fetch_sub(1) == 1) {
                             emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(shared->accountId_);
                         }
@@ -752,22 +784,34 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             "",
             false);
     } else {
-        if (oldReq != std::nullopt)
+        if (oldReq != std::nullopt) {
+            lk.unlock();
+            emitFetchFinished();
             return;
-        if (conv->pending)
+        }
+        if (conv->pending) {
+            lk.unlock();
+            emitFetchFinished();
             return;
+        }
         bool clone = !conv->info.isRemoved();
         if (clone) {
             cloneConversation(deviceId, peer, conv);
+            lk.unlock();
+            emitFetchFinished();
             return;
         }
-        if (!shouldRequestInvite)
+        if (!shouldRequestInvite) {
+            lk.unlock();
+            emitFetchFinished();
             return;
+        }
         lk.unlock();
         JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0);
+        emitFetchFinished();
     }
 }
 

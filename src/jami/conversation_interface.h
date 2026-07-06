@@ -209,6 +209,13 @@ struct LIBJAMI_PUBLIC ConversationSignal
         using cb_type = void(const std::string& /*accountId*/);
     };
 
+    struct LIBJAMI_PUBLIC ConversationFetchFinished
+    {
+        constexpr static const char* name = "ConversationFetchFinished";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */);
+    };
+
     struct LIBJAMI_PUBLIC ConversationCloned
     {
         constexpr static const char* name = "ConversationCloned";
