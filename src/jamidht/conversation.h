@@ -355,6 +355,16 @@ public:
     std::vector<std::map<std::string, std::string>> collaborativeCommits(
         const std::string& documentId) const;
     /**
+     * Persist a collaborative-document CRDT snapshot on this device's side ref
+     * (refs/collab/<docId>/<deviceId>), outside the conversation history, so
+     * clients unaware of the feature never receive it. Not announced: peers pick
+     * the refs up with their next regular fetch, and the live editing channel
+     * carries the real-time traffic.
+     * @param message  a COLLAB_UPDATE commit message (uri = document id)
+     * @return the created commit id, or empty on failure
+     */
+    std::string commitCollabUpdate(CommitMessage&& message);
+    /**
      * List every collaborative document announced in the conversation by scanning the
      * repository for COLLAB_DOC creation commits, independently of the loaded message
      * history. Lets a client show a conversation's editable documents without first

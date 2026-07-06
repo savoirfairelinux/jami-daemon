@@ -522,8 +522,10 @@ CollaborativeEditing::persistNow(const std::shared_ptr<Session>& session)
     if (!cm)
         return;
     auto state = base64::encode(session->doc->encodeStateAsUpdate());
-    cm->createCommit(session->conversationId,
-                     CommitMessage::collabUpdate(session->documentId, state));
+    // Persisted snapshots go to this device's side ref, not the conversation
+    // history: clients without the feature must never see them (they would show
+    // hundreds of unknown interactions), and they carry no display value.
+    cm->commitCollabUpdate(session->conversationId, CommitMessage::collabUpdate(session->documentId, state));
 }
 
 void

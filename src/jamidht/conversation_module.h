@@ -224,6 +224,13 @@ public:
                       OnCommitCb&& onCommit = {},
                       OnDoneCb&& cb = {});
 
+    /**
+     * Persist a collaborative-document update on this device's side ref of the
+     * conversation repository (refs/collab/<docId>/<deviceId>), keeping it out of
+     * the conversation history seen by feature-unaware clients.
+     */
+    void commitCollabUpdate(const std::string& conversationId, CommitMessage&& commitMessage);
+
     void sendMessage(const std::string& conversationId,
                      std::string message,
                      const std::string& replyTo = "",
