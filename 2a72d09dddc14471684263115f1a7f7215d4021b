@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "206ae9f8_635e62dd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-06T20:02:24Z",
+      "side": 1,
+      "message": "My current understanding is that this probably does prevent some types of corruption, but not all (and of course a non-corrupt repo can still be in an inconsistent state as far as Jami is concerned, so there\u0027s more work to do on our side if we want to make conversation storage as robust as possible). However, I\u0027m fine with trying it out -- we can always revert it later if we find a better solution or if it turns out that the gains aren\u0027t worth the reduced performance.",
+      "revId": "2a72d09dddc14471684263115f1a7f7215d4021b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
