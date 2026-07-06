@@ -98,6 +98,7 @@ public:
     std::string repository_ {};
     std::shared_ptr<dhtnet::ChannelSocket> socket_ {};
     std::string wantedReference_ {};
+    std::vector<std::string> wantedReferences_ {};
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
@@ -204,13 +205,17 @@ GitServer::Impl::parseOrder(std::string_view buf)
     } else if (cmd == WANT_CMD) {
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
-        // TODO can have more want
-        wantedReference_ = dat.substr(0, 40);
+        // A fetch can want several references (e.g. the conversation branch plus
+        // collaborative-document refs); pack them all. The first want is kept as
+        // the reported reference for onFetchedCb_.
+        wantedReferences_.emplace_back(dat.substr(0, 40));
+        if (wantedReference_.empty())
+            wantedReference_ = wantedReferences_.back();
         JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer want ref: {}",
                  accountId_,
                  repositoryId_,
                  fmt::ptr(this),
-                 wantedReference_);
+                 wantedReferences_.back());
     } else if (cmd == HAVE_CMD) {
         const auto& commit = haveRefs_.emplace_back(dat.substr(0, 40));
         if (common_.empty()) {
@@ -430,63 +435,75 @@ GitServer::Impl::sendPackData()
     GitPackBuilder pb {pb_ptr};
 
     std::string fetched = wantedReference_;
-    git_oid oid;
-    if (git_oid_fromstr(&oid, fetched.c_str()) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for commit {}",
-                   accountId_,
-                   repositoryId_,
-                   fmt::ptr(this),
-                   fetched);
+    if (wantedReferences_.empty()) {
         return;
     }
-
-    git_revwalk* walker_ptr = nullptr;
-    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
-        if (walker_ptr)
-            git_revwalk_free(walker_ptr);
-        return;
-    }
-    GitRevWalker walker {walker_ptr};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
-    // Add first commit
-    std::set<std::string> parents;
-    auto haveCommit = false;
-
-    while (!git_revwalk_next(&oid, walker.get())) {
-        // log until have refs
-        std::string id = git_oid_tostr_s(&oid);
-        haveCommit |= std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
-        auto itParents = std::find(parents.begin(), parents.end(), id);
-        if (itParents != parents.end())
-            parents.erase(itParents);
-        if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)
-            break;
-        if (git_packbuilder_insert_commit(pb.get(), &oid) != 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open insert commit {} for {}",
-                         accountId_,
-                         repositoryId_,
-                         fmt::ptr(this),
-                         git_oid_tostr_s(&oid),
-                         repository_);
-            return;
-        }
-
-        // Get next commit to pack
-        git_commit* commit_ptr;
-        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to look up current commit",
+    // Walk each wanted reference separately: the stop heuristic below (stop once a
+    // "have" commit is reached and all seen parents were emitted) is only valid
+    // within a single history. A joint walk over disjoint histories (conversation
+    // branch + collaborative-document side refs) would stop after the first chain
+    // and produce a truncated pack. The packbuilder skips duplicate objects, so
+    // overlapping histories are packed only once.
+    std::set<std::string> emitted;
+    for (const auto& want : wantedReferences_) {
+        git_oid oid;
+        if (git_oid_fromstr(&oid, want.c_str()) < 0) {
+            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for commit {}",
                        accountId_,
                        repositoryId_,
-                       fmt::ptr(this));
+                       fmt::ptr(this),
+                       want);
+            continue;
+        }
+        git_revwalk* walker_ptr = nullptr;
+        if (git_revwalk_new(&walker_ptr, repo.get()) < 0) {
             return;
         }
-        GitCommit commit {commit_ptr};
-        auto parentsCount = git_commit_parentcount(commit.get());
-        for (unsigned int p = 0; p < parentsCount; ++p) {
-            // make sure to explore all branches
-            const git_oid* pid = git_commit_parent_id(commit.get(), p);
-            if (pid)
-                parents.emplace(git_oid_tostr_s(pid));
+        GitRevWalker walker {walker_ptr};
+        if (git_revwalk_push(walker.get(), &oid) < 0) {
+            continue;
+        }
+        git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
+        // Add first commit
+        std::set<std::string> parents;
+        auto haveCommit = false;
+
+        while (!git_revwalk_next(&oid, walker.get())) {
+            // log until have refs
+            std::string id = git_oid_tostr_s(&oid);
+            haveCommit |= std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
+            auto itParents = std::find(parents.begin(), parents.end(), id);
+            if (itParents != parents.end())
+                parents.erase(itParents);
+            if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)
+                break;
+            if (emitted.emplace(id).second && git_packbuilder_insert_commit(pb.get(), &oid) != 0) {
+                JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open insert commit {} for {}",
+                             accountId_,
+                             repositoryId_,
+                             fmt::ptr(this),
+                             git_oid_tostr_s(&oid),
+                             repository_);
+                return;
+            }
+
+            // Get next commit to pack
+            git_commit* commit_ptr;
+            if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+                JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to look up current commit",
+                           accountId_,
+                           repositoryId_,
+                           fmt::ptr(this));
+                return;
+            }
+            GitCommit commit {commit_ptr};
+            auto parentsCount = git_commit_parentcount(commit.get());
+            for (unsigned int p = 0; p < parentsCount; ++p) {
+                // make sure to explore all branches
+                const git_oid* pid = git_commit_parent_id(commit.get(), p);
+                if (pid)
+                    parents.emplace(git_oid_tostr_s(pid));
+            }
         }
     }
 
@@ -546,6 +563,7 @@ GitServer::Impl::sendPackData()
     // Clear sent data
     haveRefs_.clear();
     wantedReference_.clear();
+    wantedReferences_.clear();
     common_.clear();
     if (onFetchedCb_)
         onFetchedCb_(fetched);
