@@ -585,11 +585,12 @@ ConversationFetchSentTest::testDisplayedOnLoad()
 void
 ConversationFetchSentTest::testDisplayedWithCollabUpdateTip()
 {
-    // Regression test: when the conversation tip is an internal collaborative-editing
-    // commit (COLLAB_UPDATE, which is never surfaced as a message), a member's read/fetched
-    // high-water-mark can point at it. On reload the per-message status is recomputed from
-    // that pointer and must still resolve to the right message instead of staying stuck on
-    // SENDING (which showed up in the client as messages without a read receipt).
+    // Since collaborative-document snapshots moved to side refs
+    // (refs/collab/<docId>/<deviceId>), editing a document must leave the
+    // conversation history untouched: the tip stays on the last real message,
+    // read receipts keep working, and the persisted CRDT state still reaches the
+    // peer (through the side ref carried by the regular fetch), so a document
+    // survives a daemon restart on the receiving side.
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -629,34 +630,44 @@ ConversationFetchSentTest::testDisplayedWithCollabUpdateTip()
         return libjami::Account::MessageStates::UNKNOWN;
     };
 
-    // Alice creates and edits a collaborative document. Closing forces an immediate persist,
-    // so the conversation ends on a COLLAB_UPDATE commit rather than on a message.
+    // Alice creates and edits a collaborative document. Closing forces an immediate
+    // persist of the CRDT snapshot.
     auto docId = libjami::createCollaborativeDocument(aliceId, aliceData.conversationId, "doc"s, "text"s);
     CPPUNIT_ASSERT(!docId.empty());
     libjami::editCollaborativeDocument(aliceId, aliceData.conversationId, docId, 0, 0, "hello"s);
     libjami::closeCollaborativeDocument(aliceId, aliceData.conversationId, docId);
 
-    // Wait for a collaborative commit to land, then let the edit's persist settle so the tip
-    // is the COLLAB_UPDATE commit.
+    // The snapshot goes to this device's side ref: the conversation tip must stay
+    // on the document-creation announcement (a real, displayable commit) and never
+    // on an internal COLLAB_UPDATE commit.
+    std::string announceTip;
     for (int i = 0; i < 80; ++i) {
         if (auto conv = aliceAccount->convModule()->getConversation(aliceData.conversationId)) {
             auto cur = conv->lastCommitId();
-            if (!cur.empty() && cur != msgId2)
+            if (!cur.empty() && cur != msgId2) {
+                announceTip = cur;
                 break;
+            }
         }
         std::this_thread::sleep_for(500ms);
     }
-    std::this_thread::sleep_for(3s);
-    std::string tip;
-    if (auto conv = aliceAccount->convModule()->getConversation(aliceData.conversationId))
-        tip = conv->lastCommitId();
-    CPPUNIT_ASSERT(!tip.empty() && tip != msgId2);
+    CPPUNIT_ASSERT(!announceTip.empty());
+    std::this_thread::sleep_for(3s); // Let the debounced persist settle
+    if (auto conv = aliceAccount->convModule()->getConversation(aliceData.conversationId)) {
+        auto tip = conv->lastCommitId();
+        CPPUNIT_ASSERT_EQUAL(announceTip, tip); // Tip unchanged by the persisted update
+        auto commit = conv->getCommit(tip);
+        CPPUNIT_ASSERT(commit.has_value());
+        CPPUNIT_ASSERT(commit->commitMsg.type != CommitType::COLLAB_UPDATE);
+        // And the update landed on the side ref
+        CPPUNIT_ASSERT(!conv->collaborativeCommits(docId).empty());
+    }
 
-    // Wait for Bob to sync those commits so his repository can resolve the pointer on reload.
+    // Bob syncs the announcement; his regular fetch also carries alice's side ref.
     bool bobSynced = false;
     for (int i = 0; i < 80; ++i) {
         if (auto bconv = bobAccount->convModule()->getConversation(bobData.conversationId)) {
-            if (bconv->lastCommitId() == tip) {
+            if (bconv->lastCommitId() == announceTip) {
                 bobSynced = true;
                 break;
             }
@@ -665,16 +676,69 @@ ConversationFetchSentTest::testDisplayedWithCollabUpdateTip()
     }
     CPPUNIT_ASSERT(bobSynced);
 
-    // Alice marks the conversation read up to the (collab) tip, so aliceUri's read
-    // high-water-mark points at a COLLAB_UPDATE commit.
-    aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, tip, 3);
+    // Bob's side must eventually hold alice's persisted snapshot (side ref fetched),
+    // making the document content available without any live editing session.
+    bool bobHasSnapshot = false;
+    for (int i = 0; i < 80; ++i) {
+        if (auto bconv = bobAccount->convModule()->getConversation(bobData.conversationId)) {
+            for (const auto& c : bconv->collaborativeCommits(docId)) {
+                auto typeIt = c.find("type");
+                if (typeIt != c.end() && typeIt->second == CommitType::COLLAB_UPDATE) {
+                    bobHasSnapshot = true;
+                    break;
+                }
+            }
+        }
+        if (bobHasSnapshot)
+            break;
+        std::this_thread::sleep_for(500ms);
+    }
+    CPPUNIT_ASSERT(bobHasSnapshot);
+    CPPUNIT_ASSERT_EQUAL("hello"s, libjami::collaborativeDocumentText(bobId, bobData.conversationId, docId));
+
+    // Security: forge an unsigned empty-tree COLLAB_UPDATE commit on a side ref of
+    // a device that is not in the conversation. Validation must ignore it.
+    {
+        auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID() / "conversations"
+                        / bobData.conversationId;
+        git_repository* repo = nullptr;
+        CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.string().c_str()) == 0);
+        git_treebuilder* tb = nullptr;
+        CPPUNIT_ASSERT(git_treebuilder_new(&tb, repo, nullptr) == 0);
+        git_oid treeId, forgedId;
+        CPPUNIT_ASSERT(git_treebuilder_write(&treeId, tb) == 0);
+        git_treebuilder_free(tb);
+        git_tree* tree = nullptr;
+        CPPUNIT_ASSERT(git_tree_lookup(&tree, repo, &treeId) == 0);
+        git_signature* sig = nullptr;
+        std::string fakeDevice(64, 'f');
+        CPPUNIT_ASSERT(git_signature_new(&sig, "attacker", fakeDevice.c_str(), std::time(nullptr), 0) == 0);
+        auto forgedMsg = "{\"type\":\"application/collab-update+json\",\"uri\":\"" + docId
+                         + "\",\"body\":\"Zm9yZ2Vk\"}";
+        auto forgedRef = "refs/collab/" + docId + "/" + fakeDevice;
+        CPPUNIT_ASSERT(
+            git_commit_create(&forgedId, repo, forgedRef.c_str(), sig, sig, nullptr, forgedMsg.c_str(), tree, 0, nullptr)
+            == 0);
+        git_signature_free(sig);
+        git_tree_free(tree);
+        git_repository_free(repo);
+
+        auto bconv = bobAccount->convModule()->getConversation(bobData.conversationId);
+        CPPUNIT_ASSERT(bconv);
+        for (const auto& c : bconv->collaborativeCommits(docId)) {
+            auto idIt = c.find("id");
+            CPPUNIT_ASSERT(idIt == c.end() || idIt->second != git_oid_tostr_s(&forgedId));
+        }
+    }
+
+    // Read receipts: alice marks the conversation read up to the tip; bob's view of
+    // both messages must reach DISPLAYED, including after a full reload.
+    aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, announceTip, 3);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
     }));
 
-    // Reload bob's conversation: the status is recomputed from the persisted high-water-mark
-    // (a COLLAB_UPDATE commit). It must still resolve to DISPLAYED for the messages.
     bobAccount->convModule()->loadConversations();
     bobData.messages.clear();
     CPPUNIT_ASSERT(getMsgStatus(bobData, msgId1, aliceUri) != libjami::Account::MessageStates::DISPLAYED);

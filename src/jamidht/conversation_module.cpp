@@ -2265,6 +2265,16 @@ ConversationModule::createCommit(
 }
 
 void
+ConversationModule::commitCollabUpdate(const std::string& conversationId, CommitMessage&& message)
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation)
+            conv->conversation->commitCollabUpdate(std::move(message));
+    }
+}
+
+void
 ConversationModule::editMessage(const std::string& conversationId,
                                 const std::string& newBody,
                                 const std::string& editedId)

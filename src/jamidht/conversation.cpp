@@ -1856,6 +1856,15 @@ Conversation::hasCommit(const std::string& commitId) const
     return pimpl_->repository_->hasCommit(commitId);
 }
 
+std::string
+Conversation::commitCollabUpdate(CommitMessage&& message)
+{
+    if (!pimpl_->repository_ || message.uri.empty())
+        return {};
+    std::lock_guard lk(pimpl_->writeMtx_);
+    return pimpl_->repository_->commitToCollabRef(message.uri, message.toString());
+}
+
 std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
@@ -1871,10 +1880,22 @@ Conversation::collaborativeCommits(const std::string& documentId) const
     // in the loaded history (loadMessages would dedup them away) or the daemon was
     // restarted (the in-memory session was lost). Order does not matter: applying the
     // resulting CRDT snapshots is idempotent and commutative.
+    std::vector<std::map<std::string, std::string>> result;
+
+    // Current storage: per-device side refs (refs/collab/<docId>/<deviceId>), invisible
+    // to clients unaware of the feature.
+    for (const auto& cc : pimpl_->repository_->logCollabRefs(documentId)) {
+        if (cc.commitMsg.type != CommitType::COLLAB_UPDATE || cc.commitMsg.uri != documentId)
+            continue;
+        if (auto optMessage = pimpl_->repository_->convCommitToMap(cc))
+            result.emplace_back(std::move(optMessage.value()));
+    }
+
+    // Legacy storage: COLLAB commits written on the main branch by earlier builds of
+    // the feature. Kept so documents created before the side-ref migration still load.
     LogOptions options;
     options.skipMerge = true;
     auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
-    std::vector<std::map<std::string, std::string>> result;
     for (auto& commit : commits) {
         auto typeIt = commit.find(CommitKey::TYPE);
         if (typeIt == commit.end()
