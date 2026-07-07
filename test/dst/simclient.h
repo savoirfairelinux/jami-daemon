@@ -63,6 +63,9 @@ public:
     void clearMessages();
     bool hasConsistentHistory() const;
 
+    int getIndex(const std::string& messageId) const;
+    const SwarmMessage& getMessageAtIndex(int idx) const;
+
 private:
     void insertMessage(const SwarmMessage& message);
 
