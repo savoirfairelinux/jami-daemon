@@ -108,6 +108,15 @@ ConversationDST::setUp(int numAccountsToSimulate)
         repositoryAccounts.emplace_back(RepositoryAccount(account));
     }
 
+    // Sort accounts by display name. This isn't strictly necessary, but it ensures that
+    // successive test runs with the same seed will have the same account order, which can
+    // make the logs easier to compare during debugging.
+    std::sort(repositoryAccounts.begin(),
+              repositoryAccounts.end(),
+              [](const RepositoryAccount& a, const RepositoryAccount& b) {
+                  return a.account->getDisplayName() < b.account->getDisplayName();
+              });
+
     // Register signal handlers
     confHandlers.clear();
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
@@ -130,10 +139,10 @@ ConversationDST::setUp(int numAccountsToSimulate)
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(
-        [&](const std::string& accountId, const std::string& state, int, const std::string&) {
+        [&](const std::string& accountId, const std::string&, int, const std::string&) {
             for (auto& repoAcc : repositoryAccounts) {
                 if (accountId == repoAcc.account->getAccountID()) {
-                    repoAcc.identityLoaded = state != "INITIALIZING";
+                    repoAcc.identityLoaded = repoAcc.account->identity().second != nullptr;
                     break;
                 }
             }
@@ -184,15 +193,6 @@ ConversationDST::setUp(int numAccountsToSimulate)
     });
     if (!ok)
         return false;
-
-    // Sort accounts by display name. This isn't strictly necessary, but it ensures that
-    // successive test runs with the same seed will have the same account order, which can
-    // make the logs easier to compare during debugging.
-    std::sort(repositoryAccounts.begin(),
-              repositoryAccounts.end(),
-              [](const RepositoryAccount& a, const RepositoryAccount& b) {
-                  return a.account->getDisplayName() < b.account->getDisplayName();
-              });
 
     int accountIndex = 0;
     for (RepositoryAccount& repositoryAccount : repositoryAccounts) {
