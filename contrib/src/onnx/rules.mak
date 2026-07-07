@@ -17,7 +17,7 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
-	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended --allow_running_as_root --compile_no_warning_as_error
+	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended --use_nnapi --allow_running_as_root --compile_no_warning_as_error
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
 ifdef HAVE_MACOSX
