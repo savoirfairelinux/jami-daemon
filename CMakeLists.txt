@@ -203,14 +203,29 @@ if (BUILD_CONTRIB)
                 list(APPEND LIB_FILES_TO_MERGE "-output" "${FAT_CONTRIB_PATH}/lib/${LIB_FILE}")
                 execute_process(COMMAND lipo ${LIB_FILES_TO_MERGE})
             endforeach()
-            # replace all path references in pc and cmake files
+            # Fix path references in pc and cmake files.
+            # .pc files may have been built from a cache location (not the workspace),
+            # so string(REPLACE) on the workspace path alone is insufficient.
+            # Rewrite prefix/libdir/includedir unconditionally via regex.
             file(GLOB_RECURSE PC_FILES ${FAT_CONTRIB_PATH}/lib/pkgconfig/*.pc)
+            foreach(FILE_PATH ${PC_FILES})
+                file(READ ${FILE_PATH} FILE_CONTENT)
+                string(REGEX REPLACE "prefix=[^\n]*" "prefix=${FAT_CONTRIB_PATH}" FILE_CONTENT "${FILE_CONTENT}")
+                string(REGEX REPLACE "libdir=[^\n]*" "libdir=\${prefix}/lib" FILE_CONTENT "${FILE_CONTENT}")
+                string(REGEX REPLACE "includedir=[^\n]*" "includedir=\${prefix}/include" FILE_CONTENT "${FILE_CONTENT}")
+                file(WRITE ${FILE_PATH} "${FILE_CONTENT}")
+            endforeach()
             file(GLOB_RECURSE CMAKE_FILES ${FAT_CONTRIB_PATH}/lib/cmake/*.cmake)
-            list(APPEND ALL_FILES ${PC_FILES} ${CMAKE_FILES})
-            foreach(FILE_PATH ${ALL_FILES})
-                file(READ ${FILE_PATH} PC_FILE_CONTENT)
-                string(REPLACE ${CONTRIB_PATH_FIRST} ${FAT_CONTRIB_PATH} PC_FILE_CONTENT ${PC_FILE_CONTENT})
-                file(WRITE ${FILE_PATH} ${PC_FILE_CONTENT})
+            foreach(FILE_PATH ${CMAKE_FILES})
+                file(READ ${FILE_PATH} FILE_CONTENT)
+                # Match any contrib arch path (workspace or cache) and replace with fat path.
+                # Pattern matches everything up to and including <arch>-apple-darwin<ver>,
+                # leaving the /lib/... or /include/... suffix intact.
+                string(REGEX REPLACE
+                    "[^ \"']*contrib[^ \"']*/[^ \"'/]*-apple-darwin[0-9.]+"
+                    "${FAT_CONTRIB_PATH}"
+                    FILE_CONTENT "${FILE_CONTENT}")
+                file(WRITE ${FILE_PATH} "${FILE_CONTENT}")
             endforeach()
             set(CONTRIB_PATH ${FAT_CONTRIB_PATH})
         else()
