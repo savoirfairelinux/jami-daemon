@@ -115,6 +115,9 @@ public:
         , enableGitLogging_(enableGitLogging)
     {
         ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
+
+        // Disabling fsync can make simulations more than twice as fast.
+        git_libgit2_opts(GIT_OPT_ENABLE_FSYNC_GITDIR, 0);
     }
     ~ConversationDST() {}
 
