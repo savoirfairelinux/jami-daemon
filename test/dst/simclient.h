@@ -62,6 +62,11 @@ public:
     std::vector<SwarmMessage> getMessages() const;
     void clearMessages();
     bool hasConsistentHistory() const;
+    // Returns the position of a message (by id) in chronological order (oldest first, i.e. the
+    // position in sortedIndices_). Asserts the message exists.
+    int getChronologicalIndex(const std::string& messageId) const;
+    // Returns the message at a given position in chronological order (oldest first).
+    const SwarmMessage& getMessageAtChronologicalIndex(int idx) const;
 
 private:
     void insertMessage(const SwarmMessage& message);

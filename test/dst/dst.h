@@ -38,13 +38,15 @@ enum class ConversationEvent : std::uint8_t {
     SEND_MESSAGE = 1,
     CONNECT = 2,
     DISCONNECT = 3,
+    SEND_FILE = 4,
 
     // Secondary events (only generated in response to other events)
-    FETCH = 4,
-    MERGE = 5,
-    CLONE = 6
+    FETCH = 5,
+    MERGE = 6,
+    CLONE = 7,
+    DELETE_FILE = 8
 };
-static constexpr uint8_t NUM_PRIMARY_EVENTS = 4;
+static constexpr uint8_t NUM_PRIMARY_EVENTS = 5;
 
 /**
  * A structure containing the relevant data for account and repo simulation.
@@ -90,16 +92,21 @@ struct Event
     int receivingAccountIndex;
     ConversationEvent type;
     std::chrono::nanoseconds timeOfOccurrence;
+    // Index of a target message in the instigator's own message history, in chronological
+    // order (oldest first). -1 means unused. Used by DELETE_FILE to identify its target.
+    int targetMessageIndex {-1};
 
     // For construction of an event struct
     Event(int instigatorAccountIndex,
           int receivingAccountIndex,
           ConversationEvent type,
-          std::chrono::nanoseconds timeOfOccurrence)
+          std::chrono::nanoseconds timeOfOccurrence,
+          int targetMessageIndex = -1)
         : instigatorAccountIndex(instigatorAccountIndex)
         , receivingAccountIndex(receivingAccountIndex)
         , type(type)
         , timeOfOccurrence(timeOfOccurrence)
+        , targetMessageIndex(targetMessageIndex)
     {}
 };
 struct EventComparator
@@ -200,6 +207,7 @@ private:
     bool enableGitLogging_;
 
     int msgCount = 0;
+    int fileCount = 0;
 };
 
 } // namespace test

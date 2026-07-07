@@ -195,6 +195,19 @@ SimClient::hasConsistentHistory() const
     return true;
 }
 
+int
+SimClient::getChronologicalIndex(const std::string& messageId) const
+{
+    return static_cast<int>(indexFromMessageId_.at(messageId));
+}
+
+const libjami::SwarmMessage&
+SimClient::getMessageAtChronologicalIndex(int index) const
+{
+    assert(index >= 0 && index < static_cast<int>(swarmMessages_.size()));
+    return swarmMessages_[index];
+}
+
 void
 SimClient::insertMessage(const SwarmMessage& message)
 {
