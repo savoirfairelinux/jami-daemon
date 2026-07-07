@@ -416,6 +416,7 @@ serviceRecordToMap(const jami::ServiceRecord& r)
     m["scheme"] = r.scheme;
     m["localHost"] = r.localHost;
     m["localPort"] = std::to_string(r.localPort);
+    m["preferredPort"] = std::to_string(r.preferredPort);
     m["directory"] = r.directory;
     m["enabled"] = r.enabled ? "true" : "false";
     switch (r.policy) {
@@ -462,6 +463,13 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
     if (!portStr.empty()) {
         try {
             r.localPort = static_cast<uint16_t>(std::stoi(portStr));
+        } catch (...) {
+        }
+    }
+    auto prefPortStr = get("preferredPort");
+    if (!prefPortStr.empty()) {
+        try {
+            r.preferredPort = static_cast<uint16_t>(std::stoi(prefPortStr));
         } catch (...) {
         }
     }

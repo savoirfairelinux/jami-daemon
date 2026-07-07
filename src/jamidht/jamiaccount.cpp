@@ -3322,6 +3322,7 @@ JamiAccount::buildPeerServicesJson(const std::string& peerUri, const DeviceId* f
         v["description"] = s.info.description;
         v["proto"] = s.info.proto;
         v["scheme"] = s.info.scheme;
+        v["preferredPort"] = s.info.preferred_port;
         v["device"] = s.deviceId.toString();
         v["available"] = (forceAvailableDevice && *forceAvailableDevice == s.deviceId)
                          || std::find(onlineDevices.begin(), onlineDevices.end(), s.deviceId) != onlineDevices.end();
