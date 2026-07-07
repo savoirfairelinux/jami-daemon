@@ -23,6 +23,7 @@
 #include "configurationmanager_interface.h"
 #include "jami.h"
 #include "json_utils.h"
+#include "jamidht/commit_message.h"
 #include "manager.h"
 
 #undef NDEBUG
@@ -40,16 +41,20 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::SEND_MESSAGE, "SEND_MESSAGE"},
                                                      {ConversationEvent::CONNECT, "CONNECT"},
                                                      {ConversationEvent::DISCONNECT, "DISCONNECT"},
+                                                     {ConversationEvent::SEND_FILE, "SEND_FILE"},
                                                      {ConversationEvent::FETCH, "FETCH"},
                                                      {ConversationEvent::MERGE, "MERGE"},
-                                                     {ConversationEvent::CLONE, "CLONE"}};
+                                                     {ConversationEvent::CLONE, "CLONE"},
+                                                     {ConversationEvent::DELETE_FILE, "DELETE_FILE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
                                                              {"DISCONNECT", ConversationEvent::DISCONNECT},
+                                                             {"SEND_FILE", ConversationEvent::SEND_FILE},
                                                              {"FETCH", ConversationEvent::FETCH},
                                                              {"MERGE", ConversationEvent::MERGE},
-                                                             {"CLONE", ConversationEvent::CLONE}};
+                                                             {"CLONE", ConversationEvent::CLONE},
+                                                             {"DELETE_FILE", ConversationEvent::DELETE_FILE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -61,7 +66,8 @@ enum class UTKEY : std::uint8_t {
     VALIDATED_EVENTS,
     EVENT_TYPE,
     INSTIGATOR_ACCOUNT_ID,
-    RECEIVING_ACCOUNT_ID
+    RECEIVING_ACCOUNT_ID,
+    TARGET_MESSAGE_INDEX
 };
 std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::DATE, "date"},
@@ -71,7 +77,8 @@ std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::VALIDATED_EVENTS, "validatedEvents"},
                                            {UTKEY::EVENT_TYPE, "eventType"},
                                            {UTKEY::INSTIGATOR_ACCOUNT_ID, "instigatorAccountID"},
-                                           {UTKEY::RECEIVING_ACCOUNT_ID, "receivingAccountID"}};
+                                           {UTKEY::RECEIVING_ACCOUNT_ID, "receivingAccountID"},
+                                           {UTKEY::TARGET_MESSAGE_INDEX, "targetMessageIndex"}};
 
 bool
 ConversationDST::setUp(int numAccountsToSimulate)
@@ -230,6 +237,9 @@ ConversationDST::eventLogger(const Event& event)
         case ConversationEvent::DISCONNECT:
             fmt::print("EVENT: {} disconnected from the conversation at {}\n", instigatorName, eventTime);
             break;
+        case ConversationEvent::SEND_FILE:
+            fmt::print("EVENT: {} sent a file to the conversation at {}\n", instigatorName, eventTime);
+            break;
         case ConversationEvent::CLONE:
             fmt::print("GIT OPERATION: {} cloned the conversation from {} at {}\n",
                        receiverName,
@@ -241,6 +251,12 @@ ConversationDST::eventLogger(const Event& event)
             break;
         case ConversationEvent::MERGE:
             fmt::print("GIT OPERATION: {} merged commits from {} at {}\n", receiverName, instigatorName, eventTime);
+            break;
+        case ConversationEvent::DELETE_FILE:
+            fmt::print("EVENT: {} deleted a file (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
             break;
 
         default:
@@ -410,6 +426,23 @@ ConversationDST::validateEvent(const Event& event)
             return false;
         }
         break;
+    case ConversationEvent::SEND_FILE:
+        // Same precondition as SEND_MESSAGE
+        if (!instigatorRepoAcc.repository) {
+            return false;
+        }
+        break;
+    case ConversationEvent::DELETE_FILE: {
+        // Valid by construction: only scheduled by SEND_FILE for a file the instigator just sent.
+        assert(instigatorRepoAcc.repository != nullptr);
+        assert(event.targetMessageIndex >= 0);
+        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(target.type == CommitType::DATA_TRANSFER);
+        // The file must not have been deleted yet (tid must be non-empty).
+        auto tidIt = target.body.find(CommitKey::TID);
+        assert(tidIt != target.body.end() && !tidIt->second.empty());
+        break;
+    }
     case ConversationEvent::CLONE:
         // The instigator should only be able to have the receiver clone from them if:
         // 1. The instigator and receiver are online
@@ -512,6 +545,55 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         //  Note for logging: commitMessage()
         //  returns the ID
         const std::string& commitID = instigatorAccount.repository->commitMessage(messageContent, true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
+    case ConversationEvent::SEND_FILE: {
+        fileCount++;
+        // Build deterministic pseudo-metadata from the counter. No real file I/O is needed;
+        // these fields are opaque to commitMessage.
+        auto displayName = "file_" + std::to_string(fileCount) + ".bin";
+        // 128 hex chars = SHA3-512 size; pad the counter value with leading zeros.
+        auto sha3sum = fmt::format("{:0>128x}", static_cast<uint64_t>(fileCount));
+        uint64_t tid = static_cast<uint64_t>(fileCount);
+        int64_t totalSize = static_cast<int64_t>(fileCount) * 1024;
+
+        auto msg = CommitMessage::fileSent(displayName, sha3sum, tid, totalSize);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+
+            // With ~30% probability, schedule a secondary DELETE_FILE for this file.
+            std::uniform_real_distribution<> deleteProbDist(0.0, 1.0);
+            if (deleteProbDist(gen_) < 0.3) {
+                int targetIdx = instigatorAccount.client.getIndex(commitID);
+                std::uniform_int_distribution<> delayDist(1, 5000);
+                auto deleteTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                queue->emplace(event.instigatorAccountIndex,
+                               event.instigatorAccountIndex,
+                               ConversationEvent::DELETE_FILE,
+                               deleteTime,
+                               targetIdx);
+            }
+        }
+        break;
+    }
+    case ConversationEvent::DELETE_FILE: {
+        assert(event.targetMessageIndex >= 0);
+        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(targetMessage.type == CommitType::DATA_TRANSFER);
+        const std::string& fileCommitId = targetMessage.id;
+
+        auto msg = CommitMessage::fileDeleted(fileCommitId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
 
         instigatorAccount.conversation->announce(commitID, true);
@@ -645,12 +727,14 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_MESSAGE)] = 5;
     eventWeights[static_cast<uint8_t>(ConversationEvent::CONNECT)] = 1;
     eventWeights[static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 1;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
 
     // Indices to be used throughout iteration
     int instigatorAccountIndex, receivingAccountIndex;
 
     msgCount = 0;
+    fileCount = 0;
 
     // Create the initial conversation
     int latestAccountIndex = 0;
@@ -1093,8 +1177,13 @@ ConversationDST::loadUnitTestConfig(const std::string& unitTestPath)
             ConversationEvent convEvent = invertedEventNames[validatedEvent[unitTestKeys[UTKEY::EVENT_TYPE]].asString()];
             std::string instigatorAccountID = validatedEvent[unitTestKeys[UTKEY::INSTIGATOR_ACCOUNT_ID]].asString();
             std::string receiverAccountID = validatedEvent[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]].asString();
+            int targetMessageIndex = -1;
+            const auto& targetKey = unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX];
+            if (validatedEvent.isMember(targetKey)) {
+                targetMessageIndex = validatedEvent[targetKey].asInt();
+            }
             ret.events.emplace_back(
-                Event(accountIDs[instigatorAccountID], accountIDs[receiverAccountID], convEvent, 0s));
+                Event(accountIDs[instigatorAccountID], accountIDs[receiverAccountID], convEvent, 0s, targetMessageIndex));
         } else {
             JAMI_ERROR("Invalid JSON object type found, please check your configuration!");
             return UnitTest();
@@ -1155,6 +1244,9 @@ ConversationDST::saveAsUnitTestConfig(const std::string& saveFilePath)
             = repositoryAccounts[validatedEvents[i].instigatorAccountIndex].account->getDisplayName();
         validatedEventObject[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]]
             = repositoryAccounts[validatedEvents[i].receivingAccountIndex].account->getDisplayName();
+        if (validatedEvents[i].targetMessageIndex >= 0) {
+            validatedEventObject[unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX]] = validatedEvents[i].targetMessageIndex;
+        }
 
         unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]].append(validatedEventObject);
     }
@@ -1252,6 +1344,7 @@ ConversationDST::runUnitTest(const UnitTest& unitTest)
     repositoryAccounts[firstEvent.instigatorAccountIndex].createConversation(std::move(repo));
 
     msgCount = 0;
+    fileCount = 0;
     // We skip the first event since it represents who gets their repository first
     for (size_t i = 1; i < unitTest.events.size(); i++) {
         eventLogger(unitTest.events[i]);
