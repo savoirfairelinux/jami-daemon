@@ -71,6 +71,7 @@ private:
     void default_host_test();
     void update_test();
     void persistence_test();
+    void preferred_port_persistence_test();
     void auth_public_test();
     void auth_contacts_only_test();
     void auth_specific_contacts_test();
@@ -78,6 +79,8 @@ private:
     void visible_services_test();
     void protocol_query_roundtrip_test();
     void protocol_response_roundtrip_test();
+    void protocol_preferred_port_roundtrip_test();
+    void protocol_legacy_svcinfo_compat_test();
     void protocol_peek_type_test();
     void protocol_peek_version_test();
     void protocol_version_mismatch_roundtrip_test();
@@ -91,6 +94,7 @@ private:
     CPPUNIT_TEST(default_host_test);
     CPPUNIT_TEST(update_test);
     CPPUNIT_TEST(persistence_test);
+    CPPUNIT_TEST(preferred_port_persistence_test);
     CPPUNIT_TEST(auth_public_test);
     CPPUNIT_TEST(auth_contacts_only_test);
     CPPUNIT_TEST(auth_specific_contacts_test);
@@ -98,6 +102,8 @@ private:
     CPPUNIT_TEST(visible_services_test);
     CPPUNIT_TEST(protocol_query_roundtrip_test);
     CPPUNIT_TEST(protocol_response_roundtrip_test);
+    CPPUNIT_TEST(protocol_preferred_port_roundtrip_test);
+    CPPUNIT_TEST(protocol_legacy_svcinfo_compat_test);
     CPPUNIT_TEST(protocol_peek_type_test);
     CPPUNIT_TEST(protocol_peek_version_test);
     CPPUNIT_TEST(protocol_version_mismatch_roundtrip_test);
@@ -256,6 +262,26 @@ ServiceManagerTest::persistence_test()
 }
 
 void
+ServiceManagerTest::preferred_port_persistence_test()
+{
+    std::string id;
+    {
+        ServiceManager m(tmpDir_);
+        auto rec = makeRec("office", 8080);
+        rec.preferredPort = 8080;
+        id = m.addService(rec, rng_);
+        CPPUNIT_ASSERT(!id.empty());
+    }
+    // Reopen and verify the preferred port is restored.
+    {
+        ServiceManager m(tmpDir_);
+        auto rec = m.getService(id);
+        CPPUNIT_ASSERT(rec);
+        CPPUNIT_ASSERT_EQUAL(uint16_t {8080}, rec->preferredPort);
+    }
+}
+
+void
 ServiceManagerTest::auth_public_test()
 {
     ServiceManager m(tmpDir_);
@@ -393,6 +419,44 @@ ServiceManagerTest::protocol_response_roundtrip_test()
     CPPUNIT_ASSERT_EQUAL(std::string("game"), decoded.services[1].name);
     CPPUNIT_ASSERT(decoded.services[1].description.empty());
     CPPUNIT_ASSERT_EQUAL(std::string("ssh"), decoded.services[1].scheme);
+}
+
+void
+ServiceManagerTest::protocol_preferred_port_roundtrip_test()
+{
+    svc_protocol::SvcDiscResponse resp;
+    svc_protocol::SvcInfo info;
+    info.id = "id-a";
+    info.name = "office";
+    info.proto = "tcp";
+    info.scheme = "http";
+    info.preferred_port = 8080;
+    resp.services.push_back(std::move(info));
+    auto oh = pack_unpack(resp);
+
+    svc_protocol::SvcDiscResponse decoded;
+    oh.get().convert(decoded);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, decoded.services.size());
+    CPPUNIT_ASSERT_EQUAL(uint16_t {8080}, decoded.services[0].preferred_port);
+}
+
+void
+ServiceManagerTest::protocol_legacy_svcinfo_compat_test()
+{
+    // A v1 peer that predates preferred_port sends a map without that key;
+    // decoding must succeed and default the field to 0.
+    std::map<std::string, std::string> legacy {{"id", "id-a"},
+                                               {"name", "web"},
+                                               {"description", ""},
+                                               {"proto", "tcp"},
+                                               {"scheme", "http"}};
+    auto oh = pack_unpack(legacy);
+
+    svc_protocol::SvcInfo decoded;
+    oh.get().convert(decoded);
+    CPPUNIT_ASSERT_EQUAL(std::string("id-a"), decoded.id);
+    CPPUNIT_ASSERT_EQUAL(std::string("http"), decoded.scheme);
+    CPPUNIT_ASSERT_EQUAL(uint16_t {0}, decoded.preferred_port);
 }
 
 void

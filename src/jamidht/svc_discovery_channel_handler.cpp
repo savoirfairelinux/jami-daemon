@@ -129,6 +129,7 @@ SvcDiscoveryChannelHandler::buildResponse(JamiAccount& account, const std::strin
         info.description = std::move(r.description);
         info.proto = "tcp";
         info.scheme = std::move(r.scheme);
+        info.preferred_port = r.preferredPort;
         out.services.push_back(std::move(info));
     }
     return out;

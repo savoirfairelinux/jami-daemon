@@ -50,9 +50,10 @@ struct SvcInfo
     std::string id; ///< RFC 4122 v4 UUID
     std::string name;
     std::string description;
-    std::string proto;  ///< "tcp" in v1
-    std::string scheme; ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
-    MSGPACK_DEFINE_MAP(id, name, description, proto, scheme)
+    std::string proto;           ///< "tcp" in v1
+    std::string scheme;          ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
+    uint16_t preferred_port {0}; ///< Suggested local listener port on the peer side (0 = any)
+    MSGPACK_DEFINE_MAP(id, name, description, proto, scheme, preferred_port)
 };
 
 /// Request sent by the client over `svcdisc://query`.

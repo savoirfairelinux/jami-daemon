@@ -51,6 +51,7 @@ struct ServiceRecord
     std::string scheme;                  ///< Optional URI scheme hint (e.g. "http", "https"); empty means raw TCP
     std::string localHost {"localhost"}; ///< Local TCP host
     uint16_t localPort {0};              ///< Local TCP port
+    uint16_t preferredPort {0};          ///< Suggested port for the peer's local tunnel listener (0 = any)
     std::string directory;               ///< Directory served by embedded HTTP services
     AccessPolicy policy {AccessPolicy::CONTACTS_ONLY};
     std::vector<std::string> allowedContacts; ///< Account URIs (used when policy == SPECIFIC_CONTACTS)

@@ -69,6 +69,7 @@ toJson(const ServiceRecord& r)
     v["scheme"] = r.scheme;
     v["localHost"] = r.localHost;
     v["localPort"] = static_cast<Json::UInt>(r.localPort);
+    v["preferredPort"] = static_cast<Json::UInt>(r.preferredPort);
     v["directory"] = r.directory;
     v["policy"] = policyToString(r.policy);
     Json::Value allowed(Json::arrayValue);
@@ -93,6 +94,7 @@ fromJson(const Json::Value& v, ServiceRecord& r)
     r.scheme = v.get("scheme", "").asString();
     r.localHost = v.get("localHost", "localhost").asString();
     r.localPort = static_cast<uint16_t>(v.get("localPort", 0).asUInt());
+    r.preferredPort = static_cast<uint16_t>(v.get("preferredPort", 0).asUInt());
     r.directory = v.get("directory", "").asString();
     r.policy = policyFromString(v.get("policy", "contacts").asString());
     r.allowedContacts.clear();
