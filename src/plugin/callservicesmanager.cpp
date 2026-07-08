@@ -42,6 +42,7 @@ CallServicesManager::~CallServicesManager()
 void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     auto predicate = [&data](const std::pair<const StreamData, AVSubjectSPtr>& item) {
         return data.id == item.first.id && data.direction == item.first.direction && data.type == item.first.type;
     };
@@ -83,6 +84,7 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
 void
 CallServicesManager::clearAVSubject(const std::string& callId)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     callAVsubjects_.erase(callId);
 }
 
@@ -242,6 +244,7 @@ CallServicesManager::notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
 void
 CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId, const std::string& callId, const bool toggle)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     auto& handlers = mediaHandlerToggled_[callId];
     bool applyRestart = false;
 
