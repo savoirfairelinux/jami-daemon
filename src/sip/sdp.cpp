@@ -136,12 +136,6 @@ findCryptoSuiteDefinition(std::string_view cryptoSuite)
     return it != CryptoSuites.end() ? &*it : nullptr;
 }
 
-std::string
-buildCryptoPrefix(const CryptoAttribute& crypto)
-{
-    return crypto.getTag() + " " + crypto.getCryptoSuite() + " ";
-}
-
 bool
 isDtlsTransport(MediaTransport transport)
 {
@@ -520,13 +514,22 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
     if (secure and sdpDirection_ == SdpDirection::OFFER) {
-        if (secureMediaKeyExchange_ == KeyExchangeProtocol::SDES) {
+        if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
+            addDtlsAttributes(med, DtlsSetup::ACTPASS);
+        } else {
+            // Offer SDES for the SDES and default key exchanges. Jami accounts
+            // enable SRTP without reporting an explicit key exchange, so the
+            // default must still advertise SDES crypto for backward
+            // compatibility with existing Jami and SIP peers.
             for (auto* attr : generateSdesOfferAttributes()) {
                 if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
                     throw SdpException("Unable to add sdes attribute to media");
             }
-        } else if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
-            addDtlsAttributes(med, DtlsSetup::ACTPASS);
+            // Hybrid SDES+DTLS offer (RFC 5764 4.1): keep the SDES-compatible
+            // transport but also advertise our DTLS identity so the answerer
+            // can pick DTLS-SRTP. SDES-only peers ignore these attributes.
+            if (not localDtlsFingerprint_.empty())
+                addDtlsAttributes(med, DtlsSetup::ACTPASS);
         }
     }
 
@@ -794,6 +797,15 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         const auto remoteTransport = getMediaTransport(remoteMedia);
 
         if (localTransport == MediaTransport::RTP_SAVP) {
+            // Prefer DTLS-SRTP when a hybrid offer (RFC 5764 4.1) carries a
+            // fingerprint and we have a DTLS identity of our own.
+            const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
+            if (not localDtlsFingerprint_.empty() and not remoteFingerprint.second.empty()) {
+                addDtlsAttributes(localMedia,
+                                  negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
+                continue;
+            }
+
             const auto crypto = getCrypto(remoteMedia);
             if (crypto.empty())
                 continue;
@@ -958,6 +970,10 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
     std::vector<MediaDescription> ret;
     for (unsigned i = 0; i < session->media_count; i++) {
         auto* media = session->media[i];
+        const auto useLocalSecurityFallback = not remote and session == activeLocalSession_ and localSession_
+                                              and i < localSession_->media_count;
+        const auto* securitySession = useLocalSecurityFallback ? localSession_ : session;
+        auto* securityMedia = useLocalSecurityFallback ? localSession_->media[i] : media;
         ret.emplace_back(MediaDescription());
         MediaDescription& descr = ret.back();
         if (!pj_stricmp2(&media->desc.media, "audio"))
@@ -1043,12 +1059,24 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
 
-        if (isDtlsTransport(descr.transport)) {
+        bool useDtls = isDtlsTransport(descr.transport);
+        if (not useDtls and not getDtlsFingerprint(securitySession, i).second.empty()) {
+            // Hybrid SDES+DTLS m-line (RFC 5764 4.1): DTLS is in use when the
+            // counterpart session also committed to it with a fingerprint.
+            const auto* counterpart = remote ? (activeLocalSession_ ? activeLocalSession_ : localSession_)
+                                             : activeRemoteSession_;
+            if (counterpart and i < counterpart->media_count)
+                useDtls = not getDtlsFingerprint(counterpart, i).second.empty();
+            else
+                useDtls = getCrypto(media).empty();
+        }
+
+        if (useDtls) {
             descr.key_exchange = KeyExchangeProtocol::DTLS;
-            auto [fingerprintType, fingerprint] = getDtlsFingerprint(session, i);
+            auto [fingerprintType, fingerprint] = getDtlsFingerprint(securitySession, i);
             descr.dtls_fingerprint_type = std::move(fingerprintType);
             descr.dtls_fingerprint = std::move(fingerprint);
-            descr.dtls_setup = getDtlsSetup(session, i);
+            descr.dtls_setup = getDtlsSetup(securitySession, i);
             if (not remote and session == activeLocalSession_ and activeRemoteSession_ and i < activeRemoteSession_->media_count) {
                 descr.dtls_setup = negotiateLocalDtlsSetup(descr.dtls_setup, getDtlsSetup(activeRemoteSession_, i));
             }
@@ -1057,8 +1085,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
         // get crypto info
         std::vector<std::string> crypto;
-        for (unsigned j = 0; j < media->attr_count; j++) {
-            auto* const attribute = media->attr[j];
+        for (unsigned j = 0; j < securityMedia->attr_count; j++) {
+            auto* const attribute = securityMedia->attr[j];
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
@@ -1066,11 +1094,18 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             const auto remoteCrypto = getCrypto(activeRemoteSession_->media[i]);
             const auto selectedRemoteCrypto = SdesNegotiator::negotiate(remoteCrypto);
             if (selectedRemoteCrypto) {
-                const auto cryptoPrefix = buildCryptoPrefix(selectedRemoteCrypto);
+                // Match on the crypto suite only: a peer selecting one of our
+                // offered suites may answer with a different tag than the one we
+                // used (e.g. an older Jami hardcodes tag 1), so the local tag
+                // must not take part in the comparison.
+                const auto& remoteSuite = selectedRemoteCrypto.getCryptoSuite();
                 const auto matchingLocalCrypto = std::find_if(
                     crypto.begin(),
                     crypto.end(),
-                    [&cryptoPrefix](const auto& item) { return item.rfind(cryptoPrefix, 0) == 0; });
+                    [&remoteSuite](const auto& item) {
+                        const auto local = SdesNegotiator::negotiate(std::vector<std::string> {item});
+                        return local and local.getCryptoSuite() == remoteSuite;
+                    });
                 if (matchingLocalCrypto != crypto.end()) {
                     descr.key_exchange = KeyExchangeProtocol::SDES;
                     descr.crypto = SdesNegotiator::negotiate(std::vector<std::string> {*matchingLocalCrypto});
