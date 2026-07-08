@@ -126,6 +126,8 @@ jami.pc
 bin/dbus/*.adaptor.h
 bin/dbus/cx.ring.Ring.service
 bin/dbus/jamid
+bin/nodejs/dist/
+**/node_modules/
 doltcompile
 doltlibtool
 __pycache__
