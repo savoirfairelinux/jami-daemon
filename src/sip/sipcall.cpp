@@ -102,7 +102,22 @@ initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
                            std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
                            Sdp& sdp)
 {
-    if (!account || account->getSrtpKeyExchange() != KeyExchangeProtocol::DTLS)
+    if (!account)
+        return;
+
+    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
+        // Use the account device identity so Jami calls can negotiate
+        // DTLS-SRTP through the hybrid SDES+DTLS offer (RFC 5764 4.1).
+        const auto& identity = jamiAccount->identity();
+        if (identity.first && identity.second) {
+            privateKey = identity.first;
+            certificate = identity.second;
+            sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
+        }
+        return;
+    }
+
+    if (account->getSrtpKeyExchange() != KeyExchangeProtocol::DTLS)
         return;
 
     auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);

@@ -116,6 +116,21 @@ test(
     timeout: 1800,
 )
 
+ut_srtp_hybrid = executable(
+    'ut_srtp_hybrid',
+    sources: files('unitTest/sip/srtp_hybrid.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'srtp_hybrid',
+    ut_srtp_hybrid,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),
