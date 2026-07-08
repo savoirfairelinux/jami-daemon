@@ -606,7 +606,9 @@ if(MSVC)
    # Dependencies
    ################################################################################
 
-   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG
+   # ponytail: single source list reused for both link mechanisms below, so
+   # adding/removing a contrib lib only requires touching one place.
+   set(contribLibDependencies
         ws2_32.lib
         advapi32.lib
         Secur32.lib
@@ -649,10 +651,30 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/build/src/Release/simdutf.lib
-        /ignore:4006"
    )
 
-   set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+   if (BUILD_SHARED_LIBS)
+       # CMAKE_STATIC_LINKER_FLAGS below only affects lib.exe (static
+       # archiving), so it's a no-op for a DLL target: link.exe needs these
+       # as ordinary target_link_libraries instead, or the contrib symbols
+       # (opendht, jsoncpp, etc.) are left unresolved when linking jami-core.dll.
+       target_link_libraries(${PROJECT_NAME} PRIVATE ${contribLibDependencies})
+       if (JAMI_VIDEO)
+           # These are pulled in transitively by ffmpeg's libavdevice (dshow/dxgi/winrt
+           # capture backends); the static archive build defers resolving them to the
+           # final client executable link, which already lists Strmiids/windowsapp, so
+           # this gap is invisible there. A DLL must resolve them itself.
+           target_link_libraries(${PROJECT_NAME} PRIVATE Strmiids.lib windowsapp.lib d3d11.lib dxgi.lib)
+       endif()
+       target_link_options(${PROJECT_NAME} PRIVATE "/ignore:4006")
+   else()
+       string(REPLACE ";" "\n        " libAdditionalDependenciesStr "${contribLibDependencies}")
+       set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG
+        ${libAdditionalDependenciesStr}
+        /ignore:4006"
+       )
+       set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+   endif()
 else()
     include (GNUInstallDirs)
     message("Contrib path: ${CONTRIB_PATH}")
