@@ -525,6 +525,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
                 if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
                     throw SdpException("Unable to add sdes attribute to media");
             }
+            // Hybrid SDES+DTLS offer (RFC 5764 4.1): keep the SDES-compatible
+            // transport but also advertise our DTLS identity so the answerer
+            // can pick DTLS-SRTP. SDES-only peers ignore these attributes.
+            if (not localDtlsFingerprint_.empty())
+                addDtlsAttributes(med, DtlsSetup::ACTPASS);
         } else if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
             addDtlsAttributes(med, DtlsSetup::ACTPASS);
         }
@@ -794,6 +799,15 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         const auto remoteTransport = getMediaTransport(remoteMedia);
 
         if (localTransport == MediaTransport::RTP_SAVP) {
+            // Prefer DTLS-SRTP when a hybrid offer (RFC 5764 4.1) carries a
+            // fingerprint and we have a DTLS identity of our own.
+            const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
+            if (not localDtlsFingerprint_.empty() and not remoteFingerprint.second.empty()) {
+                addDtlsAttributes(localMedia,
+                                  negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
+                continue;
+            }
+
             const auto crypto = getCrypto(remoteMedia);
             if (crypto.empty())
                 continue;
@@ -1043,7 +1057,19 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
 
-        if (isDtlsTransport(descr.transport)) {
+        bool useDtls = isDtlsTransport(descr.transport);
+        if (not useDtls and not getDtlsFingerprint(securitySession, i).second.empty()) {
+            // Hybrid SDES+DTLS m-line (RFC 5764 4.1): DTLS is in use when the
+            // counterpart session also committed to it with a fingerprint.
+            const auto* counterpart = remote ? (activeLocalSession_ ? activeLocalSession_ : localSession_)
+                                             : activeRemoteSession_;
+            if (counterpart and i < counterpart->media_count)
+                useDtls = not getDtlsFingerprint(counterpart, i).second.empty();
+            else
+                useDtls = getCrypto(media).empty();
+        }
+
+        if (useDtls) {
             descr.key_exchange = KeyExchangeProtocol::DTLS;
             auto [fingerprintType, fingerprint] = getDtlsFingerprint(session, i);
             descr.dtls_fingerprint_type = std::move(fingerprintType);
