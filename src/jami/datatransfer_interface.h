@@ -135,9 +135,9 @@ LIBJAMI_PUBLIC bool downloadFile(const std::string& accountId,
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
-DataTransferError cancelDataTransfer(const std::string& accountId,
-                                     const std::string& conversationId,
-                                     const std::string& fileId) noexcept LIBJAMI_PUBLIC;
+LIBJAMI_PUBLIC DataTransferError cancelDataTransfer(const std::string& accountId,
+                                                    const std::string& conversationId,
+                                                    const std::string& fileId) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///
