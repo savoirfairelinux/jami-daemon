@@ -45,7 +45,8 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::FETCH, "FETCH"},
                                                      {ConversationEvent::MERGE, "MERGE"},
                                                      {ConversationEvent::CLONE, "CLONE"},
-                                                     {ConversationEvent::DELETE_FILE, "DELETE_FILE"}};
+                                                     {ConversationEvent::DELETE_FILE, "DELETE_FILE"},
+                                                     {ConversationEvent::EDIT_MESSAGE, "EDIT_MESSAGE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -54,7 +55,8 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"FETCH", ConversationEvent::FETCH},
                                                              {"MERGE", ConversationEvent::MERGE},
                                                              {"CLONE", ConversationEvent::CLONE},
-                                                             {"DELETE_FILE", ConversationEvent::DELETE_FILE}};
+                                                             {"DELETE_FILE", ConversationEvent::DELETE_FILE},
+                                                             {"EDIT_MESSAGE", ConversationEvent::EDIT_MESSAGE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -258,6 +260,12 @@ ConversationDST::eventLogger(const Event& event)
                        event.targetMessageIndex,
                        eventTime);
             break;
+        case ConversationEvent::EDIT_MESSAGE:
+            fmt::print("EVENT: {} edited a message (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
+            break;
 
         default:
             assert(false && "Unknown ConversationEvent type received, this is a bug!");
@@ -443,6 +451,17 @@ ConversationDST::validateEvent(const Event& event)
         assert(tidIt != target.body.end() && !tidIt->second.empty());
         break;
     }
+    case ConversationEvent::EDIT_MESSAGE: {
+        // Valid by construction: only scheduled by SEND_MESSAGE or EDIT_MESSAGE for a text/plain
+        // message the instigator authored.
+        assert(instigatorRepoAcc.repository != nullptr);
+        assert(event.targetMessageIndex >= 0);
+        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(target.type == CommitType::TEXT);
+        assert(target.body.find(CommitKey::EDIT) == target.body.end());
+        assert(target.body.find(CommitKey::REACT_TO) == target.body.end());
+        break;
+    }
     case ConversationEvent::CLONE:
         // The instigator should only be able to have the receiver clone from them if:
         // 1. The instigator and receiver are online
@@ -552,6 +571,18 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         instigatorAccount.conversation->announce(commitID, true);
         if (queue) {
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+
+            // With ~30% probability, schedule a secondary EDIT_MESSAGE for this message.
+            if (rand01() < 0.3f) {
+                int targetIdx = instigatorAccount.client.getIndex(commitID);
+                std::uniform_int_distribution<> delayDist(1, 5000);
+                auto editTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                queue->emplace(event.instigatorAccountIndex,
+                               event.instigatorAccountIndex,
+                               ConversationEvent::EDIT_MESSAGE,
+                               editTime,
+                               targetIdx);
+            }
         }
         break;
     }
@@ -604,6 +635,50 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         instigatorAccount.conversation->announce(commitID, true);
         if (queue) {
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
+    case ConversationEvent::EDIT_MESSAGE: {
+        assert(event.targetMessageIndex >= 0);
+        // targetMessageIndex always points to the original text/plain message, never an edit commit.
+        auto originalMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(originalMessage.type == CommitType::TEXT);
+        assert(originalMessage.body.find(CommitKey::EDIT) == originalMessage.body.end());
+        assert(originalMessage.body.find(CommitKey::REACT_TO) == originalMessage.body.end());
+
+        msgCount++;
+        auto msg = CommitMessage::edit(std::to_string(msgCount), originalMessage.id);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+
+            // With ~30% probability, schedule another edition of the same original message.
+            if (rand01() < 0.3f) {
+                std::uniform_int_distribution<> delayDist(1, 5000);
+                auto editTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                queue->emplace(event.instigatorAccountIndex,
+                               event.instigatorAccountIndex,
+                               ConversationEvent::EDIT_MESSAGE,
+                               editTime,
+                               event.targetMessageIndex); // Same original, not the edit commit
+            }
+        }
+        const auto& updatedMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(updatedMessage.editions.size() == originalMessage.editions.size() + 1);
+        for (const auto& [key, value] : updatedMessage.editions[0]) {
+            if (key == "id") {
+                assert(value
+                       == (originalMessage.latestEditionId.empty() ? originalMessage.id
+                                                                   : originalMessage.latestEditionId));
+            } else {
+                assert(value == originalMessage.body.at(key));
+            }
+        }
+        for (size_t i = 0; i < originalMessage.editions.size(); i++) {
+            assert(updatedMessage.editions[i + 1] == originalMessage.editions[i]);
         }
         break;
     }
