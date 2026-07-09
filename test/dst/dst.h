@@ -183,6 +183,7 @@ private:
         return std::chrono::nanoseconds(
             std::uniform_int_distribution<std::chrono::nanoseconds::rep>(minNs.count(), maxNs.count())(gen_));
     }
+    float rand01() { return std::uniform_real_distribution<float>(0.f, 1.f)(gen_); }
 
     static constexpr int MAX_ACCOUNTS = 6;
 
