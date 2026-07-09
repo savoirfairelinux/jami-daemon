@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56d7bcc5_6fd827fd",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 448,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:11:54Z",
+      "side": 1,
+      "message": "[info] Line 448: The shared `emitted` set correctly prevents duplicate git_packbuilder_insert_commit calls, but the revwalk itself is not pruned: when the extra refs share most of their history with the conversation branch (the expected common case), each subsequent walk re-traverses the entire overlapping history, making this O(refs × history). Consider seeding later walks with git_revwalk_hide() for the already-emitted tips (or the have refs) to cut the redundant traversal.",
+      "revId": "459b45812710cf2e50b789a4ede8bbf270e166a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d6b6dce_3e73c249",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:11:54Z",
+      "side": 1,
+      "message": "[warning] Line 459: Inconsistent error handling inside the per-want loop: a failure of git_revwalk_new() does `return`, which abandons the entire pack (including refs already walked into the packbuilder) and, critically, skips the `onFetchedCb_(fetched)` call at the end. The sync counter in jamiaccount.cpp (syncCnt_) is then never decremented and ConversationCloned may never be emitted, stalling the clone. The two other per-want failures (git_oid_fromstr, git_revwalk_push) correctly `continue`. Prefer `continue` here as well so one bad ref doesn\u0027t abort the whole fetch:\n```suggestion\n        if (git_revwalk_new(\u0026walker_ptr, repo.get()) \u003c 0) {\n            continue;\n        }\n```",
+      "revId": "459b45812710cf2e50b789a4ede8bbf270e166a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1d396b8_90c88cba",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 569,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:11:54Z",
+      "side": 1,
+      "message": "[warning] Line 569: Only the first want is reported to onFetchedCb_ (`fetched \u003d wantedReference_`), which forwards to convModule()-\u003esetFetched(conversationId, remoteDevice, commit). When several refs are wanted (the whole point of this change), the additional refs are packed and sent but never recorded as fetched for this remoteDevice. Please confirm the sync bookkeeping does not need the extra tips, otherwise those refs may be re-requested on every subsequent sync. If a single tip is genuinely sufficient, a short comment here explaining why would help future readers.",
+      "revId": "459b45812710cf2e50b789a4ede8bbf270e166a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
