@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bf96a73_b56d23c6",
+        "filename": "test/unitTest/media/video/test_video_scaler.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:10:14Z",
+      "side": 1,
+      "message": "[warning] Line 128: Only the luma plane (data[0]) is initialized; VideoFrame::reserve() allocates via FFmpeg without zeroing, so the U/V planes (data[1]/data[2]) are read uninitialized by scale() and scale_and_pad(). This is harmless for the luma[0][0] assertion but will trip MemorySanitizer/Valgrind in CI. Initialize the chroma planes too, e.g. after the luma memset:\n```suggestion\n    memset(in-\u003edata[0], LUMA, static_cast\u003csize_t\u003e(in-\u003elinesize[0]) * in-\u003eheight);\n    memset(in-\u003edata[1], 0x80, static_cast\u003csize_t\u003e(in-\u003elinesize[1]) * ((in-\u003eheight + 1) / 2));\n    memset(in-\u003edata[2], 0x80, static_cast\u003csize_t\u003e(in-\u003elinesize[2]) * ((in-\u003eheight + 1) / 2));\n```",
+      "revId": "8f88afa8d2c9b05cb4d3d1c99d50fed392d507d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
