@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a98c7944_0e8a727c",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 816,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:10:20Z",
+      "side": 1,
+      "message": "[info] Line 816: None of the new collaborative-editing methods/signals carry a `\u003ctp:added version\u003d\"...\"/\u003e` annotation, unlike neighbouring additions such as `sendMessage` (`\u003ctp:added version\u003d\"13.6.0\"/\u003e`). Adding version annotations keeps the introspection contract discoverable and consistent for client bindings.",
+      "revId": "c421423d6360f45fad3b9acdb10cee488263de0b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
