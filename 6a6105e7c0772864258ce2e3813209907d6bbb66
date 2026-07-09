@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0094598_8acd0d5a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1895,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:12:51Z",
+      "side": 1,
+      "message": "[info] Line 1895: The payload size cap is only enforced at validation time, i.e. after the object has already been fetched (bounded solely by MAX_FETCH_SIZE \u003d 256MB) and written to the local object DB. A malicious/buggy peer can therefore push large COLLAB_UPDATE messages across many device refs and consume disk before they are rejected here. This is defense-in-depth, not blocking, but worth documenting the residual DoS surface (or pruning rejected side-ref objects).",
+      "revId": "6a6105e7c0772864258ce2e3813209907d6bbb66",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "484ee27b_9fee7fbf",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3649,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:12:51Z",
+      "side": 1,
+      "message": "[warning] Line 3649: `docId` is interpolated directly into a git ref name here (`refs/collab/{docId}/{deviceId}`) and into a glob in `logCollabRefs` (`refs/collab/{docId}/*`). If `docId` can ever contain `/`, `*`, or other ref-invalid characters, this breaks in subtle ways: a `/` in docId shifts the namespace depth so that `logCollabRefs`\u0027s `rfind(\u0027/\u0027)` extracts the wrong `refDevice`, and a `*` would widen the glob to unrelated documents. Even if callers currently only pass a hex hash, please validate/reject non-conforming docIds (e.g. assert it matches the expected commit-id charset) before building ref names, so a malformed or peer-influenced docId cannot corrupt the ref namespace or the device-extraction logic.",
+      "revId": "6a6105e7c0772864258ce2e3813209907d6bbb66",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6dcb0fd2_fe83ecb4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3744,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:12:51Z",
+      "side": 1,
+      "message": "[info] Line 3744: `logCollabRefs` reads/iterates refs without holding `pimpl_-\u003eopMtx_`, whereas `commitToCollabRef` and `fetch` mutate `refs/collab/*` under that lock. This matches the existing lock-free `log()` read path, so it\u0027s acceptable, but a concurrent `commitToCollabRef`/`fetch` can update a ref mid-iteration. Since each device only fast-forwards its own ref this is benign today; flagging so it\u0027s a conscious choice.",
+      "revId": "6a6105e7c0772864258ce2e3813209907d6bbb66",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d26626cb_1669419b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3775,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:12:51Z",
+      "side": 1,
+      "message": "[info] Line 3775: `refDevice` is derived from `refName.rfind(\u0027/\u0027)`, but nothing guarantees the segment between `refs/collab/\u003cdocId\u003e/` and the tip is a single path component. Combined with the docId concern above, an unexpected multi-segment ref would yield a `refDevice` that doesn\u0027t match `commit.author.email`, silently dropping otherwise-valid snapshots. Consider validating the ref shape (exactly `refs/collab/\u003cdocId\u003e/\u003cdevice\u003e`) explicitly rather than relying on the last `/`.",
+      "revId": "6a6105e7c0772864258ce2e3813209907d6bbb66",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
