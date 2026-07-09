@@ -22,6 +22,7 @@
 #undef NDEBUG
 #include <cassert>
 #include <algorithm>
+#include <random>
 
 namespace jami {
 namespace test {
@@ -125,6 +126,10 @@ SimClient::onSwarmMessageReceived(const std::string& accountId,
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
     assert(indexFromMessageId_.find(message.id) == indexFromMessageId_.end());
+    if (auto replyToIt = message.body.find(CommitKey::REPLY_TO); replyToIt != message.body.end()) {
+        assert(!replyToIt->second.empty());
+        assert(indexFromMessageId_.contains(replyToIt->second));
+    }
 
     insertMessage(message);
 }
@@ -210,6 +215,15 @@ SimClient::getMessageAtIndex(int index) const
 {
     assert(index >= 0 && index < static_cast<int>(swarmMessages_.size()));
     return swarmMessages_[index];
+}
+
+std::string
+SimClient::randomMessageId(std::mt19937_64& gen) const
+{
+    if (swarmMessages_.empty())
+        return {};
+    std::uniform_int_distribution<size_t> dist(0, swarmMessages_.size() - 1);
+    return swarmMessages_[dist(gen)].id;
 }
 
 void
