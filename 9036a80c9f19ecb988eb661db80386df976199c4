@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f5ce196_42165a76",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 528,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:13:58Z",
+      "side": 1,
+      "message": "[warning] Line 528: Switching from createCommit(announce\u003dtrue) to commitCollabUpdate() means the persisted snapshot is no longer announced; peers only pick up the side ref on their *next* incidental fetch. If the local device goes offline shortly after this debounced persist (and there is no further conversation activity to trigger a sync), the snapshot may not reach any peer for a long time, weakening the \u0027survives a daemon restart on the receiving side\u0027 guarantee this change is built around. Consider triggering a lightweight sync/fetch of refs/collab/* after persisting (without adding a visible commit) so propagation isn\u0027t purely best-effort.",
+      "revId": "9036a80c9f19ecb988eb661db80386df976199c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50b5f5b0_d2428101",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1898,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:13:58Z",
+      "side": 1,
+      "message": "[info] Line 1898: The legacy full-history scan (convCommitsToMap(log(options))) now runs on every collaborativeCommits() call even for documents that were created after the migration and therefore only ever have data on side refs. For conversations with long histories this is an O(history) walk that yields nothing in the common case. Since side-ref reads are cheap, consider only falling back to the legacy scan when the document has no side-ref results, or otherwise gating it, to avoid paying the walk for every new-storage document open.",
+      "revId": "9036a80c9f19ecb988eb661db80386df976199c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "497e2242_3d13542f",
+        "filename": "test/unitTest/conversation/conversationFetchSent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:13:58Z",
+      "side": 1,
+      "message": "[info] Line 589: Rewriting this test drops the original regression coverage it was created for: a read/fetched high-water-mark pointing at a COLLAB_UPDATE *tip* still resolving to DISPLAYED after reload. That situation can no longer arise for new documents, but legacy conversations already in the field can still have COLLAB_UPDATE tips on main. Consider keeping a small legacy-path case so the recompute-on-reload logic stays covered for existing data.",
+      "revId": "9036a80c9f19ecb988eb661db80386df976199c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "440b2dd2_750a8560",
+        "filename": "test/unitTest/conversation/conversationFetchSent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:13:58Z",
+      "side": 1,
+      "message": "[warning] Line 720: This line is 121 columns, exceeding the repo\u0027s clang-format ColumnLimit of 120. This is almost certainly why the clang-format CI job (and thus the gating builds) went red. Let clang-format wrap the call, e.g.:\n```suggestion\n        CPPUNIT_ASSERT(git_commit_create(\u0026forgedId,\n                                         repo,\n                                         forgedRef.c_str(),\n                                         sig,\n                                         sig,\n                                         nullptr,\n                                         forgedMsg.c_str(),\n                                         tree,\n                                         0,\n                                         nullptr)\n                       \u003d\u003d 0);\n```",
+      "revId": "9036a80c9f19ecb988eb661db80386df976199c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
