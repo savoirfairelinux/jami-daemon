@@ -541,10 +541,12 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
     }
     case ConversationEvent::SEND_MESSAGE: {
         msgCount++;
-        const std::string& messageContent = "{\"body\":\"" + std::to_string(msgCount) + "\",\"type\":\"text/plain\"}";
-        //  Note for logging: commitMessage()
-        //  returns the ID
-        const std::string& commitID = instigatorAccount.repository->commitMessage(messageContent, true);
+        // With ~25% probability, make this a reply to one of the instigator's visible messages.
+        std::string replyToId;
+        if (rand01() < 0.25f)
+            replyToId = instigatorAccount.client.randomMessageId(gen_);
+        auto msg = CommitMessage::text(std::to_string(msgCount), replyToId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
 
         instigatorAccount.conversation->announce(commitID, true);
@@ -563,7 +565,11 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         uint64_t tid = static_cast<uint64_t>(fileCount);
         int64_t totalSize = static_cast<int64_t>(fileCount) * 1024;
 
-        auto msg = CommitMessage::fileSent(displayName, sha3sum, tid, totalSize);
+        // With ~25% probability, make this a reply to one of the instigator's visible messages.
+        std::string replyToId;
+        if (rand01() < 0.25f)
+            replyToId = instigatorAccount.client.randomMessageId(gen_);
+        auto msg = CommitMessage::fileSent(displayName, sha3sum, tid, totalSize, replyToId);
         const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
 
@@ -572,8 +578,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
 
             // With ~30% probability, schedule a secondary DELETE_FILE for this file.
-            std::uniform_real_distribution<> deleteProbDist(0.0, 1.0);
-            if (deleteProbDist(gen_) < 0.3) {
+            if (rand01() < 0.3f) {
                 int targetIdx = instigatorAccount.client.getIndex(commitID);
                 std::uniform_int_distribution<> delayDist(1, 5000);
                 auto deleteTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));

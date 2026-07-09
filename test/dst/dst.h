@@ -171,6 +171,8 @@ private:
     bool validateEvent(const Event& event);
     void triggerEvent(const Event& event, EventQueue* queue = nullptr);
 
+    float rand01() { return std::uniform_real_distribution<float>(0.f, 1.f)(gen_); }
+
     static constexpr int MAX_ACCOUNTS = 6;
 
     // Accounts
