@@ -16,6 +16,23 @@
       "message": "doesn\u0027t account for available bandwidth",
       "revId": "0f5c0ecb58e4ffc5b73afe3dd9bfb18b4dc95164",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5311158a_f65e235a",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 758,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:11:06Z",
+      "side": 1,
+      "message": "[warning] Line 758: In checkDynamicFormat(), verifyActive(streamInfo(x-\u003esource).streamId) is called while this thread already holds `std::shared_lock lock(rwMutex_)`. Please confirm neither verifyActive() nor streamInfo() acquires rwMutex_ (shared or exclusive). std::shared_mutex is not recursive: a thread taking a second shared lock while it already holds one is undefined behavior and can deadlock if a writer is waiting in between. If either helper locks rwMutex_, snapshot the needed data (streamId/active state) before entering the shared_lock scope, or restructure so the lock is not held across those calls.",
+      "revId": "0f5c0ecb58e4ffc5b73afe3dd9bfb18b4dc95164",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
