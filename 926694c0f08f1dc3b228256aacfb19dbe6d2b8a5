@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce70f6f4_1cafd32e",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-09T15:10:41Z",
+      "side": 1,
+      "message": "[error] Line 704: Potential self-deadlock. conferenceFormatChanged() acquires std::lock_guard lock(mutex_) at the top of the function, then calls restartSender() here (and again at the setBitrate() branch below). In this file restartSender() takes its own std::lock_guard lock(mutex_); since mutex_ is a non-recursive std::mutex, invoking it while the lock is already held will deadlock. Note the existing setNewBitrate()/RTCP-adaptation callers reach restartSender() WITHOUT holding mutex_, which is why the same pattern is safe there but not here. Fix by not holding the lock across the restart: compute the new bitrate/pixel state under the lock, then release it before calling restartSender()/sender_-\u003esetBitrate(), e.g. move the restart logic out of the locked scope (or use a scoped block for the lock). Please confirm restartSender()\u0027s locking and adjust accordingly.",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
