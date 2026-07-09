@@ -1535,32 +1535,13 @@ Conversation::Impl::handleMessage(History& history,
         if (!history.messageList.empty()) {
             (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
         }
-    } else {
-        // For commits from sendMessage, its linearizedParent may have been determined to be a merge commit. We should
-        // check whether or not the linearized parent exists in the existing history. If not found, we can only assume
-        // it's a merge commit, and we set the linearized parent of this single commit to be the last sent message.
-        if (std::find_if(history.messageList.begin(),
-                         history.messageList.end(),
-                         [&](const std::shared_ptr<libjami::SwarmMessage>& msg) {
-                             return sharedCommit->linearizedParent == msg->id;
-                         })
-            == history.messageList.end()) {
-            if (!history.messageList.empty()) {
-                sharedCommit->linearizedParent = (*history.messageList.rbegin())->id;
-            }
-        }
     }
 
-    if (sharedCommit->reannounce == "1") {
-        // Replace the existing commit in the history.messageList with the new sharedCommit
-        std::replace_if(
-            history.messageList.begin(),
-            history.messageList.end(),
-            [&](const std::shared_ptr<libjami::SwarmMessage>& msg) { return sharedCommit->id == msg->id; },
-            sharedCommit);
-    } else {
-        history.messageList.emplace_back(sharedCommit);
-    }
+    // Re-announced commits that were already ingested are handled directly in
+    // addToHistory (which preserves their folded reactions/editions), so any
+    // commit reaching this point is new to the history and simply appended.
+    assert(sharedCommit->reannounce == "0"); // TODO remove before merging
+    history.messageList.emplace_back(sharedCommit);
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
     if (reactIt != history.pendingReactions.end()) {
@@ -1593,11 +1574,7 @@ Conversation::Impl::handleMessage(History& history,
     }
     // Announce to client
     if (messageReceived) {
-        if (sharedCommit->reannounce == "1") {
-            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *sharedCommit);
-        } else {
-            emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
-        }
+        emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
     }
     return !messageReceived;
 }
@@ -1758,6 +1735,29 @@ Conversation::Impl::addToHistory(History& history,
 
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     for (const auto& sharedCommit : sharedCommits) {
+        // A re-announced commit has already been ingested (and, for a message,
+        // folded: its reactions and editions have been applied). The only thing
+        // that may have changed is its linearized parent, as a result of a
+        // merge. Update the existing object in place and re-announce it, rather
+        // than replacing it with a freshly-built one, which would discard the
+        // folded reactions and editions.
+        if (sharedCommit->reannounce == "1") {
+            auto& existing = history.quickAccess.at(sharedCommit->id);
+            existing->linearizedParent = sharedCommit->linearizedParent;
+            rectifyStatus(existing, history);
+            // Reactions and editions are folded into the message they refer
+            // to and don't appear as standalone messages, so only real
+            // messages need to be re-announced to the client.
+            auto reactToIt = existing->body.find(CommitKey::REACT_TO);
+            auto editIt = existing->body.find(CommitKey::EDIT);
+            bool isReaction = reactToIt != existing->body.end() && !reactToIt->second.empty();
+            bool isEdition = editIt != existing->body.end() && !editIt->second.empty();
+            if (!isReaction && !isEdition) {
+                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *existing);
+            }
+            continue;
+        }
+
         history.quickAccess[sharedCommit->id] = sharedCommit;
 
         auto reactToIt = sharedCommit->body.find(CommitKey::REACT_TO);

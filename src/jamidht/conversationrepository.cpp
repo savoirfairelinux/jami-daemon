@@ -80,6 +80,17 @@ as_view(const GitObject& blob)
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
+// A commit is a standalone "message" (as exposed to clients through
+// libjami::SwarmMessage) if and only if it is not a merge commit, not an
+// edition and not a reaction. Editions and reactions are folded into the
+// message they refer to and therefore don't have their own place in the
+// linearized message history.
+static bool
+isMessageCommit(const ConversationCommit& commit)
+{
+    return commit.parents.size() <= 1 && commit.commitMsg.reactTo.empty() && commit.commitMsg.editedId.empty();
+}
+
 class ConversationRepository::Impl
 {
 public:
@@ -274,6 +285,13 @@ public:
     std::string diffStats(const GitDiff& diff) const;
 
     std::vector<std::string> debugLog(std::string from) const;
+    // Map from each message commit id to its message-level linearized parent
+    // (the nearest strictly-older message commit) for the history reachable
+    // from `from`. Used to detect commits whose linearized parent changed.
+    std::map<std::string, std::string> messageLinearizedParents(const std::string& from) const;
+    // Id of the nearest strictly-older message commit before `commitId`, or ""
+    // if `commitId` is the initial commit.
+    std::string previousMessageId(const std::string& commitId) const;
     std::vector<ConversationCommit> behind(std::string local,
                                            std::string remote,
                                            const std::vector<ConversationCommit>& messagesFromFetch) const;
@@ -409,16 +427,11 @@ public:
         auto convCommit = parseCommit(repo.get(), commit.get());
 
         auto parentsCount = git_commit_parentcount(commit.get());
-        if (parentsCount == 1) {
-            LogOptions options;
-            options.from = commitId;
-            options.nbOfCommits = 2;
-            options.skipMerge = true;
-            auto commits = log(options);
-            assert(commits.size() == 2);
-            assert(commits[0].id == commitId);
-            assert(commits[1].id == commits[0].linearized_parent);
-            convCommit.linearized_parent = commits[1].id;
+        if (parentsCount == 1 && isMessageCommit(convCommit)) {
+            // Only standalone messages have a message-level linearized parent.
+            // The initial commit (0 parents), merge commits (>1 parent) and
+            // non-message commits (editions/reactions) keep an empty parent.
+            convCommit.linearized_parent = previousMessageId(commitId);
         }
 
         return convCommit;
@@ -2318,18 +2331,77 @@ ConversationRepository::Impl::debugLog(std::string from) const
     return ret;
 }
 
+std::map<std::string, std::string>
+ConversationRepository::Impl::messageLinearizedParents(const std::string& from) const
+{
+    auto repo = repository();
+    if (!repo)
+        return {};
+
+    git_oid oidFrom;
+    if (git_oid_fromstr(&oidFrom, from.c_str()) < 0)
+        return {};
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oidFrom) < 0)
+        return {};
+    GitRevWalker walker {walker_ptr};
+
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+
+    // Collect message commit ids from newest to oldest.
+    std::vector<std::string> messageIds;
+    git_oid oid;
+    while (!git_revwalk_next(&oid, walker.get())) {
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+            break;
+        GitCommit commit {commit_ptr};
+        auto cc = parseCommit(repo.get(), commit.get());
+        if (isMessageCommit(cc))
+            messageIds.emplace_back(std::move(cc.id));
+    }
+
+    // Link each message to the nearest strictly-older message. The oldest
+    // (initial) message has no entry and therefore an empty parent.
+    std::map<std::string, std::string> parents;
+    for (size_t i = 0; i + 1 < messageIds.size(); i++)
+        parents[messageIds[i]] = messageIds[i + 1];
+    return parents;
+}
+
+std::string
+ConversationRepository::Impl::previousMessageId(const std::string& commitId) const
+{
+    std::string result;
+    bool skippedSelf = false;
+    forEachCommit([](const auto&, const auto&, const auto&) { return CallbackResult::Ok; },
+                  [](ConversationCommit&&) {},
+                  [&](const auto& id, const auto&, const ConversationCommit& cc) {
+                      if (!skippedSelf) {
+                          // The first commit visited is `commitId` itself; skip it.
+                          skippedSelf = true;
+                          return false;
+                      }
+                      if (isMessageCommit(cc)) {
+                          result = id;
+                          return true; // Found the previous message, stop walking.
+                      }
+                      return false;
+                  },
+                  commitId);
+    return result;
+}
+
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(std::string local,
                                      std::string /* remote */,
                                      const std::vector<ConversationCommit>& messagesFromFetch) const
 {
-    std::map<std::string, std::string> oldLinearizedParents;
-    {
-        auto oldMessages = debugLog(local);
-        for (size_t i = 1; i < oldMessages.size(); i++) {
-            oldLinearizedParents[oldMessages[i - 1]] = oldMessages[i];
-        }
-    }
+    // Message-level linearized parents in the old (pre-fetch) local history,
+    // used to detect commits whose linearized parent changed and therefore
+    // need to be re-announced.
+    auto oldLinearizedParents = messageLinearizedParents(local);
 
     // Merge commits don't need to be announced.
     // Non-merge commits must be announced if they are new or if they have a new linearized parent.
@@ -2340,12 +2412,28 @@ ConversationRepository::Impl::behind(std::string local,
     LogOptions logOptions;
     logOptions.skipMerge = true;
     auto commits = log(logOptions);
+
+    // Compute the message-level linearized parent of each commit. `commits` is
+    // ordered from newest to oldest, so we scan backwards (oldest to newest)
+    // and keep track of the nearest older message commit. Editions, reactions
+    // and the initial commit have no message parent (empty linearized parent).
+    {
+        std::string olderMessage;
+        for (size_t i = commits.size(); i-- > 0;) {
+            if (isMessageCommit(commits[i])) {
+                commits[i].linearized_parent = olderMessage;
+                olderMessage = commits[i].id;
+            } else {
+                commits[i].linearized_parent.clear();
+            }
+        }
+    }
+
     size_t firstIndex = commits.size();
     size_t lastIndex = 0;
-    for (size_t i = 0; i + 1 < commits.size(); i++) {
+    for (size_t i = 0; i < commits.size(); i++) {
         auto& commit = commits[i];
 
-        commit.linearized_parent = commits[i + 1].id;
         auto commitIt = std::find_if(messagesFromFetch.begin(),
                                      messagesFromFetch.end(),
                                      [&](const jami::ConversationCommit& c) { return c.id == commit.id; });
