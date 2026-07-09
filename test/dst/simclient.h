@@ -18,6 +18,7 @@
 
 #include "jami/conversation_interface.h"
 
+#include <random>
 #include <string>
 #include <vector>
 
@@ -65,6 +66,7 @@ public:
 
     int getIndex(const std::string& messageId) const;
     const SwarmMessage& getMessageAtIndex(int idx) const;
+    std::string randomMessageId(std::mt19937_64& gen) const;
 
 private:
     void insertMessage(const SwarmMessage& message);
