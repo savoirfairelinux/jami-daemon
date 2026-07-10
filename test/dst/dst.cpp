@@ -46,7 +46,9 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::MERGE, "MERGE"},
                                                      {ConversationEvent::CLONE, "CLONE"},
                                                      {ConversationEvent::DELETE_FILE, "DELETE_FILE"},
-                                                     {ConversationEvent::EDIT_MESSAGE, "EDIT_MESSAGE"}};
+                                                     {ConversationEvent::EDIT_MESSAGE, "EDIT_MESSAGE"},
+                                                     {ConversationEvent::ADD_REACTION, "ADD_REACTION"},
+                                                     {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -56,7 +58,9 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"MERGE", ConversationEvent::MERGE},
                                                              {"CLONE", ConversationEvent::CLONE},
                                                              {"DELETE_FILE", ConversationEvent::DELETE_FILE},
-                                                             {"EDIT_MESSAGE", ConversationEvent::EDIT_MESSAGE}};
+                                                             {"EDIT_MESSAGE", ConversationEvent::EDIT_MESSAGE},
+                                                             {"ADD_REACTION", ConversationEvent::ADD_REACTION},
+                                                             {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -174,6 +178,28 @@ ConversationDST::setUp(int numAccountsToSimulate)
                 }
             }
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ReactionAdded>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::string& messageId,
+            std::map<std::string, std::string> reaction) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onReactionAdded(accountId, conversationId, messageId, reaction);
+                }
+            }
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ReactionRemoved>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::string& messageId,
+            const std::string& reactionId) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onReactionRemoved(accountId, conversationId, messageId, reactionId);
+                }
+            }
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
         [&](uint32_t requestId,
             const std::string& accountId,
@@ -262,6 +288,18 @@ ConversationDST::eventLogger(const Event& event)
             break;
         case ConversationEvent::EDIT_MESSAGE:
             fmt::print("EVENT: {} edited a message (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
+            break;
+        case ConversationEvent::ADD_REACTION:
+            fmt::print("EVENT: {} added a reaction to a message (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
+            break;
+        case ConversationEvent::REMOVE_REACTION:
+            fmt::print("EVENT: {} removed a reaction (target index {}) at {}\n",
                        instigatorName,
                        event.targetMessageIndex,
                        eventTime);
@@ -460,6 +498,33 @@ ConversationDST::validateEvent(const Event& event)
         assert(target.type == CommitType::TEXT);
         assert(target.body.find(CommitKey::EDIT) == target.body.end());
         assert(target.body.find(CommitKey::REACT_TO) == target.body.end());
+        break;
+    }
+    case ConversationEvent::ADD_REACTION:
+        // Instigator must be part of the conversation and the selector must resolve to a visible
+        // message (the target index is assigned before validation in generateEventSequence).
+        if (!instigatorRepoAcc.repository || event.targetMessageIndex < 0) {
+            return false;
+        }
+        break;
+    case ConversationEvent::REMOVE_REACTION: {
+        // Only scheduled by ADD_REACTION. The instigator's reaction is guaranteed to still be
+        // present unless the reacted-to message was deleted in the meantime, since a deletion
+        // clears the message's reactions. That is the only way this event can become invalid.
+        assert(instigatorRepoAcc.repository != nullptr);
+        assert(event.targetMessageIndex >= 0);
+        dht::InfoHash instigatorHash(instigatorRepoAcc.account->getUsername());
+        auto reactionId = instigatorRepoAcc.client.reactionByAuthor(event.targetMessageIndex, instigatorHash.toString());
+        if (reactionId.empty()) {
+            // Assert the reaction is gone precisely because the target message was deleted (its
+            // body/tid was emptied by an edition).
+            const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+            const std::string& deletedKey = (target.type == CommitType::DATA_TRANSFER) ? CommitKey::TID
+                                                                                       : CommitKey::BODY;
+            auto it = target.body.find(deletedKey);
+            assert(it != target.body.end() && it->second.empty());
+            return false;
+        }
         break;
     }
     case ConversationEvent::CLONE:
@@ -682,6 +747,51 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         }
         break;
     }
+    case ConversationEvent::ADD_REACTION: {
+        assert(event.targetMessageIndex >= 0);
+        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        const std::string& reactToId = targetMessage.id;
+
+        // A fixed emoji keeps the reaction deterministic; the body is opaque to commitMessage.
+        auto msg = CommitMessage::reaction("\U0001F44D", reactToId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+
+            // With ~30% probability, schedule a secondary REMOVE_REACTION targeting the same
+            // message; the removal resolves the reaction the instigator just added.
+            if (rand01() < 0.3f) {
+                std::uniform_int_distribution<> delayDist(1, 5000);
+                auto removeTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                queue->emplace(event.instigatorAccountIndex,
+                               event.instigatorAccountIndex,
+                               ConversationEvent::REMOVE_REACTION,
+                               removeTime,
+                               event.targetMessageIndex);
+            }
+        }
+        break;
+    }
+    case ConversationEvent::REMOVE_REACTION: {
+        assert(event.targetMessageIndex >= 0);
+        dht::InfoHash instigatorHash(instigatorAccount.account->getUsername());
+        auto reactionId = instigatorAccount.client.reactionByAuthor(event.targetMessageIndex, instigatorHash.toString());
+        assert(!reactionId.empty());
+
+        // A reaction removal is an edit of the reaction commit with an empty body.
+        auto msg = CommitMessage::edit("", reactionId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
     case ConversationEvent::CLONE: {
         auto repo = ConversationRepository::cloneConversation(receivingAccount.account,
                                                               instigatorAccount.account->getAccountID(),
@@ -808,6 +918,7 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     eventWeights[static_cast<uint8_t>(ConversationEvent::CONNECT)] = 1;
     eventWeights[static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 1;
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_REACTION)] = 3;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
 
     // Indices to be used throughout iteration
@@ -865,6 +976,14 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     while (unvalidatedEventsCount < maxEvents && !unvalidatedEvents.empty()) {
         Event event = unvalidatedEvents.top();
         unvalidatedEvents.pop();
+
+        // ADD_REACTION targets a random visible message. Assign the target before validation so
+        // that it is recorded in the config and reused verbatim on replay.
+        if (event.type == ConversationEvent::ADD_REACTION
+            && repositoryAccounts[event.instigatorAccountIndex].repository) {
+            event.targetMessageIndex = repositoryAccounts[event.instigatorAccountIndex].client.randomMessageIndex(gen_);
+        }
+
         eventLogger(event);
         unvalidatedEventsCount++;
 
@@ -963,8 +1082,22 @@ ConversationDST::checkAllAccounts()
 static bool
 swarmMessagesEqual(const libjami::SwarmMessage& a, const libjami::SwarmMessage& b)
 {
+    // Reactions are appended in ingestion order, which differs between the incremental signals
+    // (arrival order) and a fresh load or the oracle (git-log order). Their order is therefore not
+    // a well-defined property of the shared history, so we compare them independently of order,
+    // keyed by their unique commit id.
+    auto reactionsEqual = [](std::vector<std::map<std::string, std::string>> x,
+                             std::vector<std::map<std::string, std::string>> y) {
+        auto byId = [](const auto& lhs, const auto& rhs) {
+            return lhs.at("id") < rhs.at("id");
+        };
+        std::sort(x.begin(), x.end(), byId);
+        std::sort(y.begin(), y.end(), byId);
+        return x == y;
+    };
     return a.id == b.id && a.type == b.type && a.linearizedParent == b.linearizedParent && a.body == b.body
-           && a.reactions == b.reactions && a.editions == b.editions && a.latestEditionId == b.latestEditionId;
+           && reactionsEqual(a.reactions, b.reactions) && a.editions == b.editions
+           && a.latestEditionId == b.latestEditionId;
 }
 
 /**
@@ -1070,7 +1203,14 @@ ConversationDST::computeExpectedMessages(const RepositoryAccount& repoAcc) const
             assert(!reactTo.empty());
             auto it = quickAccess.find(reactTo);
             assert(it != quickAccess.end());
-            it->second->reactions.emplace_back(commit->body);
+            // A deleted message (body, or tid for a file, emptied by an edition) displays no
+            // reactions, so reactions targeting it are ignored.
+            const auto& target = it->second;
+            const std::string& bodyKey = (target->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
+            auto bodyIt = target->body.find(bodyKey);
+            if (bodyIt == target->body.end() || !bodyIt->second.empty()) {
+                target->reactions.emplace_back(commit->body);
+            }
         } else if (editIt != commit->body.end()) {
             assert(!editIt->second.empty());
             handleEdition(commit);
