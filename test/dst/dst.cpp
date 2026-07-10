@@ -893,6 +893,68 @@ ConversationDST::verifyLoadConversationFromScratch()
 }
 
 /**
+ * Generates a single primary event given the current state of the simulation. The event type is
+ * sampled from the weighted distribution, and the instigator is always a current member of the
+ * conversation (an account holding a repository). This keeps the proportion of invalid events low
+ * without attempting to guarantee validity: a small percentage of generated events (e.g. an
+ * ADD_REACTION when no message is visible yet) may still be rejected by validateEvent, which is
+ * acceptable. Note that CONNECT and DISCONNECT share a single weight in the distribution; the
+ * actual event is derived from the instigator's current connection state (see below).
+ *
+ * @param time The timeline position to assign to the generated event.
+ * @param eventDist The weighted distribution used to sample the primary event type.
+ * @return A primary Event.
+ */
+Event
+ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discrete_distribution<>& eventDist)
+{
+    // Collect the accounts that are currently members of the conversation. Primary events are
+    // always instigated by a member.
+    std::vector<int> members;
+    for (int i = 0; i < numAccountsToSimulate_; ++i) {
+        if (repositoryAccounts[i].repository)
+            members.push_back(i);
+    }
+    assert(!members.empty());
+
+    ConversationEvent type = static_cast<ConversationEvent>(eventDist(gen_));
+    int instigator = members[std::uniform_int_distribution<size_t>(0, members.size() - 1)(gen_)];
+    int receiver = instigator;
+    int targetMessageIndex = -1;
+
+    switch (type) {
+    case ConversationEvent::ADD_MEMBER:
+        // Prefer adding an account that is not yet a member, so that all accounts eventually join
+        // the conversation. If everyone is already a member, target a random account (the resulting
+        // operation is a validated no-op, handled by triggerEvent).
+        if (members.size() < static_cast<size_t>(numAccountsToSimulate_)) {
+            do {
+                receiver = std::uniform_int_distribution<>(0, numAccountsToSimulate_ - 1)(gen_);
+            } while (repositoryAccounts[receiver].repository);
+        } else {
+            receiver = std::uniform_int_distribution<>(0, numAccountsToSimulate_ - 1)(gen_);
+        }
+        break;
+    case ConversationEvent::CONNECT:
+        // CONNECT and DISCONNECT share a single weight; the actual event is derived from the
+        // instigator's current connection state. This avoids generating e.g. a CONNECT for an
+        // already-connected account, which would be rejected.
+        type = repositoryAccounts[instigator].connected ? ConversationEvent::DISCONNECT : ConversationEvent::CONNECT;
+        break;
+    case ConversationEvent::ADD_REACTION:
+        // React to a random message currently visible to the instigator (-1 if none, which makes
+        // the event invalid). Assigning the target here (rather than in triggerEvent) keeps it
+        // recorded for replay.
+        targetMessageIndex = repositoryAccounts[instigator].client.randomMessageIndex(gen_);
+        break;
+    default:
+        break;
+    }
+
+    return Event(instigator, receiver, type, time, targetMessageIndex);
+}
+
+/**
  * Generates a randomized sequence of events based on the current members of the
  * ConversationDST class. A sequence of events can be re-simulated provided that the same
  * eventSeed is used. Each event will be validated on a case-by-case basis given the already
@@ -911,85 +973,69 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     numAccountsToSimulate_ = std::uniform_int_distribution<>(2, MAX_ACCOUNTS)(gen_);
     assert(numAccountsToSimulate_ <= repositoryAccounts.size());
 
-    // Weightings for the event distribution
+    // Weightings for the primary event distribution. CONNECT and DISCONNECT are generated from a
+    // single combined weight (assigned to CONNECT); generatePrimaryEvent picks the appropriate one
+    // based on the instigator's connection state, so DISCONNECT itself is never sampled directly.
     double eventWeights[NUM_PRIMARY_EVENTS] = {0};
     eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_MEMBER)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_MESSAGE)] = 5;
-    eventWeights[static_cast<uint8_t>(ConversationEvent::CONNECT)] = 1;
-    eventWeights[static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 1;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::CONNECT)] = 2;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 0;
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_REACTION)] = 3;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
-
-    // Indices to be used throughout iteration
-    int instigatorAccountIndex, receivingAccountIndex;
 
     msgCount = 0;
     fileCount = 0;
 
     // Create the initial conversation
-    int latestAccountIndex = 0;
-    auto& initialAccount = repositoryAccounts[latestAccountIndex].account;
+    int initialAccountIndex = 0;
+    auto& initialAccount = repositoryAccounts[initialAccountIndex].account;
     auto repo = ConversationRepository::createConversation(initialAccount);
     assert(repo != nullptr);
     fmt::print("Conversation ID: {}\n", repo->id());
-    repositoryAccounts[latestAccountIndex].createConversation(std::move(repo));
+    repositoryAccounts[initialAccountIndex].createConversation(std::move(repo));
 
-    // Add the initial event
     startTime = std::chrono::nanoseconds(0);
 
-    EventQueue unvalidatedEvents;
-    unvalidatedEvents.emplace(latestAccountIndex, latestAccountIndex, ConversationEvent::ADD_MEMBER, startTime);
-
-    // Generate the number of events we want to occur in the simulated conversation
-    while (unvalidatedEvents.size() < maxEvents) {
-        // Select a random event from the pool of events
-        ConversationEvent generatedEvent = static_cast<ConversationEvent>(repositoryEventDist(gen_));
-
-        // Select an account (instigator) to perform an event on another account (receiver)
-        int instigatorAccountIndex = std::uniform_int_distribution<>(0, latestAccountIndex)(gen_);
-        int receivingAccountIndex = instigatorAccountIndex;
-        if (generatedEvent == ConversationEvent::ADD_MEMBER) {
-            if (latestAccountIndex < numAccountsToSimulate_ - 1) {
-                receivingAccountIndex = ++latestAccountIndex;
-            } else {
-                receivingAccountIndex = std::uniform_int_distribution<>(0, latestAccountIndex)(gen_);
-            }
-        }
-
-        startTime += std::chrono::milliseconds(1000);
-
-        // Add the event
-        Event event(instigatorAccountIndex, receivingAccountIndex, generatedEvent, startTime);
-        unvalidatedEvents.push(event);
-    }
-
-    // We want to skip the first event, we already know it's the initial repositoryAccount being added
-    validatedEvents.emplace_back(unvalidatedEvents.top());
-    unvalidatedEvents.pop();
     if (enableEventLogging_)
-        fmt::print("===================== Validating Events... =====================\n");
-    eventLogger(validatedEvents.front());
+        fmt::print("===================== Generating Events... =====================\n");
 
-    size_t unvalidatedEventsCount = 1;
+    // The first event is implicit: it represents the initial account creating the conversation. It
+    // is recorded (so the sequence can be saved and replayed) but not triggered, since the
+    // repository was already created above.
+    Event initialEvent(initialAccountIndex, initialAccountIndex, ConversationEvent::ADD_MEMBER, startTime);
+    validatedEvents.emplace_back(initialEvent);
+    eventLogger(initialEvent);
+
+    // Secondary events (git operations, editions, deletions, ...) are scheduled by triggerEvent
+    // into this timeline-ordered queue. Primary events, in contrast, are generated lazily and
+    // interleaved with the secondary events, which allows them to be sampled from the set of
+    // actions that make sense given the current state of the conversation (see generatePrimaryEvent).
+    EventQueue secondaryEvents;
+
+    size_t processedEvents = 1; // The initial event above counts as processed.
     size_t invalidEventsCount = 0;
-    while (unvalidatedEventsCount < maxEvents && !unvalidatedEvents.empty()) {
-        Event event = unvalidatedEvents.top();
-        unvalidatedEvents.pop();
+    while (processedEvents < maxEvents) {
+        // The next primary event occurs one time step from now. Any secondary event scheduled to
+        // occur before then is processed first, in timeline order. Otherwise, a new primary event
+        // is generated at that time.
+        auto nextPrimaryTime = startTime + std::chrono::milliseconds(1000);
+        bool takeSecondary = !secondaryEvents.empty() && secondaryEvents.top().timeOfOccurrence <= nextPrimaryTime;
 
-        // ADD_REACTION targets a random visible message. Assign the target before validation so
-        // that it is recorded in the config and reused verbatim on replay.
-        if (event.type == ConversationEvent::ADD_REACTION
-            && repositoryAccounts[event.instigatorAccountIndex].repository) {
-            event.targetMessageIndex = repositoryAccounts[event.instigatorAccountIndex].client.randomMessageIndex(gen_);
+        Event event = takeSecondary ? secondaryEvents.top()
+                                    : generatePrimaryEvent(nextPrimaryTime, repositoryEventDist);
+        if (takeSecondary) {
+            secondaryEvents.pop();
+        } else {
+            startTime = nextPrimaryTime;
         }
 
         eventLogger(event);
-        unvalidatedEventsCount++;
-
+        processedEvents++;
         if (validateEvent(event)) {
             validatedEvents.emplace_back(event);
-            triggerEvent(event, &unvalidatedEvents);
+            triggerEvent(event, &secondaryEvents);
         } else {
             invalidEventsCount++;
         }
@@ -998,8 +1044,8 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     auto simulationEnd = std::chrono::steady_clock::now();
     auto simulationTime = std::chrono::duration_cast<std::chrono::milliseconds>(simulationEnd - simulationStart).count();
 
-    // Display a summary of the  sequence of events that took place.
-    double rejectionRate = (static_cast<double>(invalidEventsCount) / unvalidatedEventsCount);
+    // Display a summary of the sequence of events that took place.
+    double rejectionRate = (static_cast<double>(invalidEventsCount) / processedEvents);
     sumOfRejectionRates += rejectionRate;
 
     int accountsInConversation = 0;
@@ -1012,7 +1058,7 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     fmt::print("=========================== Summary ==========================\n");
     fmt::print("Random seed used: {}\n", eventSeed);
     fmt::print("Number of accounts in conversation: {}/{}\n", accountsInConversation, numAccountsToSimulate_);
-    fmt::print("Total events generated: {}\n", unvalidatedEventsCount);
+    fmt::print("Total events generated: {}\n", processedEvents);
     fmt::print("Total valid events: {}\n", validatedEvents.size());
     fmt::print("Total invalid events: {}\n", invalidEventsCount);
     fmt::print("Rejection rate: {:.1f}%\n", rejectionRate * 100);
