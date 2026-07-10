@@ -53,6 +53,7 @@ OPENCV_CMAKECONF := \
 		-DWITH_PROTOBUF=OFF \
 		-DWITH_QUIRC=OFF \
 		-DWITH_IPP=OFF \
+		-DWITH_ADE=OFF \
 		-DBUILD_opencv_aruco=OFF \
 		-DBUILD_opencv_barcode=OFF \
 		-DBUILD_opencv_bgsegm=OFF \
