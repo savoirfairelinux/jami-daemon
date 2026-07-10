@@ -39,15 +39,17 @@ enum class ConversationEvent : std::uint8_t {
     CONNECT = 2,
     DISCONNECT = 3,
     SEND_FILE = 4,
+    ADD_REACTION = 5,
 
     // Secondary events (only generated in response to other events)
-    FETCH = 5,
-    MERGE = 6,
-    CLONE = 7,
-    DELETE_FILE = 8,
-    EDIT_MESSAGE = 9
+    FETCH = 6,
+    MERGE = 7,
+    CLONE = 8,
+    DELETE_FILE = 9,
+    EDIT_MESSAGE = 10,
+    REMOVE_REACTION = 11
 };
-static constexpr uint8_t NUM_PRIMARY_EVENTS = 5;
+static constexpr uint8_t NUM_PRIMARY_EVENTS = 6;
 
 /**
  * A structure containing the relevant data for account and repo simulation.
