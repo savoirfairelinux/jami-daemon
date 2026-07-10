@@ -229,6 +229,12 @@ SimClient::clearMessages()
 }
 
 bool
+SimClient::hasMessages() const
+{
+    return !swarmMessages_.empty();
+}
+
+bool
 SimClient::hasConsistentHistory() const
 {
     for (size_t i = 0; i + 1 < sortedIndices_.size(); i++) {

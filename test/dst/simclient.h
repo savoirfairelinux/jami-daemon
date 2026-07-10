@@ -70,6 +70,7 @@ public:
     std::vector<SwarmMessage> getMessages() const;
     void clearMessages();
     bool hasConsistentHistory() const;
+    bool hasMessages() const;
 
     int getIndex(const std::string& messageId) const;
     const SwarmMessage& getMessageAtIndex(int idx) const;

@@ -165,6 +165,7 @@ private:
 
     // Event sequence generation dependencies
     void generateEventSequence(unsigned maxEvents);
+    Event generatePrimaryEvent(std::chrono::nanoseconds time, std::discrete_distribution<>& eventDist);
     void scheduleGitEvent(EventQueue& queue,
                           const ConversationEvent& gitOperation,
                           int instigatorAccountIndex,
