@@ -161,6 +161,56 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
     sortedIndices_.insert(parentIt + 1, index);
 }
 
+void
+SimClient::onReactionAdded(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& messageId,
+                           const std::map<std::string, std::string>& reaction)
+{
+    assert(accountId == accountId_);
+    assert(conversationId == conversationId_);
+
+    // Reactions must not enter the message list, only update the target message's reactions.
+    auto indexIt = indexFromMessageId_.find(messageId);
+    assert(indexIt != indexFromMessageId_.end());
+    auto index = indexIt->second;
+    auto& reactions = swarmMessages_[index].reactions;
+
+    auto reactionIdIt = reaction.find("id");
+    assert(reactionIdIt != reaction.end());
+    const auto& reactionId = reactionIdIt->second;
+    for (const auto& r : reactions) {
+        auto idIt = r.find("id");
+        assert(idIt != r.end());
+        assert(idIt->second != reactionId);
+    }
+
+    reactions.emplace_back(reaction);
+}
+
+void
+SimClient::onReactionRemoved(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& messageId,
+                             const std::string& reactionId)
+{
+    assert(accountId == accountId_);
+    assert(conversationId == conversationId_);
+
+    auto indexIt = indexFromMessageId_.find(messageId);
+    assert(indexIt != indexFromMessageId_.end());
+    auto index = indexIt->second;
+    auto& reactions = swarmMessages_[index].reactions;
+
+    auto it = std::find_if(reactions.begin(), reactions.end(), [&](const auto& r) {
+        auto idIt = r.find("id");
+        assert(idIt != r.end());
+        return idIt->second == reactionId;
+    });
+    assert(it != reactions.end());
+    reactions.erase(it);
+}
+
 MemberRole
 SimClient::getMemberRole(const std::string& memberId) const
 {
@@ -224,6 +274,28 @@ SimClient::randomMessageId(std::mt19937_64& gen) const
         return {};
     std::uniform_int_distribution<size_t> dist(0, swarmMessages_.size() - 1);
     return swarmMessages_[dist(gen)].id;
+}
+
+int
+SimClient::randomMessageIndex(std::mt19937_64& gen) const
+{
+    if (swarmMessages_.empty())
+        return -1;
+    std::uniform_int_distribution<size_t> dist(0, swarmMessages_.size() - 1);
+    return static_cast<int>(dist(gen));
+}
+
+std::string
+SimClient::reactionByAuthor(int messageIndex, const std::string& authorUri) const
+{
+    const auto& reactions = getMessageAtIndex(messageIndex).reactions;
+    for (const auto& reaction : reactions) {
+        auto authorIt = reaction.find("author");
+        if (authorIt != reaction.end() && authorIt->second == authorUri) {
+            return reaction.at("id");
+        }
+    }
+    return {};
 }
 
 void
