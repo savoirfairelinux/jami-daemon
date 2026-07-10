@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7da57db8_1069b7f0",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 874,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-10T14:41:29Z",
+      "side": 1,
+      "message": "[warning] Line 874: Re-throwing here lets the exception escape the top-level function of `ioContextRunner_` (a std::thread), which unconditionally calls std::terminate. This is the intended \u0027crash loudly\u0027 behavior, but note the blast radius: ANY std::exception that escapes ANY handler posted to the shared io_context (timers, HTTP callbacks, RTP posts, etc. — see the many `asio::post(*Manager::instance().ioContext(), ...)` call sites) will now abort the entire daemon. All the compiling CI jobs (macos, gnulinux, android, msvc) report FAILURE on this patchset, which strongly suggests an otherwise-benign handler exception is already being turned into a process abort during the test suite. Please confirm the CI failures are unrelated, or reconsider the approach. If the goal is to avoid the previous silent death of the io thread (where run() returned and all async work stopped), a loop that logs and re-enters run() is safer than terminating:\n```suggestion\n    pimpl_-\u003eioContextRunner_ \u003d std::thread([context \u003d pimpl_-\u003eioContext_]() {\n        auto work \u003d asio::make_work_guard(*context);\n        while (true) {\n            try {\n                context-\u003erun();\n                break;\n            } catch (const std::exception\u0026 ex) {\n                JAMI_ERROR(\"[io] Unexpected io_context thread exception: {}\", ex.what());\n            }\n        }\n    });\n```\nIf an intentional crash truly is desired, prefer an explicit `std::abort()` (or a fatal handler) after logging so the intent is obvious to readers rather than relying on an implicit std::terminate from an escaping thread function.",
+      "revId": "4a5c0d78faced6a9bc6aa54a7ec0f8a17fad858f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
