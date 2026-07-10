@@ -65,6 +65,11 @@ public:
         }
 
         socket_.setOnRecv([this](unsigned char* buf, size_t len) {
+            // RFC 5764 §5.1.2: on a multiplexed transport, only feed DTLS
+            // records to the TLS stack. Early SRTP/STUN packets from the
+            // peer must be ignored here, not interpreted as TLS data/EOF.
+            if (!isDtlsPacket(buf, len))
+                return static_cast<ssize_t>(len);
             RecvCb cb;
             {
                 std::lock_guard lk(cbMutex_);
@@ -241,8 +246,6 @@ mediaDhParams()
 std::shared_ptr<dht::log::Logger>
 mediaDtlsLogger()
 {
-    // Route through Jami's logger: opendht's standard logger writes to stdout,
-    // which is discarded on Android and makes DTLS failures undiagnosable there.
     static const auto logger = Logger::dhtLogger("media.dtls");
     return logger;
 }
@@ -270,6 +273,12 @@ getDtlsFingerprint(const dht::crypto::Certificate& certificate, std::string_view
     if (digest == GNUTLS_DIG_UNKNOWN)
         throw std::runtime_error("Unsupported DTLS fingerprint hash");
     return formatFingerprint(certificate.cert, digest);
+}
+
+bool
+isDtlsPacket(const uint8_t* buf, size_t len)
+{
+    return len > 0 && buf[0] >= 20 && buf[0] <= 63;
 }
 
 DtlsSrtpContext
