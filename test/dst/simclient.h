@@ -28,8 +28,6 @@ namespace test {
 /*
 TODO Handle the following signals:
 - MessagesFound (for search)
-- ReactionAdded
-- ReactionRemoved
 - ConversationMemberEvent (to keep track of participants)
 - OnConversationError
  */
@@ -57,6 +55,15 @@ public:
                                const std::string& conversationId,
                                const SwarmMessage& message);
 
+    void onReactionAdded(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& messageId,
+                         const std::map<std::string, std::string>& reaction);
+    void onReactionRemoved(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& messageId,
+                           const std::string& reactionId);
+
     void setMemberRoles(const std::vector<std::map<std::string, std::string>>& members);
     MemberRole getMemberRole(const std::string& memberId) const;
 
@@ -67,6 +74,8 @@ public:
     int getIndex(const std::string& messageId) const;
     const SwarmMessage& getMessageAtIndex(int idx) const;
     std::string randomMessageId(std::mt19937_64& gen) const;
+    int randomMessageIndex(std::mt19937_64& gen) const;
+    std::string reactionByAuthor(int messageIndex, const std::string& authorUri) const;
 
 private:
     void insertMessage(const SwarmMessage& message);
