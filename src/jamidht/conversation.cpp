@@ -1437,10 +1437,17 @@ Conversation::Impl::handleReaction(History& history, const std::shared_ptr<libja
         history.pendingEditions.erase(peditIt);
     }
     if (it != history.quickAccess.end()) {
-        it->second->reactions.emplace_back(sharedCommit->body);
+        // A deleted message (its body, or tid for a file, has been emptied by an edition) displays
+        // no reactions.
+        const auto& target = it->second;
+        const std::string& bodyKey = (target->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
+        auto bodyIt = target->body.find(bodyKey);
+        if (bodyIt != target->body.end() && bodyIt->second.empty())
+            return;
+        target->reactions.emplace_back(sharedCommit->body);
         emitSignal<libjami::ConversationSignal::ReactionAdded>(accountId_,
                                                                repository_->id(),
-                                                               it->second->id,
+                                                               target->id,
                                                                sharedCommit->body);
     } else {
         history.pendingReactions[sharedCommit->body.at(CommitKey::REACT_TO)].emplace_back(sharedCommit->body);
