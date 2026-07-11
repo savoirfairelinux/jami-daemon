@@ -76,8 +76,15 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    pimpl_->connectionManager_
-        .connectDevice(deviceId, channelName, std::move(cb), false, forceNewConnection, connectionType);
+    dhtnet::ConnectDeviceOptions options;
+    options.forceNewSocket = forceNewConnection;
+    options.connType = connectionType;
+    // A ChannelRequest can be fully accepted by the local transport yet get no
+    // remote ACCEPT or DECLINE, leaving the operation in connecting state.
+    // Apply the mux liveness deadline so a silent mux closes and a retry can
+    // negotiate a new socket.
+    options.channelTimeout = dhtnet::SEND_BEACON_TIMEOUT;
+    pimpl_->connectionManager_.connectDevice(deviceId, channelName, std::move(cb), options);
 }
 
 void
