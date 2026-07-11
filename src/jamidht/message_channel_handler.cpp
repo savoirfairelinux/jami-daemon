@@ -76,8 +76,14 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    pimpl_->connectionManager_
-        .connectDevice(deviceId, channelName, std::move(cb), false, forceNewConnection, connectionType);
+    dhtnet::ConnectDeviceOptions options;
+    options.forceNewSocket = forceNewConnection;
+    options.connType = connectionType;
+    // Bound the channel reply wait: a request sent to a half-open socket
+    // (e.g. suspended iOS peer) would otherwise pend forever, permanently
+    // blocking any new message channel to this device.
+    options.channelTimeout = 10s;
+    pimpl_->connectionManager_.connectDevice(deviceId, channelName, std::move(cb), options);
 }
 
 void
