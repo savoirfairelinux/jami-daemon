@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a08b2cc_72c76c7b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1551,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T15:15:14Z",
+      "side": 1,
+      "message": "[warning] Line 1551: `rearmFallbackClone` is invoked once per member that fails to resolve a device, but `fallbackClone` (lines 1535-1537) fans out over *all* members, each launching an independent `forEachDevice` with its own `found` flag and `end` callback. When a conversation has several members without a currently-online device, each of their `end` callbacks calls `rearmFallbackClone`, so `fallbackTimer *\u003d 2` runs multiple times within a single fallback round (e.g. 5s→10s→20s→40s for 3 deviceless members) and `expires_at`/`async_wait` are churned repeatedly on the shared timer. This makes the exponential backoff grow per-member instead of per-round, pushing the retry interval toward MAX_FALLBACK (12h) far faster than intended and delaying eventual clones. Consider doubling/re-arming at most once per fallback round — e.g. move the backoff bump into `fallbackClone` itself (once, after dispatching all members) rather than into each device-resolution `end` callback, or guard the timer so a re-arm already scheduled this round is not doubled again.",
+      "revId": "2a6fed6b9248a4412ad0ad0266f60b26ca8abbf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2311882c_5126c44e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1554,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T15:15:14Z",
+      "side": 1,
+      "message": "[info] Line 1554: The re-arm logic here (expires_at + double + cap + async_wait binding fallbackClone) is now duplicated in at least four places (this function, the clone-failure path around line 1510, and the bootstrap paths). Since you\u0027ve already extracted `rearmFallbackClone`, consider routing those other sites through a shared helper (parameterized log message) to remove the copy-paste and keep the backoff policy in one spot.",
+      "revId": "2a6fed6b9248a4412ad0ad0266f60b26ca8abbf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
