@@ -23,6 +23,7 @@
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/commit_message.h"
+#include "jamidht/fallback_clone_backoff.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/presence_manager.h"
 #include "manager.h"
@@ -54,7 +55,6 @@ struct PendingConversationFetch
     std::shared_ptr<dhtnet::ChannelSocket> socket {};
 };
 
-constexpr std::chrono::seconds MAX_FALLBACK {12 * 3600s};
 constexpr std::chrono::seconds FETCH_STATUS_SETTLE_DELAY {1};
 // Maximum attempts at cloning a conversation whose repository fails validation
 // before giving up. Validation failures are permanent (the remote history is
@@ -66,7 +66,7 @@ struct SyncedConversation
 {
     std::mutex mtx;
     std::unique_ptr<asio::steady_timer> fallbackClone;
-    std::chrono::seconds fallbackTimer {5s};
+    FallbackCloneBackoff fallbackBackoff;
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
@@ -454,6 +454,11 @@ public:
     void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId);
     void bootstrap(const std::string& convId);
     void fallbackClone(const asio::error_code& ec, const std::string& conversationId);
+    /**
+     * Re-arm the fallback clone timer when no member device could be resolved,
+     * so that the clone attempt is retried instead of silently stopping.
+     */
+    void rearmFallbackClone(const std::shared_ptr<SyncedConversation>& conv);
 
     void cloneConversationFrom(const ConversationRequest& request);
 
@@ -949,39 +954,26 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             emitSignal<libjami::ConversationSignal::OnConversationError>(
                 accountId_, conversationId, EUNRECOVERABLE, "Conversation repository failed validation repeatedly");
         } else {
-            JAMI_WARNING(
-                "[Account {}] [Conversation {}] Remote conversation failed validation ({}/{}). Re-clone in {}s",
-                accountId_,
-                conversationId,
-                conv->validationFailures,
-                MAX_VALIDATION_FAILURES,
-                conv->fallbackTimer.count());
-            conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-            conv->fallbackTimer *= 2;
-            if (conv->fallbackTimer > MAX_FALLBACK)
-                conv->fallbackTimer = MAX_FALLBACK;
-            conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
-                                                      shared_from_this(),
-                                                      std::placeholders::_1,
-                                                      conversationId));
+            JAMI_WARNING("[Account {}] [Conversation {}] Remote conversation failed validation ({}/{})",
+                         accountId_,
+                         conversationId,
+                         conv->validationFailures,
+                         MAX_VALIDATION_FAILURES);
+            if (lk.owns_lock())
+                lk.unlock();
+            rearmFallbackClone(conv);
         }
     } catch (const std::exception& e) {
-        JAMI_WARNING(
-            "[Account {}] [Conversation {}] Something went wrong when cloning conversation: {}. Re-clone in {}s",
-            accountId_,
-            conversationId,
-            e.what(),
-            conv->fallbackTimer.count());
-        conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-        conv->fallbackTimer *= 2;
-        if (conv->fallbackTimer > MAX_FALLBACK)
-            conv->fallbackTimer = MAX_FALLBACK;
-        conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
-                                                  shared_from_this(),
-                                                  std::placeholders::_1,
-                                                  conversationId));
+        JAMI_WARNING("[Account {}] [Conversation {}] Something went wrong when cloning conversation: {}",
+                     accountId_,
+                     conversationId,
+                     e.what());
+        if (lk.owns_lock())
+            lk.unlock();
+        rearmFallbackClone(conv);
     }
-    lk.lock();
+    if (!lk.owns_lock())
+        lk.lock();
     erasePending();
 }
 
@@ -1121,8 +1113,10 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
     conv.info.removed = nowMs();
     if (isSyncing)
         conv.info.erased = nowMs();
-    if (conv.fallbackClone)
+    if (conv.fallbackClone) {
         conv.fallbackClone->cancel();
+        conv.fallbackBackoff.cancel();
+    }
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
     addConvInfo(conv.info);
@@ -1484,7 +1478,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
         conversationId,
         deviceId,
         [wthis = weak_from_this(), conv, conversationId, deviceId](const auto& channel) {
-            std::lock_guard lk(conv->mtx);
+            std::unique_lock lk(conv->mtx);
             if (conv->pending && !conv->pending->ready) {
                 if (channel) {
                     conv->pending->ready = true;
@@ -1500,19 +1494,12 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     return true;
                 } else if (auto sthis = wthis.lock()) {
                     conv->stopFetch(deviceId);
-                    JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Clone failed. Re-clone in {}s",
+                    JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Clone failed",
                                  sthis->accountId_,
                                  conversationId,
-                                 deviceId,
-                                 conv->fallbackTimer.count());
-                    conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-                    conv->fallbackTimer *= 2;
-                    if (conv->fallbackTimer > MAX_FALLBACK)
-                        conv->fallbackTimer = MAX_FALLBACK;
-                    conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
-                                                              sthis,
-                                                              std::placeholders::_1,
-                                                              conversationId));
+                                 deviceId);
+                    lk.unlock();
+                    sthis->rearmFallbackClone(conv);
                 }
             }
             return false;
@@ -1527,12 +1514,35 @@ ConversationModule::Impl::fallbackClone(const asio::error_code& ec, const std::s
     if (ec == asio::error::operation_aborted)
         return;
     auto conv = getConversation(conversationId);
-    if (!conv || conv->conversation)
+    if (!conv)
         return;
+    {
+        std::lock_guard lk(conv->mtx);
+        conv->fallbackBackoff.timerFired();
+        if (conv->conversation || conv->info.isRemoved())
+            return;
+    }
     auto members = getConversationMembers(conversationId);
     for (const auto& member : members)
         if (member.at("uri") != username_)
             cloneConversationFrom(conversationId, member.at("uri"));
+}
+
+void
+ConversationModule::Impl::rearmFallbackClone(const std::shared_ptr<SyncedConversation>& conv)
+{
+    std::lock_guard lk(conv->mtx);
+    if (conv->conversation || conv->info.isRemoved())
+        return;
+    auto delay = conv->fallbackBackoff.schedule();
+    if (!delay)
+        return;
+    JAMI_WARNING("[Account {}] [Conversation {}] Re-clone in {}s", accountId_, conv->info.id, delay->count());
+    conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + *delay);
+    conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
+                                              std::static_pointer_cast<Impl>(shared_from_this()),
+                                              std::placeholders::_1,
+                                              conv->info.id));
 }
 
 void
@@ -1599,22 +1609,34 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         return;
     }
     auto conv = startConversation(request.conversationId);
-    std::lock_guard lk(conv->mtx);
-    if (conv->info.created == TimePoint {}) {
-        conv->info = {request.conversationId};
-        conv->info.created = request.received;
-        conv->info.members.emplace(username_);
-        conv->info.members.emplace(request.from);
-        conv->info.mode = request.mode();
-        addConvInfo(conv->info);
+    {
+        std::lock_guard lk(conv->mtx);
+        if (conv->info.created == TimePoint {}) {
+            conv->info = {request.conversationId};
+            conv->info.created = request.received;
+            conv->info.members.emplace(username_);
+            conv->info.members.emplace(request.from);
+            conv->info.mode = request.mode();
+            addConvInfo(conv->info);
+        }
     }
-    accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
-        auto sthis = w.lock();
-        auto deviceId = pk->getLongId().toString();
-        if (!sthis or deviceId == sthis->deviceId_)
-            return;
-        sthis->cloneConversationFrom(conv, deviceId);
-    });
+    auto found = std::make_shared<std::atomic_bool>(false);
+    accountManager_->forEachDevice(
+        memberHash,
+        [w = weak(), conv, found](const auto& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+            found->store(true);
+            sthis->cloneConversationFrom(conv, deviceId);
+        },
+        [w = weak(), conv, found](bool) {
+            if (found->load())
+                return;
+            if (auto sthis = w.lock())
+                sthis->rearmFallbackClone(conv);
+        });
 }
 
 void
@@ -1626,15 +1648,23 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    accountManager_->forEachDevice(memberHash,
-                                   [w = weak(), conv, conversationId](
-                                       const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-                                       auto sthis = w.lock();
-                                       auto deviceId = pk->getLongId().toString();
-                                       if (!sthis or deviceId == sthis->deviceId_)
-                                           return;
-                                       sthis->cloneConversationFrom(conv, deviceId);
-                                   });
+    auto found = std::make_shared<std::atomic_bool>(false);
+    accountManager_->forEachDevice(
+        memberHash,
+        [w = weak(), conv, found](const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+            found->store(true);
+            sthis->cloneConversationFrom(conv, deviceId);
+        },
+        [w = weak(), conv, found](bool) {
+            if (found->load())
+                return;
+            if (auto sthis = w.lock())
+                sthis->rearmFallbackClone(conv);
+        });
 }
 
 ////////////////////////////////////////////////////////////////

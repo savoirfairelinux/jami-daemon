@@ -143,6 +143,21 @@ test(
     timeout: 300,
 )
 
+ut_fallback_clone_backoff = executable(
+    'ut_fallback_clone_backoff',
+    sources: files('unitTest/conversation/fallback_clone_backoff.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'fallback_clone_backoff',
+    ut_fallback_clone_backoff,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 300,
+)
+
 ut_conv_info_serialization = executable(
     'ut_conv_info_serialization',
     sources: files('unitTest/conversation/conv_info_serialization.cpp'),
