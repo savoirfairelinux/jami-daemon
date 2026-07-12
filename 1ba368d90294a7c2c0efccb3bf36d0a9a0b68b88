@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "825a7751_8fa2c275",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1276,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-12T03:29:20Z",
+      "side": 1,
+      "message": "Good catch. Patch set 2 defers the check by 1 second (asio timer on the manager\u0027s io context) before verifying the fetched status, so the asynchronous status write has time to land and ordinary fetch-then-disconnect sequences no longer trigger a re-announce.",
+      "parentUuid": "78a70dda_81920010",
+      "revId": "1ba368d90294a7c2c0efccb3bf36d0a9a0b68b88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed34c629_8c928d8b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1296,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-12T03:29:20Z",
+      "side": 1,
+      "message": "Intended: the goal is the delivery status for the member, and the message engine already dedups per member via the refresh token, consistent with the non-connected-member path in sendMessageNotification. Any of the member\u0027s devices fetching will update the status and stop further re-announces.",
+      "parentUuid": "be7c2222_c6684c8d",
+      "revId": "1ba368d90294a7c2c0efccb3bf36d0a9a0b68b88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
