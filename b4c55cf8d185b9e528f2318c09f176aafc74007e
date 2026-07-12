@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78a70dda_81920010",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1276,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T03:19:12Z",
+      "side": 1,
+      "message": "[warning] Line 1276: The `fetched` status is updated asynchronously: `Conversation::hasFetched()` dispatches the status update onto `dht::ThreadPool::io()` (conversation.cpp:2673). `removeGitSocket` is also invoked from the git socket\u0027s `onShutdown` on the same io pool (jamiaccount.cpp:2566-2570), and `resendMessageNotificationIfUnfetched` itself re-dispatches onto that pool. There is therefore no ordering guarantee between the fetched-status write and this check. In the common, healthy case (remote device fetches the last commit and then disconnects), the status may not yet be recorded when this runs, so the guard reports \u0027unfetched\u0027 and fires a redundant re-announce with device `{}` — waking the member\u0027s devices over DHT/push on every normal disconnect. Consider deferring the check slightly, or re-verifying the fetched status after a short delay, to avoid spurious wake-ups.",
+      "revId": "b4c55cf8d185b9e528f2318c09f176aafc74007e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be7c2222_c6684c8d",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1296,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T03:19:12Z",
+      "side": 1,
+      "message": "[info] Line 1296: `sendMsgCb_(memberUri, {}, ...)` with an empty device targets every device of the member, not only the one that just disconnected. If the member has several devices this wakes all of them even though only `deviceId` failed to fetch. This matches the existing non-connected-member path so it is acceptable, but worth confirming the extra fan-out is intended given the feature targets a single torn-down device.",
+      "revId": "b4c55cf8d185b9e528f2318c09f176aafc74007e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
