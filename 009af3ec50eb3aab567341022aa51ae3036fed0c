@@ -16,6 +16,24 @@
       "message": "[info] Line 341: Mobility is captured only once at Impl construction. `JamiAccount::isMobile()` depends on runtime config (`proxyEnabled` and `deviceKey`), which a user can toggle after conversations are already loaded (e.g. enabling/disabling push notifications). In that case existing SwarmManagers keep the stale value and will advertise the wrong `is_mobile` flag. Consider propagating mobility changes to live conversations when the account config changes (call `swarmManager_-\u003esetMobility(...)` from the account\u0027s config-update path), or document that a restart is required. Not blocking, but worth tracking.",
       "revId": "009af3ec50eb3aab567341022aa51ae3036fed0c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "580cdf00_cc05636c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 341,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-12T02:43:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4698de09_a7fe22d8",
+      "revId": "009af3ec50eb3aab567341022aa51ae3036fed0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
