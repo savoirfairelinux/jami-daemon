@@ -338,6 +338,7 @@ private:
         , ioContext_(Manager::instance().ioContext())
         , typers_(std::make_shared<Typers>(account, repository_->id()))
     {
+        swarmManager_->setMobility(account->isMobile());
         if (!commits.empty())
             initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
