@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8a2b215_35168bac",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1257,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T03:30:46Z",
+      "side": 1,
+      "message": "[info] Line 1257: `removeGitSocket` runs on every git-socket teardown, so a steady_timer plus an io-pool task is now allocated for every device disconnect on every conversation, even in the common case where we are not the commit author or the member already fetched. The real filters (author check, fetched check) only run 1s later inside the handler. This is cheap per call but happens frequently; if it shows up in profiling, consider a fast pre-check before scheduling the timer. Informational, non-blocking.",
+      "revId": "1ba368d90294a7c2c0efccb3bf36d0a9a0b68b88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "825a7751_8fa2c275",
