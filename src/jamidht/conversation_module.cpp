@@ -55,6 +55,7 @@ struct PendingConversationFetch
 };
 
 constexpr std::chrono::seconds MAX_FALLBACK {12 * 3600s};
+constexpr std::chrono::seconds FETCH_STATUS_SETTLE_DELAY {1};
 // Maximum attempts at cloning a conversation whose repository fails validation
 // before giving up. Validation failures are permanent (the remote history is
 // immutable), so retrying is wasted work; the counter is kept in-memory only,
@@ -235,6 +236,23 @@ public:
                                  bool sync,
                                  const std::string& commitId = "",
                                  const std::string& deviceId = "");
+
+    /**
+     * Re-announce the last commit to a member whose device disconnected
+     * before fetching it. A device can be woken up for a short time (e.g. a
+     * mobile device woken by an incoming call) and disconnect right after a
+     * message notification was successfully sent over the still open
+     * channel, but before performing the fetch. In this case, no other
+     * announce is scheduled and the sender will not get any delivery status
+     * until the next connection. Re-sending the notification through the
+     * message engine reaches the device via the DHT and push notifications.
+     * The check is deferred as the fetched status is recorded asynchronously
+     * and may not be visible yet when the disconnection is notified.
+     * @param convId    Conversation's id
+     * @param deviceId  The disconnected device
+     */
+    void resendMessageNotificationIfUnfetched(const std::string& convId, const std::string& deviceId);
+    void resendMessageNotificationIfUnfetchedImpl(const std::string& convId, const std::string& deviceId);
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -1228,6 +1246,71 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto& refresh = refreshMessage[deviceIdStr];
         refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
     }
+}
+
+void
+ConversationModule::Impl::resendMessageNotificationIfUnfetched(const std::string& convId, const std::string& deviceId)
+{
+    // The fetched status is recorded asynchronously (Conversation::hasFetched),
+    // so a fetch that just completed may not be visible yet. Defer the check to
+    // avoid a spurious re-announce when the device disconnects after fetching.
+    auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext());
+    timer->expires_after(FETCH_STATUS_SETTLE_DELAY);
+    timer->async_wait([timer, w = weak(), convId, deviceId](const std::error_code& ec) {
+        if (ec)
+            return;
+        dht::ThreadPool::io().run([w, convId, deviceId] {
+            if (auto sthis = w.lock())
+                sthis->resendMessageNotificationIfUnfetchedImpl(convId, deviceId);
+        });
+    });
+}
+
+void
+ConversationModule::Impl::resendMessageNotificationIfUnfetchedImpl(const std::string& convId,
+                                                                   const std::string& deviceId)
+{
+    auto conv = getConversation(convId);
+    if (!conv)
+        return;
+    std::shared_ptr<Conversation> conversation;
+    {
+        std::lock_guard lk(conv->mtx);
+        if (!conv->conversation || conv->conversation->isRemoving())
+            return;
+        conversation = conv->conversation;
+    }
+    auto memberUri = conversation->uriFromDevice(deviceId);
+    if (memberUri.empty() || memberUri == username_ || conversation->isMemberBanned(memberUri))
+        return;
+    auto lastCommitId = conversation->lastCommitId();
+    auto status = conversation->messageStatus();
+    auto itStatus = status.find(memberUri);
+    if (itStatus != status.end()) {
+        auto fetched = itStatus->second.find("fetched");
+        if (fetched != itStatus->second.end() && fetched->second == lastCommitId)
+            return; // Member already fetched the last commit.
+    }
+    // Checked last, as it reads the repository on disk.
+    auto commit = conversation->getCommit(lastCommitId);
+    // Only the author needs to re-announce their own commit.
+    if (!commit || commit->authorId != username_)
+        return;
+    JAMI_DEBUG("[Account {}] [Conversation {}] Device {} disconnected before fetching last "
+               "commit, re-announce {} to {}",
+               accountId_,
+               convId,
+               deviceId,
+               lastCommitId,
+               memberUri);
+    Json::Value message;
+    message["id"] = convId;
+    message["commit"] = lastCommitId;
+    message["deviceId"] = deviceId_;
+    const auto messageMap = std::map<std::string, std::string> {{MIME_TYPE_GIT, json::toString(message)}};
+    std::lock_guard lk(refreshMtx_);
+    auto& refresh = refreshMessage[memberUri];
+    refresh = sendMsgCb_(memberUri, {}, messageMap, refresh);
 }
 
 void
@@ -3431,6 +3514,10 @@ void
 ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view convId)
 {
     pimpl_->withConversation(convId, [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId)); });
+    // The disconnected device may not have fetched our last commit
+    // (e.g. a mobile device torn down right after a canceled call): if so,
+    // re-announce it so the device is reachable via DHT/push again.
+    pimpl_->resendMessageNotificationIfUnfetched(std::string(convId), std::string(deviceId));
 }
 
 void
