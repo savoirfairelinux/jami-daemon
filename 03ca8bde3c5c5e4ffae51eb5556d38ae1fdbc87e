@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ab287824_44334fd4",
+        "filename": "src/jamidht/fallback_clone_backoff.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-12T16:00:56Z",
+      "side": 1,
+      "message": "[info] Line 26: FallbackCloneBackoff is stateful but not internally synchronized: every method (schedule/timerFired/cancel) is only safe because all current callers hold conv-\u003emtx. Since this is a standalone public header, a future caller could easily use it without a lock and introduce a data race on delay_/scheduled_. Add a short doc comment stating that instances are not thread-safe and require external synchronization (the owning SyncedConversation::mtx), so the invariant is explicit.",
+      "revId": "03ca8bde3c5c5e4ffae51eb5556d38ae1fdbc87e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
