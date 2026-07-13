@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f0817cf_3b32f342",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-07-13T17:53:28Z",
+      "side": 1,
+      "message": "non-atomic write — crash mid-write loses the list",
+      "revId": "5c31ac3eb0dfc44b7423b9aeb1919573c3520b7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70a2671f_b5d166cc",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-07-13T17:53:28Z",
+      "side": 1,
+      "message": "could we verify that it changed before emitting the signal?",
+      "revId": "5c31ac3eb0dfc44b7423b9aeb1919573c3520b7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
