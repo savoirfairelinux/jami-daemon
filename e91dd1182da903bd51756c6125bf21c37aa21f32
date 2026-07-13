@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8447a18c_f7ab1f14",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-13T20:08:10Z",
+      "side": 1,
+      "message": "channelTimeout should not be relevant for this case. If socket write fails when requesting the channel, the connection would be closed quickly and the callback kicks in (with null channel) to handle any potential retry.\n\nUsing a hard-coded timeout is a hack which bypasses the underlying mechanisms, and is bound to cause other bugs and inconsistent behavior in the future.",
+      "range": {
+        "startLine": 85,
+        "startChar": 12,
+        "endLine": 85,
+        "endChar": 26
+      },
+      "revId": "e91dd1182da903bd51756c6125bf21c37aa21f32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
