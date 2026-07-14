@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49c624df_4b155c9b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3719,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T21:45:33Z",
+      "side": 1,
+      "message": "[warning] Line 3719: This path locks `pendingMessageConnectionsMtx_` and then calls `messageEngine_.hasPendingMessages(...)`, which takes `messagesMutex_`. Other message sending paths commonly start inside the message engine and can call back into the account, so this introduces an avoidable lock-order dependency between the account pending-connection mutex and the message engine mutex. Compute the pending-message state outside the account mutex, or collect candidate keys under the account mutex and re-check/erase them without holding both locks at once.",
+      "revId": "02889b9dbcb6270d89286de4bd9bbdb591126766",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a754742_05795aa6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4249,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T21:45:33Z",
+      "side": 1,
+      "message": "[warning] Line 4249: This keeps `pendingMessageConnectionsMtx_` locked while calling `handler-\u003econnect(...)`. That call crosses into the channel manager and can synchronously inspect state, enqueue callbacks, or take other locks, which makes this mutex part of a wider lock chain and increases deadlock/re-entrancy risk. Capture the needed state under the mutex, release it, then call `connect` outside the locked section.\n```suggestion\n    {\n        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);\n        auto pending \u003d pendingMessageConnections_.find({peerId, deviceId});\n        if (pending \u003d\u003d pendingMessageConnections_.end() || pending-\u003esecond.generation !\u003d generation)\n            return;\n        if (requirePendingMessages \u0026\u0026 !messageEngine_.hasPendingMessages(peerId, deviceId.toString())) {\n            pendingMessageConnections_.erase(pending);\n            return;\n        }\n        pending-\u003esecond.attemptStarted \u003d std::chrono::steady_clock::now();\n        pending-\u003esecond.attemptRevision \u003d pending-\u003esecond.requestRevision;\n        pending-\u003esecond.retryTimer.reset();\n    }\n\n    handler-\u003econnect(\n```",
+      "revId": "02889b9dbcb6270d89286de4bd9bbdb591126766",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
