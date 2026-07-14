@@ -956,11 +956,28 @@ private:
                                   const DeviceId& deviceId,
                                   const std::string& connectionType,
                                   bool retryOnFailure = true);
+    void connectMessageDevice(const std::string& peerId,
+                              const DeviceId& deviceId,
+                              const std::string& connectionType,
+                              uint64_t generation,
+                              bool forceNewConnection,
+                              bool requirePendingMessages = false);
+    void onMessageConnectionResult(const std::string& peerId,
+                                   const std::string& connectionType,
+                                   uint64_t generation,
+                                   const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                   const DeviceId& deviceId);
     struct PendingMessageConnection
     {
-        std::chrono::steady_clock::time_point started;
-        uint64_t generation;
-        bool retryOnFailure;
+        std::chrono::steady_clock::time_point seriesStarted {};
+        std::chrono::steady_clock::time_point attemptStarted {};
+        uint64_t generation {0};
+        uint64_t requestRevision {1};
+        uint64_t attemptRevision {1};
+        std::size_t nextRetry {0};
+        bool retryOnFailure {false};
+        bool retryWithoutPending {false};
+        std::shared_ptr<asio::steady_timer> retryTimer {};
     };
     std::mutex pendingMessageConnectionsMtx_;
     std::map<std::pair<std::string, DeviceId>, PendingMessageConnection> pendingMessageConnections_;

@@ -136,6 +136,21 @@ MessageEngine::getStatus(MessageToken t) const
     return MessageStatus::UNKNOWN;
 }
 
+bool
+MessageEngine::hasPendingMessages(const std::string& peer, const std::string& deviceId) const
+{
+    std::lock_guard lock(messagesMutex_);
+    auto peerMessages = messages_.find(peer);
+    if (peerMessages != messages_.end() && !peerMessages->second.empty())
+        return true;
+    if (!deviceId.empty()) {
+        auto deviceMessages = messagesDevices_.find(deviceId);
+        if (deviceMessages != messagesDevices_.end() && !deviceMessages->second.empty())
+            return true;
+    }
+    return false;
+}
+
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok, const std::string& deviceId)
 {

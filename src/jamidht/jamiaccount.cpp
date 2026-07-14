@@ -264,6 +264,15 @@ static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d
 static const constexpr std::string_view PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 const constexpr auto PENDING_MESSAGE_CONNECTION_EXPIRATION = std::chrono::seconds(60);
+// Keep a 30-second PCR operation active through the DHT value's 10-minute
+// lifetime, with at most six puts including the initial request.
+const constexpr std::array MESSAGE_CONNECTION_RETRY_OFFSETS {
+    std::chrono::seconds(30),
+    std::chrono::seconds(90),
+    std::chrono::seconds(210),
+    std::chrono::seconds(450),
+    std::chrono::seconds(570),
+};
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
@@ -380,6 +389,15 @@ JamiAccount::shutdownConnections()
             [conMgr = std::make_shared<decltype(connectionManager_)>(std::move(connectionManager_))] {});
         connectionManager_.reset();
         channelHandlers_.clear();
+    }
+    {
+        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+        ++pendingMessageConnectionGeneration_;
+        for (auto& [_, pending] : pendingMessageConnections_) {
+            if (pending.retryTimer)
+                pending.retryTimer->cancel();
+        }
+        pendingMessageConnections_.clear();
     }
     if (convModule_) {
         convModule_->shutdownConnections();
@@ -3698,6 +3716,30 @@ JamiAccount::onMessageSent(
     if (!onlyConnected)
         messageEngine_.onMessageSent(to, id, success, deviceId);
 
+    if (success) {
+        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+        if (deviceId.empty()) {
+            for (auto pending = pendingMessageConnections_.begin(); pending != pendingMessageConnections_.end();) {
+                if (pending->first.first == to
+                    && !messageEngine_.hasPendingMessages(std::string {}, pending->first.second.toString())) {
+                    if (pending->second.retryTimer)
+                        pending->second.retryTimer->cancel();
+                    pending = pendingMessageConnections_.erase(pending);
+                } else {
+                    ++pending;
+                }
+            }
+        } else {
+            auto pending = pendingMessageConnections_.find({to, DeviceId(deviceId)});
+            if (pending != pendingMessageConnections_.end()
+                && !messageEngine_.hasPendingMessages(to, deviceId)) {
+                if (pending->second.retryTimer)
+                    pending->second.retryTimer->cancel();
+                pendingMessageConnections_.erase(pending);
+            }
+        }
+    }
+
     if (!success) {
         if (retry)
             messageEngine_.onPeerOnline(to, deviceId);
@@ -4167,6 +4209,8 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
             return;
         }
     }
+    lk.unlock();
+    const auto hasPendingMessages = messageEngine_.hasPendingMessages(peerId, deviceId.toString());
     uint64_t generation;
     bool forceNewConnection = false;
     {
@@ -4174,55 +4218,153 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
         auto key = std::make_pair(peerId, deviceId);
         auto pending = pendingMessageConnections_.find(key);
         const auto now = std::chrono::steady_clock::now();
-        if (pending != pendingMessageConnections_.end()
-            && now - pending->second.started < PENDING_MESSAGE_CONNECTION_EXPIRATION) {
+        if (pending != pendingMessageConnections_.end() && !pending->second.retryTimer
+            && now - pending->second.attemptStarted < PENDING_MESSAGE_CONNECTION_EXPIRATION) {
             pending->second.retryOnFailure |= retryOnFailure;
+            pending->second.retryWithoutPending |= retryOnFailure && !hasPendingMessages;
+            ++pending->second.requestRevision;
             return;
         }
-        // A lost lower-layer callback must not suppress this device forever.
-        forceNewConnection = pending != pendingMessageConnections_.end();
+        if (pending != pendingMessageConnections_.end()) {
+            if (pending->second.retryTimer)
+                pending->second.retryTimer->cancel();
+            else
+                forceNewConnection = true;
+        }
         generation = ++pendingMessageConnectionGeneration_;
-        pendingMessageConnections_.insert_or_assign(
-            std::move(key), PendingMessageConnection {now, generation, retryOnFailure});
+        PendingMessageConnection state;
+        state.seriesStarted = now;
+        state.attemptStarted = now;
+        state.generation = generation;
+        state.retryOnFailure = retryOnFailure;
+        state.retryWithoutPending = retryOnFailure && !hasPendingMessages;
+        pendingMessageConnections_.insert_or_assign(std::move(key), std::move(state));
     }
+    connectMessageDevice(peerId, deviceId, connectionType, generation, forceNewConnection);
+}
+
+void
+JamiAccount::connectMessageDevice(const std::string& peerId,
+                                  const DeviceId& deviceId,
+                                  const std::string& connectionType,
+                                  uint64_t generation,
+                                  bool forceNewConnection,
+                                  bool requirePendingMessages)
+{
+    std::shared_lock lk(connManagerMtx_);
+    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    if (!handler) {
+        lk.unlock();
+        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+        auto pending = pendingMessageConnections_.find({peerId, deviceId});
+        if (pending != pendingMessageConnections_.end() && pending->second.generation == generation)
+            pendingMessageConnections_.erase(pending);
+        return;
+    }
+    std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+    auto pending = pendingMessageConnections_.find({peerId, deviceId});
+    if (pending == pendingMessageConnections_.end() || pending->second.generation != generation)
+        return;
+    if (requirePendingMessages && !messageEngine_.hasPendingMessages(peerId, deviceId.toString())) {
+        pendingMessageConnections_.erase(pending);
+        return;
+    }
+    pending->second.attemptStarted = std::chrono::steady_clock::now();
+    pending->second.attemptRevision = pending->second.requestRevision;
+    pending->second.retryTimer.reset();
     handler->connect(
         deviceId,
         "",
         [w = weak(), peerId, connectionType, generation](const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                                                         const DeviceId& deviceId) {
             dht::ThreadPool::io().run([w, peerId, connectionType, generation, socket, deviceId] {
-                if (auto acc = w.lock()) {
-                    bool retryOnFailure = false;
-                    {
-                        std::lock_guard pendingLock(acc->pendingMessageConnectionsMtx_);
-                        auto pending = acc->pendingMessageConnections_.find({peerId, deviceId});
-                        if (pending != acc->pendingMessageConnections_.end()
-                            && pending->second.generation == generation) {
-                            retryOnFailure = pending->second.retryOnFailure;
-                            acc->pendingMessageConnections_.erase(pending);
-                        }
-                    }
-                    if (!socket) {
-                        // Re-announce once after an orphaned PCR expires. Later
-                        // messages can start another bounded attempt.
-                        if (retryOnFailure)
-                            acc->requestMessageConnection(peerId, deviceId, connectionType, false);
-                        return;
-                    }
-                    acc->messageEngine_.onPeerOnline(peerId);
-                    acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
-                    if (!acc->presenceNote_.empty()) {
-                        // If a presence note is set, send it to this device.
-                        auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
-                        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
-                        acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
-                    }
-                    acc->convModule()->syncConversations(peerId, deviceId.toString());
-                }
+                if (auto acc = w.lock())
+                    acc->onMessageConnectionResult(peerId, connectionType, generation, socket, deviceId);
             });
         },
         connectionType,
         forceNewConnection);
+}
+
+void
+JamiAccount::onMessageConnectionResult(const std::string& peerId,
+                                       const std::string& connectionType,
+                                       uint64_t generation,
+                                       const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                       const DeviceId& deviceId)
+{
+    if (socket) {
+        {
+            std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+            auto pending = pendingMessageConnections_.find({peerId, deviceId});
+            if (pending != pendingMessageConnections_.end() && pending->second.generation == generation) {
+                if (pending->second.retryTimer)
+                    pending->second.retryTimer->cancel();
+                pendingMessageConnections_.erase(pending);
+            }
+        }
+        messageEngine_.onPeerOnline(peerId);
+        messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+        if (!presenceNote_.empty()) {
+            auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+            std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(presenceNote_)}};
+            sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+        }
+        convModule()->syncConversations(peerId, deviceId.toString());
+        return;
+    }
+
+    std::shared_ptr<asio::steady_timer> timer;
+    bool allowWithoutPending = false;
+    {
+        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+        auto pending = pendingMessageConnections_.find({peerId, deviceId});
+        if (pending == pendingMessageConnections_.end() || pending->second.generation != generation)
+            return;
+        auto& state = pending->second;
+        const auto now = std::chrono::steady_clock::now();
+        if (state.requestRevision != state.attemptRevision) {
+            state.seriesStarted = now - MESSAGE_CONNECTION_RETRY_OFFSETS.front();
+            state.nextRetry = 0;
+        }
+        if (!state.retryOnFailure || state.nextRetry >= MESSAGE_CONNECTION_RETRY_OFFSETS.size()) {
+            pendingMessageConnections_.erase(pending);
+            return;
+        }
+
+        const auto retryIndex = state.nextRetry++;
+        const auto retryAt = std::max(now, state.seriesStarted + MESSAGE_CONNECTION_RETRY_OFFSETS[retryIndex]);
+        allowWithoutPending = retryIndex == 0 && state.retryWithoutPending;
+        timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), retryAt);
+        state.retryTimer = timer;
+    }
+
+    timer->async_wait(
+        [w = weak(), peerId, deviceId, connectionType, generation, timer, allowWithoutPending](
+            const std::error_code& ec) {
+            if (ec)
+                return;
+            auto account = w.lock();
+            if (!account)
+                return;
+            {
+                std::lock_guard pendingLock(account->pendingMessageConnectionsMtx_);
+                auto pending = account->pendingMessageConnections_.find({peerId, deviceId});
+                if (pending == account->pendingMessageConnections_.end()
+                    || pending->second.generation != generation
+                    || pending->second.retryTimer != timer) {
+                    return;
+                }
+                if (!allowWithoutPending
+                    && !account->messageEngine_.hasPendingMessages(peerId, deviceId.toString())) {
+                    account->pendingMessageConnections_.erase(pending);
+                    return;
+                }
+                pending->second.retryTimer.reset();
+            }
+            account->connectMessageDevice(
+                peerId, deviceId, connectionType, generation, true, !allowWithoutPending);
+        });
 }
 
 void

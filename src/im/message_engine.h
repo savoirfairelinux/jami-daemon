@@ -55,6 +55,8 @@ public:
 
     MessageStatus getStatus(MessageToken t) const;
 
+    bool hasPendingMessages(const std::string& peer, const std::string& deviceId = {}) const;
+
     void onMessageSent(const std::string& peer, MessageToken t, bool success, const std::string& deviceId = {});
 
     /**
