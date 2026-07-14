@@ -37,6 +37,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f193f892_acb29dfb",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-14T21:30:17Z",
+      "side": 1,
+      "message": "The behaviour described in the comment  (\"ChannelRequest can be fully accepted by the local transport yet get no remote ACCEPT or DECLINE, leaving the operation in connecting state.\") would be a bug to fix in dhtnet, clearly not something to work around here with a timeout. The same issue may affect any other connectDevice() call, possibly causing real but less visible issues than missed calls or messages.\n\nAn intended purpose of dhtnet is to take care of these transport-level issues for the user.",
+      "parentUuid": "161bc1be_7f8cd331",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bb27c080_6484576f",
