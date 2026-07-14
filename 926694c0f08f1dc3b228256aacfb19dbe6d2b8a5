@@ -1,6 +1,78 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "436fb7ee_bfca0ebd",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Addressed in PS10: the conference branch in updateMedia() is guarded by `if (not confBitrateSeeded_)` (video_rtp_session.cpp:99), so an SDP renegotiation no longer overwrites the RTCP-adapted budget. Resolving.",
+      "parentUuid": "dfef5666_a6286e2c",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee541f3f_0f6b3fbf",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Addressed in PS10: each operand is cast to unsigned before multiplying (video_rtp_session.cpp:241) and the positive-size guard is kept. Resolving.",
+      "parentUuid": "88affef5_3661a6af",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "07fe6913_048d1395",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 655,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Addressed in PS10: newPixels uses per-operand unsigned casts (video_rtp_session.cpp:669). Resolving.",
+      "parentUuid": "be621e29_76a41cb2",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7604577a_ad73812e",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 656,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Addressed in PS10: conferenceFormatChanged() is now wired from Conference::onMixerFormatChanged (conference.cpp:173); it is no longer dead code. Resolving.",
+      "parentUuid": "cf94cd0e_7b130316",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce70f6f4_1cafd32e",
@@ -14,6 +86,42 @@
       "writtenOn": "2026-07-09T15:10:41Z",
       "side": 1,
       "message": "[error] Line 704: Potential self-deadlock. conferenceFormatChanged() acquires std::lock_guard lock(mutex_) at the top of the function, then calls restartSender() here (and again at the setBitrate() branch below). In this file restartSender() takes its own std::lock_guard lock(mutex_); since mutex_ is a non-recursive std::mutex, invoking it while the lock is already held will deadlock. Note the existing setNewBitrate()/RTCP-adaptation callers reach restartSender() WITHOUT holding mutex_, which is why the same pattern is safe there but not here. Fix by not holding the lock across the restart: compute the new bitrate/pixel state under the lock, then release it before calling restartSender()/sender_-\u003esetBitrate(), e.g. move the restart logic out of the locked scope (or use a scoped block for the lock). Please confirm restartSender()\u0027s locking and adjust accordingly.",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fd16849_8ee4a793",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Not a deadlock: mutex_ is a std::recursive_mutex (rtp_session.h:72), not a plain std::mutex, so re-locking it from the same thread is well-defined. The exact same lock-then-restartSender() pattern already ships in setMuted(): it takes the lock (video_rtp_session.cpp:500) and calls restartSender() (line 519), which re-locks at line 271. conferenceFormatChanged() runs on the same call path (Conference::onMixerFormatChanged, via runOnMainThread), so restartSender() and sender_-\u003esetBitrate() simply re-enter the recursive mutex on the owning thread. No lock is held across another thread here.",
+      "parentUuid": "ce70f6f4_1cafd32e",
+      "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3369f65f_6f845841",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T23:43:14Z",
+      "side": 1,
+      "message": "Addressed in PS10: sentSurfacePixels_ is now declared `unsigned` (video_rtp_session.h:141). Resolving.",
+      "parentUuid": "72e334c3_93ea282b",
       "revId": "926694c0f08f1dc3b228256aacfb19dbe6d2b8a5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
