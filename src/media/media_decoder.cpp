@@ -57,8 +57,17 @@ MediaDemuxer::~MediaDemuxer()
         streamInfoTimer_->cancel();
         streamInfoTimer_.reset();
     }
-    if (inputCtx_)
+    std::lock_guard lk(inputCtxMutex_);
+    if (inputCtx_) {
+        // Drop the interrupt callback before closing: its opaque pointer refers
+        // to the owner (e.g. VideoInput/AudioInput), which may already be tearing
+        // down. FFmpeg can invoke it while shutting an input device down, and on
+        // Windows the dshow close path (dshow_read_close) is particularly prone to
+        // dereferencing stale state.
+        inputCtx_->interrupt_callback.callback = nullptr;
+        inputCtx_->interrupt_callback.opaque = nullptr;
         avformat_close_input(&inputCtx_);
+    }
     av_dict_free(&options_);
 }
 

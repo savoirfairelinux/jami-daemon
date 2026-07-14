@@ -42,9 +42,11 @@ public:
 
 private:
     void testAudioFile();
+    void testInterruptCallbackClearedOnClose();
 
     CPPUNIT_TEST_SUITE(MediaDecoderTest);
     CPPUNIT_TEST(testAudioFile);
+    CPPUNIT_TEST(testInterruptCallbackClearedOnClose);
     CPPUNIT_TEST_SUITE_END();
 
     void writeWav(); // writes a minimal wav file to test decoding
@@ -104,7 +106,52 @@ MediaDecoderTest::testAudioFile()
     CPPUNIT_ASSERT(done);
 }
 
-// write bytes to file using native endianness
+// Regression test for the crash in ~MediaDemuxer -> avformat_close_input
+// (NULL_POINTER_READ in mfksproxy!CMFSRSource::FlushPin on Windows dshow close).
+// The interrupt callback must be cleared before the input context is closed so
+// that FFmpeg cannot invoke it with a stale opaque pointer while the owner tears
+// down.
+void
+MediaDecoderTest::testInterruptCallbackClearedOnClose()
+{
+    if (!avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE) || !avcodec_find_decoder(AV_CODEC_ID_PCM_S16BE))
+        return;
+
+    writeWav();
+
+    static int interruptCalls = 0;
+    interruptCalls = 0;
+
+    decoder_.reset(new MediaDecoder([](const std::shared_ptr<MediaFrame>&&) mutable {}));
+    decoder_->setInterruptCallback([](void*) -> int {
+        ++interruptCalls;
+        return 0; // never abort
+    }, nullptr);
+
+    DeviceParams dev;
+    dev.input = filename_;
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupAudio() >= 0);
+
+    bool done = false;
+    while (!done) {
+        switch (decoder_->decode()) {
+        case MediaDemuxer::Status::ReadError:
+        case MediaDemuxer::Status::EndOfFile:
+            done = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    int callsBeforeClose = interruptCalls;
+
+    // Destroying the decoder must not trigger the interrupt callback anymore.
+    decoder_.reset();
+
+    CPPUNIT_ASSERT_EQUAL(callsBeforeClose, interruptCalls);
+}
 template<typename Word>
 static std::ostream&
 write(std::ostream& os, Word value, unsigned size)
