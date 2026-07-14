@@ -22,6 +22,24 @@
       },
       "revId": "e91dd1182da903bd51756c6125bf21c37aa21f32",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd30bcec_e3e965c9",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T00:36:28Z",
+      "side": 1,
+      "message": "The immediate write-error path is now covered by dhtnet 34875. I am keeping this thread unresolved while we verify the distinct successful-write/no-reply case before deciding whether this daemon timeout should be dropped.",
+      "parentUuid": "8447a18c_f7ab1f14",
+      "revId": "e91dd1182da903bd51756c6125bf21c37aa21f32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
