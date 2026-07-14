@@ -73,7 +73,6 @@ public:
 
     int getIndex(const std::string& messageId) const;
     const SwarmMessage& getMessageAtIndex(int idx) const;
-    std::string randomMessageId(std::mt19937_64& gen) const;
     int randomMessageIndex(std::mt19937_64& gen) const;
     std::string reactionByAuthor(int messageIndex, const std::string& authorUri) const;
 

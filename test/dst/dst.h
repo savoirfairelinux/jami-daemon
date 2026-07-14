@@ -95,19 +95,24 @@ struct Event
     int receivingAccountIndex;
     ConversationEvent type;
     std::chrono::nanoseconds timeOfOccurrence;
+    // Index of the message targeted by a reaction, edition or deletion (-1 if not applicable).
     int targetMessageIndex {-1};
+    // Index of the message this one replies to, for SEND_MESSAGE/SEND_FILE (-1 if not a reply).
+    int replyToIndex {-1};
 
     // For construction of an event struct
     Event(int instigatorAccountIndex,
           int receivingAccountIndex,
           ConversationEvent type,
           std::chrono::nanoseconds timeOfOccurrence,
-          int targetMessageIndex = -1)
+          int targetMessageIndex = -1,
+          int replyToIndex = -1)
         : instigatorAccountIndex(instigatorAccountIndex)
         , receivingAccountIndex(receivingAccountIndex)
         , type(type)
         , timeOfOccurrence(timeOfOccurrence)
         , targetMessageIndex(targetMessageIndex)
+        , replyToIndex(replyToIndex)
     {}
 };
 struct EventComparator

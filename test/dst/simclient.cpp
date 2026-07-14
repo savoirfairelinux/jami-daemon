@@ -254,15 +254,6 @@ SimClient::getMessageAtIndex(int index) const
     return swarmMessages_[index];
 }
 
-std::string
-SimClient::randomMessageId(std::mt19937_64& gen) const
-{
-    if (swarmMessages_.empty())
-        return {};
-    std::uniform_int_distribution<size_t> dist(0, swarmMessages_.size() - 1);
-    return swarmMessages_[dist(gen)].id;
-}
-
 int
 SimClient::randomMessageIndex(std::mt19937_64& gen) const
 {

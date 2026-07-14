@@ -73,7 +73,8 @@ enum class UTKEY : std::uint8_t {
     EVENT_TYPE,
     INSTIGATOR_ACCOUNT_ID,
     RECEIVING_ACCOUNT_ID,
-    TARGET_MESSAGE_INDEX
+    TARGET_MESSAGE_INDEX,
+    REPLY_TO_INDEX
 };
 std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::DATE, "date"},
@@ -84,7 +85,8 @@ std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::EVENT_TYPE, "eventType"},
                                            {UTKEY::INSTIGATOR_ACCOUNT_ID, "instigatorAccountID"},
                                            {UTKEY::RECEIVING_ACCOUNT_ID, "receivingAccountID"},
-                                           {UTKEY::TARGET_MESSAGE_INDEX, "targetMessageIndex"}};
+                                           {UTKEY::TARGET_MESSAGE_INDEX, "targetMessageIndex"},
+                                           {UTKEY::REPLY_TO_INDEX, "replyToIndex"}};
 
 bool
 ConversationDST::setUp(int numAccountsToSimulate)
@@ -625,10 +627,11 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
     }
     case ConversationEvent::SEND_MESSAGE: {
         msgCount++;
-        // With ~25% probability, make this a reply to one of the instigator's visible messages.
+        // The reply target (if any) is resolved during generation and recorded on the event, so
+        // that replays are deterministic.
         std::string replyToId;
-        if (rand01() < 0.25f)
-            replyToId = instigatorAccount.client.randomMessageId(gen_);
+        if (event.replyToIndex >= 0)
+            replyToId = instigatorAccount.client.getMessageAtIndex(event.replyToIndex).id;
         auto msg = CommitMessage::text(std::to_string(msgCount), replyToId);
         const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
@@ -661,10 +664,11 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         uint64_t tid = static_cast<uint64_t>(fileCount);
         int64_t totalSize = static_cast<int64_t>(fileCount) * 1024;
 
-        // With ~25% probability, make this a reply to one of the instigator's visible messages.
+        // The reply target (if any) is resolved during generation and recorded on the event, so
+        // that replays are deterministic.
         std::string replyToId;
-        if (rand01() < 0.25f)
-            replyToId = instigatorAccount.client.randomMessageId(gen_);
+        if (event.replyToIndex >= 0)
+            replyToId = instigatorAccount.client.getMessageAtIndex(event.replyToIndex).id;
         auto msg = CommitMessage::fileSent(displayName, sha3sum, tid, totalSize, replyToId);
         const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
@@ -921,6 +925,7 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
     int instigator = members[std::uniform_int_distribution<size_t>(0, members.size() - 1)(gen_)];
     int receiver = instigator;
     int targetMessageIndex = -1;
+    int replyToIndex = -1;
 
     switch (type) {
     case ConversationEvent::ADD_MEMBER:
@@ -947,11 +952,18 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
         // recorded for replay.
         targetMessageIndex = repositoryAccounts[instigator].client.randomMessageIndex(gen_);
         break;
+    case ConversationEvent::SEND_MESSAGE:
+    case ConversationEvent::SEND_FILE:
+        // With ~25% probability, make this a reply to one of the instigator's visible messages.
+        // Resolving the target here (rather than in triggerEvent) keeps it recorded for replay.
+        if (rand01() < 0.25f)
+            replyToIndex = repositoryAccounts[instigator].client.randomMessageIndex(gen_);
+        break;
     default:
         break;
     }
 
-    return Event(instigator, receiver, type, time, targetMessageIndex);
+    return Event(instigator, receiver, type, time, targetMessageIndex, replyToIndex);
 }
 
 /**
@@ -1460,8 +1472,17 @@ ConversationDST::loadUnitTestConfig(const std::string& unitTestPath)
             if (validatedEvent.isMember(targetKey)) {
                 targetMessageIndex = validatedEvent[targetKey].asInt();
             }
-            ret.events.emplace_back(
-                Event(accountIDs[instigatorAccountID], accountIDs[receiverAccountID], convEvent, 0s, targetMessageIndex));
+            int replyToIndex = -1;
+            const auto& replyKey = unitTestKeys[UTKEY::REPLY_TO_INDEX];
+            if (validatedEvent.isMember(replyKey)) {
+                replyToIndex = validatedEvent[replyKey].asInt();
+            }
+            ret.events.emplace_back(Event(accountIDs[instigatorAccountID],
+                                          accountIDs[receiverAccountID],
+                                          convEvent,
+                                          0s,
+                                          targetMessageIndex,
+                                          replyToIndex));
         } else {
             JAMI_ERROR("Invalid JSON object type found, please check your configuration!");
             return UnitTest();
@@ -1524,6 +1545,9 @@ ConversationDST::saveAsUnitTestConfig(const std::string& saveFilePath)
             = repositoryAccounts[validatedEvents[i].receivingAccountIndex].account->getDisplayName();
         if (validatedEvents[i].targetMessageIndex >= 0) {
             validatedEventObject[unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX]] = validatedEvents[i].targetMessageIndex;
+        }
+        if (validatedEvents[i].replyToIndex >= 0) {
+            validatedEventObject[unitTestKeys[UTKEY::REPLY_TO_INDEX]] = validatedEvents[i].replyToIndex;
         }
 
         unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]].append(validatedEventObject);
