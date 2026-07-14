@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "161bc1be_7f8cd331",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T21:10:17Z",
+      "side": 1,
+      "message": "Hi Adrien, could you please take another look at this change in light of the completed investigation and hardware campaign?\n\nYour point about observable write failures was correct; that path is handled separately by dhtnet 34875. Change 34845 addresses a distinct reproduced case: the ChannelRequest write returns the full byte count with no error, but no ACCEPT or DECLINE arrives. In the deterministic dhtnet test, the mux stayed active, TX was credited, the callback never ran, and `isConnecting(device, name)` remained true. With the 3 s mux-liveness deadline, the silent mux closed and the retry completed exactly once on a different socket. PS2 uses the existing public `SEND_BEACON_TIMEOUT` policy rather than a hard-coded daemon duration.\n\nWe then ran the R1-R5 Mac-to-iPad hardware campaign with 34845 PS2 as the unchanged base and identified three additional wake/delivery issues, now addressed by 34900, 34901, and the iOS client change 34902. The stale-channel cycle reproduced spontaneously three times; recovery delivered in 7.1, 2.2, and 1.8 seconds, versus about 12 minutes before the fix. Offline aggregation and the single re-announce were verified with three puts for three messages and no put storm. In the foreground airplane-mode scenario, the previous behavior left messages undelivered for 25 minutes and dropped 11 valid answers across four orphan windows; the bounded series in 34901 delivered 1.5 seconds after network return. The live +210 s answer was accepted, the Mac-initiated channel opened, and later retries were cancelled.\n\nThe client-side foreground connectivity issue found during the same campaign is isolated in 34902. I would appreciate a re-review of 34845 and the stacked follow-ups with these new reproductions and measurements in mind.",
+      "parentUuid": "26c9c331_deda1632",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bb27c080_6484576f",
@@ -49,6 +67,42 @@
       "writtenOn": "2026-07-14T02:38:49Z",
       "side": 1,
       "message": "[info] Line 86: Reusing dhtnet::SEND_BEACON_TIMEOUT as the channel-reply timeout couples two unrelated concepts: it is the DHT beacon liveness interval, not a channel-request deadline. A future retune of the beacon in dhtnet would silently change message-channel behavior. Note the sibling SIP path (jamiaccount.cpp:4216) sets an explicit, purpose-specific value (options.channelTimeout \u003d 3s). Prefer a dedicated named constant (e.g. static constexpr auto MESSAGE_CHANNEL_TIMEOUT \u003d ...;) so intent is explicit and independent of beacon tuning.",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e557d4d4_fe31dc6b",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T21:10:17Z",
+      "side": 1,
+      "message": "Thanks for raising the coupling concern. In the exact dhtnet revision used here, `SEND_BEACON_TIMEOUT` is not a DHT beacon interval; it is the public 3000 ms response deadline for the multiplexed socket\u0027s liveness beacon. Reusing that duration is intentional: `MessageChannelHandler::onRequest` only validates the certificate and returns synchronously, so there is no normal application-level latency that would justify a separate message-channel policy. If a locally accepted ChannelRequest receives neither ACCEPT nor DECLINE within the mux liveness window, the control path on that mux is no longer useful for this operation.\n\nA daemon-local 3000 ms constant would duplicate the same policy and could drift from dhtnet. The deterministic dhtnet reproduction also confirmed the intended behavior: without the deadline, the mux remained active, TX was credited, the callback never ran, and `isConnecting(device, name)` stayed true; with the 3 s deadline, the silent mux closed and the retry completed once on a different socket.\n\nThe follow-up wake/delivery handling is now in 34900 and 34901. Hardware validation recovered repeated zombie-channel cases in 2.2 and 1.8 s (7.1 s on the first occurrence), versus about 12 minutes before the fix, and recovered the airplane-mode orphan window in 1.5 s versus 25 minutes, without a put storm.",
+      "parentUuid": "03c78be3_547929fe",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47853e31_5c8ea55e",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T21:10:17Z",
+      "side": 1,
+      "message": "Confirmed: expiry calls `MultiplexedSocket::shutdown()`, so every channel on that mux is closed. This is an intentional trade-off with the current dhtnet API. There is no public per-channel cancellation that both removes the pending ConnectionManager operation, completes its callback, and allows the retry to move to a new socket.\n\nFor this handler, a healthy mux should answer immediately: `MessageChannelHandler::onRequest` performs only certificate validation and returns synchronously. Receiving neither ACCEPT nor DECLINE therefore means that the mux control path is silent; keeping application channels attached to that transport would preserve a connection that cannot complete new channel negotiation. Closing it completes the pending operation with a null channel and lets the retry negotiate a fresh socket.\n\nThe deterministic reproduction exercised this exact silent-control-path case. The R1-R5 hardware campaign then validated the surrounding recovery in 34900/34901: repeated stale-channel failures recovered in seconds rather than 12 minutes, airplane-mode recovery completed 1.5 s after network return rather than remaining undelivered for 25 minutes, aggregation was preserved, and no channel or push storm occurred. We did not exercise the timeout while an active call shared the mux, so I am not claiming direct coverage of that collateral case; the rationale here is the absence of a usable per-channel recovery primitive and the synchronous reply contract.",
+      "parentUuid": "bb27c080_6484576f",
       "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
