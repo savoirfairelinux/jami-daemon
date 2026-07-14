@@ -2,7 +2,7 @@ SDBUS_CPP_VERSION := 2.1.0
 SDBUS_CPP_URL := https://github.com/Kistler-Group/sdbus-cpp/archive/refs/tags/v$(SDBUS_CPP_VERSION).tar.gz
 
 ifdef HAVE_LINUX
-ifndef HAVE_ANDROID
+ifdef JAMI_DBUS
 PKGS += sdbus-cpp
 endif
 endif
