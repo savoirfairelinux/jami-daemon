@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e70d3b6_3257d1ad",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4168,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T21:43:30Z",
+      "side": 1,
+      "message": "[warning] Line 4168: When an expired pending entry is replaced, `retryOnFailure` is initialized only from the current call. If the stale in-flight request had already accumulated `retryOnFailure \u003d\u003d true` from earlier message sends, a later non-retry caller can overwrite that intent and the failed forced reconnect will not perform the intended single re-announcement. Preserve the previous flag when replacing an expired entry.\n```suggestion\n        auto retryPending \u003d retryOnFailure;\n        if (pending !\u003d pendingMessageConnections_.end()) {\n            retryPending |\u003d pending-\u003esecond.retryOnFailure;\n            forceNewConnection \u003d true;\n        }\n        generation \u003d ++pendingMessageConnectionGeneration_;\n        pendingMessageConnections_.insert_or_assign(\n            std::move(key), PendingMessageConnection {now, generation, retryPending});\n```",
+      "revId": "af95190887a457151ea32376446f180ef1408db4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4862523f_13315a2c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4178,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T21:43:30Z",
+      "side": 1,
+      "message": "[error] Line 4178: For peer-wide connection requests where the requested `deviceId` is empty, the pending entry is stored under `{peerId, emptyDeviceId}` but the callback looks it up with the callback\u0027s concrete `deviceId`. That leaves the pending entry uncleared after success/failure, so subsequent peer-wide retries are suppressed until expiration and stale entries can force unnecessary sockets later. Capture the originally requested device id separately and use it as the pending-map key, while still using the callback device id for message delivery.\n```suggestion\n        [w \u003d weak(), peerId, requestedDeviceId \u003d deviceId, connectionType, generation](const std::shared_ptr\u003cdhtnet::ChannelSocket\u003e\u0026 socket,\n                                                                                       const DeviceId\u0026 deviceId) {\n            dht::ThreadPool::io().run([w, peerId, requestedDeviceId, connectionType, generation, socket, deviceId] {\n                if (auto acc \u003d w.lock()) {\n                    bool retryOnFailure \u003d false;\n                    {\n                        std::lock_guard pendingLock(acc-\u003ependingMessageConnectionsMtx_);\n                        auto pending \u003d acc-\u003ependingMessageConnections_.find({peerId, requestedDeviceId});\n```\nIf retrying after a failure, pass `requestedDeviceId` back into `requestMessageConnection`; keep using `deviceId` only for `onPeerOnline`, `sendMessage`, and sync once a socket exists.",
+      "revId": "af95190887a457151ea32376446f180ef1408db4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
