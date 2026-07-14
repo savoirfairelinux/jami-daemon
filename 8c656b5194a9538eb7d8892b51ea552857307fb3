@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26c9c331_deda1632",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-14T02:37:32Z",
+      "side": 1,
+      "message": "Confirmed with a deterministic dhtnet reproduction. The endpoint reported the full ChannelRequest size with no error while dropping the frame. Without channelTimeout, the mux stayed active, TX was credited, the callback was never invoked, and isConnecting(device, name) remained true. With a 3 s channelTimeout, the silent mux closed, the retry negotiated a different socket, the peer accepted the request, and the callback completed exactly once.\n\nPS2 now uses dhtnet::SEND_BEACON_TIMEOUT instead of a hard-coded value and explicitly separates this no-reply liveness case from observable write failures handled by dhtnet 34875. This reuses the existing mux liveness policy (and matches the 3 s SIP timeout) rather than replacing write-error handling.",
+      "parentUuid": "bd30bcec_e3e965c9",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
