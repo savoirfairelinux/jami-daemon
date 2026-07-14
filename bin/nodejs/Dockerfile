@@ -1,7 +1,7 @@
 FROM ubuntu:24.04 AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG cmake_args
+
 RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
@@ -15,19 +15,16 @@ RUN apt-get update && apt-get install -y \
     libasio-dev \
     libasound2-dev \
     libdbus-1-dev \
-    libexpat1-dev \
-    libpulse-dev \
     libsystemd-dev \
     libva-dev \
     libvdpau-dev \
     libtool \
     libudev-dev \
-    guile-3.0-dev \
+    libpcre2-dev \
     nasm \
     pkg-config \
     yasm \
-    ninja-build \
-    sip-tester
+    ninja-build
 
 # Install Node
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
@@ -37,7 +34,7 @@ ENV NODE_PATH=/usr/lib/node_modules
 
 # Install latest Swig (>= 4.3 required for N-API support)
 WORKDIR /swig
-RUN git clone https://github.com/swig/swig.git && \
+RUN git clone https://github.com/swig/swig.git --depth 1 && \
     cd swig && \
     ./autogen.sh && \
     ./configure && \
@@ -51,6 +48,7 @@ COPY . .
 # Build the daemon
 ENV DISABLE_PIPEWIRE=1
 ENV DISABLE_LINUX_HWACCEL=1
+ENV IGNORE_SYSTEM_LIBS=1
 RUN mkdir -p build && \
     cd build && \
     cmake .. -DBUILD_TESTING=Off -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -DJAMI_NODEJS=ON -GNinja && \
