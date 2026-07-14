@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jami Daemon <jami@jami.net>
+Date: Mon, 14 Jul 2026 00:00:00 +0000
+Subject: [PATCH] storage: guard against null bucket in Storage::expire
+
+StorageBucket::erase() was dereferenced through the per-value
+store_bucket pointer without checking it for null. Values that are
+stored without an associated storage bucket (store_bucket left at its
+default nullptr) leave that pointer null, so when they expire the
+periodic maintenance call reaches StorageBucket::erase with a null
+"this" pointer and crashes while reading a member
+(NULL_CLASS_PTR_READ / c0000005).
+
+Skip the bucket bookkeeping when no bucket is attached to the expiring
+value. The value itself is still removed from the store as before.
+---
+ include/opendht/storage.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/opendht/storage.h b/include/opendht/storage.h
+index 1111111..2222222 100644
+--- a/include/opendht/storage.h
++++ b/include/opendht/storage.h
+@@ -395,7 +395,8 @@ Storage::expire(const InfoHash& id, time_point now)
+         if (v.expiration <= now) {
+             del_num++;
+             size_diff -= v.data->size();
+-            v.store_bucket->erase(id, *v.data, v.data->size());
++            if (v.store_bucket)
++                v.store_bucket->erase(id, *v.data, v.data->size());
+             it = values.erase(it);
+         } else
+             ++it;
+-- 
+2.40.1

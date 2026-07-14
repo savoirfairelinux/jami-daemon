@@ -25,6 +25,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/0002-storage-guard-null-bucket-in-expire.patch
 	$(MOVE)
 
 CMAKE_PKGS += opendht
