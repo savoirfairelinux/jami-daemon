@@ -39,7 +39,43 @@
 #include <algorithm>
 #include <asio/steady_timer.hpp>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace jami {
+
+#ifdef _WIN32
+// Some DirectShow capture devices are exposed through a Media Foundation to
+// DirectShow proxy (mfksproxy.dll). When such a device is removed while it is
+// being captured, the proxy dereferences a null pointer while flushing its pins
+// during graph teardown (CMFSRSource::FlushPin), which raises an access
+// violation from inside the third-party driver and crashes the whole daemon.
+// Isolate the close call behind SEH so a faulty driver cannot take us down.
+// This helper deliberately contains no C++ objects requiring unwinding, as
+// required when mixing structured exception handling with C++ code.
+static void
+closeInputGuarded(AVFormatContext** ctx) noexcept
+{
+    __try {
+        avformat_close_input(ctx);
+    } __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
+                    ? EXCEPTION_EXECUTE_HANDLER
+                    : EXCEPTION_CONTINUE_SEARCH) {
+        // The driver faulted while tearing down its filter graph. The context
+        // is left in an unknown state; drop our reference to avoid reusing or
+        // double-freeing it. The associated memory is intentionally leaked
+        // rather than risking another crash inside the broken driver.
+        *ctx = nullptr;
+    }
+}
+#endif
 
 // maximum number of packets the jitter buffer can queue
 const unsigned jitterBufferMaxSize_ {1500};
@@ -57,8 +93,16 @@ MediaDemuxer::~MediaDemuxer()
         streamInfoTimer_->cancel();
         streamInfoTimer_.reset();
     }
-    if (inputCtx_)
+    if (inputCtx_) {
+#ifdef _WIN32
+        if (inputParams_.format == "dshow")
+            closeInputGuarded(&inputCtx_);
+        else
+            avformat_close_input(&inputCtx_);
+#else
         avformat_close_input(&inputCtx_);
+#endif
+    }
     av_dict_free(&options_);
 }
 
