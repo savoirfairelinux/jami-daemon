@@ -2933,7 +2933,8 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
                 if (auto sthis = w.lock()) {
                     if (!socket) {
                         if (auto acc = sthis->pimpl_->account_.lock()) {
-                            if (auto cert = acc->certStore().getCertificate(deviceId)) {
+                            auto cert = acc->certStore().getCertificate(deviceId);
+                            if (cert && cert->issuer) {
                                 sthis->pimpl_->onConnectionFailed(DeviceId(deviceId), cert->issuer->getId().toString());
                             } else {
                                 JAMI_WARNING("{} Unable to get member URI from device ID {}",
