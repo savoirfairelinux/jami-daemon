@@ -17,6 +17,40 @@
       "parentUuid": "bd30bcec_e3e965c9",
       "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb27c080_6484576f",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T02:38:49Z",
+      "side": 1,
+      "message": "[warning] Line 86: channelTimeout here is the mux liveness deadline (the comment even says \"a silent mux closes\"), so hitting it tears down the *entire* multiplexed socket to that device, not just the stuck message channel. Any calls, sync, presence or file-transfer channels sharing that socket with the peer would be collaterally dropped. Please confirm this is acceptable — a message channel that never gets ACCEPT/DECLINE arguably should fail just that channel\u0027s request, not the whole connection. If per-channel cancellation is available in dhtnet, prefer it; otherwise this collateral teardown should be documented in the comment as an intentional trade-off.",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03c78be3_547929fe",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-14T02:38:49Z",
+      "side": 1,
+      "message": "[info] Line 86: Reusing dhtnet::SEND_BEACON_TIMEOUT as the channel-reply timeout couples two unrelated concepts: it is the DHT beacon liveness interval, not a channel-request deadline. A future retune of the beacon in dhtnet would silently change message-channel behavior. Note the sibling SIP path (jamiaccount.cpp:4216) sets an explicit, purpose-specific value (options.channelTimeout \u003d 3s). Prefer a dedicated named constant (e.g. static constexpr auto MESSAGE_CHANNEL_TIMEOUT \u003d ...;) so intent is explicit and independent of beacon tuning.",
+      "revId": "8c656b5194a9538eb7d8892b51ea552857307fb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
