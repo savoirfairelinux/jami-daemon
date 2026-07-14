@@ -33,6 +33,23 @@
       "message": "done in https://review.jami.net/c/jami-daemon/+/32884",
       "revId": "8014757325588260870cd0bc1e94d128bf1f0b64",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4def4a71_3d9b20a4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-14T15:16:58Z",
+      "side": 1,
+      "message": "Duplicate of https://review.jami.net/c/jami-daemon/+/32884",
+      "revId": "8014757325588260870cd0bc1e94d128bf1f0b64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
