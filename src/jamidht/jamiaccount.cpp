@@ -263,6 +263,7 @@ static const constexpr std::string_view JAMI_URI_PREFIX = "jami:";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const constexpr std::string_view PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
+const constexpr auto PENDING_MESSAGE_CONNECTION_EXPIRATION = std::chrono::seconds(60);
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
@@ -4142,7 +4143,8 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 void
 JamiAccount::requestMessageConnection(const std::string& peerId,
                                       const DeviceId& deviceId,
-                                      const std::string& connectionType)
+                                      const std::string& connectionType,
+                                      bool retryOnFailure)
 {
     std::shared_lock lk(connManagerMtx_);
     auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
@@ -4150,34 +4152,77 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
         return;
     if (deviceId) {
         if (auto connected = handler->getChannel(peerId, deviceId)) {
+            // The channel may have appeared after sendMessage checked. Retry
+            // pending messages instead of losing that readiness notification.
+            lk.unlock();
+            messageEngine_.onPeerOnline(peerId);
+            messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
             return;
         }
     } else {
         auto connected = handler->getChannels(peerId);
         if (!connected.empty()) {
+            lk.unlock();
+            messageEngine_.onPeerOnline(peerId);
             return;
         }
+    }
+    uint64_t generation;
+    bool forceNewConnection = false;
+    {
+        std::lock_guard pendingLock(pendingMessageConnectionsMtx_);
+        auto key = std::make_pair(peerId, deviceId);
+        auto pending = pendingMessageConnections_.find(key);
+        const auto now = std::chrono::steady_clock::now();
+        if (pending != pendingMessageConnections_.end()
+            && now - pending->second.started < PENDING_MESSAGE_CONNECTION_EXPIRATION) {
+            pending->second.retryOnFailure |= retryOnFailure;
+            return;
+        }
+        // A lost lower-layer callback must not suppress this device forever.
+        forceNewConnection = pending != pendingMessageConnections_.end();
+        generation = ++pendingMessageConnectionGeneration_;
+        pendingMessageConnections_.insert_or_assign(
+            std::move(key), PendingMessageConnection {now, generation, retryOnFailure});
     }
     handler->connect(
         deviceId,
         "",
-        [w = weak(), peerId](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& deviceId) {
-            if (socket)
-                dht::ThreadPool::io().run([w, peerId, deviceId] {
-                    if (auto acc = w.lock()) {
-                        acc->messageEngine_.onPeerOnline(peerId);
-                        acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
-                        if (!acc->presenceNote_.empty()) {
-                            // If a presence note is set, send it to this device.
-                            auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
-                            std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
-                            acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+        [w = weak(), peerId, connectionType, generation](const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                                        const DeviceId& deviceId) {
+            dht::ThreadPool::io().run([w, peerId, connectionType, generation, socket, deviceId] {
+                if (auto acc = w.lock()) {
+                    bool retryOnFailure = false;
+                    {
+                        std::lock_guard pendingLock(acc->pendingMessageConnectionsMtx_);
+                        auto pending = acc->pendingMessageConnections_.find({peerId, deviceId});
+                        if (pending != acc->pendingMessageConnections_.end()
+                            && pending->second.generation == generation) {
+                            retryOnFailure = pending->second.retryOnFailure;
+                            acc->pendingMessageConnections_.erase(pending);
                         }
-                        acc->convModule()->syncConversations(peerId, deviceId.toString());
                     }
-                });
+                    if (!socket) {
+                        // Re-announce once after an orphaned PCR expires. Later
+                        // messages can start another bounded attempt.
+                        if (retryOnFailure)
+                            acc->requestMessageConnection(peerId, deviceId, connectionType, false);
+                        return;
+                    }
+                    acc->messageEngine_.onPeerOnline(peerId);
+                    acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+                    if (!acc->presenceNote_.empty()) {
+                        // If a presence note is set, send it to this device.
+                        auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
+                        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
+                        acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+                    }
+                    acc->convModule()->syncConversations(peerId, deviceId.toString());
+                }
+            });
         },
-        connectionType);
+        connectionType,
+        forceNewConnection);
 }
 
 void

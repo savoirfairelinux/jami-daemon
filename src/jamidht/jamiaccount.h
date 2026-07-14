@@ -954,7 +954,17 @@ private:
 
     void requestMessageConnection(const std::string& peerId,
                                   const DeviceId& deviceId,
-                                  const std::string& connectionType);
+                                  const std::string& connectionType,
+                                  bool retryOnFailure = true);
+    struct PendingMessageConnection
+    {
+        std::chrono::steady_clock::time_point started;
+        uint64_t generation;
+        bool retryOnFailure;
+    };
+    std::mutex pendingMessageConnectionsMtx_;
+    std::map<std::pair<std::string, DeviceId>, PendingMessageConnection> pendingMessageConnections_;
+    uint64_t pendingMessageConnectionGeneration_ {0};
 
     // File transfers
     std::mutex transfersMtx_ {};

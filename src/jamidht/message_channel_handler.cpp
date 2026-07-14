@@ -72,12 +72,9 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
                                bool forceNewConnection)
 {
     auto channelName = concat(MESSAGE_SCHEME, deviceId.to_view());
-    if (pimpl_->connectionManager_.isConnecting(deviceId, channelName)) {
-        JAMI_LOG("Already connecting to {}", deviceId);
-        return;
-    }
     dhtnet::ConnectDeviceOptions options;
     options.forceNewSocket = forceNewConnection;
+    options.uniqueName = !forceNewConnection;
     options.connType = connectionType;
     // A ChannelRequest can be fully accepted by the local transport yet get no
     // remote ACCEPT or DECLINE, leaving the operation in connecting state.
