@@ -39,7 +39,30 @@
 #include <algorithm>
 #include <asio/steady_timer.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace jami {
+
+#ifdef _WIN32
+// Closing a DirectShow capture input can dereference a null pointer deep inside
+// third-party proxy filters (e.g. mfksproxy.dll's CMFSRSource::FlushPin) while
+// the capture graph is being torn down. Such a fault happens outside our code
+// and cannot be prevented here, so wrap the FFmpeg close routine in a structured
+// exception handler to keep the access violation from crashing the whole daemon.
+// This function must not own any C++ object requiring unwinding (MSVC C2712).
+static bool
+closeInputContextSafe(AVFormatContext** ctx) noexcept
+{
+    __try {
+        avformat_close_input(ctx);
+        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+#endif
 
 // maximum number of packets the jitter buffer can queue
 const unsigned jitterBufferMaxSize_ {1500};
@@ -57,8 +80,17 @@ MediaDemuxer::~MediaDemuxer()
         streamInfoTimer_->cancel();
         streamInfoTimer_.reset();
     }
-    if (inputCtx_)
+    if (inputCtx_) {
+#ifdef _WIN32
+        if (not closeInputContextSafe(&inputCtx_)) {
+            JAMI_ERROR("Access violation while closing input context; leaking it to "
+                       "avoid a crash in a third-party capture filter");
+            inputCtx_ = nullptr;
+        }
+#else
         avformat_close_input(&inputCtx_);
+#endif
+    }
     av_dict_free(&options_);
 }
 
