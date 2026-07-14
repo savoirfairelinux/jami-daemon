@@ -39,7 +39,30 @@
 #include <algorithm>
 #include <asio/steady_timer.hpp>
 
+#ifdef _WIN32
+#include <excpt.h>
+#endif
+
 namespace jami {
+
+#ifdef _WIN32
+// Closing a DirectShow capture input can trigger an access violation deep
+// inside the Windows media proxy (e.g. mfksproxy!CMFSRSource::FlushPin) when
+// the underlying device has been unplugged or left in an inconsistent state.
+// The fault happens in third-party system code we do not control, so guard the
+// close call with a structured exception handler to prevent it from tearing
+// down the whole process. Kept free of C++ objects so no unwinding is required.
+static bool
+closeInputNoThrow(AVFormatContext** ctx)
+{
+    __try {
+        avformat_close_input(ctx);
+        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+#endif
 
 // maximum number of packets the jitter buffer can queue
 const unsigned jitterBufferMaxSize_ {1500};
@@ -57,8 +80,17 @@ MediaDemuxer::~MediaDemuxer()
         streamInfoTimer_->cancel();
         streamInfoTimer_.reset();
     }
-    if (inputCtx_)
+    if (inputCtx_) {
+#ifdef _WIN32
+        if (not closeInputNoThrow(&inputCtx_)) {
+            JAMI_ERR("Caught a fatal exception while closing media input; "
+                     "leaking context to keep the process alive");
+            inputCtx_ = nullptr;
+        }
+#else
         avformat_close_input(&inputCtx_);
+#endif
+    }
     av_dict_free(&options_);
 }
 
