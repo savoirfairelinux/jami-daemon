@@ -1527,9 +1527,16 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getAccountID(),
                 getPath(),
-                [this]() { return getAccountDetails(); },
-                [this](DeviceSync&& syncData) {
-                    if (auto* sm = syncModule()) {
+                [w = weak()]() -> std::map<std::string, std::string> {
+                    if (auto this_ = w.lock())
+                        return this_->getAccountDetails();
+                    return {};
+                },
+                [w = weak()](DeviceSync&& syncData) {
+                    auto this_ = w.lock();
+                    if (not this_)
+                        return;
+                    if (auto* sm = this_->syncModule()) {
                         auto syncDataPtr = std::make_shared<SyncMsg>();
                         syncDataPtr->ds = std::move(syncData);
                         sm->syncWithConnected(syncDataPtr);
