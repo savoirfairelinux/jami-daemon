@@ -790,21 +790,27 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     (void) timeInfo;
     (void) statusFlags;
 
-    auto toPlay = parent.getPlayback(parent.audioFormat_, framesPerBuffer);
-    if (!toPlay) {
-        // Fill silence for all channels in planar format
-        float** outputChannels = (float**) outputBuffer;
-        for (unsigned i = 0; i < parent.audioFormat_.nb_channels; ++i) {
-            std::fill_n(outputChannels[i], framesPerBuffer, 0.0f);
+    // PortAudio invokes this from a C callback thread that cannot propagate
+    // C++ exceptions; letting one escape would call std::terminate and abort.
+    try {
+        auto toPlay = parent.getPlayback(parent.audioFormat_, framesPerBuffer);
+        if (!toPlay) {
+            // Fill silence for all channels in planar format
+            float** outputChannels = (float**) outputBuffer;
+            for (unsigned i = 0; i < parent.audioFormat_.nb_channels; ++i) {
+                std::fill_n(outputChannels[i], framesPerBuffer, 0.0f);
+            }
+            return paContinue;
         }
-        return paContinue;
-    }
 
-    auto numSamples = toPlay->pointer()->nb_samples;
-    auto channels = std::min<size_t>(parent.audioFormat_.nb_channels, toPlay->pointer()->ch_layout.nb_channels);
-    float** outputChannels = (float**) outputBuffer;
-    for (size_t i = 0; i < channels; ++i) {
-        std::copy_n((float*) toPlay->pointer()->extended_data[i], numSamples, outputChannels[i]);
+        auto numSamples = toPlay->pointer()->nb_samples;
+        auto channels = std::min<size_t>(parent.audioFormat_.nb_channels, toPlay->pointer()->ch_layout.nb_channels);
+        float** outputChannels = (float**) outputBuffer;
+        for (size_t i = 0; i < channels; ++i) {
+            std::copy_n((float*) toPlay->pointer()->extended_data[i], numSamples, outputChannels[i]);
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Exception in output callback: {}", e.what());
     }
     return paContinue;
 }
@@ -827,17 +833,24 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
         return paContinue;
     }
 
-    auto inBuff = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
-    if (parent.isCaptureMuted_ || inputBuffer == nullptr) {
-        libav_utils::fillWithSilence(inBuff->pointer());
-    } else {
-        auto channels = parent.audioInputFormat_.nb_channels;
-        float** inputChannels = (float**) inputBuffer;
-        for (size_t i = 0; i < channels; ++i) {
-            std::copy_n(inputChannels[i], framesPerBuffer, (float*) inBuff->pointer()->extended_data[i]);
+    // PortAudio invokes this from a C callback thread that cannot propagate
+    // C++ exceptions; letting one escape (e.g. std::bad_alloc from the
+    // AudioFrame buffer allocation) would call std::terminate and abort.
+    try {
+        auto inBuff = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
+        if (parent.isCaptureMuted_ || inputBuffer == nullptr) {
+            libav_utils::fillWithSilence(inBuff->pointer());
+        } else {
+            auto channels = parent.audioInputFormat_.nb_channels;
+            float** inputChannels = (float**) inputBuffer;
+            for (size_t i = 0; i < channels; ++i) {
+                std::copy_n(inputChannels[i], framesPerBuffer, (float*) inBuff->pointer()->extended_data[i]);
+            }
         }
+        parent.putRecorded(std::move(inBuff));
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Exception in input callback: {}", e.what());
     }
-    parent.putRecorded(std::move(inBuff));
     return paContinue;
 }
 
