@@ -19,7 +19,7 @@
 #include <map>
 #include <cstdint>
 
-enum class StreamType : uint8_t { audio, video };
+enum class StreamType { audio, video };
 
 /**
  * @struct StreamData
