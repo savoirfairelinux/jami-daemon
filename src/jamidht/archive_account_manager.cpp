@@ -1359,14 +1359,16 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        TLS::PRIVATE_KEY_FILE};
 
     JAMI_LOG("[Account {}] [Auth] Building account archive", accountId_);
-    for (const auto& it : onExportConfig_()) {
-        // filter-out?
-        if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys), [&](const auto& key) {
-                return key == it.first;
-            }))
-            continue;
+    if (onExportConfig_) {
+        for (const auto& it : onExportConfig_()) {
+            // filter-out?
+            if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys), [&](const auto& key) {
+                    return key == it.first;
+                }))
+                continue;
 
-        archive.config[it.first] = it.second;
+            archive.config[it.first] = it.second;
+        }
     }
 
     // Note we do not know accountID_ here, use path
