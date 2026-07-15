@@ -155,7 +155,7 @@ public:
      * @param nodeId
      * @return true if mobile node exists, false if not
      */
-    bool hasMobileNode(const NodeId& nodeId) { return mobile_nodes.find(nodeId) != mobile_nodes.end(); }
+    bool hasMobileNode(const NodeId& nodeId) const { return mobile_nodes.find(nodeId) != mobile_nodes.end(); }
 
     /**
      * Get NodeIds from mobile_nodes
