@@ -132,6 +132,7 @@ private:
     void testNotifyResponsibilityHandover();
     void testKnownMobileNodes();
     void testConnectedMobileLifecycle();
+    void testFailedConnectionPreservesMobility();
     void testMobileNodesChangedCallback();
     void testPersistenceColdStart();
     void testWakeUpCoverageConvergedNetwork();
@@ -144,6 +145,7 @@ private:
     CPPUNIT_TEST(testNotifyResponsibilityHandover);
     CPPUNIT_TEST(testKnownMobileNodes);
     CPPUNIT_TEST(testConnectedMobileLifecycle);
+    CPPUNIT_TEST(testFailedConnectionPreservesMobility);
     CPPUNIT_TEST(testMobileNodesChangedCallback);
     CPPUNIT_TEST(testPersistenceColdStart);
     CPPUNIT_TEST(testWakeUpCoverageConvergedNetwork);
@@ -498,6 +500,57 @@ MobileWakeUpTest::testConnectedMobileLifecycle()
     rt.addNode(mobileChannel);
     CPPUNIT_ASSERT(!rt.hasMobileNode(mobileId));
     CPPUNIT_ASSERT(rt.getMobileNodesToNotify().empty());
+}
+
+void
+MobileWakeUpTest::testFailedConnectionPreservesMobility()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    NodeId self = nodeTestIds1.at(0);
+    NodeId mobile = nodeTestIds1.at(2);
+    NodeId desktop = nodeTestIds1.at(3);
+    auto sm = std::make_shared<SwarmManager>(self, false, rd, [](auto) { return false; });
+    auto& rt = sm->getRoutingTable();
+    std::function<bool(const std::shared_ptr<dhtnet::ChannelSocketInterface>&)> pendingConnection;
+
+    sm->needSocketCb_ = [&pendingConnection](const std::string&, auto&& onSocket, bool) {
+        pendingConnection = std::move(onSocket);
+    };
+
+    rt.addMobileNode(mobile);
+    sm->connectNode(mobile);
+
+    CPPUNIT_ASSERT(pendingConnection);
+    CPPUNIT_ASSERT(rt.hasMobileNode(mobile));
+    CPPUNIT_ASSERT(rt.hasConnectingNode(mobile));
+    CPPUNIT_ASSERT(!rt.hasKnownNode(mobile));
+    auto allNodes = sm->getAllNodes();
+    CPPUNIT_ASSERT(std::count(allNodes.begin(), allNodes.end(), mobile) == 1);
+
+    auto info = sm->getRoutingTableInfo();
+    auto mobileInfo = std::find_if(info.begin(), info.end(), [&mobile](const auto& stat) {
+        return stat.at("id") == mobile.toString();
+    });
+    CPPUNIT_ASSERT(mobileInfo != info.end());
+    CPPUNIT_ASSERT_EQUAL("connecting"s, mobileInfo->at("status"));
+    CPPUNIT_ASSERT_EQUAL("true"s, mobileInfo->at("mobile"));
+
+    pendingConnection(nullptr);
+
+    CPPUNIT_ASSERT(rt.hasMobileNode(mobile));
+    CPPUNIT_ASSERT(!rt.hasConnectingNode(mobile));
+    CPPUNIT_ASSERT(!rt.hasKnownNode(mobile));
+    CPPUNIT_ASSERT(toSet(sm->getKnownMobileNodes()).count(mobile));
+    CPPUNIT_ASSERT(toSet(sm->getMobileNodesToNotify()).count(mobile));
+
+    sm->connectNode(desktop);
+    CPPUNIT_ASSERT(pendingConnection);
+    pendingConnection(nullptr);
+
+    CPPUNIT_ASSERT(!rt.hasMobileNode(desktop));
+    CPPUNIT_ASSERT(!rt.hasConnectingNode(desktop));
+    CPPUNIT_ASSERT(rt.hasKnownNode(desktop));
 }
 
 // ################# SWARM MANAGER TESTS #################//

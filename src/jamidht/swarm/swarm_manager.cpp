@@ -333,7 +333,8 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                 std::unique_lock lk(shared->mutex);
                 auto bucket = shared->routing_table.findBucket(nodeId);
                 bucket->removeConnectingNode(nodeId);
-                bucket->addKnownNode(nodeId);
+                if (!bucket->hasMobileNode(nodeId))
+                    bucket->addKnownNode(nodeId);
                 bucket = shared->routing_table.findBucket(shared->getId());
                 if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty() && shared->onConnectionChanged_) {
                     lk.unlock();
