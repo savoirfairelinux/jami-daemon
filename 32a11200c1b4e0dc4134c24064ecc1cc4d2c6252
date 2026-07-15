@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0648cd4_25cbcc79",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-15T17:48:16Z",
+      "side": 1,
+      "message": "Addressed in this patchset.",
+      "revId": "32a11200c1b4e0dc4134c24064ecc1cc4d2c6252",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c4fe9a2_766c49c2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1193
+      },
+      "writtenOn": "2026-07-15T17:48:16Z",
+      "side": 1,
+      "message": "Addressed in this patchset.",
+      "revId": "32a11200c1b4e0dc4134c24064ecc1cc4d2c6252",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
