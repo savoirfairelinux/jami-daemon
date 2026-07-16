@@ -40,17 +40,19 @@ enum class ConversationEvent : std::uint8_t {
     DISCONNECT = 3,
     SEND_FILE = 4,
     ADD_REACTION = 5,
+    HOST_CONFERENCE = 6,
 
     // Secondary events (only generated in response to other events)
-    FETCH = 6,
-    MERGE = 7,
-    CLONE = 8,
-    DELETE_FILE = 9,
-    EDIT_MESSAGE = 10,
-    REMOVE_REACTION = 11,
-    DELETE_MESSAGE = 12
+    FETCH = 7,
+    MERGE = 8,
+    CLONE = 9,
+    DELETE_FILE = 10,
+    EDIT_MESSAGE = 11,
+    REMOVE_REACTION = 12,
+    DELETE_MESSAGE = 13,
+    END_CONFERENCE = 14
 };
-static constexpr uint8_t NUM_PRIMARY_EVENTS = 6;
+static constexpr uint8_t NUM_PRIMARY_EVENTS = 7;
 
 /**
  * A structure containing the relevant data for account and repo simulation.
@@ -72,7 +74,8 @@ struct RepositoryAccount
         : account(std::move(acc))
     {}
 
-    void createConversation(std::unique_ptr<ConversationRepository>&& repo)
+    void createConversation(std::unique_ptr<ConversationRepository>&& repo,
+                            std::vector<ConversationCommit>&& commits = {})
     {
         repository = std::move(repo);
 
@@ -80,7 +83,12 @@ struct RepositoryAccount
         auto conversationId = repository->id();
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId, conversationId);
 
-        conversation = std::make_unique<Conversation>(account, conversationId);
+        // The RepositoryAccount keeps its own repository handle for direct use by the simulator, so
+        // we hand the Conversation a separate handle along with its commits. Passing the commits
+        // lets the Conversation initialize its active-calls list (and emit ActiveCallsChanged),
+        // mirroring what the daemon does when opening a conversation cloned from a peer.
+        auto convRepo = std::make_unique<ConversationRepository>(account, conversationId);
+        conversation = std::make_unique<Conversation>(std::move(convRepo), account, std::move(commits));
         auto members = conversation->getMembers(true, true, true);
         client.setMemberRoles(members);
 
@@ -148,6 +156,8 @@ public:
     // Checkers
     bool verifyLoadConversationFromScratch();
     std::vector<libjami::SwarmMessage> computeExpectedMessages(const RepositoryAccount& repoAcc) const;
+    std::vector<std::map<std::string, std::string>> computeExpectedActiveCalls(const RepositoryAccount& repoAcc) const;
+    bool checkActiveCalls(const RepositoryAccount& repoAcc);
     bool checkMessagesMatch(const RepositoryAccount& repoAcc,
                             const std::vector<libjami::SwarmMessage>& expected,
                             const std::vector<libjami::SwarmMessage>& actual);
@@ -218,6 +228,7 @@ private:
 
     int msgCount = 0;
     int fileCount = 0;
+    int conferenceCount = 0;
 };
 
 } // namespace test

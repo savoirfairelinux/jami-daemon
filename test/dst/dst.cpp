@@ -49,7 +49,9 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::EDIT_MESSAGE, "EDIT_MESSAGE"},
                                                      {ConversationEvent::ADD_REACTION, "ADD_REACTION"},
                                                      {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"},
-                                                     {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"}};
+                                                     {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"},
+                                                     {ConversationEvent::HOST_CONFERENCE, "HOST_CONFERENCE"},
+                                                     {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -62,7 +64,9 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"EDIT_MESSAGE", ConversationEvent::EDIT_MESSAGE},
                                                              {"ADD_REACTION", ConversationEvent::ADD_REACTION},
                                                              {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION},
-                                                             {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE}};
+                                                             {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE},
+                                                             {"HOST_CONFERENCE", ConversationEvent::HOST_CONFERENCE},
+                                                             {"END_CONFERENCE", ConversationEvent::END_CONFERENCE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -204,6 +208,16 @@ ConversationDST::setUp(int numAccountsToSimulate)
                 }
             }
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ActiveCallsChanged>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<std::map<std::string, std::string>>& activeCalls) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onActiveCallsChanged(accountId, conversationId, activeCalls);
+                }
+            }
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
         [&](uint32_t requestId,
             const std::string& accountId,
@@ -310,6 +324,15 @@ ConversationDST::eventLogger(const Event& event)
             break;
         case ConversationEvent::DELETE_MESSAGE:
             fmt::print("EVENT: {} deleted a message (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
+            break;
+        case ConversationEvent::HOST_CONFERENCE:
+            fmt::print("EVENT: {} started hosting a conference at {}\n", instigatorName, eventTime);
+            break;
+        case ConversationEvent::END_CONFERENCE:
+            fmt::print("EVENT: {} stopped hosting a conference (target index {}) at {}\n",
                        instigatorName,
                        event.targetMessageIndex,
                        eventTime);
@@ -488,6 +511,24 @@ ConversationDST::validateEvent(const Event& event)
             return false;
         }
         break;
+    case ConversationEvent::HOST_CONFERENCE:
+        // Instigator can only host a conference if part of the conversation.
+        if (!instigatorRepoAcc.repository) {
+            return false;
+        }
+        break;
+    case ConversationEvent::END_CONFERENCE: {
+        // Valid by construction: only scheduled by HOST_CONFERENCE for a conference the instigator
+        // just started hosting.
+        assert(instigatorRepoAcc.repository != nullptr);
+        assert(event.targetMessageIndex >= 0);
+        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(target.type == CommitType::CALL_HISTORY);
+        // The target is a hosting-start commit: it has a confId but no duration yet.
+        assert(target.body.find(CommitKey::CONF_ID) != target.body.end());
+        assert(target.body.find(CommitKey::DURATION) == target.body.end());
+        break;
+    }
     case ConversationEvent::DELETE_FILE: {
         // Valid by construction: only scheduled by SEND_FILE for a file the instigator just sent.
         assert(instigatorRepoAcc.repository != nullptr);
@@ -756,6 +797,63 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         }
         break;
     }
+    case ConversationEvent::HOST_CONFERENCE: {
+        conferenceCount++;
+        // Deterministic pseudo-identifiers for the hosted conference.
+        std::string confId = std::to_string(conferenceCount);
+        std::string device(instigatorAccount.account->currentDeviceId());
+        dht::InfoHash hostHash(instigatorAccount.account->getUsername());
+        std::string hostId = hostHash.toString();
+
+        auto msg = CommitMessage::conferenceHostingStart(confId, device, hostId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+
+            // Always schedule the matching END_CONFERENCE for the just-started conference.
+            int targetIdx = instigatorAccount.client.getIndex(commitID);
+            std::uniform_int_distribution<> delayDist(1, 5000);
+            auto endTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+            queue->emplace(event.instigatorAccountIndex,
+                           event.instigatorAccountIndex,
+                           ConversationEvent::END_CONFERENCE,
+                           endTime,
+                           targetIdx);
+        }
+        break;
+    }
+    case ConversationEvent::END_CONFERENCE: {
+        assert(event.targetMessageIndex >= 0);
+        // targetMessageIndex points to the hosting-start commit.
+        const auto& startMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(startMessage.type == CommitType::CALL_HISTORY);
+        const std::string& confId = startMessage.body.at(CommitKey::CONF_ID);
+        const std::string& device = startMessage.body.at(CommitKey::DEVICE);
+        const std::string& hostId = startMessage.body.at(CommitKey::URI);
+
+        // Counter-derived, deterministic call duration in milliseconds.
+        uint64_t duration = std::stoull(confId) * 1000;
+        auto msg = CommitMessage::conferenceHostingEnd(confId, device, hostId, duration);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+
+        // The end commit carries the same confId/device/uri as the start commit, plus a duration.
+        const auto& endMessage = instigatorAccount.client.getMessageAtIndex(instigatorAccount.client.getIndex(commitID));
+        assert(endMessage.body.at(CommitKey::CONF_ID) == confId);
+        assert(endMessage.body.at(CommitKey::DEVICE) == device);
+        assert(endMessage.body.at(CommitKey::URI) == hostId);
+        assert(!endMessage.body.at(CommitKey::DURATION).empty());
+
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
     case ConversationEvent::EDIT_MESSAGE: {
         assert(event.targetMessageIndex >= 0);
         // targetMessageIndex always points to the original text/plain message, never an edit commit.
@@ -846,15 +944,14 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::CLONE: {
-        auto repo = ConversationRepository::cloneConversation(receivingAccount.account,
-                                                              instigatorAccount.account->getAccountID(),
-                                                              instigatorAccount.repository->id())
-                        .first;
+        auto [repo, commits] = ConversationRepository::cloneConversation(receivingAccount.account,
+                                                                         instigatorAccount.account->getAccountID(),
+                                                                         instigatorAccount.repository->id());
         // Join right after clone
         const std::string commitID = repo->join();
         assert(!commitID.empty());
 
-        receivingAccount.createConversation(std::move(repo));
+        receivingAccount.createConversation(std::move(repo), std::move(commits));
         if (queue) {
             // Now we notify the others about the join
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.receivingAccountIndex, -1, event.timeOfOccurrence);
@@ -937,6 +1034,12 @@ ConversationDST::verifyLoadConversationFromScratch()
             auto repoMessages = computeExpectedMessages(repositoryAccount);
             auto clientMessages = repositoryAccount.client.getMessages();
             if (!checkMessagesMatch(repositoryAccount, repoMessages, clientMessages)) {
+                return false;
+            }
+
+            // A fresh Conversation re-initializes its active calls from the repository and emits
+            // ActiveCallsChanged, so the client's list should again match the oracle.
+            if (!checkActiveCalls(repositoryAccount)) {
                 return false;
             }
         }
@@ -1045,10 +1148,12 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     eventWeights[static_cast<uint8_t>(ConversationEvent::DISCONNECT)] = 0;
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_REACTION)] = 3;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::HOST_CONFERENCE)] = 2;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
 
     msgCount = 0;
     fileCount = 0;
+    conferenceCount = 0;
 
     // Create the initial conversation
     int initialAccountIndex = 0;
@@ -1187,6 +1292,9 @@ ConversationDST::checkAllAccounts()
             return false;
         }
         if (!checkConversationMembers(repoAcc)) {
+            return false;
+        }
+        if (!checkActiveCalls(repoAcc)) {
             return false;
         }
     }
@@ -1353,6 +1461,111 @@ ConversationDST::computeExpectedMessages(const RepositoryAccount& repoAcc) const
         expected.emplace_back(**it);
     }
     return expected;
+}
+
+/**
+ * Reconstructs the list of active (ongoing) conferences for a given account from its repository
+ * history. This is an independent oracle for the active-call list the SimClient accumulates from
+ * the ActiveCallsChanged signal. It mirrors the daemon's active-call bookkeeping (see
+ * Conversation::Impl::updateActiveCalls): a hosting-start commit (a call-history commit with a
+ * confId/uri/device and no duration) adds a call, the matching hosting-end commit (same triple
+ * with a duration) removes it, and a member being removed or banned removes any call they host.
+ *
+ * @note The order of the returned calls is not significant (it is compared order-independently).
+ */
+std::vector<std::map<std::string, std::string>>
+ConversationDST::computeExpectedActiveCalls(const RepositoryAccount& repoAcc) const
+{
+    std::vector<std::map<std::string, std::string>> activeCalls;
+    if (!repoAcc.repository) {
+        return activeCalls;
+    }
+
+    LogOptions options;
+    options.skipMerge = true;
+    std::vector<jami::ConversationCommit> commits = repoAcc.repository->log(options);
+
+    // Process commits oldest-first.
+    for (auto it = commits.rbegin(); it != commits.rend(); ++it) {
+        auto commitMap = repoAcc.repository->convCommitToMap(*it);
+        assert(commitMap.has_value());
+        const auto& commit = *commitMap;
+
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end())
+            continue;
+
+        if (typeIt->second == CommitType::MEMBER) {
+            // A removed or banned member can no longer host: drop any call they host.
+            auto actionIt = commit.find(CommitKey::ACTION);
+            auto uriIt = commit.find(CommitKey::URI);
+            if (actionIt != commit.end() && uriIt != commit.end()
+                && (actionIt->second == CommitAction::REMOVE || actionIt->second == CommitAction::BAN)) {
+                const std::string& memberUri = uriIt->second;
+                activeCalls.erase(std::remove_if(activeCalls.begin(),
+                                                 activeCalls.end(),
+                                                 [&](const auto& call) {
+                                                     return call.at("uri") == memberUri
+                                                            || call.at("device") == memberUri;
+                                                 }),
+                                  activeCalls.end());
+            }
+        } else if (typeIt->second == CommitType::CALL_HISTORY) {
+            auto confIt = commit.find(CommitKey::CONF_ID);
+            auto uriIt = commit.find(CommitKey::URI);
+            auto deviceIt = commit.find(CommitKey::DEVICE);
+            if (confIt == commit.end() || uriIt == commit.end() || deviceIt == commit.end())
+                continue;
+            auto matches = [&](const auto& call) {
+                return call.at("id") == confIt->second && call.at("uri") == uriIt->second
+                       && call.at("device") == deviceIt->second;
+            };
+            if (commit.find(CommitKey::DURATION) == commit.end()) {
+                // Hosting start: add the call if not already tracked.
+                if (std::none_of(activeCalls.begin(), activeCalls.end(), matches)) {
+                    activeCalls.emplace_back(std::map<std::string, std::string> {{"id", confIt->second},
+                                                                                 {"uri", uriIt->second},
+                                                                                 {"device", deviceIt->second}});
+                }
+            } else {
+                // Hosting end: remove the matching call.
+                activeCalls.erase(std::remove_if(activeCalls.begin(), activeCalls.end(), matches), activeCalls.end());
+            }
+        }
+    }
+    return activeCalls;
+}
+
+/**
+ * @brief Checks that the active-call list accumulated by the client (from the ActiveCallsChanged
+ * signal) matches the one reconstructed from the repository history. The comparison is
+ * order-independent, since the list order is not a well-defined property of the shared history.
+ */
+bool
+ConversationDST::checkActiveCalls(const RepositoryAccount& repoAcc)
+{
+    if (!repoAcc.repository) {
+        return true;
+    }
+
+    auto expected = computeExpectedActiveCalls(repoAcc);
+    auto actual = repoAcc.client.getActiveCalls();
+
+    auto byId = [](const auto& a, const auto& b) {
+        return a.at("id") < b.at("id");
+    };
+    std::sort(expected.begin(), expected.end(), byId);
+    std::sort(actual.begin(), actual.end(), byId);
+
+    if (expected != actual) {
+        fmt::print(fg(fmt::color::red),
+                   "[{}] Client active calls ({}) don't match the repository ({})\n",
+                   repoAcc.account->getDisplayName(),
+                   actual.size(),
+                   expected.size());
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -1697,6 +1910,7 @@ ConversationDST::runUnitTest(const UnitTest& unitTest)
 
     msgCount = 0;
     fileCount = 0;
+    conferenceCount = 0;
     // We skip the first event since it represents who gets their repository first
     for (size_t i = 1; i < unitTest.events.size(); i++) {
         eventLogger(unitTest.events[i]);

@@ -263,6 +263,15 @@ public:
     std::vector<libjami::SwarmMessage> loadMessagesSync(const LogOptions& options);
     void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
     void announce(const std::string& commitId, bool commitFromSelf = false);
+
+    /**
+     * Construct a Conversation directly from a repository and its commits, forwarding to the
+     * corresponding Conversation::Impl constructor. Used by the tests to open a conversation while
+     * initializing the active-calls list from the given commits (as the daemon does after a clone).
+     */
+    Conversation(std::unique_ptr<ConversationRepository>&& repository,
+                 const std::shared_ptr<JamiAccount>& account,
+                 std::vector<ConversationCommit>&& commits = {});
 #endif
 
     /**
