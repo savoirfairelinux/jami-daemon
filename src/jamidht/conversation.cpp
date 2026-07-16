@@ -350,11 +350,12 @@ private:
         loadMobileNodes();
         // Self-contained callback: the swarm manager can outlive this Impl
         // (its timers hold shared_from_this), so do not capture `this`.
-        swarmManager_->onMobileNodesChanged([path = mobileNodesPath_](const std::vector<NodeId>& mobileNodes) {
-            std::lock_guard lk {dhtnet::fileutils::getFileLock(path)};
-            std::ofstream file(path, std::ios::trunc | std::ios::binary);
-            msgpack::pack(file, mobileNodes);
-        });
+        swarmManager_->onMobileNodeInfosChanged(
+            [path = mobileNodesPath_](const std::vector<MobileNodeInfo>& mobileNodes) {
+                std::lock_guard lk {dhtnet::fileutils::getFileLock(path)};
+                std::ofstream file(path, std::ios::trunc | std::ios::binary);
+                msgpack::pack(file, mobileNodes);
+            });
         setupMemberCallback();
     }
 
@@ -718,15 +719,21 @@ public:
 
     void loadMobileNodes()
     {
-        std::vector<NodeId> nodes;
         try {
             auto file = fileutils::loadFile(mobileNodesPath_);
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            oh.get().convert(nodes);
+            try {
+                std::vector<MobileNodeInfo> nodes;
+                oh.get().convert(nodes);
+                swarmManager_->setMobileNodes(nodes);
+            } catch (const std::exception&) {
+                std::vector<NodeId> nodes;
+                oh.get().convert(nodes);
+                swarmManager_->setMobileNodes(nodes);
+            }
         } catch (const std::exception& e) {
             return;
         }
-        swarmManager_->setMobileNodes(nodes);
     }
 
     void loadActiveCalls() const
@@ -2037,10 +2044,41 @@ Conversation::peersToSyncWith() const
     return s;
 }
 
-std::vector<NodeId>
+std::vector<MobileNodeTarget>
 Conversation::mobileNodesToNotify() const
 {
-    return pimpl_->swarmManager_->getMobileNodesToNotify();
+    std::vector<MobileNodeTarget> targets;
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return targets;
+    for (const auto& info : pimpl_->swarmManager_->getMobileNodeInfosToNotify()) {
+        const auto deviceId = info.id.toString();
+        auto uri = uriFromDevice(deviceId);
+        if (uri.empty() && !info.certificate.empty()) {
+            try {
+                dht::crypto::Certificate cert(info.certificate);
+                if (cert.getLongId() == info.id && cert.issuer) {
+                    dht::crypto::TrustList trust;
+                    trust.add(*cert.issuer);
+                    if (trust.verify(cert))
+                        uri = cert.issuer->getId().toString();
+                }
+            } catch (const std::exception& e) {
+                JAMI_WARNING("{} Unable to validate mobile certificate for {}: {}",
+                             pimpl_->toString(),
+                             deviceId,
+                             e.what());
+            }
+        }
+        if (uri.empty()) {
+            auto cert = account->certStore().getCertificate(deviceId);
+            if (cert && cert->issuer)
+                uri = cert->issuer->getId().toString();
+        }
+        if (!uri.empty() && isPeerAuthorized(uri, deviceId, false))
+            targets.emplace_back(MobileNodeTarget {info.id, std::move(uri)});
+    }
+    return targets;
 }
 
 bool
@@ -3002,6 +3040,7 @@ Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
     if (!cert || !cert->issuer)
         return;
     auto member = cert->issuer->getId().toString();
+    pimpl_->swarmManager_->setMobileNodeCertificate(deviceId, cert->getPacked());
     pimpl_->swarmManager_->addChannel(std::move(channel));
     dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w = weak_from_this()] {
         auto sthis = w.lock();

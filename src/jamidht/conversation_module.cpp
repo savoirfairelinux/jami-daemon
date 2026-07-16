@@ -1262,20 +1262,13 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     // Note: the repository only contains certificates of devices that wrote
     // commits, so for read-only devices we resolve the member URI through
     // the certificate store (filled when the device was last connected).
-    for (const auto& device : conversation.mobileNodesToNotify()) {
+    for (const auto& target : conversation.mobileNodesToNotify()) {
+        const auto& device = target.device;
         auto deviceIdStr = device.toString();
         if (deviceIdStr == deviceId)
             continue;
-        auto memberUri = conversation.uriFromDevice(deviceIdStr);
-        if (memberUri.empty()) {
-            auto cert = acc->certStore().getCertificate(deviceIdStr);
-            if (cert && cert->issuer)
-                memberUri = cert->issuer->getId().toString();
-        }
-        if (memberUri.empty())
-            continue;
         auto& refresh = refreshMessage[deviceIdStr];
-        refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
+        refresh = sendMsgCb_(target.uri, device, messageMap, refresh);
     }
 }
 
