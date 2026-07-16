@@ -43,18 +43,19 @@ enum class ConversationEvent : std::uint8_t {
     SEND_FILE = 4,
     ADD_REACTION = 5,
     HOST_CONFERENCE = 6,
+    UPDATE_PROFILE = 7,
 
     // Secondary events (only generated in response to other events)
-    FETCH = 7,
-    MERGE = 8,
-    CLONE = 9,
-    DELETE_FILE = 10,
-    EDIT_MESSAGE = 11,
-    REMOVE_REACTION = 12,
-    DELETE_MESSAGE = 13,
-    END_CONFERENCE = 14
+    FETCH = 8,
+    MERGE = 9,
+    CLONE = 10,
+    DELETE_FILE = 11,
+    EDIT_MESSAGE = 12,
+    REMOVE_REACTION = 13,
+    DELETE_MESSAGE = 14,
+    END_CONFERENCE = 15
 };
-static constexpr uint8_t NUM_PRIMARY_EVENTS = 7;
+static constexpr uint8_t NUM_PRIMARY_EVENTS = 8;
 
 /**
  * A structure containing the relevant data for account and repo simulation.
@@ -97,6 +98,10 @@ struct RepositoryAccount
 
         auto messages = conversation->loadMessagesSync({});
         emitSignal<libjami::ConversationSignal::SwarmLoaded>(0, accountId, conversationId, messages);
+
+        emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId,
+                                                                            conversationId,
+                                                                            repository->infos());
     }
 };
 
@@ -161,6 +166,7 @@ public:
     std::vector<libjami::SwarmMessage> computeExpectedMessages(const RepositoryAccount& repoAcc) const;
     std::vector<std::map<std::string, std::string>> computeExpectedActiveCalls(const RepositoryAccount& repoAcc) const;
     bool checkActiveCalls(const RepositoryAccount& repoAcc);
+    bool checkProfile(const RepositoryAccount& repoAcc);
     bool checkMessagesMatch(const RepositoryAccount& repoAcc,
                             const std::vector<libjami::SwarmMessage>& expected,
                             const std::vector<libjami::SwarmMessage>& actual);
@@ -241,6 +247,7 @@ private:
     int msgCount = 0;
     int fileCount = 0;
     int conferenceCount = 0;
+    int profileUpdateCount = 0;
 };
 
 } // namespace test
