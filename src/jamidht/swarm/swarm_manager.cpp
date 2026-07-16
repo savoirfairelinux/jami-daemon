@@ -87,6 +87,40 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
 }
 
 void
+SwarmManager::setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes)
+{
+    bool changed = false;
+    {
+        std::lock_guard lock(mutex);
+        for (const auto& mobile : mobile_nodes) {
+            if (mobile.id == id_)
+                continue;
+            changed |= addMobileNodes(mobile.id);
+            changed |= setMobileNodeCertificateInternal(mobile.id, mobile.certificate);
+        }
+    }
+    if (changed)
+        emitMobileNodesChanged();
+}
+
+void
+SwarmManager::setMobileNodeCertificate(const NodeId& nodeId, const dht::Blob& certificate)
+{
+    bool changed = false;
+    bool isKnownMobile = false;
+    {
+        std::lock_guard lock(mutex);
+        changed = setMobileNodeCertificateInternal(nodeId, certificate);
+        if (changed) {
+            const auto mobileNodes = routing_table.getKnownMobileNodes();
+            isKnownMobile = std::find(mobileNodes.begin(), mobileNodes.end(), nodeId) != mobileNodes.end();
+        }
+    }
+    if (changed && isKnownMobile)
+        emitMobileNodesChanged();
+}
+
+void
 SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel)
 {
     // JAMI_WARNING("[SwarmManager {}] addChannel! with {}", fmt::ptr(this), channel->deviceId().to_view());
@@ -170,18 +204,43 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
     return false;
 }
 
+bool
+SwarmManager::setMobileNodeCertificateInternal(const NodeId& nodeId, const dht::Blob& certificate)
+{
+    if (certificate.empty() || certificate.size() > MAX_MOBILE_CERTIFICATE_SIZE)
+        return false;
+    try {
+        dht::crypto::Certificate cert(certificate);
+        if (cert.getLongId() != nodeId || cert.getIssuerUID().empty())
+            return false;
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Ignoring invalid mobile certificate for {}: {}", nodeId, e.what());
+        return false;
+    }
+    auto current = mobileNodeCertificates_.find(nodeId);
+    if (current != mobileNodeCertificates_.end() && current->second == certificate)
+        return false;
+    mobileNodeCertificates_.insert_or_assign(nodeId, certificate);
+    return true;
+}
+
 void
 SwarmManager::emitMobileNodesChanged()
 {
     std::lock_guard emissionLock(mobileNodesEmissionMtx_);
     auto mobileNodes = getKnownMobileNodes();
+    auto mobileNodeInfos = getKnownMobileNodeInfos();
     OnMobileNodesChanged callback;
+    OnMobileNodeInfosChanged infosCallback;
     {
         std::lock_guard callbackLock(onMobileNodesChangedMtx_);
         callback = onMobileNodesChanged_;
+        infosCallback = onMobileNodeInfosChanged_;
     }
     if (callback)
         callback(mobileNodes);
+    if (infosCallback)
+        infosCallback(mobileNodeInfos);
 }
 
 void
@@ -239,7 +298,18 @@ SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         auto nodes = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
         auto bucket = routing_table.findBucket(msg_.request->nodeId);
         const auto& m_nodes = bucket->getMobileNodes();
-        Response toResponse {Query::FOUND, nodes, {m_nodes.begin(), m_nodes.end()}};
+        std::vector<MobileNodeInfo> mobileNodeInfos;
+        mobileNodeInfos.reserve(m_nodes.size());
+        size_t certificatesSize = 0;
+        for (const auto& node : m_nodes) {
+            if (auto certificate = mobileNodeCertificates_.find(node);
+                certificate != mobileNodeCertificates_.end()
+                && certificatesSize + certificate->second.size() <= MAX_MOBILE_CERTIFICATES_SIZE) {
+                mobileNodeInfos.emplace_back(MobileNodeInfo {node, certificate->second});
+                certificatesSize += certificate->second.size();
+            }
+        }
+        Response toResponse {Query::FOUND, nodes, {m_nodes.begin(), m_nodes.end()}, std::move(mobileNodeInfos)};
 
         Message msg;
         msg.is_mobile = isMobile_;
@@ -276,6 +346,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
 
             } else if (msg.response) {
                 shared->setKnownNodes(msg.response->nodes);
+                shared->setMobileNodes(msg.response->mobile_node_infos);
                 shared->setMobileNodes(msg.response->mobile_nodes);
             }
             return std::error_code();
@@ -403,6 +474,32 @@ SwarmManager::getKnownMobileNodes() const
     return routing_table.getKnownMobileNodes();
 }
 
+std::vector<MobileNodeInfo>
+SwarmManager::getKnownMobileNodeInfos() const
+{
+    std::lock_guard lock(mutex);
+    std::vector<MobileNodeInfo> infos;
+    for (const auto& node : routing_table.getKnownMobileNodes()) {
+        auto certificate = mobileNodeCertificates_.find(node);
+        infos.emplace_back(
+            MobileNodeInfo {node, certificate == mobileNodeCertificates_.end() ? dht::Blob {} : certificate->second});
+    }
+    return infos;
+}
+
+std::vector<MobileNodeInfo>
+SwarmManager::getMobileNodeInfosToNotify()
+{
+    std::lock_guard lock(mutex);
+    std::vector<MobileNodeInfo> infos;
+    for (const auto& node : routing_table.getMobileNodesToNotify()) {
+        auto certificate = mobileNodeCertificates_.find(node);
+        infos.emplace_back(
+            MobileNodeInfo {node, certificate == mobileNodeCertificates_.end() ? dht::Blob {} : certificate->second});
+    }
+    return infos;
+}
+
 std::vector<std::map<std::string, std::string>>
 SwarmManager::getRoutingTableInfo() const
 {
@@ -440,8 +537,9 @@ SwarmManager::deleteNode(const std::vector<NodeId>& nodes)
         auto mobileNodes = routing_table.getKnownMobileNodes();
         for (const auto& node : nodes) {
             routing_table.deleteNode(node);
+            mobileNodesChanged |= mobileNodeCertificates_.erase(node) != 0;
         }
-        mobileNodesChanged = mobileNodes != routing_table.getKnownMobileNodes();
+        mobileNodesChanged |= mobileNodes != routing_table.getKnownMobileNodes();
     }
     if (mobileNodesChanged)
         emitMobileNodesChanged();
