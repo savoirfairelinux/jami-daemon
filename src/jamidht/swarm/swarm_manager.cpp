@@ -173,8 +173,15 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
 void
 SwarmManager::emitMobileNodesChanged()
 {
-    if (onMobileNodesChanged_)
-        onMobileNodesChanged_(getKnownMobileNodes());
+    std::lock_guard emissionLock(mobileNodesEmissionMtx_);
+    auto mobileNodes = getKnownMobileNodes();
+    OnMobileNodesChanged callback;
+    {
+        std::lock_guard callbackLock(onMobileNodesChangedMtx_);
+        callback = onMobileNodesChanged_;
+    }
+    if (callback)
+        callback(mobileNodes);
 }
 
 void
@@ -427,12 +434,17 @@ SwarmManager::isConnected() const
 void
 SwarmManager::deleteNode(const std::vector<NodeId>& nodes)
 {
+    bool mobileNodesChanged = false;
     {
         std::lock_guard lock(mutex);
+        auto mobileNodes = routing_table.getKnownMobileNodes();
         for (const auto& node : nodes) {
             routing_table.deleteNode(node);
         }
+        mobileNodesChanged = mobileNodes != routing_table.getKnownMobileNodes();
     }
+    if (mobileNodesChanged)
+        emitMobileNodesChanged();
     maintainBuckets();
 }
 
