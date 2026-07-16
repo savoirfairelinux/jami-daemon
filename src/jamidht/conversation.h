@@ -82,6 +82,12 @@ namespace ConversationPreferences {
 static constexpr const char* HOST_CONFERENCES = "hostConferences";
 }
 
+struct MobileNodeTarget
+{
+    NodeId device;
+    std::string uri;
+};
+
 class JamiAccount;
 class ConversationRepository;
 class TransferManager;
@@ -364,7 +370,7 @@ public:
      * (converted to a push notification by the proxy).
      * @return mobile nodes we are closer to than any connected node
      */
-    std::vector<NodeId> mobileNodesToNotify() const;
+    std::vector<MobileNodeTarget> mobileNodesToNotify() const;
     /**
      * Check if we're at least connected to one node
      * @return if the DRT is connected
