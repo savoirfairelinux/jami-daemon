@@ -47,7 +47,8 @@ enum class ConversationEvent : std::uint8_t {
     CLONE = 8,
     DELETE_FILE = 9,
     EDIT_MESSAGE = 10,
-    REMOVE_REACTION = 11
+    REMOVE_REACTION = 11,
+    DELETE_MESSAGE = 12
 };
 static constexpr uint8_t NUM_PRIMARY_EVENTS = 6;
 
