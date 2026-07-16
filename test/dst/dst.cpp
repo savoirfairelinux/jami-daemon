@@ -48,7 +48,8 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::DELETE_FILE, "DELETE_FILE"},
                                                      {ConversationEvent::EDIT_MESSAGE, "EDIT_MESSAGE"},
                                                      {ConversationEvent::ADD_REACTION, "ADD_REACTION"},
-                                                     {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"}};
+                                                     {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"},
+                                                     {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -60,7 +61,8 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"DELETE_FILE", ConversationEvent::DELETE_FILE},
                                                              {"EDIT_MESSAGE", ConversationEvent::EDIT_MESSAGE},
                                                              {"ADD_REACTION", ConversationEvent::ADD_REACTION},
-                                                             {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION}};
+                                                             {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION},
+                                                             {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -306,6 +308,12 @@ ConversationDST::eventLogger(const Event& event)
                        event.targetMessageIndex,
                        eventTime);
             break;
+        case ConversationEvent::DELETE_MESSAGE:
+            fmt::print("EVENT: {} deleted a message (target index {}) at {}\n",
+                       instigatorName,
+                       event.targetMessageIndex,
+                       eventTime);
+            break;
 
         default:
             assert(false && "Unknown ConversationEvent type received, this is a bug!");
@@ -491,6 +499,20 @@ ConversationDST::validateEvent(const Event& event)
         assert(tidIt != target.body.end() && !tidIt->second.empty());
         break;
     }
+    case ConversationEvent::DELETE_MESSAGE: {
+        // Valid by construction: only scheduled by SEND_MESSAGE for a text/plain message the
+        // instigator just sent (and for which no edition was scheduled).
+        assert(instigatorRepoAcc.repository != nullptr);
+        assert(event.targetMessageIndex >= 0);
+        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(target.type == CommitType::TEXT);
+        assert(target.body.find(CommitKey::EDIT) == target.body.end());
+        assert(target.body.find(CommitKey::REACT_TO) == target.body.end());
+        // The message must not have been deleted yet (body must be non-empty).
+        auto bodyIt = target.body.find(CommitKey::BODY);
+        assert(bodyIt != target.body.end() && !bodyIt->second.empty());
+        break;
+    }
     case ConversationEvent::EDIT_MESSAGE: {
         // Valid by construction: only scheduled by SEND_MESSAGE or EDIT_MESSAGE for a text/plain
         // message the instigator authored.
@@ -640,15 +662,18 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         if (queue) {
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
 
-            // With ~30% probability, schedule a secondary EDIT_MESSAGE for this message.
+            // With ~30% probability, schedule a secondary edition or deletion for this message.
+            // Editing and deleting are mutually exclusive for a given message, so we pick one.
             if (rand01() < 0.3f) {
                 int targetIdx = instigatorAccount.client.getIndex(commitID);
                 std::uniform_int_distribution<> delayDist(1, 5000);
-                auto editTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                auto secondaryTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                auto secondaryType = rand01() < 0.5f ? ConversationEvent::EDIT_MESSAGE
+                                                     : ConversationEvent::DELETE_MESSAGE;
                 queue->emplace(event.instigatorAccountIndex,
                                event.instigatorAccountIndex,
-                               ConversationEvent::EDIT_MESSAGE,
-                               editTime,
+                               secondaryType,
+                               secondaryTime,
                                targetIdx);
             }
         }
@@ -702,6 +727,30 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         assert(!commitID.empty());
 
         instigatorAccount.conversation->announce(commitID, true);
+        if (queue) {
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
+    case ConversationEvent::DELETE_MESSAGE: {
+        assert(event.targetMessageIndex >= 0);
+        // targetMessageIndex points to the original text/plain message being deleted.
+        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(targetMessage.type == CommitType::TEXT);
+        const std::string& msgCommitId = targetMessage.id;
+
+        // A message deletion is an edit of the message commit with an empty body.
+        auto msg = CommitMessage::edit("", msgCommitId);
+        const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
+        assert(!commitID.empty());
+
+        instigatorAccount.conversation->announce(commitID, true);
+
+        // Deleting a message empties its body and clears its reactions.
+        const auto& updatedMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(updatedMessage.body.at(CommitKey::BODY).empty());
+        assert(updatedMessage.reactions.empty());
+
         if (queue) {
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
         }
