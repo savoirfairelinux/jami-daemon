@@ -109,7 +109,11 @@ public:
      * with the updated set.
      * @param cb
      */
-    void onMobileNodesChanged(OnMobileNodesChanged cb) { onMobileNodesChanged_ = std::move(cb); }
+    void onMobileNodesChanged(OnMobileNodesChanged cb)
+    {
+        std::lock_guard lock(onMobileNodesChangedMtx_);
+        onMobileNodesChanged_ = std::move(cb);
+    }
 
     std::vector<std::map<std::string, std::string>> getRoutingTableInfo() const;
 
@@ -281,6 +285,8 @@ private:
     std::atomic_bool isShutdown_ {false};
 
     OnConnectionChanged onConnectionChanged_ {};
+    mutable std::mutex onMobileNodesChangedMtx_;
+    std::recursive_mutex mobileNodesEmissionMtx_;
     OnMobileNodesChanged onMobileNodesChanged_ {};
 
     ToConnectCb toConnectCb_;

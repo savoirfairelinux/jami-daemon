@@ -134,6 +134,8 @@ private:
     void testConnectedMobileLifecycle();
     void testFailedConnectionPreservesMobility();
     void testMobileNodesChangedCallback();
+    void testDeleteNodeUpdatesMobileNodes();
+    void testConcurrentMobileNodesChangedCallbacks();
     void testPersistenceColdStart();
     void testWakeUpCoverageConvergedNetwork();
     void testMobileLifecycleWakeUp();
@@ -147,6 +149,8 @@ private:
     CPPUNIT_TEST(testConnectedMobileLifecycle);
     CPPUNIT_TEST(testFailedConnectionPreservesMobility);
     CPPUNIT_TEST(testMobileNodesChangedCallback);
+    CPPUNIT_TEST(testDeleteNodeUpdatesMobileNodes);
+    CPPUNIT_TEST(testConcurrentMobileNodesChangedCallbacks);
     CPPUNIT_TEST(testPersistenceColdStart);
     CPPUNIT_TEST(testWakeUpCoverageConvergedNetwork);
     CPPUNIT_TEST(testMobileLifecycleWakeUp);
@@ -605,6 +609,58 @@ MobileWakeUpTest::testMobileNodesChangedCallback()
     sm->changeMobility(connectedId, false);
     CPPUNIT_ASSERT(!lastPayload.count(connectedId));
     CPPUNIT_ASSERT(lastPayload == (std::set<NodeId> {m1, m2, m3}));
+}
+
+void
+MobileWakeUpTest::testDeleteNodeUpdatesMobileNodes()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
+    NodeId mobile = nodeTestIds1.at(2);
+    unsigned emissions = 0;
+    std::set<NodeId> lastPayload;
+    sm->onMobileNodesChanged([&](const std::vector<NodeId>& nodes) {
+        emissions++;
+        lastPayload = toSet(nodes);
+    });
+
+    sm->setMobileNodes({mobile});
+    CPPUNIT_ASSERT_EQUAL(1u, emissions);
+    CPPUNIT_ASSERT(lastPayload.count(mobile));
+
+    sm->deleteNode({mobile});
+    CPPUNIT_ASSERT_EQUAL(2u, emissions);
+    CPPUNIT_ASSERT(lastPayload.empty());
+
+    sm->deleteNode({mobile});
+    CPPUNIT_ASSERT_EQUAL(2u, emissions);
+}
+
+void
+MobileWakeUpTest::testConcurrentMobileNodesChangedCallbacks()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
+    std::mutex callbackMtx;
+    std::set<NodeId> lastPayload;
+    sm->onMobileNodesChanged([&](const std::vector<NodeId>& nodes) {
+        std::lock_guard lock(callbackMtx);
+        lastPayload = toSet(nodes);
+    });
+
+    std::vector<NodeId> mobiles {
+        nodeTestIds1.at(2), nodeTestIds1.at(3), nodeTestIds1.at(4), nodeTestIds2.at(5)};
+    std::vector<std::thread> workers;
+    for (const auto& mobile : mobiles)
+        workers.emplace_back([sm, mobile] { sm->setMobileNodes({mobile}); });
+    for (auto& worker : workers)
+        worker.join();
+
+    std::lock_guard lock(callbackMtx);
+    CPPUNIT_ASSERT(lastPayload == toSet(sm->getKnownMobileNodes()));
+    CPPUNIT_ASSERT(lastPayload == toSet(mobiles));
 }
 
 void
