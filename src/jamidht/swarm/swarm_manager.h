@@ -32,6 +32,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using ToConnectCb = std::function<bool(const NodeId&)>;
     using OnConnectionChanged = std::function<void(bool ok)>;
     using OnMobileNodesChanged = std::function<void(const std::vector<NodeId>&)>;
+    using OnMobileNodeInfosChanged = std::function<void(const std::vector<MobileNodeInfo>&)>;
 
 public:
     explicit SwarmManager(const NodeId& nodeId, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb);
@@ -59,6 +60,18 @@ public:
      * @param mobile_nodes
      */
     void setMobileNodes(const std::vector<NodeId>& mobile_nodes);
+
+    /**
+     * Merge certificate-bearing mobile node records received from peers.
+     * Invalid certificates and mismatched device IDs are ignored.
+     * @param mobile_nodes
+     */
+    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes);
+
+    /**
+     * Retain the authenticated certificate for a connected mobile node.
+     */
+    void setMobileNodeCertificate(const NodeId& nodeId, const dht::Blob& certificate);
 
     /**
      * Add channel to routing table
@@ -105,6 +118,16 @@ public:
     std::vector<NodeId> getKnownMobileNodes() const;
 
     /**
+     * Get known mobile nodes with any validated device certificate metadata.
+     */
+    std::vector<MobileNodeInfo> getKnownMobileNodeInfos() const;
+
+    /**
+     * Get wake-up targets with any validated device certificate metadata.
+     */
+    std::vector<MobileNodeInfo> getMobileNodeInfosToNotify();
+
+    /**
      * Callback invoked when the set of known mobile nodes changes,
      * with the updated set.
      * @param cb
@@ -113,6 +136,12 @@ public:
     {
         std::lock_guard lock(onMobileNodesChangedMtx_);
         onMobileNodesChanged_ = std::move(cb);
+    }
+
+    void onMobileNodeInfosChanged(OnMobileNodeInfosChanged cb)
+    {
+        std::lock_guard lock(onMobileNodesChangedMtx_);
+        onMobileNodeInfosChanged_ = std::move(cb);
     }
 
     std::vector<std::map<std::string, std::string>> getRoutingTableInfo() const;
@@ -223,6 +252,12 @@ private:
     bool addMobileNodes(const NodeId& nodeId);
 
     /**
+     * Validate and retain certificate metadata for a mobile node.
+     * Must be called with mutex held.
+     */
+    bool setMobileNodeCertificateInternal(const NodeId& nodeId, const dht::Blob& certificate);
+
+    /**
      * Notify the onMobileNodesChanged_ callback with the current set of
      * known mobile nodes. Must be called without the mutex held.
      */
@@ -281,6 +316,7 @@ private:
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+    std::map<NodeId, dht::Blob> mobileNodeCertificates_;
 
     std::atomic_bool isShutdown_ {false};
 
@@ -288,6 +324,7 @@ private:
     mutable std::mutex onMobileNodesChangedMtx_;
     std::recursive_mutex mobileNodesEmissionMtx_;
     OnMobileNodesChanged onMobileNodesChanged_ {};
+    OnMobileNodeInfosChanged onMobileNodeInfosChanged_ {};
 
     ToConnectCb toConnectCb_;
 };

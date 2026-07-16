@@ -20,6 +20,7 @@
 #include <string_view>
 #include <msgpack.hpp>
 
+#include <opendht/crypto.h>
 #include <opendht/infohash.h>
 
 using namespace std::literals;
@@ -29,7 +30,9 @@ namespace jami {
 
 namespace swarm_protocol {
 
-static constexpr int version = 1;
+static constexpr int version = 2;
+static constexpr size_t MAX_MOBILE_CERTIFICATE_SIZE = 64 * 1024;
+static constexpr size_t MAX_MOBILE_CERTIFICATES_SIZE = 256 * 1024;
 
 enum class Query : uint8_t { FIND = 1, FOUND = 2 };
 
@@ -43,13 +46,22 @@ struct Request
     MSGPACK_DEFINE_MAP(q, num, nodeId);
 };
 
+struct MobileNodeInfo
+{
+    NodeId id;
+    dht::Blob certificate;
+
+    MSGPACK_DEFINE_MAP(id, certificate);
+};
+
 struct Response
 {
     Query q;
     std::vector<NodeId> nodes;
     std::vector<NodeId> mobile_nodes;
+    std::vector<MobileNodeInfo> mobile_node_infos;
 
-    MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes);
+    MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes, mobile_node_infos);
 };
 
 struct Message

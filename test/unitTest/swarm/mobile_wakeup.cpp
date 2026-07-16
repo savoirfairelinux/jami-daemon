@@ -51,6 +51,14 @@ constexpr size_t N_DESKTOPS = 9;
 constexpr size_t N_MOBILES = 3;
 constexpr std::chrono::seconds CONVERGENCE_TIMEOUT {60};
 
+struct LegacySwarmResponse
+{
+    Query q;
+    std::vector<NodeId> nodes;
+    std::vector<NodeId> mobile_nodes;
+    MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes);
+};
+
 class MobileWakeUpTest : public CppUnit::TestFixture
 {
 public:
@@ -128,6 +136,7 @@ private:
     // ################# UNIT TEST METHODES #################//
 
     void testNotifyWithoutConnectedNodes();
+    void testMobileProtocolCompatibility();
     void testNotifyAgainstBruteForceOracle();
     void testNotifyResponsibilityHandover();
     void testKnownMobileNodes();
@@ -143,6 +152,7 @@ private:
 
     CPPUNIT_TEST_SUITE(MobileWakeUpTest);
     CPPUNIT_TEST(testNotifyWithoutConnectedNodes);
+    CPPUNIT_TEST(testMobileProtocolCompatibility);
     CPPUNIT_TEST(testNotifyAgainstBruteForceOracle);
     CPPUNIT_TEST(testNotifyResponsibilityHandover);
     CPPUNIT_TEST(testKnownMobileNodes);
@@ -315,6 +325,43 @@ MobileWakeUpTest::checkLocalConsistency(const std::shared_ptr<SwarmManager>& sm)
 }
 
 // ################# DETERMINISTIC ROUTING TABLE TESTS #################//
+
+void
+MobileWakeUpTest::testMobileProtocolCompatibility()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    NodeId mobile = nodeTestIds1.at(2);
+    msgpack::sbuffer legacyBuffer;
+    msgpack::pack(legacyBuffer, LegacySwarmResponse {Query::FOUND, {}, {mobile}});
+    auto legacyObject = msgpack::unpack(legacyBuffer.data(), legacyBuffer.size());
+    Response decodedLegacy;
+    legacyObject.get().convert(decodedLegacy);
+    CPPUNIT_ASSERT(decodedLegacy.mobile_nodes == std::vector<NodeId> {mobile});
+    CPPUNIT_ASSERT(decodedLegacy.mobile_node_infos.empty());
+
+    Response response {Query::FOUND, {}, {mobile}, {{mobile, {1, 2, 3}}}};
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, response);
+    auto object = msgpack::unpack(buffer.data(), buffer.size());
+    Response decoded;
+    object.get().convert(decoded);
+    CPPUNIT_ASSERT(decoded.mobile_nodes == response.mobile_nodes);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), decoded.mobile_node_infos.size());
+    CPPUNIT_ASSERT(decoded.mobile_node_infos.front().id == mobile);
+    CPPUNIT_ASSERT(decoded.mobile_node_infos.front().certificate == dht::Blob({1, 2, 3}));
+
+    LegacySwarmResponse decodedByLegacy;
+    object.get().convert(decodedByLegacy);
+    CPPUNIT_ASSERT(decodedByLegacy.mobile_nodes == response.mobile_nodes);
+
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
+    sm->setMobileNodes(response.mobile_node_infos);
+    auto infos = sm->getKnownMobileNodeInfos();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), infos.size());
+    CPPUNIT_ASSERT(infos.front().id == mobile);
+    CPPUNIT_ASSERT(infos.front().certificate.empty());
+}
 
 void
 MobileWakeUpTest::testNotifyWithoutConnectedNodes()
@@ -650,8 +697,7 @@ MobileWakeUpTest::testConcurrentMobileNodesChangedCallbacks()
         lastPayload = toSet(nodes);
     });
 
-    std::vector<NodeId> mobiles {
-        nodeTestIds1.at(2), nodeTestIds1.at(3), nodeTestIds1.at(4), nodeTestIds2.at(5)};
+    std::vector<NodeId> mobiles {nodeTestIds1.at(2), nodeTestIds1.at(3), nodeTestIds1.at(4), nodeTestIds2.at(5)};
     std::vector<std::thread> workers;
     for (const auto& mobile : mobiles)
         workers.emplace_back([sm, mobile] { sm->setMobileNodes({mobile}); });
@@ -672,17 +718,13 @@ MobileWakeUpTest::testPersistenceColdStart()
     std::vector<NodeId> mobiles {nodeTestIds1.at(2), nodeTestIds1.at(5), nodeTestIds2.at(9)};
 
     // First run: learn mobile nodes and persist them from the callback,
-    // exactly as Conversation does (msgpack vector of hex strings).
+    // exactly as Conversation does.
     msgpack::sbuffer persisted;
     {
         auto sm = std::make_shared<SwarmManager>(self, false, rd, [](auto) { return false; });
-        sm->onMobileNodesChanged([&](const std::vector<NodeId>& nodes) {
-            std::vector<std::string> strs;
-            strs.reserve(nodes.size());
-            for (const auto& n : nodes)
-                strs.emplace_back(n.toString());
+        sm->onMobileNodeInfosChanged([&](const std::vector<MobileNodeInfo>& nodes) {
             persisted = msgpack::sbuffer();
-            msgpack::pack(persisted, strs);
+            msgpack::pack(persisted, nodes);
         });
         sm->setMobileNodes(mobiles);
         sm->shutdown();
@@ -692,13 +734,8 @@ MobileWakeUpTest::testPersistenceColdStart()
     // Cold start: a brand-new manager reloads the persisted set and can
     // immediately compute wake-up targets without any gossip or connection.
     auto oh = msgpack::unpack(persisted.data(), persisted.size());
-    std::vector<std::string> restoredStrs;
-    oh.get().convert(restoredStrs);
-
-    std::vector<NodeId> restored;
-    restored.reserve(restoredStrs.size());
-    for (const auto& s : restoredStrs)
-        restored.emplace_back(NodeId(s));
+    std::vector<MobileNodeInfo> restored;
+    oh.get().convert(restored);
 
     auto sm2 = std::make_shared<SwarmManager>(self, false, rd, [](auto) { return false; });
     sm2->setMobileNodes(restored);
@@ -707,6 +744,16 @@ MobileWakeUpTest::testPersistenceColdStart()
     // No connected node: responsible for all of them
     CPPUNIT_ASSERT(toSet(sm2->getMobileNodesToNotify()) == toSet(mobiles));
     sm2->shutdown();
+
+    msgpack::sbuffer legacyPersisted;
+    msgpack::pack(legacyPersisted, mobiles);
+    auto legacyObject = msgpack::unpack(legacyPersisted.data(), legacyPersisted.size());
+    std::vector<NodeId> legacyRestored;
+    legacyObject.get().convert(legacyRestored);
+    auto sm3 = std::make_shared<SwarmManager>(self, false, rd, [](auto) { return false; });
+    sm3->setMobileNodes(legacyRestored);
+    CPPUNIT_ASSERT(toSet(sm3->getKnownMobileNodes()) == toSet(mobiles));
+    sm3->shutdown();
 }
 
 // ################# LIVE NETWORK SIMULATIONS #################//
