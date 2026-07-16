@@ -51,7 +51,8 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"},
                                                      {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"},
                                                      {ConversationEvent::HOST_CONFERENCE, "HOST_CONFERENCE"},
-                                                     {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"}};
+                                                     {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"},
+                                                     {ConversationEvent::UPDATE_PROFILE, "UPDATE_PROFILE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -66,7 +67,8 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION},
                                                              {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE},
                                                              {"HOST_CONFERENCE", ConversationEvent::HOST_CONFERENCE},
-                                                             {"END_CONFERENCE", ConversationEvent::END_CONFERENCE}};
+                                                             {"END_CONFERENCE", ConversationEvent::END_CONFERENCE},
+                                                             {"UPDATE_PROFILE", ConversationEvent::UPDATE_PROFILE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -218,6 +220,14 @@ ConversationDST::setUp(int numAccountsToSimulate)
                 }
             }
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationProfileUpdated>(
+        [&](const std::string& accountId, const std::string& conversationId, std::map<std::string, std::string> profile) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onConversationProfileUpdated(accountId, conversationId, profile);
+                }
+            }
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
         [&](uint32_t requestId,
             const std::string& accountId,
@@ -336,6 +346,9 @@ ConversationDST::eventLogger(const Event& event)
                        instigatorName,
                        event.targetMessageIndex,
                        eventTime);
+            break;
+        case ConversationEvent::UPDATE_PROFILE:
+            fmt::print("EVENT: {} updated the conversation profile at {}\n", instigatorName, eventTime);
             break;
 
         default:
@@ -513,6 +526,13 @@ ConversationDST::validateEvent(const Event& event)
         break;
     case ConversationEvent::HOST_CONFERENCE:
         // Instigator can only host a conference if part of the conversation.
+        if (!instigatorRepoAcc.repository) {
+            return false;
+        }
+        break;
+    case ConversationEvent::UPDATE_PROFILE:
+        // Instigator must be part of the conversation. Permission is intentionally not checked
+        // here: the insufficient-permission case is exercised and asserted in triggerEvent.
         if (!instigatorRepoAcc.repository) {
             return false;
         }
@@ -854,6 +874,51 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         }
         break;
     }
+    case ConversationEvent::UPDATE_PROFILE: {
+        profileUpdateCount++;
+        // Deterministic profile derived from the counter.
+        std::string title = "Title " + std::to_string(profileUpdateCount);
+        std::string description = "Desc " + std::to_string(profileUpdateCount);
+        std::map<std::string, std::string> profile {{"title", title}, {"description", description}};
+
+        // The profile can only be updated by a member whose role is at least the required
+        // permission level (ADMIN by default, see ConversationRepository::updateProfilePermLvl_).
+        // Determine this from the instigator's own repository membership.
+        dht::InfoHash instigatorHash(instigatorAccount.account->getUsername());
+        const std::string instigatorUri = instigatorHash.toString();
+        bool hasPermission = false;
+        for (const auto& member : instigatorAccount.repository->members()) {
+            if (member.uri == instigatorUri) {
+                hasPermission = member.role == jami::MemberRole::ADMIN;
+                break;
+            }
+        }
+
+        const std::string commitID = instigatorAccount.repository->updateInfos(profile);
+        // Mirrors ADD_MEMBER: the commit succeeds iff the instigator has sufficient permission.
+        assert(commitID.empty() == !hasPermission);
+
+        if (!commitID.empty()) {
+            auto infos = instigatorAccount.repository->infos();
+            assert(infos.at("title") == title);
+            assert(infos.at("description") == description);
+
+            instigatorAccount.conversation->announce(commitID, true);
+            // The daemon emits this signal from Conversation::updateInfos; the DST commits through
+            // the repository directly, so we mirror it here for the author.
+            emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(instigatorAccount.account->getAccountID(),
+                                                                                instigatorAccount.repository->id(),
+                                                                                infos);
+            if (queue) {
+                scheduleGitEvent(*queue,
+                                 ConversationEvent::FETCH,
+                                 event.instigatorAccountIndex,
+                                 -1,
+                                 event.timeOfOccurrence);
+            }
+        }
+        break;
+    }
     case ConversationEvent::EDIT_MESSAGE: {
         assert(event.targetMessageIndex >= 0);
         // targetMessageIndex always points to the original text/plain message, never an edit commit.
@@ -994,6 +1059,19 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         if (!commits.empty()) {
             // Messages have been found. This announce function should add the messages into the respective RepositoryAccount
             receivingAccount.conversation->announce(commits, false);
+            // The daemon emits this signal from Conversation::pull when a fetched commit changes
+            // profile.vcf; the DST merges directly, so we mirror it here when a profile-update
+            // commit is among the merged commits.
+            auto isProfileUpdate = [](const std::map<std::string, std::string>& commit) {
+                auto it = commit.find(CommitKey::TYPE);
+                return it != commit.end() && it->second == CommitType::UPDATE_PROFILE;
+            };
+            if (std::any_of(commits.begin(), commits.end(), isProfileUpdate)) {
+                emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(receivingAccount.account
+                                                                                        ->getAccountID(),
+                                                                                    receivingAccount.repository->id(),
+                                                                                    receivingAccount.repository->infos());
+            }
         }
         assert(receivingAccount.client.hasConsistentHistory());
         assert(checkConversationMembers(receivingAccount));
@@ -1148,11 +1226,13 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_REACTION)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::HOST_CONFERENCE)] = 2;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::UPDATE_PROFILE)] = 1;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
 
     msgCount = 0;
     fileCount = 0;
     conferenceCount = 0;
+    profileUpdateCount = 0;
 
     // Create the initial conversation
     int initialAccountIndex = 0;
@@ -1294,6 +1374,9 @@ ConversationDST::checkAllAccounts()
             return false;
         }
         if (!checkActiveCalls(repoAcc)) {
+            return false;
+        }
+        if (!checkProfile(repoAcc)) {
             return false;
         }
     }
@@ -1562,6 +1645,38 @@ ConversationDST::checkActiveCalls(const RepositoryAccount& repoAcc)
                    repoAcc.account->getDisplayName(),
                    actual.size(),
                    expected.size());
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @brief Checks that the conversation profile accumulated by the client (from the
+ * ConversationProfileUpdated signal) matches the one stored in its repository.
+ */
+bool
+ConversationDST::checkProfile(const RepositoryAccount& repoAcc)
+{
+    if (!repoAcc.repository) {
+        return true;
+    }
+
+    auto repoInfos = repoAcc.repository->infos();
+    const auto& clientProfile = repoAcc.client.getProfile();
+
+    if (repoInfos != clientProfile) {
+        auto formatProfile = [](const std::map<std::string, std::string>& profile) {
+            std::string out;
+            for (const auto& [key, value] : profile) {
+                out += fmt::format("\n  {}={}", key, value);
+            }
+            return out;
+        };
+        fmt::print(fg(fmt::color::red),
+                   "[{}] Client profile doesn't match the repository\n  client:{}\n  repository:{}\n",
+                   repoAcc.account->getDisplayName(),
+                   formatProfile(clientProfile),
+                   formatProfile(repoInfos));
         return false;
     }
     return true;
@@ -1910,6 +2025,7 @@ ConversationDST::runUnitTest(const UnitTest& unitTest)
     msgCount = 0;
     fileCount = 0;
     conferenceCount = 0;
+    profileUpdateCount = 0;
     // We skip the first event since it represents who gets their repository first
     for (size_t i = 1; i < unitTest.events.size(); i++) {
         eventLogger(unitTest.events[i]);

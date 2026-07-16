@@ -208,6 +208,16 @@ SimClient::onActiveCallsChanged(const std::string& accountId,
     activeCalls_ = activeCalls;
 }
 
+void
+SimClient::onConversationProfileUpdated(const std::string& accountId,
+                                        const std::string& conversationId,
+                                        const std::map<std::string, std::string>& profile)
+{
+    assert(accountId == accountId_);
+    assert(conversationId == conversationId_);
+    profile_ = profile;
+}
+
 MemberRole
 SimClient::getMemberRole(const std::string& memberId) const
 {
@@ -242,6 +252,12 @@ const std::vector<std::map<std::string, std::string>>&
 SimClient::getActiveCalls() const
 {
     return activeCalls_;
+}
+
+const std::map<std::string, std::string>&
+SimClient::getProfile() const
+{
+    return profile_;
 }
 
 bool
