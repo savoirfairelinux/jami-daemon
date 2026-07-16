@@ -307,6 +307,10 @@ struct History
 class Conversation::Impl
 {
 private:
+#ifdef LIBJAMI_TEST
+    // Allow the test-only Conversation constructor to forward to the private Impl constructor.
+    friend class Conversation;
+#endif
     Impl(std::unique_ptr<ConversationRepository>&& repository,
          const std::shared_ptr<JamiAccount>& account,
          std::vector<ConversationCommit>&& commits = {})
@@ -1799,6 +1803,14 @@ Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, remoteDevice, conversationId}}
 {}
+
+#ifdef LIBJAMI_TEST
+Conversation::Conversation(std::unique_ptr<ConversationRepository>&& repository,
+                           const std::shared_ptr<JamiAccount>& account,
+                           std::vector<ConversationCommit>&& commits)
+    : pimpl_ {new Impl {std::move(repository), account, std::move(commits)}}
+{}
+#endif
 
 Conversation::~Conversation() {}
 

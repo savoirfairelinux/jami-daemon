@@ -198,6 +198,16 @@ SimClient::onReactionRemoved(const std::string& accountId,
     reactions.erase(it);
 }
 
+void
+SimClient::onActiveCallsChanged(const std::string& accountId,
+                                const std::string& conversationId,
+                                const std::vector<std::map<std::string, std::string>>& activeCalls)
+{
+    assert(accountId == accountId_);
+    assert(conversationId == conversationId_);
+    activeCalls_ = activeCalls;
+}
+
 MemberRole
 SimClient::getMemberRole(const std::string& memberId) const
 {
@@ -226,6 +236,12 @@ SimClient::clearMessages()
     swarmMessages_.clear();
     sortedIndices_.clear();
     indexFromMessageId_.clear();
+}
+
+const std::vector<std::map<std::string, std::string>>&
+SimClient::getActiveCalls() const
+{
+    return activeCalls_;
 }
 
 bool
