@@ -67,6 +67,10 @@ public:
                               const std::string& conversationId,
                               const std::vector<std::map<std::string, std::string>>& activeCalls);
 
+    void onConversationProfileUpdated(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::map<std::string, std::string>& profile);
+
     void setMemberRoles(const std::vector<std::map<std::string, std::string>>& members);
     MemberRole getMemberRole(const std::string& memberId) const;
 
@@ -74,6 +78,7 @@ public:
     void clearMessages();
     bool hasConsistentHistory() const;
     const std::vector<std::map<std::string, std::string>>& getActiveCalls() const;
+    const std::map<std::string, std::string>& getProfile() const;
     int getIndex(const std::string& messageId) const;
     const SwarmMessage& getMessageAtIndex(int idx) const;
     int randomMessageIndex(std::mt19937_64& gen) const;
@@ -92,6 +97,7 @@ private:
     std::vector<size_t> sortedIndices_; // From oldest to newest message
     std::map<std::string, size_t> indexFromMessageId_;
     std::vector<std::map<std::string, std::string>> activeCalls_;
+    std::map<std::string, std::string> profile_;
 };
 
 } // namespace test
