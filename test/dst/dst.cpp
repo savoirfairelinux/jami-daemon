@@ -51,7 +51,8 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::REMOVE_REACTION, "REMOVE_REACTION"},
                                                      {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"},
                                                      {ConversationEvent::HOST_CONFERENCE, "HOST_CONFERENCE"},
-                                                     {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"}};
+                                                     {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"},
+                                                     {ConversationEvent::UPDATE_PROFILE, "UPDATE_PROFILE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -66,7 +67,8 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"REMOVE_REACTION", ConversationEvent::REMOVE_REACTION},
                                                              {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE},
                                                              {"HOST_CONFERENCE", ConversationEvent::HOST_CONFERENCE},
-                                                             {"END_CONFERENCE", ConversationEvent::END_CONFERENCE}};
+                                                             {"END_CONFERENCE", ConversationEvent::END_CONFERENCE},
+                                                             {"UPDATE_PROFILE", ConversationEvent::UPDATE_PROFILE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -337,6 +339,9 @@ ConversationDST::eventLogger(const Event& event)
                        event.targetMessageIndex,
                        eventTime);
             break;
+        case ConversationEvent::UPDATE_PROFILE:
+            fmt::print("EVENT: {} updated the conversation profile at {}\n", instigatorName, eventTime);
+            break;
 
         default:
             assert(false && "Unknown ConversationEvent type received, this is a bug!");
@@ -513,6 +518,13 @@ ConversationDST::validateEvent(const Event& event)
         break;
     case ConversationEvent::HOST_CONFERENCE:
         // Instigator can only host a conference if part of the conversation.
+        if (!instigatorRepoAcc.repository) {
+            return false;
+        }
+        break;
+    case ConversationEvent::UPDATE_PROFILE:
+        // Instigator must be part of the conversation. Permission is intentionally not checked
+        // here: the insufficient-permission case is exercised and asserted in triggerEvent.
         if (!instigatorRepoAcc.repository) {
             return false;
         }
@@ -854,6 +866,46 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         }
         break;
     }
+    case ConversationEvent::UPDATE_PROFILE: {
+        profileUpdateCount++;
+        // Deterministic profile derived from the counter.
+        std::string title = "Title " + std::to_string(profileUpdateCount);
+        std::string description = "Desc " + std::to_string(profileUpdateCount);
+        std::map<std::string, std::string> profile {{"title", title}, {"description", description}};
+
+        // The profile can only be updated by a member whose role is at least the required
+        // permission level (ADMIN by default, see ConversationRepository::updateProfilePermLvl_).
+        // Determine this from the instigator's own repository membership.
+        dht::InfoHash instigatorHash(instigatorAccount.account->getUsername());
+        const std::string instigatorUri = instigatorHash.toString();
+        bool hasPermission = false;
+        for (const auto& member : instigatorAccount.repository->members()) {
+            if (member.uri == instigatorUri) {
+                hasPermission = member.role == jami::MemberRole::ADMIN;
+                break;
+            }
+        }
+
+        const std::string commitID = instigatorAccount.repository->updateInfos(profile);
+        // Mirrors ADD_MEMBER: the commit succeeds iff the instigator has sufficient permission.
+        assert(commitID.empty() == !hasPermission);
+
+        if (!commitID.empty()) {
+            auto infos = instigatorAccount.repository->infos();
+            assert(infos.at("title") == title);
+            assert(infos.at("description") == description);
+
+            instigatorAccount.conversation->announce(commitID, true);
+            if (queue) {
+                scheduleGitEvent(*queue,
+                                 ConversationEvent::FETCH,
+                                 event.instigatorAccountIndex,
+                                 -1,
+                                 event.timeOfOccurrence);
+            }
+        }
+        break;
+    }
     case ConversationEvent::EDIT_MESSAGE: {
         assert(event.targetMessageIndex >= 0);
         // targetMessageIndex always points to the original text/plain message, never an edit commit.
@@ -1148,11 +1200,13 @@ ConversationDST::generateEventSequence(unsigned maxEvents)
     eventWeights[static_cast<uint8_t>(ConversationEvent::SEND_FILE)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::ADD_REACTION)] = 3;
     eventWeights[static_cast<uint8_t>(ConversationEvent::HOST_CONFERENCE)] = 2;
+    eventWeights[static_cast<uint8_t>(ConversationEvent::UPDATE_PROFILE)] = 1;
     std::discrete_distribution<> repositoryEventDist {eventWeights, eventWeights + NUM_PRIMARY_EVENTS};
 
     msgCount = 0;
     fileCount = 0;
     conferenceCount = 0;
+    profileUpdateCount = 0;
 
     // Create the initial conversation
     int initialAccountIndex = 0;
@@ -1910,6 +1964,7 @@ ConversationDST::runUnitTest(const UnitTest& unitTest)
     msgCount = 0;
     fileCount = 0;
     conferenceCount = 0;
+    profileUpdateCount = 0;
     // We skip the first event since it represents who gets their repository first
     for (size_t i = 1; i < unitTest.events.size(); i++) {
         eventLogger(unitTest.events[i]);
