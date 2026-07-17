@@ -329,7 +329,12 @@ AAudioLayer::dataCallback(AAudioStream* stream, void* userData, void* audioData,
 
         auto frame = stream == layer->ringStream_.get() ? layer->getToRing(format, numFrames)
                                                         : layer->getToPlay(format, numFrames);
-        if (frame && frame->pointer() && frame->pointer()->data[0]) {
+        if (stream != layer->ringStream_.get() && layer->isPlaybackMuted()) {
+            // Explicit call-audio mute (see AudioLayer::mutePlayback()): still drain the
+            // playback queue via getToPlay() above so it doesn't build up an ever-growing
+            // backlog while muted, but discard the samples and emit silence instead.
+            std::fill_n(static_cast<float*>(audioData), numSamples, 0.0f);
+        } else if (frame && frame->pointer() && frame->pointer()->data[0]) {
             float* output = static_cast<float*>(audioData);
             const float* src = reinterpret_cast<const float*>(frame->pointer()->data[0]);
             std::copy(src, src + numSamples, output);
