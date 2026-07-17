@@ -43,6 +43,7 @@ public:
                                    const std::string& memberId,
                                    int event);
     void onConversationReady(const std::string& accountId, const std::string& conversationId);
+    void onConversationRemoved(const std::string& accountId, const std::string& conversationId);
     void onSwarmLoaded(uint32_t id,
                        const std::string& accountId,
                        const std::string& conversationId,
@@ -76,6 +77,7 @@ public:
 
     std::vector<SwarmMessage> getMessages() const;
     void clearMessages();
+    bool hasLeftConversation() const;
     bool hasConsistentHistory() const;
     const std::vector<std::map<std::string, std::string>>& getActiveCalls() const;
     const std::map<std::string, std::string>& getProfile() const;
@@ -89,6 +91,7 @@ private:
 
     std::string accountId_;
     std::string conversationId_;
+    bool conversationRemoved_ {false};
 
     std::string adminId_;
     std::map<std::string, MemberRole> memberRole_;
