@@ -54,6 +54,8 @@ SimClient::onConversationMemberEvent(const std::string& accountId,
         memberRole_[memberId] = MemberRole::MEMBER;
         break;
     case MemberEvent::REMOVE:
+        // A member can only leave (or be removed) once it has actually joined the conversation.
+        assert(memberRole_.at(memberId) == MemberRole::MEMBER || memberRole_.at(memberId) == MemberRole::ADMIN);
         memberRole_[memberId] = MemberRole::LEFT;
         break;
     case MemberEvent::BAN:
