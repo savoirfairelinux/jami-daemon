@@ -151,12 +151,6 @@ public:
     void onConnectionChanged(OnConnectionChanged cb) { onConnectionChanged_ = std::move(cb); }
 
     /**
-     * Set mobility of swarm manager
-     * @param isMobile
-     */
-    void setMobility(bool isMobile) { isMobile_ = isMobile; }
-
-    /**
      * Get mobility of swarm manager
      * @return true if mobile, false if not
      */
