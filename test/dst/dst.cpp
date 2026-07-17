@@ -52,7 +52,8 @@ std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEM
                                                      {ConversationEvent::DELETE_MESSAGE, "DELETE_MESSAGE"},
                                                      {ConversationEvent::HOST_CONFERENCE, "HOST_CONFERENCE"},
                                                      {ConversationEvent::END_CONFERENCE, "END_CONFERENCE"},
-                                                     {ConversationEvent::UPDATE_PROFILE, "UPDATE_PROFILE"}};
+                                                     {ConversationEvent::UPDATE_PROFILE, "UPDATE_PROFILE"},
+                                                     {ConversationEvent::LEAVE, "LEAVE"}};
 std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
                                                              {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
                                                              {"CONNECT", ConversationEvent::CONNECT},
@@ -68,7 +69,8 @@ std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", Conv
                                                              {"DELETE_MESSAGE", ConversationEvent::DELETE_MESSAGE},
                                                              {"HOST_CONFERENCE", ConversationEvent::HOST_CONFERENCE},
                                                              {"END_CONFERENCE", ConversationEvent::END_CONFERENCE},
-                                                             {"UPDATE_PROFILE", ConversationEvent::UPDATE_PROFILE}};
+                                                             {"UPDATE_PROFILE", ConversationEvent::UPDATE_PROFILE},
+                                                             {"LEAVE", ConversationEvent::LEAVE}};
 
 // Keys used in config.json
 enum class UTKEY : std::uint8_t {
@@ -156,6 +158,16 @@ ConversationDST::setUp(int numAccountsToSimulate)
             for (auto& repoAcc : repositoryAccounts) {
                 if (accountId == repoAcc.account->getAccountID()) {
                     repoAcc.client.onConversationReady(accountId, conversationId);
+                    break;
+                }
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            for (auto& repoAcc : repositoryAccounts) {
+                if (accountId == repoAcc.account->getAccountID()) {
+                    repoAcc.client.onConversationRemoved(accountId, conversationId);
                     break;
                 }
             }
@@ -350,6 +362,9 @@ ConversationDST::eventLogger(const Event& event)
         case ConversationEvent::UPDATE_PROFILE:
             fmt::print("EVENT: {} updated the conversation profile at {}\n", instigatorName, eventTime);
             break;
+        case ConversationEvent::LEAVE:
+            fmt::print("EVENT: {} left the conversation at {}\n", instigatorName, eventTime);
+            break;
 
         default:
             assert(false && "Unknown ConversationEvent type received, this is a bug!");
@@ -471,6 +486,31 @@ ConversationDST::isUserInRepo(int accountIndexToSearch, int accountIndexToFind)
     for (const auto& member : repositoryAccounts[accountIndexToSearch].repository->members()) {
         if (member.uri == targetUri) {
             return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Checks whether an account is currently an active participant in the conversation, as seen from
+ * its own repository: it holds a repository and lists itself with role MEMBER or ADMIN (i.e. it has
+ * not left and is not banned from its own point of view). Note that a banned member still considers
+ * itself active, since it never receives the ban commit.
+ * @param accountIndex The index of the account to check
+ * @return bool Whether the account is an active member of the conversation
+ */
+bool
+ConversationDST::isActiveMember(int accountIndex)
+{
+    auto& repoAcc = repositoryAccounts[accountIndex];
+    if (!repoAcc.repository)
+        return false;
+
+    dht::InfoHash h(repoAcc.account->getUsername());
+    const std::string& selfUri = h.toString();
+    for (const auto& member : repoAcc.repository->members()) {
+        if (member.uri == selfUri) {
+            return member.role == jami::MemberRole::MEMBER || member.role == jami::MemberRole::ADMIN;
         }
     }
     return false;
@@ -626,6 +666,9 @@ ConversationDST::validateEvent(const Event& event)
         }
         break;
     case ConversationEvent::FETCH:
+        if (!isActiveMember(event.receivingAccountIndex)) {
+            return false;
+        }
         // The instigator should only be able to have the receiver fetch from them if:
         // 1. The instigator and receiver are online
         // 2. The instigator and receiver are part of the conversation
@@ -649,6 +692,10 @@ ConversationDST::validateEvent(const Event& event)
         assert(instigatorRepoAcc.repository);
         assert(receiverRepoAcc.repository);
         assert(receiverRepoAcc.devicesWithPendingFetch.contains(instigatorRepoAcc.account->getAccountID()));
+        break;
+    case ConversationEvent::LEAVE:
+        // Valid by construction: only scheduled by CLONE for the account that just joined.
+        assert(isActiveMember(event.instigatorAccountIndex));
         break;
     default:
         assert(false && "Unknown ConversationEvent type received, this is a bug!");
@@ -919,6 +966,27 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         }
         break;
     }
+    case ConversationEvent::LEAVE: {
+        dht::InfoHash instigatorHash(instigatorAccount.account->getUsername());
+        const std::string instigatorUri = instigatorHash.toString();
+
+        emitSignal<libjami::ConversationSignal::ConversationRemoved>(instigatorAccount.account->getAccountID(),
+                                                                     instigatorAccount.repository->id());
+        const std::string commitID = instigatorAccount.repository->leave();
+        assert(!commitID.empty());
+
+        // After leaving, the account has removed itself from its own repository's member list.
+        auto members = instigatorAccount.repository->members();
+        assert(std::none_of(members.begin(), members.end(), [&](const auto& member) {
+            return member.uri == instigatorUri;
+        }));
+
+        if (queue) {
+            // Propagate the "remove" commit to the other members so they learn about the departure.
+            scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
+        }
+        break;
+    }
     case ConversationEvent::EDIT_MESSAGE: {
         assert(event.targetMessageIndex >= 0);
         // targetMessageIndex always points to the original text/plain message, never an edit commit.
@@ -1020,6 +1088,17 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         if (queue) {
             // Now we notify the others about the join
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.receivingAccountIndex, -1, event.timeOfOccurrence);
+
+            // With ~10% probability, schedule the account that just joined to later leave the
+            // conversation. The admin (account 0) never clones, so it is never scheduled to leave.
+            if (rand01() < 0.1f) {
+                std::uniform_int_distribution<> delayDist(1, 15000);
+                auto leaveTime = event.timeOfOccurrence + std::chrono::milliseconds(delayDist(gen_));
+                queue->emplace(event.receivingAccountIndex,
+                               event.receivingAccountIndex,
+                               ConversationEvent::LEAVE,
+                               leaveTime);
+            }
         }
         assert(receivingAccount.client.hasConsistentHistory());
         assert(checkConversationMembers(receivingAccount));
@@ -1092,7 +1171,7 @@ bool
 ConversationDST::verifyLoadConversationFromScratch()
 {
     for (RepositoryAccount& repositoryAccount : repositoryAccounts) {
-        if (repositoryAccount.repository) {
+        if (repositoryAccount.repository && !repositoryAccount.client.hasLeftConversation()) {
             // Clear messages that may have been added from previous signal handling
             repositoryAccount.client.clearMessages();
             // Get the id of the conversation (i.e. repo id)
@@ -1147,9 +1226,9 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
     std::vector<int> members;
     int firstNonMember = numAccountsToSimulate_;
     for (int i = 0; i < numAccountsToSimulate_; ++i) {
-        if (repositoryAccounts[i].repository)
+        if (isActiveMember(i))
             members.push_back(i);
-        else
+        else if (!repositoryAccounts[i].repository)
             firstNonMember = std::min(firstNonMember, i);
     }
     assert(!members.empty());
@@ -1540,7 +1619,15 @@ ConversationDST::computeExpectedMessages(const RepositoryAccount& repoAcc) const
     // Return newest first, matching SimClient::getMessages.
     std::vector<libjami::SwarmMessage> expected;
     expected.reserve(materialized.size());
-    for (auto it = materialized.rbegin(); it != materialized.rend(); ++it) {
+    // If the client left the conversation, we expect it to have all messages except the very
+    // last one (which corresponds to the leave commit and isn't announced to the client).
+    auto it = materialized.rbegin();
+    if (it != materialized.rend() && (*it)->type == CommitType::MEMBER
+        && (*it)->body.at(CommitKey::ACTION) == CommitAction::REMOVE
+        && (*it)->body.at(CommitKey::URI) == repoAcc.account->getUsername()) {
+        ++it;
+    }
+    for (; it != materialized.rend(); ++it) {
         expected.emplace_back(**it);
     }
     return expected;
@@ -1797,8 +1884,9 @@ ConversationDST::checkConversationMembers(const RepositoryAccount& repoAcc)
                        static_cast<int>(memberRole),
                        static_cast<int>(member.role));
             // The current merge algorithm does not properly handle role conflicts, which can cause
-            // the repo to end up in an inconsistent state (where e.g. a peer is already a member, but
-            // also still in the "invited" directory) and lead to a role mismatch here.
+            // the repo to end up in an inconsistent state (where e.g. a peer is still in the "invited"
+            // directory even though they are already a member, or were a member but then left the
+            // conversation).
             // TODO return false once the above issue is fixed.
             return true;
         }
