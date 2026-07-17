@@ -53,7 +53,8 @@ enum class ConversationEvent : std::uint8_t {
     EDIT_MESSAGE = 12,
     REMOVE_REACTION = 13,
     DELETE_MESSAGE = 14,
-    END_CONFERENCE = 15
+    END_CONFERENCE = 15,
+    LEAVE = 16
 };
 static constexpr uint8_t NUM_PRIMARY_EVENTS = 8;
 
@@ -200,6 +201,7 @@ private:
                           int receivingAccountIndex,
                           std::chrono::nanoseconds eventTimeOfOccurrence);
     bool isUserInRepo(int accountIndexToSearch, int accountIndexToFind);
+    bool isActiveMember(int accountIndex);
     bool validateEvent(const Event& event);
     void triggerEvent(const Event& event, EventQueue* queue = nullptr);
 
