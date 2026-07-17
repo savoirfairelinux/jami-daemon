@@ -23,6 +23,8 @@
 #include <cassert>
 #include <algorithm>
 #include <random>
+#include <fmt/color.h>
+#include <fmt/printf.h>
 
 namespace jami {
 namespace test {
@@ -37,6 +39,7 @@ SimClient::onConversationMemberEvent(const std::string& accountId,
 
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
 
     auto event = static_cast<MemberEvent>(eventCode);
     if (event != MemberEvent::ADD) {
@@ -54,6 +57,16 @@ SimClient::onConversationMemberEvent(const std::string& accountId,
         memberRole_[memberId] = MemberRole::MEMBER;
         break;
     case MemberEvent::REMOVE:
+        // A member can only leave (or be removed) once it has actually joined the conversation.
+        if (memberRole_[memberId] != MemberRole::MEMBER && memberRole_[memberId] != MemberRole::ADMIN) {
+            fmt::print(fg(fmt::color::red),
+                       "[{}] Member {} was removed from the conversation but was not a member (role: {})\n",
+                       accountId_,
+                       memberId,
+                       static_cast<int>(memberRole_[memberId]));
+        }
+        // TODO Replace the above by an assertion once role conflicts are correctly handled by the merge algorithm:
+        // assert(memberRole_[memberId] == MemberRole::MEMBER || memberRole_[memberId] == MemberRole::ADMIN);
         memberRole_[memberId] = MemberRole::LEFT;
         break;
     case MemberEvent::BAN:
@@ -70,8 +83,19 @@ SimClient::onConversationReady(const std::string& accountId, const std::string& 
 {
     assert(accountId_.empty());
     assert(conversationId_.empty());
+    assert(!conversationRemoved_);
     accountId_ = accountId;
     conversationId_ = conversationId;
+}
+
+void
+SimClient::onConversationRemoved(const std::string& accountId, const std::string& conversationId)
+{
+    assert(accountId_ == accountId);
+    assert(conversationId_ == conversationId);
+    assert(!conversationRemoved_);
+    conversationRemoved_ = true;
+    activeCalls_.clear();
 }
 
 void
@@ -112,6 +136,7 @@ SimClient::onSwarmLoaded(uint32_t /* id */,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
 
     for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
         insertMessage(*it);
@@ -125,6 +150,7 @@ SimClient::onSwarmMessageReceived(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
     assert(indexFromMessageId_.find(message.id) == indexFromMessageId_.end());
     if (auto replyToIt = message.body.find(CommitKey::REPLY_TO); replyToIt != message.body.end()) {
         assert(!replyToIt->second.empty());
@@ -141,6 +167,7 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
 
     auto indexIt = indexFromMessageId_.find(message.id);
     assert(indexIt != indexFromMessageId_.end());
@@ -169,6 +196,7 @@ SimClient::onReactionAdded(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
 
     // Reactions must not enter the message list, only update the target message's reactions.
     auto indexIt = indexFromMessageId_.find(messageId);
@@ -196,6 +224,7 @@ SimClient::onReactionRemoved(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
 
     auto indexIt = indexFromMessageId_.find(messageId);
     assert(indexIt != indexFromMessageId_.end());
@@ -218,6 +247,7 @@ SimClient::onActiveCallsChanged(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
     activeCalls_ = activeCalls;
 }
 
@@ -228,6 +258,7 @@ SimClient::onConversationProfileUpdated(const std::string& accountId,
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
+    assert(!conversationRemoved_);
     profile_ = profile;
 }
 
@@ -259,6 +290,12 @@ SimClient::clearMessages()
     swarmMessages_.clear();
     sortedIndices_.clear();
     indexFromMessageId_.clear();
+}
+
+bool
+SimClient::hasLeftConversation() const
+{
+    return conversationRemoved_;
 }
 
 const std::vector<std::map<std::string, std::string>>&
