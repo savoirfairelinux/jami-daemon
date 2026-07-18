@@ -243,9 +243,14 @@ if (BUILD_CONTRIB)
             execute_process(
                 COMMAND ${BOOTSTRAP_COMMAND}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
-            execute_process(COMMAND make list
+
+            set(CONTRIB_MAKE_OPTIONS)
+            if(JAMI_DBUS)
+                list(APPEND CONTRIB_MAKE_OPTIONS JAMI_DBUS=1)
+            endif()
+            execute_process(COMMAND make ${CONTRIB_MAKE_OPTIONS} list
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
-            execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
+            execute_process(COMMAND make ${CONTRIB_MAKE_OPTIONS} ${CONTRIB_BUILD_FLAGS}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
