@@ -1,18 +1,23 @@
 {
     "name": "onnx",
-    "version": "v1.12.0",
-    "cpe": "cpe:2.3:a:*:onnx:1.12.0:*:*:*:*:*:*:*",
+    "version": "v1.27.0",
+    "cpe": "cpe:2.3:a:*:onnx:1.27.0:*:*:*:*:*:*:*",
     "url": "https://github.com/microsoft/onnxruntime/archive/__VERSION__.tar.gz",
     "deps": [],
-    "patches": ["fix-eigen-hash.patch"],
+    "patches": [],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [
-            "mkdir build"
+            "mkdir build",
+            "python -m venv .venv-build",
+            ".venv-build\\Scripts\\python.exe -m pip install --upgrade pip",
+            ".venv-build\\Scripts\\python.exe -m pip install -r requirements.txt"
         ],
-        "build": [],
+        "build": [
+            ".venv-build\\Scripts\\python.exe tools\\ci_build\\build.py --config Release --parallel --build_shared_lib --skip_tests --skip_submodule_sync --use_dml --build_dir build --cmake_generator \"Visual Studio 17 2022\""
+        ],
         "post_build": []
     }
 }
