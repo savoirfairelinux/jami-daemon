@@ -519,7 +519,7 @@ get_home_dir_impl()
     // 1) try getting user's home directory from the environment
     std::string home(PROTECTED_GETENV("HOME"));
     if (not home.empty())
-        return home;
+        return std::filesystem::absolute(home);
 
     // 2) try getting it from getpwuid_r (i.e. /etc/passwd)
     const long max = sysconf(_SC_GETPW_R_SIZE_MAX);
