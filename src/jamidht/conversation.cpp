@@ -498,11 +498,11 @@ public:
                     activeCall["uri"] = uri;
                     activeCall["device"] = device;
                     activeCalls_.emplace_back(activeCall);
-                    fmt::print("swarm:{} new active call detected: {} (on device {}, account {})\n",
-                               convId,
-                               confId,
-                               device,
-                               uri);
+                    JAMI_LOG("swarm:{} new active call detected: {} (on device {}, account {})",
+                             convId,
+                             confId,
+                             device,
+                             uri);
                 }
                 // Even if the call was active, we still add its ID to invalidCallIds to make sure it
                 // doesn't get added a second time. (This shouldn't happen normally, but in practice
