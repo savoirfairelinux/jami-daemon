@@ -341,13 +341,26 @@ public:
             return false;
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
-            // We only remove requests (if accepted) or change .declined
-            if (req.declined == TimePoint {})
+            const bool existingDeclined = it->second.declined != TimePoint {};
+            const bool incomingDeclined = req.declined != TimePoint {};
+
+            if (incomingDeclined && existingDeclined) {
+                // Keep only the latest decline and avoid sync ping-pong.
+                if (req.declined <= it->second.declined)
+                    return false;
+                conversationsRequests_[id] = req;
+                saveConvRequests();
                 return false;
-            if (it->second.declined != TimePoint {}) {
-                // Already declined: nothing changed. Reporting a change here
-                // would make devices re-propagate declined requests to each
-                // other forever (sync ping-pong).
+            } else if (incomingDeclined) {
+                // Accept a decline only if it is newer than the active request.
+                if (req.declined < it->second.received)
+                    return false;
+            } else if (existingDeclined) {
+                // Accept a re-invitation only if it arrived after the previous decline.
+                if (req.received <= it->second.declined)
+                    return false;
+            } else {
+                // Ignore duplicate active requests.
                 return false;
             }
         } else if (req.isOneToOne()) {
@@ -1524,6 +1537,11 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
         addConvInfo(conv->info);
+    } else if (conv->info.mode != ConversationMode::ONE_TO_ONE && conv->info.isRemoved()) {
+        // Re-invited to a group conversation we previously left.
+        conv->info.created = nowMs();
+        conv->info.erased = TimePoint {};
+        addConvInfo(conv->info);
     }
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
         auto sthis = w.lock();
@@ -2034,16 +2052,13 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                from);
     auto convId = req.conversationId;
 
-    // Already accepted request, do nothing
-    if (pimpl_->isConversation(convId))
-        return;
-    auto oldReq = pimpl_->getRequest(convId);
-    if (oldReq != std::nullopt) {
-        JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. "
-                   "Ignore. Declined: {}",
-                   pimpl_->accountId_,
-                   oldReq->declined != TimePoint {});
-        return;
+    // Already accepted request, do nothing.
+    // Exception: a group conversation we previously left can be legitimately
+    // re-invited (same convId reused).
+    if (auto conv = pimpl_->getConversation(convId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->info.mode == ConversationMode::ONE_TO_ONE || !conv->info.isRemoved())
+            return;
     }
     req.received = nowMs();
     req.from = from;
