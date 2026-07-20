@@ -98,7 +98,7 @@ pipeline {
                                 -v \${WORKSPACE}:\${WORKSPACE} \\
                                 -w \${WORKSPACE}/bin/nodejs \\
                                 node:24-slim \\
-                                sh -c 'npm ci --ignore-scripts && npm run build'
+                                sh -c 'npm install --ignore-scripts --omit=optional --package-lock=false && npm run build'
                         """
                     }
                 }
