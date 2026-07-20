@@ -1,10 +1,10 @@
 {
     "name": "onnx",
-    "version": "v1.12.0",
-    "cpe": "cpe:2.3:a:*:onnx:1.12.0:*:*:*:*:*:*:*",
+    "version": "v1.27.0",
+    "cpe": "cpe:2.3:a:*:onnx:1.27.0:*:*:*:*:*:*:*",
     "url": "https://github.com/microsoft/onnxruntime/archive/__VERSION__.tar.gz",
     "deps": [],
-    "patches": ["fix-eigen-hash.patch"],
+    "patches": [],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
