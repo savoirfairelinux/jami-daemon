@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2354d05f_91a96fb5",
+        "filename": "test/unitTest/fileTransfer/fileTransfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 710,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-21T22:39:23Z",
+      "side": 1,
+      "message": "[warning] Line 710: 🟡 This constructs `TransferManager` with an empty peer id, so `TransferManager::info()` returns early on `pimpl_-\u003eto_.empty()` before reaching the filesystem lookup this test is meant to cover. Use a non-empty `to` value so the too-long `fileId` exercises the `std::filesystem::is_regular_file(..., ec)` path.",
+      "revId": "09d8b7e33f8d2f03360930b58456c39c8442e637",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
