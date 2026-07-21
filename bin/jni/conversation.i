@@ -53,6 +53,8 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
     std::map<std::string, int32_t> status;
+    // Extra attributes written by plugins (e.g. {"bodyOverwrite": "..."}), local display only.
+    std::map<std::string, std::string> pluginData;
 };
 
   // Conversation management
