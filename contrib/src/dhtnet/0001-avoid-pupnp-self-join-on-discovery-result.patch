@@ -1,0 +1,34 @@
+From 4b53d377f23dc9e3d80a32f804a7f9b8c8d8e4e5 Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Tue, 21 Jul 2026 21:31:16 +0000
+Subject: [PATCH] upnp: avoid destroying PUPnP from its own worker
+
+Discovery result handling can retain the last shared PUPnP reference until
+the worker lambda exits. When that lambda runs on PUPnP's private thread pool,
+the destructor can be entered from one of the threads that the same destructor
+must join, which makes std::thread::join throw resource_deadlock_would_occur
+and terminates the application on Windows.
+
+Dispatch discovery result processing on the shared dht I/O pool instead. The
+work still runs asynchronously, but a final PUPnP reference released by that
+task no longer destroys the private pool from one of its own workers.
+---
+ src/upnp/protocol/pupnp/pupnp.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/upnp/protocol/pupnp/pupnp.cpp b/src/upnp/protocol/pupnp/pupnp.cpp
+index 47b7a11..a8e9c01 100644
+--- a/src/upnp/protocol/pupnp/pupnp.cpp
++++ b/src/upnp/protocol/pupnp/pupnp.cpp
+@@ -394,7 +394,7 @@ PUPnP::processDiscoverySearchResult(UpnpDiscovery* d_event)
+         return;
+     }
+ 
+-    threadPool_.run([this, location = std::move(location), localIp = std::move(localIp)] {
++    dht::ThreadPool::io().run([this, location = std::move(location), localIp = std::move(localIp)] {
+         auto igd = parseIgd(location, localIp);
+         if (!igd) {
+             return;
+-- 
+2.34.1
+
