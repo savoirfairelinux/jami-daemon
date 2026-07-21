@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Tue, 21 Jul 2026 20:58:47 +0000
+Subject: [PATCH] connectionmanager: ignore unauthenticated peer responses
+
+DHT values may be delivered without a resolved owner certificate.  Ignore
+those peer responses before the connection manager dereferences the owner
+key while matching the response to pending connection attempts.
+---
+ src/connectionmanager.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/connectionmanager.cpp b/src/connectionmanager.cpp
+index 0000000..0000000 100644
+--- a/src/connectionmanager.cpp
++++ b/src/connectionmanager.cpp
+@@ -1203,2 +1203,5 @@
++    if (!from)
++        return;
++
+     auto peerId = from->getId();
+     auto peerDeviceId = from->getLongId();
+ 
+-- 
+2.51.0
