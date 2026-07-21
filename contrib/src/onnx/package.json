@@ -16,7 +16,7 @@
             ".venv-build\\Scripts\\python.exe -m pip install -r requirements.txt"
         ],
         "build": [
-            ".venv-build\\Scripts\\python.exe tools\\ci_build\\build.py --config Release --parallel --build_shared_lib --skip_tests --skip_submodule_sync --use_dml --build_dir build --cmake_generator \"Visual Studio 17 2022\""
+            ".venv-build\\Scripts\\python.exe tools\\ci_build\\build.py --config Release --parallel 4 --build_shared_lib --skip_tests --skip_submodule_sync --use_dml --build_dir build --cmake_generator \"Visual Studio 17 2022\""
         ],
         "post_build": []
     }
