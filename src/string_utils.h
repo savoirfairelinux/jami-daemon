@@ -20,11 +20,14 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <array>
 #include <algorithm>
 #include <regex>
 #include <iterator>
 #include <charconv>
 #include <string_view>
+#include <type_traits>
+#include <utility>
 
 #ifdef _WIN32
 #include <WTypes.h>
@@ -143,14 +146,50 @@ starts_with(std::string_view str, std::string_view prefix)
     return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
 }
 
+namespace detail {
+
+inline std::string_view
+as_string_view(const char* str) noexcept
+{
+    return str ? std::string_view {str} : std::string_view {};
+}
+
+inline std::string_view
+as_string_view(char* str) noexcept
+{
+    return as_string_view(static_cast<const char*>(str));
+}
+
+template<typename T>
+inline std::string_view
+as_string_view(T&& str)
+{
+    return std::string_view {std::forward<T>(str)};
+}
+
+inline void
+append(std::string& target, std::string_view value)
+{
+    if (!value.empty())
+        target.append(value.data(), value.size());
+}
+
+} // namespace detail
+
 template<typename... Args>
 std::string
 concat(Args&&... args)
 {
     static_assert((std::is_constructible_v<std::string_view, Args&&> && ...));
+    const std::array<std::string_view, sizeof...(Args)> views {
+        detail::as_string_view(std::forward<Args>(args))...};
     std::string s;
-    s.reserve((std::string_view {args}.size() + ...));
-    (s.append(std::forward<Args>(args)), ...);
+    std::size_t total = 0;
+    for (const auto view : views)
+        total += view.size();
+    s.reserve(total);
+    for (const auto view : views)
+        detail::append(s, view);
     return s;
 }
 

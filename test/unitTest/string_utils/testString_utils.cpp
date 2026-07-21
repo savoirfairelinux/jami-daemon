@@ -42,6 +42,7 @@ private:
     void to_string_test();
     void split_string_test();
     void starts_with_test();
+    void concat_test();
     void version_test();
 
     CPPUNIT_TEST_SUITE(StringUtilsTest);
@@ -49,6 +50,7 @@ private:
     CPPUNIT_TEST(to_string_test);
     CPPUNIT_TEST(split_string_test);
     CPPUNIT_TEST(starts_with_test);
+    CPPUNIT_TEST(concat_test);
     CPPUNIT_TEST(version_test);
     CPPUNIT_TEST_SUITE_END();
 
@@ -133,6 +135,15 @@ StringUtilsTest::starts_with_test()
     CPPUNIT_ASSERT(starts_with("test", "test"));
     CPPUNIT_ASSERT(!starts_with("test", "testt"));
     CPPUNIT_ASSERT(!starts_with("test", "es"));
+}
+
+void
+StringUtilsTest::concat_test()
+{
+    const char* nullCString = nullptr;
+    const char* tail = "suffix";
+
+    CPPUNIT_ASSERT_EQUAL("prefixsuffix"s, concat("prefix"sv, nullCString, tail));
 }
 
 } // namespace test
