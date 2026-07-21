@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3913187_e438a770",
+        "filename": "contrib/src/dhtnet/0001-avoid-pupnp-self-join-on-discovery-result.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-21T21:34:22Z",
+      "side": 1,
+      "message": "[error] Line 28: 🔴 Moving this lambda from the PUPnP-owned `threadPool_` to the shared DHT I/O pool removes the lifetime synchronization that the member pool provided, while the task still captures raw `this`. If `PUPnP` is destroyed after scheduling but before this task runs, the lambda can dereference a freed object. Capture a `shared_ptr`/`weak_ptr` using the class\u0027 existing lifetime pattern, or otherwise cancel/synchronize these shared-pool tasks during destruction.",
+      "revId": "64672663941135bbcbb20cb931c4627237f760fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
