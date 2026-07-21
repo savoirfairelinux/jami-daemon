@@ -407,13 +407,17 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
 
     auto itI = pimpl_->incomings_.find(fileId);
     auto itW = pimpl_->waitingIds_.find(fileId);
-    path = this->path(fileId).string();
+    const auto transferPath = this->path(fileId);
+    path = transferPath.string();
     if (itI != pimpl_->incomings_.end()) {
         total = itI->second->info().totalSize;
         progress = itI->second->info().bytesProgress;
         return true;
-    } else if (std::filesystem::is_regular_file(path)) {
-        std::ifstream transfer(path, std::ios::binary);
+    }
+
+    std::error_code ec;
+    if (std::filesystem::is_regular_file(transferPath, ec)) {
+        std::ifstream transfer(transferPath, std::ios::binary);
         transfer.seekg(0, std::ios::end);
         progress = transfer.tellg();
         if (itW != pimpl_->waitingIds_.end()) {
@@ -423,7 +427,11 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
             total = progress;
         }
         return true;
-    } else if (itW != pimpl_->waitingIds_.end()) {
+    }
+    if (ec) {
+        JAMI_WARNING("Unable to inspect transfer file {}: {}", transferPath, ec.message());
+    }
+    if (itW != pimpl_->waitingIds_.end()) {
         total = static_cast<int64_t>(itW->second.totalSize);
         progress = 0;
         return true;

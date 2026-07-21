@@ -100,6 +100,7 @@ private:
     void testResumeTransferAfterInterruption();
     void testDontDownloadExistingFile();
     void testTransferInfo();
+    void testTransferInfoInvalidPath();
     void testRemoveHardLink();
     void testTooLarge();
     void testDeleteFile();
@@ -115,6 +116,7 @@ private:
     CPPUNIT_TEST(testResumeTransferAfterInterruption);
     CPPUNIT_TEST(testDontDownloadExistingFile);
     CPPUNIT_TEST(testTransferInfo);
+    CPPUNIT_TEST(testTransferInfoInvalidPath);
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
     CPPUNIT_TEST(testDeleteFile);
@@ -704,6 +706,21 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(bytesProgress == 640000);
     CPPUNIT_ASSERT(totalSize == 640000);
     CPPUNIT_ASSERT(dhtnet::fileutils::isFile(path));
+}
+
+void
+FileTransferTest::testTransferInfoInvalidPath()
+{
+    std::mt19937_64 rand;
+    TransferManager transfer(aliceId, "", "conversation", rand);
+
+    std::string path;
+    int64_t totalSize = -1;
+    int64_t bytesProgress = -1;
+    const std::string tooLongFileId(5000, 'a');
+
+    CPPUNIT_ASSERT(!transfer.info(tooLongFileId, path, totalSize, bytesProgress));
+    CPPUNIT_ASSERT(bytesProgress == 0);
 }
 
 void
