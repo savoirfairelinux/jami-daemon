@@ -16,6 +16,24 @@
       "message": "[error] Line 359: 🔴 This compares the re-invitation against `req.received`, but `onConversationRequest()` sets `req.received \u003d nowMs()` after parsing the incoming request. A delayed/replayed copy of the original invitation received after the local decline will therefore satisfy this check and resurrect a request the user already declined. Compare against a sender-provided invitation creation/update timestamp or explicit request revision instead; if none exists, this needs protocol/state support rather than using local receipt time.",
       "revId": "b2abb9bac92b4d6a71931b7d379ed4484ff8da8e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11cffa54_f7e39609",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-07-21T20:46:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29dd1f2d_300d1475",
+      "revId": "b2abb9bac92b4d6a71931b7d379ed4484ff8da8e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

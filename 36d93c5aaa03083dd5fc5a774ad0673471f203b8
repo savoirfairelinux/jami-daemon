@@ -16,6 +16,24 @@
       "message": "[error] Line 343: 🔴 Re-invitations to previously removed group conversations are allowed past `onConversationRequest()`, but `addConversationRequest()` still rejects any id for which `isConversation(id)` is true. If removed conversations are still returned by `isConversation()`, the re-invitation will be dropped before it can be surfaced or accepted. Make this guard match the new policy, e.g. only reject active/one-to-one conversations and allow removed group conversations through.",
       "revId": "36d93c5aaa03083dd5fc5a774ad0673471f203b8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c48031c8_b0d733a9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-07-21T20:46:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "234843d6_adbd3327",
+      "revId": "36d93c5aaa03083dd5fc5a774ad0673471f203b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
