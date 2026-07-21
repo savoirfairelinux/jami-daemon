@@ -40,6 +40,7 @@
 #include <fstream>
 #include <streambuf>
 #include <filesystem>
+#include <thread>
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
@@ -82,6 +83,7 @@ private:
     // void testExportDhtWrongPassword();
     void testChangePassword();
     void testChangeDhtPort();
+    void testRemoveAccountDuringLocalArchiveImport();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
@@ -92,6 +94,7 @@ private:
     // CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST(testChangeDhtPort);
+    CPPUNIT_TEST(testRemoveAccountDuringLocalArchiveImport);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -239,6 +242,27 @@ AccountArchiveTest::testChangeDhtPort()
     cv.wait_for(lk, 20s, [&] { return aliceReady; });
 
     CPPUNIT_ASSERT(aliceAccount->dht()->getBoundPort() == 1413);
+}
+
+void
+AccountArchiveTest::testRemoveAccountDuringLocalArchiveImport()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const std::string importedId = "local-archive-import";
+    const auto importDir = fileutils::get_data_dir() / importedId;
+    const auto archivePath = importDir / "archive.gz";
+
+    std::filesystem::remove_all(importDir);
+    std::filesystem::create_directories(importDir);
+    CPPUNIT_ASSERT(aliceAccount->exportArchive(archivePath.string()));
+
+    auto details = libjami::getAccountTemplate("RING");
+    CPPUNIT_ASSERT_EQUAL(importedId, Manager::instance().addAccount(details, importedId));
+
+    Manager::instance().removeAccount(importedId);
+    CPPUNIT_ASSERT(!Manager::instance().getAccount(importedId));
+    std::this_thread::sleep_for(1s);
+    std::filesystem::remove_all(importDir);
 }
 
 } // namespace test

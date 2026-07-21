@@ -107,6 +107,7 @@
 #include <memory>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -1527,9 +1528,19 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getAccountID(),
                 getPath(),
-                [this]() { return getAccountDetails(); },
-                [this](DeviceSync&& syncData) {
-                    if (auto* sm = syncModule()) {
+                [w = weak(), accountId = getAccountID()] {
+                    auto account = w.lock();
+                    if (!account) {
+                        throw std::runtime_error(
+                            fmt::format("[Account {}] Account removed while exporting config", accountId));
+                    }
+                    return account->getAccountDetails();
+                },
+                [w = weak()](DeviceSync&& syncData) {
+                    auto account = w.lock();
+                    if (!account)
+                        return;
+                    if (auto* sm = account->syncModule()) {
                         auto syncDataPtr = std::make_shared<SyncMsg>();
                         syncDataPtr->ds = std::move(syncData);
                         sm->syncWithConnected(syncDataPtr);
