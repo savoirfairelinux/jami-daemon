@@ -69,7 +69,9 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
 
-    auto index = indexFromMessageId_.at(message.id);
+    auto indexIt = indexFromMessageId_.find(message.id);
+    assert(indexIt != indexFromMessageId_.end());
+    auto index = indexIt->second;
     swarmMessages_[index] = message;
 
     auto it = std::find(sortedIndices_.begin(), sortedIndices_.end(), index);
@@ -78,7 +80,9 @@ SimClient::onSwarmMessageUpdated(const std::string& accountId,
 
     auto parentId = message.linearizedParent;
     assert(!parentId.empty());
-    auto parentIndex = indexFromMessageId_.at(parentId);
+    auto parentIndexIt = indexFromMessageId_.find(parentId);
+    assert(parentIndexIt != indexFromMessageId_.end());
+    auto parentIndex = parentIndexIt->second;
     auto parentIt = std::find(sortedIndices_.begin(), sortedIndices_.end(), parentIndex);
     assert(parentIt != sortedIndices_.end());
     sortedIndices_.insert(parentIt + 1, index);
