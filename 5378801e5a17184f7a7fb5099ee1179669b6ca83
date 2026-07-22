@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a9a8fc8_70a3dda2",
+        "filename": "contrib/src/opendht/0002-thread-pool-avoid-self-join.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:52:27Z",
+      "side": 1,
+      "message": "[error] Line 29: 🔴 Detaching the current worker avoids `std::thread::join()` throwing, but it does not make self-destruction safe: after `join()` returns, the detached worker can continue unwinding back into the pool worker loop and access `running_`, `tasks_`, `mutex_`, or `cv_` after `threads_.clear()` and object destruction. The fix should ensure `ThreadPool` is never destroyed/joined from one of its own workers, or make the worker exit path avoid touching destroyed pool state before allowing destruction to complete.",
+      "revId": "5378801e5a17184f7a7fb5099ee1179669b6ca83",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
