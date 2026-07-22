@@ -28,6 +28,7 @@
 
 #include <future>
 #include <memory>
+#include <stdexcept>
 
 namespace jami {
 
@@ -254,6 +255,9 @@ AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
         if (ringBuf_)
             ringBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
     });
+    if (!decoder->isReady()) {
+        throw std::runtime_error("audio decoder setup failed for " + path);
+    }
     decoder->emulateRate();
     decoder->setInterruptCallback([](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); },
                                   this);

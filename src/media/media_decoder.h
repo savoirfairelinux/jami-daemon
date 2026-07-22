@@ -185,6 +185,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     std::string getDecoderName() const;
+    bool isReady() const noexcept { return decoderReady_; }
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
@@ -222,6 +223,7 @@ private:
     const AVCodec* inputDecoder_ = nullptr;
     AVCodecContext* decoderCtx_ = nullptr;
     AVStream* avStream_ = nullptr;
+    bool decoderReady_ = false;
     bool emulateRate_ = false;
     bool passthrough_ = false;
     int64_t startTime_;

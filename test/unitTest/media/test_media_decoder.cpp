@@ -41,9 +41,11 @@ public:
     void tearDown();
 
 private:
+    void testUnsetPixelFormat();
     void testAudioFile();
 
     CPPUNIT_TEST_SUITE(MediaDecoderTest);
+    CPPUNIT_TEST(testUnsetPixelFormat);
     CPPUNIT_TEST(testAudioFile);
     CPPUNIT_TEST_SUITE_END();
 
@@ -67,6 +69,14 @@ MediaDecoderTest::tearDown()
 {
     dhtnet::fileutils::remove(filename_);
     libjami::fini();
+}
+
+void
+MediaDecoderTest::testUnsetPixelFormat()
+{
+    MediaDecoder decoder;
+    CPPUNIT_ASSERT(!decoder.isReady());
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(AV_PIX_FMT_NONE), static_cast<int>(decoder.getPixelFormat()));
 }
 
 void

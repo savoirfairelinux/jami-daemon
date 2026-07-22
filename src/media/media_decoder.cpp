@@ -555,6 +555,7 @@ int
 MediaDecoder::setupStream()
 {
     int ret = 0;
+    decoderReady_ = false;
     avcodec_free_context(&decoderCtx_);
 
     if (prepareDecoderContext() < 0)
@@ -624,6 +625,7 @@ MediaDecoder::setupStream()
         return -1;
     }
 
+    decoderReady_ = true;
     return 0;
 }
 
@@ -895,7 +897,7 @@ MediaDecoder::getTimeBase() const
 AVPixelFormat
 MediaDecoder::getPixelFormat() const
 {
-    return decoderCtx_->pix_fmt;
+    return isReady() ? decoderCtx_->pix_fmt : AV_PIX_FMT_NONE;
 }
 
 int

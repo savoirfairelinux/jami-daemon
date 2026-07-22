@@ -31,8 +31,9 @@
 
 #include <libavformat/avio.h>
 
-#include <string>
 #include <cassert>
+#include <stdexcept>
+#include <string>
 #ifdef _MSC_VER
 #include <io.h> // for access
 #else
@@ -222,7 +223,7 @@ VideoInput::flushBuffers()
 }
 
 void
-VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
 {
     deleteDecoder();
     clearOptions();
@@ -230,6 +231,9 @@ VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemux
     auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     });
+    if (!decoder->isReady()) {
+        throw std::runtime_error("video decoder setup failed for " + path);
+    }
     decoder->setInterruptCallback([](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
                                   this);
     decoder->emulateRate();
