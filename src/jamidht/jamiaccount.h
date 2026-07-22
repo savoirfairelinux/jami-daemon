@@ -426,6 +426,10 @@ public:
     void noSha3sumVerification(bool newValue);
 
     void publishPresence(bool newValue) { publishPresence_ = newValue; }
+    void onAccountDeviceFoundForTest(const std::shared_ptr<dht::crypto::Certificate>& crt)
+    {
+        onAccountDeviceFound(crt);
+    }
 #endif
 
     /**

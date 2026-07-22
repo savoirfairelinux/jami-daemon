@@ -2147,11 +2147,17 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
     if (jami::Manager::instance().syncOnRegister) {
         if (!crt)
             return;
-        auto deviceId = crt->getLongId().toString();
-        if (accountManager_->getInfo()->deviceId == deviceId)
+        auto deviceId = crt->getLongId();
+        auto accountManager = accountManager_;
+        auto info = accountManager ? accountManager->getInfo() : nullptr;
+        if (!info) {
+            JAMI_DEBUG("[Account {}] Ignoring discovered account device without account info", getAccountID());
+            return;
+        }
+        if (info->deviceId == deviceId.toString())
             return;
 
-        dht::ThreadPool::io().run([w = weak(), crt] {
+        dht::ThreadPool::io().run([w = weak(), deviceId] {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -2159,17 +2165,17 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
             // local contact/conversation-list change. This avoids waking up
             // devices (especially mobiles) when there is nothing new to sync.
             if (auto* sm = shared->syncModule()) {
-                if (!sm->needsSync(crt->getLongId())) {
+                if (!sm->needsSync(deviceId)) {
                     JAMI_DEBUG("[Account {}] [device {}] up to date, skipping sync connection",
                                shared->getAccountID(),
-                               crt->getLongId());
+                               deviceId);
                     return;
                 }
             }
             // Initiate a message connection to create the first TCP link.
             // Once established, onNewDeviceConnection will set up sync and
             // swarm channels.
-            shared->connectSyncDevice(crt->getLongId());
+            shared->connectSyncDevice(deviceId);
         });
     }
 }
