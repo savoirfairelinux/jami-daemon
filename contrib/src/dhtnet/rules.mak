@@ -25,6 +25,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK)
+	perl $(SRC)/dhtnet/guard_peer_response.pl "$(UNPACK_DIR)/src/connectionmanager.cpp"
 	$(MOVE)
 
 CMAKE_PKGS += dhtnet

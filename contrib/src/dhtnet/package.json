@@ -24,6 +24,7 @@
     "with_env": "",
     "custom_scripts": {
         "pre_build": [
+            "python \"%DAEMON_DIR%\\contrib\\src\\dhtnet\\guard_peer_response.py\" \"%DAEMON_DIR%\\contrib\\build\\dhtnet\\src\\connectionmanager.cpp\"",
             "IF exist \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" ( rmdir /S /Q \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" )"
         ],
         "build": [],
