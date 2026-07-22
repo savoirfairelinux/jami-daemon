@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "846eef16_164f7d2f",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:55:15Z",
+      "side": 1,
+      "message": "[error] Line 247: 🔴 Moving `decoder_` assignment after `sink_-\u003estart()`/`setFrameSize()` creates a callback window where daemon-managed `VideoInput` has no decoder. `getWidth()`/`getHeight()` still dereference `decoder_` unconditionally, so any client/sink notification during startup can crash. Snapshot the decoder values first, then assign `decoder_` before starting/signaling the sink, while keeping `playingFile_` and `loop_.start()` after setup.",
+      "revId": "93011fe89f8b39c259add9fd268bb87d5818a4a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e944344_34fbe442",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:55:15Z",
+      "side": 1,
+      "message": "[warning] Line 255: 🟡 `av_get_pix_fmt_name(pixelFormat)` can return `nullptr` for invalid/sentinel pixel formats other than `AV_PIX_FMT_NONE`; assigning that to `decOpts_.pixel_format` may crash. Store the returned pointer and fall back to `AV_PIX_FMT_YUV420P` when it is null.",
+      "revId": "93011fe89f8b39c259add9fd268bb87d5818a4a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
