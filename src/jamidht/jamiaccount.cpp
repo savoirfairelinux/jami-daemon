@@ -2147,8 +2147,14 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
     if (jami::Manager::instance().syncOnRegister) {
         if (!crt)
             return;
+        auto accountManager = accountManager_;
+        if (!accountManager)
+            return;
+        const auto* info = accountManager->getInfo();
+        if (!info)
+            return;
         auto deviceId = crt->getLongId().toString();
-        if (accountManager_->getInfo()->deviceId == deviceId)
+        if (info->deviceId == deviceId)
             return;
 
         dht::ThreadPool::io().run([w = weak(), crt] {
@@ -2173,6 +2179,48 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
         });
     }
 }
+
+#ifdef LIBJAMI_TEST
+namespace {
+class EmptyAccountManager final : public AccountManager
+{
+public:
+    EmptyAccountManager(const std::string& accountId,
+                        const std::filesystem::path& path,
+                        const std::string& nameServer)
+        : AccountManager(accountId, path, nameServer)
+    {}
+
+    void initAuthentication(std::string,
+                            std::unique_ptr<AccountCredentials>,
+                            AuthSuccessCallback,
+                            AuthFailureCallback,
+                            const OnChangeCallback&) override
+    {}
+
+    bool changePassword(const std::string&, const std::string&) override { return false; }
+
+    void syncDevices() override {}
+
+    void registerName(const std::string&, std::string_view, const std::string&, RegistrationCallback) override {}
+};
+} // namespace
+
+void
+JamiAccount::onAccountDeviceFoundForTest(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                         bool withoutAccountInfo)
+{
+    if (!withoutAccountInfo) {
+        onAccountDeviceFound(crt);
+        return;
+    }
+
+    auto accountManager = std::move(accountManager_);
+    accountManager_ = std::make_shared<EmptyAccountManager>(getAccountID(), getPath(), config().nameServer);
+    onAccountDeviceFound(crt);
+    accountManager_ = std::move(accountManager);
+}
+#endif
 
 void
 JamiAccount::connectSyncDevice(const DeviceId& deviceId)

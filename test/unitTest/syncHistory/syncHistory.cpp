@@ -102,6 +102,7 @@ private:
     void testProfileReceivedMultiDevice();
     void testLastInteractionAfterClone();
     void testLastInteractionAfterSomeMessages();
+    void testAccountDeviceFoundWithoutAccountInfo();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -118,6 +119,7 @@ private:
     CPPUNIT_TEST(testProfileReceivedMultiDevice);
     CPPUNIT_TEST(testLastInteractionAfterClone);
     CPPUNIT_TEST(testLastInteractionAfterSomeMessages);
+    CPPUNIT_TEST(testAccountDeviceFoundWithoutAccountInfo);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -912,6 +914,18 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
                                 membersInfos.end(),
                                 [&](auto infos) { return infos["uri"] == aliceUri && infos["lastDisplayed"] == msgId; })
                    != membersInfos.end());
+}
+
+void
+SyncHistoryTest::testAccountDeviceFoundWithoutAccountInfo()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    CPPUNIT_ASSERT(aliceAccount);
+    CPPUNIT_ASSERT(bobAccount);
+    CPPUNIT_ASSERT(bobAccount->identity().second);
+
+    aliceAccount->onAccountDeviceFoundForTest(bobAccount->identity().second, true);
 }
 
 } // namespace test
