@@ -61,6 +61,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
@@ -78,11 +79,35 @@ using sip_utils::CONST_PJ_STR;
 
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
+static constexpr size_t MAX_CIPHERS_STRLEN = 1000;
 static constexpr std::string_view VALID_TLS_PROTOS[] = {"Default"sv, "TLSv1.2"sv, "TLSv1.1"sv, "TLSv1"sv};
 // NOLINTBEGIN: variables are used on Android and Apple platforms
 static constexpr std::string_view PN_FCM = "fcm"sv;
 static constexpr std::string_view PN_APNS = "apns"sv;
 // NOLINTEND
+
+namespace sip_utils {
+
+size_t
+trimmedCipherNameCountForMaxStringLength(const std::vector<std::string_view>& cipherNames, size_t maxStringLength)
+{
+    size_t cipherListLength = 0;
+    size_t count = 0;
+
+    for (const auto& cipherName : cipherNames) {
+        const auto separatorLength = count > 0 ? 1 : 0;
+        const auto nextLength = cipherListLength + separatorLength + cipherName.size();
+        if (nextLength > maxStringLength)
+            break;
+
+        cipherListLength = nextLength;
+        ++count;
+    }
+
+    return count;
+}
+
+} // namespace sip_utils
 
 struct ctx
 {
@@ -988,16 +1013,15 @@ SIPAccount::tlsProtocolFromString(const std::string& method)
 void
 SIPAccount::trimCiphers()
 {
-    size_t sum = 0;
-    unsigned count = 0;
-    static const size_t MAX_CIPHERS_STRLEN = 1000;
-    for (const auto& item : ciphers_) {
-        sum += strlen(pj_ssl_cipher_name(item));
-        if (sum > MAX_CIPHERS_STRLEN)
+    std::vector<std::string_view> cipherNames;
+    cipherNames.reserve(ciphers_.size());
+    for (const auto& cipher : ciphers_) {
+        const auto* cipherName = pj_ssl_cipher_name(cipher);
+        if (not cipherName)
             break;
-        ++count;
+        cipherNames.emplace_back(cipherName);
     }
-    ciphers_.resize(count);
+    ciphers_.resize(sip_utils::trimmedCipherNameCountForMaxStringLength(cipherNames, MAX_CIPHERS_STRLEN));
 }
 
 void
