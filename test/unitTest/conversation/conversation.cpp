@@ -125,6 +125,7 @@ private:
     void testSetMessageDisplayedPreference();
     void testSetMessageDisplayedAfterClone();
     void testSendMessageWithLotOfKnownDevices();
+    void testSocketFailureSkipsCertificateLookup();
     void testVoteNonEmpty();
     void testNoBadFileInInitialCommit();
     void testNoBadCertInInitialCommit();
@@ -177,6 +178,7 @@ private:
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
     CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
     CPPUNIT_TEST(testSendMessageWithLotOfKnownDevices);
+    CPPUNIT_TEST(testSocketFailureSkipsCertificateLookup);
     CPPUNIT_TEST(testVoteNonEmpty);
     CPPUNIT_TEST(testNoBadFileInInitialCommit);
     CPPUNIT_TEST(testNoBadCertInInitialCommit);
@@ -1080,6 +1082,22 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
     *bootstrapped = false;
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return *bootstrapped; }));
     libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testSocketFailureSkipsCertificateLookup()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    auto conversation = aliceAccount->convModule()->getConversation(convId);
+    CPPUNIT_ASSERT(conversation);
+
+    auto deviceId = dht::Hash<32>::get("failed-swarm-device");
+    conversation->addKnownDevices({deviceId}, aliceAccount->getUsername());
+
+    CPPUNIT_ASSERT_NO_THROW(conversation->onSocketConnectionFailed(deviceId));
 }
 
 std::string

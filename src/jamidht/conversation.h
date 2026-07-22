@@ -303,6 +303,9 @@ public:
      * @param cb
      */
     void onNeedSocket(NeedSocketCb cb);
+#ifdef LIBJAMI_TEST
+    void onSocketConnectionFailed(const DeviceId& deviceId);
+#endif
     /**
      * Add swarm connection to the DRT
      * @param channel       Related channel

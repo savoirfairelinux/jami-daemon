@@ -1076,8 +1076,19 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
     if (!isTracking_)
         return;
 
-    if (!memberUri.empty()) {
-        if (auto it = trackedMembers_.find(memberUri); it != trackedMembers_.end()) {
+    auto failedMemberUri = memberUri;
+    if (failedMemberUri.empty() && deviceId) {
+        auto memberIt = std::find_if(trackedMembers_.begin(),
+                                     trackedMembers_.end(),
+                                     [&](const auto& member) {
+                                         return member.second.devices.find(deviceId) != member.second.devices.end();
+                                     });
+        if (memberIt != trackedMembers_.end())
+            failedMemberUri = memberIt->first;
+    }
+
+    if (!failedMemberUri.empty()) {
+        if (auto it = trackedMembers_.find(failedMemberUri); it != trackedMembers_.end()) {
             JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
             auto& info = it->second;
             info.failedDevices.insert(deviceId);
@@ -1114,7 +1125,7 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
         std::vector<std::string> candidates;
         candidates.reserve(N - trackedMembers_.size());
         for (const auto& m : members) {
-            if (m.uri != memberUri && trackedMembers_.find(m.uri) == trackedMembers_.end()) {
+            if (m.uri != failedMemberUri && trackedMembers_.find(m.uri) == trackedMembers_.end()) {
                 candidates.push_back(m.uri);
             }
         }
@@ -2932,20 +2943,8 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
         if (auto sthis = w.lock()) {
             auto wrappedCb = [cb = std::move(cb), w, deviceId](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
                 if (auto sthis = w.lock()) {
-                    if (!socket) {
-                        if (auto acc = sthis->pimpl_->account_.lock()) {
-                            auto cert = acc->certStore().getCertificate(deviceId);
-                            if (cert && cert->issuer) {
-                                sthis->pimpl_->onConnectionFailed(DeviceId(deviceId), cert->issuer->getId().toString());
-                            } else {
-                                JAMI_WARNING("{} Unable to get member URI from device ID {}",
-                                             sthis->pimpl_->toString(),
-                                             deviceId);
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
+                    if (!socket)
+                        sthis->pimpl_->onConnectionFailed(DeviceId(deviceId));
                 }
                 return cb(socket);
             };
@@ -2953,6 +2952,14 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
         }
     };
 }
+
+#ifdef LIBJAMI_TEST
+void
+Conversation::onSocketConnectionFailed(const DeviceId& deviceId)
+{
+    pimpl_->onConnectionFailed(deviceId);
+}
+#endif
 
 void
 Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
