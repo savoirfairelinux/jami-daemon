@@ -1,0 +1,26 @@
+From 9a1f0e47d1e6a2c4d5f8f49a65caa3adfef4c8ba Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Wed, 22 Jul 2026 17:00:49 +0000
+Subject: [PATCH] connectionmanager: ignore invalid peer responses
+
+Malformed or partially decoded peer connection responses can reach the
+DHT listener without a sender certificate. Reject them before the
+response handling code dereferences the sender identity.
+---
+ src/connectionmanager.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/connectionmanager.cpp b/src/connectionmanager.cpp
+index 11111111..22222222 100644
+--- a/src/connectionmanager.cpp
++++ b/src/connectionmanager.cpp
+@@ -1199,6 +1199,11 @@
+ {
++    if (!response.from) {
++        logger_->warn("Ignoring peer response without sender certificate");
++        return true;
++    }
++
+     auto peerId = response.from->getId();
+-- 
+2.43.0
