@@ -56,6 +56,23 @@ test(
     timeout: 1800,
 )
 
+if host_machine.system() == 'windows'
+    ut_audio_device_monitor = executable(
+        'ut_audio_device_monitor',
+        sources: files('unitTest/media/audio/test_audio_device_monitor.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'audio_device_monitor',
+        ut_audio_device_monitor,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+endif
+
 ut_auto_answer = executable(
     'ut_auto_answer',
     sources: files('unitTest/media_negotiation/auto_answer.cpp'),

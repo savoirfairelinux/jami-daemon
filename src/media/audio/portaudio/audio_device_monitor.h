@@ -52,19 +52,10 @@ to_string(DeviceEventType type)
 }
 using DeviceEventCallback = std::function<void(const std::string& deviceName, DeviceEventType)>;
 
-std::string
-GetFriendlyNameFromIMMDeviceId(CComPtr<IMMDeviceEnumerator> enumerator, LPCWSTR deviceId)
+inline std::string
+GetFriendlyNameFromPropertyStore(CComPtr<IPropertyStore> props)
 {
-    if (!enumerator || !deviceId)
-        return {};
-
-    CComPtr<IMMDevice> device;
-    CComPtr<IPropertyStore> props;
-
-    if (FAILED(enumerator->GetDevice(deviceId, &device)))
-        return {};
-
-    if (FAILED(device->OpenPropertyStore(STGM_READ, &props)))
+    if (!props)
         return {};
 
     PROPVARIANT varName;
@@ -77,6 +68,23 @@ GetFriendlyNameFromIMMDeviceId(CComPtr<IMMDeviceEnumerator> enumerator, LPCWSTR 
     }
     PropVariantClear(&varName);
     return result;
+}
+
+inline std::string
+GetFriendlyNameFromIMMDeviceId(CComPtr<IMMDeviceEnumerator> enumerator, LPCWSTR deviceId)
+{
+    if (!enumerator || !deviceId)
+        return {};
+
+    CComPtr<IMMDevice> device;
+    if (FAILED(enumerator->GetDevice(deviceId, &device)) || !device)
+        return {};
+
+    CComPtr<IPropertyStore> props;
+    if (FAILED(device->OpenPropertyStore(STGM_READ, &props)) || !props)
+        return {};
+
+    return GetFriendlyNameFromPropertyStore(props);
 }
 
 class AudioDeviceNotificationClient : public IMMNotificationClient
@@ -175,7 +183,7 @@ public:
         // If the default communication device changes, we should restart the layer
         // to ensure the new device is used. We only care about the default communication
         // device, so we ignore other roles.
-        if (role == eCommunications && deviceId && deviceEventCallback_) {
+        if (role == eCommunications && deviceId && deviceEnumerator_ && deviceEventCallback_) {
             std::string friendlyName = GetFriendlyNameFromIMMDeviceId(deviceEnumerator_, deviceId);
             deviceEventCallback_(friendlyName, DeviceEventType::DefaultChanged);
         }
@@ -185,19 +193,22 @@ public:
     HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR deviceId, const PROPERTYKEY key) override
     {
         // Limit this to samplerate changes
-        if (key == PKEY_AudioEngine_DeviceFormat) {
+        if (key == PKEY_AudioEngine_DeviceFormat && deviceId && deviceEnumerator_
+            && deviceEventCallback_) {
             // Fetch updated sample rate
-            IMMDevice* pDevice;
-            deviceEnumerator_->GetDevice(deviceId, &pDevice);
+            CComPtr<IMMDevice> pDevice;
+            if (FAILED(deviceEnumerator_->GetDevice(deviceId, &pDevice)) || !pDevice)
+                return S_OK;
 
-            IPropertyStore* pProps;
-            pDevice->OpenPropertyStore(STGM_READ, &pProps);
+            CComPtr<IPropertyStore> pProps;
+            if (FAILED(pDevice->OpenPropertyStore(STGM_READ, &pProps)) || !pProps)
+                return S_OK;
 
             PROPVARIANT var;
             PropVariantInit(&var);
-            pProps->GetValue(PKEY_AudioEngine_DeviceFormat, &var);
+            HRESULT hr = pProps->GetValue(PKEY_AudioEngine_DeviceFormat, &var);
 
-            if (var.vt == VT_BLOB) {
+            if (SUCCEEDED(hr) && var.vt == VT_BLOB && var.blob.pBlobData) {
                 auto* pWaveFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(var.blob.pBlobData);
                 UINT sampleRate = pWaveFormat->Format.nSamplesPerSec;
                 JAMI_LOG("Sample rate changed to {}", sampleRate);
@@ -206,8 +217,6 @@ public:
             }
 
             PropVariantClear(&var);
-            pProps->Release();
-            pDevice->Release();
         }
         return S_OK;
     }
