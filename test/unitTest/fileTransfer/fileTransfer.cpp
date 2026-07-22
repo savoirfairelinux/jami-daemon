@@ -35,6 +35,7 @@
 #include <condition_variable>
 #include <string>
 #include <filesystem>
+#include <random>
 
 using namespace std::literals::chrono_literals;
 using namespace libjami::Account;
@@ -100,6 +101,7 @@ private:
     void testResumeTransferAfterInterruption();
     void testDontDownloadExistingFile();
     void testTransferInfo();
+    void testTransferInfoInvalidPathDoesNotAbort();
     void testRemoveHardLink();
     void testTooLarge();
     void testDeleteFile();
@@ -115,6 +117,7 @@ private:
     CPPUNIT_TEST(testResumeTransferAfterInterruption);
     CPPUNIT_TEST(testDontDownloadExistingFile);
     CPPUNIT_TEST(testTransferInfo);
+    CPPUNIT_TEST(testTransferInfoInvalidPathDoesNotAbort);
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
     CPPUNIT_TEST(testDeleteFile);
@@ -704,6 +707,19 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(bytesProgress == 640000);
     CPPUNIT_ASSERT(totalSize == 640000);
     CPPUNIT_ASSERT(dhtnet::fileutils::isFile(path));
+}
+
+void
+FileTransferTest::testTransferInfoInvalidPathDoesNotAbort()
+{
+    std::mt19937_64 rand;
+    TransferManager transferManager(aliceId, {}, "invalid-path-conversation", rand);
+    std::string path;
+    int64_t totalSize = -1;
+    int64_t bytesProgress = -1;
+
+    CPPUNIT_ASSERT(!transferManager.info(std::string(5000, 'A'), path, totalSize, bytesProgress));
+    CPPUNIT_ASSERT(bytesProgress == 0);
 }
 
 void

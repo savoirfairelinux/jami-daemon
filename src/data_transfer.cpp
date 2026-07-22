@@ -22,9 +22,11 @@
 #include "manager.h"
 #include "client/jami_signal.h"
 
+#include <algorithm>
 #include <mutex>
 #include <cstdlib> // mkstemp
 #include <filesystem>
+#include <limits>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -407,15 +409,31 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
 
     auto itI = pimpl_->incomings_.find(fileId);
     auto itW = pimpl_->waitingIds_.find(fileId);
-    path = this->path(fileId).string();
+    std::filesystem::path transferPath;
+    try {
+        transferPath = this->path(fileId);
+        path = transferPath.string();
+    } catch (const std::filesystem::filesystem_error& e) {
+        JAMI_WARNING("Unable to resolve transfer path for {}: {}", fileId, e.what());
+        progress = 0;
+        return false;
+    }
     if (itI != pimpl_->incomings_.end()) {
         total = itI->second->info().totalSize;
         progress = itI->second->info().bytesProgress;
         return true;
-    } else if (std::filesystem::is_regular_file(path)) {
-        std::ifstream transfer(path, std::ios::binary);
-        transfer.seekg(0, std::ios::end);
-        progress = transfer.tellg();
+    }
+
+    std::error_code ec;
+    if (std::filesystem::is_regular_file(transferPath, ec)) {
+        auto fileSize = std::filesystem::file_size(transferPath, ec);
+        if (ec) {
+            JAMI_WARNING("Unable to read transfer file size for {}: {}", path, ec.message());
+            progress = 0;
+            return false;
+        }
+        progress = static_cast<int64_t>(
+            std::min<uintmax_t>(fileSize, static_cast<uintmax_t>(std::numeric_limits<int64_t>::max())));
         if (itW != pimpl_->waitingIds_.end()) {
             total = static_cast<int64_t>(itW->second.totalSize);
         } else {
@@ -423,7 +441,11 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
             total = progress;
         }
         return true;
-    } else if (itW != pimpl_->waitingIds_.end()) {
+    }
+    if (ec) {
+        JAMI_WARNING("Unable to inspect transfer path {}: {}", path, ec.message());
+    }
+    if (itW != pimpl_->waitingIds_.end()) {
         total = static_cast<int64_t>(itW->second.totalSize);
         progress = 0;
         return true;
