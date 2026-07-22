@@ -236,6 +236,12 @@ public:
     static const std::vector<std::string>& getSupportedTlsProtocols();
 
     /**
+     * PJSIP aborts if the string length of our cipher list is too
+     * great, so this function forces our cipher list to fit this constraint.
+     */
+    static void trimCiphers(CipherArray& ciphers);
+
+    /**
      * @return pj_uint8_t structure, filled from the configuration
      * file, that can be used directly by PJSIP to initialize
      * an alternate UDP transport.
@@ -484,12 +490,6 @@ private:
      * Initializes tls settings from configuration file.
      */
     void initTlsConfiguration();
-
-    /**
-     * PJSIP aborts if the string length of our cipher list is too
-     * great, so this function forces our cipher list to fit this constraint.
-     */
-    void trimCiphers();
 
     /**
      * Initializes STUN config from the config file
