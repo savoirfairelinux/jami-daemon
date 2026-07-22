@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5252d80f_11e65334",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1094,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:07:33Z",
+      "side": 1,
+      "message": "[warning] Line 1094: 🟡 This test bypasses the changed `onNeedSocket` wrapper, so it does not prove that socket failures skip the certificate lookup path. Exercise `Conversation::onNeedSocket()` with a fake `NeedSocketCb` that invokes the provided `ChannelCb` with `nullptr`, preferably using an unknown/unresolvable device id, so the regression is covered without relying on the new test-only public method.",
+      "revId": "fb9e266ba4075ad3d06c170037c7b7b35ef9c583",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
