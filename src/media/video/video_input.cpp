@@ -129,7 +129,7 @@ AVPixelFormat
 VideoInput::getPixelFormat() const
 {
     if (!videoManagedByClient()) {
-        return decoder_->getPixelFormat();
+        return decoder_ ? decoder_->getPixelFormat() : AV_PIX_FMT_NONE;
     }
     return (AVPixelFormat) std::stoi(decOpts_.format);
 }
@@ -166,7 +166,7 @@ void
 VideoInput::process()
 {
     if (playingFile_) {
-        if (paused_ || !decoder_->emitFrame(false)) {
+        if (paused_ || !decoder_ || !decoder_->emitFrame(false)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
         return;
@@ -238,26 +238,29 @@ VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
                                   this);
     decoder->emulateRate();
 
-    decoder_ = std::move(decoder);
-    playingFile_ = true;
+    const auto width = decoder->getWidth();
+    const auto height = decoder->getHeight();
+    const auto framerate = decoder->getFps();
+    const auto pixelFormat = decoder->getPixelFormat();
 
     // For DBUS it is imperative that we start the sink before setting the frame size
     sink_->start();
     /* Signal the client about readable sink */
-    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+    sink_->setFrameSize(width, height);
 
-    loop_.start();
-
-    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
-    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
-    decOpts_.framerate = decoder_->getFps();
-    AVPixelFormat fmt = decoder_->getPixelFormat();
-    if (fmt != AV_PIX_FMT_NONE) {
-        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+    decOpts_.width = ((width >> 3) << 3);
+    decOpts_.height = ((height >> 3) << 3);
+    decOpts_.framerate = framerate;
+    if (pixelFormat != AV_PIX_FMT_NONE) {
+        decOpts_.pixel_format = av_get_pix_fmt_name(pixelFormat);
     } else {
         JAMI_WARNING("Unable to determine pixel format, using default");
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
+
+    decoder_ = std::move(decoder);
+    playingFile_ = true;
+    loop_.start();
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
