@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "162e3c52_f60e5e59",
+        "filename": "contrib/src/dhtnet/guard_peer_response.pl",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T20:35:21Z",
+      "side": 1,
+      "message": "[error] Line 9: 🔴 Same issue as the Python patcher: the global `index($source, \u0027!response.from\u0027)` can falsely report the file as already patched. Make the Perl implementation scope the idempotency check to the target function body or fail if the target dereference is still unguarded.",
+      "revId": "432781a5e0857a6a12cd1a4d097b2abeb38babbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01faa985_cbc4ad33",
+        "filename": "contrib/src/dhtnet/guard_peer_response.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T20:35:21Z",
+      "side": 1,
+      "message": "[warning] Line 11: 🟡 The Python and Perl patchers duplicate the same source-rewriting logic, which makes future fixes easy to apply to only one platform. Prefer a single portable script if possible, or add equivalent self-tests to the build path for both implementations so they cannot diverge unnoticed.",
+      "revId": "432781a5e0857a6a12cd1a4d097b2abeb38babbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "646893d1_2afb5c91",
+        "filename": "contrib/src/dhtnet/guard_peer_response.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T20:35:21Z",
+      "side": 1,
+      "message": "[error] Line 14: 🔴 The idempotency check is global, so any unrelated occurrence of `!response.from` in the file can make the patch silently skip the target function and leave the null dereference unguarded. Scope this check to `ConnectionManager::Impl::onPeerResponse` or verify the guard appears before the first `response.from-\u003e` use in that function.",
+      "revId": "432781a5e0857a6a12cd1a4d097b2abeb38babbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
