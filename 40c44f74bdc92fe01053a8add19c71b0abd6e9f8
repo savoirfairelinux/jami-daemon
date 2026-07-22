@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c74448a_e48df7e4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2200,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:57:37Z",
+      "side": 1,
+      "message": "[warning] Line 2200: 🟡 The test-only helper moves `accountManager_` out and restores it manually. If `onAccountDeviceFound(crt)` ever throws or gains throwing code before the restore, the account remains with the dummy manager, which can corrupt later tests. Use an RAII guard/scope-exit to restore `accountManager_` unconditionally.",
+      "revId": "40c44f74bdc92fe01053a8add19c71b0abd6e9f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
