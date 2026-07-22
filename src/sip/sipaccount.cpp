@@ -61,6 +61,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
@@ -986,18 +987,21 @@ SIPAccount::tlsProtocolFromString(const std::string& method)
  * PJSIP aborts if our cipher list exceeds 1000 characters
  */
 void
-SIPAccount::trimCiphers()
+SIPAccount::trimCiphers(CipherArray& ciphers)
 {
     size_t sum = 0;
     unsigned count = 0;
-    static const size_t MAX_CIPHERS_STRLEN = 1000;
-    for (const auto& item : ciphers_) {
-        sum += strlen(pj_ssl_cipher_name(item));
+    static constexpr size_t MAX_CIPHERS_STRLEN = 1000;
+    for (const auto& cipher : ciphers) {
+        const auto* cipherName = pj_ssl_cipher_name(cipher);
+        if (not cipherName)
+            break;
+        sum += std::strlen(cipherName) + (count != 0);
         if (sum > MAX_CIPHERS_STRLEN)
             break;
         ++count;
     }
-    ciphers_.resize(count);
+    ciphers.resize(count);
 }
 
 void
@@ -1034,7 +1038,7 @@ SIPAccount::initTlsConfiguration()
                                   }),
                    ciphers_.end());
 
-    trimCiphers();
+    trimCiphers(ciphers_);
 
     tlsSetting_.ca_list_file = CONST_PJ_STR(conf.tlsCaListFile);
     tlsSetting_.cert_file = CONST_PJ_STR(conf.tlsCaListFile);

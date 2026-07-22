@@ -34,6 +34,10 @@
 
 namespace jami {
 
+namespace test {
+class SipAccountTest;
+}
+
 typedef std::vector<pj_ssl_cipher> CipherArray;
 
 class SIPPresence;
@@ -411,6 +415,8 @@ public:
     void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
 private:
+    friend class test::SipAccountTest;
+
     void doRegister1_();
     void doRegister2_();
 
@@ -489,7 +495,7 @@ private:
      * PJSIP aborts if the string length of our cipher list is too
      * great, so this function forces our cipher list to fit this constraint.
      */
-    void trimCiphers();
+    static void trimCiphers(CipherArray& ciphers);
 
     /**
      * Initializes STUN config from the config file
