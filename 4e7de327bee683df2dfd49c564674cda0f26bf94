@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5eb8a8a2_b8e23102",
+        "filename": "contrib/src/opendht/package.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:05:15Z",
+      "side": 1,
+      "message": "[warning] Line 34: 🟡 This duplicates the same source rewrite added in rules.mak using a separate PowerShell regex. Please factor this into a normal contrib patch file and apply the same patch from both build paths, otherwise the two fixes can drift and fail differently when opendht changes.",
+      "revId": "4e7de327bee683df2dfd49c564674cda0f26bf94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c36799fd_0c71762a",
+        "filename": "contrib/src/opendht/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:05:15Z",
+      "side": 1,
+      "message": "[warning] Line 27: 🟡 This inline perl mutation is hard to review and maintain compared with the contrib patch mechanism. Please add an explicit patch file for opendht and apply it here, so the exact upstream source change is visible and shared with the Windows package path.",
+      "revId": "4e7de327bee683df2dfd49c564674cda0f26bf94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
