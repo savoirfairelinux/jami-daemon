@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5924390_a411c299",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T20:10:33Z",
+      "side": 1,
+      "message": "[warning] Line 1533: 🟡 Throwing from this archive callback can terminate an async worker or destructor path if the ArchiveAccountManager caller does not explicitly catch exceptions. Prefer making the callback failure explicit in the ArchiveAccountManager API or ensure the caller catches and reports this error at the invocation site.",
+      "revId": "74f3b15ef75c1a97c9b118d63e02f05a10c9013f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57d7122f_7ae7c19e",
+        "filename": "test/unitTest/account_archive/account_archive.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T20:10:33Z",
+      "side": 1,
+      "message": "[warning] Line 219: 🟡 The regression test only removes the imported account immediately; it does not assert that the archive callback actually ran after removal or that the guarded path was exercised. Add synchronization/assertions around the import/export callback outcome so the test fails reliably if the weak-account guard regresses.",
+      "revId": "74f3b15ef75c1a97c9b118d63e02f05a10c9013f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
