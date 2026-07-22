@@ -1,0 +1,24 @@
+From 2ce4597c5edfc6d89149cceea820910dbb97f548 Mon Sep 17 00:00:00 2001
+From: Copilot <223556219+Copilot@users.noreply.github.com>
+Date: Wed, 22 Jul 2026 20:56:17 +0000
+Subject: [PATCH] disable SSLKEYLOGFILE on Windows
+
+---
+ lib/kx.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/lib/kx.c b/lib/kx.c
+index 2d0496db6..17282a77b 100644
+--- a/lib/kx.c
++++ b/lib/kx.c
+@@ -138,2 +138,8 @@ static void keylog_once_init(void)
+ {
++#ifdef _WIN32
++	/* Keep the debug-only NSS key log hook from probing the UCRT
++	 * environment in packaged Windows builds. */
++	return;
++#endif
++
+ #ifdef HAVE_SECURE_GETENV
+-- 
+2.47.0
