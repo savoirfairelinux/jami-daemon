@@ -1,0 +1,35 @@
+From 2f0a7113e5fb09f1f1f9c6b314245865c2ff1177 Mon Sep 17 00:00:00 2001
+From: Copilot <223556219+Copilot@users.noreply.github.com>
+Date: Wed, 22 Jul 2026 21:21:16 +0000
+Subject: [PATCH] upnp: keep PUPnP alive during IGD search
+
+The periodic IGD search timer captured a raw PUPnP pointer and could run
+while shutdown was tearing down the UPnP protocol object. Hold a weak
+reference in the async wait handler and only restart discovery when the
+PUPnP instance is still alive.
+---
+ src/upnp/protocol/pupnp/pupnp.cpp | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/src/upnp/protocol/pupnp/pupnp.cpp b/src/upnp/protocol/pupnp/pupnp.cpp
+index 7a3f6ef..e59631f 100644
+--- a/src/upnp/protocol/pupnp/pupnp.cpp
++++ b/src/upnp/protocol/pupnp/pupnp.cpp
+@@ -368,9 +368,12 @@ PUPnP::searchForIgd()
+ 
+     igdSearchTimer_->expires_after(IGD_SEARCH_INTERVAL);
+     igdSearchTimer_->async_wait(
+-        [this](const std::error_code& ec) {
+-            if (!ec)
+-                searchForIgd();
++        [weakThis = weak_from_this()](const std::error_code& ec) {
++            if (ec)
++                return;
++
++            if (auto shared = weakThis.lock())
++                shared->searchForIgd();
+         });
+ 
+     const auto ret = UpnpSearchAsync(ctrlptHandle_,
+-- 
+2.43.0
