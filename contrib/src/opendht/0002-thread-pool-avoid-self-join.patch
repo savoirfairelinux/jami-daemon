@@ -1,0 +1,38 @@
+From 1111111111111111111111111111111111111111 Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Wed, 22 Jul 2026 19:48:28 +0000
+Subject: [PATCH] thread_pool: avoid joining the current worker
+
+Calling ThreadPool::join() from one of the pool's own workers asks
+std::thread to join the current thread, which throws and terminates when
+join() runs from a destructor. Detach that worker instead so the shutdown
+path can continue joining every other worker without aborting.
+---
+ include/opendht/thread_pool.h | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/include/opendht/thread_pool.h b/include/opendht/thread_pool.h
+index 12345678..12345679 100644
+--- a/include/opendht/thread_pool.h
++++ b/include/opendht/thread_pool.h
+@@ -88,8 +88,16 @@ public:
+         running_ = false;
+         cv_.notify_all();
+ 
+-        for (auto& thread : threads_)
+-            thread->join();
++        const auto currentThreadId = std::this_thread::get_id();
++        for (auto& thread : threads_) {
++            if (not thread->joinable())
++                continue;
++            if (thread->get_id() == currentThreadId) {
++                thread->detach();
++                continue;
++            }
++            thread->join();
++        }
+         threads_.clear();
+     }
+ 
+-- 
+2.43.0
