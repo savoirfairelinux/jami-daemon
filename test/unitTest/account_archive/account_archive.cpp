@@ -80,6 +80,7 @@ private:
     void testExportImportPasswordDoubleGunzip();
     // void testExportDht();
     // void testExportDhtWrongPassword();
+    void testRemoveDuringArchiveImport();
     void testChangePassword();
     void testChangeDhtPort();
 
@@ -90,6 +91,7 @@ private:
     CPPUNIT_TEST(testExportImportPasswordDoubleGunzip);
     // CPPUNIT_TEST(testExportDht);
     // CPPUNIT_TEST(testExportDhtWrongPassword);
+    CPPUNIT_TEST(testRemoveDuringArchiveImport);
     CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST(testChangeDhtPort);
     CPPUNIT_TEST_SUITE_END();
@@ -205,6 +207,21 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
     CPPUNIT_ASSERT(bob2Account->getUsername() == bobAccount->getUsername());
     std::remove("test.gz");
     wait_for_removal_of(accountId);
+}
+
+void
+AccountArchiveTest::testRemoveDuringArchiveImport()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
+
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PATH] = "test.gz";
+
+    auto accountId = jami::Manager::instance().addAccount(details);
+    wait_for_removal_of(accountId);
+    std::remove("test.gz");
 }
 
 void

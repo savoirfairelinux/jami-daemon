@@ -1527,12 +1527,22 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getAccountID(),
                 getPath(),
-                [this]() { return getAccountDetails(); },
-                [this](DeviceSync&& syncData) {
-                    if (auto* sm = syncModule()) {
+                [w = weak()]() {
+                    auto account = w.lock();
+                    if (!account)
+                        throw std::runtime_error("Cannot export configuration for a destroyed account");
+                    return account->getAccountDetails();
+                },
+                [w = weak()](DeviceSync&& syncData) {
+                    if (auto account = w.lock(); account) {
+                        auto* sm = account->syncModule();
+                        if (!sm)
+                            return;
                         auto syncDataPtr = std::make_shared<SyncMsg>();
                         syncDataPtr->ds = std::move(syncData);
                         sm->syncWithConnected(syncDataPtr);
+                    } else {
+                        JAMI_WARNING("Cannot sync data for a destroyed account");
                     }
                 },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
