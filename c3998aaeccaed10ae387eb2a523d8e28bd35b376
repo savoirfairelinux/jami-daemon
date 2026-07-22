@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1569e0be_de35a844",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T18:19:08Z",
+      "side": 1,
+      "message": "[error] Line 62: 🔴 clang-format CI failed for this patchset; please run the repository clang-format target/tool and update the formatted diff before merging.",
+      "revId": "c3998aaeccaed10ae387eb2a523d8e28bd35b376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
