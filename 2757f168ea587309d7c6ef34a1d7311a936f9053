@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f3490dd_71b63cbf",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 446,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:20:43Z",
+      "side": 1,
+      "message": "[error] Line 446: 🔴 When `is_regular_file(transferPath, ec)` fails with an error and there is no waiting transfer, `info()` returns `false` without resetting `progress`. The new test expects `bytesProgress \u003d\u003d 0` for an invalid long path, but path construction may succeed and the error may instead be reported through `ec`, leaving the caller\u0027s previous value unchanged. Set `progress \u003d 0` before returning on the `ec` path.",
+      "revId": "2757f168ea587309d7c6ef34a1d7311a936f9053",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
