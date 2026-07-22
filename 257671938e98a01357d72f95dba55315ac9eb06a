@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76f5c936_adcb80c1",
+        "filename": "contrib/src/dhtnet/fix_upnp_shutdown.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T16:48:49Z",
+      "side": 1,
+      "message": "[warning] Line 5: 🟡 This duplicates the Perl patching logic used by non-Windows builds, which makes future fixes easy to apply to only one platform. Consider using one portable script for both rules.mak and package.json, or adding a small test fixture that exercises both implementations with the same expected output.",
+      "revId": "257671938e98a01357d72f95dba55315ac9eb06a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "318479dd_de5f9ad6",
+        "filename": "contrib/src/dhtnet/fix_upnp_shutdown.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T16:48:49Z",
+      "side": 1,
+      "message": "[warning] Line 66: 🟡 Please open source files with an explicit UTF-8 encoding, matching the Perl script. On Windows, plain open() uses the locale encoding, so a non-ASCII source comment/string in dhtnet could make this pre_build patch fail before compilation. Use io.open(path, \"r\", encoding\u003d\"utf-8\") / io.open(path, \"w\", encoding\u003d\"utf-8\") while preserving Python 2 compatibility, or require Python 3 explicitly.",
+      "revId": "257671938e98a01357d72f95dba55315ac9eb06a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
