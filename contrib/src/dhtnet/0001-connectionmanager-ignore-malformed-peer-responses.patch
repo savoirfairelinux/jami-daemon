@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Wed, 22 Jul 2026 19:18:35 +0000
+Subject: [PATCH] connectionmanager: ignore malformed peer responses
+
+Peer responses arrive from the DHT and must be treated as untrusted
+network input. Ignore decoded responses that are missing the response
+object or its certificate before using any field that can be absent from a
+malformed value.
+---
+ src/connectionmanager.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/connectionmanager.cpp b/src/connectionmanager.cpp
+index 0000000..0000000 100644
+--- a/src/connectionmanager.cpp
++++ b/src/connectionmanager.cpp
+@@ -1199,6 +1199,13 @@ ConnectionManager::Impl::onPeerResponse(const std::shared_ptr<PeerConnectionRequ
+ {
++    if (!response || !response->cert) {
++        JAMI_WARNING("Ignoring malformed peer connection response");
++        return;
++    }
++
+     auto peerId = response->cert->getId();
+ 
+     if (!config_->identity.first || peerId == config_->identity.first->getId())
+-- 
+2.34.1
+
