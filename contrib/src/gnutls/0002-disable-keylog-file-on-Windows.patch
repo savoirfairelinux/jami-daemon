@@ -1,0 +1,32 @@
+From 6cfd51b0296a51544fa6ec42f62dbd8c5661cc2a Mon Sep 17 00:00:00 2001
+From: Copilot <223556219+Copilot@users.noreply.github.com>
+Date: Wed, 22 Jul 2026 17:20:48 +0000
+Subject: [PATCH] disable keylog file on Windows
+
+---
+ lib/kx.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/lib/kx.c b/lib/kx.c
+index 6e6b5c1d1..a9f6f6a2b 100644
+--- a/lib/kx.c
++++ b/lib/kx.c
+@@ -136,6 +136,7 @@ static FILE *keylog_file = NULL;
+ 
+ static void keylog_once_init(void)
+ {
++#ifndef _WIN32
+ 	const char *keylogfile = secure_getenv("SSLKEYLOGFILE");
+ 
+ 	if (keylogfile)
+@@ -143,6 +144,7 @@ static void keylog_once_init(void)
+ 
+ 	if (keylog_file)
+ 		setvbuf(keylog_file, NULL, _IOLBF, 0);
++#endif
+ }
+ 
+ static int _gnutls_nss_keylog_func(gnutls_session_t session,
+-- 
+2.47.0
+
