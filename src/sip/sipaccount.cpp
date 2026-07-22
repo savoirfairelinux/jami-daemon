@@ -64,6 +64,7 @@
 #include <memory>
 #include <sstream>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 
 #ifdef _WIN32
@@ -982,18 +983,48 @@ SIPAccount::tlsProtocolFromString(const std::string& method)
     return PJSIP_SSL_DEFAULT_PROTO;
 }
 
+static constexpr size_t MAX_CIPHERS_STRLEN = 1000;
+
+static bool
+appendCipherNameLength(size_t& currentLength, unsigned cipherCount, const char* cipherName)
+{
+    if (!cipherName)
+        return false;
+
+    const auto separatorLength = cipherCount == 0 ? 0 : 1;
+    const auto nextLength = currentLength + separatorLength + strlen(cipherName);
+    if (nextLength > MAX_CIPHERS_STRLEN)
+        return false;
+
+    currentLength = nextLength;
+    return true;
+}
+
+#ifdef LIBJAMI_TEST
+std::size_t
+SIPAccount::trimmedCipherCountForNames(const std::vector<std::string>& cipherNames)
+{
+    size_t length = 0;
+    std::size_t count = 0;
+    for (const auto& cipherName : cipherNames) {
+        if (!appendCipherNameLength(length, count, cipherName.c_str()))
+            break;
+        ++count;
+    }
+    return count;
+}
+#endif
+
 /**
- * PJSIP aborts if our cipher list exceeds 1000 characters
+ * PJSIP aborts if our delimiter-separated cipher list exceeds 1000 characters.
  */
 void
 SIPAccount::trimCiphers()
 {
-    size_t sum = 0;
+    size_t length = 0;
     unsigned count = 0;
-    static const size_t MAX_CIPHERS_STRLEN = 1000;
     for (const auto& item : ciphers_) {
-        sum += strlen(pj_ssl_cipher_name(item));
-        if (sum > MAX_CIPHERS_STRLEN)
+        if (!appendCipherNameLength(length, count, pj_ssl_cipher_name(item)))
             break;
         ++count;
     }

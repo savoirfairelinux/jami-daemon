@@ -24,13 +24,16 @@
 #include "sip/siptransport.h"
 #include "noncopyable.h"
 #include "sipaccount_config.h"
+#include "jami/def.h"
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
 #include <pjsip-ua/sip_regc.h>
 
-#include <vector>
+#include <cstddef>
 #include <map>
+#include <string>
+#include <vector>
 
 namespace jami {
 
@@ -85,6 +88,11 @@ public:
     void updateDialogViaSentBy(pjsip_dialog* dlg);
 
     void resetAutoRegistration();
+
+#ifdef LIBJAMI_TEST
+    static LIBJAMI_TEST_EXPORT std::size_t trimmedCipherCountForNames(
+        const std::vector<std::string>& cipherNames);
+#endif
 
     /**
      * Update NAT address, Via and Contact header from the REGISTER response

@@ -482,6 +482,21 @@ test(
     timeout: 1800,
 )
 
+ut_sip_tls = executable(
+    'ut_sip_tls',
+    sources: files('unitTest/sip_account/sip_tls.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'sip_tls',
+    ut_sip_tls,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_sip_basic_calls = executable(
     'ut_sip_basic_calls',
     sources: files('unitTest/sip_account/sip_basic_calls.cpp'),
