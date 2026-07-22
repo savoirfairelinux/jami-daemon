@@ -129,3 +129,14 @@ test_SIP::testSIPURI()
     auto foo = sip_utils::stripSipUriPrefix("<sip:17771234567@callcentric.com>"sv);
     CPPUNIT_ASSERT_EQUAL("17771234567"sv, foo);
 }
+
+void
+test_SIP::testNegativePjStringLength()
+{
+    std::cout << ">>>> test negative PJ string length <<<< " << '\n';
+
+    char value[] = "display name";
+    pj_str_t pjString {value, -1};
+
+    CPPUNIT_ASSERT(sip_utils::as_view(pjString).empty());
+}

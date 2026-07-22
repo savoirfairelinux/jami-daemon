@@ -104,6 +104,9 @@ CONST_PJ_STR(const std::string_view& str) noexcept
 inline constexpr std::string_view
 as_view(const pj_str_t& str) noexcept
 {
+    if (str.ptr == nullptr || str.slen <= 0)
+        return {};
+
     return {str.ptr, (size_t) str.slen};
 }
 

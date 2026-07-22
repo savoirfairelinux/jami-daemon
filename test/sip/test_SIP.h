@@ -77,12 +77,14 @@ public:
 
 private:
     void testSIPURI(void);
+    void testNegativePjStringLength(void);
 
     /**
      * Use cppunit library macros to add unit test to the factory
      */
     CPPUNIT_TEST_SUITE(test_SIP);
     CPPUNIT_TEST(testSIPURI);
+    CPPUNIT_TEST(testNegativePjStringLength);
     CPPUNIT_TEST_SUITE_END();
 
     RAIIThread eventLoop_;
