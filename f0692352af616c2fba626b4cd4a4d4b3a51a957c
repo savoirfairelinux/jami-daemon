@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b9dfd78_9fffcb7c",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T21:20:49Z",
+      "side": 1,
+      "message": "[error] Line 244: 🔴 `sink_-\u003esetFrameSize()` is documented here as the point that signals the client about the readable sink, but `decoder_` is still unset until line 259. If the client queries `getPixelFormat()` from that notification path, it now receives `AV_PIX_FMT_NONE` even though the decoder format is already known. Move `decoder_ \u003d std::move(decoder)` before `setFrameSize()` after computing `decOpts_`, or otherwise ensure the notification cannot expose a transient missing decoder state.",
+      "revId": "f0692352af616c2fba626b4cd4a4d4b3a51a957c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
