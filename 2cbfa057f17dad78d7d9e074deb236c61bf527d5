@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0039ad52_06d01294",
+        "filename": "contrib/src/dhtnet/0001-connectionmanager-ignore-malformed-peer-responses.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T19:21:23Z",
+      "side": 1,
+      "message": "[warning] Line 21: 🟡 This warning is emitted for malformed DHT-originated input, so a peer could repeatedly trigger it and flood logs. Prefer a debug/trace-level message or the project’s rate-limited logging pattern if one exists.",
+      "revId": "2cbfa057f17dad78d7d9e074deb236c61bf527d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
