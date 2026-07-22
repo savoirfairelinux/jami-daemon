@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87c37ad2_c6c726c9",
+        "filename": "contrib/src/dhtnet/0001-connectionmanager-ignore-invalid-peer-responses.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:04:20Z",
+      "side": 1,
+      "message": "[error] Line 18: 🔴 The embedded patch hunk is malformed: the header declares `-1199,6 +1199,11`, but the hunk only contains 2 old-side context lines. `patch`/`git apply` will reject this during contrib extraction. Regenerate the patch with valid context/counts from the actual dhtnet source.",
+      "revId": "58e18db437f4994746121a0d9061fc42aa4aa0d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
