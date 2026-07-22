@@ -24,6 +24,7 @@
     "with_env": "",
     "custom_scripts": {
         "pre_build": [
+            "python \"%DAEMON_DIR%\\contrib\\src\\dhtnet\\fix_upnp_shutdown.py\" \".\"",
             "IF exist \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" ( rmdir /S /Q \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" )"
         ],
         "build": [],
