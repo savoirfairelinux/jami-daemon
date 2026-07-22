@@ -698,3 +698,9 @@ if conf.get('ENABLE_VIDEO')
         timeout: 1800,
     )
 endif
+
+test(
+    'dhtnet_pupnp_patch',
+    find_program('packaging/test_dhtnet_pupnp_patch.sh'),
+    workdir: meson.project_source_root(),
+)

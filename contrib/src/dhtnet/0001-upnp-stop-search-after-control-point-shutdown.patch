@@ -1,0 +1,32 @@
+From 1a21d75f0565bc7f0b90f9f53cc178f466ff03f1 Mon Sep 17 00:00:00 2001
+From: Jami maintainers <jami@gnu.org>
+Date: Wed, 22 Jul 2026 18:46:48 +0000
+Subject: [PATCH] upnp: stop search after control point shutdown
+
+---
+ src/upnp/protocol/pupnp/pupnp.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/upnp/protocol/pupnp/pupnp.cpp b/src/upnp/protocol/pupnp/pupnp.cpp
+index 0000000..0000000 100644
+--- a/src/upnp/protocol/pupnp/pupnp.cpp
++++ b/src/upnp/protocol/pupnp/pupnp.cpp
+@@ -370,6 +370,14 @@ PUPnP::searchForIgd()
+ {
+     std::lock_guard lock(pupnpMutex_);
+ 
++    /*
++     * searchForIgd() is also reached from the asynchronous retry timer.
++     * During shutdown the timer can still dispatch after the libupnp
++     * control point has been unregistered, so do not dereference or pass
++     * an invalid handle back into libupnp.
++     */
++    if (ctrlptHandle_ == -1)
++        return;
++
+     auto ret = UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, IGD_DEVICE_TYPE, this);
+     if (ret != UPNP_E_SUCCESS) {
+         JAMI_WARN("UPnP: IGD search failed: {}", UpnpGetErrorMessage(ret));
+-- 
+2.39.5
+
