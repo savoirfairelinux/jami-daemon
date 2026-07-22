@@ -25,7 +25,8 @@
         "CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
     ],
     "patches": [
-        "0001-cmake-fix-jami-contrib-linking.patch"
+        "0001-cmake-fix-jami-contrib-linking.patch",
+        "0002-thread-pool-avoid-self-join-on-shutdown.patch"
     ],
     "win_patches": [],
     "project_paths": [],

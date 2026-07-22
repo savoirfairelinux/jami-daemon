@@ -1,0 +1,43 @@
+From 1d711667d9e4dc1801f06f880b21593495549315 Mon Sep 17 00:00:00 2001
+From: Copilot <223556219+Copilot@users.noreply.github.com>
+Date: Wed, 22 Jul 2026 17:44:48 +0000
+Subject: [PATCH] thread_pool: avoid self-join on shutdown
+
+When the last owner of an object containing a ThreadPool is released by
+one of that pool's worker tasks, the ThreadPool destructor runs on a
+worker thread and join() attempts to join the current std::thread. MSVC
+turns that resource deadlock into std::terminate(), which aborts Jami
+during UPnP discovery result handling.
+
+Detect the current worker while joining and detach it after shutdown has
+been requested, then continue joining the other workers normally. This
+keeps shutdown idempotent while avoiding a self-join fatal exception.
+---
+ src/thread_pool.cpp | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/src/thread_pool.cpp b/src/thread_pool.cpp
+index 85f31ab..a8d9291 100644
+--- a/src/thread_pool.cpp
++++ b/src/thread_pool.cpp
+@@ -75,8 +75,16 @@ ThreadPool::join()
+     }
+     cv_.notify_all();
+ 
++    const auto currentThreadId = std::this_thread::get_id();
+     for (auto& thread : threads_) {
+-        if (thread.joinable())
++        if (!thread.joinable())
++            continue;
++
++        if (thread.get_id() == currentThreadId) {
++            thread.detach();
++            continue;
++        }
++
+-            thread.join();
++        thread.join();
+     }
+ }
+-- 
+2.40.1
