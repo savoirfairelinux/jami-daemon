@@ -26,5 +26,6 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
+	$(APPLY) $(SRC)/dhtnet/0001-upnp-guard-igd-search-retry-callback.patch
 
 CMAKE_PKGS += dhtnet
