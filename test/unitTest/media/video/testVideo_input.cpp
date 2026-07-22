@@ -47,9 +47,11 @@ public:
 
 private:
     void testInput();
+    void testPixelFormatWithoutDecoder();
 
     CPPUNIT_TEST_SUITE(VideoInputTest);
     CPPUNIT_TEST(testInput);
+    CPPUNIT_TEST(testPixelFormatWithoutDecoder);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -63,6 +65,14 @@ VideoInputTest::testInput()
                            + std::string(getenv("DISPLAY") ?: ":0.0");
     video::VideoInput video;
     libjami::switchInput("", "", resource);
+}
+
+void
+VideoInputTest::testPixelFormatWithoutDecoder()
+{
+    video::VideoInput video(video::VideoInputMode::ManagedByDaemon);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(AV_PIX_FMT_NONE),
+                         static_cast<int>(video.getPixelFormat()));
 }
 
 } // namespace test

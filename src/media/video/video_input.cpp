@@ -129,7 +129,7 @@ AVPixelFormat
 VideoInput::getPixelFormat() const
 {
     if (!videoManagedByClient()) {
-        return decoder_->getPixelFormat();
+        return decoder_ ? decoder_->getPixelFormat() : AV_PIX_FMT_NONE;
     }
     return (AVPixelFormat) std::stoi(decOpts_.format);
 }
@@ -238,20 +238,15 @@ VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
                                   this);
     decoder->emulateRate();
 
-    decoder_ = std::move(decoder);
-    playingFile_ = true;
-
     // For DBUS it is imperative that we start the sink before setting the frame size
     sink_->start();
     /* Signal the client about readable sink */
-    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+    sink_->setFrameSize(decoder->getWidth(), decoder->getHeight());
 
-    loop_.start();
-
-    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
-    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
-    decOpts_.framerate = decoder_->getFps();
-    AVPixelFormat fmt = decoder_->getPixelFormat();
+    decOpts_.width = ((decoder->getWidth() >> 3) << 3);
+    decOpts_.height = ((decoder->getHeight() >> 3) << 3);
+    decOpts_.framerate = decoder->getFps();
+    AVPixelFormat fmt = decoder->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
@@ -259,10 +254,15 @@ VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
+    decoder_ = std::move(decoder);
+    playingFile_ = true;
+
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
     foundDecOpts(decOpts_);
     futureDecOpts_ = foundDecOpts_.get_future().share();
+
+    loop_.start();
 }
 
 void
