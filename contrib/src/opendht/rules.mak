@@ -25,6 +25,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	perl -0pi -e 'BEGIN{$$n=0} $$n += s/std::bind\s*\(\s*&Dht::expireStorage\s*,\s*this\s*,\s*std::cref\s*\(\s*([^()]+?)\s*\)\s*\)/std::bind(&Dht::expireStorage, this, $$1)/g; END{exit($$n ? 0 : 1)}' $(UNPACK_DIR)/src/dht.cpp
 	$(MOVE)
 
 CMAKE_PKGS += opendht

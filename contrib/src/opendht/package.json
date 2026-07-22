@@ -31,7 +31,9 @@
     "project_paths": [],
     "with_env": "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": [
+            "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$p='src/dht.cpp'; $s=Get-Content $p -Raw; $r='std::bind\\s*\\(\\s*&Dht::expireStorage\\s*,\\s*this\\s*,\\s*std::cref\\s*\\(\\s*([^()]+?)\\s*\\)\\s*\\)'; $patched=[regex]::Replace($s, $r, 'std::bind(&Dht::expireStorage, this, $1)'); if ($patched -eq $s) { throw 'Dht::expireStorage bind not found' }; Set-Content $p $patched -NoNewline\""
+        ],
         "build": [],
         "post_build": []
     }
