@@ -29,12 +29,21 @@
 #include <pjsip/sip_types.h>
 #include <pjsip-ua/sip_regc.h>
 
-#include <vector>
+#include <cstddef>
 #include <map>
+#include <string_view>
+#include <vector>
 
 namespace jami {
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
+
+namespace sip_utils {
+
+size_t trimmedCipherNameCountForMaxStringLength(const std::vector<std::string_view>& cipherNames,
+                                                size_t maxStringLength);
+
+} // namespace sip_utils
 
 class SIPPresence;
 class SIPCall;
