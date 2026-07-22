@@ -20,6 +20,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
 #	$(APPLY) $(SRC)/gnutls/0001-fix-autotools-build-errors.patch
+	$(APPLY) $(SRC)/gnutls/0002-disable-nss-keylog-on-Windows.patch
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif

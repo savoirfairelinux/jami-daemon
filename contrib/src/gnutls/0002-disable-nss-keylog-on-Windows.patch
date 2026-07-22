@@ -1,0 +1,24 @@
+From 3f3a9e0a2c33d7c51f7f4704f31df4c97807d9da Mon Sep 17 00:00:00 2001
+From: Jami <jami@gnu.org>
+Date: Wed, 22 Jul 2026 19:23:29 +0000
+Subject: [PATCH] disable NSS key logging on Windows
+
+---
+ lib/kx.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lib/kx.c b/lib/kx.c
+index 0e2e5f9b2..6b6b8c9f1 100644
+--- a/lib/kx.c
++++ b/lib/kx.c
+@@ -135,3 +135,8 @@
+ static void keylog_once_init(void)
+ {
++#ifdef _WIN32
++	/* Avoid a crash in secure_getenv()/fopen() during Windows TLS handshakes. */
++	return;
++#endif
++
+ 	char *keylogfile = secure_getenv("SSLKEYLOGFILE");
+-- 
+2.47.0
