@@ -315,15 +315,48 @@ private:
         , accountId_(account->getAccountID())
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
-        , swarmManager_(std::make_shared<SwarmManager>(NodeId(deviceId_),
-                                                       account->isMobile(),
-                                                       Manager::instance().getSeededRandomEngine(),
-                                                       [account = account_](const DeviceId& deviceId) {
-                                                           if (auto acc = account.lock()) {
-                                                               return acc->isConnectedWith(deviceId);
-                                                           }
-                                                           return false;
-                                                       }))
+        , swarmManager_(std::make_shared<SwarmManager>(
+              NodeId(deviceId_),
+              account->isMobile(),
+              Manager::instance().getSeededRandomEngine(),
+              [account = account_](const DeviceId& deviceId) {
+                  if (auto acc = account.lock()) {
+                      return acc->isConnectedWith(deviceId);
+                  }
+                  return false;
+              },
+              repository_->id(),
+              [account = account_, conversationId = repository_->id(), deviceId = NodeId(deviceId_)]()
+                  -> std::optional<MobileNodeInfo> {
+                  auto acc = account.lock();
+                  if (!acc || !acc->isMobile())
+                      return std::nullopt;
+                  const auto& identity = acc->identity();
+                  if (!identity.first || !identity.second || !identity.second->issuer)
+                      return std::nullopt;
+
+                  const auto now = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                                                             std::chrono::system_clock::now().time_since_epoch())
+                                                             .count());
+                  const auto certificateExpiry = static_cast<uint64_t>(
+                      std::chrono::duration_cast<std::chrono::seconds>(
+                          identity.second->getExpiration().time_since_epoch())
+                          .count());
+                  const auto maximumExpiry
+                      = now + std::chrono::duration_cast<std::chrono::seconds>(MAX_MOBILE_LEASE_DURATION).count();
+                  const auto expiry = std::min(certificateExpiry, maximumExpiry);
+                  if (expiry <= now)
+                      return std::nullopt;
+
+                  MobileLease lease {1, conversationId, identity.second->issuer->getId(), deviceId, now, expiry, {}};
+                  lease.signature = identity.first->sign(mobileLeasePayload(lease));
+                  return MobileNodeInfo {deviceId, identity.second->getPacked(), std::move(lease)};
+              },
+              [this](const dht::InfoHash& issuerId) {
+                  const auto members
+                      = repository_->memberUris("", {MemberRole::INVITED, MemberRole::BANNED, MemberRole::LEFT});
+                  return members.contains(issuerId.toString());
+              }))
         , transferManager_(std::make_shared<TransferManager>(accountId_,
                                                              "",
                                                              repository_->id(),

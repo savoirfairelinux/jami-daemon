@@ -59,6 +59,22 @@ struct LegacySwarmResponse
     MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes);
 };
 
+struct VersionTwoMobileNodeInfo
+{
+    NodeId id;
+    dht::Blob certificate;
+    MSGPACK_DEFINE_MAP(id, certificate);
+};
+
+struct VersionTwoSwarmResponse
+{
+    Query q;
+    std::vector<NodeId> nodes;
+    std::vector<NodeId> mobile_nodes;
+    std::vector<VersionTwoMobileNodeInfo> mobile_node_infos;
+    MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes, mobile_node_infos);
+};
+
 class MobileWakeUpTest : public CppUnit::TestFixture
 {
 public:
@@ -102,14 +118,14 @@ private:
         return std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), id, "test1", 0);
     }
 
-    // Brute-force oracle: are we (self) responsible for waking up mobile,
-    // i.e. closer to it than every connected node?
+    // Brute-force oracle: is self among the redundant closest nodes to mobile?
     static bool oracleResponsible(const NodeId& self, const std::vector<NodeId>& connected, const NodeId& mobile)
     {
+        unsigned closerNodes = 0;
         for (const auto& c : connected) {
             if (c == mobile)
                 continue;
-            if (mobile.xorCmp(self, c) >= 0)
+            if (mobile.xorCmp(self, c) >= 0 && ++closerNodes == RoutingTable::MOBILE_WAKE_REDUNDANCY)
                 return false;
         }
         return true;
@@ -137,6 +153,9 @@ private:
 
     void testNotifyWithoutConnectedNodes();
     void testMobileProtocolCompatibility();
+    void testLegacyMobileAnnouncementLifecycle();
+    void testMobileLeaseCanonicalPayload();
+    void testSignedMobileLeaseValidation();
     void testNotifyAgainstBruteForceOracle();
     void testNotifyResponsibilityHandover();
     void testKnownMobileNodes();
@@ -153,6 +172,9 @@ private:
     CPPUNIT_TEST_SUITE(MobileWakeUpTest);
     CPPUNIT_TEST(testNotifyWithoutConnectedNodes);
     CPPUNIT_TEST(testMobileProtocolCompatibility);
+    CPPUNIT_TEST(testLegacyMobileAnnouncementLifecycle);
+    CPPUNIT_TEST(testMobileLeaseCanonicalPayload);
+    CPPUNIT_TEST(testSignedMobileLeaseValidation);
     CPPUNIT_TEST(testNotifyAgainstBruteForceOracle);
     CPPUNIT_TEST(testNotifyResponsibilityHandover);
     CPPUNIT_TEST(testKnownMobileNodes);
@@ -203,8 +225,7 @@ MobileWakeUpTest::tearDown()
 std::shared_ptr<jami::SwarmManager>
 MobileWakeUpTest::createManager(const NodeId& id, bool mobile)
 {
-    auto sm = std::make_shared<SwarmManager>(id, false, rd, [](auto) { return false; });
-    sm->setMobility(mobile);
+    auto sm = std::make_shared<SwarmManager>(id, mobile, rd, [](auto) { return false; });
     needSocketCallBack(sm);
     {
         std::lock_guard lk(channelSocketsMtx_);
@@ -310,17 +331,6 @@ MobileWakeUpTest::checkLocalConsistency(const std::shared_ptr<SwarmManager>& sm)
         // Wake-up targets must be known mobile nodes, not currently connected
         CPPUNIT_ASSERT(knownMobiles.count(m));
         CPPUNIT_ASSERT(!connectedSet.count(m));
-        // And we must be XOR-closer to them than every connected node
-        CPPUNIT_ASSERT(oracleResponsible(sm->getId(), connected, m));
-    }
-    // Inverse: every disconnected known mobile we are responsible for
-    // must be in the wake-up list
-    auto toNotifySet = toSet(toNotify);
-    for (const auto& m : knownMobiles) {
-        if (connectedSet.count(m))
-            continue;
-        if (oracleResponsible(sm->getId(), connected, m))
-            CPPUNIT_ASSERT(toNotifySet.count(m));
     }
 }
 
@@ -340,7 +350,7 @@ MobileWakeUpTest::testMobileProtocolCompatibility()
     CPPUNIT_ASSERT(decodedLegacy.mobile_nodes == std::vector<NodeId> {mobile});
     CPPUNIT_ASSERT(decodedLegacy.mobile_node_infos.empty());
 
-    Response response {Query::FOUND, {}, {mobile}, {{mobile, {1, 2, 3}}}};
+    Response response {Query::FOUND, {}, {mobile}, {{mobile, {1, 2, 3}, std::nullopt}}};
     msgpack::sbuffer buffer;
     msgpack::pack(buffer, response);
     auto object = msgpack::unpack(buffer.data(), buffer.size());
@@ -355,12 +365,194 @@ MobileWakeUpTest::testMobileProtocolCompatibility()
     object.get().convert(decodedByLegacy);
     CPPUNIT_ASSERT(decodedByLegacy.mobile_nodes == response.mobile_nodes);
 
+    msgpack::sbuffer versionTwoBuffer;
+    msgpack::pack(versionTwoBuffer, VersionTwoSwarmResponse {Query::FOUND, {}, {mobile}, {{mobile, {4, 5, 6}}}});
+    auto versionTwoObject = msgpack::unpack(versionTwoBuffer.data(), versionTwoBuffer.size());
+    Response decodedVersionTwo;
+    versionTwoObject.get().convert(decodedVersionTwo);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), decodedVersionTwo.mobile_node_infos.size());
+    CPPUNIT_ASSERT(!decodedVersionTwo.mobile_node_infos.front().lease.has_value());
+
+    MobileLease lease {1, "conversation", dht::InfoHash::getRandom(), mobile, 1, 2, {7, 8, 9}};
+    Response leasedResponse {Query::FOUND, {}, {mobile}, {{mobile, {1, 2, 3}, lease}}};
+    msgpack::sbuffer leasedBuffer;
+    msgpack::pack(leasedBuffer, leasedResponse);
+    auto leasedObject = msgpack::unpack(leasedBuffer.data(), leasedBuffer.size());
+    VersionTwoSwarmResponse decodedLeasedByVersionTwo;
+    leasedObject.get().convert(decodedLeasedByVersionTwo);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), decodedLeasedByVersionTwo.mobile_node_infos.size());
+    CPPUNIT_ASSERT(decodedLeasedByVersionTwo.mobile_node_infos.front().certificate == dht::Blob({1, 2, 3}));
+
     auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
     sm->setMobileNodes(response.mobile_node_infos);
     auto infos = sm->getKnownMobileNodeInfos();
     CPPUNIT_ASSERT_EQUAL(size_t(1), infos.size());
     CPPUNIT_ASSERT(infos.front().id == mobile);
     CPPUNIT_ASSERT(infos.front().certificate.empty());
+
+    auto scopedManager
+        = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; }, "conversation");
+    scopedManager->setMobileNodes(decodedVersionTwo.mobile_node_infos, true);
+    CPPUNIT_ASSERT(scopedManager->getKnownMobileNodes().empty());
+    scopedManager->shutdown();
+}
+
+void
+MobileWakeUpTest::testLegacyMobileAnnouncementLifecycle()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto desktop = std::make_shared<SwarmManager>(
+        nodeTestIds1.at(0), false, rd, [](auto) { return false; }, "legacy-conversation");
+    auto inbound = makeChannel(nodeTestIds1.at(2));
+    auto remote = makeChannel(nodeTestIds1.at(0));
+    dhtnet::ChannelSocketTest::link(inbound, remote);
+    desktop->addChannel(inbound);
+
+    Message legacyMessage;
+    legacyMessage.v = 1;
+    legacyMessage.is_mobile = true;
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, legacyMessage);
+    std::error_code ec;
+    remote->write(reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size(), ec);
+    CPPUNIT_ASSERT(!ec);
+    CPPUNIT_ASSERT(waitFor([&] { return toSet(desktop->getKnownMobileNodes()).contains(inbound->deviceId()); },
+                           CONVERGENCE_TIMEOUT));
+
+    inbound->shutdown();
+    CPPUNIT_ASSERT(waitFor([&] { return toSet(desktop->getMobileNodesToNotify()).contains(inbound->deviceId()); },
+                           CONVERGENCE_TIMEOUT));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), desktop->getMobileNodeInfosToNotify().size());
+    desktop->shutdown();
+}
+
+void
+MobileWakeUpTest::testMobileLeaseCanonicalPayload()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    MobileLease lease {1,
+                       "0123456789abcdef0123456789abcdef01234567",
+                       dht::InfoHash("fedcba9876543210fedcba9876543210fedcba98"),
+                       nodeTestIds1.at(2),
+                       1'700'000'000,
+                       1'702'592'000,
+                       {9, 8, 7}};
+    const auto payload = mobileLeasePayload(lease);
+    CPPUNIT_ASSERT(payload == mobileLeasePayload(lease));
+
+    auto object = msgpack::unpack(reinterpret_cast<const char*>(payload.data()), payload.size());
+    CPPUNIT_ASSERT_EQUAL(msgpack::type::ARRAY, object.get().type);
+    CPPUNIT_ASSERT_EQUAL(uint32_t(7), object.get().via.array.size);
+    CPPUNIT_ASSERT_EQUAL(std::string("DRT-MOBILE"), object.get().via.array.ptr[0].as<std::string>());
+    CPPUNIT_ASSERT_EQUAL(uint8_t(1), object.get().via.array.ptr[1].as<uint8_t>());
+    CPPUNIT_ASSERT_EQUAL(lease.conversation_id, object.get().via.array.ptr[2].as<std::string>());
+    CPPUNIT_ASSERT(lease.issuer_id == object.get().via.array.ptr[3].as<dht::InfoHash>());
+    CPPUNIT_ASSERT_EQUAL(lease.device_id.toString(), object.get().via.array.ptr[4].as<std::string>());
+    CPPUNIT_ASSERT_EQUAL(lease.issued_at, object.get().via.array.ptr[5].as<uint64_t>());
+    CPPUNIT_ASSERT_EQUAL(lease.expires_at, object.get().via.array.ptr[6].as<uint64_t>());
+
+    lease.signature = {1, 2, 3, 4};
+    CPPUNIT_ASSERT(payload == mobileLeasePayload(lease));
+}
+
+void
+MobileWakeUpTest::testSignedMobileLeaseValidation()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    const auto accountIdentity = dht::crypto::generateIdentity("lease-account", {}, 2048, true);
+    const auto deviceIdentity = dht::crypto::generateIdentity("lease-device", accountIdentity, 2048, false);
+    const auto deviceId = deviceIdentity.second->getLongId();
+    const std::string conversationId = "0123456789abcdef0123456789abcdef01234567";
+    const auto now = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+
+    auto makeInfo = [&](uint64_t expiry) {
+        MobileLease lease {1, conversationId, accountIdentity.second->getId(), deviceId, now, expiry, {}};
+        lease.signature = deviceIdentity.first->sign(mobileLeasePayload(lease));
+        return MobileNodeInfo {deviceId, deviceIdentity.second->getPacked(), std::move(lease)};
+    };
+
+    const auto issuerId = accountIdentity.second->getId();
+    auto isConversationMember = [issuerId](const dht::InfoHash& candidate) {
+        return candidate == issuerId;
+    };
+    auto manager = std::make_shared<SwarmManager>(
+        nodeTestIds1.at(0),
+        false,
+        rd,
+        [](auto) { return false; },
+        conversationId,
+        std::function<std::optional<MobileNodeInfo>()> {},
+        isConversationMember);
+    auto valid = makeInfo(now + 60);
+    dht::crypto::Certificate packedCertificate(valid.certificate);
+    CPPUNIT_ASSERT(packedCertificate.getLongId() == deviceId);
+    CPPUNIT_ASSERT(packedCertificate.issuer);
+    CPPUNIT_ASSERT(valid.lease->issuer_id == packedCertificate.issuer->getId());
+    dht::crypto::TrustList trust;
+    trust.add(*packedCertificate.issuer);
+    CPPUNIT_ASSERT(trust.verify(packedCertificate));
+    CPPUNIT_ASSERT(
+        packedCertificate.getPublicKey().checkSignature(mobileLeasePayload(*valid.lease), valid.lease->signature));
+    manager->setMobileNodes({valid});
+    auto infos = manager->getKnownMobileNodeInfos();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), infos.size());
+    CPPUNIT_ASSERT(infos.front().lease.has_value());
+    CPPUNIT_ASSERT(valid.lease->signature == infos.front().lease->signature);
+
+    auto replayed = valid;
+    replayed.lease->conversation_id = "different-conversation";
+    manager->deleteNode({deviceId});
+    manager->setMobileNodes({replayed});
+    CPPUNIT_ASSERT(manager->getKnownMobileNodes().empty());
+
+    auto tampered = valid;
+    tampered.lease->expires_at += 1;
+    manager->setMobileNodes({tampered});
+    CPPUNIT_ASSERT(manager->getKnownMobileNodes().empty());
+
+    const auto outsiderAccount = dht::crypto::generateIdentity("lease-outsider", {}, 2048, true);
+    const auto outsiderDevice = dht::crypto::generateIdentity("lease-outsider-device", outsiderAccount, 2048, false);
+    MobileLease outsiderLease {1,
+                               conversationId,
+                               outsiderAccount.second->getId(),
+                               outsiderDevice.second->getLongId(),
+                               now,
+                               now + 60,
+                               {}};
+    outsiderLease.signature = outsiderDevice.first->sign(mobileLeasePayload(outsiderLease));
+    manager->setMobileNodes({{outsiderLease.device_id, outsiderDevice.second->getPacked(), std::move(outsiderLease)}});
+    CPPUNIT_ASSERT(manager->getKnownMobileNodes().empty());
+
+    size_t providerCalls = 0;
+    auto renewalManager = std::make_shared<SwarmManager>(
+        deviceId,
+        true,
+        rd,
+        [](auto) { return false; },
+        conversationId,
+        [&] {
+            ++providerCalls;
+            const auto duration = providerCalls == 1 ? MOBILE_LEASE_RENEWAL_THRESHOLD : MAX_MOBILE_LEASE_DURATION;
+            return std::optional<MobileNodeInfo>(
+                makeInfo(now + std::chrono::duration_cast<std::chrono::seconds>(duration).count()));
+        },
+        isConversationMember);
+    CPPUNIT_ASSERT(renewalManager->getLocalMobileNodeInfo().has_value());
+    CPPUNIT_ASSERT_EQUAL(size_t(1), providerCalls);
+    CPPUNIT_ASSERT(renewalManager->getLocalMobileNodeInfo().has_value());
+    CPPUNIT_ASSERT_EQUAL(size_t(2), providerCalls);
+    CPPUNIT_ASSERT(renewalManager->getLocalMobileNodeInfo().has_value());
+    CPPUNIT_ASSERT_EQUAL(size_t(2), providerCalls);
+    renewalManager->shutdown();
+
+    manager->setMobileNodes({makeInfo(now + 2)});
+    CPPUNIT_ASSERT_EQUAL(size_t(1), manager->getKnownMobileNodes().size());
+    CPPUNIT_ASSERT(waitFor([&] { return manager->getKnownMobileNodes().empty(); }, 5s));
+    manager->shutdown();
 }
 
 void

@@ -876,15 +876,26 @@ RoutingTableTest::testMobileNodeWakeUp()
     auto toNotify = rt.getMobileNodesToNotify();
     CPPUNIT_ASSERT_EQUAL(size_t(2), toNotify.size());
 
-    // With a connected node (41a0...), we only keep the mobile nodes we are
-    // closer to than the connected node
-    rt.addNode(nodeTestChannels1_1.at(1));
+    // One closer peer still leaves us within the redundant wake set.
+    auto peer = nodeTestChannels1_1.at(1);
+    rt.addNode(peer);
     toNotify = rt.getMobileNodesToNotify();
-    CPPUNIT_ASSERT_EQUAL(size_t(1), toNotify.size());
-    CPPUNIT_ASSERT(toNotify.front() == closeMobile);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), toNotify.size());
+
+    // A second closer peer moves the far mobile outside our wake set.
+    bool addedSecondCloserPeer = false;
+    for (const auto& candidate : nodeTestChannels1_1) {
+        if (candidate != peer && farMobile.xorCmp(candidate->deviceId(), rt.getId()) < 0 && rt.addNode(candidate)) {
+            addedSecondCloserPeer = true;
+            break;
+        }
+    }
+    CPPUNIT_ASSERT(addedSecondCloserPeer);
+    toNotify = rt.getMobileNodesToNotify();
+    CPPUNIT_ASSERT(std::find(toNotify.begin(), toNotify.end(), farMobile) == toNotify.end());
 
     // Connected nodes are no longer responsible once removed from the table
-    rt.deleteNode(nodeTestChannels1_1.at(1)->deviceId());
+    rt.deleteNode(peer->deviceId());
     toNotify = rt.getMobileNodesToNotify();
     CPPUNIT_ASSERT_EQUAL(size_t(2), toNotify.size());
 }

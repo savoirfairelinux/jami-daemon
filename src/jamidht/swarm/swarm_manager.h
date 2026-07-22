@@ -33,9 +33,17 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using OnConnectionChanged = std::function<void(bool ok)>;
     using OnMobileNodesChanged = std::function<void(const std::vector<NodeId>&)>;
     using OnMobileNodeInfosChanged = std::function<void(const std::vector<MobileNodeInfo>&)>;
+    using MobileLeaseProvider = std::function<std::optional<MobileNodeInfo>()>;
+    using MobileLeaseIssuerValidator = std::function<bool(const dht::InfoHash&)>;
 
 public:
-    explicit SwarmManager(const NodeId& nodeId, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb);
+    explicit SwarmManager(const NodeId& nodeId,
+                          bool isMobile,
+                          const std::mt19937_64& rand,
+                          ToConnectCb&& toConnectCb,
+                          std::string conversationId = {},
+                          MobileLeaseProvider mobileLeaseProvider = {},
+                          MobileLeaseIssuerValidator mobileLeaseIssuerValidator = {});
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
@@ -66,7 +74,7 @@ public:
      * Invalid certificates and mismatched device IDs are ignored.
      * @param mobile_nodes
      */
-    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes);
+    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes, bool requireLease = false);
 
     /**
      * Retain the authenticated certificate for a connected mobile node.
@@ -106,8 +114,8 @@ public:
     std::vector<NodeId> getConnectedNodes() const;
 
     /**
-     * Get the mobile nodes this device is responsible for waking up
-     * (i.e. closer to them than any connected node).
+     * Get the mobile nodes this device is responsible for waking up.
+     * The closest redundant nodes in the local Kademlia view wake it.
      */
     std::vector<NodeId> getMobileNodesToNotify();
 
@@ -160,6 +168,8 @@ public:
      * @return RoutingTable
      */
     RoutingTable& getRoutingTable() { return routing_table; };
+
+    std::optional<MobileNodeInfo> getLocalMobileNodeInfo() { return localMobileNodeInfo(); }
 
     /**
      * Get buckets of routing table
@@ -257,6 +267,18 @@ private:
      */
     bool setMobileNodeCertificateInternal(const NodeId& nodeId, const dht::Blob& certificate);
 
+    bool setMobileNodeInfo(const MobileNodeInfo& mobile, bool requireLease = false);
+
+    bool validateMobileNodeInfo(const MobileNodeInfo& mobile) const;
+
+    bool isMobileNodeCurrentInternal(const NodeId& nodeId, uint64_t now) const;
+
+    std::optional<MobileNodeInfo> localMobileNodeInfo();
+
+    void scheduleMobileLeaseExpiryInternal();
+
+    void expireMobileLeases(const asio::error_code& ec);
+
     /**
      * Notify the onMobileNodesChanged_ callback with the current set of
      * known mobile nodes. Must be called without the mutex held.
@@ -313,10 +335,18 @@ private:
 
     const NodeId id_;
     bool isMobile_ {false};
+    const std::string conversationId_;
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
     std::map<NodeId, dht::Blob> mobileNodeCertificates_;
+    std::map<NodeId, MobileLease> mobileNodeLeases_;
+    std::map<NodeId, uint64_t> legacyMobileNodeExpiries_;
+    MobileLeaseProvider mobileLeaseProvider_;
+    MobileLeaseIssuerValidator mobileLeaseIssuerValidator_;
+    std::mutex mobileLeaseRenewalMtx_;
+    std::optional<MobileNodeInfo> localMobileNodeInfo_;
+    asio::steady_timer mobileLeaseExpiryTimer_ {*Manager::instance().ioContext()};
 
     std::atomic_bool isShutdown_ {false};
 
