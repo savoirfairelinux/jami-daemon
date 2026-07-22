@@ -1,0 +1,30 @@
+From 7ef6db885c13b41b00a69348e02661d965065f9e Mon Sep 17 00:00:00 2001
+From: Jami <jami@jami.net>
+Date: Wed, 22 Jul 2026 17:14:18 +0000
+Subject: [PATCH] storage: ignore null values during refresh
+
+Malformed network announces may decode to a null shared Value pointer.
+Storage refresh runs on externally supplied values and must not
+dereference such entries while expiring bucket contents.
+---
+ src/storage.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/storage.cpp b/src/storage.cpp
+index 52d034d0..ae01ef47 100644
+--- a/src/storage.cpp
++++ b/src/storage.cpp
+@@ -82,6 +82,10 @@ StorageBucket::refresh(time_point now)
+     auto min_expiration = time_point::max();
+     for (auto it = values.begin(); it != values.end();) {
+         auto& value = *it;
++        if (!value) {
++            it = values.erase(it);
++            continue;
++        }
+         if (value->isExpired(now)) {
+             it = values.erase(it);
+         } else {
+-- 
+2.43.0
+

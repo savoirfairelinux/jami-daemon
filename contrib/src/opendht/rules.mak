@@ -26,5 +26,6 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
+	$(APPLY) $(SRC)/opendht/0002-storage-ignore-null-values-during-refresh.patch
 
 CMAKE_PKGS += opendht
