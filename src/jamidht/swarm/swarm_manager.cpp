@@ -29,12 +29,14 @@ SwarmManager::SwarmManager(const NodeId& id,
                            const std::mt19937_64& rand,
                            ToConnectCb&& toConnectCb,
                            std::string conversationId,
-                           MobileLeaseProvider mobileLeaseProvider)
+                           MobileLeaseProvider mobileLeaseProvider,
+                           MobileLeaseIssuerValidator mobileLeaseIssuerValidator)
     : id_(id)
     , isMobile_(isMobile)
     , conversationId_(std::move(conversationId))
     , rd(rand)
     , mobileLeaseProvider_(std::move(mobileLeaseProvider))
+    , mobileLeaseIssuerValidator_(std::move(mobileLeaseIssuerValidator))
     , toConnectCb_(toConnectCb)
 {
     routing_table.setId(id);
@@ -300,7 +302,7 @@ SwarmManager::validateMobileNodeInfo(const MobileNodeInfo& mobile) const
     if (lease.format_version != 1 || lease.device_id != mobile.id || lease.conversation_id != conversationId_
         || lease.signature.empty() || lease.signature.size() > MAX_MOBILE_LEASE_SIGNATURE_SIZE
         || lease.conversation_id.empty() || lease.conversation_id.size() > MAX_MOBILE_LEASE_IDENTIFIER_SIZE
-        || !lease.issuer_id)
+        || !lease.issuer_id || !mobileLeaseIssuerValidator_ || !mobileLeaseIssuerValidator_(lease.issuer_id))
         return false;
 
     constexpr uint64_t MAX_CLOCK_SKEW_SECONDS = 5 * 60;
@@ -565,16 +567,21 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
                 if (validMobileAnnouncement && shared->setMobileNodeInfo(*msg.self_mobile_info, true))
                     shared->emitMobileNodesChanged();
             }
-            if (msg.is_mobile && validMobileAnnouncement)
+            if (msg.is_mobile && validMobileAnnouncement) {
+                if (msg.v < 3 && !shared->conversationId_.empty())
+                    shared->setMobileNodes(std::vector<NodeId> {socket->deviceId()});
                 shared->changeMobility(socket->deviceId(), true);
+            }
 
             if (msg.request) {
                 shared->sendAnswer(socket, msg);
 
             } else if (msg.response) {
                 shared->setKnownNodes(msg.response->nodes);
-                shared->setMobileNodes(msg.response->mobile_node_infos, msg.v >= 3 && !shared->conversationId_.empty());
-                if (msg.v < 3 || shared->conversationId_.empty())
+                const auto requireLease = msg.v >= 3 && !shared->conversationId_.empty();
+                shared->setMobileNodes(msg.response->mobile_node_infos, requireLease);
+                const auto acceptLegacy = msg.v < 3 || shared->conversationId_.empty();
+                if (acceptLegacy)
                     shared->setMobileNodes(msg.response->mobile_nodes);
             }
             return std::error_code();

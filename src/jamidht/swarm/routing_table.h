@@ -301,6 +301,8 @@ private:
 class RoutingTable
 {
 public:
+    static constexpr unsigned MOBILE_WAKE_REDUNDANCY = 2;
+
     RoutingTable();
 
     bool isEmpty() const;
@@ -508,10 +510,8 @@ public:
 
     /**
      * Returns the mobile nodes this table's owner is responsible for
-     * waking up, i.e. the mobile nodes to which we are closer than any
-     * connected node. Knowledge of a mobile node concentrates in its
-     * Kademlia region, so a small number of nodes self-select for each
-     * mobile node, keeping wake-up messages O(1) per mobile.
+     * waking up. The closest MOBILE_WAKE_REDUNDANCY nodes in the local
+     * Kademlia view independently take responsibility.
      * @return vector of nodeIds
      */
     std::vector<NodeId> getMobileNodesToNotify();

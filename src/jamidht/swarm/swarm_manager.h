@@ -34,6 +34,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using OnMobileNodesChanged = std::function<void(const std::vector<NodeId>&)>;
     using OnMobileNodeInfosChanged = std::function<void(const std::vector<MobileNodeInfo>&)>;
     using MobileLeaseProvider = std::function<std::optional<MobileNodeInfo>()>;
+    using MobileLeaseIssuerValidator = std::function<bool(const dht::InfoHash&)>;
 
 public:
     explicit SwarmManager(const NodeId& nodeId,
@@ -41,7 +42,8 @@ public:
                           const std::mt19937_64& rand,
                           ToConnectCb&& toConnectCb,
                           std::string conversationId = {},
-                          MobileLeaseProvider mobileLeaseProvider = {});
+                          MobileLeaseProvider mobileLeaseProvider = {},
+                          MobileLeaseIssuerValidator mobileLeaseIssuerValidator = {});
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
@@ -112,8 +114,8 @@ public:
     std::vector<NodeId> getConnectedNodes() const;
 
     /**
-     * Get the mobile nodes this device is responsible for waking up
-     * (i.e. closer to them than any connected node).
+     * Get the mobile nodes this device is responsible for waking up.
+     * The closest redundant nodes in the local Kademlia view wake it.
      */
     std::vector<NodeId> getMobileNodesToNotify();
 
@@ -341,6 +343,7 @@ private:
     std::map<NodeId, MobileLease> mobileNodeLeases_;
     std::map<NodeId, uint64_t> legacyMobileNodeExpiries_;
     MobileLeaseProvider mobileLeaseProvider_;
+    MobileLeaseIssuerValidator mobileLeaseIssuerValidator_;
     std::mutex mobileLeaseRenewalMtx_;
     std::optional<MobileNodeInfo> localMobileNodeInfo_;
     asio::steady_timer mobileLeaseExpiryTimer_ {*Manager::instance().ioContext()};
