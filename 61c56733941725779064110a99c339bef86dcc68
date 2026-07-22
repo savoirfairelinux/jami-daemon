@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6f9c81a_86c355ed",
+        "filename": "src/media/audio/portaudio/audio_device_monitor.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:41:51Z",
+      "side": 1,
+      "message": "[warning] Line 211: 🟡 The blob is cast to WAVEFORMATEXTENSIBLE without validating var.blob.cbSize. A truncated or unexpected property value could make the subsequent nSamplesPerSec read access past the buffer. Check cbSize is at least large enough for WAVEFORMATEX::nSamplesPerSec, or parse as WAVEFORMATEX and validate the size before reading.",
+      "revId": "61c56733941725779064110a99c339bef86dcc68",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
