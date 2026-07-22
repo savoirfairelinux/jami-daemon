@@ -61,6 +61,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
@@ -992,7 +993,7 @@ SIPAccount::trimCiphers()
     unsigned count = 0;
     static const size_t MAX_CIPHERS_STRLEN = 1000;
     for (const auto& item : ciphers_) {
-        sum += strlen(pj_ssl_cipher_name(item));
+        sum += std::strlen(pj_ssl_cipher_name(item)) + (count != 0);
         if (sum > MAX_CIPHERS_STRLEN)
             break;
         ++count;

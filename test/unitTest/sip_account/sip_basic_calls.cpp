@@ -94,6 +94,7 @@ public:
 
 private:
     // Test cases.
+    void tls_cipher_list_with_separators();
     void audio_only_test();
     void audio_video_test();
     void peer_answer_with_all_media_disabled();
@@ -101,6 +102,7 @@ private:
     void blind_transfer_test();
 
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
+    CPPUNIT_TEST(tls_cipher_list_with_separators);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
     // Test when the peer answers with all the media disabled (RTP port = 0)
@@ -532,6 +534,32 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     JAMI_LOG("Call terminated on both sides");
+}
+
+void
+SipBasicCallTest::tls_cipher_list_with_separators()
+{
+    const auto& supported = SIPAccount::getSupportedTlsCiphers();
+    CPPUNIT_ASSERT(not supported.empty());
+    const auto& cipher = supported.front();
+    CPPUNIT_ASSERT(not cipher.empty());
+
+    auto const account = Manager::instance().getAccount<SIPAccount>(callDataMap_["ALICE"].accountId_);
+    CPPUNIT_ASSERT(account);
+    auto details = account->getAccountDetails();
+    details[ConfProperties::TLS::ENABLED] = "true";
+    auto& ciphers = details[ConfProperties::TLS::CIPHERS];
+    ciphers.clear();
+    // The names fit within the limit, but their separators do not.
+    for (size_t i = 0; i < 1000 / cipher.size(); ++i)
+        ciphers += cipher + ' ';
+    account->setAccountDetails(details);
+
+    const auto* tls = account->getTlsSetting();
+    CPPUNIT_ASSERT(tls->ciphers_num > 0);
+    const auto length = tls->ciphers_num * cipher.size() + tls->ciphers_num - 1;
+    CPPUNIT_ASSERT(length <= 1000);
+    CPPUNIT_ASSERT(length + cipher.size() + 1 > 1000);
 }
 
 void
