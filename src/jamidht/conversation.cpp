@@ -351,6 +351,11 @@ private:
                   MobileLease lease {1, conversationId, identity.second->issuer->getId(), deviceId, now, expiry, {}};
                   lease.signature = identity.first->sign(mobileLeasePayload(lease));
                   return MobileNodeInfo {deviceId, identity.second->getPacked(), std::move(lease)};
+              },
+              [this](const dht::InfoHash& issuerId) {
+                  const auto members
+                      = repository_->memberUris("", {MemberRole::INVITED, MemberRole::BANNED, MemberRole::LEFT});
+                  return members.contains(issuerId.toString());
               }))
         , transferManager_(std::make_shared<TransferManager>(accountId_,
                                                              "",
