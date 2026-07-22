@@ -26,6 +26,21 @@ test(
     timeout: 1800,
 )
 
+ut_account_manager = executable(
+    'ut_account_manager',
+    sources: files('unitTest/account_manager/account_manager.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'account_manager',
+    ut_account_manager,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_account_factory = executable(
     'ut_account_factory',
     sources: files('unitTest/account_factory/testAccount_factory.cpp'),

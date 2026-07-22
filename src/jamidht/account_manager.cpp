@@ -284,6 +284,11 @@ AccountManager::reloadContacts()
 void
 AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
 {
+    if (!info_) {
+        JAMI_ERROR("[Account {}] Unable to start sync: no account identity.", accountId_);
+        return;
+    }
+
     // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);

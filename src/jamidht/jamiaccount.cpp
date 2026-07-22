@@ -2126,16 +2126,28 @@ JamiAccount::initDhtContext()
         setRegistrationState(state);
     };
 
-    context.identityAnnouncedCb = [this](bool ok) {
+    context.identityAnnouncedCb = [w = weak()](bool ok) {
+        auto shared = w.lock();
+        if (!shared)
+            return;
         if (!ok) {
-            JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
+            JAMI_ERROR("[Account {}] Identity announcement failed", shared->getAccountID());
             return;
         }
-        JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
-        accountManager_
-            ->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) { onAccountDeviceFound(crt); },
-                        [this] { onAccountDeviceAnnounced(); },
-                        publishPresence_);
+        auto accountManager = shared->accountManager_;
+        if (!accountManager || !accountManager->getInfo())
+            return;
+        JAMI_WARNING("[Account {}] Identity announcement succeeded", shared->getAccountID());
+        accountManager->startSync(
+            [w](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                if (auto shared = w.lock())
+                    shared->onAccountDeviceFound(crt);
+            },
+            [w] {
+                if (auto shared = w.lock())
+                    shared->onAccountDeviceAnnounced();
+            },
+            shared->publishPresence_);
     };
 
     return context;
@@ -2147,8 +2159,14 @@ JamiAccount::onAccountDeviceFound(const std::shared_ptr<dht::crypto::Certificate
     if (jami::Manager::instance().syncOnRegister) {
         if (!crt)
             return;
+        auto accountManager = accountManager_;
+        if (!accountManager)
+            return;
+        const auto* info = accountManager->getInfo();
+        if (!info)
+            return;
         auto deviceId = crt->getLongId().toString();
-        if (accountManager_->getInfo()->deviceId == deviceId)
+        if (info->deviceId == deviceId)
             return;
 
         dht::ThreadPool::io().run([w = weak(), crt] {
