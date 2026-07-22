@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4236833a_33307857",
+        "filename": "contrib/src/opendht/0002-thread-pool-avoid-self-join-on-shutdown.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-22T17:48:27Z",
+      "side": 1,
+      "message": "[error] Line 33: 🔴 Detaching the current worker lets `ThreadPool::~ThreadPool()` continue destroying `threads_`, `cv_`, `mutex_`, and other members while that same worker is still unwinding through the pool\u0027s worker loop. After the task returns, the detached thread can still access the already-destroyed pool state, turning the self-join crash into a use-after-free race. Please fix this at the ownership/lifetime level instead: ensure objects owning a `ThreadPool` are not destroyed from one of their own worker callbacks, or refactor the pool so worker state is separately owned and remains alive until the detached current worker has fully exited.",
+      "revId": "718ce0726df46de6a9916f336281e51135833784",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
