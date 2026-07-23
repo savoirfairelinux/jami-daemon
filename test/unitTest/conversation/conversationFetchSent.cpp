@@ -76,8 +76,14 @@ public:
     UserData carlaData;
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
+
+    template<typename Rep, typename Period, typename Predicate>
+    bool waitFor(const std::chrono::duration<Rep, Period>& timeout, Predicate&& predicate)
+    {
+        std::unique_lock lk {mtx};
+        return cv.wait_for(lk, timeout, std::forward<Predicate>(predicate));
+    }
 
     void connectSignals();
 
@@ -124,6 +130,7 @@ ConversationFetchSentTest::connectSignals()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
         [&](const std::string& accountId, const std::map<std::string, std::string>&) {
+            std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
                 auto details = aliceAccount->getVolatileAccountDetails();
@@ -176,6 +183,7 @@ ConversationFetchSentTest::connectSignals()
             const std::string& accountId,
             const std::string& /* conversationId */,
             std::vector<libjami::SwarmMessage> messages) {
+            std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 aliceData.messages.insert(aliceData.messages.end(), messages.begin(), messages.end());
             } else if (accountId == bobId) {
@@ -187,6 +195,7 @@ ConversationFetchSentTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 aliceData.conversationId = conversationId;
             } else if (accountId == alice2Id) {
@@ -204,6 +213,7 @@ ConversationFetchSentTest::connectSignals()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*metadatas*/) {
+            std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 aliceData.requestReceived = true;
             } else if (accountId == bobId) {
@@ -217,6 +227,7 @@ ConversationFetchSentTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+            std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
@@ -234,6 +245,7 @@ ConversationFetchSentTest::connectSignals()
             const std::string& peer,
             const std::string& msgId,
             int status) {
+            std::lock_guard guard {mtx};
             auto placeMessage = [&](auto& data) {
                 for (auto& dataMsg : data.messages) {
                     if (dataMsg.id == msgId) {
@@ -297,15 +309,14 @@ ConversationFetchSentTest::testSyncAfterDisconnection()
     bob2Id = Manager::instance().addAccount(details);
 
     // Disconnect bob2, to create a valid conv betwen Alice and Bob1
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bob2Data.deviceAnnounced; }));
 
     // Create conversation between alice and bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bobData.requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && !bob2Data.conversationId.empty(); }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return !bobData.conversationId.empty() && !bob2Data.conversationId.empty(); }));
 
     std::this_thread::sleep_for(5s); // Wait for all join messages to be received
 
@@ -313,7 +324,7 @@ ConversationFetchSentTest::testSyncAfterDisconnection()
     auto aliceMsgSize = aliceData.messages.size(), bob2MsgSize = bob2Data.messages.size(),
          bobMsgSize = bobData.messages.size();
     libjami::sendMessage(bobId, bobData.conversationId, "1"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 1 && bobData.messages.size() == bobMsgSize + 1
                && bob2Data.messages.size() == bob2MsgSize + 1;
     }));
@@ -326,49 +337,49 @@ ConversationFetchSentTest::testSyncAfterDisconnection()
         }
         return libjami::Account::MessageStates::UNKNOWN;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId1, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "2"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 2 && bobData.messages.size() == bobMsgSize + 2
                && bob2Data.messages.size() == bob2MsgSize + 2;
     }));
     auto msgId2 = aliceData.messages.rbegin()->id;
     // Because bob2Data.status is here only on update, but msgReceived can be good directly at first
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId2, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "3"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 3 && bobData.messages.size() == bobMsgSize + 3
                && bob2Data.messages.size() == bob2MsgSize + 3;
     }));
     auto msgId3 = aliceData.messages.rbegin()->id;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId3, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId3, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "4"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 4 && bobData.messages.size() == bobMsgSize + 4
                && bob2Data.messages.size() == bob2MsgSize + 4;
     }));
     auto msgId4 = aliceData.messages.rbegin()->id;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId4, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId4, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
 
     // Bob is disabled. Bob2 will get the infos
     Manager::instance().sendRegister(bobId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.stopped; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bobData.stopped; }));
 
     // Second message is set to displayed by alice
     aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, msgId2, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bob2Data, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bob2Data, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
     }));
@@ -376,11 +387,11 @@ ConversationFetchSentTest::testSyncAfterDisconnection()
 
     // Alice is disabled so she will not sync
     Manager::instance().sendRegister(aliceId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.stopped; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return aliceData.stopped; }));
 
     // Bob is enabled again, should sync infos with bob2
     Manager::instance().sendRegister(bobId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
     }));
@@ -411,15 +422,14 @@ ConversationFetchSentTest::testSyncFetch()
     bob2Id = Manager::instance().addAccount(details);
 
     // Disconnect bob2, to create a valid conv betwen Alice and Bob1
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bob2Data.deviceAnnounced; }));
 
     // Create conversation between alice and bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bobData.requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && !bob2Data.conversationId.empty(); }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return !bobData.conversationId.empty() && !bob2Data.conversationId.empty(); }));
 
     std::this_thread::sleep_for(5s); // Wait for all join messages to be received
 
@@ -427,7 +437,7 @@ ConversationFetchSentTest::testSyncFetch()
     auto aliceMsgSize = aliceData.messages.size(), bob2MsgSize = bob2Data.messages.size(),
          bobMsgSize = bobData.messages.size();
     libjami::sendMessage(bobId, bobData.conversationId, "1"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 1 && bobData.messages.size() == bobMsgSize + 1
                && bob2Data.messages.size() == bob2MsgSize + 1;
     }));
@@ -440,45 +450,45 @@ ConversationFetchSentTest::testSyncFetch()
         }
         return libjami::Account::MessageStates::UNKNOWN;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId1, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "2"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 2 && bobData.messages.size() == bobMsgSize + 2
                && bob2Data.messages.size() == bob2MsgSize + 2;
     }));
     auto msgId2 = aliceData.messages.rbegin()->id;
     // Because bob2Data.status is here only on update, but msgReceived can be good directly at first
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId2, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "3"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 3 && bobData.messages.size() == bobMsgSize + 3
                && bob2Data.messages.size() == bob2MsgSize + 3;
     }));
     auto msgId3 = aliceData.messages.rbegin()->id;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId3, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId3, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "4"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 4 && bobData.messages.size() == bobMsgSize + 4
                && bob2Data.messages.size() == bob2MsgSize + 4;
     }));
     auto msgId4 = aliceData.messages.rbegin()->id;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId4, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bob2Data, msgId4, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
 
     // Second message is set to displayed by alice
     aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, msgId2, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bob2Data, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED
@@ -499,17 +509,17 @@ ConversationFetchSentTest::testSyncFetch()
 
     // Alice is disabled
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.stopped; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return aliceData.stopped; }));
 
     // Bob send 2 more messages
     bob2MsgSize = bob2Data.messages.size();
     libjami::sendMessage(bobId, bobData.conversationId, "5"s, "");
     libjami::sendMessage(bobId, bobData.conversationId, "6"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.messages.size() == bob2MsgSize + 2; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bob2Data.messages.size() == bob2MsgSize + 2; }));
     auto msgId5 = bobData.messages.rbegin()->id;
     auto msgId6 = (bobData.messages.rbegin() + 1)->id;
     // No update
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(!waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId5, aliceUri) == libjami::Account::MessageStates::SENT
                && getMsgStatus(bobData, msgId6, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
@@ -532,16 +542,16 @@ ConversationFetchSentTest::testDisplayedOnLoad()
     // Create conversation between alice and bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bobData.requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return !bobData.conversationId.empty(); }));
 
     std::this_thread::sleep_for(5s); // Wait for all join messages to be received
 
     // bob send 2 messages
     auto aliceMsgSize = aliceData.messages.size(), bobMsgSize = bobData.messages.size();
     libjami::sendMessage(bobId, bobData.conversationId, "1"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 1 && bobData.messages.size() == bobMsgSize + 1;
     }));
     auto msgId1 = aliceData.messages.rbegin()->id;
@@ -553,18 +563,18 @@ ConversationFetchSentTest::testDisplayedOnLoad()
         }
         return libjami::Account::MessageStates::UNKNOWN;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
     libjami::sendMessage(bobId, bobData.conversationId, "2"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return aliceData.messages.size() == aliceMsgSize + 2 && bobData.messages.size() == bobMsgSize + 2;
     }));
     auto msgId2 = aliceData.messages.rbegin()->id;
 
     // Second message is set to displayed by alice
     aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, msgId2, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
     }));
@@ -574,7 +584,7 @@ ConversationFetchSentTest::testDisplayedOnLoad()
     // Load messages, messages should be displayed
     CPPUNIT_ASSERT(getMsgStatus(bobData, msgId1, aliceUri) != libjami::Account::MessageStates::DISPLAYED);
     libjami::loadConversation(bobId, bobData.conversationId, "", 0);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
     }));
