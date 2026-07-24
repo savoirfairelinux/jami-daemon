@@ -530,11 +530,12 @@ ConversationDST::validateEvent(const Event& event)
     RepositoryAccount& instigatorRepoAcc = repositoryAccounts[event.instigatorAccountIndex];
     RepositoryAccount& receiverRepoAcc = repositoryAccounts[event.receivingAccountIndex];
 
-    // A member that left can remain the source of the fetch/merge events that propagate its
-    // leave commit, but can no longer participate in any other event.
-    if (receiverRepoAcc.client.hasLeftConversation()
-        || (instigatorRepoAcc.client.hasLeftConversation() && event.type != ConversationEvent::FETCH
-            && event.type != ConversationEvent::MERGE)) {
+    // A member that left can remain the source of fetch/merge events that propagate its leave
+    // commit, and can be the target of the events that re-add it to the conversation.
+    const bool instigatorLeft = instigatorRepoAcc.client.hasLeftConversation();
+    const bool receiverLeft = receiverRepoAcc.client.hasLeftConversation();
+    if ((receiverLeft && event.type != ConversationEvent::ADD_MEMBER && event.type != ConversationEvent::CLONE)
+        || (instigatorLeft && event.type != ConversationEvent::FETCH && event.type != ConversationEvent::MERGE)) {
         return false;
     }
 
@@ -555,8 +556,9 @@ ConversationDST::validateEvent(const Event& event)
         // Note: this is within the context of the CURRENT repo
         // The instigator should only be able to add the receiver if:
         // 1. The instigator is not trying to add themselves (this occurs in the very first event)
-        // 2. The instigator is already part of of the conversation
-        if (event.instigatorAccountIndex == event.receivingAccountIndex || !instigatorRepoAcc.repository) {
+        // 2. The instigator is an active member of the conversation
+        if (event.instigatorAccountIndex == event.receivingAccountIndex
+            || !isActiveMember(event.instigatorAccountIndex)) {
             return false;
         }
         break;
@@ -663,11 +665,12 @@ ConversationDST::validateEvent(const Event& event)
     case ConversationEvent::CLONE:
         // The instigator should only be able to have the receiver clone from them if:
         // 1. The instigator and receiver are online
-        // 2. The instigator is part of the conversation
-        // 3. The receiver is not already part of the conversation
+        // 2. The instigator is an active member of the conversation
+        // 3. The receiver has not joined yet, or previously left the conversation
         // 4. The receiver is a member of the instigator's repository
-        if (instigatorRepoAcc.repository && !receiverRepoAcc.repository && instigatorRepoAcc.connected
-            && receiverRepoAcc.connected) {
+        if (isActiveMember(event.instigatorAccountIndex)
+            && (!receiverRepoAcc.repository || receiverRepoAcc.client.hasLeftConversation())
+            && instigatorRepoAcc.connected && receiverRepoAcc.connected) {
             return isUserInRepo(event.instigatorAccountIndex, event.receivingAccountIndex);
         } else {
             return false;
@@ -1098,14 +1101,27 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::CLONE: {
+        const std::string conversationId = instigatorAccount.repository->id();
+        if (receivingAccount.client.hasLeftConversation()) {
+            // Keep the old repository until the leave commit has been propagated, then discard it
+            // before cloning the re-invitation to the same conversation.
+            receivingAccount.conversation.reset();
+            receivingAccount.repository->erase();
+            receivingAccount.repository.reset();
+            receivingAccount.pendingCloneMemberIndices.clear();
+            receivingAccount.devicesWithPendingFetch.clear();
+        }
+
         auto [repo, commits] = ConversationRepository::cloneConversation(receivingAccount.account,
                                                                          instigatorAccount.account->getAccountID(),
-                                                                         instigatorAccount.repository->id());
+                                                                         conversationId);
+        assert(repo->id() == conversationId);
         // Join right after clone
         const std::string commitID = repo->join();
         assert(!commitID.empty());
 
         receivingAccount.createConversation(std::move(repo), std::move(commits));
+        assert(!receivingAccount.client.hasLeftConversation());
         if (queue) {
             // Now we notify the others about the join
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.receivingAccountIndex, -1, event.timeOfOccurrence);
@@ -1245,12 +1261,12 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
     // Collect the accounts that are currently members of the conversation. Primary events are
     // always instigated by a member.
     std::vector<int> members;
-    int firstNonMember = numAccountsToSimulate_;
+    int firstNewMember = numAccountsToSimulate_;
     for (int i = 0; i < numAccountsToSimulate_; ++i) {
         if (isActiveMember(i))
             members.push_back(i);
         else if (!repositoryAccounts[i].repository)
-            firstNonMember = std::min(firstNonMember, i);
+            firstNewMember = std::min(firstNewMember, i);
     }
     assert(!members.empty());
 
@@ -1262,13 +1278,23 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
 
     switch (type) {
     case ConversationEvent::ADD_MEMBER:
-        // Prefer adding an account that is not yet a member, so that all accounts eventually join
-        // the conversation. If everyone is already a member, target a random account (the resulting
+        // Prefer an account that has never joined, then one that left and is no longer present in
+        // the instigator's repository. If neither exists, target a random account (the resulting
         // operation is a validated no-op, handled by triggerEvent).
-        if (firstNonMember < numAccountsToSimulate_) {
-            receiver = firstNonMember;
+        if (firstNewMember < numAccountsToSimulate_) {
+            receiver = firstNewMember;
         } else {
-            receiver = std::uniform_int_distribution<>(0, numAccountsToSimulate_ - 1)(gen_);
+            int firstDepartedMember = numAccountsToSimulate_;
+            for (int i = 0; i < numAccountsToSimulate_; ++i) {
+                if (i != instigator && repositoryAccounts[i].client.hasLeftConversation()
+                    && !isUserInRepo(instigator, i)) {
+                    firstDepartedMember = i;
+                    break;
+                }
+            }
+            receiver = firstDepartedMember < numAccountsToSimulate_
+                           ? firstDepartedMember
+                           : std::uniform_int_distribution<>(0, numAccountsToSimulate_ - 1)(gen_);
         }
         break;
     case ConversationEvent::CONNECT:
