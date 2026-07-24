@@ -1,0 +1,26 @@
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -2261,12 +2261,20 @@
+             err = rdata->msg_info.parse_err.next;
+             while (err != &rdata->msg_info.parse_err) {
+                 int len;
++                /* Guard against a malformed or uninitialized header name: a
++                 * negative slen makes "%.*s" degrade to "%s" and run strlen()
++                 * off a non-NUL-terminated, packet-derived buffer, crashing
++                 * the transport thread on malformed inbound SIP messages.
++                 */
++                int hname_len = (err->hname.slen > 0) ? (int)err->hname.slen : 0;
++                const char *hname_ptr = (hname_len && err->hname.ptr) ?
++                                        err->hname.ptr : "";
+                 len = pj_ansi_snprintf(tmp.ptr+tmp.slen, sizeof(buf)-tmp.slen,
+                                        ": %s exception when parsing '%.*s' "
+                                        "header on line %d col %d",
+                                        pj_exception_id_name(err->except_code),
+-                                       (int)err->hname.slen,
+-                                       (err->hname.ptr?err->hname.ptr:""),
++                                       hname_len,
++                                       hname_ptr,
+                                        err->line, err->col);
+                 if (len >= (int)sizeof(buf)-(int)tmp.slen) {
+                     len = (int)sizeof(buf)-(int)tmp.slen;

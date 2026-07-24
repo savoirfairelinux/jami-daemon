@@ -49,6 +49,7 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
+	$(APPLY) $(SRC)/pjproject/0005-fix-rx-parse-error-log-overread.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
