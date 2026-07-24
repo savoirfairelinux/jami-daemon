@@ -81,9 +81,21 @@ SimClient::onConversationMemberEvent(const std::string& accountId,
 void
 SimClient::onConversationReady(const std::string& accountId, const std::string& conversationId)
 {
+    if (conversationRemoved_) {
+        assert(accountId_ == accountId);
+        assert(conversationId_ == conversationId);
+
+        conversationRemoved_ = false;
+        adminId_.clear();
+        memberRole_.clear();
+        clearMessages();
+        activeCalls_.clear();
+        profile_.clear();
+        return;
+    }
+
     assert(accountId_.empty());
     assert(conversationId_.empty());
-    assert(!conversationRemoved_);
     accountId_ = accountId;
     conversationId_ = conversationId;
 }
