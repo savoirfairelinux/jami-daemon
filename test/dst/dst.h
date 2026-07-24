@@ -58,6 +58,7 @@ struct RepositoryAccount
     std::unique_ptr<Conversation> conversation;
     /*!< Indicator for whether or not the account is capable of performing connection-dependent actions*/
     bool connected {true};
+    std::vector<int> pendingCloneMemberIndices;
     std::unordered_set<std::string> devicesWithPendingFetch;
     /*!< Marker for initializing the account, only used in setUp()*/
     bool identityLoaded {false};
