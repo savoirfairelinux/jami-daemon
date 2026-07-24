@@ -1,0 +1,94 @@
+{
+    "accountIDs": [
+        "ALICE",
+        "BOB",
+        "CHARLIE",
+        "EMILY"
+    ],
+    "date": "20261011",
+    "desc": "Usually, when a user clones a conversation, they need to make a 'join' commit in order to transition from the 'invited' state to the 'member' state. However, it's possible for the user to already be in the 'member' state upon cloning. This is what happens in the scenario below: Bob joins the conversation, leaves it, then re-clones it from a member who has his initial 'join' commit but has not yet fetched his 'leave' commit.",
+    "seed": 0,
+    "time": "21:47",
+    "validatedEvents": [
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "EMILY"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "EMILY"
+        },
+        {
+            "eventType": "DISCONNECT",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "EMILY"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "EMILY"
+        },
+        {
+            "eventType": "LEAVE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "CONNECT",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "EMILY",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "EMILY",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "BOB"
+        }
+    ]
+}

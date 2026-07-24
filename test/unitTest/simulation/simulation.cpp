@@ -43,11 +43,13 @@ public:
 
     void testSimpleConversation();
     void testMissingMessage();
+    void testAlreadyMemberInClonedRepo();
 
     // Unit test suite
     CPPUNIT_TEST_SUITE(SimulationTest);
     CPPUNIT_TEST(testSimpleConversation);
     CPPUNIT_TEST(testMissingMessage);
+    CPPUNIT_TEST(testAlreadyMemberInClonedRepo);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -81,6 +83,12 @@ void
 SimulationTest::testMissingMessage()
 {
     runTest("simulation/data/missingMessage.json");
+}
+
+void
+SimulationTest::testAlreadyMemberInClonedRepo()
+{
+    runTest("simulation/data/alreadyMemberInClonedRepo.json");
 }
 
 } // namespace test
