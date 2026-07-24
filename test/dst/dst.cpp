@@ -472,6 +472,15 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         instigatorAccount.connected = true;
 
         if (queue) {
+            for (int memberIndex : instigatorAccount.pendingCloneMemberIndices) {
+                scheduleGitEvent(*queue,
+                                 ConversationEvent::CLONE,
+                                 event.instigatorAccountIndex,
+                                 memberIndex,
+                                 event.timeOfOccurrence);
+            }
+            instigatorAccount.pendingCloneMemberIndices.clear();
+
             // We should eventually incorporate the DRT and message notifications into the simulation, but for
             // now just have members sync with everyone else in the conversation when they connect.
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
@@ -496,11 +505,15 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         if (!commitID.empty()) {
             instigatorAccount.conversation->announce(commitID, true);
             if (queue) {
-                scheduleGitEvent(*queue,
-                                 ConversationEvent::CLONE,
-                                 event.instigatorAccountIndex,
-                                 event.receivingAccountIndex,
-                                 event.timeOfOccurrence);
+                if (instigatorAccount.connected) {
+                    scheduleGitEvent(*queue,
+                                     ConversationEvent::CLONE,
+                                     event.instigatorAccountIndex,
+                                     event.receivingAccountIndex,
+                                     event.timeOfOccurrence);
+                } else {
+                    instigatorAccount.pendingCloneMemberIndices.push_back(event.receivingAccountIndex);
+                }
             }
         }
         break;
@@ -780,6 +793,7 @@ ConversationDST::resetRepositories()
         repoAcc.repository.reset();
         repoAcc.conversation.reset();
         repoAcc.connected = true;
+        repoAcc.pendingCloneMemberIndices.clear();
         repoAcc.devicesWithPendingFetch.clear();
         repoAcc.client = SimClient();
     }
