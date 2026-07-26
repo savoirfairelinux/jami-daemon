@@ -281,6 +281,37 @@ AccountManager::reloadContacts()
     }
 }
 
+/**
+ * Publish `crl` as the account's current revocation list, retiring the one it supersedes.
+ *
+ * The id is derived from the list's own content, so a newer list necessarily lands under a
+ * different id and cannot replace its predecessor in place. Reusing one fixed id for the account
+ * would not work: the value is unsigned USER_DATA, whose edit policy denies edition, and a
+ * permanent put whose id the closest nodes already hold is renewed with an id-only refresh, which
+ * would extend the lifetime of the superseded list rather than replace it. Signing the value to
+ * reach the sequence-number edit path would in turn break across devices, since that path requires
+ * an unchanged owner.
+ *
+ * So cancel the put being superseded instead: cancelPut() both drops the permanent put and removes
+ * the value from the local store, so the old list stops being re-announced and expires from the
+ * network within one value-expiration period. Without this, revoking a device would leave the put
+ * registered at registration time re-announcing the pre-revocation list for the rest of the run.
+ */
+void
+AccountManager::publishCurrentCrl(const dht::InfoHash& h,
+                                  const std::shared_ptr<dht::crypto::RevocationList>& crl)
+{
+    if (not crl or not dht_)
+        return;
+    const dht::Value::Id id = crlValueId(*crl);
+    if (const auto superseded = publishedCrlId_.exchange(id); superseded and superseded != id)
+        dht_->cancelPut(h, superseded);
+    auto crlVal = std::make_shared<dht::Value>(*crl);
+    crlVal->priority = 1; // CRLs are not urgent — use normal priority
+    crlVal->id = id;
+    dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+}
+
 void
 AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
 {
@@ -288,6 +319,10 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         if (publishPresence) {
+            // Pin the announcement to a deterministic id: published with an unset id, it would be
+            // assigned a random one and every daemon run would leave another copy of the same
+            // announcement on the account key.
+            info_->announce->id = dhtValueId(*info_->announce);
             dht_->put(
                 h,
                 info_->announce,
@@ -302,10 +337,17 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                 {},
                 true);
         }
-        for (const auto& crl : info_->identity.second->issuer->getRevocationLists()) {
-            auto crlVal = std::make_shared<dht::Value>(*crl);
-            crlVal->priority = 1; // CRLs are not urgent — use normal priority
-            dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+        // Publish only the most recent revocation list, under a deterministic id.
+        //
+        // Revocation lists are cumulative, so the newest supersedes every earlier one. Republishing
+        // the whole history on each registration, with a random id per put and a permanent put that
+        // is re-announced every value-expiration period, makes the account key grow without bound.
+        {
+            std::shared_ptr<dht::crypto::RevocationList> newest;
+            for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
+                if (not newest or crl->getUpdateTime() > newest->getUpdateTime())
+                    newest = crl;
+            publishCurrentCrl(h, newest);
         }
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
             if (dev.pk) {
