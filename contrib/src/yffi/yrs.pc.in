@@ -1,0 +1,11 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: yrs
+Description: Y-CRDT (yrs) C FFI - CRDT engine for collaborative editing
+Version: @VERSION@
+Libs: -L${libdir} -lyrs
+Libs.private: @PRIVATE_LIBS@
+Cflags: -I${includedir}
