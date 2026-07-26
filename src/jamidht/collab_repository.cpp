@@ -1,0 +1,870 @@
+/*
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+#include "collab_repository.h"
+
+#include "base64.h"
+#include "fileutils.h"
+#include "git_def.h"
+#include "jamiaccount.h"
+#include "json_utils.h"
+#include "logger.h"
+
+#include <algorithm>
+#include <charconv>
+#include <ctime>
+#include <sstream>
+
+namespace jami {
+
+namespace {
+
+constexpr std::string_view META_FILE {"meta.json"};
+constexpr std::string_view PROJECTION_FILE {"document.md"};
+constexpr std::string_view DELTAS_DIR {"deltas"};
+constexpr std::string_view MAIN_REF {"refs/heads/main"};
+
+// Regular, non-executable file mode for blobs stored in the tree.
+constexpr git_filemode_t BLOB_MODE {GIT_FILEMODE_BLOB};
+
+// A document tree is root/deltas/<device>/<blob>; anything deeper is a peer
+// serving something it should not.
+constexpr unsigned MAX_TREE_DEPTH {8};
+
+struct GitTreeBuilderDeleter
+{
+    void operator()(git_treebuilder* p) const { git_treebuilder_free(p); }
+};
+using GitTreeBuilder = std::unique_ptr<git_treebuilder, GitTreeBuilderDeleter>;
+
+struct GitBlobDeleter
+{
+    void operator()(git_blob* p) const { git_blob_free(p); }
+};
+using GitBlob = std::unique_ptr<git_blob, GitBlobDeleter>;
+
+struct GitTreeEntryDeleter
+{
+    void operator()(git_tree_entry* p) const { git_tree_entry_free(p); }
+};
+using GitTreeEntry = std::unique_ptr<git_tree_entry, GitTreeEntryDeleter>;
+
+std::string
+oidToString(const git_oid& oid)
+{
+    const char* str = git_oid_tostr_s(&oid);
+    return str ? std::string {str} : std::string {};
+}
+
+/// Read a blob's content, given a tree entry that is expected to be a blob.
+std::string
+readBlob(git_repository* repo, const git_tree_entry* entry)
+{
+    if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_BLOB)
+        return {};
+    git_blob* blob_ptr = nullptr;
+    if (git_blob_lookup(&blob_ptr, repo, git_tree_entry_id(entry)) < 0)
+        return {};
+    GitBlob blob {blob_ptr};
+    const auto* data = static_cast<const char*>(git_blob_rawcontent(blob.get()));
+    return data ? std::string(data, git_blob_rawsize(blob.get())) : std::string {};
+}
+
+/// Read a blob addressed by its path relative to @c tree.
+std::string
+readBlobAt(git_repository* repo, git_tree* tree, const std::string& path)
+{
+    if (!tree)
+        return {};
+    git_tree_entry* entry_ptr = nullptr;
+    if (git_tree_entry_bypath(&entry_ptr, tree, path.c_str()) < 0)
+        return {};
+    GitTreeEntry entry {entry_ptr};
+    return readBlob(repo, entry.get());
+}
+
+/// Look up a subtree of @c parent by name, or nullptr when absent.
+GitTree
+subTree(git_repository* repo, git_tree* parent, std::string_view name)
+{
+    if (!parent)
+        return nullptr;
+    const auto* entry = git_tree_entry_byname(parent, std::string(name).c_str());
+    if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_TREE)
+        return nullptr;
+    git_tree* tree_ptr = nullptr;
+    if (git_tree_lookup(&tree_ptr, repo, git_tree_entry_id(entry)) < 0)
+        return nullptr;
+    return GitTree {tree_ptr};
+}
+
+/**
+ * Union of two trees, computed identically on every replica.
+ *
+ * Under deltas/ the entry names embed the hash of their content, so a name never
+ * denotes two different blobs and the union is a plain set union. The derived
+ * files at the root can genuinely differ, and are resolved by taking the greater
+ * object id. Both rules are commutative, associative and idempotent, which is
+ * what makes the result independent of the merge order and lets two replicas
+ * converge on the same tree.
+ */
+bool
+unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out, unsigned depth = 0)
+{
+    // A legitimate layout is three levels deep. The remote tree is whatever a
+    // peer chose to serve, so cap the recursion rather than let a deeply nested
+    // one overflow the worker thread's stack.
+    if (depth > MAX_TREE_DEPTH)
+        return false;
+
+    git_treebuilder* bld_ptr = nullptr;
+    if (git_treebuilder_new(&bld_ptr, repo, local) < 0)
+        return false;
+    GitTreeBuilder bld {bld_ptr};
+
+    const size_t count = remote ? git_tree_entrycount(remote) : 0;
+    for (size_t i = 0; i < count; ++i) {
+        const auto* rEntry = git_tree_entry_byindex(remote, i);
+        if (!rEntry)
+            return false;
+        const auto* name = git_tree_entry_name(rEntry);
+        const auto type = git_tree_entry_type(rEntry);
+        const auto* lEntry = local ? git_tree_entry_byname(local, name) : nullptr;
+
+        // A tree entry only ever holds a tree or a blob here. A submodule would
+        // point outside this repository, and there is nothing sensible to merge.
+        if (type != GIT_OBJECT_TREE && type != GIT_OBJECT_BLOB)
+            return false;
+        // Same name, different kind on each side: the peer is not serving the
+        // layout we wrote. Resolving that by object id would let a blob named
+        // "deltas" replace our whole deltas/ tree, so refuse the merge instead.
+        if (lEntry && git_tree_entry_type(lEntry) != type)
+            return false;
+
+        // Every failure below has to abort the whole union. Skipping an entry
+        // would still produce a merge commit recording the remote as a parent,
+        // so the dropped deltas would never be looked at again.
+        if (type == GIT_OBJECT_TREE) {
+            GitTree rSub {nullptr};
+            {
+                git_tree* p = nullptr;
+                if (git_tree_lookup(&p, repo, git_tree_entry_id(rEntry)) < 0)
+                    return false;
+                rSub.reset(p);
+            }
+            GitTree lSub {nullptr};
+            if (lEntry) {
+                git_tree* p = nullptr;
+                if (git_tree_lookup(&p, repo, git_tree_entry_id(lEntry)) < 0)
+                    return false;
+                lSub.reset(p);
+            }
+            git_oid merged;
+            if (!unionTrees(repo, lSub.get(), rSub.get(), merged, depth + 1))
+                return false;
+            if (git_treebuilder_insert(nullptr, bld.get(), name, &merged, GIT_FILEMODE_TREE) < 0)
+                return false;
+        } else {
+            // Under deltas/ a name embeds its own content hash, so two sides can
+            // never disagree. The derived files at the root (meta.json,
+            // document.md) can, and picking the greater oid resolves it the same
+            // way on both replicas whatever the merge order: that is what makes
+            // the union a lattice, hence convergent. The next checkpoint rewrites
+            // the projection from the merged state anyway.
+            const auto* winner = git_tree_entry_id(rEntry);
+            auto mode = git_tree_entry_filemode(rEntry);
+            if (lEntry) {
+                auto cmp = git_oid_cmp(git_tree_entry_id(lEntry), winner);
+                if (cmp > 0) {
+                    winner = git_tree_entry_id(lEntry);
+                    mode = git_tree_entry_filemode(lEntry);
+                } else if (cmp == 0) {
+                    // Same content, different filemode: the rule above would make
+                    // each replica keep the other's mode and the trees would never
+                    // match. Order this field too.
+                    mode = std::max(mode, git_tree_entry_filemode(lEntry));
+                }
+            }
+            if (git_treebuilder_insert(nullptr, bld.get(), name, winner, mode) < 0)
+                return false;
+        }
+    }
+    return git_treebuilder_write(&out, bld.get()) == 0;
+}
+
+/// Insert (or replace) an entry in a copy of @c parent, returning the new tree.
+bool
+withEntry(
+    git_repository* repo, git_tree* parent, std::string_view name, const git_oid& id, git_filemode_t mode, git_oid& out)
+{
+    git_treebuilder* bld_ptr = nullptr;
+    if (git_treebuilder_new(&bld_ptr, repo, parent) < 0)
+        return false;
+    GitTreeBuilder bld {bld_ptr};
+    if (git_treebuilder_insert(nullptr, bld.get(), std::string(name).c_str(), &id, mode) < 0)
+        return false;
+    return git_treebuilder_write(&out, bld.get()) == 0;
+}
+
+} // namespace
+
+class CollabRepository::Impl
+{
+public:
+    Impl(const std::shared_ptr<JamiAccount>& account, std::string path)
+        : account_(account)
+        , accountId_(account ? account->getAccountID() : std::string {})
+        , deviceId_(account ? account->currentDeviceId() : std::string {})
+        , path_(std::move(path))
+    {}
+
+    GitRepository repository() const
+    {
+        git_repository* repo = nullptr;
+        if (git_repository_open(&repo, path_.c_str()) != 0)
+            return nullptr;
+        return GitRepository {repo};
+    }
+
+    /// Tip commit of @c main, or nullptr when the repository is empty.
+    GitCommit headCommit(git_repository* repo) const
+    {
+        git_oid oid;
+        if (git_reference_name_to_id(&oid, repo, std::string(MAIN_REF).c_str()) < 0)
+            return nullptr;
+        git_commit* commit = nullptr;
+        if (git_commit_lookup(&commit, repo, &oid) < 0)
+            return nullptr;
+        return GitCommit {commit};
+    }
+
+    GitTree headTree(const GitCommit& commit) const
+    {
+        if (!commit)
+            return nullptr;
+        git_tree* tree = nullptr;
+        if (git_commit_tree(&tree, commit.get()) < 0)
+            return nullptr;
+        return GitTree {tree};
+    }
+
+    /// Signature identifying this device; mirrors the conversation repository.
+    GitSignature signature() const
+    {
+        auto account = account_.lock();
+        if (!account)
+            return nullptr;
+        auto name = account->getUsername();
+        if (name.empty())
+            name = deviceId_;
+        git_signature* sig = nullptr;
+        if (git_signature_new(&sig, name.c_str(), deviceId_.c_str(), std::time(nullptr), 0) < 0
+            && git_signature_new(&sig, deviceId_.c_str(), deviceId_.c_str(), std::time(nullptr), 0) < 0)
+            return nullptr;
+        return GitSignature {sig};
+    }
+
+    /**
+     * Create a commit signed with the account identity and move @c main to it.
+     * Signing lets peers verify that a checkpoint really comes from a member's
+     * device, exactly like conversation commits.
+     */
+    std::string commit(git_repository* repo,
+                       const git_oid& treeId,
+                       const std::string& message,
+                       const std::vector<git_commit*>& parents)
+    {
+        auto account = account_.lock();
+        if (!account)
+            return {};
+        auto sig = signature();
+        if (!sig)
+            return {};
+
+        git_tree* tree_ptr = nullptr;
+        if (git_tree_lookup(&tree_ptr, repo, &treeId) < 0)
+            return {};
+        GitTree tree {tree_ptr};
+
+        git_buf to_sign = {};
+        // The last argument of git_commit_create_buffer is of type
+        // 'const git_commit **' in all versions of libgit2 except 1.8.0,
+        // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+        git_commit* const* parentsPtr = parents.data();
+#else
+        const git_commit** parentsPtr = const_cast<const git_commit**>(parents.data());
+#endif
+        if (git_commit_create_buffer(&to_sign,
+                                     repo,
+                                     sig.get(),
+                                     sig.get(),
+                                     nullptr,
+                                     message.c_str(),
+                                     tree.get(),
+                                     parents.size(),
+                                     parents.empty() ? nullptr : parentsPtr)
+            < 0) {
+            JAMI_ERROR("[Account {}] [Document {}] Unable to create commit buffer", accountId_, path_);
+            return {};
+        }
+
+        auto toSignVec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+        auto signedBuf = account->identity().first->sign(toSignVec);
+        auto signedStr = base64::encode(signedBuf);
+        git_oid commitId;
+        if (git_commit_create_with_signature(&commitId, repo, to_sign.ptr, signedStr.c_str(), "signature") < 0) {
+            JAMI_ERROR("[Account {}] [Document {}] Unable to sign commit", accountId_, path_);
+            git_buf_dispose(&to_sign);
+            return {};
+        }
+        git_buf_dispose(&to_sign);
+
+        git_reference* ref = nullptr;
+        if (git_reference_create(&ref, repo, std::string(MAIN_REF).c_str(), &commitId, true, nullptr) < 0) {
+            JAMI_ERROR("[Account {}] [Document {}] Unable to move main", accountId_, path_);
+            return {};
+        }
+        git_reference_free(ref);
+        return oidToString(commitId);
+    }
+
+    std::weak_ptr<JamiAccount> account_;
+    std::string accountId_;
+    std::string deviceId_;
+    std::string path_;
+    mutable std::mutex mutex_;
+};
+
+CollabRepository::CollabRepository(const std::shared_ptr<JamiAccount>& account,
+                                   std::string conversationId,
+                                   std::string documentId,
+                                   std::string path)
+    : pimpl_(std::make_unique<Impl>(account, path))
+    , conversationId_(std::move(conversationId))
+    , documentId_(std::move(documentId))
+    , path_(std::move(path))
+{}
+
+CollabRepository::~CollabRepository() = default;
+
+bool
+CollabRepository::isValidId(std::string_view id)
+{
+    // Both ids are generated as fixed-length hexadecimal strings. Enforcing that
+    // alphabet here is what keeps a peer-supplied id from reaching outside the
+    // account's own directory: no separator, no "..", no absolute path, nothing
+    // the filesystem could interpret. Every path helper below funnels through it.
+    if (id.empty() || id.size() > 64)
+        return false;
+    return std::all_of(id.begin(), id.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+std::filesystem::path
+CollabRepository::conversationPath(const std::string& accountId, const std::string& conversationId)
+{
+    if (!isValidId(conversationId))
+        return {};
+    return fileutils::get_data_dir() / accountId / "collab" / conversationId;
+}
+
+std::filesystem::path
+CollabRepository::documentPath(const std::string& accountId,
+                               const std::string& conversationId,
+                               const std::string& documentId)
+{
+    if (!isValidId(documentId))
+        return {};
+    auto base = conversationPath(accountId, conversationId);
+    if (base.empty())
+        return {};
+    return base / documentId;
+}
+
+std::vector<std::string>
+CollabRepository::listDocuments(const std::string& accountId, const std::string& conversationId)
+{
+    std::vector<std::string> ids;
+    std::error_code ec;
+    auto base = conversationPath(accountId, conversationId);
+    for (const auto& entry : std::filesystem::directory_iterator(base, ec)) {
+        if (entry.is_directory(ec))
+            ids.emplace_back(entry.path().filename().string());
+    }
+    return ids;
+}
+
+std::shared_ptr<CollabRepository>
+CollabRepository::openOrInit(const std::shared_ptr<JamiAccount>& account,
+                             const std::string& conversationId,
+                             const std::string& documentId)
+{
+    if (!account)
+        return nullptr;
+    auto path = documentPath(account->getAccountID(), conversationId, documentId);
+    if (path.empty()) {
+        JAMI_WARNING("[Account {}] Refusing document id {} in conversation {}: not a valid id",
+                     account->getAccountID(),
+                     documentId,
+                     conversationId);
+        return nullptr;
+    }
+    // One instance per repository, process-wide. The per-instance mutex is what
+    // serializes checkpoints against merges, so handing two callers their own
+    // object would let a checkpoint and a fetch both move refs/heads/main from
+    // the same starting point, and one of the two sets of edits would be lost.
+    static std::mutex registryMtx;
+    static std::map<std::string, std::weak_ptr<CollabRepository>> registry;
+    std::lock_guard registryLk(registryMtx);
+    auto key = path.string();
+    if (auto it = registry.find(key); it != registry.end()) {
+        if (auto existing = it->second.lock())
+            return existing;
+        registry.erase(it);
+    }
+    // Drop entries whose repository is gone, so the map does not grow with every
+    // document ever touched.
+    for (auto it = registry.begin(); it != registry.end();)
+        it = it->second.expired() ? registry.erase(it) : std::next(it);
+
+    auto repo = std::shared_ptr<CollabRepository>(
+        new CollabRepository(account, conversationId, documentId, path.string()));
+
+    if (!std::filesystem::exists(path / "HEAD")) {
+        std::error_code ec;
+        std::filesystem::create_directories(path, ec);
+        git_repository* raw = nullptr;
+        git_repository_init_options opts;
+        git_repository_init_options_init(&opts, GIT_REPOSITORY_INIT_OPTIONS_VERSION);
+        // Bare: the payload lives in the object database, and no working copy is
+        // needed since trees are built programmatically. Halves the footprint.
+        opts.flags = GIT_REPOSITORY_INIT_MKPATH | GIT_REPOSITORY_INIT_BARE;
+        opts.initial_head = "main";
+        if (git_repository_init_ext(&raw, path.string().c_str(), &opts) < 0) {
+            JAMI_ERROR("[Account {}] [Document {}] Unable to initialize repository",
+                       account->getAccountID(),
+                       documentId);
+            return nullptr;
+        }
+        git_repository_free(raw);
+    }
+    registry[key] = repo;
+    return repo;
+}
+
+std::shared_ptr<CollabRepository>
+CollabRepository::create(const std::shared_ptr<JamiAccount>& account,
+                         const std::string& conversationId,
+                         const std::string& documentId,
+                         const std::string& displayName,
+                         const std::string& kind)
+{
+    if (!account)
+        return nullptr;
+    auto path = documentPath(account->getAccountID(), conversationId, documentId);
+    if (path.empty() || std::filesystem::exists(path / "HEAD")) {
+        JAMI_WARNING("[Account {}] [Document {}] Repository already exists", account->getAccountID(), documentId);
+        return nullptr;
+    }
+    auto self = openOrInit(account, conversationId, documentId);
+    if (!self)
+        return nullptr;
+
+    auto repo = self->pimpl_->repository();
+    if (!repo)
+        return nullptr;
+
+    Json::Value meta;
+    meta["documentId"] = documentId;
+    meta["conversationId"] = conversationId;
+    meta["displayName"] = displayName;
+    meta["kind"] = kind.empty() ? "text" : kind;
+    meta["createdBy"] = account->getUsername();
+    meta["createdAt"] = static_cast<Json::Int64>(std::time(nullptr));
+    auto metaStr = json::toString(meta);
+
+    git_oid metaBlob;
+    if (git_blob_create_from_buffer(&metaBlob, repo.get(), metaStr.data(), metaStr.size()) < 0)
+        return nullptr;
+
+    git_oid treeId;
+    if (!withEntry(repo.get(), nullptr, META_FILE, metaBlob, BLOB_MODE, treeId))
+        return nullptr;
+
+    auto commitId = self->pimpl_->commit(repo.get(), treeId, "document created", {});
+    if (commitId.empty())
+        return nullptr;
+    JAMI_LOG("[Account {}] [Document {}] Repository created at {}", account->getAccountID(), documentId, self->path_);
+    return self;
+}
+
+std::shared_ptr<CollabRepository>
+CollabRepository::open(const std::shared_ptr<JamiAccount>& account,
+                       const std::string& conversationId,
+                       const std::string& documentId)
+{
+    if (!account)
+        return nullptr;
+    auto path = documentPath(account->getAccountID(), conversationId, documentId);
+    if (!std::filesystem::exists(path / "HEAD"))
+        return nullptr;
+    return std::shared_ptr<CollabRepository>(new CollabRepository(account, conversationId, documentId, path.string()));
+}
+
+std::string
+CollabRepository::head() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    git_oid oid;
+    if (git_reference_name_to_id(&oid, repo.get(), std::string(MAIN_REF).c_str()) < 0)
+        return {};
+    return oidToString(oid);
+}
+
+CollabRepository::Meta
+CollabRepository::meta() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    Meta out;
+    out.documentId = documentId_;
+    out.conversationId = conversationId_;
+
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return out;
+    auto commit = pimpl_->headCommit(repo.get());
+    auto tree = pimpl_->headTree(commit);
+    auto content = readBlobAt(repo.get(), tree.get(), std::string(META_FILE));
+    if (content.empty())
+        return out;
+
+    Json::Value root;
+    if (!json::parse(content, root))
+        return out;
+    out.displayName = root.get("displayName", "").asString();
+    out.kind = root.get("kind", "text").asString();
+    out.createdBy = root.get("createdBy", "").asString();
+    out.createdAt = root.get("createdAt", 0).asInt64();
+    return out;
+}
+
+std::string
+CollabRepository::appendCheckpoint(const std::vector<std::string>& updates, const std::string& projection)
+{
+    if (updates.empty())
+        return {};
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+
+    auto parent = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(parent);
+
+    // One blob per checkpoint, not per update: a burst of typing costs a single
+    // git object, which is what keeps the repository small.
+    std::string payload;
+    for (const auto& u : updates) {
+        payload += u;
+        payload += '\n';
+    }
+    git_oid deltaBlob;
+    if (git_blob_create_from_buffer(&deltaBlob, repo.get(), payload.data(), payload.size()) < 0)
+        return {};
+
+    auto deltasTree = subTree(repo.get(), root.get(), DELTAS_DIR);
+    auto deviceTree = deltasTree ? subTree(repo.get(), deltasTree.get(), pimpl_->deviceId_) : nullptr;
+
+    // Sequence number for readability, blob hash for uniqueness: two distinct
+    // checkpoints can never share a name, so merging is a plain set union.
+    const size_t seq = deviceTree ? git_tree_entrycount(deviceTree.get()) : 0;
+    auto entryName = fmt::format("{:06d}-{}.jsonl", seq, oidToString(deltaBlob).substr(0, 8));
+
+    git_oid newDeviceTree;
+    if (!withEntry(repo.get(), deviceTree.get(), entryName, deltaBlob, BLOB_MODE, newDeviceTree))
+        return {};
+    git_oid newDeltasTree;
+    if (!withEntry(repo.get(), deltasTree.get(), pimpl_->deviceId_, newDeviceTree, GIT_FILEMODE_TREE, newDeltasTree))
+        return {};
+
+    git_oid newRoot;
+    if (!withEntry(repo.get(), root.get(), DELTAS_DIR, newDeltasTree, GIT_FILEMODE_TREE, newRoot))
+        return {};
+
+    // The readable projection is what makes `git show` and `git log -p` useful.
+    // It is derived data: it costs little once git delta-compresses successive
+    // revisions, and it is regenerated rather than merged.
+    if (!projection.empty()) {
+        git_oid projBlob;
+        if (git_blob_create_from_buffer(&projBlob, repo.get(), projection.data(), projection.size()) == 0) {
+            git_tree* rootTree = nullptr;
+            if (git_tree_lookup(&rootTree, repo.get(), &newRoot) == 0) {
+                GitTree updated {rootTree};
+                git_oid withProj;
+                if (withEntry(repo.get(), updated.get(), PROJECTION_FILE, projBlob, BLOB_MODE, withProj))
+                    newRoot = withProj;
+            }
+        }
+    }
+
+    std::vector<git_commit*> parents;
+    if (parent)
+        parents.push_back(parent.get());
+    return pimpl_->commit(repo.get(), newRoot, fmt::format("checkpoint: {} update(s)", updates.size()), parents);
+}
+
+std::string
+CollabRepository::refreshProjection(const std::string& projection)
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto parent = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(parent);
+    if (!root)
+        return {};
+
+    // Idempotent on purpose: after a merge, both replicas recompute the same
+    // text from the same set of deltas, so the second one to run finds the blob
+    // already in place and commits nothing. Without that, the two would keep
+    // notifying each other forever.
+    if (readBlobAt(repo.get(), root.get(), std::string(PROJECTION_FILE)) == projection)
+        return {};
+
+    git_oid projBlob;
+    if (git_blob_create_from_buffer(&projBlob, repo.get(), projection.data(), projection.size()) < 0)
+        return {};
+    git_oid newRoot;
+    if (!withEntry(repo.get(), root.get(), PROJECTION_FILE, projBlob, BLOB_MODE, newRoot))
+        return {};
+
+    std::vector<git_commit*> parents;
+    if (parent)
+        parents.push_back(parent.get());
+    return pimpl_->commit(repo.get(), newRoot, "projection: refresh after merge", parents);
+}
+
+std::string
+CollabRepository::setDisplayName(const std::string& displayName)
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto parent = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(parent);
+    if (!root)
+        return {};
+
+    auto content = readBlobAt(repo.get(), root.get(), std::string(META_FILE));
+    Json::Value meta;
+    if (!content.empty())
+        json::parse(content, meta);
+    meta["displayName"] = displayName;
+    auto metaStr = json::toString(meta);
+
+    git_oid metaBlob;
+    if (git_blob_create_from_buffer(&metaBlob, repo.get(), metaStr.data(), metaStr.size()) < 0)
+        return {};
+    git_oid newRoot;
+    if (!withEntry(repo.get(), root.get(), META_FILE, metaBlob, BLOB_MODE, newRoot))
+        return {};
+
+    std::vector<git_commit*> parents;
+    if (parent)
+        parents.push_back(parent.get());
+    return pimpl_->commit(repo.get(), newRoot, "document renamed", parents);
+}
+
+std::vector<std::string>
+CollabRepository::updates() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    std::vector<std::string> out;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return out;
+    auto commit = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(commit);
+    auto deltas = subTree(repo.get(), root.get(), DELTAS_DIR);
+    if (!deltas)
+        return out;
+
+    // Y-CRDT updates are commutative, so the replay order across devices does
+    // not affect the result; entries are walked in tree order for determinism.
+    const size_t devices = git_tree_entrycount(deltas.get());
+    for (size_t d = 0; d < devices; ++d) {
+        auto deviceTree = subTree(repo.get(),
+                                  deltas.get(),
+                                  git_tree_entry_name(git_tree_entry_byindex(deltas.get(), d)));
+        if (!deviceTree)
+            continue;
+        const size_t files = git_tree_entrycount(deviceTree.get());
+        for (size_t f = 0; f < files; ++f) {
+            auto content = readBlob(repo.get(), git_tree_entry_byindex(deviceTree.get(), f));
+            std::istringstream stream(content);
+            for (std::string line; std::getline(stream, line);) {
+                if (!line.empty())
+                    out.emplace_back(std::move(line));
+            }
+        }
+    }
+    return out;
+}
+
+size_t
+CollabRepository::updateCount() const
+{
+    return updates().size();
+}
+
+bool
+CollabRepository::isEmpty() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return true;
+    return pimpl_->headCommit(repo.get()) == nullptr;
+}
+
+std::string
+CollabRepository::projection() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto commit = pimpl_->headCommit(repo.get());
+    auto tree = pimpl_->headTree(commit);
+    return readBlobAt(repo.get(), tree.get(), std::string(PROJECTION_FILE));
+}
+
+std::vector<CollabRepository::HistoryEntry>
+CollabRepository::history(size_t max) const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    std::vector<HistoryEntry> out;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return out;
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0)
+        return out;
+    GitRevWalker walker {walker_ptr};
+    if (git_revwalk_push_ref(walker.get(), std::string(MAIN_REF).c_str()) < 0)
+        return out;
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+
+    git_oid oid;
+    while (git_revwalk_next(&oid, walker.get()) == 0) {
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+            continue;
+        GitCommit commit {commit_ptr};
+        HistoryEntry entry;
+        entry.commitId = oidToString(oid);
+        entry.timestamp = git_commit_time(commit.get());
+        if (const auto* sig = git_commit_author(commit.get())) {
+            entry.author = sig->name ? sig->name : "";
+            entry.deviceId = sig->email ? sig->email : "";
+        }
+        if (const auto* msg = git_commit_message(commit.get())) {
+            unsigned count = 0;
+            const std::string_view view {msg};
+            if (auto pos = view.find("checkpoint: "); pos != std::string_view::npos) {
+                const auto* begin = view.data() + pos + 12;
+                std::from_chars(begin, view.data() + view.size(), count);
+            }
+            entry.deltaCount = count;
+        }
+        out.push_back(std::move(entry));
+        if (max && out.size() >= max)
+            break;
+    }
+    return out;
+}
+
+bool
+CollabRepository::mergeRemote(const std::string& remoteDeviceId)
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+
+    auto remoteRef = fmt::format("refs/remotes/{}/main", remoteDeviceId);
+    git_oid remoteOid;
+    if (git_reference_name_to_id(&remoteOid, repo.get(), remoteRef.c_str()) < 0)
+        return false;
+
+    auto local = pimpl_->headCommit(repo.get());
+    if (!local) {
+        // Nothing local yet: adopt the remote tip verbatim.
+        git_reference* ref = nullptr;
+        if (git_reference_create(&ref, repo.get(), std::string(MAIN_REF).c_str(), &remoteOid, true, nullptr) < 0)
+            return false;
+        git_reference_free(ref);
+        return true;
+    }
+
+    const auto localOid = *git_commit_id(local.get());
+    if (git_oid_equal(&localOid, &remoteOid))
+        return false;
+
+    // Already up to date when the remote tip is an ancestor of ours.
+    if (git_graph_descendant_of(repo.get(), &localOid, &remoteOid) == 1)
+        return false;
+
+    git_commit* remote_ptr = nullptr;
+    if (git_commit_lookup(&remote_ptr, repo.get(), &remoteOid) < 0)
+        return false;
+    GitCommit remote {remote_ptr};
+
+    // Fast-forward when we have nothing the remote does not already have.
+    if (git_graph_descendant_of(repo.get(), &remoteOid, &localOid) == 1) {
+        git_reference* ref = nullptr;
+        if (git_reference_create(&ref, repo.get(), std::string(MAIN_REF).c_str(), &remoteOid, true, nullptr) < 0)
+            return false;
+        git_reference_free(ref);
+        return true;
+    }
+
+    auto localTree = pimpl_->headTree(local);
+    git_tree* remoteTree_ptr = nullptr;
+    if (git_commit_tree(&remoteTree_ptr, remote.get()) < 0)
+        return false;
+    GitTree remoteTree {remoteTree_ptr};
+
+    // Diverged: union the trees. This never conflicts (see class documentation),
+    // so no textual merge and no user-visible conflict can happen.
+    git_oid mergedTree;
+    if (!unionTrees(repo.get(), localTree.get(), remoteTree.get(), mergedTree))
+        return false;
+
+    std::vector<git_commit*> parents {local.get(), remote.get()};
+    return !pimpl_->commit(repo.get(), mergedTree, "merge: union of collaborative updates", parents).empty();
+}
+
+} // namespace jami
