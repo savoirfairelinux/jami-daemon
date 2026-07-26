@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -99,7 +100,11 @@ public:
                    int anchor);
 
     /// Handle a collaborative-editing payload received from a peer (real-time).
-    void onRemotePayload(const std::string& from, const std::string& jsonPayload);
+    /// @param from        the sender's account URI
+    /// @param fromDevice  the sending device, needed to fetch what it announces
+    void onRemotePayload(const std::string& from,
+                         const std::string& fromDevice,
+                         const std::string& jsonPayload);
 
     /// Checkpoints of a document, newest first (@c max == 0 means no limit).
     std::vector<CollabRepository::HistoryEntry> history(const std::string& conversationId,
@@ -130,6 +135,11 @@ private:
     /// Replay the document repository's stored updates into a freshly created
     /// session, so opening a document always shows its full content, even after a
     /// daemon restart.
+    /// Whether a COLLAB_DOC commit in @c conversationId announced this document.
+    bool isAnnouncedDocument(const std::string& conversationId, const std::string& documentId);
+    /// Announced document ids per conversation, so the check above stays O(1).
+    std::mutex announcedMtx_;
+    std::map<std::string, std::set<std::string>> announced_;
     void loadPersistedState(const std::shared_ptr<Session>& session);
     /// Apply every update stored in the repository, skipping unreadable ones.
     void replayStoredUpdates(const std::shared_ptr<Session>& session, bool silent);
@@ -160,6 +170,9 @@ private:
 
     std::mutex mutex_;
     std::map<std::string, std::shared_ptr<Session>> sessions_;
+    /// Documents already asked for since the account registered, so that paging
+    /// through history does not re-request every document over and over.
+    std::set<std::string> syncedDocuments_;
 };
 
 } // namespace jami

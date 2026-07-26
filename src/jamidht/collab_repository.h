@@ -190,6 +190,16 @@ public:
     std::vector<HistoryEntry> history(size_t max = 0) const;
 
     /**
+     * Fetch @c main from a peer device into @c refs/remotes/<deviceId>/main.
+     *
+     * Travels over the peer-to-peer git transport, like a conversation does; the
+     * channel to that device must already be open.
+     *
+     * @return true on success.
+     */
+    bool fetch(const std::string& remoteDeviceId);
+
+    /**
      * Merge a reference fetched from @c remoteDeviceId into @c main.
      *
      * The merge is the union of the @c deltas/ trees (see class documentation),

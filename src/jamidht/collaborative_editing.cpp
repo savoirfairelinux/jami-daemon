@@ -348,6 +348,31 @@ CollaborativeEditing::documents(const std::string& conversationId)
     return conversation->collaborativeDocuments();
 }
 
+bool
+CollaborativeEditing::isAnnouncedDocument(const std::string& conversationId,
+                                          const std::string& documentId)
+{
+    // A document only exists once a COLLAB_DOC commit announced it in the
+    // conversation. Without this check, a member could name arbitrary ids in
+    // instant messages and have us create a bare repository on disk for each.
+    {
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        if (auto it = announced_.find(conversationId); it != announced_.end())
+            return it->second.count(documentId) != 0;
+    }
+    // First question asked about this conversation: walking its whole history is
+    // expensive, so do it once and let onDocumentAnnounced() keep the set fresh.
+    std::set<std::string> ids;
+    for (const auto& doc : documents(conversationId)) {
+        if (auto it = doc.find(CommitKey::URI); it != doc.end())
+            ids.emplace(it->second);
+    }
+    std::lock_guard<std::mutex> lk(announcedMtx_);
+    auto& set = announced_[conversationId];
+    set.merge(ids);
+    return set.count(documentId) != 0;
+}
+
 std::string
 CollaborativeEditing::openDocument(const std::string& conversationId, const std::string& documentId)
 {
@@ -402,20 +427,49 @@ CollaborativeEditing::documentText(const std::string& conversationId, const std:
 }
 
 void
-CollaborativeEditing::onRemotePayload(const std::string& from, const std::string& jsonPayload)
+CollaborativeEditing::onRemotePayload(const std::string& from,
+                                     const std::string& fromDevice,
+                                     const std::string& jsonPayload)
 {
     Json::Value root;
     if (!json::parse(jsonPayload, root))
         return;
     auto conversationId = root["cid"].asString();
     auto documentId = root["did"].asString();
-    if (conversationId.empty() || documentId.empty())
+    if (!CollabRepository::isValidId(conversationId) || !CollabRepository::isValidId(documentId))
         return;
+
+    // Being able to send us a message is not the same as being allowed to edit
+    // this document: a plain contact could otherwise inject text into a swarm
+    // it does not belong to, and a legitimate editor would then checkpoint it.
+    auto account = account_.lock();
+    if (!account)
+        return;
+    auto* convModule = account->convModule(true);
+    if (!convModule || !convModule->isPeerAuthorized(conversationId, from, fromDevice, true)) {
+        JAMI_WARNING("[Account {}] [Document {}] Ignoring collaborative payload from "
+                     "unauthorized peer {}",
+                     accountId_,
+                     documentId,
+                     from);
+        return;
+    }
 
     // "k" (kind) discriminates ephemeral awareness messages from CRDT ops.
     // Absent/"op" = a CRDT update; "cur" = a cursor position; "leave" = the
-    // peer closed the document. Awareness is keyed on the authenticated sender.
+    // peer closed the document; "ckpt"/"req" drive repository synchronization.
     auto kind = root.get("k", "op").asString();
+    // These two touch the disk and the network, so they must name a document the
+    // conversation actually announced. Live updates ("op") deliberately are not
+    // gated: they routinely overtake the announcement commit, and they only ever
+    // build in-memory state.
+    if ((kind == "ckpt" || kind == "req") && !isAnnouncedDocument(conversationId, documentId)) {
+        JAMI_WARNING("[Account {}] Ignoring collaborative {} for unannounced document {}",
+                     accountId_,
+                     kind,
+                     documentId);
+        return;
+    }
     if (kind == "cur") {
         emitSignal<libjami::ConfigurationSignal::CollaborativeCursorChanged>(accountId_,
                                                                              conversationId,
@@ -423,6 +477,26 @@ CollaborativeEditing::onRemotePayload(const std::string& from, const std::string
                                                                              from,
                                                                              root.get("p", 0).asInt(),
                                                                              root.get("a", 0).asInt());
+        return;
+    }
+    if (kind == "ckpt") {
+        // A peer checkpointed the document: pull its repository. Content is not
+        // carried here, only the fact that there is something new to fetch.
+        account->fetchCollabDocument(fromDevice, conversationId, documentId);
+        return;
+    }
+    if (kind == "req") {
+        // A peer wants this document and cannot pull from us on its own: answer
+        // with a checkpoint notification so it fetches from us. Staying silent
+        // when we have nothing avoids a needless round of fetches.
+        auto session = findSession(conversationId, documentId);
+        auto repo = session ? session->repo : nullptr;
+        if (!repo) {
+            if (auto acc = account_.lock())
+                repo = CollabRepository::openOrInit(acc, conversationId, documentId);
+        }
+        if (repo && !repo->isEmpty())
+            account->syncCollabDocument(conversationId, documentId);
         return;
     }
     if (kind == "leave") {
@@ -435,7 +509,11 @@ CollaborativeEditing::onRemotePayload(const std::string& from, const std::string
     auto update = base64::decode(root["u"].asString());
     if (update.empty())
         return;
-    auto session = ensureSession(conversationId, documentId);
+    // No repository yet if the announcement has not been merged: the update
+    // stays in memory and is persisted once the document is opened locally.
+    auto session = ensureSession(conversationId,
+                                 documentId,
+                                 isAnnouncedDocument(conversationId, documentId));
     session->doc->applyUpdate(update);
 }
 
@@ -606,6 +684,9 @@ CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
         scheduleCheckpoint(session, CHECKPOINT_IDLE);
         return;
     }
+
+    if (auto account = account_.lock())
+        account->syncCollabDocument(session->conversationId, session->documentId);
 }
 
 std::vector<CollabRepository::HistoryEntry>
@@ -629,9 +710,42 @@ CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId,
     auto account = account_.lock();
     if (!account)
         return;
-    // Create the local repository if needed so the document can be replicated,
-    // then ask for its content. Nothing is loaded in memory until it is opened.
-    CollabRepository::openOrInit(account, conversationId, documentId);
+    {
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        announced_[conversationId].emplace(documentId);
+    }
+    // Create the local repository if needed so the document can be replicated.
+    // Nothing is loaded in memory until the document is actually opened.
+    auto repo = CollabRepository::openOrInit(account, conversationId, documentId);
+    if (!repo)
+        return;
+    // Live updates may have opened a session before the announcement landed; it
+    // has no repository, so give it this one and persist what it accumulated.
+    if (auto session = findSession(conversationId, documentId)) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (!session->repo)
+            session->repo = repo;
+    }
+    // This also runs while paging older messages back in, and a conversation may
+    // announce many documents: without a guard, scrolling would cost one
+    // broadcast and one fetch per document, for every member, every time.
+    //
+    // Gating on "the repository is empty" would be wrong the other way round: a
+    // device that was offline while others edited has a non-empty but stale
+    // repository, and checkpoint notifications are best-effort and not stored in
+    // the swarm, so it would never catch up. Sync once per document per
+    // registration instead: cheap while browsing, and it still resynchronizes
+    // every document each time the account comes back online.
+    //
+    // What we send is a request, not a notification: announcing our own head
+    // makes the others pull from us, which is the wrong direction for a replica
+    // that is behind.
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (!syncedDocuments_.emplace(key(conversationId, documentId)).second)
+            return;
+    }
+    account->requestCollabDocument(conversationId, documentId);
 }
 
 void
@@ -648,11 +762,10 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId,
     }
     // Applying an update the replica already knows is a no-op for a CRDT, so
     // replaying the whole set is correct, just more work than strictly needed.
-    for (const auto& encoded : session->repo->updates()) {
-        auto update = base64::decode(encoded);
-        if (!update.empty())
-            session->doc->applyUpdate(update);
-    }
+    replayStoredUpdates(session, /*silent=*/false);
+    // The merge unioned the deltas but left document.md as it was: rewrite it so
+    // the readable projection matches the content again. No-op when unchanged.
+    session->repo->refreshProjection(session->doc->text());
 }
 
 void
@@ -664,10 +777,15 @@ CollaborativeEditing::flush()
         sessions.reserve(sessions_.size());
         for (const auto& [_, session] : sessions_)
             sessions.emplace_back(session);
+        // The account is going away: let every document be synchronized again
+        // when it comes back, so a device that was offline catches up.
+        syncedDocuments_.clear();
     }
     for (const auto& session : sessions) {
-        if (session->checkpointTimer)
+        if (session->checkpointTimer) {
+            std::lock_guard<std::mutex> lk(session->timerMutex);
             session->checkpointTimer->cancel();
+        }
         checkpointNow(session);
     }
 }

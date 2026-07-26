@@ -37,6 +37,10 @@ constexpr std::string_view PROJECTION_FILE {"document.md"};
 constexpr std::string_view DELTAS_DIR {"deltas"};
 constexpr std::string_view MAIN_REF {"refs/heads/main"};
 
+// A document repository stores text deltas; a larger transfer means the peer is
+// not sending what was asked for.
+constexpr unsigned MAX_FETCH_SIZE {256 * 1024 * 1024};
+
 // Regular, non-executable file mode for blobs stored in the tree.
 constexpr git_filemode_t BLOB_MODE {GIT_FILEMODE_BLOB};
 
@@ -810,6 +814,72 @@ CollabRepository::history(size_t max) const
 }
 
 bool
+CollabRepository::fetch(const std::string& remoteDeviceId)
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+
+    git_remote* remotePtr = nullptr;
+    {
+        // Only the remote's registration is serialized: it rewrites the shared
+        // config file. The transfer below must not hold this lock — it reads a
+        // peer's socket, and a peer that simply stops writing would otherwise
+        // block every checkpoint, and account teardown with them.
+        std::lock_guard lk(pimpl_->mutex_);
+        // The remote is named after the device, so several peers can be tracked
+        // side by side in refs/remotes/<deviceId>/.
+        auto res = git_remote_lookup(&remotePtr, repo.get(), remoteDeviceId.c_str());
+        if (res == GIT_ENOTFOUND) {
+            auto url = fmt::format("collab://{}/{}/{}", remoteDeviceId, conversationId_, documentId_);
+            if (git_remote_create(&remotePtr, repo.get(), remoteDeviceId.c_str(), url.c_str()) < 0) {
+                JAMI_ERROR("[Account {}] [Document {}] Unable to create remote {}",
+                           pimpl_->accountId_,
+                           documentId_,
+                           remoteDeviceId);
+                return false;
+            }
+        } else if (res != 0) {
+            return false;
+        }
+    }
+    GitRemote remote {remotePtr};
+
+    // Safe to run unlocked: this repository handle is our own (a fresh one is
+    // opened per call), and the fetch only writes refs/remotes/<device>/main,
+    // which no other path writes and only mergeRemote reads. Concurrent fetches
+    // for the same device are already deduplicated by the caller.
+
+    git_fetch_options fetchOpts;
+    git_fetch_options_init(&fetchOpts, GIT_FETCH_OPTIONS_VERSION);
+    fetchOpts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
+    fetchOpts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
+        // A document repository holds text deltas; anything this large means the
+        // peer is not sending what we asked for.
+        if (stats->received_bytes > MAX_FETCH_SIZE) {
+            JAMI_ERROR("Abort fetching document repository, the fetch is too big: {} bytes",
+                       stats->received_bytes);
+            return -1;
+        }
+        return 0;
+    };
+
+    auto refspec = fmt::format("+{}:refs/remotes/{}/main", MAIN_REF, remoteDeviceId);
+    char* refspecPtr = refspec.data();
+    git_strarray refspecs {&refspecPtr, 1};
+    if (git_remote_fetch(remote.get(), &refspecs, &fetchOpts, "fetch") < 0) {
+        const git_error* err = giterr_last();
+        JAMI_WARNING("[Account {}] [Document {}] Unable to fetch from {}: {}",
+                     pimpl_->accountId_,
+                     documentId_,
+                     remoteDeviceId,
+                     err ? err->message : "(unknown)");
+        return false;
+    }
+    return true;
+}
+
+bool
 CollabRepository::mergeRemote(const std::string& remoteDeviceId)
 {
     std::lock_guard lk(pimpl_->mutex_);
@@ -863,7 +933,7 @@ CollabRepository::mergeRemote(const std::string& remoteDeviceId)
     // Diverged: union the trees. This never conflicts (see class documentation),
     // so no textual merge and no user-visible conflict can happen.
     git_oid mergedTree;
-    if (!unionTrees(repo.get(), localTree.get(), remoteTree.get(), mergedTree))
+    if (!unionTrees(repo.get(), localTree.get(), remoteTree.get(), mergedTree, 0))
         return false;
 
     std::vector<git_commit*> parents {local.get(), remote.get()};
