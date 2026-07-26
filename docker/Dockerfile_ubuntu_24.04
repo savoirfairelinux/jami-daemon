@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt install -y software-properties-common
+    apt install -y software-properties-common curl
 
 RUN add-apt-repository universe && \
     apt-get update && \
@@ -80,3 +80,13 @@ RUN apt-get install -y -o Acquire::Retries=10 \
         libcppunit-dev \
         sip-tester && \
     apt-get clean
+
+# Rust toolchain, required to build the yffi (Y-CRDT) contrib package used by
+# the collaborative editing feature. Installed system-wide, and on PATH, so it
+# is reachable by the unprivileged user the build runs as (which has no HOME).
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --profile minimal --default-toolchain stable && \
+    chmod -R a+rwX /usr/local/rustup /usr/local/cargo

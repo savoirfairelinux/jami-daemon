@@ -537,6 +537,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/tests-ffi/include;"
        )
    endif()
 
@@ -615,6 +616,9 @@ if(MSVC)
         ws2_32.lib
         advapi32.lib
         Secur32.lib
+        bcrypt.lib
+        ntdll.lib
+        userenv.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavcodec.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavdevice.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavfilter.lib
@@ -654,6 +658,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/build/src/Release/simdutf.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/target/release/yrs.lib
         /ignore:4006"
    )
 
@@ -678,6 +683,7 @@ else()
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
     pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
+    pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)
     pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
     pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
     pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
@@ -702,6 +708,7 @@ else()
         PkgConfig::opendht
         PkgConfig::pjproject
         PkgConfig::git2
+        PkgConfig::yrs
         PkgConfig::gnutls
         PkgConfig::nettle
         PkgConfig::avformat

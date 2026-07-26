@@ -36,6 +36,7 @@ depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1')
 depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5')
 depsimdutf = dependency('simdutf')
 depzlib = dependency('zlib')
+depyrs = dependency('yrs')
 
 if get_option('interfaces').contains('dbus')
     depsdbuscpp = dependency('sdbus-c++', version: '>= 2.0.0')
