@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbbd3275_98b65250",
+        "filename": "src/jamidht/account_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-26T12:28:03Z",
+      "side": 1,
+      "message": "[error] Line 85: 🔴 `crlValueId()` derives the DHT value id from the CRL content, so every updated CRL gets a different id. That means a newly revoked device publishes a second permanent CRL value instead of replacing the previous current CRL, especially in the same daemon run where the old permanent put remains active. Use a stable id for the account/issuer CRL slot instead of hashing `getPacked()`.",
+      "revId": "1dd4e4bb0b4f548527a3863672014c7dd928e5f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
