@@ -73,6 +73,20 @@ struct SwarmMessage
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
+  // Collaborative editing
+  std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& kind);
+  std::string openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void editCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t index, uint32_t deleteLen, const std::string& insert);
+  void setCollaborativeCursor(const std::string& accountId, const std::string& conversationId, const std::string& documentId, int position, int anchor);
+  std::string collaborativeDocumentText(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void setCollaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& name);
+  std::string collaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void applyCollaborativeDelta(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& deltaJson);
+  std::string collaborativeDocumentContentDelta(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
+
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo, const int32_t& flag);
   uint32_t loadConversation(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
