@@ -1454,9 +1454,7 @@ ArchiveAccountManager::revokeDevice(const std::string& device,
 
                         // Announce CRL immediately
                         auto h = a.id.second->getId();
-                        auto crlVal = std::make_shared<dht::Value>(*a.revoked);
-                        crlVal->priority = 1; // CRLs are not urgent
-                        this_->dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+                        this_->publishCurrentCrl(h, a.revoked);
 
                         this_->saveArchive(a, scheme, password);
                         this_->info_->contacts->removeAccountDevice(crt->getLongId());
