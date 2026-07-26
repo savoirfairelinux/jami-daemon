@@ -178,6 +178,12 @@ public:
      * Replaying them rebuilds the document state.
      */
     std::vector<std::string> updates() const;
+    /**
+     * Same, but as of @c commitId instead of the current head, so a client can
+     * rebuild what the document looked like at that checkpoint. Returns nothing
+     * if @c commitId is not an ancestor of the current head.
+     */
+    std::vector<std::string> updatesAt(const std::string& commitId) const;
     /// Whether the repository has no commit yet, i.e. nothing was ever stored
     /// or fetched for this document.
     bool isEmpty() const;

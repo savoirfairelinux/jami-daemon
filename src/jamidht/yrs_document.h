@@ -124,6 +124,16 @@ public:
     /// Remove @c length UTF-16 code units starting at @c index.
     void remove(uint32_t index, uint32_t length);
 
+    /// Bring the text to @c target, rewriting only the range that differs so
+    /// collaborators' cursors stay where they are and the update stays small.
+    ///
+    /// Measuring the difference and applying it must be one indivisible step:
+    /// another thread applying a remote update in between would leave the
+    /// offsets describing a text that no longer exists, and yrs aborts the whole
+    /// process on an out-of-range index.
+    /// @return false when the text already equals @c target
+    bool spliceTo(const std::string& target);
+
     /// Apply a local rich-text edit expressed as a Quill-style delta (an ordered
     /// sequence of retain/insert/delete ops carrying formatting attributes). The
     /// whole delta is applied in a single transaction, so it broadcasts and

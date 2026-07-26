@@ -136,6 +136,11 @@ struct CollaborativeEditing::Session
     // Set when the pending batch reached its cap, so that continued typing stops
     // pushing the debounce timer further away and the checkpoint actually runs.
     std::atomic_bool checkpointDue {false};
+
+    // Local edits are normally not signalled back: they come from the editor that
+    // already shows them. A restoration is the exception, being a local edit no
+    // editor typed, so it is announced through the ordinary callbacks.
+    std::atomic_bool announceLocalEdits {false};
 };
 
 CollaborativeEditing::CollaborativeEditing(const std::shared_ptr<JamiAccount>& account)
@@ -221,12 +226,13 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
     });
     session->doc->setChangeCallback(
         [wthis, wsession](const std::vector<YrsDocument::TextChange>& changes, bool isLocal) {
-            if (isLocal)
-                return; // local edits already live in the editor that produced them
             auto sthis = wthis.lock();
             auto session = wsession.lock();
-            if (sthis && session)
-                sthis->emitRemoteChanges(session->conversationId, session->documentId, changes);
+            if (!sthis || !session)
+                return;
+            if (isLocal && !session->announceLocalEdits)
+                return; // local edits already live in the editor that produced them
+            sthis->emitRemoteChanges(session->conversationId, session->documentId, changes);
         });
     session->doc->setNameCallback([wthis, wsession](const std::string& name, bool /*isLocal*/) {
         // Emit for both local and remote: the bubble and other editors mirror
@@ -238,12 +244,13 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
             sthis->emitRename(session->conversationId, session->documentId, name);
     });
     session->doc->setRichChangeCallback([wthis, wsession](const std::vector<YrsDocument::RichOp>& ops, bool isLocal) {
-        if (isLocal)
-            return; // local edits already live in the editor that produced them
         auto sthis = wthis.lock();
         auto session = wsession.lock();
-        if (sthis && session)
-            sthis->emitRichDelta(session->conversationId, session->documentId, ops);
+        if (!sthis || !session)
+            return;
+        if (isLocal && !session->announceLocalEdits)
+            return; // local edits already live in the editor that produced them
+        sthis->emitRichDelta(session->conversationId, session->documentId, ops);
     });
 
     sessions_.emplace(k, session);
@@ -675,6 +682,87 @@ CollaborativeEditing::history(const std::string& conversationId, const std::stri
             repo = CollabRepository::open(account, conversationId, documentId);
     }
     return repo ? repo->history(max) : std::vector<CollabRepository::HistoryEntry> {};
+}
+
+std::string
+CollaborativeEditing::documentTextAt(const std::string& conversationId,
+                                     const std::string& documentId,
+                                     const std::string& commitId)
+{
+    auto session = findSession(conversationId, documentId);
+    auto repo = session ? session->repo : nullptr;
+    if (!repo) {
+        if (auto account = account_.lock())
+            repo = CollabRepository::open(account, conversationId, documentId);
+    }
+    if (!repo)
+        return {};
+
+    // Replay into a throwaway replica: the live document must not be touched,
+    // and this one never emits updates because nothing observes it.
+    YrsDocument snapshot {replicaId()};
+    for (const auto& encoded : repo->updatesAt(commitId)) {
+        try {
+            auto update = base64::decode(encoded);
+            if (!update.empty())
+                snapshot.applyUpdate(update, /*silent=*/true);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] [Document {}] Skipping unreadable stored update: {}",
+                         accountId_,
+                         documentId,
+                         e.what());
+        }
+    }
+    return snapshot.text();
+}
+
+bool
+CollaborativeEditing::restoreDocument(const std::string& conversationId,
+                                      const std::string& documentId,
+                                      const std::string& commitId)
+{
+    if (!CollabRepository::isValidId(commitId))
+        return false; // no checkpoint can bear this id, so nothing to restore to
+    auto session = findSession(conversationId, documentId);
+    if (!session)
+        return false; // the document must be open: restoring is an edit like any other
+    auto target = documentTextAt(conversationId, documentId, commitId);
+    if (target.empty()) {
+        // An unknown or unreachable commit yields nothing; emptying the document
+        // on that basis would destroy content for the whole conversation.
+        auto known = false;
+        for (const auto& entry : history(conversationId, documentId, 0))
+            if (entry.commitId == commitId) {
+                known = true;
+                break;
+            }
+        if (!known) {
+            JAMI_WARNING("[Account {}] [Document {}] Refusing to restore unknown checkpoint {}",
+                         accountId_,
+                         documentId,
+                         commitId);
+            return false;
+        }
+    }
+
+    // Applied as an ordinary edit, so it reaches the other members through the
+    // usual path and can itself be undone by restoring a later checkpoint.
+    // Announcing it through the document's own callbacks is what makes the open
+    // editors follow: they each listen on the channel matching their flavour,
+    // plain text or rich, and the engine reports exactly what it changed.
+    struct AnnounceGuard
+    {
+        std::atomic_bool& flag;
+        explicit AnnounceGuard(std::atomic_bool& f)
+            : flag(f)
+        {
+            flag = true;
+        }
+        ~AnnounceGuard() { flag = false; }
+    } guard(session->announceLocalEdits);
+
+    session->doc->spliceTo(target);
+    return true;
 }
 
 void

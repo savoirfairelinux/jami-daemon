@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <mutex>
+#include <string_view>
 
 // libyrs.h is a plain C header with no extern "C" guard of its own.
 extern "C" {
@@ -373,6 +374,71 @@ YrsDocument::insert(uint32_t index, const std::string& utf8Text)
     ytransaction_commit(txn);
 }
 
+/// Number of UTF-16 code units in a UTF-8 string. Y-CRDT is configured with
+/// Y_OFFSET_UTF16, so every index handed to the document is counted this way.
+static uint32_t
+utf16Length(std::string_view utf8)
+{
+    uint32_t units = 0;
+    for (size_t i = 0; i < utf8.size();) {
+        const auto c = static_cast<unsigned char>(utf8[i]);
+        if (c < 0x80) {
+            i += 1;
+            units += 1;
+        } else if ((c >> 5) == 0x6) {
+            i += 2;
+            units += 1;
+        } else if ((c >> 4) == 0xE) {
+            i += 3;
+            units += 1;
+        } else if ((c >> 3) == 0x1E) {
+            i += 4;
+            units += 2; // beyond the BMP: encoded as a surrogate pair
+        } else {
+            i += 1; // stray byte, keep walking rather than looping forever
+            units += 1;
+        }
+    }
+    return units;
+}
+
+/// Whether @c c continues a UTF-8 sequence rather than starting one.
+static bool
+isContinuation(char c)
+{
+    return (static_cast<unsigned char>(c) & 0xC0) == 0x80;
+}
+
+/// The smallest single splice turning @c from into @c to, as UTF-16 offsets.
+/// Restoring by replacing everything would move every collaborator's cursor to
+/// the start and produce a needlessly large update, so only the differing middle
+/// is rewritten. Returns false when the texts are already identical.
+static bool
+textSplice(const std::string& from, const std::string& to, uint32_t& index, uint32_t& deleteLen, std::string& insert)
+{
+    if (from == to)
+        return false;
+    const size_t maxCommon = std::min(from.size(), to.size());
+    size_t prefix = 0;
+    while (prefix < maxCommon && from[prefix] == to[prefix])
+        ++prefix;
+    // Never cut inside a code point: back up to the start of the sequence.
+    while (prefix > 0 && prefix < from.size() && isContinuation(from[prefix]))
+        --prefix;
+
+    size_t suffix = 0;
+    const size_t maxSuffix = maxCommon - prefix;
+    while (suffix < maxSuffix && from[from.size() - 1 - suffix] == to[to.size() - 1 - suffix])
+        ++suffix;
+    while (suffix > 0 && isContinuation(from[from.size() - suffix]))
+        --suffix;
+
+    index = utf16Length(std::string_view(from.data(), prefix));
+    deleteLen = utf16Length(std::string_view(from.data() + prefix, from.size() - prefix - suffix));
+    insert.assign(to, prefix, to.size() - prefix - suffix);
+    return true;
+}
+
 void
 YrsDocument::remove(uint32_t index, uint32_t length)
 {
@@ -380,6 +446,42 @@ YrsDocument::remove(uint32_t index, uint32_t length)
     YTransaction* txn = ydoc_write_transaction(pimpl_->doc, 0, nullptr);
     ytext_remove_range(pimpl_->text, txn, index, length);
     ytransaction_commit(txn);
+}
+
+bool
+YrsDocument::spliceTo(const std::string& target)
+{
+    // Held across the read and the write, so no other thread can edit the text
+    // between measuring the difference and rewriting it.
+    std::lock_guard<std::recursive_mutex> lk(pimpl_->mutex);
+
+    std::string current;
+    {
+        YTransaction* rtxn = ydoc_read_transaction(pimpl_->doc);
+        if (!rtxn)
+            return false;
+        char* str = ytext_string(pimpl_->text, rtxn);
+        if (str) {
+            current = str;
+            ystring_destroy(str);
+        }
+        ytransaction_commit(rtxn);
+    }
+
+    uint32_t index = 0, deleteLen = 0;
+    std::string inserted;
+    if (!textSplice(current, target, index, deleteLen, inserted))
+        return false;
+
+    // One transaction, so peers and observers see the replacement as a single
+    // change rather than a removal briefly exposing a truncated document.
+    YTransaction* txn = ydoc_write_transaction(pimpl_->doc, 0, nullptr);
+    if (deleteLen > 0)
+        ytext_remove_range(pimpl_->text, txn, index, deleteLen);
+    if (!inserted.empty())
+        ytext_insert(pimpl_->text, txn, index, inserted.c_str(), nullptr);
+    ytransaction_commit(txn);
+    return true;
 }
 
 void
