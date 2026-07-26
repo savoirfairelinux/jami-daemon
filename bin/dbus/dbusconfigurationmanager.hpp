@@ -758,6 +758,22 @@ public:
         return libjami::getCollaborativeDocumentHistory(accountId, conversationId, documentId, max);
     }
 
+    std::string collaborativeDocumentTextAt(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& documentId,
+                                            const std::string& commitId)
+    {
+        return libjami::collaborativeDocumentTextAt(accountId, conversationId, documentId, commitId);
+    }
+
+    bool restoreCollaborativeDocument(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::string& documentId,
+                                      const std::string& commitId)
+    {
+        return libjami::restoreCollaborativeDocument(accountId, conversationId, documentId, commitId);
+    }
+
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,

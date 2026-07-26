@@ -943,6 +943,28 @@
             <arg type="u" name="max" direction="in"/>
         </method>
 
+        <method name="collaborativeDocumentTextAt" tp:name-for-bindings="collaborativeDocumentTextAt">
+            <tp:docstring>
+               Content of a collaborative document as of a given checkpoint
+            </tp:docstring>
+            <arg type="s" name="text" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="commitId" direction="in"/>
+        </method>
+
+        <method name="restoreCollaborativeDocument" tp:name-for-bindings="restoreCollaborativeDocument">
+            <tp:docstring>
+               Restore an open collaborative document to a given checkpoint
+            </tp:docstring>
+            <arg type="b" name="restored" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="commitId" direction="in"/>
+        </method>
+
         <signal name="collaborativeDocumentChanged" tp:name-for-bindings="collaborativeDocumentChanged">
             <tp:docstring>
                Notify clients that a collaborative document received a remote text change

@@ -72,6 +72,17 @@ public:
               const std::string& insert);
     /// Current full text of a document, or an empty string if unknown.
     std::string documentText(const std::string& conversationId, const std::string& documentId);
+    /// The document's content as of checkpoint @c commitId, without altering the
+    /// live document. Empty if that checkpoint is unknown to this replica.
+    std::string documentTextAt(const std::string& conversationId,
+                               const std::string& documentId,
+                               const std::string& commitId);
+    /// Bring the open document back to its content at @c commitId, as a regular
+    /// edit so peers converge on it. False if the document is not open or the
+    /// checkpoint is unknown.
+    bool restoreDocument(const std::string& conversationId,
+                         const std::string& documentId,
+                         const std::string& commitId);
     /// Current name of a document (CRDT field), or empty if unknown.
     std::string documentName(const std::string& conversationId, const std::string& documentId);
     /// Rename a document; the new name syncs to all members and persists.

@@ -705,17 +705,12 @@ CollabRepository::setDisplayName(const std::string& displayName)
     return pimpl_->commit(repo.get(), newRoot, "document renamed", parents);
 }
 
-std::vector<std::string>
-CollabRepository::updates() const
+/// Collect every CRDT update stored under @c deltas/ in @c root.
+static std::vector<std::string>
+collectUpdates(git_repository* repo, git_tree* root)
 {
-    std::lock_guard lk(pimpl_->mutex_);
     std::vector<std::string> out;
-    auto repo = pimpl_->repository();
-    if (!repo)
-        return out;
-    auto commit = pimpl_->headCommit(repo.get());
-    auto root = pimpl_->headTree(commit);
-    auto deltas = subTree(repo.get(), root.get(), DELTAS_DIR);
+    auto deltas = subTree(repo, root, DELTAS_DIR);
     if (!deltas)
         return out;
 
@@ -723,12 +718,12 @@ CollabRepository::updates() const
     // not affect the result; entries are walked in tree order for determinism.
     const size_t devices = git_tree_entrycount(deltas.get());
     for (size_t d = 0; d < devices; ++d) {
-        auto deviceTree = subTree(repo.get(), deltas.get(), git_tree_entry_name(git_tree_entry_byindex(deltas.get(), d)));
+        auto deviceTree = subTree(repo, deltas.get(), git_tree_entry_name(git_tree_entry_byindex(deltas.get(), d)));
         if (!deviceTree)
             continue;
         const size_t files = git_tree_entrycount(deviceTree.get());
         for (size_t f = 0; f < files; ++f) {
-            auto content = readBlob(repo.get(), git_tree_entry_byindex(deviceTree.get(), f));
+            auto content = readBlob(repo, git_tree_entry_byindex(deviceTree.get(), f));
             std::istringstream stream(content);
             for (std::string line; std::getline(stream, line);) {
                 if (!line.empty())
@@ -737,6 +732,58 @@ CollabRepository::updates() const
         }
     }
     return out;
+}
+
+std::vector<std::string>
+CollabRepository::updates() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto commit = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(commit);
+    if (!root)
+        return {};
+    return collectUpdates(repo.get(), root.get());
+}
+
+std::vector<std::string>
+CollabRepository::updatesAt(const std::string& commitId) const
+{
+    if (!isValidId(commitId))
+        return {};
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+
+    git_oid oid;
+    if (git_oid_fromstr(&oid, commitId.c_str()) < 0)
+        return {};
+    git_commit* commit_ptr = nullptr;
+    if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+        return {};
+    GitCommit commit {commit_ptr};
+
+    // Only serve commits that belong to this document's history: a peer could
+    // otherwise name any object present in the repository.
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_lookup(&ref_ptr, repo.get(), std::string(MAIN_REF).c_str()) < 0)
+        return {};
+    GitReference ref {ref_ptr};
+    const auto* headOid = git_reference_target(ref.get());
+    if (!headOid)
+        return {};
+    if (git_oid_cmp(headOid, &oid) != 0
+        && git_graph_descendant_of(repo.get(), headOid, &oid) != 1)
+        return {};
+
+    git_tree* tree_ptr = nullptr;
+    if (git_commit_tree(&tree_ptr, commit.get()) < 0)
+        return {};
+    GitTree root {tree_ptr};
+    return collectUpdates(repo.get(), root.get());
 }
 
 size_t
