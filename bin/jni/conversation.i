@@ -86,6 +86,8 @@ struct SwarmMessage
   std::string collaborativeDocumentContentDelta(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId);
   std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
+  std::string collaborativeDocumentTextAt(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
+  bool restoreCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
 
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo, const int32_t& flag);

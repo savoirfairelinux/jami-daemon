@@ -397,4 +397,26 @@ getCollaborativeDocumentHistory(const std::string& accountId,
     return result;
 }
 
+std::string
+collaborativeDocumentTextAt(const std::string& accountId,
+                            const std::string& conversationId,
+                            const std::string& documentId,
+                            const std::string& commitId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentTextAt(conversationId, documentId, commitId);
+    return {};
+}
+
+bool
+restoreCollaborativeDocument(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& documentId,
+                             const std::string& commitId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->restoreDocument(conversationId, documentId, commitId);
+    return false;
+}
+
 } // namespace libjami

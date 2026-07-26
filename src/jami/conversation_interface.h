@@ -175,6 +175,27 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeD
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(
     const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
 
+/**
+ * The document's content as it was at checkpoint @c commitId, for read-only
+ * review. The live document is left untouched.
+ * @return the text, or an empty string if that checkpoint is unknown here
+ */
+LIBJAMI_PUBLIC std::string collaborativeDocumentTextAt(const std::string& accountId,
+                                                       const std::string& conversationId,
+                                                       const std::string& documentId,
+                                                       const std::string& commitId);
+
+/**
+ * Bring an open document back to its content at @c commitId. The change is
+ * applied as an ordinary edit, so every member converges on it and the
+ * restoration can itself be undone by restoring a later checkpoint.
+ * @return false if the document is not open or the checkpoint is unknown
+ */
+LIBJAMI_PUBLIC bool restoreCollaborativeDocument(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& documentId,
+                                                 const std::string& commitId);
+
 struct LIBJAMI_PUBLIC ConversationSignal
 {
     struct LIBJAMI_PUBLIC SwarmLoaded
