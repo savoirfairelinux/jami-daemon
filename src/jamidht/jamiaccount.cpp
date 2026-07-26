@@ -32,6 +32,7 @@
 #include "server_account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
+#include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "message_channel_handler.h"
@@ -2699,6 +2700,15 @@ JamiAccount::syncModule()
     return syncModule_.get();
 }
 
+std::shared_ptr<CollaborativeEditing>
+JamiAccount::collaborativeEditing()
+{
+    std::lock_guard lk(moduleMtx_);
+    if (!collaborativeEditing_)
+        collaborativeEditing_ = std::make_shared<CollaborativeEditing>(shared());
+    return collaborativeEditing_;
+}
+
 void
 JamiAccount::onTextMessage(const std::string& id,
                            const std::string& from,
@@ -2734,6 +2744,26 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
     if (peerDiscovery_) {
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
+
+    // Edits made since the last checkpoint live only in memory, and only on the
+    // device that produced them: write them out before anything is torn down or
+    // they are lost for every replica. Copy the pointer under its own lock: an
+    // inbound collaborative message can still be assigning it on another thread.
+    std::shared_ptr<CollaborativeEditing> collab;
+    {
+        std::lock_guard lk(moduleMtx_);
+        collab = collaborativeEditing_;
+    }
+    if (collab) {
+        // flush() reaches convModule() and the CRDT document lock; both would
+        // deadlock against configurationMutex_, which we hold here.
+        lock.unlock();
+        collab->flush();
+        lock.lock();
+        // Another unregistration may have completed while the lock was down.
+        if (registrationState_ >= RegistrationState::ERROR_GENERIC)
+            return;
     }
 
     JAMI_WARNING("[Account {}] Unregistering account {}", getAccountID(), fmt::ptr(this));
@@ -4045,6 +4075,9 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
         } catch (const std::exception& e) {
             JAMI_WARNING("Error parsing composing state: {}", e.what());
         }
+    } else if (m.first == MIME_TYPE_COLLAB) {
+        collaborativeEditing()->onRemotePayload(from, m.second);
+        return true;
     } else if (m.first == MIME_TYPE_IMDN) {
         try {
             static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
