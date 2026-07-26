@@ -19,6 +19,7 @@
 
 #include "account_const.h"
 #include "jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
@@ -1634,6 +1635,14 @@ Conversation::Impl::addToHistory(History& history,
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        // A collaborative document is announced here, but its content lives in a
+        // separate repository: make sure that repository exists locally so it can
+        // be replicated. The commit itself falls through and is displayed like a
+        // shared file.
+        if (typeIt != commit.end() && typeIt->second == CommitType::COLLAB_DOC) {
+            if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
+                acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
+        }
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
