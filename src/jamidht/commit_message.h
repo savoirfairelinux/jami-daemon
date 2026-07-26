@@ -43,6 +43,7 @@ constexpr const char* const TOTAL_SIZE {"totalSize"};
 constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
+constexpr const char* const KIND {"kind"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -54,6 +55,11 @@ constexpr const char* const INITIAL {"initial"};
 constexpr const char* const VOTE {"vote"};
 constexpr const char* const UPDATE_PROFILE {"application/update-profile"};
 constexpr const char* const MERGE {"merge"};
+// Announces a collaborative document. The document's content does not live in
+// the conversation: it has its own repository, synchronized separately. This
+// commit only makes the document appear in the history and binds its id to this
+// conversation.
+constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
@@ -96,6 +102,7 @@ struct CommitMessage
     std::string sha3sum {};
     int mode {-1};
     std::string invited {};
+    std::string kind {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -278,6 +285,29 @@ struct CommitMessage
         CommitMessage msg;
         msg.type = CommitType::DATA_TRANSFER;
         msg.editedId = fileCommitId;
+        return msg;
+    }
+
+    // A collaborative document is announced with a commit of type
+    // "application/collab-doc+json" carrying the document id in "uri", its
+    // initial name in "displayName" and its editor flavour in "kind" ("text" or
+    // "rich"), e.g.:
+    //
+    //     {"displayName":"Notes","kind":"rich","type":"application/collab-doc+json",
+    //      "uri":"3f1c8a5b0d2e4f67"}
+    //
+    // The commit deliberately carries no content: the document lives in its own
+    // git repository, so the conversation history stays a list of user-visible
+    // events and does not grow with the editing traffic.
+    static CommitMessage collabDocCreated(const std::string& documentId,
+                                          const std::string& name,
+                                          const std::string& kind)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.uri = documentId;
+        msg.displayName = name;
+        msg.kind = kind;
         return msg;
     }
 
