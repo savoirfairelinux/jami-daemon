@@ -58,6 +58,38 @@ struct AccountInfo
     std::string photo;
 };
 
+/**
+ * Deterministic dht::Value id derived from a value's signed content.
+ *
+ * A value published with an unset id is assigned a random one by the DHT, so re-publishing the same
+ * value adds a copy instead of replacing the existing one. Deriving the id from the content makes a
+ * put idempotent across registrations, restarts and devices.
+ *
+ * Safe for signed values: the id is not part of getToSign(), the blob checkSignature() verifies.
+ */
+inline uint64_t
+dhtValueId(const dht::Value& v)
+{
+    const auto blob = v.getToSign();
+    const auto h = dht::InfoHash::get(blob.data(), blob.size());
+    uint64_t id = 0;
+    for (unsigned i = 0; i < sizeof(id); ++i)
+        id = (id << 8) | h[i];
+    return id ? id : 1; // 0 is dht::Value::INVALID_ID
+}
+
+/** Deterministic dht::Value id for a revocation list. See dhtValueId(). */
+inline uint64_t
+crlValueId(const dht::crypto::RevocationList& crl)
+{
+    const auto packed = crl.getPacked();
+    const auto h = dht::InfoHash::get(packed.data(), packed.size());
+    uint64_t id = 0;
+    for (unsigned i = 0; i < sizeof(id); ++i)
+        id = (id << 8) | h[i];
+    return id ? id : 1;
+}
+
 template<typename To, typename From>
 std::unique_ptr<To>
 dynamic_unique_cast(std::unique_ptr<From>&& p)

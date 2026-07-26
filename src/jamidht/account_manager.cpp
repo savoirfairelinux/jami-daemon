@@ -288,6 +288,10 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         if (publishPresence) {
+            // Pin the announcement to a deterministic id: published with an unset id, it would be
+            // assigned a random one and every daemon run would leave another copy of the same
+            // announcement on the account key.
+            info_->announce->id = dhtValueId(*info_->announce);
             dht_->put(
                 h,
                 info_->announce,
@@ -302,10 +306,22 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                 {},
                 true);
         }
-        for (const auto& crl : info_->identity.second->issuer->getRevocationLists()) {
-            auto crlVal = std::make_shared<dht::Value>(*crl);
-            crlVal->priority = 1; // CRLs are not urgent — use normal priority
-            dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+        // Publish only the most recent revocation list, under a deterministic id.
+        //
+        // Revocation lists are cumulative, so the newest supersedes every earlier one. Republishing
+        // the whole history on each registration, with a random id per put and a permanent put that
+        // is re-announced every value-expiration period, makes the account key grow without bound.
+        {
+            std::shared_ptr<dht::crypto::RevocationList> newest;
+            for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
+                if (not newest or crl->getUpdateTime() > newest->getUpdateTime())
+                    newest = crl;
+            if (newest) {
+                auto crlVal = std::make_shared<dht::Value>(*newest);
+                crlVal->priority = 1; // CRLs are not urgent — use normal priority
+                crlVal->id = crlValueId(*newest);
+                dht_->put(h, crlVal, dht::DoneCallback {}, {}, true);
+            }
         }
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
             if (dev.pk) {
