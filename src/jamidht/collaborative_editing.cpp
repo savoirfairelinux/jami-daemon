@@ -44,6 +44,12 @@ static constexpr size_t CHECKPOINT_MAX_PENDING {200};
 /// Ceiling for a session that has no repository to drain into.
 static constexpr size_t PENDING_HARD_CAP {CHECKPOINT_MAX_PENDING * 50};
 
+// Shortest delay between two writes of the readable projection. Pausing for ten
+// seconds is common while writing, so the pause alone is not a rare enough
+// trigger: without this floor the projection would still be rewritten hundreds
+// of times, and it is a full copy of the document every time.
+static constexpr std::chrono::minutes PROJECTION_MIN_INTERVAL {5};
+
 namespace {
 
 // Serialize a rich-text op list to a Quill-style delta JSON string (the wire
@@ -136,6 +142,8 @@ struct CollaborativeEditing::Session
     // Set when the pending batch reached its cap, so that continued typing stops
     // pushing the debounce timer further away and the checkpoint actually runs.
     std::atomic_bool checkpointDue {false};
+    // Steady-clock nanoseconds of the last projection write; 0 means never.
+    std::atomic_int64_t lastProjectionNs {0};
 
     // Local edits are normally not signalled back: they come from the editor that
     // already shows them. A restoration is the exception, being a local edit no
@@ -404,7 +412,7 @@ CollaborativeEditing::closeDocument(const std::string& conversationId, const std
         std::lock_guard<std::mutex> lk(session->timerMutex);
         session->checkpointTimer->cancel();
     }
-    checkpointNow(session);
+    checkpointNow(session, /*finalizing=*/true);
     // Tell other members this device is no longer editing (clears its cursor).
     broadcastLeave(conversationId, documentId);
 }
@@ -660,8 +668,31 @@ CollaborativeEditing::scheduleCheckpoint(const std::shared_ptr<Session>& session
     });
 }
 
+bool
+CollaborativeEditing::projectionDue(const std::shared_ptr<Session>& session, bool force) const
+{
+    const auto last = session->lastProjectionNs.load();
+    // A session that never wrote a projection writes one now, whatever the
+    // clock says: a repository with no document.md at all is worse than a
+    // slightly stale one.
+    if (force || last == 0)
+        return true;
+    const auto nowNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           std::chrono::steady_clock::now().time_since_epoch())
+                           .count();
+    return std::chrono::nanoseconds(nowNs - last) >= PROJECTION_MIN_INTERVAL;
+}
+
 void
-CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
+CollaborativeEditing::markProjectionWritten(const std::shared_ptr<Session>& session)
+{
+    session->lastProjectionNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
+}
+
+void
+CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session, bool finalizing)
 {
     session->checkpointDue = false;
     // Before draining anything: a drained batch with nowhere to go is lost, and
@@ -671,14 +702,32 @@ CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
     std::vector<std::string> batch;
     {
         std::lock_guard<std::mutex> lk(session->pendingMutex);
-        if (session->pending.empty())
-            return;
         batch.swap(session->pending);
     }
+    if (batch.empty()) {
+        // Nothing to commit, but the projection may still be lagging behind the
+        // text, since it is no longer written at every checkpoint. Closing is
+        // the last chance to make the repository readable again.
+        if (finalizing) {
+            session->repo->refreshProjection(session->doc->text());
+            markProjectionWritten(session);
+        }
+        return;
+    }
 
-    // Store the batch together with a readable projection of the document, so
-    // that "git log -p" on the repository shows how the text evolved.
-    if (session->repo->appendCheckpoint(batch, session->doc->text()).empty()) {
+    // The readable projection is a whole copy of the document, so writing it on
+    // every checkpoint costs a copy per two hundred keystrokes: for a 300 kB
+    // document that is the bulk of the repository. Nothing reads it back --
+    // browsing the history replays the CRDT deltas -- it exists so that
+    // "git log -p" is readable. So only refresh it once the user has actually
+    // paused: a checkpoint carrying a full batch was triggered by the cap, i.e.
+    // typing is still going on and another checkpoint is imminent.
+    const bool paused = batch.size() < CHECKPOINT_MAX_PENDING;
+    std::string projection;
+    if ((finalizing || paused) && projectionDue(session, /*force=*/finalizing))
+        projection = session->doc->text();
+
+    if (session->repo->appendCheckpoint(batch, projection).empty()) {
         // Keep the updates queued so the next checkpoint retries them rather
         // than silently losing the edits they carry, and make sure a retry is
         // actually scheduled even if the user has stopped typing.
@@ -691,6 +740,10 @@ CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
         scheduleCheckpoint(session, CHECKPOINT_IDLE);
         return;
     }
+    // Only now: a failed checkpoint writes no projection, and burning the slot
+    // there would leave document.md stale for the whole interval for nothing.
+    if (!projection.empty())
+        markProjectionWritten(session);
 
     if (auto account = account_.lock())
         account->syncCollabDocument(session->conversationId, session->documentId);
@@ -853,7 +906,13 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId,
     replayStoredUpdates(session, /*silent=*/false);
     // The merge unioned the deltas but left document.md as it was: rewrite it so
     // the readable projection matches the content again. No-op when unchanged.
-    session->repo->refreshProjection(session->doc->text());
+    // Rate-limited like the one on the checkpoint path, and for the same reason:
+    // every peer checkpoint lands here, so refreshing on each of them would
+    // write one full copy of the document per remote keystroke burst.
+    if (projectionDue(session, /*force=*/false)) {
+        session->repo->refreshProjection(session->doc->text());
+        markProjectionWritten(session);
+    }
 }
 
 void
@@ -874,7 +933,9 @@ CollaborativeEditing::flush()
             std::lock_guard<std::mutex> lk(session->timerMutex);
             session->checkpointTimer->cancel();
         }
-        checkpointNow(session);
+        // Shutting down: this is the last chance to leave a projection that
+        // matches the text.
+        checkpointNow(session, /*finalizing=*/true);
     }
 }
 
