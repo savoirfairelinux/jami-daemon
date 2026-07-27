@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4280752_6d0de1e1",
+        "filename": "src/jamidht/CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:12Z",
+      "side": 1,
+      "message": "[error] Line 55: 🔴 This patch adds `yrs_document.h` and `yrs_document.cpp` to the jamidht source list, but those files are not included in this patchset. CMake will fail when generating/building the target because the referenced sources cannot be found. Please add the missing wrapper files to the change, or remove these entries until the implementation is present.",
+      "revId": "20e4844395a65bb92daecb87e64ad5f0a6a3fbed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
