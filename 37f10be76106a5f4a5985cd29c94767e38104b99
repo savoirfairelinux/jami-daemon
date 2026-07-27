@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ccd9815_d82ef705",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:30Z",
+      "side": 1,
+      "message": "[error] Line 199: 🔴 The account-id validation still uses `\u0026\u0026`, so a missing account delimiter is not rejected before `delimAccount + 1` is used. With collab repositories now relying on `git_repository_path()`, malformed/unexpected repository paths can produce a wrong `accountId` and socket lookup. Change this to reject when `delimAccount \u003d\u003d npos || delimConv - 1 - delimAccount !\u003d 16` before slicing.",
+      "revId": "37f10be76106a5f4a5985cd29c94767e38104b99",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12238975_549c6b73",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:30Z",
+      "side": 1,
+      "message": "[error] Line 714: 🔴 `session-\u003erepo` is assigned under `mutex_` while other code reads/writes the same `Session` fields without that mutex, e.g. `checkpointNow()` and `onRepositoryUpdated()`. A live update and an announcement can race, leaving a data race on the shared `Session`. Use a per-session mutex or ensure all accesses to mutable session state (`repo`, queued updates, timers, persisted flags) are consistently protected by the same lock.",
+      "revId": "37f10be76106a5f4a5985cd29c94767e38104b99",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4cb71911_8870248d",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 1014,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:30Z",
+      "side": 1,
+      "message": "[error] Line 1014: 🔴 `collabFetching_` uses `std::set`, but this header does not include `\u003cset\u003e`. This will fail on platforms/translation units that do not get it transitively. Add `#include \u003cset\u003e` to `jamiaccount.h`.",
+      "revId": "37f10be76106a5f4a5985cd29c94767e38104b99",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
