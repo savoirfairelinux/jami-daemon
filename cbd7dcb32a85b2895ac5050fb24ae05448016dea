@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be0e24e5_421c042c",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 326,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:19:25Z",
+      "side": 1,
+      "message": "[warning] Line 326: 🟡 The retry limit is off by one: with `++busyAttempts \u003e EBUSY_MAX_ATTEMPTS`, the code performs 51 open attempts before giving up while reporting 50. Use `\u003e\u003d` here, or increment after the comparison, so the configured maximum matches the actual behavior and log message.",
+      "revId": "cbd7dcb32a85b2895ac5050fb24ae05448016dea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
