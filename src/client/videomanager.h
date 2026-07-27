@@ -23,6 +23,7 @@
 #include <memory> // for weak/shared_ptr
 #include <map>
 #include <mutex>
+#include <condition_variable>
 #include <string>
 
 #include "media/audio/audio_input.h"
@@ -56,6 +57,9 @@ public:
     }
     std::mutex videoMutex;
     std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
+    // Notified once a VideoInput has been fully destroyed and unregistered from
+    // videoInputs, so that a new one can be created for the same sink.
+    std::condition_variable videoInputsCv;
 #endif
 
     /**
