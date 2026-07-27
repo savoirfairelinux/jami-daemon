@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "762cfad8_ddfa01c8",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 708,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:19:33Z",
+      "side": 1,
+      "message": "[warning] Line 708: 🟡 `wait_for()` restarts the full 10 second timeout after every wakeup, including spurious wakeups or unrelated input destruction notifications. This can block much longer than intended. Use `wait_until()` with a fixed deadline or the predicate overload to enforce a total timeout for this `getVideoInput()` call.",
+      "revId": "db9fce43bf3b2ac405940b0fb739cfdbaaf611b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01cc9b46_47f65cdf",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 732,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:19:33Z",
+      "side": 1,
+      "message": "[error] Line 732: 🔴 `videoInputsCv.notify_all()` is called while still holding `videoMutex`. A woken waiter immediately needs the same mutex, so it can only proceed after the deleter exits; more importantly, if any waiter times out exactly while the deleter holds the lock, it may still create a new `VideoInput` after the old one has already been destroyed. Move `notify_all()` after releasing the lock, e.g. use a scoped block for the erase, then notify.",
+      "revId": "db9fce43bf3b2ac405940b0fb739cfdbaaf611b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
