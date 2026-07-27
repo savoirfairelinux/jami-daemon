@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95bca3d6_c9bbb77b",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:08:11Z",
+      "side": 1,
+      "message": "[warning] Line 73: 🟡 youtput_read_string() allocates a C string in the yrs FFI, but this path converts it to Json::Value without freeing it. Store the pointer, build the Json value, then call ystring_destroy() as done for ytext_string() results.",
+      "revId": "cd0adb5233a85f49bf1ef2c65c19c1ee8497ad8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e3e3cfb_1238463b",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:08:11Z",
+      "side": 1,
+      "message": "[warning] Line 190: 🟡 The string returned by youtput_read_string(delta[i].insert) is not released, which leaks memory for every inserted delta observed. Destroy it with ystring_destroy(str) after copying into std::string.",
+      "revId": "cd0adb5233a85f49bf1ef2c65c19c1ee8497ad8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc2b1b4c_ffa8df68",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:08:11Z",
+      "side": 1,
+      "message": "[warning] Line 312: 🟡 contentDelta() also reads chunk strings with youtput_read_string() and never frees them. Long documents or repeated full-state rendering will leak; call ystring_destroy(s) after assigning op[\"insert\"].",
+      "revId": "cd0adb5233a85f49bf1ef2c65c19c1ee8497ad8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88cdff8a_3bc97282",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:08:11Z",
+      "side": 1,
+      "message": "[error] Line 377: 🔴 ytext_insert() is still called with the caller-provided index, but the comment in applyDelta() notes that yrs panics and aborts on out-of-range indexes. Clamp index to ytext_len() here as well, or make the method report an error instead of letting stale UI state crash the daemon.",
+      "revId": "cd0adb5233a85f49bf1ef2c65c19c1ee8497ad8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d475e0b_16a8e0fb",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 386,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:08:11Z",
+      "side": 1,
+      "message": "[error] Line 386: 🔴 ytext_remove_range() is still called with unchecked index/length, so an out-of-range remove can panic inside yrs and abort the process. Mirror applyDelta() by clamping index and length to the current text length before calling into libyrs.",
+      "revId": "cd0adb5233a85f49bf1ef2c65c19c1ee8497ad8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
