@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e866c87_1d61516e",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:12:23Z",
+      "side": 1,
+      "message": "[error] Line 279: 🔴 ytext_insert() is fed caller-provided std::string data without validating that it is well-formed UTF-8. libyrs/Rust string APIs assume valid UTF-8, so malformed client input can panic/abort or produce inconsistent UTF-16 offsets. Validate inserted/name text before passing it to libyrs, e.g. with the existing simdutf dependency, and reject or sanitize invalid input consistently.",
+      "revId": "dd24ac47517bfa093db37d1ae4d375eb6680ded2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "40452f0b_271905d7",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 417,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:12:23Z",
+      "side": 1,
+      "message": "[error] Line 417: 🔴 applyUpdate() passes untrusted binary updates directly to ytransaction_apply(). Remote CRDT updates can be malformed or intentionally hostile; if the FFI panics/aborts on invalid data, a peer can crash the daemon. Use a fallible libyrs decode/apply path if available, or add an FFI wrapper that catches Rust panics and reports failure instead of aborting the process.",
+      "revId": "dd24ac47517bfa093db37d1ae4d375eb6680ded2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
