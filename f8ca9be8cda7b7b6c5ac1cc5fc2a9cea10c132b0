@@ -54,6 +54,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3a53087f_8ca0e28b",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 813,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-07-27T20:40:06Z",
+      "side": 1,
+      "message": "read the commit message please. `std::bad_alloc` is the presumed offender",
+      "parentUuid": "aa026061_0e075dfc",
+      "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "92ebaf38_17d8497b",
         "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
         "patchSetId": 4
@@ -65,6 +83,24 @@
       "writtenOn": "2026-07-27T20:36:50Z",
       "side": 1,
       "message": "[error] Line 856: 🔴 This only catches exceptions derived from `std::exception`; any non-standard exception escaping this callback can still abort the process. Add a trailing `catch (...)` with generic logging so all C++ exceptions are contained inside the callback.",
+      "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "078a538d_1581ebf2",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 856,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-07-27T20:40:06Z",
+      "side": 1,
+      "message": "read the commit message please. `std::bad_alloc` is the presumed offender",
+      "parentUuid": "92ebaf38_17d8497b",
       "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
