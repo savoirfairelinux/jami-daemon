@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "802972a0_067062d5",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 958,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:35:29Z",
+      "side": 1,
+      "message": "[error] Line 958: 🔴 `std::cref` is used here and again in the pruning loop, but this file does not include `\u003cfunctional\u003e`. Some toolchains do not expose it transitively, which can break platform builds; add `#include \u003cfunctional\u003e` with the other standard headers.",
+      "revId": "d4d46685b9c37dd788d399e2ec050a9281afbafe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
