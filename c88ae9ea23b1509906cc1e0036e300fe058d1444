@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4276fa01_c51b2f4f",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:54Z",
+      "side": 1,
+      "message": "[error] Line 132: 🔴 This file uses std::atomic_bool here and std::make_move_iterator later, but it does not include the required \u003catomic\u003e and \u003citerator\u003e headers. Several toolchains will fail to compile if these are not pulled transitively; add both includes explicitly.",
+      "revId": "c88ae9ea23b1509906cc1e0036e300fe058d1444",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bff65168_e0711f43",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:54Z",
+      "side": 1,
+      "message": "[error] Line 151: 🔴 If currentDeviceId() is not available yet, replicaId() returns 0 and ensureSession() creates a YrsDocument with that shared client id. Multiple early sessions/devices can then generate colliding CRDT updates, causing lost or corrupted edits. Always provide a non-zero unique fallback or defer document creation until a device id is available.",
+      "revId": "c88ae9ea23b1509906cc1e0036e300fe058d1444",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "231eafcd_20dd4420",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:54Z",
+      "side": 1,
+      "message": "[warning] Line 397: 🟡 The live network path decodes peer-controlled base64 without the per-update exception handling used by replayStoredUpdates(). A malformed collaborative payload can throw out of message handling and disrupt the account thread. Validate JSON field types and catch decode/apply failures for each incoming update.",
+      "revId": "c88ae9ea23b1509906cc1e0036e300fe058d1444",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f943d2d_43967d5d",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:54Z",
+      "side": 1,
+      "message": "[error] Line 401: 🔴 Remote real-time payloads create a session with allowRepoCreation\u003dtrue by default, so any sender that can deliver this MIME payload can force arbitrary cid/did repositories to be created and apply updates before a COLLAB_DOC announcement is validated. Verify the sender is a member of the conversation and the document was announced, and use allowRepoCreation\u003dfalse for pre-announcement live updates.",
+      "revId": "c88ae9ea23b1509906cc1e0036e300fe058d1444",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13bae807_55817b66",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 585,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:54Z",
+      "side": 1,
+      "message": "[warning] Line 585: 🟡 Repository updates are peer-controlled too, but this sync path decodes every stored blob without the try/catch used in replayStoredUpdates(). Reuse replayStoredUpdates(session, false) or catch and skip malformed entries so one bad checkpoint cannot break live repository replay.",
+      "revId": "c88ae9ea23b1509906cc1e0036e300fe058d1444",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
