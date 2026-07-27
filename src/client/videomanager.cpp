@@ -679,6 +679,10 @@ removeVideoDevice(const std::string& node)
 namespace jami {
 
 #ifdef ENABLE_VIDEO
+// How long getVideoInput() waits for a VideoInput that is being destroyed to
+// release its capture device before giving up and creating a new one anyway.
+static constexpr auto VIDEO_INPUT_RELEASE_TIMEOUT = std::chrono::seconds(10);
+
 video::VideoDeviceMonitor*
 getVideoDeviceMonitor()
 {
@@ -694,16 +698,52 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
     auto* vmgr = Manager::instance().getVideoManager();
     if (!vmgr)
         return {};
-    std::lock_guard<std::mutex> lk(vmgr->videoMutex);
-    auto it = vmgr->videoInputs.find(sinkId);
-    if (it != vmgr->videoInputs.end()) {
-        if (auto input = it->second.lock()) {
-            return input;
-        }
-    }
+    std::unique_lock<std::mutex> lk(vmgr->videoMutex);
 
-    auto input = std::make_shared<video::VideoInput>(inputMode, resource, sinkId);
-    vmgr->videoInputs[sinkId] = input;
+    // A registered entry whose weak pointer has expired means that a VideoInput
+    // for this sink is still being destroyed: its capture thread may be stuck in
+    // a blocking driver call and it therefore still holds the device open.
+    // Creating a new one right away would open the capture device a second time,
+    // which wedges some webcams badly enough that they drop off the USB bus.
+    // Wait for the teardown to complete instead. The deadline is computed once so
+    // that notifications for other sinks, which share this condition variable,
+    // don't restart the timeout.
+    std::shared_ptr<video::VideoInput> current;
+    const auto deadline = std::chrono::steady_clock::now() + VIDEO_INPUT_RELEASE_TIMEOUT;
+    const auto released = vmgr->videoInputsCv.wait_until(lk, deadline, [&] {
+        current.reset();
+        auto it = vmgr->videoInputs.find(sinkId);
+        if (it == vmgr->videoInputs.end())
+            return true;
+        current = it->second.input.lock();
+        return current != nullptr;
+    });
+    if (current)
+        return current;
+    if (!released)
+        JAMI_WARNING("Timed out waiting for the previous input on {} to be released", sinkId);
+
+    // Unregister the input only once it is really destroyed, so that a concurrent
+    // getVideoInput() waits for the capture device to be released. The generation
+    // guards against a deleter that ran late erasing a newer entry: matching it
+    // proves the registered entry is still the one this instance created.
+    const auto generation = ++vmgr->nextVideoInputGeneration;
+    auto unregister = [sinkId, generation](video::VideoInput* input) {
+        delete input;
+        auto* vmgr = Manager::instance().getVideoManager();
+        if (!vmgr)
+            return;
+        {
+            std::lock_guard<std::mutex> lk(vmgr->videoMutex);
+            auto it = vmgr->videoInputs.find(sinkId);
+            if (it != vmgr->videoInputs.end() && it->second.generation == generation)
+                vmgr->videoInputs.erase(it);
+        }
+        vmgr->videoInputsCv.notify_all();
+    };
+    auto* raw = new video::VideoInput(inputMode, resource, sinkId);
+    auto input = std::shared_ptr<video::VideoInput>(raw, std::move(unregister));
+    vmgr->videoInputs[sinkId] = {input, generation};
     return input;
 }
 

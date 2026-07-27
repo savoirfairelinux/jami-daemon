@@ -23,6 +23,8 @@
 #include <memory> // for weak/shared_ptr
 #include <map>
 #include <mutex>
+#include <condition_variable>
+#include <cstdint>
 #include <string>
 
 #include "media/audio/audio_input.h"
@@ -49,13 +51,25 @@ public:
     void setDeviceOrientation(const std::string& deviceId, int angle);
     // device monitor
     video::VideoDeviceMonitor videoDeviceMonitor;
+    // A registered VideoInput. The generation uniquely identifies the instance
+    // that registered the entry, so that the deleter of an instance which
+    // outlived its registration cannot unregister a later one.
+    struct VideoInputEntry
+    {
+        std::weak_ptr<video::VideoInput> input;
+        uint64_t generation {0};
+    };
     std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const
     {
         auto input = videoInputs.find(id);
-        return input == videoInputs.end() ? nullptr : input->second.lock();
+        return input == videoInputs.end() ? nullptr : input->second.input.lock();
     }
     std::mutex videoMutex;
-    std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
+    std::map<std::string, VideoInputEntry, std::less<>> videoInputs;
+    uint64_t nextVideoInputGeneration {0};
+    // Notified once a VideoInput has been fully destroyed and unregistered from
+    // videoInputs, so that a new one can be created for the same sink.
+    std::condition_variable videoInputsCv;
 #endif
 
     /**
