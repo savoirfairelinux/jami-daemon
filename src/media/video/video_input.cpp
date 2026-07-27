@@ -50,6 +50,11 @@ namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
+// How long, and how often, to retry opening a capture device that is reported
+// busy before giving up.
+static constexpr auto EBUSY_RETRY_DELAY = std::chrono::milliseconds(100);
+static constexpr unsigned EBUSY_MAX_ATTEMPTS = 50;
+
 VideoInput::VideoInput(VideoInputMode inputMode, const std::string& resource, const std::string& sink)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
@@ -304,6 +309,7 @@ VideoInput::createDecoder()
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
+    unsigned busyAttempts = 0;
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
         int ret = decoder->openInput(decOpts_);
@@ -317,8 +323,18 @@ VideoInput::createDecoder()
             // If this is the case, cleanup() can occurs and this will erase shmPath_
             // So, be sure to regenerate a correct shmPath for clients.
             restartSink = true;
+            // Give the other user a chance to release the device, but don't retry
+            // forever: hammering a capture device that never frees up can wedge
+            // the driver, and some webcams drop off the USB bus entirely.
+            if (++busyAttempts >= EBUSY_MAX_ATTEMPTS) {
+                JAMI_ERROR("Unable to open input \"{}\": still busy after {} attempts",
+                           decOpts_.input,
+                           EBUSY_MAX_ATTEMPTS);
+                foundDecOpts(decOpts_);
+                return;
+            }
+            std::this_thread::sleep_for(EBUSY_RETRY_DELAY);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     if (isStopped_)
