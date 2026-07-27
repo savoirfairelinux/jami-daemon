@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccecfa26_a50fc621",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:52Z",
+      "side": 1,
+      "message": "[error] Line 701: 🔴 `projection` is left empty when the rate limit says not to refresh, but the existing `appendCheckpoint` API previously received the full document text and this patch does not change its contract. If `appendCheckpoint` still writes the supplied projection to `document.md`, every rate-limited checkpoint will truncate the readable projection to an empty file. Add an explicit skip/no-projection API path, e.g. `std::optional\u003cstd::string\u003e` for the projection, and only update `document.md` when it has a value.",
+      "revId": "b3a414872526b4f48e2a1b418236ff0d89a87962",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4ac4ea3_a4ddb7d8",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:52Z",
+      "side": 1,
+      "message": "[warning] Line 718: 🟡 `projection.empty()` is used to decide whether a projection was written, which conflates \"skip projection\" with a legitimate empty document. If the document is deleted to empty text and the checkpoint writes that empty projection, `lastProjectionNs` is not updated, causing repeated full projection attempts. Track this with a separate boolean such as `projectionWritten` or use `std::optional\u003cstd::string\u003e`.",
+      "revId": "b3a414872526b4f48e2a1b418236ff0d89a87962",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
