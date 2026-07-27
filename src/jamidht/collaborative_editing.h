@@ -148,7 +148,25 @@ private:
     /// process.
     void queueUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);
     void scheduleCheckpoint(const std::shared_ptr<Session>& session, std::chrono::seconds delay);
-    void checkpointNow(const std::shared_ptr<Session>& session);
+    /**
+     * Write a checkpoint now.
+     *
+     * @param finalizing  the session is being closed or flushed, so the readable
+     *                    projection is refreshed even if the user was still
+     *                    typing. See the projection policy in the .cpp.
+     */
+    void checkpointNow(const std::shared_ptr<Session>& session, bool finalizing = false);
+    /**
+     * Whether the readable projection may be rewritten now. Rate-limits the one
+     * write that is proportional to the size of the document rather than to the
+     * size of the edit.
+     *
+     * @param force  bypass the interval (closing, flushing).
+     */
+    bool projectionDue(const std::shared_ptr<Session>& session, bool force) const;
+    /// Record that a projection was actually written. Kept separate from
+    /// projectionDue() so that a failed write does not consume the interval.
+    void markProjectionWritten(const std::shared_ptr<Session>& session);
     void emitRemoteChanges(const std::string& conversationId,
                            const std::string& documentId,
                            const std::vector<YrsDocument::TextChange>& changes);
