@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5becd7ce_3eb657d0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2119,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:13Z",
+      "side": 1,
+      "message": "[warning] Line 2119: 🟡 `collaborativeDocuments()` walks and materializes the full conversation history on every call. For large conversations this can become expensive, especially if clients poll this accessor to refresh UI state. Consider maintaining/indexing collaborative document announcements when messages are loaded/received, or at least adding a repository helper that filters by commit type without converting every commit to a full map.",
+      "revId": "12b6ba1ec7ae4c0362faa8dbdd727e0ca617342a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9e8916d_be2f5f68",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2128,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:13Z",
+      "side": 1,
+      "message": "[warning] Line 2128: 🟡 The API is named as a document list, but it returns one entry per announcement commit. If the same document id is announced more than once, clients will show duplicates. Consider deduplicating by `uri` while preserving the newest commit, or document explicitly that duplicates are intentional.",
+      "revId": "12b6ba1ec7ae4c0362faa8dbdd727e0ca617342a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
