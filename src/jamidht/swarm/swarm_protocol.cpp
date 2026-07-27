@@ -18,6 +18,27 @@
 #include "swarm_protocol.h"
 
 namespace jami {
-namespace swarm_protocol {}; // namespace swarm_protocol
+namespace swarm_protocol {
+
+static constexpr std::string_view MOBILE_LEASE_SIGNATURE_DOMAIN {"DRT-MOBILE"};
+
+dht::Blob
+mobileLeasePayload(const MobileLease& lease)
+{
+    // The fixed-schema array makes field order and scalar encodings deterministic.
+    msgpack::sbuffer buffer;
+    msgpack::packer<msgpack::sbuffer> packer(&buffer);
+    packer.pack_array(7);
+    packer.pack(MOBILE_LEASE_SIGNATURE_DOMAIN);
+    packer.pack(lease.format_version);
+    packer.pack(lease.conversation_id);
+    packer.pack(lease.issuer_id);
+    packer.pack(lease.device_id.toString());
+    packer.pack(lease.issued_at);
+    packer.pack(lease.expires_at);
+    return {buffer.data(), buffer.data() + buffer.size()};
+}
+
+} // namespace swarm_protocol
 
 } // namespace jami

@@ -48,13 +48,13 @@ timePointFromMilliseconds(int64_t milliseconds)
 }
 
 constexpr int64_t
-toSecondsSinceEpoch(const TimePoint& t)
+toSecondsSinceEpoch(const auto& t)
 {
     return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
 }
 
 constexpr int64_t
-toMillisecondsSinceEpoch(const TimePoint& t)
+toMillisecondsSinceEpoch(const auto& t)
 {
     return t.time_since_epoch().count();
 }
