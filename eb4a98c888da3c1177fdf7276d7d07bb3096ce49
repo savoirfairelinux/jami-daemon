@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "108d3e74_34ac27c2",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:18:10Z",
+      "side": 1,
+      "message": "[error] Line 275: 🔴 applyDelta() still passes caller-provided attrs directly to yinput_json(). Formatting attributes come from client/editor input, and malformed or non-object JSON can cross into the Rust FFI unchecked. Parse and validate attrs as a JSON object before creating YInput, and reject/drop invalid attribute ops consistently instead of handing arbitrary strings to libyrs.",
+      "revId": "eb4a98c888da3c1177fdf7276d7d07bb3096ce49",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
