@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ea50c1f_8e9822b9",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:29:33Z",
+      "side": 1,
+      "message": "[error] Line 736: 🔴 The deleter erases any expired entry for this sink, not necessarily the entry belonging to the VideoInput being destroyed. If input A times out and input B is later created then starts tearing down, A\u0027s late deleter can erase B\u0027s expired marker, allowing input C to open the device before B has released it. Store a per-entry generation/token and have the deleter erase only when the map entry matches that generation.",
+      "revId": "2e620186dc91a212b7ac071d57d8047219e92b1d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
