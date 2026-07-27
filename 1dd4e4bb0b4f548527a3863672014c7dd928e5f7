@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f9851db8_388cc013",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-27T15:01:22Z",
+      "side": 1,
+      "message": "@ShiroiKuma@sumo.do Thanks for the commit. While the model properly identified the issue, the suggested fix doesn\u0027t work, but we\u0027re working on a proper fix on our side.",
+      "revId": "1dd4e4bb0b4f548527a3863672014c7dd928e5f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fbbd3275_98b65250",
