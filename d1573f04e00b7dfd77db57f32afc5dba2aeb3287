@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4cfdf2a6_e433d1d5",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T17:06:57Z",
+      "side": 1,
+      "message": "[error] Line 319: 🔴 Equal CRL update timestamps are treated as current, so a concurrent publish of an older-but-same-timestamp CRL can still cancel and replace a newer CRL with a different id. Use a total ordering for CRL freshness, or ignore `updateTime \u003c\u003d publishedCrlTime_` unless the id matches, so ties cannot roll back revocations.",
+      "revId": "d1573f04e00b7dfd77db57f32afc5dba2aeb3287",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
