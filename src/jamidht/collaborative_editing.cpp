@@ -26,6 +26,8 @@
 #include "base64.h"
 #include "json_utils.h"
 
+#include <opendht/thread_pool.h>
+
 #include <chrono>
 #include <cstdio>
 #include <functional>
@@ -43,6 +45,12 @@ static constexpr std::chrono::seconds CHECKPOINT_IDLE {10};
 static constexpr size_t CHECKPOINT_MAX_PENDING {200};
 /// Ceiling for a session that has no repository to drain into.
 static constexpr size_t PENDING_HARD_CAP {CHECKPOINT_MAX_PENDING * 50};
+
+// How many checkpoints between two looks at whether the repository is worth
+// packing. Checking means listing the object directories, so it is not done on
+// every checkpoint; packing itself only happens once the threshold inside
+// CollabRepository::compact() is actually crossed.
+static constexpr size_t COMPACT_CHECK_EVERY {64};
 
 // Shortest delay between two writes of the readable projection. Pausing for ten
 // seconds is common while writing, so the pause alone is not a rare enough
@@ -142,6 +150,8 @@ struct CollaborativeEditing::Session
     // Set when the pending batch reached its cap, so that continued typing stops
     // pushing the debounce timer further away and the checkpoint actually runs.
     std::atomic_bool checkpointDue {false};
+    // Checkpoints written since the repository was last considered for packing.
+    std::atomic_size_t sinceCompactCheck {0};
     // Steady-clock nanoseconds of the last projection write; 0 means never.
     std::atomic_int64_t lastProjectionNs {0};
 
@@ -396,7 +406,17 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
     // so a document opens with its full content even when the daemon restarted or the
     // commits were never replayed through the message-history load path.
     loadPersistedState(session);
-    return session->doc->text();
+    auto text = session->doc->text();
+    // Catch up on repositories left uncompacted by earlier versions: a document
+    // that is only ever synchronized accumulates one pack per fetch, and no
+    // other trigger would ever tidy it up. Scheduled only once the state has
+    // been read, because packing holds the repository lock for its whole
+    // duration and this call is what the client waits on to show the document.
+    dht::ThreadPool::io().run([repo = session->repo] {
+        if (repo)
+            repo->compact();
+    });
+    return text;
 }
 
 void
@@ -747,6 +767,17 @@ CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session, boo
 
     if (auto account = account_.lock())
         account->syncCollabDocument(session->conversationId, session->documentId);
+
+    // Nothing else ever packs a document repository, and every checkpoint leaves
+    // a handful of loose objects behind. Off the io thread: packing walks the
+    // whole history and would otherwise hold up the checkpoint timers.
+    if (++session->sinceCompactCheck >= COMPACT_CHECK_EVERY) {
+        session->sinceCompactCheck = 0;
+        dht::ThreadPool::io().run([repo = session->repo] {
+            if (repo)
+                repo->compact();
+        });
+    }
 }
 
 std::vector<CollabRepository::HistoryEntry>
@@ -934,7 +965,9 @@ CollaborativeEditing::flush()
             session->checkpointTimer->cancel();
         }
         // Shutting down: this is the last chance to leave a projection that
-        // matches the text.
+        // matches the text. No compaction here -- the edits are already durable,
+        // packing is pure housekeeping, and doing it inline would stall the
+        // account unregistration for seconds per open document.
         checkpointNow(session, /*finalizing=*/true);
     }
 }

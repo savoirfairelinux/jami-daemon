@@ -24,6 +24,9 @@
 #include "logger.h"
 
 #include <algorithm>
+#include <unordered_set>
+#include <atomic>
+#include <filesystem>
 #include <charconv>
 #include <ctime>
 #include <sstream>
@@ -47,6 +50,18 @@ constexpr git_filemode_t BLOB_MODE {GIT_FILEMODE_BLOB};
 // A document tree is root/deltas/<device>/<blob>; anything deeper is a peer
 // serving something it should not.
 constexpr unsigned MAX_TREE_DEPTH {8};
+
+// Loose objects tolerated before packing. Each checkpoint writes about five,
+// so this is roughly one pack per two hundred checkpoints: often enough that
+// the repository never balloons, rare enough that packing stays off the
+// critical path of typing.
+constexpr size_t COMPACT_LOOSE_THRESHOLD {1000};
+
+// Pack files tolerated before consolidating. Every fetch from a peer leaves a
+// pack behind, and nothing ever merged them: a document synchronized a few
+// dozen times ends up with as many packs, each carrying its own copy of the
+// shared history.
+constexpr size_t COMPACT_PACK_THRESHOLD {4};
 
 struct GitTreeBuilderDeleter
 {
@@ -348,6 +363,11 @@ public:
     std::string deviceId_;
     std::string path_;
     mutable std::mutex mutex_;
+    // A fetch writes a pack without holding mutex_, on purpose: it is a network
+    // operation and must not block typing. Compaction therefore has to know
+    // whether one overlapped it before it removes any pack.
+    std::atomic_uint fetchesStarted_ {0};
+    std::atomic_uint fetchesFinished_ {0};
 };
 
 CollabRepository::CollabRepository(const std::shared_ptr<JamiAccount>& account,
@@ -792,6 +812,243 @@ CollabRepository::updateCount() const
     return updates().size();
 }
 
+namespace {
+
+struct ObjectCounts
+{
+    size_t loose {0};
+    size_t packFiles {0};
+};
+
+/// Count loose object files and pack files under objects/.
+ObjectCounts
+countObjects(const std::string& path)
+{
+    ObjectCounts counts;
+    std::error_code ec;
+    const std::filesystem::path objects = std::filesystem::path(path) / "objects";
+    for (auto it = std::filesystem::directory_iterator(objects / "pack", ec);
+         it != std::filesystem::directory_iterator();
+         it.increment(ec)) {
+        if (ec)
+            break;
+        ++counts.packFiles;
+    }
+    for (const auto& entry : std::filesystem::directory_iterator(objects, ec)) {
+        // Loose objects live in 256 two-hex-digit directories; "pack" and
+        // "info" are neither.
+        const auto name = entry.path().filename().string();
+        if (name.size() != 2 || !entry.is_directory(ec))
+            continue;
+        for (auto it = std::filesystem::directory_iterator(entry.path(), ec);
+             it != std::filesystem::directory_iterator();
+             it.increment(ec)) {
+            if (ec)
+                break;
+            ++counts.loose;
+        }
+    }
+    return counts;
+}
+
+/// Whether the repository has accumulated enough clutter to be worth packing.
+bool
+worthCompacting(const ObjectCounts& counts)
+{
+    return counts.loose > COMPACT_LOOSE_THRESHOLD || counts.packFiles > COMPACT_PACK_THRESHOLD;
+}
+
+/// Collect every object reachable from @p treeId: the tree itself, its subtrees
+/// and its blobs. Bounded by the same depth limit as the rest of the class.
+///
+/// @p seen carries across calls and is what keeps this affordable. A document
+/// tree holds one entry per checkpoint, so without it commit N would enumerate
+/// N blobs and the walk would cost O(checkpoints^2) -- hundreds of megabytes of
+/// resident memory on a repository of a few megabytes. A tree already visited
+/// has had its whole subtree visited too, so the recursion stops there.
+bool
+collectReachable(git_repository* repo,
+                 const git_oid& treeId,
+                 std::unordered_set<std::string>& seen,
+                 std::vector<git_oid>& trees,
+                 std::vector<git_oid>& blobs,
+                 unsigned depth = 0)
+{
+    if (depth > MAX_TREE_DEPTH)
+        return false;
+    if (!seen.insert(oidToString(treeId)).second)
+        return true; // this subtree was reached from another commit already
+    git_tree* tree = nullptr;
+    if (git_tree_lookup(&tree, repo, &treeId) < 0)
+        return false;
+    GitTree guard {tree};
+    trees.push_back(treeId);
+    const size_t n = git_tree_entrycount(tree);
+    for (size_t i = 0; i < n; ++i) {
+        const git_tree_entry* e = git_tree_entry_byindex(tree, i);
+        const git_oid* id = git_tree_entry_id(e);
+        if (git_tree_entry_type(e) == GIT_OBJECT_TREE) {
+            if (!collectReachable(repo, *id, seen, trees, blobs, depth + 1))
+                return false;
+        } else if (seen.insert(oidToString(*id)).second) {
+            blobs.push_back(*id);
+        }
+    }
+    return true;
+}
+
+} // namespace
+
+bool
+CollabRepository::needsCompaction() const
+{
+    return worthCompacting(countObjects(path_));
+}
+
+bool
+CollabRepository::compact(bool force)
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    if (!force && !worthCompacting(countObjects(path_)))
+        return false;
+    // Sampled before the walk, checked again before any pack is removed.
+    const auto fetchesAtStart = pimpl_->fetchesStarted_.load();
+    if (pimpl_->fetchesFinished_ != fetchesAtStart)
+        return false; // a fetch is in flight
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
+    auto head = pimpl_->headCommit(repo.get());
+    if (!head)
+        return false;
+
+    // Walk main and gather everything it reaches. Only these objects are packed
+    // and pruned: anything left over by an interrupted write stays untouched.
+    git_revwalk* walkPtr = nullptr;
+    if (git_revwalk_new(&walkPtr, repo.get()) < 0)
+        return false;
+    std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)> walk {walkPtr, git_revwalk_free};
+    // Every ref, not just main: a document fetched from a peer sits under
+    // refs/remotes/<device>/main until it is merged, and dropping the pack that
+    // carries it would lose it.
+    if (git_revwalk_push_glob(walk.get(), "refs/*") < 0)
+        return false;
+
+    std::vector<git_oid> commits, trees, blobs;
+    std::unordered_set<std::string> seen;
+    git_oid oid;
+    int walkStatus = 0;
+    while ((walkStatus = git_revwalk_next(&oid, walk.get())) == 0) {
+        commits.push_back(oid);
+        git_commit* c = nullptr;
+        if (git_commit_lookup(&c, repo.get(), &oid) < 0)
+            return false;
+        GitCommit commit {c};
+        if (!collectReachable(repo.get(), *git_commit_tree_id(c), seen, trees, blobs))
+            return false;
+    }
+    // A walk cut short by an unreadable commit would leave part of the history
+    // out of the pack, and the pruning below would then delete objects that are
+    // still needed. Only a clean end of iteration may proceed.
+    if (walkStatus != GIT_ITEROVER)
+        return false;
+    if (commits.empty())
+        return false;
+
+    git_packbuilder* pbPtr = nullptr;
+    if (git_packbuilder_new(&pbPtr, repo.get()) < 0)
+        return false;
+    std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)> pb {pbPtr,
+                                                                         git_packbuilder_free};
+    // Commits first, then trees, then blobs: libgit2 packs best in recency
+    // order, and the delta chains between successive projections are what makes
+    // the pack small.
+    for (const auto& group : {std::cref(commits), std::cref(trees), std::cref(blobs)})
+        for (const auto& id : group.get())
+            if (git_packbuilder_insert(pb.get(), &id, nullptr) < 0)
+                return false;
+
+    const auto packDir = (std::filesystem::path(path_) / "objects" / "pack").string();
+    std::error_code ec;
+    std::filesystem::create_directories(packDir, ec);
+
+    // Remember the packs written by previous compactions. The new pack holds
+    // every reachable object, so they become redundant; leaving them behind
+    // would make each compaction *add* a full copy of the history.
+    std::vector<std::filesystem::path> stalePacks;
+    for (const auto& entry : std::filesystem::directory_iterator(packDir, ec))
+        if (entry.is_regular_file(ec))
+            stalePacks.push_back(entry.path());
+
+    if (git_packbuilder_write(pb.get(), packDir.c_str(), 0, nullptr, nullptr) < 0) {
+        JAMI_WARNING("[Document {}] Could not write pack: {}",
+                     documentId_,
+                     git_error_last() ? git_error_last()->message : "unknown");
+        return false;
+    }
+
+    // A pack is named after a hash of its own contents, so compacting twice over
+    // an unchanged set of objects writes the same name again, over the file that
+    // is already there -- and that name is in the list above. Deleting it would
+    // empty the repository of everything it has. Only reachable after the walk,
+    // git_packbuilder_name() returns nothing before the write.
+    if (const char* written = git_packbuilder_name(pb.get())) {
+        const auto fresh = fmt::format("pack-{}", written);
+        stalePacks.erase(std::remove_if(stalePacks.begin(),
+                                        stalePacks.end(),
+                                        [&](const std::filesystem::path& p) {
+                                            return p.stem().string() == fresh;
+                                        }),
+                         stalePacks.end());
+    } else {
+        // Without the name there is no way to tell the new pack from the old
+        // ones: keep them all rather than risk removing it.
+        stalePacks.clear();
+    }
+
+    // The pack is on disk and readable before anything is removed, so a reader
+    // that misses a loose object finds it there.
+    if (auto* odb = [&] {
+            git_odb* o = nullptr;
+            return git_repository_odb(&o, repo.get()) == 0 ? o : nullptr;
+        }()) {
+        git_odb_refresh(odb);
+        git_odb_free(odb);
+    }
+
+    // Unlinking a pack another handle is reading is harmless on POSIX, and
+    // libgit2 rescans when an object it expected is no longer where it was.
+    // But a fetch that overlapped us may have written a pack we listed as stale
+    // and pointed a ref at it after our walk: dropping it would lose objects no
+    // one else has. Leaving the old packs in place merely postpones the gain to
+    // the next compaction.
+    if (pimpl_->fetchesStarted_ == fetchesAtStart && pimpl_->fetchesFinished_ == fetchesAtStart) {
+        for (const auto& stale : stalePacks)
+            std::filesystem::remove(stale, ec);
+    } else {
+        JAMI_DEBUG("[Document {}] A fetch overlapped compaction, keeping the previous packs",
+                   documentId_);
+        stalePacks.clear();
+    }
+
+    size_t pruned = 0;
+    const std::filesystem::path objects = std::filesystem::path(path_) / "objects";
+    for (const auto& group : {std::cref(commits), std::cref(trees), std::cref(blobs)}) {
+        for (const auto& id : group.get()) {
+            const auto hex = oidToString(id);
+            const auto loose = objects / hex.substr(0, 2) / hex.substr(2);
+            if (std::filesystem::remove(loose, ec))
+                ++pruned;
+        }
+    }
+
+    JAMI_LOG("[Document {}] Packed {} object(s), pruned {} loose file(s)",
+             documentId_,
+             commits.size() + trees.size() + blobs.size(),
+             pruned);
+    return true;
+}
+
 bool
 CollabRepository::isEmpty() const
 {
@@ -866,6 +1123,14 @@ CollabRepository::fetch(const std::string& remoteDeviceId)
     auto repo = pimpl_->repository();
     if (!repo)
         return false;
+
+    // Tell compaction that packs may appear behind its back.
+    ++pimpl_->fetchesStarted_;
+    struct FetchMark
+    {
+        std::atomic_uint& finished;
+        ~FetchMark() { ++finished; }
+    } mark {pimpl_->fetchesFinished_};
 
     git_remote* remotePtr = nullptr;
     {

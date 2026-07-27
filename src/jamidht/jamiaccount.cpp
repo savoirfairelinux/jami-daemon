@@ -2837,6 +2837,11 @@ JamiAccount::fetchCollabDocument(const std::string& deviceId,
                 if (auto repo = CollabRepository::openOrInit(sthis, conversationId, documentId)) {
                     if (repo->fetch(deviceId) && repo->mergeRemote(deviceId))
                         sthis->collaborativeEditing()->onRepositoryUpdated(conversationId, documentId);
+                    // Each fetch leaves its own pack behind. Documents that are
+                    // synchronized but never edited here would otherwise never
+                    // be compacted at all, since the other trigger sits on the
+                    // checkpoint path. Already off the connection thread.
+                    repo->compact();
                 }
                 onDone();
             });
