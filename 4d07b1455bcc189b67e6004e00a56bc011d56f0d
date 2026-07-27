@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ab5287b_f6e02e79",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 710,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:53Z",
+      "side": 1,
+      "message": "[error] Line 710: 🔴 Skipping unreadable stored updates can synthesize an incorrect historical document; `restoreDocument()` may then propagate that corrupted/truncated state to every peer. Treat decode/apply failure as a failed snapshot instead: return an error/empty optional from `documentTextAt` and make restore fail rather than silently continuing.",
+      "revId": "4d07b1455bcc189b67e6004e00a56bc011d56f0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8ed45fa_a9487269",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 734,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:53Z",
+      "side": 1,
+      "message": "[error] Line 734: 🔴 `target.empty()` is used as the failure sentinel, but a valid checkpoint can legitimately contain an empty document. That makes restore of an empty historical version dependent on history lookup and still leaves `collaborativeDocumentTextAt()` unable to distinguish unknown commits from empty content. Return an explicit success flag/optional from the snapshot path and use that for both browse and restore.",
+      "revId": "4d07b1455bcc189b67e6004e00a56bc011d56f0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a425bdcc_e00395e3",
+        "filename": "src/jamidht/yrs_document.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:53Z",
+      "side": 1,
+      "message": "[error] Line 403: 🔴 `textSplice()` compares suffix bytes after backing up the prefix to a UTF-8 boundary, but it does not ensure the suffix boundary is valid for both strings. With multi-byte characters, `insert.assign(to, prefix, to.size() - prefix - suffix)` can start or end inside a code point, producing invalid UTF-8 and potentially invalid Yjs text updates. Compute prefix/suffix on decoded code points or explicitly adjust both `from` and `to` boundaries before deriving UTF-16 offsets and inserted bytes.",
+      "revId": "4d07b1455bcc189b67e6004e00a56bc011d56f0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
