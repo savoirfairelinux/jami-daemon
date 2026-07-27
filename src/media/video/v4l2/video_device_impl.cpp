@@ -45,6 +45,30 @@ extern "C" {
 namespace jami {
 namespace video {
 
+namespace {
+// Owns a file descriptor so that the device node is released even when probing
+// it throws, which happens for every node that is not a capture device.
+class ScopedFd
+{
+public:
+    explicit ScopedFd(int fd)
+        : fd_(fd)
+    {}
+    ~ScopedFd()
+    {
+        if (fd_ != -1)
+            ::close(fd_);
+    }
+    ScopedFd(const ScopedFd&) = delete;
+    ScopedFd& operator=(const ScopedFd&) = delete;
+
+    int get() const { return fd_; }
+
+private:
+    int fd_;
+};
+} // namespace
+
 class VideoV4l2Rate
 {
 public:
@@ -442,12 +466,12 @@ VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
         rate_.frame_rate = 30;
         return;
     }
-    int fd = open(path.c_str(), O_RDWR);
-    if (fd == -1)
+    ScopedFd fd(open(path.c_str(), O_RDWR));
+    if (fd.get() == -1)
         throw std::runtime_error("Unable to open device");
 
     v4l2_capability cap;
-    if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
+    if (ioctl(fd.get(), VIDIOC_QUERYCAP, &cap))
         throw std::runtime_error("Unable to query capabilities");
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
@@ -462,21 +486,19 @@ VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
     ZEROVAR(input);
     unsigned idx;
     input.index = idx = 0;
-    while (!ioctl(fd, VIDIOC_ENUMINPUT, &input)) {
+    while (!ioctl(fd.get(), VIDIOC_ENUMINPUT, &input)) {
         if (idx != input.index)
             break;
 
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Channel channel(idx, (const char*) input.name);
-            channel.readFormats(fd);
+            channel.readFormats(fd.get());
             if (not channel.getSizeList().empty())
                 channels_.push_back(channel);
         }
 
         input.index = ++idx;
     }
-
-    ::close(fd);
 }
 
 string
