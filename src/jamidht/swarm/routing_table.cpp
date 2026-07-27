@@ -471,10 +471,8 @@ RoutingTable::getMobileNodesToNotify()
 {
     std::vector<NodeId> ret;
     for (const auto& mobile : getMobileNodes()) {
-        // We are responsible for waking up this mobile node if we are
-        // closer to it than every node we are connected to.
-        auto closest = closestNodes(mobile, 1);
-        if (closest.empty() || mobile.xorCmp(id_, closest.front()) < 0)
+        const auto closest = closestNodes(mobile, MOBILE_WAKE_REDUNDANCY);
+        if (closest.size() < MOBILE_WAKE_REDUNDANCY || mobile.xorCmp(id_, closest.back()) < 0)
             ret.emplace_back(mobile);
     }
     return ret;

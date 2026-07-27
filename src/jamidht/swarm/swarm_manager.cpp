@@ -16,6 +16,7 @@
  */
 
 #include "swarm_manager.h"
+#include "jamidht/timestamp.h"
 #include <dhtnet/multiplexed_socket.h>
 #include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
@@ -24,10 +25,23 @@ namespace jami {
 
 using namespace swarm_protocol;
 
-SwarmManager::SwarmManager(const NodeId& id, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb)
+SwarmManager::SwarmManager(const NodeId& id,
+                           bool isMobile,
+                           const std::mt19937_64& rand,
+                           ToConnectCb&& toConnectCb,
+                           std::string conversationId,
+                           MobileLeaseProvider mobileLeaseProvider,
+                           MobileLeaseIssuerValidator mobileLeaseIssuerValidator,
+                           CertificateProvider certificateProvider,
+                           CertificateFetcher certificateFetcher)
     : id_(id)
     , isMobile_(isMobile)
+    , conversationId_(std::move(conversationId))
     , rd(rand)
+    , mobileLeaseProvider_(std::move(mobileLeaseProvider))
+    , mobileLeaseIssuerValidator_(std::move(mobileLeaseIssuerValidator))
+    , certificateProvider_(std::move(certificateProvider))
+    , certificateFetcher_(std::move(certificateFetcher))
     , toConnectCb_(toConnectCb)
 {
     routing_table.setId(id);
@@ -79,45 +93,87 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
     bool changed = false;
     {
         std::lock_guard lock(mutex);
-        for (const auto& nodeId : mobile_nodes)
+        const auto now = toSecondsSinceEpoch(std::chrono::system_clock::now());
+        if (!conversationId_.empty() && now >= LEGACY_MOBILE_NODE_SUNSET)
+            return;
+        for (const auto& nodeId : mobile_nodes) {
             changed |= addMobileNodes(nodeId);
+            if (!conversationId_.empty() && !mobileNodeLeases_.contains(nodeId))
+                changed |= legacyMobileNodeExpiries_.try_emplace(nodeId, LEGACY_MOBILE_NODE_SUNSET).second;
+        }
+        scheduleMobileLeaseExpiryInternal();
     }
     if (changed)
         emitMobileNodesChanged();
 }
 
 void
-SwarmManager::setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes)
+SwarmManager::setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes, bool requireLease)
 {
     bool changed = false;
-    {
-        std::lock_guard lock(mutex);
-        for (const auto& mobile : mobile_nodes) {
-            if (mobile.id == id_)
-                continue;
-            changed |= addMobileNodes(mobile.id);
-            changed |= setMobileNodeCertificateInternal(mobile.id, mobile.certificate);
-        }
+    size_t records = 0;
+    for (const auto& mobile : mobile_nodes) {
+        if (records++ == MAX_MOBILE_NODE_INFOS)
+            break;
+        changed |= setMobileNodeInfo(mobile, requireLease);
     }
     if (changed)
         emitMobileNodesChanged();
 }
 
-void
-SwarmManager::setMobileNodeCertificate(const NodeId& nodeId, const dht::Blob& certificate)
+bool
+SwarmManager::setMobileNodeInfo(const MobileNodeInfo& mobile,
+                                bool requireLease,
+                                const std::shared_ptr<dhtnet::ChannelSocketInterface>& source)
 {
-    bool changed = false;
-    bool isKnownMobile = false;
-    {
+    if (mobile.id == id_)
+        return false;
+
+    if (!mobile.lease) {
+        if (requireLease)
+            return false;
+        const auto now = static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count());
+        if (!conversationId_.empty() && now >= LEGACY_MOBILE_NODE_SUNSET)
+            return false;
         std::lock_guard lock(mutex);
-        changed = setMobileNodeCertificateInternal(nodeId, certificate);
-        if (changed) {
-            const auto mobileNodes = routing_table.getKnownMobileNodes();
-            isKnownMobile = std::find(mobileNodes.begin(), mobileNodes.end(), nodeId) != mobileNodes.end();
+        bool changed = addMobileNodes(mobile.id);
+        if (!conversationId_.empty()) {
+            changed |= legacyMobileNodeExpiries_.try_emplace(mobile.id, LEGACY_MOBILE_NODE_SUNSET).second;
+            scheduleMobileLeaseExpiryInternal();
+        }
+        return changed;
+    }
+
+    const auto& lease = *mobile.lease;
+    if (lease.device_id != mobile.id || !precheckLease(lease))
+        return false;
+
+    {
+        // Gossip re-announces the same lease every round: skip the whole
+        // resolution when what we already verified is at least as good.
+        std::lock_guard lock(mutex);
+        auto known = mobileNodeLeases_.find(mobile.id);
+        if (known != mobileNodeLeases_.end() && known->second.expires_at >= lease.expires_at)
+            return false;
+    }
+
+    // The certificate is never gossiped: resolve it from the account certificate
+    // store, which already holds every device we ever connected to (the swarm
+    // channel pins its TLS peer certificate) and everything resolved before.
+    if (certificateProvider_) {
+        if (auto certificate = certificateProvider_(mobile.id)) {
+            if (!verifyLease(*certificate, lease))
+                return false;
+            std::lock_guard lock(mutex);
+            return commitLeaseInternal(lease);
         }
     }
-    if (changed && isKnownMobile)
-        emitMobileNodesChanged();
+
+    std::lock_guard lock(mutex);
+    enqueuePendingLeaseInternal(lease, source);
+    return false;
 }
 
 void
@@ -126,14 +182,16 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
     // JAMI_WARNING("[SwarmManager {}] addChannel! with {}", fmt::ptr(this), channel->deviceId().to_view());
     if (channel) {
         auto emit = false;
+        auto added = false;
         {
             std::lock_guard lock(mutex);
             emit = routing_table.findBucket(getId())->isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
-            if (routing_table.addNode(channel, bucket)) {
-                std::error_code ec;
-                resetNodeExpiry(ec, channel, id_);
-            }
+            added = routing_table.addNode(channel, bucket);
+        }
+        if (added) {
+            std::error_code ec;
+            resetNodeExpiry(ec, channel, id_);
         }
         receiveMessage(channel);
         if (emit && onConnectionChanged_) {
@@ -180,6 +238,11 @@ SwarmManager::shutdown()
     }
     isShutdown_ = true;
     std::lock_guard lock(mutex);
+    mobileLeaseExpiryTimer_.cancel();
+    for (auto& [peer, state] : outstandingCertRequests_)
+        if (state.timer)
+            state.timer->cancel();
+    outstandingCertRequests_.clear();
     routing_table.shutdownAllNodes();
 }
 
@@ -187,6 +250,8 @@ void
 SwarmManager::restart()
 {
     isShutdown_ = false;
+    std::lock_guard lock(mutex);
+    scheduleMobileLeaseExpiryInternal();
 }
 
 bool
@@ -205,23 +270,434 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
 }
 
 bool
-SwarmManager::setMobileNodeCertificateInternal(const NodeId& nodeId, const dht::Blob& certificate)
+SwarmManager::isMobileNodeCurrentInternal(const NodeId& nodeId, int64_t now) const
 {
-    if (certificate.empty() || certificate.size() > MAX_MOBILE_CERTIFICATE_SIZE)
+    if (auto lease = mobileNodeLeases_.find(nodeId); lease != mobileNodeLeases_.end())
+        return lease->second.expires_at > now;
+    if (auto legacy = legacyMobileNodeExpiries_.find(nodeId); legacy != legacyMobileNodeExpiries_.end())
+        return legacy->second > now;
+    return conversationId_.empty();
+}
+
+bool
+SwarmManager::precheckLease(const MobileLease& lease) const
+{
+    if (lease.format_version != 1 || lease.conversation_id != conversationId_ || lease.conversation_id.empty()
+        || lease.conversation_id.size() > MAX_MOBILE_LEASE_IDENTIFIER_SIZE || lease.signature.empty()
+        || lease.signature.size() > MAX_MOBILE_LEASE_SIGNATURE_SIZE || !lease.issuer_id
+        || !mobileLeaseIssuerValidator_ || !mobileLeaseIssuerValidator_(lease.issuer_id))
         return false;
+
+    constexpr auto MAX_CLOCK_SKEW = std::chrono::seconds(5 * 60);
+    const auto now = std::chrono::system_clock::now();
+    const auto issued = std::chrono::system_clock::time_point(std::chrono::seconds(lease.issued_at));
+    const auto expires = std::chrono::system_clock::time_point(std::chrono::seconds(lease.expires_at));
+    if (issued > now + MAX_CLOCK_SKEW || expires <= now || expires <= issued
+        || expires - issued > MAX_MOBILE_LEASE_DURATION)
+        return false;
+    return true;
+}
+
+bool
+SwarmManager::verifyLease(const dht::crypto::Certificate& certificate, const MobileLease& lease) const
+{
     try {
-        dht::crypto::Certificate cert(certificate);
-        if (cert.getLongId() != nodeId || cert.getIssuerUID().empty())
+        if (certificate.getLongId() != lease.device_id || !certificate.issuer
+            || certificate.issuer->getId() != lease.issuer_id)
             return false;
+        dht::crypto::TrustList trust;
+        trust.add(*certificate.issuer);
+        if (!trust.verify(certificate))
+            return false;
+        auto certificateExpiry = toSecondsSinceEpoch(certificate.getExpiration());
+        if (lease.expires_at > certificateExpiry)
+            return false;
+        const auto payload = mobileLeasePayload(lease);
+        return certificate.getPublicKey().checkSignature(payload, lease.signature);
     } catch (const std::exception& e) {
-        JAMI_WARNING("Ignoring invalid mobile certificate for {}: {}", nodeId, e.what());
+        JAMI_WARNING("Ignoring invalid mobile lease for {}: {}", lease.device_id, e.what());
         return false;
     }
-    auto current = mobileNodeCertificates_.find(nodeId);
-    if (current != mobileNodeCertificates_.end() && current->second == certificate)
-        return false;
-    mobileNodeCertificates_.insert_or_assign(nodeId, certificate);
-    return true;
+}
+
+bool
+SwarmManager::commitLeaseInternal(const MobileLease& lease)
+{
+    pendingMobileLeases_.erase(lease.device_id);
+
+    bool changed = addMobileNodes(lease.device_id);
+    auto current = mobileNodeLeases_.find(lease.device_id);
+    if (current == mobileNodeLeases_.end() || lease.expires_at > current->second.expires_at
+        || (lease.expires_at == current->second.expires_at && lease.issued_at > current->second.issued_at)) {
+        mobileNodeLeases_.insert_or_assign(lease.device_id, lease);
+        legacyMobileNodeExpiries_.erase(lease.device_id);
+        changed = true;
+    }
+    scheduleMobileLeaseExpiryInternal();
+    return changed;
+}
+
+void
+SwarmManager::enqueuePendingLeaseInternal(const MobileLease& lease,
+                                          const std::shared_ptr<dhtnet::ChannelSocketInterface>& source)
+{
+    const auto& nodeId = lease.device_id;
+    auto pending = pendingMobileLeases_.find(nodeId);
+    if (pending != pendingMobileLeases_.end()) {
+        if (lease.expires_at > pending->second.lease.expires_at)
+            pending->second.lease = lease;
+        if (source)
+            pending->second.source = source;
+    } else {
+        if (pendingMobileLeases_.size() >= MAX_PENDING_MOBILE_LEASES) {
+            // Evict the entry that would expire first: it is the least useful to keep resolving.
+            auto oldest = std::min_element(pendingMobileLeases_.begin(),
+                                           pendingMobileLeases_.end(),
+                                           [](const auto& a, const auto& b) {
+                                               return a.second.lease.expires_at < b.second.lease.expires_at;
+                                           });
+            if (oldest != pendingMobileLeases_.end() && oldest->second.lease.expires_at >= lease.expires_at)
+                return;
+            pendingMobileLeases_.erase(oldest);
+        }
+        pendingMobileLeases_.emplace(nodeId, PendingLease {lease, source});
+    }
+
+    if (certFetchInFlight_.count(nodeId))
+        return;
+
+    if (source) {
+        certFetchInFlight_.emplace(nodeId);
+        dht::ThreadPool::io().run([w = weak(), source, nodeId] {
+            if (auto shared = w.lock())
+                shared->requestCertificates(source, {nodeId});
+        });
+    } else {
+        certFetchInFlight_.emplace(nodeId);
+        dht::ThreadPool::io().run([w = weak(), nodeId] {
+            if (auto shared = w.lock())
+                shared->fetchCertificateFromDht(nodeId);
+        });
+    }
+}
+
+void
+SwarmManager::abandonLeaseInternal(const NodeId& nodeId)
+{
+    certFetchInFlight_.erase(nodeId);
+    pendingMobileLeases_.erase(nodeId);
+}
+
+void
+SwarmManager::requestCertificates(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                                  const std::vector<NodeId>& ids)
+{
+    if (!socket || ids.empty() || isShutdown_) {
+        std::lock_guard lock(mutex);
+        for (const auto& id : ids)
+            certFetchInFlight_.erase(id);
+        return;
+    }
+    const auto peer = NodeId(socket->deviceId());
+    CertRequest request;
+    {
+        std::lock_guard lock(mutex);
+        auto& state = outstandingCertRequests_[peer];
+        if (state.timer) {
+            // One request in flight per peer: drop the resolution so that the
+            // next gossip round asks again.
+            for (const auto& id : ids)
+                certFetchInFlight_.erase(id);
+            return;
+        }
+        for (const auto& id : ids) {
+            if (request.ids.size() >= MAX_CERT_REQUEST_IDS) {
+                certFetchInFlight_.erase(id);
+                continue;
+            }
+            request.ids.emplace_back(id);
+        }
+        if (request.ids.empty()) {
+            outstandingCertRequests_.erase(peer);
+            return;
+        }
+        state.ids.insert(request.ids.begin(), request.ids.end());
+        state.timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext());
+        state.timer->expires_after(CERT_REQUEST_TIMEOUT);
+        state.timer->async_wait([w = weak(), peer](const asio::error_code& ec) {
+            if (ec == asio::error::operation_aborted)
+                return;
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            std::vector<NodeId> unanswered;
+            {
+                std::lock_guard lock(shared->mutex);
+                auto it = shared->outstandingCertRequests_.find(peer);
+                if (it == shared->outstandingCertRequests_.end())
+                    return;
+                unanswered.assign(it->second.ids.begin(), it->second.ids.end());
+                shared->outstandingCertRequests_.erase(it);
+            }
+            // The peer did not answer: fall back to the DHT.
+            for (const auto& id : unanswered)
+                shared->fetchCertificateFromDht(id);
+        });
+    }
+
+    Message msg;
+    msg.is_mobile = isMobile_;
+    msg.cert_request = std::move(request);
+
+    msgpack::sbuffer buffer;
+    msgpack::packer<msgpack::sbuffer> pk(&buffer);
+    pk.pack(msg);
+
+    std::error_code ec;
+    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    if (ec)
+        JAMI_ERROR("{}", ec.message());
+}
+
+void
+SwarmManager::onCertRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const CertRequest& request)
+{
+    if (!socket || request.ids.empty() || !certificateProvider_)
+        return;
+
+    std::vector<NodeId> toAnswer;
+    {
+        std::lock_guard lock(mutex);
+        for (const auto& id : request.ids) {
+            if (toAnswer.size() >= MAX_CERT_REQUEST_IDS)
+                break;
+            // A peer must not be able to use the swarm as a generic certificate
+            // oracle: only serve certificates for devices we ourselves announced
+            // as mobile in this conversation, plus our own when we are mobile.
+            if (id != id_ && !mobileNodeLeases_.count(id))
+                continue;
+            toAnswer.emplace_back(id);
+        }
+    }
+    if (toAnswer.empty())
+        return;
+
+    CertResponse response;
+    size_t totalSize = 0;
+    for (const auto& id : toAnswer) {
+        auto certificate = certificateProvider_(id);
+        if (!certificate)
+            continue;
+        auto packed = certificate->getPacked();
+        if (packed.empty() || packed.size() > MAX_MOBILE_CERTIFICATE_SIZE
+            || totalSize + packed.size() > MAX_MOBILE_CERTIFICATES_SIZE)
+            continue;
+        totalSize += packed.size();
+        response.certificates.emplace_back(std::move(packed));
+    }
+    if (response.certificates.empty())
+        return;
+
+    Message msg;
+    msg.is_mobile = isMobile_;
+    msg.cert_response = std::move(response);
+
+    msgpack::sbuffer buffer;
+    msgpack::packer<msgpack::sbuffer> pk(&buffer);
+    pk.pack(msg);
+
+    std::error_code ec;
+    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    if (ec)
+        JAMI_ERROR("{}", ec.message());
+}
+
+void
+SwarmManager::onCertResponse(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const CertResponse& response)
+{
+    if (!socket)
+        return;
+    const auto peer = NodeId(socket->deviceId());
+
+    std::set<NodeId> requested;
+    {
+        std::lock_guard lock(mutex);
+        auto it = outstandingCertRequests_.find(peer);
+        if (it == outstandingCertRequests_.end())
+            return; // Unsolicited.
+        requested = std::move(it->second.ids);
+        if (it->second.timer)
+            it->second.timer->cancel();
+        outstandingCertRequests_.erase(it);
+    }
+
+    size_t totalSize = 0;
+    for (const auto& packed : response.certificates) {
+        if (packed.empty() || packed.size() > MAX_MOBILE_CERTIFICATE_SIZE
+            || totalSize + packed.size() > MAX_MOBILE_CERTIFICATES_SIZE)
+            break;
+        totalSize += packed.size();
+        try {
+            auto certificate = std::make_shared<dht::crypto::Certificate>(packed);
+            const auto nodeId = certificate->getLongId();
+            if (!requested.erase(nodeId))
+                continue; // Not something we asked for.
+            onCertificateResolved(nodeId, certificate);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("Ignoring invalid certificate from {}: {}", peer, e.what());
+        }
+    }
+
+    // Whatever the peer could not provide is worth one DHT lookup.
+    for (const auto& nodeId : requested)
+        fetchCertificateFromDht(nodeId);
+}
+
+void
+SwarmManager::fetchCertificateFromDht(const NodeId& nodeId)
+{
+    if (isShutdown_)
+        return;
+    if (!certificateFetcher_) {
+        std::lock_guard lock(mutex);
+        abandonLeaseInternal(nodeId);
+        return;
+    }
+    certificateFetcher_(nodeId, [w = weak(), nodeId](const std::shared_ptr<dht::crypto::Certificate>& certificate) {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        if (certificate && certificate->getLongId() == nodeId)
+            shared->onCertificateResolved(nodeId, certificate);
+        else {
+            std::lock_guard lock(shared->mutex);
+            shared->abandonLeaseInternal(nodeId);
+        }
+    });
+}
+
+void
+SwarmManager::onCertificateResolved(const NodeId& nodeId, const std::shared_ptr<dht::crypto::Certificate>& certificate)
+{
+    if (!certificate)
+        return;
+
+    std::optional<MobileLease> lease;
+    {
+        std::lock_guard lock(mutex);
+        certFetchInFlight_.erase(nodeId);
+        auto pending = pendingMobileLeases_.find(nodeId);
+        if (pending == pendingMobileLeases_.end())
+            return;
+        lease = pending->second.lease;
+    }
+
+    // Re-run the cheap checks: the lease may have expired while we were resolving.
+    if (!precheckLease(*lease) || !verifyLease(*certificate, *lease)) {
+        std::lock_guard lock(mutex);
+        abandonLeaseInternal(nodeId);
+        return;
+    }
+
+    bool changed = false;
+    {
+        std::lock_guard lock(mutex);
+        changed = commitLeaseInternal(*lease);
+    }
+    if (changed)
+        emitMobileNodesChanged();
+}
+
+std::optional<MobileNodeInfo>
+SwarmManager::localMobileNodeInfo()
+{
+    if (!isMobile_ || !mobileLeaseProvider_)
+        return std::nullopt;
+
+    std::lock_guard renewalLock(mobileLeaseRenewalMtx_);
+
+    auto renewalThresholdTime = toSecondsSinceEpoch(std::chrono::system_clock::now() + MOBILE_LEASE_RENEWAL_THRESHOLD);
+    {
+        std::lock_guard lock(mutex);
+        if (localMobileNodeInfo_ && localMobileNodeInfo_->lease
+            && localMobileNodeInfo_->lease->expires_at > renewalThresholdTime)
+            return localMobileNodeInfo_;
+    }
+
+    auto renewed = mobileLeaseProvider_();
+    if (!renewed || renewed->id != id_ || !renewed->lease || renewed->lease->device_id != id_
+        || !precheckLease(*renewed->lease))
+        return std::nullopt;
+    std::lock_guard lock(mutex);
+    localMobileNodeInfo_ = std::move(renewed);
+    return localMobileNodeInfo_;
+}
+
+void
+SwarmManager::scheduleMobileLeaseExpiryInternal()
+{
+    mobileLeaseExpiryTimer_.cancel();
+    if ((mobileNodeLeases_.empty() && legacyMobileNodeExpiries_.empty()) || isShutdown_)
+        return;
+
+    auto nearestExpiry = std::numeric_limits<int64_t>::max();
+    for (const auto& [node, lease] : mobileNodeLeases_)
+        nearestExpiry = std::min(nearestExpiry, lease.expires_at);
+    for (const auto& [node, expiry] : legacyMobileNodeExpiries_)
+        nearestExpiry = std::min(nearestExpiry, expiry);
+    auto expiryTime = timePointFromSeconds(nearestExpiry);
+    const auto now = std::chrono::system_clock::now();
+    constexpr auto MAX_TIMER_DELAY_SECONDS = std::chrono::minutes(1);
+    const auto delay = std::min<std::chrono::system_clock::duration>(expiryTime > now ? expiryTime - now : std::chrono::seconds(0), MAX_TIMER_DELAY_SECONDS);
+    mobileLeaseExpiryTimer_.expires_after(delay);
+    mobileLeaseExpiryTimer_.async_wait([w = weak()](const asio::error_code& ec) {
+        if (auto shared = w.lock())
+            shared->expireMobileLeases(ec);
+    });
+}
+
+void
+SwarmManager::expireMobileLeases(const asio::error_code& ec)
+{
+    if (ec == asio::error::operation_aborted)
+        return;
+
+    bool changed = false;
+    {
+        std::lock_guard lock(mutex);
+        auto now = toSecondsSinceEpoch(std::chrono::system_clock::now());
+        for (auto it = mobileNodeLeases_.begin(); it != mobileNodeLeases_.end();) {
+            if (it->second.expires_at > now) {
+                ++it;
+                continue;
+            }
+            const auto nodeId = it->first;
+            routing_table.removeMobileNode(nodeId);
+            routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
+            it = mobileNodeLeases_.erase(it);
+            changed = true;
+        }
+        for (auto it = legacyMobileNodeExpiries_.begin(); it != legacyMobileNodeExpiries_.end();) {
+            if (it->second > now) {
+                ++it;
+                continue;
+            }
+            const auto nodeId = it->first;
+            routing_table.removeMobileNode(nodeId);
+            routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
+            it = legacyMobileNodeExpiries_.erase(it);
+            changed = true;
+        }
+        for (auto it = pendingMobileLeases_.begin(); it != pendingMobileLeases_.end();) {
+            if (it->second.lease.expires_at > now)
+                ++it;
+            else
+                it = pendingMobileLeases_.erase(it);
+        }
+        scheduleMobileLeaseExpiryInternal();
+    }
+    if (changed)
+        emitMobileNodesChanged();
 }
 
 void
@@ -273,58 +749,74 @@ SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>&
                           Query q,
                           int numberNodes)
 {
-    dht::ThreadPool::io().run([socket, isMobile = isMobile_, nodeId, q, numberNodes] {
-        msgpack::sbuffer buffer;
-        msgpack::packer<msgpack::sbuffer> pk(&buffer);
-        Message msg;
-        msg.is_mobile = isMobile;
-        msg.request = Request {q, numberNodes, nodeId};
-        pk.pack(msg);
+    auto selfMobileInfo = localMobileNodeInfo();
+    dht::ThreadPool::io().run(
+        [socket, isMobile = isMobile_, selfMobileInfo = std::move(selfMobileInfo), nodeId, q, numberNodes] {
+            msgpack::sbuffer buffer;
+            msgpack::packer<msgpack::sbuffer> pk(&buffer);
+            Message msg;
+            msg.is_mobile = isMobile;
+            msg.self_mobile_info = selfMobileInfo;
+            msg.request = Request {q, numberNodes, nodeId};
+            pk.pack(msg);
 
-        std::error_code ec;
-        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec) {
-            JAMI_ERROR("{}", ec.message());
-        }
-    });
+            std::error_code ec;
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("{}", ec.message());
+            }
+        });
 }
 
 void
 SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_)
 {
-    std::lock_guard lock(mutex);
+    if (msg_.request->q != Query::FIND)
+        return;
 
-    if (msg_.request->q == Query::FIND) {
+    auto selfMobileInfo = localMobileNodeInfo();
+    Message msg;
+    {
+        std::lock_guard lock(mutex);
         auto nodes = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
         auto bucket = routing_table.findBucket(msg_.request->nodeId);
         const auto& m_nodes = bucket->getMobileNodes();
+        std::vector<NodeId> responseMobileNodes;
+        responseMobileNodes.reserve(m_nodes.size());
         std::vector<MobileNodeInfo> mobileNodeInfos;
         mobileNodeInfos.reserve(m_nodes.size());
-        size_t certificatesSize = 0;
+        const auto now = toSecondsSinceEpoch(std::chrono::system_clock::now());
         for (const auto& node : m_nodes) {
-            if (auto certificate = mobileNodeCertificates_.find(node);
-                certificate != mobileNodeCertificates_.end()
-                && certificatesSize + certificate->second.size() <= MAX_MOBILE_CERTIFICATES_SIZE) {
-                mobileNodeInfos.emplace_back(MobileNodeInfo {node, certificate->second});
-                certificatesSize += certificate->second.size();
+            if (!isMobileNodeCurrentInternal(node, now))
+                continue;
+            responseMobileNodes.emplace_back(node);
+            if (mobileNodeInfos.size() >= MAX_MOBILE_NODE_INFOS)
+                continue;
+            auto lease = mobileNodeLeases_.find(node);
+            if (lease == mobileNodeLeases_.end()) {
+                if (msg_.v >= 3)
+                    continue;
+                mobileNodeInfos.emplace_back(MobileNodeInfo {node, std::nullopt});
+            } else {
+                mobileNodeInfos.emplace_back(MobileNodeInfo {node, lease->second});
             }
         }
-        Response toResponse {Query::FOUND, nodes, {m_nodes.begin(), m_nodes.end()}, std::move(mobileNodeInfos)};
+        Response toResponse {Query::FOUND, nodes, std::move(responseMobileNodes), std::move(mobileNodeInfos)};
 
-        Message msg;
         msg.is_mobile = isMobile_;
+        msg.self_mobile_info = std::move(selfMobileInfo);
         msg.response = std::move(toResponse);
+    }
 
-        msgpack::sbuffer buffer((size_t) 60000);
-        msgpack::packer<msgpack::sbuffer> pk(&buffer);
-        pk.pack(msg);
+    msgpack::sbuffer buffer;
+    msgpack::packer<msgpack::sbuffer> pk(&buffer);
+    pk.pack(msg);
 
-        std::error_code ec;
-        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec) {
-            JAMI_ERROR("{}", ec.message());
-            return;
-        }
+    std::error_code ec;
+    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    if (ec) {
+        JAMI_ERROR("{}", ec.message());
+        return;
     }
 }
 
@@ -338,16 +830,45 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
             if (!shared || !socket)
                 return std::make_error_code(std::errc::operation_canceled);
 
-            if (msg.is_mobile)
-                shared->changeMobility(socket->deviceId(), msg.is_mobile);
+            auto validMobileAnnouncement = msg.v < 3 || shared->conversationId_.empty();
+            if (msg.self_mobile_info && msg.self_mobile_info->id == socket->deviceId()) {
+                // The peer's own certificate is authenticated by the channel's TLS
+                // handshake and pinned when the swarm channel was added, so this
+                // resolves locally without any lookup.
+                validMobileAnnouncement = msg.self_mobile_info->lease
+                                          && msg.self_mobile_info->lease->device_id == msg.self_mobile_info->id
+                                          && shared->precheckLease(*msg.self_mobile_info->lease);
+                if (validMobileAnnouncement && shared->setMobileNodeInfo(*msg.self_mobile_info, true, socket))
+                    shared->emitMobileNodesChanged();
+            }
+            if (msg.is_mobile && validMobileAnnouncement) {
+                if (msg.v < 3 && !shared->conversationId_.empty())
+                    shared->setMobileNodes(std::vector<NodeId> {socket->deviceId()});
+                shared->changeMobility(socket->deviceId(), true);
+            }
 
-            if (msg.request) {
+            if (msg.cert_request) {
+                shared->onCertRequest(socket, *msg.cert_request);
+            } else if (msg.cert_response) {
+                shared->onCertResponse(socket, *msg.cert_response);
+            } else if (msg.request) {
                 shared->sendAnswer(socket, msg);
 
             } else if (msg.response) {
                 shared->setKnownNodes(msg.response->nodes);
-                shared->setMobileNodes(msg.response->mobile_node_infos);
-                shared->setMobileNodes(msg.response->mobile_nodes);
+                const auto requireLease = msg.v >= 3 && !shared->conversationId_.empty();
+                bool changed = false;
+                size_t records = 0;
+                for (const auto& mobile : msg.response->mobile_node_infos) {
+                    if (records++ == MAX_MOBILE_NODE_INFOS)
+                        break;
+                    changed |= shared->setMobileNodeInfo(mobile, requireLease, socket);
+                }
+                if (changed)
+                    shared->emitMobileNodesChanged();
+                const auto acceptLegacy = msg.v < 3 || shared->conversationId_.empty();
+                if (acceptLegacy)
+                    shared->setMobileNodes(msg.response->mobile_nodes);
             }
             return std::error_code();
         }));
@@ -479,10 +1000,15 @@ SwarmManager::getKnownMobileNodeInfos() const
 {
     std::lock_guard lock(mutex);
     std::vector<MobileNodeInfo> infos;
+    const auto now = toSecondsSinceEpoch(std::chrono::system_clock::now());
     for (const auto& node : routing_table.getKnownMobileNodes()) {
-        auto certificate = mobileNodeCertificates_.find(node);
-        infos.emplace_back(
-            MobileNodeInfo {node, certificate == mobileNodeCertificates_.end() ? dht::Blob {} : certificate->second});
+        if (!isMobileNodeCurrentInternal(node, now))
+            continue;
+        auto lease = mobileNodeLeases_.find(node);
+        infos.emplace_back(MobileNodeInfo {node,
+                                           lease == mobileNodeLeases_.end()
+                                               ? std::nullopt
+                                               : std::optional<MobileLease>(lease->second)});
     }
     return infos;
 }
@@ -492,10 +1018,15 @@ SwarmManager::getMobileNodeInfosToNotify()
 {
     std::lock_guard lock(mutex);
     std::vector<MobileNodeInfo> infos;
+    const auto now = toSecondsSinceEpoch(std::chrono::system_clock::now());
     for (const auto& node : routing_table.getMobileNodesToNotify()) {
-        auto certificate = mobileNodeCertificates_.find(node);
-        infos.emplace_back(
-            MobileNodeInfo {node, certificate == mobileNodeCertificates_.end() ? dht::Blob {} : certificate->second});
+        if (!isMobileNodeCurrentInternal(node, now))
+            continue;
+        auto lease = mobileNodeLeases_.find(node);
+        infos.emplace_back(MobileNodeInfo {node,
+                                           lease == mobileNodeLeases_.end()
+                                               ? std::nullopt
+                                               : std::optional<MobileLease>(lease->second)});
     }
     return infos;
 }
@@ -537,8 +1068,11 @@ SwarmManager::deleteNode(const std::vector<NodeId>& nodes)
         auto mobileNodes = routing_table.getKnownMobileNodes();
         for (const auto& node : nodes) {
             routing_table.deleteNode(node);
-            mobileNodesChanged |= mobileNodeCertificates_.erase(node) != 0;
+            mobileNodesChanged |= mobileNodeLeases_.erase(node) != 0;
+            mobileNodesChanged |= legacyMobileNodeExpiries_.erase(node) != 0;
+            pendingMobileLeases_.erase(node);
         }
+        scheduleMobileLeaseExpiryInternal();
         mobileNodesChanged |= mobileNodes != routing_table.getKnownMobileNodes();
     }
     if (mobileNodesChanged)
