@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89908a63_0cf944d7",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T16:54:42Z",
+      "side": 1,
+      "message": "[error] Line 312: 🔴 `publishedCrlId_.exchange()` only makes the id write atomic; it does not serialize the cancel/put sequence or prevent older CRLs from winning a race. `startSync()` and `revokeDevice()` are explicitly expected to run on different threads, so an older `publishCurrentCrl()` call can exchange/compute first, then publish after a newer revocation has already been put, leaving the superseded CRL active or even cancelling the newer one. Protect the whole publish decision with a mutex and track the current CRL update time/id so calls with an older `getUpdateTime()` are ignored before cancelling or putting.",
+      "revId": "0db36e9fc13ce14cef1a9777b2bd966ef0a8db76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
