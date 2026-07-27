@@ -22,6 +22,8 @@
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
+#include "timestamp.h"
+
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
@@ -315,15 +317,54 @@ private:
         , accountId_(account->getAccountID())
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
-        , swarmManager_(std::make_shared<SwarmManager>(NodeId(deviceId_),
-                                                       account->isMobile(),
-                                                       Manager::instance().getSeededRandomEngine(),
-                                                       [account = account_](const DeviceId& deviceId) {
-                                                           if (auto acc = account.lock()) {
-                                                               return acc->isConnectedWith(deviceId);
-                                                           }
-                                                           return false;
-                                                       }))
+        , swarmManager_(std::make_shared<SwarmManager>(
+              NodeId(deviceId_),
+              account->isMobile(),
+              Manager::instance().getSeededRandomEngine(),
+              [account = account_](const DeviceId& deviceId) {
+                  if (auto acc = account.lock()) {
+                      return acc->isConnectedWith(deviceId);
+                  }
+                  return false;
+              },
+              repository_->id(),
+              [account = account_, conversationId = repository_->id(), deviceId = NodeId(deviceId_)]()
+                  -> std::optional<MobileNodeInfo> {
+                  auto acc = account.lock();
+                  if (!acc || !acc->isMobile())
+                      return std::nullopt;
+                  const auto& identity = acc->identity();
+                  if (!identity.first || !identity.second || !identity.second->issuer)
+                      return std::nullopt;
+
+                  const auto now = std::chrono::system_clock::now();
+                  const auto certificateExpiry = identity.second->getExpiration();
+                  const auto maximumExpiry = now + MAX_MOBILE_LEASE_DURATION;
+                  const auto expiry = std::min(certificateExpiry, maximumExpiry);
+                  if (expiry <= now)
+                      return std::nullopt;
+
+                  MobileLease lease {1, conversationId, identity.second->issuer->getId(), deviceId, toSecondsSinceEpoch(now), toSecondsSinceEpoch(expiry), {}};
+                  lease.signature = identity.first->sign(mobileLeasePayload(lease));
+                  return MobileNodeInfo {deviceId, std::move(lease)};
+              },
+              [this](const dht::InfoHash& issuerId) {
+                  const auto members
+                      = repository_->memberUris("", {MemberRole::INVITED, MemberRole::BANNED, MemberRole::LEFT});
+                  return members.contains(issuerId.toString());
+              },
+              [account = account_](const NodeId& deviceId) -> std::shared_ptr<dht::crypto::Certificate> {
+                  if (auto acc = account.lock())
+                      return acc->certStore().getCertificate(deviceId.toString());
+                  return {};
+              },
+              [account = account_](const NodeId& deviceId,
+                                   std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb) {
+                  if (auto acc = account.lock())
+                      acc->findCertificate(deviceId, std::move(cb));
+                  else
+                      cb(nullptr);
+              }))
         , transferManager_(std::make_shared<TransferManager>(accountId_,
                                                              "",
                                                              repository_->id(),
@@ -2054,22 +2095,10 @@ Conversation::mobileNodesToNotify() const
     for (const auto& info : pimpl_->swarmManager_->getMobileNodeInfosToNotify()) {
         const auto deviceId = info.id.toString();
         auto uri = uriFromDevice(deviceId);
-        if (uri.empty() && !info.certificate.empty()) {
-            try {
-                dht::crypto::Certificate cert(info.certificate);
-                if (cert.getLongId() == info.id && cert.issuer) {
-                    dht::crypto::TrustList trust;
-                    trust.add(*cert.issuer);
-                    if (trust.verify(cert))
-                        uri = cert.issuer->getId().toString();
-                }
-            } catch (const std::exception& e) {
-                JAMI_WARNING("{} Unable to validate mobile certificate for {}: {}",
-                             pimpl_->toString(),
-                             deviceId,
-                             e.what());
-            }
-        }
+        // A verified lease binds the device to its issuer, so the account URI is
+        // already known without touching the certificate.
+        if (uri.empty() && info.lease)
+            uri = info.lease->issuer_id.toString();
         if (uri.empty()) {
             auto cert = account->certStore().getCertificate(deviceId);
             if (cert && cert->issuer)
@@ -3040,7 +3069,10 @@ Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
     if (!cert || !cert->issuer)
         return;
     auto member = cert->issuer->getId().toString();
-    pimpl_->swarmManager_->setMobileNodeCertificate(deviceId, cert->getPacked());
+    // The TLS handshake authenticated this certificate: pin it so that any mobile
+    // lease this device gossips can be verified without a lookup.
+    if (auto account = pimpl_->account_.lock())
+        account->certStore().pinCertificate(cert);
     pimpl_->swarmManager_->addChannel(std::move(channel));
     dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w = weak_from_this()] {
         auto sthis = w.lock();

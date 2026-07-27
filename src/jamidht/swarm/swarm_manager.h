@@ -33,9 +33,24 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using OnConnectionChanged = std::function<void(bool ok)>;
     using OnMobileNodesChanged = std::function<void(const std::vector<NodeId>&)>;
     using OnMobileNodeInfosChanged = std::function<void(const std::vector<MobileNodeInfo>&)>;
+    using MobileLeaseProvider = std::function<std::optional<MobileNodeInfo>()>;
+    using MobileLeaseIssuerValidator = std::function<bool(const dht::InfoHash&)>;
+    /** Synchronous lookup of an already known device certificate (account certificate store). */
+    using CertificateProvider = std::function<std::shared_ptr<dht::crypto::Certificate>(const NodeId&)>;
+    /** Asynchronous last-resort lookup (DHT). The implementation is expected to pin on success. */
+    using CertificateFetcher
+        = std::function<void(const NodeId&, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&&)>;
 
 public:
-    explicit SwarmManager(const NodeId& nodeId, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb);
+    explicit SwarmManager(const NodeId& nodeId,
+                          bool isMobile,
+                          const std::mt19937_64& rand,
+                          ToConnectCb&& toConnectCb,
+                          std::string conversationId = {},
+                          MobileLeaseProvider mobileLeaseProvider = {},
+                          MobileLeaseIssuerValidator mobileLeaseIssuerValidator = {},
+                          CertificateProvider certificateProvider = {},
+                          CertificateFetcher certificateFetcher = {});
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
@@ -62,16 +77,13 @@ public:
     void setMobileNodes(const std::vector<NodeId>& mobile_nodes);
 
     /**
-     * Merge certificate-bearing mobile node records received from peers.
-     * Invalid certificates and mismatched device IDs are ignored.
+     * Merge lease-bearing mobile node records received from peers.
+     * Records whose lease cannot be verified yet (the device certificate is
+     * unknown locally) are kept aside and resolved asynchronously; they only
+     * become visible once verified.
      * @param mobile_nodes
      */
-    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes);
-
-    /**
-     * Retain the authenticated certificate for a connected mobile node.
-     */
-    void setMobileNodeCertificate(const NodeId& nodeId, const dht::Blob& certificate);
+    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes, bool requireLease = false);
 
     /**
      * Add channel to routing table
@@ -106,8 +118,8 @@ public:
     std::vector<NodeId> getConnectedNodes() const;
 
     /**
-     * Get the mobile nodes this device is responsible for waking up
-     * (i.e. closer to them than any connected node).
+     * Get the mobile nodes this device is responsible for waking up.
+     * The closest redundant nodes in the local Kademlia view wake it.
      */
     std::vector<NodeId> getMobileNodesToNotify();
 
@@ -118,12 +130,12 @@ public:
     std::vector<NodeId> getKnownMobileNodes() const;
 
     /**
-     * Get known mobile nodes with any validated device certificate metadata.
+     * Get known mobile nodes with any validated lease metadata.
      */
     std::vector<MobileNodeInfo> getKnownMobileNodeInfos() const;
 
     /**
-     * Get wake-up targets with any validated device certificate metadata.
+     * Get wake-up targets with any validated lease metadata.
      */
     std::vector<MobileNodeInfo> getMobileNodeInfosToNotify();
 
@@ -160,6 +172,8 @@ public:
      * @return RoutingTable
      */
     RoutingTable& getRoutingTable() { return routing_table; };
+
+    std::optional<MobileNodeInfo> getLocalMobileNodeInfo() { return localMobileNodeInfo(); }
 
     /**
      * Get buckets of routing table
@@ -251,11 +265,62 @@ private:
      */
     bool addMobileNodes(const NodeId& nodeId);
 
+    bool setMobileNodeInfo(const MobileNodeInfo& mobile,
+                           bool requireLease = false,
+                           const std::shared_ptr<dhtnet::ChannelSocketInterface>& source = {});
+
     /**
-     * Validate and retain certificate metadata for a mobile node.
+     * Certificate-free validation of a lease. Cheap: no cryptography, no I/O.
+     * Gates every expensive certificate resolution, in particular by requiring
+     * the issuer to be a member of the conversation.
+     */
+    bool precheckLease(const MobileLease& lease) const;
+
+    /**
+     * Full cryptographic validation of a lease against its device certificate.
+     */
+    bool verifyLease(const dht::crypto::Certificate& certificate, const MobileLease& lease) const;
+
+    /**
+     * Record a verified lease. Must be called with mutex held.
+     * @return true if the known mobile node set or leases changed
+     */
+    bool commitLeaseInternal(const MobileLease& lease);
+
+    /**
+     * Keep an unverified lease aside and start resolving its certificate.
      * Must be called with mutex held.
      */
-    bool setMobileNodeCertificateInternal(const NodeId& nodeId, const dht::Blob& certificate);
+    void enqueuePendingLeaseInternal(const MobileLease& lease,
+                                     const std::shared_ptr<dhtnet::ChannelSocketInterface>& source);
+
+    /** Ask a peer for device certificates over the swarm channel. */
+    void requestCertificates(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                             const std::vector<NodeId>& ids);
+
+    void onCertRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const CertRequest& request);
+
+    void onCertResponse(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const CertResponse& response);
+
+    /** Try to promote pending leases now that `certificate` is known. */
+    void onCertificateResolved(const NodeId& nodeId, const std::shared_ptr<dht::crypto::Certificate>& certificate);
+
+    /** Last-resort DHT lookup for a pending lease's certificate. */
+    void fetchCertificateFromDht(const NodeId& nodeId);
+
+    /**
+     * Forget an unverifiable lease: the node is simply ignored until it is
+     * announced again. Must be called with mutex held.
+     */
+    void abandonLeaseInternal(const NodeId& nodeId);
+
+    bool isMobileNodeCurrentInternal(const NodeId& nodeId, uint64_t now) const;
+
+    std::optional<MobileNodeInfo> localMobileNodeInfo();
+
+    void scheduleMobileLeaseExpiryInternal();
+
+    void expireMobileLeases(const asio::error_code& ec);
 
     /**
      * Notify the onMobileNodesChanged_ callback with the current set of
@@ -313,10 +378,39 @@ private:
 
     const NodeId id_;
     bool isMobile_ {false};
+    const std::string conversationId_;
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
-    std::map<NodeId, dht::Blob> mobileNodeCertificates_;
+    std::map<NodeId, MobileLease> mobileNodeLeases_;
+    std::map<NodeId, int64_t> legacyMobileNodeExpiries_;
+
+    /** Lease accepted by precheckLease() but not yet verified: certificate unknown. */
+    struct PendingLease
+    {
+        MobileLease lease;
+        std::weak_ptr<dhtnet::ChannelSocketInterface> source;
+    };
+    std::map<NodeId, PendingLease> pendingMobileLeases_;
+
+    /** Nodes whose certificate resolution is already under way: avoids duplicate lookups. */
+    std::set<NodeId> certFetchInFlight_;
+
+    /** At most one outstanding CERT_REQ per peer, keyed by the peer's device id. */
+    struct CertRequestState
+    {
+        std::set<NodeId> ids;
+        std::shared_ptr<asio::steady_timer> timer;
+    };
+    std::map<NodeId, CertRequestState> outstandingCertRequests_;
+
+    MobileLeaseProvider mobileLeaseProvider_;
+    MobileLeaseIssuerValidator mobileLeaseIssuerValidator_;
+    CertificateProvider certificateProvider_;
+    CertificateFetcher certificateFetcher_;
+    std::mutex mobileLeaseRenewalMtx_;
+    std::optional<MobileNodeInfo> localMobileNodeInfo_;
+    asio::steady_timer mobileLeaseExpiryTimer_ {*Manager::instance().ioContext()};
 
     std::atomic_bool isShutdown_ {false};
 
