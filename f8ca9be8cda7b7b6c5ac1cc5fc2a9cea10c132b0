@@ -33,6 +33,40 @@
       "message": "Addressed in this patchset.",
       "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa026061_0e075dfc",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 813,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:36:50Z",
+      "side": 1,
+      "message": "[error] Line 813: 🔴 This still allows non-`std::exception` exceptions to escape the PortAudio C callback and trigger `std::terminate`, so it does not fully guarantee the crash prevention described by the change. Add a `catch (...)` after this block and log a generic callback failure before returning `paContinue`.",
+      "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92ebaf38_17d8497b",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 856,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T20:36:50Z",
+      "side": 1,
+      "message": "[error] Line 856: 🔴 This only catches exceptions derived from `std::exception`; any non-standard exception escaping this callback can still abort the process. Add a trailing `catch (...)` with generic logging so all C++ exceptions are contained inside the callback.",
+      "revId": "f8ca9be8cda7b7b6c5ac1cc5fc2a9cea10c132b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
