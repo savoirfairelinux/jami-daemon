@@ -215,6 +215,33 @@ public:
     /// Number of CRDT updates currently stored (cheap growth indicator).
     size_t updateCount() const;
 
+    /**
+     * Pack the loose objects of the repository and drop the packed copies.
+     *
+     * Nothing else ever compacts a document repository: every checkpoint writes
+     * a handful of loose objects, each compressed on its own and each taking a
+     * whole filesystem block, and successive revisions of the same document are
+     * never delta-compressed against each other. Left alone, a 300 kB document
+     * written by eight people costs about 130 MB on disk; packed, about 3.5 MB.
+     *
+     * Only objects reachable from @c main are packed and pruned, so an
+     * interrupted write can never lose data. Concurrent readers are safe:
+     * libgit2 refreshes its object database when a loose object it expected has
+     * moved into a pack, and unlinking a file another handle is reading is
+     * harmless on POSIX.
+     *
+     * Fetching from a peer also leaves a pack behind, and nothing merged them
+     * either, so a heavily synchronized document accumulates one pack per fetch.
+     * Compaction consolidates those too.
+     *
+     * @param force  compact even if little has accumulated.
+     * @return true when a pack was written.
+     */
+    bool compact(bool force = false);
+
+    /// Whether enough loose objects or packs have accumulated to be worth packing.
+    bool needsCompaction() const;
+
 private:
     CollabRepository(const std::shared_ptr<JamiAccount>& account,
                      std::string conversationId,
