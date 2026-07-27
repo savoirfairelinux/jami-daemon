@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2f3ba38_eba27d38",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:42Z",
+      "side": 1,
+      "message": "[error] Line 879: 🔴 These callbacks bind to emitCollaborativeDocumentChanged/emitCollaborativeCursorChanged/emitCollaborativeParticipantLeft/emitCollaborativeDocumentRenamed/emitCollaborativeDocumentDelta, but this patch does not add corresponding DBus signal emitter methods in this class. That matches the CI build failures and will not compile unless those methods already exist on the new-side class. Add the emit methods with signatures matching the XML signals, as is done for the other ConfigurationSignal bindings.",
+      "revId": "55ffbda663feea38afdec7e60aa1fe25f4bf43ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ac975e3_e3583988",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:42Z",
+      "side": 1,
+      "message": "[error] Line 277: 🔴 The new public API dereferences acc-\u003ecollaborativeEditing() without checking that the collaborative editing module exists. If the account type/state does not initialize this component, every exposed DBus/JNI call can crash the daemon. Store the pointer once and return/log consistently when it is null before calling createDocument/openDocument/etc.; apply the same guard to all new wrappers.",
+      "revId": "55ffbda663feea38afdec7e60aa1fe25f4bf43ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06e59688_eb9767f1",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-27T21:34:42Z",
+      "side": 1,
+      "message": "[warning] Line 356: 🟡 getCollaborativeDocumentHistory() treats max\u003d0 as unlimited according to the public header. Since this value is client-controlled over DBus/JNI, an unlimited history request can allocate and serialize an unbounded vector of maps. Add a server-side cap or require callers to pass a bounded max to avoid excessive memory/IPC usage.",
+      "revId": "55ffbda663feea38afdec7e60aa1fe25f4bf43ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
