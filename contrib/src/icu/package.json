@@ -1,0 +1,17 @@
+{
+    "name": "icu",
+    "version": "78.3",
+    "cpe": "cpe:2.3:a:unicode:icu:78.3:*:*:*:*:*:*:*",
+    "url": "https://github.com/unicode-org/icu/archive/refs/tags/release-__VERSION__.tar.gz",
+    "deps": [],
+    "defines": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env": "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
