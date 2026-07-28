@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49585e4b_5dd0b849",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:55Z",
+      "side": 1,
+      "message": "[warning] Line 99: 🟡 replicaId() says the Y-CRDT client id is stable, but std::hash\u003cstd::string\u003e is implementation-defined and not guaranteed stable across standard library versions or platforms. Derive the 53-bit id from a stable digest of currentDeviceId() instead.",
+      "revId": "e63be0316d1922331e5013494d316b87ba26ed24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfe42a7f_041f4f6f",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:55Z",
+      "side": 1,
+      "message": "[warning] Line 191: 🟡 The document repository is created and returned even if announcing it in the conversation fails. That leaves a local-only document that other members cannot discover or authorize. Check the createCommit result and either fail/clean up or surface the error before returning the document id.",
+      "revId": "e63be0316d1922331e5013494d316b87ba26ed24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "585fbe39_553ebcb6",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:55Z",
+      "side": 1,
+      "message": "[error] Line 330: 🔴 openDocument() creates a repository before proving the document was announced in the conversation. This bypasses the announced-document gate used for remote checkpoint/fetch messages, so a caller can allocate arbitrary document repositories. Check isAnnouncedDocument(conversationId, documentId) before ensureSession(..., true), or open only an existing repository and return empty for unknown documents.",
+      "revId": "e63be0316d1922331e5013494d316b87ba26ed24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "463909c6_f98fe862",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:55Z",
+      "side": 1,
+      "message": "[warning] Line 480: 🟡 Unannounced live ops still create persistent in-memory sessions. An authorized peer can send ops for many random document ids and grow sessions_ with YrsDocument instances that are never evicted. Keep a bounded pending-unannounced cache, expire these sessions, or require the document announcement before creating a full session.",
+      "revId": "e63be0316d1922331e5013494d316b87ba26ed24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
