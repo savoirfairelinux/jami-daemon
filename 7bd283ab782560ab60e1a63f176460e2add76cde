@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03fe75ab_34ba7c4d",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 341,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:39Z",
+      "side": 1,
+      "message": "[warning] Line 341: 🟡 `listDocuments()` returns every directory name under the conversation path without applying `isValidId()`. If stale, temporary, or unexpected directories exist, callers can surface invalid document ids or later try to open paths that this class would reject. Filter returned names with `isValidId()` for consistency with `documentPath()`.",
+      "revId": "7bd283ab782560ab60e1a63f176460e2add76cde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d87479b7_5f8acf6d",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 548,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:39Z",
+      "side": 1,
+      "message": "[error] Line 548: 🔴 `collectMessageUpdates()` accepts unbounded commit-message bodies from fetched repositories and appends every line into memory. `MAX_FETCH_SIZE` caps transfer size, but a malicious peer can still force hundreds of MB of allocations and later signal payloads. Enforce a per-update size and total update count/bytes limit when parsing checkpoint messages, and reject histories that exceed it.",
+      "revId": "7bd283ab782560ab60e1a63f176460e2add76cde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8efdb477_37734fce",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:39Z",
+      "side": 1,
+      "message": "[error] Line 931: 🔴 Remote commits are merged without verifying their embedded signature or author/device membership. A peer serving this transport can inject arbitrary checkpoint messages or metadata into the document history as long as the objects are well-formed. Before accepting `remoteOid` in `mergeRemote()`, verify each newly fetched commit signature against an authorized conversation member/device, matching the conversation repository trust model.",
+      "revId": "7bd283ab782560ab60e1a63f176460e2add76cde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
