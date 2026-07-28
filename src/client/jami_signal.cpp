@@ -88,6 +88,10 @@ getSignalHandlers()
         exported_callback<libjami::ConfigurationSignal::HardwareDecodingChanged>(),
         exported_callback<libjami::ConfigurationSignal::HardwareEncodingChanged>(),
         exported_callback<libjami::ConfigurationSignal::MessageSend>(),
+        exported_callback<libjami::ConfigurationSignal::CollaborativeDocumentUpdate>(),
+        exported_callback<libjami::ConfigurationSignal::CollaborativeAwarenessChanged>(),
+        exported_callback<libjami::ConfigurationSignal::CollaborativeParticipantLeft>(),
+        exported_callback<libjami::ConfigurationSignal::CollaborativeDocumentRenamed>(),
 
         /* Service-exposure */
         exported_callback<libjami::ServiceSignal::PeerServicesReceived>(),
