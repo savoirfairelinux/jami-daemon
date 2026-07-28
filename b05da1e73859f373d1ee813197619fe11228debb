@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a9e398b_1b4de515",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1008,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T16:18:14Z",
+      "side": 1,
+      "message": "[warning] Line 1008: 🟡 `emitNewAttachments()` announces every new blob in the repository, not only attachments referenced by `documentId`. If old/unreferenced blobs or another document\u0027s blobs are present in the same repository namespace, clients will wake up/redraw for payloads this document does not reference. Filter the emitted IDs to attachments referenced by the current document state, or make `attachmentIds()` scoped to this document\u0027s attachment namespace.",
+      "revId": "b05da1e73859f373d1ee813197619fe11228debb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea136498_5ea49b26",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1015,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T16:18:14Z",
+      "side": 1,
+      "message": "[error] Line 1015: 🔴 `emitNewAttachments()` never runs for a freshly opened local session, because `loadPersistedState()` seeds `knownAttachments` with every attachment currently in the repository and no signal is emitted there. If an attachment syncs while the document is closed, the client later opens the document, receives state that references the attachment, calls `collaborativeAttachment()`, but never gets `CollaborativeAttachmentAdded` for that already-synced payload. Either emit availability for referenced attachments during/open after state delivery, or document and expose a way for clients to enumerate/check all existing attachments when loading a document.",
+      "revId": "b05da1e73859f373d1ee813197619fe11228debb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
