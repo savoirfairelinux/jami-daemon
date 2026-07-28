@@ -70,6 +70,8 @@ struct RepositoryAccount
     bool connected {true};
     std::vector<int> pendingCloneMemberIndices;
     std::unordered_set<std::string> devicesWithPendingFetch;
+    // Identifies the repository instance associated with pending fetches.
+    uint64_t repositoryGeneration {0};
     /*!< Marker for initializing the account, only used in setUp()*/
     bool identityLoaded {false};
 
@@ -116,24 +118,28 @@ struct Event
     int receivingAccountIndex;
     ConversationEvent type;
     std::chrono::nanoseconds timeOfOccurrence;
-    // Index of the message targeted by a reaction, edition or deletion (-1 if not applicable).
-    int targetMessageIndex {-1};
-    // Index of the message this one replies to, for SEND_MESSAGE/SEND_FILE (-1 if not a reply).
-    int replyToIndex {-1};
+    // Message targeted by a reaction, edition or deletion (invalid if not applicable).
+    MessageHandle targetMessage;
+    // Message this one replies to, for SEND_MESSAGE/SEND_FILE (invalid if not a reply).
+    MessageHandle replyTo;
+    // Generation of the receiver's repository targeted by a delayed MERGE.
+    uint64_t receivingRepositoryGeneration;
 
     // For construction of an event struct
     Event(int instigatorAccountIndex,
           int receivingAccountIndex,
           ConversationEvent type,
           std::chrono::nanoseconds timeOfOccurrence,
-          int targetMessageIndex = -1,
-          int replyToIndex = -1)
+          MessageHandle targetMessage = {},
+          MessageHandle replyTo = {},
+          uint64_t receivingRepositoryGeneration = 0)
         : instigatorAccountIndex(instigatorAccountIndex)
         , receivingAccountIndex(receivingAccountIndex)
         , type(type)
         , timeOfOccurrence(timeOfOccurrence)
-        , targetMessageIndex(targetMessageIndex)
-        , replyToIndex(replyToIndex)
+        , targetMessage(targetMessage)
+        , replyTo(replyTo)
+        , receivingRepositoryGeneration(receivingRepositoryGeneration)
     {}
 };
 struct EventComparator
