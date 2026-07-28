@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abbd7dbc_c9d47c12",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T19:18:20Z",
+      "side": 1,
+      "message": "[error] Line 248: 🔴 setName() still calls ensureSession(..., true) before proving the document was announced in the conversation. A local caller can therefore create arbitrary collab repositories just by renaming random ids. Check isAnnouncedDocument(conversationId, documentId) before ensureSession(), and refuse unknown documents.",
+      "revId": "f914eb8d1c2aaaeb0348d8892badb6005e1a0084",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
