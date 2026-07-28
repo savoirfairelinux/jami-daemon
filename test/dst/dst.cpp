@@ -304,14 +304,15 @@ ConversationDST::scheduleGitEvent(EventQueue& queue,
     assert(instigatorAccountIndex >= -1 && instigatorAccountIndex < numAccountsToSimulate_);
     assert(receivingAccountIndex >= -1 && receivingAccountIndex < numAccountsToSimulate_);
 
-    std::uniform_int_distribution<> adaptiveDist(5, 50);
+    constexpr auto minDelay = std::chrono::milliseconds(5);
+    constexpr auto maxDelay = std::chrono::milliseconds(50);
 
     if (receivingAccountIndex == -1) {
         assert(instigatorAccountIndex >= 0);
         // Schedule the Git event for each account to "receive"
         for (int i = 0; i < numAccountsToSimulate_; ++i) {
             if (repositoryAccounts[i].repository != nullptr && i != instigatorAccountIndex) {
-                auto scheduledTime = eventTimeOfOccurrence + std::chrono::nanoseconds(adaptiveDist(gen_));
+                auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
                 queue.emplace(instigatorAccountIndex, i, gitOperation, scheduledTime);
             }
         }
@@ -320,13 +321,13 @@ ConversationDST::scheduleGitEvent(EventQueue& queue,
         // Schedule the Git event for each account to "initiate"
         for (int i = 0; i < numAccountsToSimulate_; ++i) {
             if (repositoryAccounts[i].repository != nullptr && i != receivingAccountIndex) {
-                auto scheduledTime = eventTimeOfOccurrence + std::chrono::nanoseconds(adaptiveDist(gen_));
+                auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
                 queue.emplace(i, receivingAccountIndex, gitOperation, scheduledTime);
             }
         }
     } else {
         // Schedule the Git event for the specific instigator and receiver
-        auto scheduledTime = eventTimeOfOccurrence + std::chrono::nanoseconds(adaptiveDist(gen_));
+        auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
         queue.emplace(instigatorAccountIndex, receivingAccountIndex, gitOperation, scheduledTime);
     }
 }
