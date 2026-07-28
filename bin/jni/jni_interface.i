@@ -294,6 +294,10 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&ConfigurationCallback::deviceRevocationEnded, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&ConfigurationCallback::accountProfileReceived, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::MessageSend>(bind(&ConfigurationCallback::messageSend, confM, _1)),
+        exportable_callback<ConfigurationSignal::CollaborativeDocumentUpdate>(bind(&ConfigurationCallback::collaborativeDocumentUpdate, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::CollaborativeAwarenessChanged>(bind(&ConfigurationCallback::collaborativeAwarenessChanged, confM, _1, _2, _3, _4, _5)),
+        exportable_callback<ConfigurationSignal::CollaborativeParticipantLeft>(bind(&ConfigurationCallback::collaborativeParticipantLeft, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::CollaborativeDocumentRenamed>(bind(&ConfigurationCallback::collaborativeDocumentRenamed, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&ConfigurationCallback::deviceAuthStateChanged, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&ConfigurationCallback::addDeviceStateChanged, confM, _1, _2, _3, _4)),
     };

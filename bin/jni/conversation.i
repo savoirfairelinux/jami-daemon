@@ -73,6 +73,19 @@ struct SwarmMessage
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
+  // Collaborative editing
+  std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& kind);
+  std::string openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& base64Update);
+  void setCollaborativeAwareness(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& state);
+  std::string collaborativeDocumentState(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void setCollaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& name);
+  std::string collaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
+  std::string collaborativeDocumentStateAt(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
+
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo, const int32_t& flag);
   uint32_t loadConversation(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
