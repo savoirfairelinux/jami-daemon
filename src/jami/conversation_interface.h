@@ -117,6 +117,107 @@ LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                            const int32_t& flag);
 LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId);
 
+/**
+ * Real-time collaborative editing of a shared document inside a conversation.
+ *
+ * The daemon is a transport for Y-CRDT updates, not an editor: it moves opaque
+ * updates between the clients and the conversation members and stores them, but
+ * it never interprets what a document contains. A client keeps its own yrs
+ * replica, produces updates from it and merges the ones it receives through
+ * ConfigurationSignal::CollaborativeDocumentUpdate.
+ *
+ * Because nothing here is tied to a document type, a client is free to implement
+ * an editor for any type yrs supports -- text, rich text, maps, arrays, XML
+ * fragments -- without a change to this API.
+ *
+ * Every update crossing this API is base64-encoded, so it survives the string
+ * transports the clients are reached through (D-Bus, JNI, Node).
+ */
+LIBJAMI_PUBLIC std::string createCollaborativeDocument(const std::string& accountId,
+                                                       const std::string& conversationId,
+                                                       const std::string& name,
+                                                       const std::string& kind);
+/**
+ * Open a document and get its whole state as a single base64 Y-CRDT update.
+ * Apply it to a fresh replica to obtain the current document.
+ *
+ * @return the state, never an empty string: a document that holds nothing still
+ *         encodes as a short, valid update, and applying it is a harmless no-op.
+ *         An empty string means the account is gone.
+ */
+LIBJAMI_PUBLIC std::string openCollaborativeDocument(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& documentId);
+LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
+                                               const std::string& conversationId,
+                                               const std::string& documentId);
+/**
+ * Hand the daemon an update produced by the client's own replica: it is merged,
+ * broadcast to the members and persisted.
+ *
+ * It is not signalled back to the local clients, since the replica that produced
+ * it already holds it.
+ *
+ * An update the engine cannot read, or one over 8 MiB once decoded, is dropped:
+ * the call has no way to fail, so a client must not treat it as an acknowledgement.
+ * Calling collaborativeDocumentState() tells the client what the daemon actually
+ * holds.
+ */
+LIBJAMI_PUBLIC void applyCollaborativeUpdate(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& documentId,
+                                             const std::string& base64Update);
+/// The document's whole current state as a base64 Y-CRDT update.
+LIBJAMI_PUBLIC std::string collaborativeDocumentState(const std::string& accountId,
+                                                      const std::string& conversationId,
+                                                      const std::string& documentId);
+/**
+ * Share ephemeral state with the other members while editing: presence, cursor,
+ * selection. The payload is opaque, never merged and never stored, so its shape
+ * is the clients' own agreement. Delivered as
+ * ConfigurationSignal::CollaborativeAwarenessChanged.
+ *
+ * It is meant to stay small: a state over 8 KiB is dropped, in both directions.
+ */
+LIBJAMI_PUBLIC void setCollaborativeAwareness(const std::string& accountId,
+                                              const std::string& conversationId,
+                                              const std::string& documentId,
+                                              const std::string& state);
+LIBJAMI_PUBLIC void setCollaborativeDocumentName(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& documentId,
+                                                 const std::string& name);
+LIBJAMI_PUBLIC std::string collaborativeDocumentName(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& documentId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(
+    const std::string& accountId, const std::string& conversationId);
+
+/**
+ * Checkpoints of a collaborative document, newest first. Each entry describes one
+ * batch of edits with the keys "id", "author", "device", "timestamp" and "deltas".
+ * @param accountId       the local account id
+ * @param conversationId  the conversation hosting the document
+ * @param documentId      the document id
+ * @param max             maximum number of entries, 0 for no limit
+ */
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(
+    const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
+
+/**
+ * The document's state as it was at checkpoint @c commitId, as a base64 Y-CRDT
+ * update. The live document is left untouched.
+ *
+ * Reviewing that state, or restoring the document to it, is the client's
+ * business: both need to know what the document is, which is precisely what the
+ * daemon does not.
+ * @return an empty string if that checkpoint is unknown here
+ */
+LIBJAMI_PUBLIC std::string collaborativeDocumentStateAt(const std::string& accountId,
+                                                        const std::string& conversationId,
+                                                        const std::string& documentId,
+                                                        const std::string& commitId);
+
 struct LIBJAMI_PUBLIC ConversationSignal
 {
     struct LIBJAMI_PUBLIC SwarmLoaded
