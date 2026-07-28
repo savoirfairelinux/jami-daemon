@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a21d1fed_d88b5e9a",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:16Z",
+      "side": 1,
+      "message": "[error] Line 869: 🔴 The new signal callbacks bind to emitCollaborativeDocumentUpdate/emitCollaborativeAwarenessChanged/emitCollaborativeParticipantLeft/emitCollaborativeDocumentRenamed, but this patch does not add those emitter methods to DBusConfigurationManager. Unless they already exist outside this diff, this will fail to compile; add the corresponding emit* wrappers matching the XML signal names and argument order.",
+      "revId": "94dac6c29686b0928483ab2766f0a8f408a7542a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
