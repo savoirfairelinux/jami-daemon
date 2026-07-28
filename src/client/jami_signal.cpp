@@ -92,6 +92,7 @@ getSignalHandlers()
         exported_callback<libjami::ConfigurationSignal::CollaborativeAwarenessChanged>(),
         exported_callback<libjami::ConfigurationSignal::CollaborativeParticipantLeft>(),
         exported_callback<libjami::ConfigurationSignal::CollaborativeDocumentRenamed>(),
+        exported_callback<libjami::ConfigurationSignal::CollaborativeAttachmentAdded>(),
 
         /* Service-exposure */
         exported_callback<libjami::ServiceSignal::PeerServicesReceived>(),

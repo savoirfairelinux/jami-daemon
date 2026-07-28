@@ -486,6 +486,17 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*documentId*/,
                              const std::string& /*name*/);
     };
+    /// A synchronization brought in a binary payload the document refers to.
+    /// Clients showing a placeholder for it can now read it with
+    /// collaborativeAttachment().
+    struct LIBJAMI_PUBLIC CollaborativeAttachmentAdded
+    {
+        constexpr static const char* name = "CollaborativeAttachmentAdded";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*attachmentId*/);
+    };
     struct LIBJAMI_PUBLIC IncomingTrustRequest
     {
         constexpr static const char* name = "IncomingTrustRequest";

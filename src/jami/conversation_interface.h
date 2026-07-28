@@ -218,6 +218,39 @@ LIBJAMI_PUBLIC std::string collaborativeDocumentStateAt(const std::string& accou
                                                         const std::string& documentId,
                                                         const std::string& commitId);
 
+/**
+ * Store a binary payload the document refers to -- an image, a sound, any blob --
+ * and return the id to embed in the document.
+ *
+ * The content is opaque to the daemon, like an update: this does not know about
+ * images any more than the rest of this API knows about text. It is kept out of
+ * the CRDT deliberately, because a CRDT never forgets: a deleted payload would
+ * still weigh on every replica for good. Stored here it is a plain git blob,
+ * written once whatever the number of references to it, and carried to the other
+ * members by the document's own repository.
+ *
+ * @return the attachment id, or empty when the payload is empty, over 16 MiB, or
+ *         could not be stored.
+ */
+LIBJAMI_PUBLIC std::string addCollaborativeAttachment(const std::string& accountId,
+                                                      const std::string& conversationId,
+                                                      const std::string& documentId,
+                                                      const std::vector<uint8_t>& data);
+/**
+ * Read back an attachment.
+ *
+ * @return empty when this replica does not hold it @b yet, which is the normal
+ *         state right after a peer referenced it: the reference travels on the
+ *         real-time path and the payload with the repository. A client should
+ *         show a placeholder and wait for
+ *         ConfigurationSignal::CollaborativeAttachmentAdded rather than treat
+ *         this as an error.
+ */
+LIBJAMI_PUBLIC std::vector<uint8_t> collaborativeAttachment(const std::string& accountId,
+                                                            const std::string& conversationId,
+                                                            const std::string& documentId,
+                                                            const std::string& attachmentId);
+
 struct LIBJAMI_PUBLIC ConversationSignal
 {
     struct LIBJAMI_PUBLIC SwarmLoaded

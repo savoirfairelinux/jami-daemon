@@ -387,4 +387,26 @@ collaborativeDocumentStateAt(const std::string& accountId,
     return {};
 }
 
+std::string
+addCollaborativeAttachment(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& documentId,
+                           const std::vector<uint8_t>& data)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->addAttachment(conversationId, documentId, data);
+    return {};
+}
+
+std::vector<uint8_t>
+collaborativeAttachment(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::string& documentId,
+                        const std::string& attachmentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->attachment(conversationId, documentId, attachmentId);
+    return {};
+}
+
 } // namespace libjami
