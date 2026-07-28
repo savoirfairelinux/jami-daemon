@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a5f2e6d_3199ef0a",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 737,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T17:03:37Z",
+      "side": 1,
+      "message": "[error] Line 737: 🔴 `collectReachable()` now skips unsupported tree entries instead of rejecting the walk. That lets a fetched remote ref with an unsupported tree remain packable/retainable even though merge refuses it, leaving malformed repository state around indefinitely. Return `false` on the default case so compaction fails safely and the invalid ref/object graph is not normalized as acceptable.",
+      "revId": "9b899ca5a339410e17c5a8105f44237a32fb0ebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8b746e0_89df9e3d",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1097,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T17:03:37Z",
+      "side": 1,
+      "message": "[error] Line 1097: 🔴 `mergeRemote()` still accepts commits solely based on graph shape and tree layout; it does not verify the commit signatures or that each author device is an authorized conversation participant before moving `refs/heads/main`. Fetching from a named device is not sufficient trust because the served objects can contain commits attributed to anyone. Validate the fetched commit chain before adopting, fast-forwarding, or merging the remote tip.",
+      "revId": "9b899ca5a339410e17c5a8105f44237a32fb0ebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
