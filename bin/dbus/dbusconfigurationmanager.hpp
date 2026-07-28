@@ -747,6 +747,22 @@ public:
         return libjami::collaborativeDocumentStateAt(accountId, conversationId, documentId, commitId);
     }
 
+    std::string addCollaborativeAttachment(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& documentId,
+                                           const std::vector<uint8_t>& data)
+    {
+        return libjami::addCollaborativeAttachment(accountId, conversationId, documentId, data);
+    }
+
+    std::vector<uint8_t> collaborativeAttachment(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& documentId,
+                                                 const std::string& attachmentId)
+    {
+        return libjami::collaborativeAttachment(accountId, conversationId, documentId, attachmentId);
+    }
+
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
@@ -875,6 +891,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitCollaborativeParticipantLeft, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentRenamed>(
                 std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRenamed, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::CollaborativeAttachmentAdded>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeAttachmentAdded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
                 std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ContactAdded>(

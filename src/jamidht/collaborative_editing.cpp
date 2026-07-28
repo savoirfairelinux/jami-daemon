@@ -80,6 +80,12 @@ struct CollaborativeEditing::Session
     std::unique_ptr<asio::steady_timer> checkpointTimer;
     // Set once the repository's stored updates have been replayed into this session.
     bool persistedLoaded {false};
+    // Attachment ids the local clients already know about, so a synchronization
+    // only announces what it actually brought. Seeded on open with what the
+    // repository already holds: a client reads those itself, and re-announcing
+    // them would make every editor redraw its images on every sync. Guarded by
+    // mutex_.
+    std::set<std::string> knownAttachments;
 
     // Local updates produced since the last checkpoint, base64-encoded. Guarded by
     // its own mutex: it is filled from a YrsDocument callback, which already holds
@@ -701,6 +707,17 @@ CollaborativeEditing::loadPersistedState(const std::shared_ptr<Session>& session
     // it before the replay would freeze a partially rebuilt document.
     std::lock_guard<std::mutex> lk(mutex_);
     session->persistedLoaded = true;
+    // What is already on disk is not news: the client resolves the attachments
+    // of the state it is being handed. Only what arrives afterwards is signalled.
+    // The asymmetry is deliberate. For a document being opened the client pulls,
+    // asking for each reference it meets while rendering; announcing every stored
+    // attachment here would push bytes nobody has asked for yet, on a document the
+    // user may never scroll through. The signal exists for the opposite case: an
+    // attachment landing in an already open document, which the client has no
+    // reason to look for.
+    if (session->repo)
+        for (auto& id : session->repo->attachmentIds())
+            session->knownAttachments.insert(std::move(id));
 }
 
 void
@@ -934,6 +951,10 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
     // the client API for nothing.
     if (session->doc->takeChanged())
         emitUpdate(conversationId, documentId, session->doc->encodeDiff(before));
+    // Independent of the updates above: an attachment is not part of the CRDT,
+    // so a synchronization can bring the payload of a reference the real-time
+    // path delivered long before, with no update at all to show for it.
+    emitNewAttachments(session);
     // The name travels with the repository now, so a remote rename lands here.
     // It cannot be detected by reading the name around the replay: the caller
     // merges before calling us, so both reads would return the name from after
@@ -999,6 +1020,75 @@ CollaborativeEditing::emitRename(const std::string& conversationId,
                                  const std::string& name)
 {
     emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRenamed>(accountId_, conversationId, documentId, name);
+}
+
+void
+CollaborativeEditing::emitNewAttachments(const std::shared_ptr<Session>& session)
+{
+    if (!session->repo)
+        return;
+    std::vector<std::string> fresh;
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        for (auto& id : session->repo->attachmentIds())
+            if (session->knownAttachments.insert(id).second)
+                fresh.push_back(std::move(id));
+    }
+    for (const auto& id : fresh)
+        emitSignal<libjami::ConfigurationSignal::CollaborativeAttachmentAdded>(accountId_,
+                                                                               session->conversationId,
+                                                                               session->documentId,
+                                                                               id);
+}
+
+std::string
+CollaborativeEditing::addAttachment(const std::string& conversationId,
+                                    const std::string& documentId,
+                                    const std::vector<uint8_t>& data)
+{
+    if (data.empty() || data.size() > CollabRepository::MAX_ATTACHMENT_SIZE) {
+        JAMI_WARNING("[Account {}] [Document {}] Attachment refused: {} byte(s), limit is {}",
+                     accountId_,
+                     documentId,
+                     data.size(),
+                     CollabRepository::MAX_ATTACHMENT_SIZE);
+        return {};
+    }
+    auto session = ensureSession(conversationId, documentId);
+    if (!session || !session->repo)
+        return {};
+    auto id = session->repo->addAttachment(data);
+    if (id.empty())
+        return {};
+    {
+        // Ours already: the client that stored it holds the bytes, and the next
+        // synchronization must not announce them back to it.
+        std::lock_guard<std::mutex> lk(mutex_);
+        session->knownAttachments.insert(id);
+    }
+    // The reference travels on the real-time path and the payload with the
+    // repository, so peers would show a placeholder until the next checkpoint --
+    // ten seconds of nothing, or much longer on a document nobody is typing in.
+    // Announce straight away instead.
+    if (auto account = account_.lock())
+        account->syncCollabDocument(conversationId, documentId);
+    return id;
+}
+
+std::vector<uint8_t>
+CollaborativeEditing::attachment(const std::string& conversationId,
+                                 const std::string& documentId,
+                                 const std::string& attachmentId)
+{
+    auto session = findSession(conversationId, documentId);
+    auto repo = session ? session->repo : nullptr;
+    if (!repo) {
+        // Readable without an editing session: a client browsing the history of
+        // a document it has not opened still has to resolve what it refers to.
+        if (auto account = account_.lock())
+            repo = CollabRepository::open(account, conversationId, documentId);
+    }
+    return repo ? repo->attachment(attachmentId) : std::vector<uint8_t> {};
 }
 
 } // namespace jami
