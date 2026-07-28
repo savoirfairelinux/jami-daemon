@@ -895,6 +895,17 @@ public:
                                                      std::string_view deviceId,
                                                      std::string_view conversationId);
 
+    /**
+     * Return the socket currently used to sync a collaborative document
+     * @param accountId     Related account
+     * @param deviceId      Related device
+     * @param documentKey   "<conversationId>/<documentId>"
+     * @return the related socket, or nullptr
+     */
+    std::shared_ptr<dhtnet::ChannelSocket> collabSocket(std::string_view accountId,
+                                                        std::string_view deviceId,
+                                                        std::string_view documentKey);
+
     void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
