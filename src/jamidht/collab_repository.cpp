@@ -36,6 +36,7 @@ namespace jami {
 namespace {
 
 constexpr std::string_view META_FILE {"meta.json"};
+constexpr std::string_view ATTACHMENTS_DIR {"attachments"};
 constexpr std::string_view MAIN_REF {"refs/heads/main"};
 
 // Subject line prefix identifying a commit whose message carries CRDT updates.
@@ -149,7 +150,7 @@ metaNameClock(git_repository* repo, const git_tree_entry* entry)
  * clocks tie, which is a genuinely concurrent rename. Ordering on (clock, oid)
  * is still a total order, so the union remains a lattice.
  */
-bool unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out, unsigned depth);
+bool unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out, unsigned depth, bool attachments);
 
 /// Merge one subtree entry present on the remote side into @p bld.
 bool
@@ -160,6 +161,9 @@ unionSubtreeEntry(git_repository* repo,
                   const git_tree_entry* rEntry,
                   unsigned depth)
 {
+    // attachments/ is the one subtree whose entries are named after their own
+    // content, and it is merged under that rule instead of the ordering below.
+    const bool attachments = depth == 0 && name && name == ATTACHMENTS_DIR;
     GitTree rSub {nullptr};
     {
         git_tree* p = nullptr;
@@ -175,7 +179,7 @@ unionSubtreeEntry(git_repository* repo,
         lSub.reset(p);
     }
     git_oid merged;
-    if (!unionTrees(repo, lSub.get(), rSub.get(), merged, depth + 1))
+    if (!unionTrees(repo, lSub.get(), rSub.get(), merged, depth + 1, attachments))
         return false;
     return git_treebuilder_insert(nullptr, bld, name, &merged, GIT_FILEMODE_TREE) == 0;
 }
@@ -219,8 +223,20 @@ unionBlobEntry(git_repository* repo,
     return git_treebuilder_insert(nullptr, bld, name, winner, mode) == 0;
 }
 
+/// Whether @p entry really holds the object it is named after.
+///
+/// In attachments/ the name @b is the git oid of the content, so this single
+/// test is the whole admission rule.
 bool
-unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out, unsigned depth = 0)
+entryHoldsItsName(const git_tree_entry* entry)
+{
+    const auto* name = git_tree_entry_name(entry);
+    return name && git_tree_entry_type(entry) == GIT_OBJECT_BLOB && oidToString(*git_tree_entry_id(entry)) == name;
+}
+
+bool
+unionTrees(
+    git_repository* repo, git_tree* local, git_tree* remote, git_oid& out, unsigned depth = 0, bool attachments = false)
 {
     // A legitimate layout is three levels deep. The remote tree is whatever a
     // peer chose to serve, so cap the recursion rather than let a deeply nested
@@ -233,6 +249,15 @@ unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out
         return false;
     GitTreeBuilder bld {bld_ptr};
 
+    // Done before the merge, not after: an entry a peer forged under the name of
+    // one of ours would otherwise win the ordering below, be dropped on read for
+    // not matching its name, and take the legitimate attachment with it. Any
+    // member of the swarm could then erase an image for everyone. Filtering the
+    // local side too heals a tree that already merged such an entry.
+    if (attachments)
+        git_treebuilder_filter(
+            bld.get(), [](const git_tree_entry* entry, void*) { return entryHoldsItsName(entry) ? 0 : 1; }, nullptr);
+
     const size_t count = remote ? git_tree_entrycount(remote) : 0;
     for (size_t i = 0; i < count; ++i) {
         const auto* rEntry = git_tree_entry_byindex(remote, i);
@@ -241,6 +266,11 @@ unionTrees(git_repository* repo, git_tree* local, git_tree* remote, git_oid& out
         const auto* name = git_tree_entry_name(rEntry);
         const auto type = git_tree_entry_type(rEntry);
         const auto* lEntry = local ? git_tree_entry_byname(local, name) : nullptr;
+
+        // Two admissible attachments sharing a name necessarily hold the same
+        // object, so there is nothing to order: refusing the rest is enough.
+        if (attachments && !entryHoldsItsName(rEntry))
+            continue;
 
         // A tree entry only ever holds a tree or a blob here. A submodule would
         // point outside this repository, and there is nothing sensible to merge.
@@ -311,6 +341,39 @@ withEntry(
     if (git_treebuilder_insert(nullptr, bld.get(), std::string(name).c_str(), &id, mode) < 0)
         return false;
     return git_treebuilder_write(&out, bld.get()) == 0;
+}
+
+/// The @c attachments/ subtree of @c root, or nullptr when there is none.
+GitTree
+attachmentsTree(git_repository* repo, git_tree* root)
+{
+    if (!root)
+        return GitTree {nullptr};
+    git_tree_entry* entry_ptr = nullptr;
+    if (git_tree_entry_bypath(&entry_ptr, root, std::string(ATTACHMENTS_DIR).c_str()) < 0)
+        return GitTree {nullptr};
+    GitTreeEntry entry {entry_ptr};
+    if (git_tree_entry_type(entry.get()) != GIT_OBJECT_TREE)
+        return GitTree {nullptr};
+    git_tree* p = nullptr;
+    if (git_tree_lookup(&p, repo, git_tree_entry_id(entry.get())) < 0)
+        return GitTree {nullptr};
+    return GitTree {p};
+}
+
+/// The attachment entry named @c id, only if it really holds the object it is
+/// named after. Everything in this subtree arrives by merging what a peer chose
+/// to serve, so an entry whose name does not match its content is a peer
+/// substituting bytes under an id a client already trusts.
+const git_tree_entry*
+attachmentEntry(git_tree* dir, const std::string& id)
+{
+    if (!dir)
+        return nullptr;
+    const auto* entry = git_tree_entry_byname(dir, id.c_str());
+    if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_BLOB)
+        return nullptr;
+    return oidToString(*git_tree_entry_id(entry)) == id ? entry : nullptr;
 }
 
 } // namespace
@@ -925,6 +988,106 @@ CollabRepository::setDisplayName(const std::string& displayName)
     if (parent)
         parents.push_back(parent.get());
     return pimpl_->commit(repo.get(), newRoot, "document renamed", parents);
+}
+
+std::string
+CollabRepository::addAttachment(const std::vector<uint8_t>& data)
+{
+    if (data.empty() || data.size() > MAX_ATTACHMENT_SIZE)
+        return {};
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+
+    git_oid blobId;
+    if (git_blob_create_from_buffer(&blobId, repo.get(), data.data(), data.size()) < 0)
+        return {};
+    const auto id = oidToString(blobId);
+
+    auto parent = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(parent);
+    auto dir = attachmentsTree(repo.get(), root.get());
+    // Storing the same payload twice must not write a commit: the same image
+    // pasted into two paragraphs, or edited back in after a delete, would
+    // otherwise grow the history for nothing. The blob above is already there
+    // and is left for the next compaction to collect if it is not referenced.
+    if (attachmentEntry(dir.get(), id))
+        return id;
+
+    git_oid newDir;
+    if (!withEntry(repo.get(), dir.get(), id, blobId, BLOB_MODE, newDir))
+        return {};
+    git_oid newRoot;
+    if (!withEntry(repo.get(), root.get(), ATTACHMENTS_DIR, newDir, GIT_FILEMODE_TREE, newRoot))
+        return {};
+
+    std::vector<git_commit*> parents;
+    if (parent)
+        parents.push_back(parent.get());
+    if (pimpl_->commit(repo.get(), newRoot, fmt::format("attachment: {} ({} bytes)", id, data.size()), parents).empty())
+        return {};
+    return id;
+}
+
+std::vector<uint8_t>
+CollabRepository::attachment(const std::string& attachmentId) const
+{
+    if (!isValidId(attachmentId))
+        return {};
+    std::lock_guard lk(pimpl_->mutex_);
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto commit = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(commit);
+    auto dir = attachmentsTree(repo.get(), root.get());
+    const auto* entry = attachmentEntry(dir.get(), attachmentId);
+    if (!entry)
+        return {};
+
+    git_blob* blob_ptr = nullptr;
+    if (git_blob_lookup(&blob_ptr, repo.get(), git_tree_entry_id(entry)) < 0)
+        return {};
+    GitBlob blob {blob_ptr};
+    const auto size = git_blob_rawsize(blob.get());
+    const auto* raw = static_cast<const uint8_t*>(git_blob_rawcontent(blob.get()));
+    // A peer serves whatever it likes: an entry can name a blob far larger than
+    // we would ever have written ourselves.
+    if (!raw || size == 0 || static_cast<size_t>(size) > MAX_ATTACHMENT_SIZE)
+        return {};
+    return {raw, raw + size};
+}
+
+std::vector<std::string>
+CollabRepository::attachmentIds() const
+{
+    std::lock_guard lk(pimpl_->mutex_);
+    std::vector<std::string> out;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return out;
+    auto commit = pimpl_->headCommit(repo.get());
+    auto root = pimpl_->headTree(commit);
+    auto dir = attachmentsTree(repo.get(), root.get());
+    if (!dir)
+        return out;
+
+    const auto count = git_tree_entrycount(dir.get());
+    out.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        const auto* entry = git_tree_entry_byindex(dir.get(), i);
+        if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_BLOB)
+            continue;
+        const auto* name = git_tree_entry_name(entry);
+        if (!name)
+            continue;
+        // Same check as attachment(): an entry that does not hold the object it
+        // is named after is never handed to a client, so it is not announced.
+        if (oidToString(*git_tree_entry_id(entry)) == name)
+            out.emplace_back(name);
+    }
+    return out;
 }
 
 /// Append the base64 CRDT updates carried by one commit message to @c out.

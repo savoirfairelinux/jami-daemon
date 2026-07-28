@@ -48,6 +48,7 @@ class JamiAccount;
  * ----------------------------------------
  * @verbatim
  *   meta.json                          document id, conversation id, kind, name
+ *   attachments/<blobId>               binary payloads referenced by the document
  * @endverbatim
  *
  * The tree holds descriptive data only. The CRDT updates themselves live in the
@@ -65,6 +66,14 @@ class JamiAccount;
  * checkpoint, and those tree objects cost more than the deltas themselves;
  * measured on a 300 kB document written by eight people, the same history is
  * 856 kB with deltas in the messages against 1780 kB with deltas in files.
+ *
+ * Attachments are the one thing that does live in the tree, and for the exact
+ * reason deltas do not: what that measurement condemned is rewriting the tree
+ * once per @b checkpoint, not holding an immutable blob. An attachment is
+ * written once, never modified and never rewritten, so it costs one blob and
+ * one tree rewrite for its whole lifetime. Storing it in a commit message
+ * instead would mean base64, i.e. a third more bytes forever, and would put it
+ * in the CRDT's path where nothing can ever reclaim it.
  *
  * The repository is @b bare: the content is reachable through the object
  * database and the history is readable with @c git @c log / @c git @c show,
@@ -115,6 +124,12 @@ public:
     /// Longest document name kept, in bytes. Names are merged in from other
     /// members and shown by every client; a name is a label, not a payload.
     static constexpr size_t MAX_DOCUMENT_NAME_SIZE {256};
+
+    /// Largest attachment accepted, in bytes. Unlike a CRDT update an attachment
+    /// is stored raw, so this is what it actually costs on every replica; it is
+    /// deliberately larger than MAX_UPDATE_SIZE because that one pays for base64
+    /// twice over.
+    static constexpr size_t MAX_ATTACHMENT_SIZE {16 * 1024 * 1024};
 
     /// @c name cut down to MAX_DOCUMENT_NAME_SIZE bytes, on a UTF-8 boundary.
     static std::string truncatedName(std::string name);
@@ -178,6 +193,40 @@ public:
 
     /// Rename the document (updates @c meta.json). Returns the new commit id.
     std::string setDisplayName(const std::string& displayName);
+
+    /**
+     * Store a binary payload the document refers to -- an image, a sound, any
+     * blob a client wants to embed -- and make it part of the document's
+     * history.
+     *
+     * The daemon does not interpret the content, exactly as it does not
+     * interpret a CRDT update: what an attachment @e is remains the clients'
+     * agreement.
+     *
+     * The returned id is the git object id of the content itself, which is what
+     * a client embeds in the document. Naming the entry after its own content
+     * buys three properties at no cost: identical payloads are stored once,
+     * concurrent additions on two replicas can never collide, and a peer cannot
+     * serve different bytes under a known id -- attachment() checks the entry
+     * against the id it was asked for.
+     *
+     * @return the attachment id, or an empty string if @c data is empty, larger
+     *         than MAX_ATTACHMENT_SIZE, or could not be written.
+     */
+    std::string addAttachment(const std::vector<uint8_t>& data);
+
+    /**
+     * Read back an attachment.
+     *
+     * @return its content, or an empty vector when this replica does not hold
+     *         it (yet): a peer's attachment only lands here once the document
+     *         has been fetched and merged, which is normally later than the
+     *         real-time update that referenced it.
+     */
+    std::vector<uint8_t> attachment(const std::string& attachmentId) const;
+
+    /// Ids of every attachment held by the current tip.
+    std::vector<std::string> attachmentIds() const;
 
     /**
      * Every CRDT update stored in the repository, oldest checkpoint first.
