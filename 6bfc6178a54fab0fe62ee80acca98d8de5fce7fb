@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b222ef1_68528dad",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 782,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T03:38:36Z",
+      "side": 1,
+      "message": "[error] Line 782: 🔴 `collectReachable()` treats every non-tree entry as a blob and later passes those ids to `git_packbuilder_insert()`. Unlike `unionTrees()`, it does not reject submodules or other non-blob entries, so a malicious fetched tree can make compaction pack arbitrary object ids or silently classify unsupported entries as blobs. Mirror the `GIT_OBJECT_TREE`/`GIT_OBJECT_BLOB` validation here and abort compaction on any other type.",
+      "revId": "6bfc6178a54fab0fe62ee80acca98d8de5fce7fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1de5ad91_c7982f30",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1130,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T03:38:36Z",
+      "side": 1,
+      "message": "[error] Line 1130: 🔴 `mergeRemote()` fast-forwards/adopts a remote tip without first validating that its tree has the supported layout. The tree-shape checks in `unionTrees()` only run on the divergent merge path, so an empty/local-ancestor repository can accept a remote commit containing unsupported tree entries and later expose them to metadata reads or compaction. Validate the remote tree with the same constraints before moving `refs/heads/main` to `remoteOid`.",
+      "revId": "6bfc6178a54fab0fe62ee80acca98d8de5fce7fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
