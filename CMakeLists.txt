@@ -537,6 +537,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/tests-ffi/include;"
        )
    endif()
 
@@ -654,6 +655,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/build/src/Release/simdutf.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/target/release/yrs.lib
         /ignore:4006"
    )
 
