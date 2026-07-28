@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22cd5e2b_02c11326",
+        "filename": "bin/nodejs/Dockerfile",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T17:36:53Z",
+      "side": 1,
+      "message": "[error] Line 53: 🔴 `chmod a+rwx /usr/local/cargo` makes a PATH directory world-writable, so any unprivileged build user can replace `cargo`/`rustc` entries via directory rename/unlink despite the files being read-only. Keep the toolchain/bin directory root-owned and non-writable, and use a separate writable cargo cache directory for registry/git data.",
+      "revId": "68a5c700c775687c6b75d21d8e8e29209b8f0022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "759f9377_c237a7a5",
+        "filename": "docker/Dockerfile_ubuntu_24.04",
+        "patchSetId": 3
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T17:36:53Z",
+      "side": 1,
+      "message": "[error] Line 97: 🔴 `chmod a+rwx /usr/local/cargo` makes a PATH directory world-writable, allowing an unprivileged build to replace Rust executables or shims. Split the read-only toolchain/bin location from a writable cargo cache, or make only non-PATH cache subdirectories writable.",
+      "revId": "68a5c700c775687c6b75d21d8e8e29209b8f0022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
