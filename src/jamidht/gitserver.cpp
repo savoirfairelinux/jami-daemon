@@ -589,6 +589,14 @@ GitServer::GitServer(const std::string& accountId,
     pimpl_ = std::make_unique<GitServer::Impl>(accountId, conversationId, path, client);
 }
 
+GitServer::GitServer(const std::string& accountId,
+                     const std::string& repositoryId,
+                     const std::string& path,
+                     const std::shared_ptr<dhtnet::ChannelSocket>& client)
+{
+    pimpl_ = std::make_unique<GitServer::Impl>(accountId, repositoryId, path, client);
+}
+
 GitServer::~GitServer()
 {
     stop();
