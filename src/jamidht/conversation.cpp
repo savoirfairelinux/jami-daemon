@@ -19,6 +19,7 @@
 
 #include "account_const.h"
 #include "jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
@@ -516,8 +517,8 @@ public:
                                device,
                                uri);
                     activeCalls_.emplace_back(std::map<std::string, std::string> {
-                        {"id",     confId},
-                        {"uri",    uri   },
+                        {"id", confId},
+                        {"uri", uri},
                         {"device", device},
                     });
                     saveActiveCalls();
@@ -1634,6 +1635,14 @@ Conversation::Impl::addToHistory(History& history,
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        // A collaborative document is announced here, but its content lives in a
+        // separate repository: make sure that repository exists locally so it can
+        // be replicated. The commit itself falls through and is displayed like a
+        // shared file.
+        if (typeIt != commit.end() && typeIt->second == CommitType::COLLAB_DOC) {
+            if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
+                acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
+        }
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
@@ -2105,6 +2114,29 @@ std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
     return pimpl_->repository_->getCommit(commitId);
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::collaborativeDocuments() const
+{
+    if (!pimpl_->repository_)
+        return {};
+    // Read straight from git so documents are found even when their announcing commit
+    // is not (or no longer) in the loaded message window.
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
+    std::vector<std::map<std::string, std::string>> result;
+    for (auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        auto uriIt = commit.find(CommitKey::URI);
+        if (uriIt == commit.end() || uriIt->second.empty())
+            continue;
+        result.emplace_back(std::move(commit));
+    }
+    return result;
 }
 
 void
