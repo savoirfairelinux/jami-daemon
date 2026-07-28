@@ -16,6 +16,29 @@
       "message": ":(",
       "revId": "5f7b4298f0c5d4d70f84a85c6680003a10c0023e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "722c28de_7f4501e6",
+        "filename": "contrib/src/icu/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1192
+      },
+      "writtenOn": "2026-07-28T20:00:39Z",
+      "side": 1,
+      "message": "got reverted for some reason",
+      "range": {
+        "startLine": 5,
+        "startChar": 1,
+        "endLine": 8,
+        "endChar": 11
+      },
+      "revId": "5f7b4298f0c5d4d70f84a85c6680003a10c0023e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
