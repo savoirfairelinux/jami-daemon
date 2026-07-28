@@ -440,6 +440,52 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*from*/,
                              int /*status*/);
     };
+    /**
+     * A Y-CRDT update to merge into the client's own replica of the document.
+     *
+     * The payload is base64 and opaque: the daemon neither produces nor reads
+     * the document's content, so this one signal carries every change of every
+     * document type. An update the replica already has is a no-op, so applying
+     * it unconditionally is always correct.
+     */
+    struct LIBJAMI_PUBLIC CollaborativeDocumentUpdate
+    {
+        constexpr static const char* name = "CollaborativeDocumentUpdate";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*base64Update*/);
+    };
+    /**
+     * Ephemeral state a peer shares while editing: presence, cursor, selection.
+     * Never merged and never stored; its shape is agreed between clients, not
+     * imposed by the daemon.
+     */
+    struct LIBJAMI_PUBLIC CollaborativeAwarenessChanged
+    {
+        constexpr static const char* name = "CollaborativeAwarenessChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/,
+                             const std::string& /*state*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeParticipantLeft
+    {
+        constexpr static const char* name = "CollaborativeParticipantLeft";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeDocumentRenamed
+    {
+        constexpr static const char* name = "CollaborativeDocumentRenamed";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*name*/);
+    };
     struct LIBJAMI_PUBLIC IncomingTrustRequest
     {
         constexpr static const char* name = "IncomingTrustRequest";
