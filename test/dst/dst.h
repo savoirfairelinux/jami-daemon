@@ -23,9 +23,11 @@
 #include "jamidht/conversationrepository.h"
 #include "jamidht/conversation_module.h"
 
+#include <chrono>
 #include <map>
 #include <memory>
 #include <queue>
+#include <random>
 #include <string>
 
 namespace jami {
@@ -157,6 +159,16 @@ private:
     bool isUserInRepo(int accountIndexToSearch, int accountIndexToFind);
     bool validateEvent(const Event& event);
     void triggerEvent(const Event& event, EventQueue* queue = nullptr);
+
+    template<typename MinRep, typename MinPeriod, typename MaxRep, typename MaxPeriod>
+    std::chrono::nanoseconds randDuration(std::chrono::duration<MinRep, MinPeriod> min,
+                                          std::chrono::duration<MaxRep, MaxPeriod> max)
+    {
+        const auto minNs = std::chrono::duration_cast<std::chrono::nanoseconds>(min);
+        const auto maxNs = std::chrono::duration_cast<std::chrono::nanoseconds>(max);
+        return std::chrono::nanoseconds(
+            std::uniform_int_distribution<std::chrono::nanoseconds::rep>(minNs.count(), maxNs.count())(gen_));
+    }
 
     static constexpr int MAX_ACCOUNTS = 6;
 
