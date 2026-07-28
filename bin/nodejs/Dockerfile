@@ -32,6 +32,21 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     npm install -g node-gyp node-addon-api
 ENV NODE_PATH=/usr/lib/node_modules
 
+# Rust toolchain, required to build the yffi (Y-CRDT) contrib package used by
+# the collaborative editing feature.
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# The toolchain is pinned: "stable" moves under us, so an unrelated Rust release
+# could break the build with no change on our side. Bump this line deliberately.
+# The toolchain itself stays read-only -- a build must not be able to rewrite the
+# compiler it is about to use. Only the CARGO_HOME directory is writable, which is
+# all cargo needs to create its registry cache and lock file as an arbitrary user.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --profile minimal --default-toolchain 1.96.0 && \
+    chmod -R a+rX /usr/local/rustup /usr/local/cargo && \
+    chmod a+rwx /usr/local/cargo
+
 # Install latest Swig (>= 4.3 required for N-API support)
 WORKDIR /swig
 RUN git clone https://github.com/swig/swig.git --depth 1 && \
