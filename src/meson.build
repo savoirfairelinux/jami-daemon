@@ -21,6 +21,7 @@ libjami_sources = files(
     'jamidht/archive_account_manager.cpp',
     'jamidht/auth_channel_handler.cpp',
     'jamidht/channeled_transport.cpp',
+    'jamidht/collab_repository.cpp',
     'jamidht/contact_list.cpp',
     'jamidht/conversation.cpp',
     'jamidht/conversation_channel_handler.cpp',
