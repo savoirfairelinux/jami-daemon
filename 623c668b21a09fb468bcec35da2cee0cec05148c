@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf382614_eb7b73e8",
+        "filename": "src/jamidht/CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:09Z",
+      "side": 1,
+      "message": "[error] Line 53: 🔴 The new source includes `\u003clibyrs.h\u003e` and calls libyrs symbols, but the CMake build only adds the files and does not add the yrs include path/library dependency. Meson was updated with `depyrs`; please add the equivalent CMake dependency/linking so CMake builds do not fail.",
+      "revId": "623c668b21a09fb468bcec35da2cee0cec05148c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce23eec5_2d7251a3",
+        "filename": "src/jamidht/yrs_document.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:09Z",
+      "side": 1,
+      "message": "[warning] Line 40: 🟡 This states every public method is serialized by the mutex, but `takeChanged()` does not lock and relies on an atomic flag. Either take the mutex there too or update the contract to accurately document that only document-accessing methods are serialized.",
+      "revId": "623c668b21a09fb468bcec35da2cee0cec05148c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
