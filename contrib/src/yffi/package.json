@@ -1,0 +1,11 @@
+{
+    "name": "yffi",
+    "version": "03e14a0232903498299a9e717c7ee8001e40e5db",
+    "url": "https://github.com/y-crdt/y-crdt/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "custom_scripts": {
+        "build": [
+            "cargo build --release --locked --manifest-path yffi\\Cargo.toml --target-dir target"
+        ]
+    }
+}
