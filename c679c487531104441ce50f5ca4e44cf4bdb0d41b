@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c316289_d08b907e",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:24Z",
+      "side": 1,
+      "message": "[warning] Line 165: 🟡 `base64Update` is an opaque client-controlled payload that will be merged, broadcast, and persisted, but the API contract does not define invalid-base64 handling or any maximum size. Please specify and enforce rejection semantics and an encoded/decoded size limit so clients cannot drive unbounded memory, disk, or network usage.",
+      "revId": "c679c487531104441ce50f5ca4e44cf4bdb0d41b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88236a12_181b4093",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T01:40:24Z",
+      "side": 1,
+      "message": "[warning] Line 179: 🟡 `state` is broadcast as real-time awareness data but has no documented size or rate/coalescing constraints. Please add a bounded payload contract for awareness updates, since this path is especially easy for a client to spam and can otherwise amplify large ephemeral messages to every participant.",
+      "revId": "c679c487531104441ce50f5ca4e44cf4bdb0d41b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
