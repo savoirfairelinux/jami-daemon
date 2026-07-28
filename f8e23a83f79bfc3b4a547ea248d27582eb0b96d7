@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37de7e2a_76060df8",
+        "filename": "meson.build",
+        "patchSetId": 4
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-28T18:26:01Z",
+      "side": 1,
+      "message": "Measured against the actual CI logs of patch set 2, the diagnosis does not hold: on every platform that failed, `dependency(\u0027yrs\u0027)` was either resolved or never reached.\n\nThe contrib package does exist -- it is 35213, the first change of this series (`contrib/src/yffi/`, tarball + SHA512SUMS + rules.mak + yrs.pc.in). This change only consumes it.\n\nPer-platform evidence:\n\n* **daemon-gnulinux #28437 (FAILURE)** -- yffi builds and installs fine: `Compiling yffi v0.27.2` (l. 7279), `install -m644 yffi/target/release/libyrs.a .../lib/libyrs.a` (l. 7329), `libyrs.h` (l. 7330), `yrs.pc` generated (l. 7332), `touch .yffi` (l. 7333). Meson then resolves it: `Checking for one of the modules \u0027yrs\u0027` (l. 7375). The build dies 60 lines later on something unrelated to this series: `asio/handler_continuation_hook.hpp:54:10: fatal error: .../asio/detail/pop_options.hpp: No such file or directory` (l. 7435), while compiling `src/im/message_engine.cpp`. That is the shared `/var/cache/jami/contrib/\u003chash\u003e` prefix being rebuilt under a concurrent build -- the `flock` only covers the contrib `make`, not the daemon compile. Same header, same race, reported earlier on 35213.\n\n* **daemon-nodejs #5557, daemon-macos #3295, daemon-ios #26047: SUCCESS.** nodejs is listed in the comment as failing; it passed. The Apple agents resolve the dependency too, so \"several CI jobs\" is really two families.\n\n* **daemon-android-armv7 #27949 / daemon-android-x86_64 #27968 (FAILURE)** -- the failure is not a missing contrib package nor an unresolved dependency. It is `yffi: cargo not found. Install the Rust toolchain or set CARGO\u003d/path/to/cargo.` (l. 17696 and l. 18057 respectively), i.e. our own guard firing because the Android agents have no Rust toolchain installed. Nothing in the contrib wiring can fix that from inside the tree.\n\n* **daemon-msvc** -- console log purged (HTTP 404), so no measurement. The known Windows gap is that `contrib/src/yffi/package.json` declares no `custom_scripts`/`project_paths`/`use_cmake`, and `compat/msvc/winmake.py:build()` then treats the package as header-only and compiles nothing.\n\nSo the residual blocker is toolchain availability on two agent families (Rust on the Android agents, a winmake recipe plus Rust on the MSVC agents), not platform wiring in this change. Project decision for this series: target GNU/Linux; Android and Windows support for the yffi contrib is tracked as follow-up work and handled outside this series. If the team prefers to land before the agents grow a Rust toolchain, gating behind a meson/CMake feature option is the obvious lever and we can do it -- but it would leave the feature uncompiled on those targets rather than fix them, so we would rather not do it silently.\n\nThe two other findings on this change are already addressed: the CMake yrs include/link dependency (patch set 2), and the `takeChanged()` locking contract, which the header now documents explicitly as the one method that does not take the mutex (`yrs_document.h:41-44`).",
+      "parentUuid": "e0251d9a_d19c0184",
+      "revId": "f8e23a83f79bfc3b4a547ea248d27582eb0b96d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
