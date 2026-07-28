@@ -931,6 +931,30 @@
             <arg type="s" name="commitId" direction="in"/>
         </method>
 
+        <method name="addCollaborativeAttachment" tp:name-for-bindings="addCollaborativeAttachment">
+            <tp:docstring>
+               Store a binary payload a collaborative document refers to, returning its id
+            </tp:docstring>
+            <arg type="s" name="attachmentId" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="data" direction="in"/>
+        </method>
+
+        <method name="collaborativeAttachment" tp:name-for-bindings="collaborativeAttachment">
+            <tp:docstring>
+               Read back a binary payload of a collaborative document; empty when not held yet
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="data" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="attachmentId" direction="in"/>
+        </method>
+
         <signal name="collaborativeDocumentUpdate" tp:name-for-bindings="collaborativeDocumentUpdate">
             <tp:docstring>
                Notify clients of a Y-CRDT update to merge into their replica of the document
@@ -970,6 +994,16 @@
             <arg type="s" name="conversationId"/>
             <arg type="s" name="documentId"/>
             <arg type="s" name="name"/>
+        </signal>
+
+        <signal name="collaborativeAttachmentAdded" tp:name-for-bindings="collaborativeAttachmentAdded">
+            <tp:docstring>
+               Notify clients that a binary payload referenced by a document is now available
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="attachmentId"/>
         </signal>
 
         <method name="setVolume" tp:name-for-bindings="setVolume">
