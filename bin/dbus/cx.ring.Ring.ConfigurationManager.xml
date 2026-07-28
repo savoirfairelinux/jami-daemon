@@ -818,6 +818,160 @@
             </arg>
         </signal>
 
+        <method name="createCollaborativeDocument" tp:name-for-bindings="createCollaborativeDocument">
+            <tp:docstring>
+               Create a collaborative document in a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+            <arg type="s" name="kind" direction="in"/>
+            <arg type="s" name="documentId" direction="out"/>
+        </method>
+
+        <method name="openCollaborativeDocument" tp:name-for-bindings="openCollaborativeDocument">
+            <tp:docstring>
+               Open a collaborative document and start receiving its updates
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="content" direction="out"/>
+        </method>
+
+        <method name="closeCollaborativeDocument" tp:name-for-bindings="closeCollaborativeDocument">
+            <tp:docstring>
+               Close a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+        </method>
+
+        <method name="applyCollaborativeUpdate" tp:name-for-bindings="applyCollaborativeUpdate">
+            <tp:docstring>
+               Merge a Y-CRDT update produced by the client into a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="base64Update" direction="in"/>
+        </method>
+
+        <method name="setCollaborativeAwareness" tp:name-for-bindings="setCollaborativeAwareness">
+            <tp:docstring>
+               Share opaque ephemeral state (presence, cursor) in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="state" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentState" tp:name-for-bindings="collaborativeDocumentState">
+            <tp:docstring>
+               Get the whole state of a collaborative document as a Y-CRDT update
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="state" direction="out"/>
+        </method>
+
+        <method name="setCollaborativeDocumentName" tp:name-for-bindings="setCollaborativeDocumentName">
+            <tp:docstring>
+               Rename a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentName" tp:name-for-bindings="collaborativeDocumentName">
+            <tp:docstring>
+               Get the name of a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="out"/>
+        </method>
+
+        <method name="getCollaborativeDocuments" tp:name-for-bindings="getCollaborativeDocuments">
+            <tp:docstring>
+               List the collaborative documents of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="documents" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <method name="getCollaborativeDocumentHistory" tp:name-for-bindings="getCollaborativeDocumentHistory">
+            <tp:docstring>
+               List the checkpoints of a collaborative document, newest first
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="history" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="u" name="max" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentStateAt" tp:name-for-bindings="collaborativeDocumentStateAt">
+            <tp:docstring>
+               State of a collaborative document as of a given checkpoint, as a Y-CRDT update
+            </tp:docstring>
+            <arg type="s" name="state" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="commitId" direction="in"/>
+        </method>
+
+        <signal name="collaborativeDocumentUpdate" tp:name-for-bindings="collaborativeDocumentUpdate">
+            <tp:docstring>
+               Notify clients of a Y-CRDT update to merge into their replica of the document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="base64Update"/>
+        </signal>
+
+        <signal name="collaborativeAwarenessChanged" tp:name-for-bindings="collaborativeAwarenessChanged">
+            <tp:docstring>
+               Notify clients that a peer shared ephemeral state in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+            <arg type="s" name="state"/>
+        </signal>
+
+        <signal name="collaborativeParticipantLeft" tp:name-for-bindings="collaborativeParticipantLeft">
+            <tp:docstring>
+               Notify clients that a peer left a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+        </signal>
+
+        <signal name="collaborativeDocumentRenamed" tp:name-for-bindings="collaborativeDocumentRenamed">
+            <tp:docstring>
+               Notify clients that a collaborative document was renamed
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="name"/>
+        </signal>
+
         <method name="setVolume" tp:name-for-bindings="setVolume">
             <tp:docstring>
                 <p>Sets the volume using a linear scale [0,100].</p>
@@ -1956,6 +2110,7 @@
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
         </method>
+
 
         <method name="sendMessage" tp:name-for-bindings="sendMessage">
             <tp:added version="13.6.0"/>
