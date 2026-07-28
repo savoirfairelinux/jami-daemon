@@ -748,6 +748,13 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         const git_error* error = giterr_last();
         JAMI_ERROR("Unable to initialize git transport: {}", error ? error->message : "(unknown)");
     }
+    // Repositories of collaborative documents travel over the same peer-to-peer
+    // transport, under their own scheme so their URLs can carry a document id.
+    res = git_transport_register("collab", p2p_transport_cb, nullptr);
+    if (res < 0) {
+        const git_error* error = giterr_last();
+        JAMI_ERROR("Unable to initialize collab transport: {}", error ? error->message : "(unknown)");
+    }
 
 #ifndef WIN32
     // Set the max number of open files.
@@ -3273,6 +3280,14 @@ Manager::gitSocket(std::string_view accountId, std::string_view deviceId, std::s
     if (const auto acc = getAccount<JamiAccount>(accountId))
         if (auto* convModule = acc->convModule(true))
             return convModule->gitSocket(deviceId, conversationId);
+    return nullptr;
+}
+
+std::shared_ptr<dhtnet::ChannelSocket>
+Manager::collabSocket(std::string_view accountId, std::string_view deviceId, std::string_view documentKey)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountId))
+        return acc->collabSocket(deviceId, documentKey);
     return nullptr;
 }
 
