@@ -680,6 +680,7 @@ else()
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
     pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
+    pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)
     pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
     pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
     pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
@@ -704,6 +705,7 @@ else()
         PkgConfig::opendht
         PkgConfig::pjproject
         PkgConfig::git2
+        PkgConfig::yrs
         PkgConfig::gnutls
         PkgConfig::nettle
         PkgConfig::avformat
