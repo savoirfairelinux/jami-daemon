@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87b6118a_4de8399e",
+        "filename": "src/jamidht/collab_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:39Z",
+      "side": 1,
+      "message": "[error] Line 82: 🔴 onRequest() authorizes the requester for the conversation but never verifies that the requested document was actually announced in that conversation. Any authorized conversation member can therefore open a collab channel for an arbitrary document id and cause this device to serve/create access paths for non-existent document repositories. Reuse CollaborativeEditing::isAnnouncedDocument() or the conversation\u0027s collaborative document list before accepting the channel.",
+      "revId": "0b16812437d6f5c30478084e755175e0926a39e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc9af53e_653d2be3",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:39Z",
+      "side": 1,
+      "message": "[error] Line 589: 🔴 The \"req\" path opens or initializes a repository after only checking that the document id was announced, but it does not ensure this device actually has content for that repository. A peer can trigger empty repository creation and then receive checkpoint notifications from an empty local repo once metadata exists. Use CollabRepository::open() here and answer only when an existing repository is non-empty.",
+      "revId": "0b16812437d6f5c30478084e755175e0926a39e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
