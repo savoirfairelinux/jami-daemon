@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41da9ab6_d7f5271f",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:36Z",
+      "side": 1,
+      "message": "[error] Line 134: 🔴 These new `LIBJAMI_PUBLIC` APIs are declared in the public header but this patchset does not add matching exported definitions. Any client that starts using them will compile but fail at link/load time. Please add the corresponding implementation/export wiring in the daemon, or keep the declarations out of the public interface until the implementation lands.",
+      "revId": "1b4d17a39808aa381dd7d2318974c17b6876409b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
