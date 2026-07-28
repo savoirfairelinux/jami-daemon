@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93a44b93_a1050659",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T16:18:10Z",
+      "side": 1,
+      "message": "[warning] Line 825: 🟡 The attachment id is derived from the default git object id. If this repository can be initialized with different object formats across replicas, the same payload may get different ids and break convergence/client references. Ensure the repo object format is fixed for collab repositories or document that attachment ids are tied to that format.",
+      "revId": "b4f977089c0968328190b1d8cfed9ebd1d0a237c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "290a82b8_4920121e",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 866,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T16:18:10Z",
+      "side": 1,
+      "message": "[warning] Line 866: 🟡 `attachment()` returns `{}` for both a valid zero-byte/invalid attachment and for any read failure, while `addAttachment()` also rejects empty payloads. If clients need to distinguish missing from empty this is fine, but then the API contract should explicitly state empty attachments are invalid; otherwise use an optional/result type so callers can distinguish absence from content.",
+      "revId": "b4f977089c0968328190b1d8cfed9ebd1d0a237c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
