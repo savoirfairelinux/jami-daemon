@@ -109,6 +109,36 @@ public:
      */
     void setAwareness(const std::string& conversationId, const std::string& documentId, const std::string& state);
 
+    /**
+     * Store a binary payload the document refers to -- an image, a sound, any
+     * blob -- and return the id a client embeds in the document.
+     *
+     * Like an update, the content is opaque: what an attachment @e is remains
+     * the clients' agreement. It is kept out of the CRDT on purpose. Inlining it
+     * would put megabytes into a structure that never forgets anything, since a
+     * CRDT keeps a tombstone for what is deleted; stored here it is a plain git
+     * blob, written once, shared by every reference to it and reclaimed by the
+     * usual retention of the repository.
+     *
+     * @return the attachment id, or empty when the payload is empty, over
+     *         CollabRepository::MAX_ATTACHMENT_SIZE, or could not be stored.
+     */
+    std::string addAttachment(const std::string& conversationId,
+                              const std::string& documentId,
+                              const std::vector<uint8_t>& data);
+    /**
+     * Read back an attachment.
+     *
+     * @return empty when this replica does not hold it @e yet: the real-time
+     *         path carries the reference, the payload travels with the
+     *         repository, so a peer normally learns the id before it has the
+     *         bytes. ConfigurationSignal::CollaborativeAttachmentAdded then
+     *         tells it when they arrive.
+     */
+    std::vector<uint8_t> attachment(const std::string& conversationId,
+                                    const std::string& documentId,
+                                    const std::string& attachmentId);
+
     /// Handle a collaborative-editing payload received from a peer (real-time).
     /// @param from        the sender's account URI
     /// @param fromDevice  the sending device, needed to fetch what it announces
@@ -176,6 +206,9 @@ private:
     /// Hand an update to the local clients, so they merge it into their replica.
     void emitUpdate(const std::string& conversationId, const std::string& documentId, const YrsDocument::Bytes& update);
     void emitRename(const std::string& conversationId, const std::string& documentId, const std::string& name);
+    /// Tell the local clients which attachments a synchronization brought in, so
+    /// an editor showing a placeholder for one can finally draw it.
+    void emitNewAttachments(const std::shared_ptr<Session>& session);
 
     std::weak_ptr<JamiAccount> account_;
     std::string accountId_;

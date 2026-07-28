@@ -298,6 +298,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConfigurationSignal::CollaborativeAwarenessChanged>(bind(&ConfigurationCallback::collaborativeAwarenessChanged, confM, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::CollaborativeParticipantLeft>(bind(&ConfigurationCallback::collaborativeParticipantLeft, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::CollaborativeDocumentRenamed>(bind(&ConfigurationCallback::collaborativeDocumentRenamed, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::CollaborativeAttachmentAdded>(bind(&ConfigurationCallback::collaborativeAttachmentAdded, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&ConfigurationCallback::deviceAuthStateChanged, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&ConfigurationCallback::addDeviceStateChanged, confM, _1, _2, _3, _4)),
     };
