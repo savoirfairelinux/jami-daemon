@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc26abb1_0babea80",
+        "filename": "contrib/src/icu/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-07-28T13:44:57Z",
+      "side": 1,
+      "message": "as explained, don\u0027t add to PKGS",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 11
+      },
+      "revId": "51ff0ec536283f84fec92e16ca3dad9d7944658f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
