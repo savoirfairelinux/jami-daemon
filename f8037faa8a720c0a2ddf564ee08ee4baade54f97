@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "634bc699_ed503bc5",
+        "filename": "bin/nodejs/Dockerfile",
+        "patchSetId": 2
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:36Z",
+      "side": 1,
+      "message": "[warning] Line 40: 🟡 This pipes the live rustup installer and installs the moving `stable` toolchain, making the image non-reproducible and dependent on upstream state at build time. Pin the rustup installer checksum and a concrete Rust toolchain version, or install a pinned distro/package-manager Rust where possible.",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39229920_379140e8",
+        "filename": "contrib/src/yffi/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:36Z",
+      "side": 1,
+      "message": "[error] Line 58: 🔴 Android cross builds pass `--target $(YFFI_RUST_TARGET)`, but this change never installs or verifies the corresponding Rust std target. A default rustup install only includes the host target, so Android jobs will fail with `can\u0027t find crate for std`. Add the required `rustup target add` step in the Android build image/setup, or make the contrib rule fail early with a clear message and document/install the required targets.",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2b872fc_fcf49feb",
+        "filename": "docker/Dockerfile_ubuntu_24.04",
+        "patchSetId": 2
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:36Z",
+      "side": 1,
+      "message": "[warning] Line 88: 🟡 This also installs Rust from the live rustup script with `--default-toolchain stable`, so CI images can change behavior whenever Rust stable advances. Pin the installer/toolchain version and verify the download before execution.",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
