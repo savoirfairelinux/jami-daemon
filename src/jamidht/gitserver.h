@@ -47,6 +47,19 @@ public:
     GitServer(const std::string& accountId,
               const std::string& conversationId,
               const std::shared_ptr<dhtnet::ChannelSocketInterface>& client);
+    /**
+     * Serve an arbitrary repository to a remote client. Used for repositories
+     * that do not live under the conversations directory, such as the ones
+     * backing collaborative documents.
+     * @param accountId     Account owning the repository
+     * @param repositoryId  Identifier used for logging
+     * @param path          Absolute path of the repository (may be bare)
+     * @param client        The client to serve
+     */
+    GitServer(const std::string& accountId,
+              const std::string& repositoryId,
+              const std::string& path,
+              const std::shared_ptr<dhtnet::ChannelSocketInterface>& client);
     ~GitServer();
 
     /**

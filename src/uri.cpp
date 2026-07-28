@@ -39,6 +39,8 @@ Uri::Uri(std::string_view uri)
             scheme_ = Uri::Scheme::DATA_TRANSFER;
         else if (scheme_str == "git")
             scheme_ = Uri::Scheme::GIT;
+        else if (scheme_str == "collab")
+            scheme_ = Uri::Scheme::COLLAB;
         else if (scheme_str == "rdv")
             scheme_ = Uri::Scheme::RENDEZVOUS;
         else if (scheme_str == "sync")
@@ -93,6 +95,8 @@ Uri::schemeToString() const
         return "rdv"sv;
     case Uri::Scheme::GIT:
         return "git"sv;
+    case Uri::Scheme::COLLAB:
+        return "collab"sv;
     case Uri::Scheme::SYNC:
         return "sync"sv;
     case Uri::Scheme::MESSAGE:

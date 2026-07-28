@@ -81,6 +81,7 @@ class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
 class PresenceManager;
+class CollaborativeEditing;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -490,6 +491,33 @@ public:
      */
     ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
+
+    /**
+     * Retrieve the (lazily created) collaborative editing manager, which handles
+     * real-time shared text documents inside this account's conversations.
+     */
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing();
+
+    /**
+     * Socket currently opened to sync a collaborative document's repository
+     * @param deviceId      Remote device
+     * @param documentKey   "<conversationId>/<documentId>"
+     */
+    std::shared_ptr<dhtnet::ChannelSocket> collabSocket(std::string_view deviceId, std::string_view documentKey);
+    /**
+     * Fetch a collaborative document's repository from a peer and merge it.
+     * No-op when a fetch for the same document and peer is already in flight.
+     */
+    void fetchCollabDocument(const std::string& deviceId,
+                             const std::string& conversationId,
+                             const std::string& documentId);
+    /**
+     * Announce that a collaborative document's repository changed, so that the
+     * other devices of the conversation fetch it.
+     */
+    void syncCollabDocument(const std::string& conversationId, const std::string& documentId);
+    /// Ask the other devices to notify us about @c documentId so we can pull it.
+    void requestCollabDocument(const std::string& conversationId, const std::string& documentId);
 
     /**
      * Check (via the cache) if we need to send our profile to a specific device
@@ -985,6 +1013,11 @@ private:
     std::unique_ptr<ConversationModule> convModule_;
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing_;
+    std::mutex collabSocketsMtx_;
+    // deviceId -> "<conversationId>/<documentId>" -> socket
+    std::map<std::string, std::map<std::string, std::shared_ptr<dhtnet::ChannelSocket>>> collabSockets_;
+    std::map<std::string, std::set<std::string>> collabFetching_;
 
     std::mutex rdvMtx_;
 
