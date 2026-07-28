@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0251d9a_d19c0184",
+        "filename": "meson.build",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-28T02:42:36Z",
+      "side": 1,
+      "message": "[error] Line 37: 🔴 `yrs` is now an unconditional dependency, but this patch does not add/build/package it in the daemon contrib system for all supported targets. The reported CI failures on nodejs, Android, and MSVC are consistent with those platforms not being able to resolve `dependency(\u0027yrs\u0027)`. Please add the corresponding contrib package and platform wiring, or gate this source/dependency behind a supported feature option until every target can provide it.",
+      "revId": "aaf7f1705b464b24a0ebeaa4761f99ec57c71cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
