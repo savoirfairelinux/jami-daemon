@@ -18,6 +18,7 @@
 
 #include "jami/conversation_interface.h"
 
+#include <cstdint>
 #include <random>
 #include <string>
 #include <vector>
@@ -32,6 +33,12 @@ TODO Handle the following signals:
  */
 
 enum class MemberRole { INVALID = -1, ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
+
+struct MessageHandle
+{
+    int index {-1};
+    uint64_t generation {0};
+};
 
 class SimClient
 {
@@ -81,10 +88,12 @@ public:
     bool hasConsistentHistory() const;
     const std::vector<std::map<std::string, std::string>>& getActiveCalls() const;
     const std::map<std::string, std::string>& getProfile() const;
-    int getIndex(const std::string& messageId) const;
-    const SwarmMessage& getMessageAtIndex(int idx) const;
-    int randomMessageIndex(std::mt19937_64& gen) const;
-    std::string reactionByAuthor(int messageIndex, const std::string& authorUri) const;
+    MessageHandle getMessageHandle(const std::string& messageId) const;
+    bool isCurrentMessageHandle(const MessageHandle& handle) const;
+    bool isValidMessageHandle(const MessageHandle& handle) const;
+    const SwarmMessage& getMessage(const MessageHandle& handle) const;
+    MessageHandle randomMessageHandle(std::mt19937_64& gen) const;
+    std::string reactionByAuthor(const MessageHandle& message, const std::string& authorUri) const;
 
 private:
     void insertMessage(const SwarmMessage& message);
@@ -99,6 +108,7 @@ private:
     std::vector<SwarmMessage> swarmMessages_;
     std::vector<size_t> sortedIndices_; // From oldest to newest message
     std::map<std::string, size_t> indexFromMessageId_;
+    uint64_t messageGeneration_ {0};
     std::vector<std::map<std::string, std::string>> activeCalls_;
     std::map<std::string, std::string> profile_;
 };
