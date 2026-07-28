@@ -84,7 +84,10 @@ enum class UTKEY : std::uint8_t {
     INSTIGATOR_ACCOUNT_ID,
     RECEIVING_ACCOUNT_ID,
     TARGET_MESSAGE_INDEX,
-    REPLY_TO_INDEX
+    TARGET_MESSAGE_GENERATION,
+    REPLY_TO_INDEX,
+    REPLY_TO_GENERATION,
+    RECEIVING_REPOSITORY_GENERATION
 };
 std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::DATE, "date"},
@@ -96,7 +99,10 @@ std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
                                            {UTKEY::INSTIGATOR_ACCOUNT_ID, "instigatorAccountID"},
                                            {UTKEY::RECEIVING_ACCOUNT_ID, "receivingAccountID"},
                                            {UTKEY::TARGET_MESSAGE_INDEX, "targetMessageIndex"},
-                                           {UTKEY::REPLY_TO_INDEX, "replyToIndex"}};
+                                           {UTKEY::TARGET_MESSAGE_GENERATION, "targetMessageGeneration"},
+                                           {UTKEY::REPLY_TO_INDEX, "replyToIndex"},
+                                           {UTKEY::REPLY_TO_GENERATION, "replyToGeneration"},
+                                           {UTKEY::RECEIVING_REPOSITORY_GENERATION, "receivingRepositoryGeneration"}};
 
 bool
 ConversationDST::setUp(int numAccountsToSimulate)
@@ -323,31 +329,31 @@ ConversationDST::eventLogger(const Event& event)
         case ConversationEvent::DELETE_FILE:
             fmt::print("EVENT: {} deleted a file (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::EDIT_MESSAGE:
             fmt::print("EVENT: {} edited a message (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::ADD_REACTION:
             fmt::print("EVENT: {} added a reaction to a message (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::REMOVE_REACTION:
             fmt::print("EVENT: {} removed a reaction (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::DELETE_MESSAGE:
             fmt::print("EVENT: {} deleted a message (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::HOST_CONFERENCE:
@@ -356,7 +362,7 @@ ConversationDST::eventLogger(const Event& event)
         case ConversationEvent::END_CONFERENCE:
             fmt::print("EVENT: {} stopped hosting a conference (target index {}) at {}\n",
                        instigatorName,
-                       event.targetMessageIndex,
+                       event.targetMessage.index,
                        eventTime);
             break;
         case ConversationEvent::UPDATE_PROFILE:
@@ -446,7 +452,13 @@ ConversationDST::scheduleGitEvent(EventQueue& queue,
         for (int i = 0; i < numAccountsToSimulate_; ++i) {
             if (repositoryAccounts[i].repository != nullptr && i != instigatorAccountIndex) {
                 auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
-                queue.emplace(instigatorAccountIndex, i, gitOperation, scheduledTime);
+                queue.emplace(instigatorAccountIndex,
+                              i,
+                              gitOperation,
+                              scheduledTime,
+                              MessageHandle {},
+                              MessageHandle {},
+                              repositoryAccounts[i].repositoryGeneration);
             }
         }
     } else if (instigatorAccountIndex == -1) {
@@ -455,13 +467,25 @@ ConversationDST::scheduleGitEvent(EventQueue& queue,
         for (int i = 0; i < numAccountsToSimulate_; ++i) {
             if (repositoryAccounts[i].repository != nullptr && i != receivingAccountIndex) {
                 auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
-                queue.emplace(i, receivingAccountIndex, gitOperation, scheduledTime);
+                queue.emplace(i,
+                              receivingAccountIndex,
+                              gitOperation,
+                              scheduledTime,
+                              MessageHandle {},
+                              MessageHandle {},
+                              repositoryAccounts[receivingAccountIndex].repositoryGeneration);
             }
         }
     } else {
         // Schedule the Git event for the specific instigator and receiver
         auto scheduledTime = eventTimeOfOccurrence + randDuration(minDelay, maxDelay);
-        queue.emplace(instigatorAccountIndex, receivingAccountIndex, gitOperation, scheduledTime);
+        queue.emplace(instigatorAccountIndex,
+                      receivingAccountIndex,
+                      gitOperation,
+                      scheduledTime,
+                      MessageHandle {},
+                      MessageHandle {},
+                      repositoryAccounts[receivingAccountIndex].repositoryGeneration);
     }
 }
 
@@ -568,11 +592,23 @@ ConversationDST::validateEvent(const Event& event)
         if (!instigatorRepoAcc.repository) {
             return false;
         }
+        if (event.replyTo.index >= 0) {
+            if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.replyTo)) {
+                return false;
+            }
+            assert(instigatorRepoAcc.client.isValidMessageHandle(event.replyTo));
+        }
         break;
     case ConversationEvent::SEND_FILE:
         // Same precondition as SEND_MESSAGE
         if (!instigatorRepoAcc.repository) {
             return false;
+        }
+        if (event.replyTo.index >= 0) {
+            if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.replyTo)) {
+                return false;
+            }
+            assert(instigatorRepoAcc.client.isValidMessageHandle(event.replyTo));
         }
         break;
     case ConversationEvent::HOST_CONFERENCE:
@@ -590,10 +626,13 @@ ConversationDST::validateEvent(const Event& event)
         break;
     case ConversationEvent::END_CONFERENCE: {
         // Valid by construction: only scheduled by HOST_CONFERENCE for a conference the instigator
-        // just started hosting.
+        // just started hosting. It becomes invalid if the client state was reset before it ended.
         assert(instigatorRepoAcc.repository != nullptr);
-        assert(event.targetMessageIndex >= 0);
-        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
+            return false;
+        }
+        const auto& target = instigatorRepoAcc.client.getMessage(event.targetMessage);
         assert(target.type == CommitType::CALL_HISTORY);
         // The target is a hosting-start commit: it has a confId but no duration yet.
         assert(target.body.find(CommitKey::CONF_ID) != target.body.end());
@@ -602,9 +641,13 @@ ConversationDST::validateEvent(const Event& event)
     }
     case ConversationEvent::DELETE_FILE: {
         // Valid by construction: only scheduled by SEND_FILE for a file the instigator just sent.
+        // It becomes invalid if the client state was reset before the deletion.
         assert(instigatorRepoAcc.repository != nullptr);
-        assert(event.targetMessageIndex >= 0);
-        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
+            return false;
+        }
+        const auto& target = instigatorRepoAcc.client.getMessage(event.targetMessage);
         assert(target.type == CommitType::DATA_TRANSFER);
         // The file must not have been deleted yet (tid must be non-empty).
         auto tidIt = target.body.find(CommitKey::TID);
@@ -613,10 +656,14 @@ ConversationDST::validateEvent(const Event& event)
     }
     case ConversationEvent::DELETE_MESSAGE: {
         // Valid by construction: only scheduled by SEND_MESSAGE for a text/plain message the
-        // instigator just sent (and for which no edition was scheduled).
+        // instigator just sent (and for which no edition was scheduled). It becomes invalid if the
+        // client state was reset before the deletion.
         assert(instigatorRepoAcc.repository != nullptr);
-        assert(event.targetMessageIndex >= 0);
-        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
+            return false;
+        }
+        const auto& target = instigatorRepoAcc.client.getMessage(event.targetMessage);
         assert(target.type == CommitType::TEXT);
         assert(target.body.find(CommitKey::EDIT) == target.body.end());
         assert(target.body.find(CommitKey::REACT_TO) == target.body.end());
@@ -627,10 +674,14 @@ ConversationDST::validateEvent(const Event& event)
     }
     case ConversationEvent::EDIT_MESSAGE: {
         // Valid by construction: only scheduled by SEND_MESSAGE or EDIT_MESSAGE for a text/plain
-        // message the instigator authored.
+        // message the instigator authored. It becomes invalid if the client state was reset before
+        // the edition.
         assert(instigatorRepoAcc.repository != nullptr);
-        assert(event.targetMessageIndex >= 0);
-        const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
+            return false;
+        }
+        const auto& target = instigatorRepoAcc.client.getMessage(event.targetMessage);
         assert(target.type == CommitType::TEXT);
         assert(target.body.find(CommitKey::EDIT) == target.body.end());
         assert(target.body.find(CommitKey::REACT_TO) == target.body.end());
@@ -638,23 +689,28 @@ ConversationDST::validateEvent(const Event& event)
     }
     case ConversationEvent::ADD_REACTION:
         // Instigator must be part of the conversation and the selector must resolve to a visible
-        // message (the target index is assigned before validation in generateEventSequence).
-        if (!instigatorRepoAcc.repository || event.targetMessageIndex < 0) {
+        // message (the target handle is assigned before validation in generateEventSequence).
+        if (!instigatorRepoAcc.repository || event.targetMessage.index < 0
+            || !instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
             return false;
         }
+        assert(instigatorRepoAcc.client.isValidMessageHandle(event.targetMessage));
         break;
     case ConversationEvent::REMOVE_REACTION: {
         // Only scheduled by ADD_REACTION. The instigator's reaction is guaranteed to still be
         // present unless the reacted-to message was deleted in the meantime, since a deletion
         // clears the message's reactions. That is the only way this event can become invalid.
         assert(instigatorRepoAcc.repository != nullptr);
-        assert(event.targetMessageIndex >= 0);
+        assert(event.targetMessage.index >= 0);
+        if (!instigatorRepoAcc.client.isCurrentMessageHandle(event.targetMessage)) {
+            return false;
+        }
         dht::InfoHash instigatorHash(instigatorRepoAcc.account->getUsername());
-        auto reactionId = instigatorRepoAcc.client.reactionByAuthor(event.targetMessageIndex, instigatorHash.toString());
+        auto reactionId = instigatorRepoAcc.client.reactionByAuthor(event.targetMessage, instigatorHash.toString());
         if (reactionId.empty()) {
             // Assert the reaction is gone precisely because the target message was deleted (its
             // body/tid was emptied by an edition).
-            const auto& target = instigatorRepoAcc.client.getMessageAtIndex(event.targetMessageIndex);
+            const auto& target = instigatorRepoAcc.client.getMessage(event.targetMessage);
             const std::string& deletedKey = (target.type == CommitType::DATA_TRANSFER) ? CommitKey::TID
                                                                                        : CommitKey::BODY;
             auto it = target.body.find(deletedKey);
@@ -700,7 +756,11 @@ ConversationDST::validateEvent(const Event& event)
         break;
     case ConversationEvent::MERGE:
         // Merge events should always be valid since they are only scheduled after a valid
-        // fetch event has been executed.
+        // fetch event has been executed, unless the receiving repository was replaced while
+        // the merge was pending.
+        if (event.receivingRepositoryGeneration != receiverRepoAcc.repositoryGeneration) {
+            return false;
+        }
         assert(instigatorRepoAcc.repository);
         assert(receiverRepoAcc.repository);
         assert(receiverRepoAcc.devicesWithPendingFetch.contains(instigatorRepoAcc.account->getAccountID()));
@@ -785,8 +845,8 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         // The reply target (if any) is resolved during generation and recorded on the event, so
         // that replays are deterministic.
         std::string replyToId;
-        if (event.replyToIndex >= 0)
-            replyToId = instigatorAccount.client.getMessageAtIndex(event.replyToIndex).id;
+        if (event.replyTo.index >= 0)
+            replyToId = instigatorAccount.client.getMessage(event.replyTo).id;
         auto msg = CommitMessage::text(std::to_string(msgCount), replyToId);
         const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
@@ -798,7 +858,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
             // With ~30% probability, schedule a secondary edition or deletion for this message.
             // Editing and deleting are mutually exclusive for a given message, so we pick one.
             if (rand01() < 0.3f) {
-                int targetIdx = instigatorAccount.client.getIndex(commitID);
+                auto target = instigatorAccount.client.getMessageHandle(commitID);
                 auto secondaryTime = event.timeOfOccurrence
                                      + randDuration(std::chrono::milliseconds(1), std::chrono::milliseconds(5000));
                 auto secondaryType = rand01() < 0.5f ? ConversationEvent::EDIT_MESSAGE
@@ -807,7 +867,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
                                event.instigatorAccountIndex,
                                secondaryType,
                                secondaryTime,
-                               targetIdx);
+                               target);
             }
         }
         break;
@@ -825,8 +885,8 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         // The reply target (if any) is resolved during generation and recorded on the event, so
         // that replays are deterministic.
         std::string replyToId;
-        if (event.replyToIndex >= 0)
-            replyToId = instigatorAccount.client.getMessageAtIndex(event.replyToIndex).id;
+        if (event.replyTo.index >= 0)
+            replyToId = instigatorAccount.client.getMessage(event.replyTo).id;
         auto msg = CommitMessage::fileSent(displayName, sha3sum, tid, totalSize, replyToId);
         const std::string commitID = instigatorAccount.repository->commitMessage(msg.toString(), true);
         assert(!commitID.empty());
@@ -837,21 +897,21 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
 
             // With ~30% probability, schedule a secondary DELETE_FILE for this file.
             if (rand01() < 0.3f) {
-                int targetIdx = instigatorAccount.client.getIndex(commitID);
+                auto target = instigatorAccount.client.getMessageHandle(commitID);
                 auto deleteTime = event.timeOfOccurrence
                                   + randDuration(std::chrono::milliseconds(1), std::chrono::milliseconds(5000));
                 queue->emplace(event.instigatorAccountIndex,
                                event.instigatorAccountIndex,
                                ConversationEvent::DELETE_FILE,
                                deleteTime,
-                               targetIdx);
+                               target);
             }
         }
         break;
     }
     case ConversationEvent::DELETE_FILE: {
-        assert(event.targetMessageIndex >= 0);
-        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        const auto& targetMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(targetMessage.type == CommitType::DATA_TRANSFER);
         const std::string& fileCommitId = targetMessage.id;
 
@@ -866,9 +926,9 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::DELETE_MESSAGE: {
-        assert(event.targetMessageIndex >= 0);
-        // targetMessageIndex points to the original text/plain message being deleted.
-        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        // targetMessage points to the original text/plain message being deleted.
+        const auto& targetMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(targetMessage.type == CommitType::TEXT);
         const std::string& msgCommitId = targetMessage.id;
 
@@ -880,7 +940,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         instigatorAccount.conversation->announce(commitID, true);
 
         // Deleting a message empties its body and clears its reactions.
-        const auto& updatedMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        const auto& updatedMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(updatedMessage.body.at(CommitKey::BODY).empty());
         assert(updatedMessage.reactions.empty());
 
@@ -906,21 +966,21 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
             scheduleGitEvent(*queue, ConversationEvent::FETCH, event.instigatorAccountIndex, -1, event.timeOfOccurrence);
 
             // Always schedule the matching END_CONFERENCE for the just-started conference.
-            int targetIdx = instigatorAccount.client.getIndex(commitID);
+            auto target = instigatorAccount.client.getMessageHandle(commitID);
             auto endTime = event.timeOfOccurrence
                            + randDuration(std::chrono::milliseconds(1), std::chrono::milliseconds(5000));
             queue->emplace(event.instigatorAccountIndex,
                            event.instigatorAccountIndex,
                            ConversationEvent::END_CONFERENCE,
                            endTime,
-                           targetIdx);
+                           target);
         }
         break;
     }
     case ConversationEvent::END_CONFERENCE: {
-        assert(event.targetMessageIndex >= 0);
-        // targetMessageIndex points to the hosting-start commit.
-        const auto& startMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        // targetMessage points to the hosting-start commit.
+        const auto& startMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(startMessage.type == CommitType::CALL_HISTORY);
         const std::string& confId = startMessage.body.at(CommitKey::CONF_ID);
         const std::string& device = startMessage.body.at(CommitKey::DEVICE);
@@ -935,7 +995,8 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         instigatorAccount.conversation->announce(commitID, true);
 
         // The end commit carries the same confId/device/uri as the start commit, plus a duration.
-        const auto& endMessage = instigatorAccount.client.getMessageAtIndex(instigatorAccount.client.getIndex(commitID));
+        const auto& endMessage = instigatorAccount.client.getMessage(
+            instigatorAccount.client.getMessageHandle(commitID));
         assert(endMessage.body.at(CommitKey::CONF_ID) == confId);
         assert(endMessage.body.at(CommitKey::DEVICE) == device);
         assert(endMessage.body.at(CommitKey::URI) == hostId);
@@ -1013,9 +1074,9 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::EDIT_MESSAGE: {
-        assert(event.targetMessageIndex >= 0);
-        // targetMessageIndex always points to the original text/plain message, never an edit commit.
-        auto originalMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        // targetMessage always points to the original text/plain message, never an edit commit.
+        auto originalMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(originalMessage.type == CommitType::TEXT);
         assert(originalMessage.body.find(CommitKey::EDIT) == originalMessage.body.end());
         assert(originalMessage.body.find(CommitKey::REACT_TO) == originalMessage.body.end());
@@ -1037,10 +1098,10 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
                                event.instigatorAccountIndex,
                                ConversationEvent::EDIT_MESSAGE,
                                editTime,
-                               event.targetMessageIndex); // Same original, not the edit commit
+                               event.targetMessage); // Same original, not the edit commit
             }
         }
-        const auto& updatedMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        const auto& updatedMessage = instigatorAccount.client.getMessage(event.targetMessage);
         assert(updatedMessage.editions.size() == originalMessage.editions.size() + 1);
         for (const auto& [key, value] : updatedMessage.editions[0]) {
             if (key == "id") {
@@ -1057,8 +1118,8 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::ADD_REACTION: {
-        assert(event.targetMessageIndex >= 0);
-        const auto& targetMessage = instigatorAccount.client.getMessageAtIndex(event.targetMessageIndex);
+        assert(event.targetMessage.index >= 0);
+        const auto& targetMessage = instigatorAccount.client.getMessage(event.targetMessage);
         const std::string& reactToId = targetMessage.id;
 
         // A fixed emoji keeps the reaction deterministic; the body is opaque to commitMessage.
@@ -1079,15 +1140,15 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
                                event.instigatorAccountIndex,
                                ConversationEvent::REMOVE_REACTION,
                                removeTime,
-                               event.targetMessageIndex);
+                               event.targetMessage);
             }
         }
         break;
     }
     case ConversationEvent::REMOVE_REACTION: {
-        assert(event.targetMessageIndex >= 0);
+        assert(event.targetMessage.index >= 0);
         dht::InfoHash instigatorHash(instigatorAccount.account->getUsername());
-        auto reactionId = instigatorAccount.client.reactionByAuthor(event.targetMessageIndex, instigatorHash.toString());
+        auto reactionId = instigatorAccount.client.reactionByAuthor(event.targetMessage, instigatorHash.toString());
         assert(!reactionId.empty());
 
         // A reaction removal is an edit of the reaction commit with an empty body.
@@ -1106,6 +1167,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         if (receivingAccount.client.hasLeftConversation()) {
             // Keep the old repository until the leave commit has been propagated, then discard it
             // before cloning the re-invitation to the same conversation.
+            ++receivingAccount.repositoryGeneration;
             receivingAccount.conversation->erase();
             receivingAccount.conversation.reset();
             receivingAccount.repository.reset();
@@ -1168,6 +1230,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         break;
     }
     case ConversationEvent::MERGE: {
+        assert(event.receivingRepositoryGeneration == receivingAccount.repositoryGeneration);
         auto deviceId = instigatorAccount.account->getAccountID();
         assert(receivingAccount.devicesWithPendingFetch.contains(deviceId));
         receivingAccount.devicesWithPendingFetch.erase(deviceId);
@@ -1274,8 +1337,8 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
     ConversationEvent type = static_cast<ConversationEvent>(eventDist(gen_));
     int instigator = members[std::uniform_int_distribution<size_t>(0, members.size() - 1)(gen_)];
     int receiver = instigator;
-    int targetMessageIndex = -1;
-    int replyToIndex = -1;
+    MessageHandle targetMessage;
+    MessageHandle replyTo;
 
     switch (type) {
     case ConversationEvent::ADD_MEMBER:
@@ -1308,20 +1371,20 @@ ConversationDST::generatePrimaryEvent(std::chrono::nanoseconds time, std::discre
         // React to a random message currently visible to the instigator (-1 if none, which makes
         // the event invalid). Assigning the target here (rather than in triggerEvent) keeps it
         // recorded for replay.
-        targetMessageIndex = repositoryAccounts[instigator].client.randomMessageIndex(gen_);
+        targetMessage = repositoryAccounts[instigator].client.randomMessageHandle(gen_);
         break;
     case ConversationEvent::SEND_MESSAGE:
     case ConversationEvent::SEND_FILE:
         // With ~25% probability, make this a reply to one of the instigator's visible messages.
         // Resolving the target here (rather than in triggerEvent) keeps it recorded for replay.
         if (rand01() < 0.25f)
-            replyToIndex = repositoryAccounts[instigator].client.randomMessageIndex(gen_);
+            replyTo = repositoryAccounts[instigator].client.randomMessageHandle(gen_);
         break;
     default:
         break;
     }
 
-    return Event(instigator, receiver, type, time, targetMessageIndex, replyToIndex);
+    return Event(instigator, receiver, type, time, targetMessage, replyTo);
 }
 
 /**
@@ -1480,6 +1543,7 @@ ConversationDST::resetRepositories()
         }
 
         // Reset account state
+        repoAcc.repositoryGeneration = 0;
         repoAcc.repository.reset();
         repoAcc.conversation.reset();
         repoAcc.connected = true;
@@ -1989,22 +2053,36 @@ ConversationDST::loadUnitTestConfig(const std::string& unitTestPath)
             ConversationEvent convEvent = invertedEventNames[validatedEvent[unitTestKeys[UTKEY::EVENT_TYPE]].asString()];
             std::string instigatorAccountID = validatedEvent[unitTestKeys[UTKEY::INSTIGATOR_ACCOUNT_ID]].asString();
             std::string receiverAccountID = validatedEvent[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]].asString();
-            int targetMessageIndex = -1;
+            MessageHandle targetMessage;
             const auto& targetKey = unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX];
             if (validatedEvent.isMember(targetKey)) {
-                targetMessageIndex = validatedEvent[targetKey].asInt();
+                targetMessage.index = validatedEvent[targetKey].asInt();
+                const auto& generationKey = unitTestKeys[UTKEY::TARGET_MESSAGE_GENERATION];
+                if (validatedEvent.isMember(generationKey)) {
+                    targetMessage.generation = validatedEvent[generationKey].asUInt64();
+                }
             }
-            int replyToIndex = -1;
+            MessageHandle replyTo;
             const auto& replyKey = unitTestKeys[UTKEY::REPLY_TO_INDEX];
             if (validatedEvent.isMember(replyKey)) {
-                replyToIndex = validatedEvent[replyKey].asInt();
+                replyTo.index = validatedEvent[replyKey].asInt();
+                const auto& generationKey = unitTestKeys[UTKEY::REPLY_TO_GENERATION];
+                if (validatedEvent.isMember(generationKey)) {
+                    replyTo.generation = validatedEvent[generationKey].asUInt64();
+                }
+            }
+            uint64_t receivingRepositoryGeneration = 0;
+            const auto& repositoryGenerationKey = unitTestKeys[UTKEY::RECEIVING_REPOSITORY_GENERATION];
+            if (validatedEvent.isMember(repositoryGenerationKey)) {
+                receivingRepositoryGeneration = validatedEvent[repositoryGenerationKey].asUInt64();
             }
             ret.events.emplace_back(Event(accountIDs[instigatorAccountID],
                                           accountIDs[receiverAccountID],
                                           convEvent,
                                           0s,
-                                          targetMessageIndex,
-                                          replyToIndex));
+                                          targetMessage,
+                                          replyTo,
+                                          receivingRepositoryGeneration));
         } else {
             JAMI_ERROR("Invalid JSON object type found, please check your configuration!");
             return UnitTest();
@@ -2065,11 +2143,18 @@ ConversationDST::saveAsUnitTestConfig(const std::string& saveFilePath)
             = repositoryAccounts[validatedEvents[i].instigatorAccountIndex].account->getDisplayName();
         validatedEventObject[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]]
             = repositoryAccounts[validatedEvents[i].receivingAccountIndex].account->getDisplayName();
-        if (validatedEvents[i].targetMessageIndex >= 0) {
-            validatedEventObject[unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX]] = validatedEvents[i].targetMessageIndex;
+        if (validatedEvents[i].targetMessage.index >= 0) {
+            validatedEventObject[unitTestKeys[UTKEY::TARGET_MESSAGE_INDEX]] = validatedEvents[i].targetMessage.index;
+            validatedEventObject[unitTestKeys[UTKEY::TARGET_MESSAGE_GENERATION]] = validatedEvents[i]
+                                                                                       .targetMessage.generation;
         }
-        if (validatedEvents[i].replyToIndex >= 0) {
-            validatedEventObject[unitTestKeys[UTKEY::REPLY_TO_INDEX]] = validatedEvents[i].replyToIndex;
+        if (validatedEvents[i].replyTo.index >= 0) {
+            validatedEventObject[unitTestKeys[UTKEY::REPLY_TO_INDEX]] = validatedEvents[i].replyTo.index;
+            validatedEventObject[unitTestKeys[UTKEY::REPLY_TO_GENERATION]] = validatedEvents[i].replyTo.generation;
+        }
+        if (validatedEvents[i].type == ConversationEvent::MERGE) {
+            validatedEventObject[unitTestKeys[UTKEY::RECEIVING_REPOSITORY_GENERATION]]
+                = validatedEvents[i].receivingRepositoryGeneration;
         }
 
         unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]].append(validatedEventObject);

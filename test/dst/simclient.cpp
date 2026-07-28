@@ -302,6 +302,7 @@ SimClient::clearMessages()
     swarmMessages_.clear();
     sortedIndices_.clear();
     indexFromMessageId_.clear();
+    messageGeneration_++;
 }
 
 bool
@@ -335,32 +336,45 @@ SimClient::hasConsistentHistory() const
     return true;
 }
 
-int
-SimClient::getIndex(const std::string& messageId) const
+MessageHandle
+SimClient::getMessageHandle(const std::string& messageId) const
 {
-    return static_cast<int>(indexFromMessageId_.at(messageId));
+    return {static_cast<int>(indexFromMessageId_.at(messageId)), messageGeneration_};
+}
+
+bool
+SimClient::isCurrentMessageHandle(const MessageHandle& handle) const
+{
+    return handle.generation == messageGeneration_;
+}
+
+bool
+SimClient::isValidMessageHandle(const MessageHandle& handle) const
+{
+    return isCurrentMessageHandle(handle) && handle.index >= 0
+           && handle.index < static_cast<int>(swarmMessages_.size());
 }
 
 const libjami::SwarmMessage&
-SimClient::getMessageAtIndex(int index) const
+SimClient::getMessage(const MessageHandle& handle) const
 {
-    assert(index >= 0 && index < static_cast<int>(swarmMessages_.size()));
-    return swarmMessages_[index];
+    assert(isValidMessageHandle(handle));
+    return swarmMessages_[handle.index];
 }
 
-int
-SimClient::randomMessageIndex(std::mt19937_64& gen) const
+MessageHandle
+SimClient::randomMessageHandle(std::mt19937_64& gen) const
 {
     if (swarmMessages_.empty())
-        return -1;
+        return {-1, messageGeneration_};
     std::uniform_int_distribution<size_t> dist(0, swarmMessages_.size() - 1);
-    return static_cast<int>(dist(gen));
+    return {static_cast<int>(dist(gen)), messageGeneration_};
 }
 
 std::string
-SimClient::reactionByAuthor(int messageIndex, const std::string& authorUri) const
+SimClient::reactionByAuthor(const MessageHandle& message, const std::string& authorUri) const
 {
-    const auto& reactions = getMessageAtIndex(messageIndex).reactions;
+    const auto& reactions = getMessage(message).reactions;
     for (const auto& reaction : reactions) {
         auto authorIt = reaction.find("author");
         if (authorIt != reaction.end() && authorIt->second == authorUri) {
