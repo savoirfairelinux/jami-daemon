@@ -65,6 +65,7 @@ static constexpr const char* REMOVED_MS {"removedMs"};
 static constexpr const char* ERASED_MS {"erasedMs"};
 static constexpr const char* RECEIVED_MS {"receivedMs"};
 static constexpr const char* DECLINED_MS {"declinedMs"};
+static constexpr const char* INVITED {"invited"};
 } // namespace ConversationMapKeys
 
 namespace ConversationDirectories {
@@ -171,6 +172,9 @@ struct ConvInfo
     std::set<std::string> members;
     std::string lastDisplayed {};
     ConversationMode mode {0};
+    // Last time we explicitly (re-)invited a given peer (via addConversationMember()/
+    // sendTrustRequest()), keyed by peer URI.
+    std::map<std::string, TimePoint> invited {};
 
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
@@ -199,6 +203,9 @@ struct ConvInfo
         int64_t createdMs = toMillisecondsSinceEpoch(created);
         int64_t removedMs = toMillisecondsSinceEpoch(removed);
         int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+        std::map<std::string, int64_t> invitedMs;
+        for (const auto& [uri, t] : invited)
+            invitedMs[uri] = toMillisecondsSinceEpoch(t);
         msgpack::type::make_define_map(ConversationMapKeys::ID,
                                        id,
                                        ConversationMapKeys::CREATED,
@@ -218,7 +225,9 @@ struct ConvInfo
                                        ConversationMapKeys::REMOVED_MS,
                                        removedMs,
                                        ConversationMapKeys::ERASED_MS,
-                                       erasedMs)
+                                       erasedMs,
+                                       ConversationMapKeys::INVITED,
+                                       invitedMs)
             .msgpack_pack(pk);
     }
     void msgpack_unpack(const msgpack::object& o);
@@ -472,9 +481,12 @@ public:
 
     /**
      * Generate an invitation to send to new contacts
+     * @param sent  timestamp of the explicit action that caused this invite to be (re)sent
+     *              (e.g. addConversationMember()). Callers that merely relay/resend an
+     *              already-generated invite must pass the originally recorded timestamp.
      * @return the invite to send
      */
-    std::map<std::string, std::string> generateInvitation() const;
+    std::map<std::string, std::string> generateInvitation(TimePoint sent) const;
 
     /**
      * Leave a conversation

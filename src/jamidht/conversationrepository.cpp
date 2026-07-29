@@ -4348,6 +4348,8 @@ ConversationRepository::infosFromVCard(vCard::utils::VCardData&& details)
             result["rdvAccount"] = std::move(v);
         } else if (k.find(vCard::Property::RDV_DEVICE) == 0) {
             result["rdvDevice"] = std::move(v);
+        } else if (k == vCard::Property::INVITED_TIMESTAMP) {
+            result[std::string(vCard::Value::INVITED_TIMESTAMP)] = std::move(v);
         }
     }
     return result;
