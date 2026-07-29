@@ -1242,7 +1242,7 @@ ConversationRequestTest::testAddConversationNoPresenceThenConnects()
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             std::lock_guard lk {mtx};
-            if (accountId == carlaId) {
+            if (accountId == aliceId) {
                 convId = conversationId;
             }
             cv.notify_one();
