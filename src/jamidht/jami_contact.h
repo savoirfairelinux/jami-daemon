@@ -47,6 +47,10 @@ static constexpr const char* PAYLOAD {"payload"};
 static constexpr const char* ADDED_MS {"addedMs"};
 static constexpr const char* REMOVED_MS {"removedMs"};
 static constexpr const char* RECEIVED_MS {"receivedMs"};
+// Sender-embedded invite timestamp (see jami::TrustRequestMsg::invitedMs), so that a re-sync
+// of a pending trust request to another one of our own devices doesn't lose the original
+// invite time and fall back to comparing against local receive times instead.
+static constexpr const char* INVITED_MS {"invitedMs"};
 } // namespace ContactMapKeys
 
 struct Contact
@@ -233,6 +237,7 @@ struct TrustRequest
     std::string conversationId;
     TimePoint received {};
     std::vector<uint8_t> payload;
+    TimePoint invited {};
 
     // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
     // dual keys: legacy seconds (received) + milliseconds (receivedMs). Readers
@@ -242,6 +247,7 @@ struct TrustRequest
     {
         int64_t receivedSec = toSecondsSinceEpoch(received);
         int64_t receivedMs = toMillisecondsSinceEpoch(received);
+        int64_t invitedMs = toMillisecondsSinceEpoch(invited);
         msgpack::type::make_define_map(ContactMapKeys::DEVICE,
                                        device,
                                        ContactMapKeys::CONVERSATIONID,
@@ -251,7 +257,9 @@ struct TrustRequest
                                        ContactMapKeys::PAYLOAD,
                                        payload,
                                        ContactMapKeys::RECEIVED_MS,
-                                       receivedMs)
+                                       receivedMs,
+                                       ContactMapKeys::INVITED_MS,
+                                       invitedMs)
             .msgpack_pack(pk);
     }
 
@@ -261,6 +269,7 @@ struct TrustRequest
             throw msgpack::type_error();
         int64_t receivedSec = 0;
         std::optional<int64_t> receivedMs;
+        int64_t invitedMs = 0;
         for (uint32_t i = 0; i < o.via.map.size; ++i) {
             const auto& kv = o.via.map.ptr[i];
             if (kv.key.type != msgpack::type::STR)
@@ -276,8 +285,11 @@ struct TrustRequest
                 receivedMs = kv.val.as<int64_t>();
             else if (key == ContactMapKeys::PAYLOAD)
                 kv.val.convert(payload);
+            else if (key == ContactMapKeys::INVITED_MS)
+                kv.val.convert(invitedMs);
         }
         received = receivedMs ? timePointFromMilliseconds(*receivedMs) : timePointFromSeconds(receivedSec);
+        invited = invitedMs > 0 ? timePointFromMilliseconds(invitedMs) : TimePoint {};
     }
 
     template<typename MSGPACK_OBJECT>
@@ -285,6 +297,7 @@ struct TrustRequest
     {
         int64_t receivedSec = toSecondsSinceEpoch(received);
         int64_t receivedMs = toMillisecondsSinceEpoch(received);
+        int64_t invitedMs = toMillisecondsSinceEpoch(invited);
         msgpack::type::make_define_map(ContactMapKeys::DEVICE,
                                        device,
                                        ContactMapKeys::CONVERSATIONID,
@@ -294,7 +307,9 @@ struct TrustRequest
                                        ContactMapKeys::PAYLOAD,
                                        payload,
                                        ContactMapKeys::RECEIVED_MS,
-                                       receivedMs)
+                                       receivedMs,
+                                       ContactMapKeys::INVITED_MS,
+                                       invitedMs)
             .msgpack_object(o, z);
     }
 };
@@ -326,6 +341,20 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests)
+};
+
+struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>
+{
+    static const constexpr dht::ValueType& TYPE = dht::TrustRequest::TYPE;
+
+    std::string service;
+    std::string conversationId;
+    std::vector<uint8_t> payload;
+    bool confirm {false};
+    // Millisecond timestamp of when the sender originally issued this invite, so that
+    // passive DHT redeliveries/retries aren't mistaken for a brand new invitation.
+    int64_t invitedMs {0};
+    MSGPACK_DEFINE_MAP(service, conversationId, payload, confirm, invitedMs)
 };
 
 struct KnownDevice

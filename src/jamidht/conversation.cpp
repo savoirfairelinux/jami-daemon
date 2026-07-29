@@ -95,6 +95,11 @@ ConvInfo::ConvInfo(const Json::Value& json)
     lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
     if (json.isMember(ConversationMapKeys::MODE))
         mode = static_cast<ConversationMode>(json[ConversationMapKeys::MODE].asInt());
+    if (json.isMember(ConversationMapKeys::INVITED)) {
+        const auto& invitedJson = json[ConversationMapKeys::INVITED];
+        for (const auto& uri : invitedJson.getMemberNames())
+            invited[uri] = timePointFromMilliseconds(invitedJson[uri].asLargestInt());
+    }
 }
 
 Json::Value
@@ -119,6 +124,12 @@ ConvInfo::toJson() const
     }
     json[ConversationMapKeys::LAST_DISPLAYED] = lastDisplayed;
     json[ConversationMapKeys::MODE] = static_cast<int>(mode);
+    if (!invited.empty()) {
+        Json::Value invitedJson;
+        for (const auto& [uri, t] : invited)
+            invitedJson[uri] = Json::Int64(toMillisecondsSinceEpoch(t));
+        json[ConversationMapKeys::INVITED] = std::move(invitedJson);
+    }
     return json;
 }
 
@@ -129,6 +140,7 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
         throw msgpack::type_error();
     int64_t createdSec = 0, removedSec = 0, erasedSec = 0;
     std::optional<int64_t> createdMs, removedMs, erasedMs;
+    std::map<std::string, int64_t> invitedMs;
     for (uint32_t i = 0; i < o.via.map.size; ++i) {
         const auto& kv = o.via.map.ptr[i];
         if (kv.key.type != msgpack::type::STR)
@@ -154,10 +166,15 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
             kv.val.convert(lastDisplayed);
         else if (key == ConversationMapKeys::MODE)
             kv.val.convert(mode);
+        else if (key == ConversationMapKeys::INVITED)
+            kv.val.convert(invitedMs);
     }
     created = resolveTimePoint(createdMs, createdSec);
     removed = resolveTimePoint(removedMs, removedSec);
     erased = resolveTimePoint(erasedMs, erasedSec);
+    invited.clear();
+    for (const auto& [uri, ms] : invitedMs)
+        invited[uri] = timePointFromMilliseconds(ms);
 }
 
 void
@@ -169,6 +186,9 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
     int64_t createdMs = toMillisecondsSinceEpoch(created);
     int64_t removedMs = toMillisecondsSinceEpoch(removed);
     int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+    std::map<std::string, int64_t> invitedMs;
+    for (const auto& [uri, t] : invited)
+        invitedMs[uri] = toMillisecondsSinceEpoch(t);
     msgpack::type::make_define_map(ConversationMapKeys::ID,
                                    id,
                                    ConversationMapKeys::CREATED,
@@ -188,7 +208,9 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
                                    ConversationMapKeys::REMOVED_MS,
                                    removedMs,
                                    ConversationMapKeys::ERASED_MS,
-                                   erasedMs)
+                                   erasedMs,
+                                   ConversationMapKeys::INVITED,
+                                   invitedMs)
         .msgpack_object(o, z);
 }
 
@@ -2550,7 +2572,7 @@ Conversation::sync(const std::string& member, const std::string& deviceId, OnPul
 }
 
 std::map<std::string, std::string>
-Conversation::generateInvitation() const
+Conversation::generateInvitation(TimePoint sent) const
 {
     // Invite the new member to the conversation
     Json::Value root;
@@ -2563,6 +2585,8 @@ Conversation::generateInvitation() const
         metadata[k] = v;
     }
     root[ConversationMapKeys::CONVERSATIONID] = id();
+    root[ConversationMapKeys::RECEIVED] = Json::Int64(toSecondsSinceEpoch(sent));
+    root[ConversationMapKeys::RECEIVED_MS] = Json::Int64(toMillisecondsSinceEpoch(sent));
     return {{"application/invite+json", json::toString(root)}};
 }
 
