@@ -155,11 +155,13 @@ public:
      * @param conversationId    Related conversation's id
      * @param payload           VCard
      * @param received          Received time
+     * @param invited           Sender-embedded invite timestamp (default: unset, meaning unknown)
      */
     void onTrustRequest(const std::string& uri,
                         const std::string& conversationId,
                         const std::vector<uint8_t>& payload,
-                        TimePoint received);
+                        TimePoint received,
+                        TimePoint invited = {});
 
     /**
      * Called when receiving a new conversation's request
