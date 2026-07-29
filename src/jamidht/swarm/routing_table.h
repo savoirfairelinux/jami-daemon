@@ -424,7 +424,7 @@ public:
      * @param count
      * @return vector of nodeIds
      */
-    std::vector<NodeId> closestNodes(const NodeId& nodeId, unsigned count);
+    std::vector<NodeId> closestNodes(const NodeId& nodeId, unsigned count) const;
 
     /**
      * Returns number of buckets in routing table
@@ -514,7 +514,7 @@ public:
      * Kademlia view independently take responsibility.
      * @return vector of nodeIds
      */
-    std::vector<NodeId> getMobileNodesToNotify();
+    std::vector<NodeId> getMobileNodesToNotify() const;
 
     /**
      * Returns every node known to be mobile: disconnected mobile nodes

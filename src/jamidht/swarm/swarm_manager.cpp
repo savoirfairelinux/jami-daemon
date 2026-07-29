@@ -1036,6 +1036,10 @@ SwarmManager::getRoutingTableInfo() const
 {
     std::lock_guard lock(mutex);
     auto stats = routing_table.getRoutingTableStats();
+    const auto toNotify = routing_table.getMobileNodesToNotify();
+    std::set<std::string> responsible;
+    for (const auto& node : toNotify)
+        responsible.emplace(node.toString());
     std::vector<std::map<std::string, std::string>> result;
     result.reserve(stats.size());
     for (const auto& stat : stats) {
@@ -1043,7 +1047,8 @@ SwarmManager::getRoutingTableInfo() const
                           {"device", stat.id},
                           {"status", stat.status},
                           {"remoteAddress", stat.remoteAddress},
-                          {"mobile", stat.isMobile ? "true" : "false"}});
+                          {"mobile", stat.isMobile ? "true" : "false"},
+                          {"responsible", responsible.count(stat.id) ? "true" : "false"}});
         if (stat.connectionTime != std::chrono::system_clock::time_point::min()) {
             auto tt = std::chrono::system_clock::to_time_t(stat.connectionTime);
             result.back().emplace("connectionTime", std::to_string(tt));

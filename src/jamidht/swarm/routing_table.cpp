@@ -377,11 +377,11 @@ RoutingTable::findBucket(const NodeId& nodeId)
 }
 
 std::vector<NodeId>
-RoutingTable::closestNodes(const NodeId& nodeId, unsigned count)
+RoutingTable::closestNodes(const NodeId& nodeId, unsigned count) const
 {
     std::vector<NodeId> closestNodes;
     auto bucket = findBucket(nodeId);
-    auto sortedBucketInsert = [&](const std::list<Bucket>::iterator& b) {
+    auto sortedBucketInsert = [&](const std::list<Bucket>::const_iterator& b) {
         auto nodes = b->getNodeIds();
         for (auto n : nodes) {
             if (n != nodeId) {
@@ -467,7 +467,7 @@ RoutingTable::getMobileNodes() const
 }
 
 std::vector<NodeId>
-RoutingTable::getMobileNodesToNotify()
+RoutingTable::getMobileNodesToNotify() const
 {
     std::vector<NodeId> ret;
     for (const auto& mobile : getMobileNodes()) {

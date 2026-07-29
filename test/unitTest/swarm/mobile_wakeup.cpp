@@ -217,6 +217,7 @@ private:
     void testKnownMobileNodes();
     void testConnectedMobileLifecycle();
     void testFailedConnectionPreservesMobility();
+    void testRoutingTableInfoResponsibleFlag();
     void testMobileNodesChangedCallback();
     void testDeleteNodeUpdatesMobileNodes();
     void testConcurrentMobileNodesChangedCallbacks();
@@ -246,6 +247,7 @@ private:
     CPPUNIT_TEST(testKnownMobileNodes);
     CPPUNIT_TEST(testConnectedMobileLifecycle);
     CPPUNIT_TEST(testFailedConnectionPreservesMobility);
+    CPPUNIT_TEST(testRoutingTableInfoResponsibleFlag);
     CPPUNIT_TEST(testMobileNodesChangedCallback);
     CPPUNIT_TEST(testDeleteNodeUpdatesMobileNodes);
     CPPUNIT_TEST(testConcurrentMobileNodesChangedCallbacks);
@@ -1445,6 +1447,41 @@ MobileWakeUpTest::testFailedConnectionPreservesMobility()
     CPPUNIT_ASSERT(!rt.hasMobileNode(desktop));
     CPPUNIT_ASSERT(!rt.hasConnectingNode(desktop));
     CPPUNIT_ASSERT(rt.hasKnownNode(desktop));
+}
+
+void
+MobileWakeUpTest::testRoutingTableInfoResponsibleFlag()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    NodeId self = nodeTestIds1.at(0);
+    auto sm = std::make_shared<SwarmManager>(self, false, rd, [](auto) { return false; });
+    auto& rt = sm->getRoutingTable();
+
+    // Connected desktop nodes
+    for (size_t i = 1; i < 6; ++i)
+        sm->addChannel(nodeTestChannels1.at(i));
+
+    // Disconnected mobile nodes
+    for (const auto& mobile : {nodeTestIds2.at(2), nodeTestIds2.at(5), nodeTestIds2.at(8)})
+        rt.addMobileNode(mobile);
+
+    const auto notify = toSet(sm->getMobileNodesToNotify());
+    CPPUNIT_ASSERT(!notify.empty());
+
+    // Every routing table entry carries a "responsible" flag matching
+    // the wake-up list, and only mobile nodes can be responsible targets
+    std::set<NodeId> responsible;
+    for (const auto& entry : sm->getRoutingTableInfo()) {
+        CPPUNIT_ASSERT(entry.count("responsible"));
+        if (entry.at("responsible") == "true") {
+            CPPUNIT_ASSERT_EQUAL("true"s, entry.at("mobile"));
+            responsible.emplace(NodeId(entry.at("id")));
+        }
+    }
+    CPPUNIT_ASSERT(responsible == notify);
+
+    sm->shutdown();
 }
 
 // ################# SWARM MANAGER TESTS #################//
