@@ -1417,6 +1417,39 @@ ConversationModule::Impl::fixStructures(
         JAMI_ERROR("[Account {}] Remove conversation ({})", accountId_, conv);
         removeConversation(conv, true);
     }
+
+    ////////////////////////////////////////////////////////////////
+    // An active contact always owns a one-to-one conversation: removeConversation()
+    // creates a new one as soon as the previous one goes away. That invariant used to
+    // be broken when a conversation was erased, because unlinkConversations() clears
+    // the conversationId of the contact and nothing ever sets it again (the repair
+    // above only handles the opposite case, a contact referencing a conversation we
+    // do not have anymore). Such a contact is unreachable: it owns no conversation to
+    // display, and clients discard the search result as soon as the peer is a known
+    // contact. Give it a conversation back.
+    if (auto* convModule = acc->convModule(true)) {
+        for (const auto& [contactId, contact] : accountManager_->getContacts(false)) {
+            if (!contact.isActive() || !contact.conversationId.empty())
+                continue;
+            auto uri = contactId.toString();
+            auto convId = convModule->startConversation(ConversationMode::ONE_TO_ONE, contactId);
+            if (convId.empty()) {
+                JAMI_ERROR("[Account {}] Unable to create a conversation for contact {}", accountId_, uri);
+                continue;
+            }
+            JAMI_WARNING("[Account {}] Contact {} had no conversation, created {}", accountId_, uri, convId);
+            accountManager_->updateContactConversation(uri, convId, true);
+            if (auto convObj = getConversation(convId)) {
+                std::lock_guard lk(convObj->mtx);
+                if (convObj->conversation) {
+                    auto commitId = convObj->conversation->lastCommitId();
+                    if (!commitId.empty())
+                        sendMessageNotification(*convObj->conversation, true, commitId);
+                }
+            }
+        }
+    }
+
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
 
