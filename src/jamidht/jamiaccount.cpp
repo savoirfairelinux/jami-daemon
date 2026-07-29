@@ -1224,8 +1224,9 @@ JamiAccount::setupAccountCallbacks()
                                              [this](const std::string& uri,
                                                     const std::string& conversationId,
                                                     const std::vector<uint8_t>& payload,
-                                                    TimePoint received) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
+                                                    TimePoint received,
+                                                    TimePoint invited) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
                                              },
                                              [this](const std::map<DeviceId, KnownDevice>& devices) {
                                                  onKnownDevicesChanged(devices);
@@ -1287,11 +1288,12 @@ void
 JamiAccount::onIncomingTrustRequest(const std::string& uri,
                                     const std::string& conversationId,
                                     const std::vector<uint8_t>& payload,
-                                    TimePoint received)
+                                    TimePoint received,
+                                    TimePoint invited)
 {
     if (!id_.first)
         return;
-    dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
+    dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received, invited] {
         if (auto shared = w.lock()) {
             shared->clearProfileCache(uri);
             if (conversationId.empty()) {
@@ -1307,7 +1309,7 @@ JamiAccount::onIncomingTrustRequest(const std::string& uri,
             if (auto* cm = shared->convModule(true)) {
                 auto activeConv = cm->getOneToOneConversation(uri);
                 if (activeConv != conversationId)
-                    cm->onTrustRequest(uri, conversationId, payload, received);
+                    cm->onTrustRequest(uri, conversationId, payload, received, invited);
             }
         }
     });
@@ -1346,6 +1348,7 @@ JamiAccount::onContactConfirmed(const std::string& uri, const std::string& convF
             // Remove cached payload if there is one
             auto requestPath = shared->cachePath_ / "requests" / uri;
             dhtnet::fileutils::remove(requestPath);
+            dhtnet::fileutils::remove(shared->cachePath_ / "requests" / (uri + ".ts"));
         }
     });
 }
@@ -1878,7 +1881,35 @@ JamiAccount::onTrackedBuddyOnline(const std::string& contactId)
                                  contactId);
                     payload.clear();
                 }
-                accountManager_->sendTrustRequest(contactId, convId, payload);
+                // Reuse the original invite timestamp so this passive retry isn't treated as a
+                // fresh invitation; fall back to now() if no cached timestamp is found (e.g.
+                // cache predates this mechanism, or the sidecar failed to write previously).
+                auto tsPath = cachePath_ / "requests" / (contactId + ".ts");
+                TimePoint invited {};
+                try {
+                    auto tsData = fileutils::loadFile(tsPath);
+                    auto invitedMs = std::stoll(std::string(tsData.begin(), tsData.end()));
+                    if (invitedMs > 0)
+                        invited = timePointFromMilliseconds(invitedMs);
+                } catch (const std::exception& e) {
+                    JAMI_WARNING("[Account {:s}] Unable to load invite timestamp for {:s}: {}",
+                                 getAccountID(),
+                                 contactId,
+                                 e.what());
+                }
+                if (invited == TimePoint {}) {
+                    invited = nowMs();
+                    // Persist the fallback so subsequent retries stay stable instead of minting
+                    // a new timestamp (and thus looking like a fresh re-invitation) every time.
+                    std::ofstream tsFile(tsPath, std::ios::trunc | std::ios::binary);
+                    if (tsFile.is_open())
+                        tsFile << toMillisecondsSinceEpoch(invited);
+                    else
+                        JAMI_WARNING("[Account {:s}] Unable to write invite timestamp for {:s}",
+                                     getAccountID(),
+                                     contactId);
+                }
+                accountManager_->sendTrustRequest(contactId, convId, payload, invited);
             }
         }
     }
@@ -3502,7 +3533,13 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         JAMI_ERROR("addContact: invalid contact URI");
         return;
     }
-    // Here we cache payload sent by the client
+
+    // The invite timestamp is now a native field on the trust request itself (see
+    // jami::TrustRequestMsg), no need to stamp it into the vCard payload anymore.
+    auto invited = nowMs();
+
+    // Cache the payload (and the invite timestamp alongside it) so retries reuse the same
+    // timestamp instead of being treated as a new re-invite.
     auto requestPath = cachePath_ / "requests";
     dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath / to;
@@ -3513,8 +3550,15 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     }
 
     if (not payload.empty()) {
-        req.write(reinterpret_cast<const char*>(payload.data()), static_cast<std::streamsize>(payload.size()));
+        req.write(reinterpret_cast<const char*>(payload.data()),
+                  static_cast<std::streamsize>(payload.size()));
     }
+    req.close();
+
+    auto cachedTsFile = requestPath / (to + ".ts");
+    std::ofstream tsFile(cachedTsFile, std::ios::trunc | std::ios::binary);
+    if (tsFile.is_open())
+        tsFile << toMillisecondsSinceEpoch(invited);
 
     if (payload.size() >= 64000) {
         JAMI_WARNING("Trust request is too big. Remove payload");
@@ -3528,7 +3572,8 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         if (accountManager_)
             accountManager_->sendTrustRequest(to,
                                               conversation,
-                                              payload.size() >= 64000 ? std::vector<uint8_t> {} : payload);
+                                              payload.size() >= 64000 ? std::vector<uint8_t> {} : payload,
+                                              invited);
         else
             JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
     } else
