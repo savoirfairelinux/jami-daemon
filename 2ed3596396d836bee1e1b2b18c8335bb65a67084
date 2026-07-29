@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3345035_1012f2df",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T18:17:51Z",
+      "side": 1,
+      "message": "[error] Line 380: 🔴 setName() still creates a session/repository before checking that the document was announced. Move the isAnnouncedDocument(conversationId, documentId) check before ensureSession(), matching openDocument(), so local callers cannot allocate repositories for arbitrary ids by renaming them.",
+      "revId": "2ed3596396d836bee1e1b2b18c8335bb65a67084",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
