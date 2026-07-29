@@ -92,9 +92,17 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     }
 
     // Sync trust requests
+    // Pass through the sender-embedded invite timestamp (tr.second.invited) so a second device
+    // orders this the same way a directly DHT-delivered request would be, instead of silently
+    // falling back to comparing local receive times across devices.
     for (const auto& tr : sync.trust_requests)
-        info_->contacts
-            ->onTrustRequest(tr.first, tr.second.device, tr.second.received, false, tr.second.conversationId, {});
+        info_->contacts->onTrustRequest(tr.first,
+                                        tr.second.device,
+                                        tr.second.received,
+                                        false,
+                                        tr.second.conversationId,
+                                        {},
+                                        tr.second.invited);
 }
 
 dht::crypto::Identity
@@ -337,7 +345,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     }
 
     auto inboxKey = dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString());
-    dht_->listen<dht::TrustRequest>(inboxKey, [this](dht::TrustRequest&& v) {
+    dht_->listen<TrustRequestMsg>(inboxKey, [this](TrustRequestMsg&& v) {
         if (v.service != DHT_TYPE_NS)
             return true;
 
@@ -358,7 +366,10 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                                                                   nowMs(),
                                                                   v.confirm,
                                                                   v.conversationId,
-                                                                  std::move(v.payload))) {
+                                                                  std::move(v.payload),
+                                                                  v.invitedMs > 0
+                                                                      ? timePointFromMilliseconds(v.invitedMs)
+                                                                      : TimePoint {})) {
                                   if (v.confirm) // No need to send a confirmation as already accepted here
                                       return;
                                   sendTrustRequestConfirm(peer_account, v.conversationId);
@@ -702,7 +713,10 @@ AccountManager::discardTrustRequest(const std::string& from)
 }
 
 void
-AccountManager::sendTrustRequest(const std::string& to, const std::string& convId, const std::vector<uint8_t>& payload)
+AccountManager::sendTrustRequest(const std::string& to,
+                                 const std::string& convId,
+                                 const std::vector<uint8_t>& payload,
+                                 TimePoint invited)
 {
     JAMI_WARNING("[Account {}] AccountManager::sendTrustRequest", accountId_);
     auto toH = dht::InfoHash(to);
@@ -717,16 +731,19 @@ AccountManager::sendTrustRequest(const std::string& to, const std::string& convI
     if (info_->contacts->addContact(toH, false, convId)) {
         syncDevices();
     }
-    forEachDevice(toH, [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+    auto invitedMs = invited != TimePoint {} ? toMillisecondsSinceEpoch(invited) : toMillisecondsSinceEpoch(nowMs());
+    forEachDevice(toH, [this, toH, convId, payload, invitedMs](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
         auto to = toH.toString();
         JAMI_WARNING("[Account {}] [device {}] Sending trust request (size {:d}) to: {:s}",
                      accountId_,
                      dev->getLongId(),
                      payload.size(),
                      to);
+        TrustRequestMsg req(DHT_TYPE_NS, convId, payload);
+        req.invitedMs = invitedMs;
         dht_->putEncrypted(dht::InfoHash::get(concat("inbox:"sv, dev->getId().to_view())),
                            dev,
-                           dht::TrustRequest(DHT_TYPE_NS, convId, payload),
+                           std::move(req),
                            [to, size = payload.size()](bool ok) {
                                if (!ok)
                                    JAMI_ERROR("Tried to send request {:s} (size: "
@@ -744,7 +761,7 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
                  accountId_,
                  toH,
                  convId);
-    dht::TrustRequest answer {DHT_TYPE_NS, convId};
+    TrustRequestMsg answer {DHT_TYPE_NS, convId};
     answer.confirm = true;
 
     if (!convId.empty() && info_)
