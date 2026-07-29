@@ -365,7 +365,8 @@ ContactList::loadTrustRequests()
                        tr.second.received,
                        false,
                        tr.second.conversationId,
-                       std::move(tr.second.payload));
+                       std::move(tr.second.payload),
+                       {});
 }
 
 bool
@@ -374,7 +375,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                             TimePoint received,
                             bool confirm,
                             const std::string& conversationId,
-                            std::vector<uint8_t>&& payload)
+                            std::vector<uint8_t>&& payload,
+                            TimePoint invited)
 {
     bool accept = false;
     // Check existing contact
@@ -423,7 +425,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         callbacks_.trustRequest(peer_account.toString(),
                                 conversationId,
                                 std::move(payload),
-                                received);
+                                received,
+                                invited);
     else if (active) {
         // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);

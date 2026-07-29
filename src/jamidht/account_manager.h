@@ -217,7 +217,10 @@ public:
     bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
 
-    void sendTrustRequest(const std::string& to, const std::string& convId, const std::vector<uint8_t>& payload);
+    void sendTrustRequest(const std::string& to,
+                          const std::string& convId,
+                          const std::vector<uint8_t>& payload,
+                          TimePoint invited = {});
     void sendTrustRequestConfirm(const dht::InfoHash& to,
                                  const std::string& conversationId); // TODO ideally no convId here
 
