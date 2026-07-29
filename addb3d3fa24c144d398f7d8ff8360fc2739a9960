@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "628e4746_7ec1af90",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1434,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T19:45:57Z",
+      "side": 1,
+      "message": "[warning] Line 1434: 🟡 Creating conversations while iterating all active contacts with an empty conversationId may also recreate one-to-one conversations for contacts that intentionally have no linked conversation after data migration or partial contact state repair. Please confirm this invariant is universally true here, or narrow the condition to contacts whose prior one-to-one conversation was removed by this fixStructures pass.",
+      "revId": "addb3d3fa24c144d398f7d8ff8360fc2739a9960",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99835f3a_e0b1312c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1443,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T19:45:57Z",
+      "side": 1,
+      "message": "[warning] Line 1443: 🟡 Emitting a message notification during structure repair can surface old messages as new/unread work to clients at startup. If the goal is only to make the restored conversation visible, prefer the existing conversation-created/updated notification path or explicitly mark this as a sync/repair notification so clients do not treat the last commit as a newly received message.",
+      "revId": "addb3d3fa24c144d398f7d8ff8360fc2739a9960",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
