@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e0b8a49_077afd90",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3497,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T21:41:17Z",
+      "side": 1,
+      "message": "[warning] Line 3497: 🟡 The new `X-JAMI-INVITED` property is appended blindly to the payload. For normal vCard payloads this can place the property after `END:VCARD`, making the vCard malformed or causing parsers to ignore the property. Insert the extension before `END:VCARD` when present, or build the vCard through the existing vCard utilities so the timestamp is inside the card.",
+      "revId": "a4edd41d65deb13479e0bff070a17bd16f2d8781",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
