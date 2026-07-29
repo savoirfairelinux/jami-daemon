@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "124a44c6_85d9180b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1434,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-29T19:56:03Z",
+      "side": 1,
+      "message": "Restricting the repair to conversations removed by this very fixStructures pass would defeat the purpose: the inconsistency is historical, not produced by the current run. The comment a few lines above already documents exactly this class of damage: \"On oldest version, removeConversation didn\u0027t update appdata/contacts causing a potential incorrect state between appdata/contacts and appdata/convInfos\". In the case that motivated this patch the conversation had been erased more than a year before, by an older version, and unlinkConversations() cleared the conversationId with nothing ever setting it again.\n\nOn the invariant itself: removeConversation() (handleNewConversation) already recreates a one-to-one conversation for every contact that pointed at the conversation being removed, unconditionally and with no extra filter. So the daemon already treats \"an active contact owns a one-to-one conversation\" as an invariant; this change simply restores it for contacts where it was lost. I deliberately kept the same condition as that existing path rather than adding a divergent one.\n\nBanned contacts are excluded: getContacts(false) does return them (the filter is !isActive() \u0026\u0026 !includeRemoved \u0026\u0026 !isBanned()), and isActive() screens them out here.",
+      "parentUuid": "628e4746_7ec1af90",
+      "revId": "addb3d3fa24c144d398f7d8ff8360fc2739a9960",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "99835f3a_e0b1312c",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-29T19:45:57Z",
       "side": 1,
       "message": "[warning] Line 1443: 🟡 Emitting a message notification during structure repair can surface old messages as new/unread work to clients at startup. If the goal is only to make the restored conversation visible, prefer the existing conversation-created/updated notification path or explicitly mark this as a sync/repair notification so clients do not treat the last commit as a newly received message.",
+      "revId": "addb3d3fa24c144d398f7d8ff8360fc2739a9960",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "50570059_79b5691e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1443,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-29T19:56:03Z",
+      "side": 1,
+      "message": "This cannot surface old messages: the conversation is created a few lines above, so its last commit is the initial commit of a brand new repository. There is no prior history to replay.\n\nAlso, sendMessageNotification() is not a chat-message notification. It announces a git commit (MIME_TYPE_GIT, {id, commit, deviceId}) to our other devices and to the conversation members. It is precisely how the peer learns that the conversation exists and can clone it. Dropping it would make the repair purely local: the contact would be visible again on this device but the peer would never be told, which is the opposite of the intent.\n\nThis mirrors the sendNotification() call that removeConversation() already performs after recreating a one-to-one conversation. Note that startConversation() only emits ConversationReady and syncs our own devices via needsSyncingCb_, so it does not cover the peer.",
+      "parentUuid": "99835f3a_e0b1312c",
       "revId": "addb3d3fa24c144d398f7d8ff8360fc2739a9960",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
