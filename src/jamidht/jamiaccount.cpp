@@ -3485,7 +3485,34 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         JAMI_ERROR("addContact: invalid contact URI");
         return;
     }
-    // Here we cache payload sent by the client
+
+    // Embed the send timestamp as a vCard property, so that when this trust request gets
+    // passively redelivered by the DHT (e.g. on reconnect)
+    std::vector<uint8_t> stampedPayload = payload;
+    {
+        std::string_view payloadView(reinterpret_cast<const char*>(stampedPayload.data()),
+                                     stampedPayload.size());
+        auto endPos = payloadView.rfind(vCard::Delimiter::END_TOKEN);
+        std::string_view eol = "\n";
+        if (endPos != std::string_view::npos && endPos >= 2
+            && payloadView[endPos - 2] == '\r' && payloadView[endPos - 1] == '\n')
+            eol = "\r\n";
+        auto invitedLine = fmt::format("{}:{}{}",
+                                       vCard::Property::INVITED_TIMESTAMP,
+                                       toMillisecondsSinceEpoch(nowMs()),
+                                       eol);
+        if (endPos != std::string_view::npos) {
+            stampedPayload.insert(stampedPayload.begin() + static_cast<long>(endPos),
+                                  invitedLine.begin(),
+                                  invitedLine.end());
+        } else {
+            if (!stampedPayload.empty() && stampedPayload.back() != '\n')
+                stampedPayload.push_back('\n');
+            stampedPayload.insert(stampedPayload.end(), invitedLine.begin(), invitedLine.end());
+        }
+    }
+
+    // Cache the stamped payload so retries reuse the same timestamp instead of creating a new re-invite.
     auto requestPath = cachePath_ / "requests";
     dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath / to;
@@ -3495,11 +3522,12 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         return;
     }
 
-    if (not payload.empty()) {
-        req.write(reinterpret_cast<const char*>(payload.data()), static_cast<std::streamsize>(payload.size()));
+    if (not stampedPayload.empty()) {
+        req.write(reinterpret_cast<const char*>(stampedPayload.data()),
+                  static_cast<std::streamsize>(stampedPayload.size()));
     }
 
-    if (payload.size() >= 64000) {
+    if (stampedPayload.size() >= 64000) {
         JAMI_WARNING("Trust request is too big. Remove payload");
     }
 
@@ -3511,7 +3539,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         if (accountManager_)
             accountManager_->sendTrustRequest(to,
                                               conversation,
-                                              payload.size() >= 64000 ? std::vector<uint8_t> {} : payload);
+                                              stampedPayload.size() >= 64000 ? std::vector<uint8_t> {} : stampedPayload);
         else
             JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
     } else
