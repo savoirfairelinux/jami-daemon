@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8aa82b5e_2ad0a7ec",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2047,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T22:01:36Z",
+      "side": 1,
+      "message": "[warning] Line 2047: 🟡 `std::stoll` accepts partially parsed strings, so values like `123junk` are treated as valid invite timestamps. Parse with a position argument and require `pos \u003d\u003d invitedIt-\u003esecond.size()` (or use an existing strict numeric parser) before trusting the embedded timestamp.",
+      "revId": "43cdadd65ba106a38cb7143089dde1a916caa2ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1de24641_84c87f09",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3498,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T22:01:36Z",
+      "side": 1,
+      "message": "[warning] Line 3498: 🟡 The inserted vCard property uses only `\\n`; existing vCards commonly use CRLF, and inserting `X-JAMI-INVITED...\\n` immediately before `END:VCARD` can leave a mixed/invalid line ending sequence. Reuse the payload\u0027s existing newline style around `END:VCARD`, or write the property with `\\r\\n` when the card uses CRLF.",
+      "revId": "43cdadd65ba106a38cb7143089dde1a916caa2ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
