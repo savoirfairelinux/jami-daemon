@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0be8c2dd_ccaee866",
+        "filename": "src/jamidht/CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-29T21:42:15Z",
+      "side": 1,
+      "message": "The CMake dependency is there, just not in this file.\n\nsrc/jamidht/CMakeLists.txt does nothing but append paths to the Source_Files__jamidht list (list (APPEND ...)). It declares no target and calls no target_link_libraries, so a dependency cannot be expressed here -- no file under src/*/CMakeLists.txt does.\n\nThe wiring is in the top-level CMakeLists.txt, added by this same patch and present since patch set 1:\n\n  pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)   # line 681\n  ...\n        PkgConfig::yrs                                    # line 706\n\nIMPORTED_TARGET carries the include path and the library together, so \u003clibyrs.h\u003e resolves and libyrs links -- the exact counterpart of depyrs in meson. The CMake build of this series is what the gnulinux and macOS jobs run, and it does link libyrs.",
+      "parentUuid": "bf382614_eb7b73e8",
+      "revId": "717e8b6e7d49200ce12db9e96aafd6231b7f29b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d2e8bb8_8b1759b2",
+        "filename": "src/jamidht/yrs_document.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-29T21:42:15Z",
+      "side": 1,
+      "message": "Correct, and fixed. Patch set 1 claimed \"every public method is serialized by an internal mutex\", which takeChanged() does not honour.\n\nThe contract now names the exception instead of glossing over it:\n\n  Thread-safety: every public method that touches the yrs document is\n  serialized by an internal mutex. takeChanged() is the exception: it only\n  reads and clears an atomic flag, so it never blocks and may be called\n  while another thread is inside the document.\n\nDocumenting rather than locking is deliberate: the flag is atomic, the caller polls it from the sync path, and taking the document mutex there would make a cheap poll wait on a merge.",
+      "parentUuid": "ce23eec5_2d7251a3",
+      "revId": "717e8b6e7d49200ce12db9e96aafd6231b7f29b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
