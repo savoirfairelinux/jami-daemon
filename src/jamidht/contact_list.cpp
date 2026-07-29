@@ -365,7 +365,8 @@ ContactList::loadTrustRequests()
                        tr.second.received,
                        false,
                        tr.second.conversationId,
-                       std::move(tr.second.payload));
+                       std::move(tr.second.payload),
+                       tr.second.invited);
 }
 
 bool
@@ -374,7 +375,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                             TimePoint received,
                             bool confirm,
                             const std::string& conversationId,
-                            std::vector<uint8_t>&& payload)
+                            std::vector<uint8_t>&& payload,
+                            TimePoint invited)
 {
     bool accept = false;
     // Check existing contact
@@ -402,15 +404,20 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         auto req = trustRequests_.find(peer_account);
         if (req == trustRequests_.end()) {
             // Add trust request
-            req = trustRequests_.emplace(peer_account, TrustRequest {peer_device, conversationId, received, payload})
+            req = trustRequests_
+                      .emplace(peer_account, TrustRequest {peer_device, conversationId, received, payload, invited})
                       .first;
         } else {
-            // Update trust request
-            if (received > req->second.received) {
+            auto incomingTimestamp = invited != TimePoint {} ? invited : received;
+            auto existingTimestamp = req->second.invited != TimePoint {} ? req->second.invited
+                                                             : req->second.received;
+
+            if (incomingTimestamp > existingTimestamp) {
                 req->second.device = peer_device;
                 req->second.conversationId = conversationId;
                 req->second.received = received;
                 req->second.payload = payload;
+                req->second.invited = invited;
             } else {
                 JAMI_LOG("[Account {}] [Contacts] Ignoring outdated trust request from {}", accountId_, peer_account);
             }
@@ -423,7 +430,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         callbacks_.trustRequest(peer_account.toString(),
                                 conversationId,
                                 std::move(payload),
-                                received);
+                                received,
+                                invited);
     else if (active) {
         // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);
@@ -662,18 +670,24 @@ ContactList::getSyncData() const
     std::lock_guard lk(mutex_);
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
-            sync_data.trust_requests
-                .emplace(req.first,
-                         TrustRequest {req.second.device, req.second.conversationId, req.second.received, {}});
+            sync_data.trust_requests.emplace(req.first,
+                                             TrustRequest {req.second.device,
+                                                           req.second.conversationId,
+                                                           req.second.received,
+                                                           {},
+                                                           req.second.invited});
     else {
         size_t inserted = 0;
         auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
         while (inserted++ < MAX_TRUST_REQUESTS) {
             if (req == trustRequests_.end())
                 req = trustRequests_.begin();
-            sync_data.trust_requests
-                .emplace(req->first,
-                         TrustRequest {req->second.device, req->second.conversationId, req->second.received, {}});
+            sync_data.trust_requests.emplace(req->first,
+                                             TrustRequest {req->second.device,
+                                                           req->second.conversationId,
+                                                           req->second.received,
+                                                           {},
+                                                           req->second.invited});
             ++req;
         }
     }

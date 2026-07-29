@@ -38,7 +38,8 @@ public:
     using OnContactAdded = std::function<void(const std::string&, bool)>;
     using OnContactRemoved = std::function<void(const std::string&, bool)>;
     using OnIncomingTrustRequest
-        = std::function<void(const std::string&, const std::string&, const std::vector<uint8_t>&, TimePoint)>;
+        = std::function<
+            void(const std::string&, const std::string&, const std::vector<uint8_t>&, TimePoint, TimePoint)>;
     using OnAcceptConversation = std::function<void(const std::string&, const std::string&)>;
     using OnConfirmation = std::function<void(const std::string&, const std::string&)>;
     using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;
@@ -107,13 +108,15 @@ public:
     /* Contact requests */
 
     /** Inform of a new contact request. Returns true if the request should be immediatly accepted
-     * (already a contact) */
+     * (already a contact). invited is the sender-embedded invite timestamp ({} if not
+     * present/known). */
     bool onTrustRequest(const dht::InfoHash& peer_account,
                         const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
                         TimePoint received,
                         bool confirm,
                         const std::string& conversationId,
-                        std::vector<uint8_t>&& payload);
+                        std::vector<uint8_t>&& payload,
+                        TimePoint invited = {});
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
     std::map<std::string, std::string> getTrustRequest(const dht::InfoHash& from) const;
     void acceptConversation(const std::string& convId,
