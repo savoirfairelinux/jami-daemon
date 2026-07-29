@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5befbada_4ae075ee",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2098,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T22:09:55Z",
+      "side": 1,
+      "message": "[warning] Line 2098: 🟡 The embedded invite timestamp is accepted without any sanity bounds. A malformed or malicious peer can send a far-future `receivedMs`/trust-request timestamp, making later legitimate re-invites look older and potentially suppressing them in the request de-duplication logic. Reject or clamp timestamps that are in the future beyond an acceptable clock-skew window, falling back to the local receive time.",
+      "revId": "00423720e2ea1662d4c6c46e39bacaae83e56a0a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bd84cb3_f49cdcf0",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2152,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-29T22:09:55Z",
+      "side": 1,
+      "message": "[warning] Line 2152: 🟡 When `conv.info.invited` has no entry, this resend path generates a fresh timestamp but does not store it. Repeated `NeedConversationRequest` messages for older conversations will therefore keep producing new invite timestamps and can be interpreted as fresh re-invitations each time. When falling back to `nowMs()`, persist that value in `conv.info.invited[from]` before sending so subsequent passive resends remain stable.",
+      "revId": "00423720e2ea1662d4c6c46e39bacaae83e56a0a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
