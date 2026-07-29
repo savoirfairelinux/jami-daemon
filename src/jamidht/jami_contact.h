@@ -328,6 +328,31 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests)
 };
 
+struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>
+{
+    static const constexpr dht::ValueType& TYPE = dht::TrustRequest::TYPE;
+
+    TrustRequestMsg() {}
+    TrustRequestMsg(std::string s, std::string ci = {})
+        : service(std::move(s))
+        , conversationId(std::move(ci))
+    {}
+    TrustRequestMsg(std::string s, std::string ci, const std::vector<uint8_t>& d)
+        : service(std::move(s))
+        , conversationId(std::move(ci))
+        , payload(d)
+    {}
+
+    std::string service;
+    std::string conversationId;
+    std::vector<uint8_t> payload;
+    bool confirm {false};
+    // Millisecond timestamp of when the sender originally issued this invite, so that
+    // passive DHT redeliveries/retries aren't mistaken for a brand new invitation.
+    int64_t invitedMs {0};
+    MSGPACK_DEFINE_MAP(service, conversationId, payload, confirm, invitedMs)
+};
+
 struct KnownDevice
 {
     using clock = std::chrono::system_clock;
