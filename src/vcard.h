@@ -75,6 +75,7 @@ struct Property
     constexpr static std::string_view PHOTO_JPEG = "PHOTO;ENCODING=BASE64;TYPE=JPEG";
     constexpr static std::string_view KIND = "KIND";
     constexpr static std::string_view RELATED_OWNER = "RELATED;TYPE=owner";
+    constexpr static std::string_view INVITED_TIMESTAMP = "X-JAMI-INVITED";
 };
 
 struct Value
@@ -84,6 +85,7 @@ struct Value
     constexpr static std::string_view AVATAR = "avatar";
     constexpr static std::string_view RDV_ACCOUNT = "rdvAccount";
     constexpr static std::string_view RDV_DEVICE = "rdvDevice";
+    constexpr static std::string_view INVITED_TIMESTAMP = "invitedTimestamp";
 };
 
 namespace utils {

@@ -356,7 +356,6 @@ public:
         if (it != conversationsRequests_.end()) {
             const bool existingDeclined = it->second.declined != TimePoint {};
             const bool incomingDeclined = req.declined != TimePoint {};
-
             if (incomingDeclined && existingDeclined) {
                 // Keep only the latest decline and avoid sync ping-pong.
                 if (req.declined <= it->second.declined)
@@ -2041,9 +2040,20 @@ ConversationModule::onTrustRequest(const std::string& uri,
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
-    req.received = nowMs();
     req.metadatas = ConversationRepository::infosFromVCard(
         vCard::utils::toMap(std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
+    auto invitedIt = req.metadatas.find(std::string(vCard::Value::INVITED_TIMESTAMP));
+    if (invitedIt != req.metadatas.end()) {
+        try {
+            req.received = timePointFromMilliseconds(std::stoll(invitedIt->second));
+        } catch (...) {
+            req.received = received;
+        }
+        req.metadatas.erase(invitedIt);
+    } else {
+        // Older peer that doesn't embed a timestamp yet
+        req.received = received;
+    }
     auto reqMap = req.toMap();
 
     auto contactInfo = pimpl_->accountManager_->getContactInfo(uri);
@@ -2086,7 +2096,12 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     // reused).
     if (pimpl_->isActiveOrNonReinvitableConversation(convId))
         return;
-    req.received = nowMs();
+    // Prefer the sender-embedded invite timestamp (set by generateInvitation()) so that a
+    // passively redelivered/re-asked invite (same timestamp) can be told apart from a
+    // genuine new re-invitation (fresh timestamp). Fall back to now() only for older peers
+    // that don't embed one yet.
+    if (req.received == TimePoint {})
+        req.received = nowMs();
     req.from = from;
 
     if (isOneToOne) {
@@ -2125,13 +2140,18 @@ ConversationModule::peerFromConversationRequest(const std::string& convId) const
 void
 ConversationModule::onNeedConversationRequest(const std::string& from, const std::string& conversationId)
 {
-    pimpl_->withConversation(conversationId, [&](auto& conversation) {
-        if (!conversation.isMember(from, true)) {
+    pimpl_->withConv(conversationId, [&](auto& conv) {
+        if (!conv.conversation)
+            return;
+        if (!conv.conversation->isMember(from, true)) {
             JAMI_WARNING("{} is asking a new invite for {}, but not a member", from, conversationId);
             return;
         }
         JAMI_LOG("{} is asking a new invite for {}", from, conversationId);
-        pimpl_->sendMsgCb_(from, {}, conversation.generateInvitation(), 0);
+        // Reuse the original invite timestamp so passive resends aren't treated as new invitations.
+        auto it = conv.info.invited.find(from);
+        auto sent = it != conv.info.invited.end() ? it->second : nowMs();
+        pimpl_->sendMsgCb_(from, {}, conv.conversation->generateInvitation(sent), 0);
     });
 }
 
@@ -2693,8 +2713,18 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUriStr, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't
         // join we should not forbid new invites
-        auto invite = conv->conversation->generateInvitation();
+        auto sent = nowMs();
+        conv->info.invited[contactUriStr] = sent;
+        auto info = conv->info;
+        auto invite = conv->conversation->generateInvitation(sent);
         lk.unlock();
+        // convInfosMtx_ must not be taken while conv->mtx is held
+        // so update convInfos_/save only after unlocking conv->mtx.
+        {
+            std::lock_guard lkInfos(pimpl_->convInfosMtx_);
+            pimpl_->convInfos_[conversationId] = std::move(info);
+            pimpl_->saveConvInfos();
+        }
         pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
         return;
     }
@@ -2708,8 +2738,17 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                                                           true,
                                                                           commitId); // For the other members
                                           if (sendRequest) {
-                                              auto invite = conv->conversation->generateInvitation();
+                                              auto sent = nowMs();
+                                              conv->info.invited[contactUriStr] = sent;
+                                              auto info = conv->info;
+                                              auto invite = conv->conversation->generateInvitation(sent);
                                               lk.unlock();
+                                              // convInfosMtx_ must be taken after releasing conv->mtx
+                                              {
+                                                  std::lock_guard lkInfos(pimpl_->convInfosMtx_);
+                                                  pimpl_->convInfos_[conversationId] = std::move(info);
+                                                  pimpl_->saveConvInfos();
+                                              }
                                               pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
                                           }
                                       }
