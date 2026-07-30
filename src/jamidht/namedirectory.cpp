@@ -302,6 +302,7 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                     cb("", "", Response::error);
                 }
             }
+            std::lock_guard lk(requestsMtx_);
             if (auto req = response.request.lock())
                 requests_.erase(req);
         });
