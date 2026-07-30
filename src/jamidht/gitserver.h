@@ -24,7 +24,7 @@
 #include "jamidht/conversationrepository.h"
 
 namespace dhtnet {
-class ChannelSocket;
+class ChannelSocketInterface;
 }
 
 namespace jami {
@@ -46,7 +46,7 @@ public:
      */
     GitServer(const std::string& accountId,
               const std::string& conversationId,
-              const std::shared_ptr<dhtnet::ChannelSocket>& client);
+              const std::shared_ptr<dhtnet::ChannelSocketInterface>& client);
     ~GitServer();
 
     /**
