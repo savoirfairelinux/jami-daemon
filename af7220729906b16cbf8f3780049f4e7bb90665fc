@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afe5b748_958b8e92",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1880,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T17:14:14Z",
+      "side": 1,
+      "message": "[warning] Line 1880: 🟡 When the timestamp sidecar is missing or invalid, this retry path falls back to `nowMs()` but does not persist that fallback. For pre-upgrade caches or a failed sidecar write, each buddy-online retry can therefore carry a fresh `invitedMs` and look like a new re-invitation. After choosing the fallback timestamp, write it to `contactId + \".ts\"` before sending, and log parse/load failures instead of silently swallowing them.",
+      "revId": "af7220729906b16cbf8f3780049f4e7bb90665fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
