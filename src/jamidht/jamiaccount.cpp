@@ -2474,13 +2474,21 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                      remoteDevice);
             auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
             syncCnt_.fetch_add(1);
-            gs->setOnFetched([w = weak(), conversationId, remoteDevice](const std::string& commit) {
-                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit]() {
+            // Balances the increment above exactly once, whether the peer ends up
+            // fetching or the channel simply dies.
+            auto endSync = [w = weak(), done = std::make_shared<std::once_flag>()] {
+                std::call_once(*done, [&] {
+                    if (auto shared = w.lock())
+                        if (shared->syncCnt_.fetch_sub(1) == 1)
+                            emitSignal<libjami::ConversationSignal::ConversationCloned>(
+                                shared->getAccountID().c_str());
+                });
+            };
+            gs->setOnFetched([w = weak(), conversationId, remoteDevice, endSync](const std::string& commit) {
+                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit, endSync]() {
                     if (auto shared = w.lock()) {
                         shared->convModule()->setFetched(conversationId, remoteDevice, commit);
-                        if (shared->syncCnt_.fetch_sub(1) == 1) {
-                            emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
-                        }
+                        endSync();
                     }
                 });
             });
@@ -2489,7 +2497,8 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 std::lock_guard lk(gitServersMtx_);
                 gitServers_[serverId] = std::move(gs);
             }
-            channel->onShutdown([w = weak(), serverId](const std::error_code&) {
+            channel->onShutdown([w = weak(), serverId, endSync](const std::error_code&) {
+                endSync();
                 // Run on main thread to avoid to be in mxSock's eventLoop
                 runOnMainThread([serverId, w]() {
                     if (auto sthis = w.lock()) {
