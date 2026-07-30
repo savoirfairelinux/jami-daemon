@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c50aebc_14938c36",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2098,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-07-30T14:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5befbada_4ae075ee",
+      "revId": "00423720e2ea1662d4c6c46e39bacaae83e56a0a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6bd84cb3_f49cdcf0",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-29T22:09:55Z",
       "side": 1,
       "message": "[warning] Line 2152: 🟡 When `conv.info.invited` has no entry, this resend path generates a fresh timestamp but does not store it. Repeated `NeedConversationRequest` messages for older conversations will therefore keep producing new invite timestamps and can be interpreted as fresh re-invitations each time. When falling back to `nowMs()`, persist that value in `conv.info.invited[from]` before sending so subsequent passive resends remain stable.",
+      "revId": "00423720e2ea1662d4c6c46e39bacaae83e56a0a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "009727ef_df76053f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2152,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-07-30T14:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6bd84cb3_f49cdcf0",
       "revId": "00423720e2ea1662d4c6c46e39bacaae83e56a0a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
