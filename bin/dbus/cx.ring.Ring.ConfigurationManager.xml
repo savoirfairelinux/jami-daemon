@@ -833,10 +833,11 @@
             <tp:docstring>
                Open a collaborative document and start receiving its updates
             </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="content" direction="out"/>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
             <arg type="s" name="documentId" direction="in"/>
-            <arg type="s" name="content" direction="out"/>
         </method>
 
         <method name="closeCollaborativeDocument" tp:name-for-bindings="closeCollaborativeDocument">
@@ -855,7 +856,8 @@
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
             <arg type="s" name="documentId" direction="in"/>
-            <arg type="s" name="base64Update" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="update" direction="in"/>
         </method>
 
         <method name="setCollaborativeAwareness" tp:name-for-bindings="setCollaborativeAwareness">
@@ -872,10 +874,11 @@
             <tp:docstring>
                Get the whole state of a collaborative document as a Y-CRDT update
             </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="state" direction="out"/>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
             <arg type="s" name="documentId" direction="in"/>
-            <arg type="s" name="state" direction="out"/>
         </method>
 
         <method name="setCollaborativeDocumentName" tp:name-for-bindings="setCollaborativeDocumentName">
@@ -924,7 +927,8 @@
             <tp:docstring>
                State of a collaborative document as of a given checkpoint, as a Y-CRDT update
             </tp:docstring>
-            <arg type="s" name="state" direction="out"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="state" direction="out"/>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
             <arg type="s" name="documentId" direction="in"/>
@@ -962,7 +966,8 @@
             <arg type="s" name="accountId"/>
             <arg type="s" name="conversationId"/>
             <arg type="s" name="documentId"/>
-            <arg type="s" name="base64Update"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="update"/>
         </signal>
 
         <signal name="collaborativeAwarenessChanged" tp:name-for-bindings="collaborativeAwarenessChanged">
