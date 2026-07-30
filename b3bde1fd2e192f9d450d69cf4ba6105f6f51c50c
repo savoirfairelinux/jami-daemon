@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f0aca1d_ecc59198",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T17:18:44Z",
+      "side": 1,
+      "message": "[warning] Line 102: 🟡 Synced trust requests drop the sender-embedded invite timestamp by passing `invited` as `{}`. A second device that learns the request through account sync will order it by local receive time, while later DHT-delivered requests are ordered by sender `invitedMs`; with clock skew this can cause a legitimate re-invite to look older and be ignored. Persist/sync the invite timestamp with the trust request and pass it through here.",
+      "revId": "b3bde1fd2e192f9d450d69cf4ba6105f6f51c50c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
