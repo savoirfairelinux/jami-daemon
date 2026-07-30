@@ -2907,6 +2907,17 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     if (pimpl_->swarmManager_->isShutdown()) {
         pimpl_->swarmManager_->restart();
         pimpl_->swarmManager_->maintainBuckets();
+    } else if (!pimpl_->swarmManager_->isConnected()) {
+        // A swarm manager that is up but holds no connected node will never get
+        // one on its own: setKnownNodes() only acts on ids it has never seen
+        // before, so members it already knows are simply skipped.
+        //
+        // A mobile client reaches that state every time it leaves and returns
+        // to the foreground: setAccountActive() leaves established connections
+        // alone by default, so the swarm manager is not shut down, yet the
+        // links die with the network. Bootstrapping then finds nothing to do,
+        // and the conversation stays silent until the process is restarted.
+        pimpl_->swarmManager_->maintainBuckets();
     }
 }
 
