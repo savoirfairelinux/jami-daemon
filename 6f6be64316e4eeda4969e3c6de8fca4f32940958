@@ -18,6 +18,40 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4816f13_d3b6e5dd",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 653,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:47:09Z",
+      "side": 1,
+      "message": "[warning] Line 653: 🟡 Awareness frames call `admitSession()`, which can create/load a full collaborative session and repository state just to process ephemeral cursor data. A member can force this device to allocate/load sessions for documents it is not editing by sending awareness frames. Handle awareness only for an existing open session, or split awareness storage from the YrsDocument/repository session path.",
+      "revId": "6f6be64316e4eeda4969e3c6de8fca4f32940958",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "586edf4f_09c3c5f4",
+        "filename": "src/jamidht/y_protocol.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:47:09Z",
+      "side": 1,
+      "message": "[warning] Line 45: 🟡 `data + size` is evaluated even for zero-length arrays. Empty diffs are possible when answering a STEP1 from a peer that is already up to date, and an empty vector may expose a null `data()` pointer; forming `data + 0` from it is undefined. Return immediately after writing the length when `size \u003d\u003d 0`.",
+      "revId": "6f6be64316e4eeda4969e3c6de8fca4f32940958",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "d81ed1b9_4020beaa",
