@@ -43,7 +43,7 @@ constexpr const char* const TOTAL_SIZE {"totalSize"};
 constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
-constexpr const char* const KIND {"kind"};
+constexpr const char* const MIME_TYPE {"mimeType"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -102,7 +102,7 @@ struct CommitMessage
     std::string sha3sum {};
     int mode {-1};
     std::string invited {};
-    std::string kind {};
+    std::string mimeType {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -290,24 +290,29 @@ struct CommitMessage
 
     // A collaborative document is announced with a commit of type
     // "application/collab-doc+json" carrying the document id in "uri", its
-    // initial name in "displayName" and its editor flavour in "kind" ("text" or
-    // "rich"), e.g.:
+    // initial name in "displayName" and the media type of what it holds in
+    // "mimeType", e.g.:
     //
-    //     {"displayName":"Notes","kind":"rich","type":"application/collab-doc+json",
-    //      "uri":"3f1c8a5b0d2e4f67"}
+    //     {"displayName":"Notes","mimeType":"text/html",
+    //      "type":"application/collab-doc+json","uri":"3f1c8a5b0d2e4f67"}
+    //
+    // The media type says how to read the document, not how it travels: the
+    // bytes on the wire are always a Y-CRDT update. It is what tells a client
+    // whether it can open a document at all, so a document type this client
+    // knows nothing about can be shown as such instead of opened wrongly.
     //
     // The commit deliberately carries no content: the document lives in its own
     // git repository, so the conversation history stays a list of user-visible
     // events and does not grow with the editing traffic.
     static CommitMessage collabDocCreated(const std::string& documentId,
                                           const std::string& name,
-                                          const std::string& kind)
+                                          const std::string& mimeType)
     {
         CommitMessage msg;
         msg.type = CommitType::COLLAB_DOC;
         msg.uri = documentId;
         msg.displayName = name;
-        msg.kind = kind;
+        msg.mimeType = mimeType;
         return msg;
     }
 

@@ -77,8 +77,8 @@ CommitMessage::toJson() const
     if (!invited.empty()) {
         value[CommitKey::INVITED] = invited;
     }
-    if (!kind.empty()) {
-        value[CommitKey::KIND] = kind;
+    if (!mimeType.empty()) {
+        value[CommitKey::MIME_TYPE] = mimeType;
     }
     return value;
 }
@@ -126,7 +126,7 @@ CommitMessage::fromString(const std::string& str)
         msg.sha3sum = value.get(CommitKey::SHA3SUM, "").asString();
         msg.mode = value.get(CommitKey::MODE, -1).asInt();
         msg.invited = value.get(CommitKey::INVITED, "").asString();
-        msg.kind = value.get(CommitKey::KIND, "").asString();
+        msg.mimeType = value.get(CommitKey::MIME_TYPE, "").asString();
     } catch (const std::exception& e) {
         JAMI_ERROR("Exception while parsing commit message '{}': {}", str, e.what());
         return std::nullopt;

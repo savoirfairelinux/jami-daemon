@@ -128,7 +128,9 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
  *
  * Because nothing here is tied to a document type, a client is free to implement
  * an editor for any type yrs supports -- text, rich text, maps, arrays, XML
- * fragments -- without a change to this API.
+ * fragments -- without a change to this API. A document carries the media type
+ * of what it holds, so a client can tell an unsupported document apart from one
+ * it should open.
  *
  * Every update crossing this API is base64-encoded, so it survives the string
  * transports the clients are reached through (D-Bus, JNI, Node).
@@ -136,7 +138,7 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
 LIBJAMI_PUBLIC std::string createCollaborativeDocument(const std::string& accountId,
                                                        const std::string& conversationId,
                                                        const std::string& name,
-                                                       const std::string& kind);
+                                                       const std::string& mimeType);
 /**
  * Open a document and get its whole state as a single base64 Y-CRDT update.
  * Apply it to a fresh replica to obtain the current document.
