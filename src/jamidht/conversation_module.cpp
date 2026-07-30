@@ -1079,6 +1079,9 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
     if (conv.conversation && (force || conv.conversation->isRemoving())) {
         // Stop fetch!
         conv.pending.reset();
+        // And abort the ones already running: the repository is about to be deleted, and erase()
+        // below waits for them to release the repository write lock.
+        conv.conversation->shutdownConnections();
 
         JAMI_LOG("[Account {}] [Conversation {}] Remove conversation", accountId_, conv.info.id);
         try {
