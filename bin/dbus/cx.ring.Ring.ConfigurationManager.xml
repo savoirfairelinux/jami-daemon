@@ -849,6 +849,16 @@
             <arg type="s" name="documentId" direction="in"/>
         </method>
 
+        <method name="removeCollaborativeDocument" tp:name-for-bindings="removeCollaborativeDocument">
+            <tp:docstring>
+               Remove a collaborative document from a conversation, for every member
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="b" name="removed" direction="out"/>
+        </method>
+
         <method name="applyCollaborativeUpdate" tp:name-for-bindings="applyCollaborativeUpdate">
             <tp:docstring>
                Merge a Y-CRDT update produced by the client into a collaborative document
@@ -1001,6 +1011,15 @@
             <arg type="s" name="conversationId"/>
             <arg type="s" name="documentId"/>
             <arg type="s" name="name"/>
+        </signal>
+
+        <signal name="collaborativeDocumentRemoved" tp:name-for-bindings="collaborativeDocumentRemoved">
+            <tp:docstring>
+               Notify clients that a collaborative document was removed by its author
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
         </signal>
 
         <signal name="collaborativeAttachmentAdded" tp:name-for-bindings="collaborativeAttachmentAdded">
