@@ -75,16 +75,16 @@ struct SwarmMessage
 
   // Collaborative editing
   std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);
-  std::string openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
-  void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& base64Update);
+  void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::vector<uint8_t>& update);
   void setCollaborativeAwareness(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& state);
-  std::string collaborativeDocumentState(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  std::vector<uint8_t> collaborativeDocumentState(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void setCollaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& name);
   std::string collaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId);
   std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
-  std::string collaborativeDocumentStateAt(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
+  std::vector<uint8_t> collaborativeDocumentStateAt(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
   std::string addCollaborativeAttachment(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::vector<uint8_t>& data);
   std::vector<uint8_t> collaborativeAttachment(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& attachmentId);
 
