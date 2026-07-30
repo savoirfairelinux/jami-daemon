@@ -72,11 +72,10 @@ public:
     std::string createDocument(const std::string& conversationId, const std::string& name, const std::string& mimeType);
     /**
      * Open (or create the local session for) a document.
-     * @return its whole state as a single base64 Y-CRDT update, which the caller
-     *         applies to its own replica. Empty for a document nothing is known
-     *         about yet.
+     * @return its whole state as a single Y-CRDT update, which the caller applies
+     *         to its own replica. Empty for a document nothing is known about yet.
      */
-    std::string openDocument(const std::string& conversationId, const std::string& documentId);
+    YrsDocument::Bytes openDocument(const std::string& conversationId, const std::string& documentId);
     /// Drop the local session for a document.
     void closeDocument(const std::string& conversationId, const std::string& documentId);
     /**
@@ -86,14 +85,14 @@ public:
      * The update is opaque here. It is @b not signalled back to the local
      * clients: the one that produced it already has it in its own replica.
      */
-    void applyUpdate(const std::string& conversationId, const std::string& documentId, const std::string& base64Update);
-    /// Whole current state as a single base64 Y-CRDT update, or empty if unknown.
-    std::string documentState(const std::string& conversationId, const std::string& documentId);
+    void applyUpdate(const std::string& conversationId, const std::string& documentId, const YrsDocument::Bytes& update);
+    /// Whole current state as a single Y-CRDT update, or empty if unknown.
+    YrsDocument::Bytes documentState(const std::string& conversationId, const std::string& documentId);
     /// Same, as of checkpoint @c commitId, without touching the live document.
     /// Empty if that checkpoint is unknown to this replica.
-    std::string documentStateAt(const std::string& conversationId,
-                                const std::string& documentId,
-                                const std::string& commitId);
+    YrsDocument::Bytes documentStateAt(const std::string& conversationId,
+                                       const std::string& documentId,
+                                       const std::string& commitId);
     /// Current name of a document, or empty if unknown.
     std::string documentName(const std::string& conversationId, const std::string& documentId);
     /// Rename a document; the new name syncs to all members and persists.

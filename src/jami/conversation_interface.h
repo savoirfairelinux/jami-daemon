@@ -132,24 +132,25 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
  * of what it holds, so a client can tell an unsupported document apart from one
  * it should open.
  *
- * Every update crossing this API is base64-encoded, so it survives the string
- * transports the clients are reached through (D-Bus, JNI, Node).
+ * Updates cross this API as the bytes the engine produced. They are binary and
+ * they are handed over as such: encoding them would inflate every keystroke by a
+ * third and cost a conversion at each end, for nothing the transports need.
  */
 LIBJAMI_PUBLIC std::string createCollaborativeDocument(const std::string& accountId,
                                                        const std::string& conversationId,
                                                        const std::string& name,
                                                        const std::string& mimeType);
 /**
- * Open a document and get its whole state as a single base64 Y-CRDT update.
- * Apply it to a fresh replica to obtain the current document.
+ * Open a document and get its whole state as a single Y-CRDT update. Apply it to
+ * a fresh replica to obtain the current document.
  *
- * @return the state, never an empty string: a document that holds nothing still
- *         encodes as a short, valid update, and applying it is a harmless no-op.
- *         An empty string means the account is gone.
+ * @return the state, never empty: a document that holds nothing still encodes as
+ *         a short, valid update, and applying it is a harmless no-op. Empty means
+ *         the account is gone.
  */
-LIBJAMI_PUBLIC std::string openCollaborativeDocument(const std::string& accountId,
-                                                     const std::string& conversationId,
-                                                     const std::string& documentId);
+LIBJAMI_PUBLIC std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId,
+                                                              const std::string& conversationId,
+                                                              const std::string& documentId);
 LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& documentId);
@@ -168,11 +169,11 @@ LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
 LIBJAMI_PUBLIC void applyCollaborativeUpdate(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& documentId,
-                                             const std::string& base64Update);
-/// The document's whole current state as a base64 Y-CRDT update.
-LIBJAMI_PUBLIC std::string collaborativeDocumentState(const std::string& accountId,
-                                                      const std::string& conversationId,
-                                                      const std::string& documentId);
+                                             const std::vector<uint8_t>& update);
+/// The document's whole current state as a Y-CRDT update.
+LIBJAMI_PUBLIC std::vector<uint8_t> collaborativeDocumentState(const std::string& accountId,
+                                                               const std::string& conversationId,
+                                                               const std::string& documentId);
 /**
  * Share ephemeral state with the other members while editing: presence, cursor,
  * selection. The payload is opaque, never merged and never stored, so its shape
@@ -207,18 +208,18 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeD
     const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
 
 /**
- * The document's state as it was at checkpoint @c commitId, as a base64 Y-CRDT
- * update. The live document is left untouched.
+ * The document's state as it was at checkpoint @c commitId, as a Y-CRDT update.
+ * The live document is left untouched.
  *
  * Reviewing that state, or restoring the document to it, is the client's
  * business: both need to know what the document is, which is precisely what the
  * daemon does not.
- * @return an empty string if that checkpoint is unknown here
+ * @return empty if that checkpoint is unknown here
  */
-LIBJAMI_PUBLIC std::string collaborativeDocumentStateAt(const std::string& accountId,
-                                                        const std::string& conversationId,
-                                                        const std::string& documentId,
-                                                        const std::string& commitId);
+LIBJAMI_PUBLIC std::vector<uint8_t> collaborativeDocumentStateAt(const std::string& accountId,
+                                                                 const std::string& conversationId,
+                                                                 const std::string& documentId,
+                                                                 const std::string& commitId);
 
 /**
  * Store a binary payload the document refers to -- an image, a sound, any blob --

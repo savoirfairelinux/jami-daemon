@@ -443,7 +443,7 @@ CollaborativeEditing::admitUnannounced(const std::string& conversationId, const 
     return unannounced < MAX_UNANNOUNCED;
 }
 
-std::string
+YrsDocument::Bytes
 CollaborativeEditing::openDocument(const std::string& conversationId, const std::string& documentId)
 {
     // A document only exists once the conversation announced it. Opening one
@@ -472,7 +472,7 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
         if (!session->announcedName)
             session->announcedName = name;
     }
-    auto state = base64::encode(session->doc->encodeStateAsUpdate());
+    auto state = session->doc->encodeStateAsUpdate();
     // Offer the members what this replica already holds, so that the ones with
     // the document open answer with just the difference. This is also what makes
     // a second device of the same account catch up on edits that were made while
@@ -519,28 +519,18 @@ CollaborativeEditing::closeDocument(const std::string& conversationId, const std
 void
 CollaborativeEditing::applyUpdate(const std::string& conversationId,
                                   const std::string& documentId,
-                                  const std::string& base64Update)
+                                  const YrsDocument::Bytes& update)
 {
     auto session = findSession(conversationId, documentId);
     if (!session)
         return;
-    if (base64Update.size() > MAX_ENCODED_UPDATE_SIZE) {
+    if (update.size() > MAX_UPDATE_SIZE) {
         JAMI_WARNING("[Account {}] [Document {}] Discarding a {} byte update from the client: "
                      "over the {} byte limit",
                      accountId_,
                      documentId,
-                     base64Update.size(),
-                     MAX_ENCODED_UPDATE_SIZE);
-        return;
-    }
-    YrsDocument::Bytes update;
-    try {
-        update = base64::decode(base64Update);
-    } catch (const std::exception& e) {
-        JAMI_WARNING("[Account {}] [Document {}] Discarding unreadable update from the client: {}",
-                     accountId_,
-                     documentId,
-                     e.what());
+                     update.size(),
+                     MAX_UPDATE_SIZE);
         return;
     }
     // Merge before forwarding: an update the engine rejects must not be sent to
@@ -550,11 +540,11 @@ CollaborativeEditing::applyUpdate(const std::string& conversationId,
     onLocalUpdate(session, update);
 }
 
-std::string
+YrsDocument::Bytes
 CollaborativeEditing::documentState(const std::string& conversationId, const std::string& documentId)
 {
     auto session = findSession(conversationId, documentId);
-    return session ? base64::encode(session->doc->encodeStateAsUpdate()) : std::string {};
+    return session ? session->doc->encodeStateAsUpdate() : YrsDocument::Bytes {};
 }
 
 void
@@ -1139,7 +1129,7 @@ CollaborativeEditing::history(const std::string& conversationId, const std::stri
     return repo ? repo->history(max) : std::vector<CollabRepository::HistoryEntry> {};
 }
 
-std::string
+YrsDocument::Bytes
 CollaborativeEditing::documentStateAt(const std::string& conversationId,
                                       const std::string& documentId,
                                       const std::string& commitId)
@@ -1176,7 +1166,7 @@ CollaborativeEditing::documentStateAt(const std::string& conversationId,
                          e.what());
         }
     }
-    return base64::encode(snapshot.encodeStateAsUpdate());
+    return snapshot.encodeStateAsUpdate();
 }
 
 void
@@ -1329,7 +1319,7 @@ CollaborativeEditing::emitUpdate(const std::string& conversationId,
     emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentUpdate>(accountId_,
                                                                           conversationId,
                                                                           documentId,
-                                                                          base64::encode(update));
+                                                                          update);
 }
 
 void

@@ -454,7 +454,7 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*convId*/,
                              const std::string& /*documentId*/,
-                             const std::string& /*base64Update*/);
+                             const std::vector<uint8_t>& /*update*/);
     };
     /**
      * Ephemeral state a peer shares while editing: presence, cursor, selection.

@@ -283,7 +283,7 @@ createCollaborativeDocument(const std::string& accountId,
     return {};
 }
 
-std::string
+std::vector<uint8_t>
 openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
@@ -304,10 +304,10 @@ void
 applyCollaborativeUpdate(const std::string& accountId,
                          const std::string& conversationId,
                          const std::string& documentId,
-                         const std::string& base64Update)
+                         const std::vector<uint8_t>& update)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        acc->collaborativeEditing()->applyUpdate(conversationId, documentId, base64Update);
+        acc->collaborativeEditing()->applyUpdate(conversationId, documentId, update);
 }
 
 void
@@ -320,7 +320,7 @@ setCollaborativeAwareness(const std::string& accountId,
         acc->collaborativeEditing()->setAwareness(conversationId, documentId, state);
 }
 
-std::string
+std::vector<uint8_t>
 collaborativeDocumentState(const std::string& accountId,
                            const std::string& conversationId,
                            const std::string& documentId)
@@ -376,7 +376,7 @@ getCollaborativeDocumentHistory(const std::string& accountId,
     return result;
 }
 
-std::string
+std::vector<uint8_t>
 collaborativeDocumentStateAt(const std::string& accountId,
                              const std::string& conversationId,
                              const std::string& documentId,
