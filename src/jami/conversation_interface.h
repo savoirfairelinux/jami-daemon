@@ -151,6 +151,22 @@ LIBJAMI_PUBLIC std::string createCollaborativeDocument(const std::string& accoun
 LIBJAMI_PUBLIC std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId,
                                                               const std::string& conversationId,
                                                               const std::string& documentId);
+/**
+ * Remove a document from the conversation. It is retired for every member and
+ * erased from every device, so this is not a way to stop holding a document
+ * locally.
+ *
+ * Only the member who created the document can: the removal is an edition of the
+ * announcement, and the swarm accepts an edition only from the author of what it
+ * edits.
+ *
+ * @return false if no announcement for that document is known here. True means
+ *         the removal was committed, not that the members already applied it;
+ *         ConfigurationSignal::CollaborativeDocumentRemoved reports that.
+ */
+LIBJAMI_PUBLIC bool removeCollaborativeDocument(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const std::string& documentId);
 LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& documentId);

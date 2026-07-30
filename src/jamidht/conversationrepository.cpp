@@ -1135,6 +1135,12 @@ ConversationRepository::Impl::checkEdit(const std::string& userDevice, const Con
         if (!editedCommit->commitMsg.tid.empty())
             return true;
     }
+    // Removing a collaborative document is an edition of the commit that
+    // announced it, so the author check above is what says that only the member
+    // who created a document may remove it for everyone.
+    if (editedCommit->commitMsg.type == CommitType::COLLAB_DOC) {
+        return true;
+    }
     JAMI_ERROR("Edited commit {:s} is not valid!", editedId);
     return false;
 }

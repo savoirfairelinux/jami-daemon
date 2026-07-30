@@ -70,6 +70,10 @@ public:
     /// @c mimeType names the media type of what the document will hold, so a
     /// client can tell whether it is able to open it; the daemon only stores it.
     std::string createDocument(const std::string& conversationId, const std::string& name, const std::string& mimeType);
+    /// Retire a document from the conversation: it is removed on every device.
+    /// Only its author can, which the swarm enforces on the edition itself.
+    /// @return false if no announcement for it was found here
+    bool removeDocument(const std::string& conversationId, const std::string& documentId);
     /**
      * Open (or create the local session for) a document.
      * @return its whole state as a single Y-CRDT update, which the caller applies
@@ -162,6 +166,9 @@ public:
     /// A peer announced a document in @c conversationId: make sure a local
     /// repository exists so it can be replicated.
     void onDocumentAnnounced(const std::string& conversationId, const std::string& documentId);
+    /// The author of a document retired its announcement: stop replicating it and
+    /// drop what this device holds of it.
+    void onDocumentRemoved(const std::string& conversationId, const std::string& documentId);
     /// The document's repository changed after a sync: replay the new updates
     /// into the live session and notify the client.
     void onRepositoryUpdated(const std::string& conversationId, const std::string& documentId);
@@ -182,6 +189,12 @@ private:
     void onLocalUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);
     /// Whether a COLLAB_DOC commit in @c conversationId announced this document.
     bool isAnnouncedDocument(const std::string& conversationId, const std::string& documentId);
+    /// Whether the author of this document has retired its announcement.
+    ///
+    /// Answered from what the history walk recorded, never by asking the
+    /// conversation again: this is consulted while the caller holds the
+    /// conversation lock.
+    bool isRemovedDocument(const std::string& conversationId, const std::string& documentId);
     /// Whether room remains to hold a session for a document the conversation
     /// never announced. Live updates arrive before the announcement is merged,
     /// so such sessions have to be tolerated -- but an authorized member can name
@@ -191,6 +204,10 @@ private:
     /// Announced document ids per conversation, so the check above stays O(1).
     std::mutex announcedMtx_;
     std::map<std::string, std::set<std::string>> announced_;
+    /// Removed document ids per conversation, guarded by @c announcedMtx_ too:
+    /// the two sets are always read together, and one lock keeps them consistent.
+    /// A conversation absent from this map has not been scanned yet.
+    std::map<std::string, std::set<std::string>> removed_;
     /// Display names already read from disk. Clients ask for a name far more
     /// often than one changes -- once per message delegate built while scrolling
     /// -- and answering from the repository means git lookups on their UI thread.
