@@ -36,7 +36,8 @@ def build_contrib(args, paths):
         "opencv_contrib",
         "freetype",
         "harfbuzz",
-        "whispercpp"
+        "whispercpp",
+        "icu"
     ]
     versioner.extra_output_dirs = ["msvc"]
 
