@@ -177,7 +177,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, cb = std::move(cb), addr](const dht::http::Response& response) {
+        request->add_on_done_callback([this, cb, addr](const dht::http::Response& response) {
             if (response.status_code > 400 && response.status_code < 500) {
                 auto cacheResult = nameCache(addr);
                 if (not cacheResult.first.empty())
@@ -225,9 +225,12 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERROR("Error when performing address lookup: {}", e.what());
-        std::lock_guard lk(requestsMtx_);
-        if (request)
+        {
+            std::lock_guard lk(requestsMtx_);
             requests_.erase(request);
+        }
+        // The request will never complete, so answer here: callers must always get a reply.
+        cb("", "", Response::error);
     }
 }
 
@@ -250,7 +253,7 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, name, cb = std::move(cb)](const dht::http::Response& response) {
+        request->add_on_done_callback([this, name, cb](const dht::http::Response& response) {
             if (response.status_code > 400 && response.status_code < 500)
                 cb("", "", Response::notFound);
             else if (response.status_code == 400)
@@ -313,9 +316,12 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERROR("Name lookup for {} failed: {}", name, e.what());
-        std::lock_guard lk(requestsMtx_);
-        if (request)
+        {
+            std::lock_guard lk(requestsMtx_);
             requests_.erase(request);
+        }
+        // The request will never complete, so answer here: callers must always get a reply.
+        cb("", "", Response::error);
     }
 }
 
