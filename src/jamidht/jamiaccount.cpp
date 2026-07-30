@@ -1216,28 +1216,19 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    TimePoint received,
-                                                    TimePoint invited) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               TimePoint received,
+               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -1689,16 +1680,10 @@ JamiAccount::lookupAddress(const std::string& addr)
                                                                       "");
         return;
     }
-    accountManager_->lookupAddress(addr,
-                                   [acc, addr](const std::string& regName,
-                                               const std::string& address,
-                                               NameDirectory::Response response) {
-                                       emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
-                                                                                                     addr,
-                                                                                                     (int) response,
-                                                                                                     address,
-                                                                                                     regName);
-                                   });
+    accountManager_->lookupAddress(
+        addr, [acc, addr](const std::string& regName, const std::string& address, NameDirectory::Response response) {
+            emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc, addr, (int) response, address, regName);
+        });
 }
 
 void
@@ -2487,13 +2472,20 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                      remoteDevice);
             auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
             syncCnt_.fetch_add(1);
-            gs->setOnFetched([w = weak(), conversationId, remoteDevice](const std::string& commit) {
-                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit]() {
+            // Balances the increment above exactly once, whether the peer ends up
+            // fetching or the channel simply dies.
+            auto endSync = [w = weak(), done = std::make_shared<std::once_flag>()] {
+                std::call_once(*done, [&] {
+                    if (auto shared = w.lock())
+                        if (shared->syncCnt_.fetch_sub(1) == 1)
+                            emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
+                });
+            };
+            gs->setOnFetched([w = weak(), conversationId, remoteDevice, endSync](const std::string& commit) {
+                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit, endSync]() {
                     if (auto shared = w.lock()) {
                         shared->convModule()->setFetched(conversationId, remoteDevice, commit);
-                        if (shared->syncCnt_.fetch_sub(1) == 1) {
-                            emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
-                        }
+                        endSync();
                     }
                 });
             });
@@ -2502,7 +2494,8 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 std::lock_guard lk(gitServersMtx_);
                 gitServers_[serverId] = std::move(gs);
             }
-            channel->onShutdown([w = weak(), serverId](const std::error_code&) {
+            channel->onShutdown([w = weak(), serverId, endSync](const std::error_code&) {
+                endSync();
                 // Run on main thread to avoid to be in mxSock's eventLoop
                 runOnMainThread([serverId, w]() {
                     if (auto sthis = w.lock()) {
@@ -3575,8 +3568,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     }
 
     if (not payload.empty()) {
-        req.write(reinterpret_cast<const char*>(payload.data()),
-                  static_cast<std::streamsize>(payload.size()));
+        req.write(reinterpret_cast<const char*>(payload.data()), static_cast<std::streamsize>(payload.size()));
     }
     req.close();
 
