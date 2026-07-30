@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "931f2d1d_43bd3e32",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 876,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-07-30T18:07:59Z",
+      "side": 1,
+      "message": "We check if `socket` is null here but not in `Conversation::shutdownConnections`. I don\u0027t think it\u0027s currently possible for `gitSocketList_` to contain null pointers, but if we want to be defensive in case this changes in the future then we should be consistent and do it in both places.",
+      "range": {
+        "startLine": 875,
+        "startChar": 8,
+        "endLine": 876,
+        "endChar": 27
+      },
+      "revId": "1a6cf19b355d9274fc8553da3511b5d74c1fdbd6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
