@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ae29f42_df50c7b8",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 909,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:09Z",
+      "side": 1,
+      "message": "[error] Line 909: 🔴 Existing document repositories store \"kind\" in meta.json, but this now defaults missing \"mimeType\" to text/plain. That silently mislabels old rich documents as plain text. Read legacy \"kind\" when \"mimeType\" is absent and translate known legacy values instead of always defaulting.",
+      "revId": "5d20c4eddbd70d1234393f3a2ff10220e24e3215",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e1e9b232_4f14eff6",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:09Z",
+      "side": 1,
+      "message": "[warning] Line 236: 🟡 When callers pass an empty mimeType, the repository metadata stores text/plain but the announcement commit keeps mimeType empty, and CommitMessage::toJson() omits the field. Normalize the value once before both CollabRepository::create() and collabDocCreated() so document listings and repository metadata agree.",
+      "revId": "5d20c4eddbd70d1234393f3a2ff10220e24e3215",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f32d914_90bc900f",
+        "filename": "src/jamidht/commit_message.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:09Z",
+      "side": 1,
+      "message": "[error] Line 127: 🔴 Existing COLLAB_DOC commits still use the legacy \"kind\" key, but this now only reads \"mimeType\", so previously announced documents lose their type when listed from history. Fall back to parsing \"kind\" and map known values such as \"text\" -\u003e \"text/plain\" and \"rich\" -\u003e the chosen rich-text media type.",
+      "revId": "5d20c4eddbd70d1234393f3a2ff10220e24e3215",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
