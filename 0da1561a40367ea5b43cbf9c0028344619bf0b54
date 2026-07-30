@@ -16,6 +16,24 @@
       "message": "[warning] Line 407: 🟡 This still updates stored trust requests by local receive time only. With the new sender timestamp, an older/passively redelivered request can arrive later, pass `received \u003e req-\u003esecond.received`, and overwrite `req-\u003esecond.invited` with an older invite time; that regressed value is then saved and synced to other devices. Compare the effective invite ordering timestamp (`invited` when set, otherwise `received`) against the existing request\u0027s effective timestamp before replacing the stored request.",
       "revId": "0da1561a40367ea5b43cbf9c0028344619bf0b54",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40d7977a_6b5e7d63",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 407,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-07-30T19:08:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "36c5ba45_461b55ba",
+      "revId": "0da1561a40367ea5b43cbf9c0028344619bf0b54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
