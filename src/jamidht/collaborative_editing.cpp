@@ -183,7 +183,9 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
 }
 
 std::string
-CollaborativeEditing::createDocument(const std::string& conversationId, const std::string& name, const std::string& kind)
+CollaborativeEditing::createDocument(const std::string& conversationId,
+                                     const std::string& name,
+                                     const std::string& mimeType)
 {
     std::random_device rd;
     std::uniform_int_distribution<uint64_t> dist;
@@ -197,7 +199,7 @@ CollaborativeEditing::createDocument(const std::string& conversationId, const st
         return {};
     // The document gets its own repository, holding its content and history. It
     // must exist before the session opens it.
-    if (!CollabRepository::create(account, conversationId, documentId, name, kind)) {
+    if (!CollabRepository::create(account, conversationId, documentId, name, mimeType)) {
         JAMI_ERROR("[Account {}] Unable to create repository for document {}", accountId_, documentId);
         return {};
     }
@@ -233,7 +235,7 @@ CollaborativeEditing::createDocument(const std::string& conversationId, const st
         return {};
     }
     cm->createCommit(conversationId,
-                     CommitMessage::collabDocCreated(documentId, name, kind),
+                     CommitMessage::collabDocCreated(documentId, name, mimeType),
                      true,
                      {},
                      [w = weak_from_this(), conversationId, documentId, accountId = accountId_](bool ok,

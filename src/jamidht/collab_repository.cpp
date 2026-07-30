@@ -39,6 +39,10 @@ constexpr std::string_view META_FILE {"meta.json"};
 constexpr std::string_view ATTACHMENTS_DIR {"attachments"};
 constexpr std::string_view MAIN_REF {"refs/heads/main"};
 
+// What a document holds when its metadata does not say. Only a document written
+// by a client too old to name a media type gets here, and those held text.
+constexpr const char* const DEFAULT_MIME_TYPE {"text/plain"};
+
 // Subject line prefix identifying a commit whose message carries CRDT updates.
 
 // A document repository stores text deltas; a larger transfer means the peer is
@@ -816,7 +820,7 @@ CollabRepository::create(const std::shared_ptr<JamiAccount>& account,
                          const std::string& conversationId,
                          const std::string& documentId,
                          const std::string& displayName,
-                         const std::string& kind)
+                         const std::string& mimeType)
 {
     if (!account)
         return nullptr;
@@ -837,7 +841,7 @@ CollabRepository::create(const std::shared_ptr<JamiAccount>& account,
     meta["documentId"] = documentId;
     meta["conversationId"] = conversationId;
     meta["displayName"] = truncatedName(displayName);
-    meta["kind"] = kind.empty() ? "text" : kind;
+    meta["mimeType"] = mimeType.empty() ? DEFAULT_MIME_TYPE : mimeType;
     meta["createdBy"] = account->getUsername();
     meta["createdAt"] = static_cast<Json::Int64>(std::time(nullptr));
     auto metaStr = json::toString(meta);
@@ -904,7 +908,7 @@ CollabRepository::meta() const
     // meta.json is merged in from other members: its name is remote input, and it
     // ends up in a signal every client displays.
     out.displayName = truncatedName(root.get("displayName", "").asString());
-    out.kind = root.get("kind", "text").asString();
+    out.mimeType = root.get("mimeType", DEFAULT_MIME_TYPE).asString();
     out.createdBy = root.get("createdBy", "").asString();
     out.createdAt = root.get("createdAt", 0).asInt64();
     return out;

@@ -47,7 +47,7 @@ class JamiAccount;
  * Layout (branch @c main, bare repository)
  * ----------------------------------------
  * @verbatim
- *   meta.json                          document id, conversation id, kind, name
+ *   meta.json                          document id, conversation id, media type, name
  *   attachments/<blobId>               binary payloads referenced by the document
  * @endverbatim
  *
@@ -100,9 +100,9 @@ public:
         std::string documentId;
         std::string conversationId;
         std::string displayName;
-        std::string kind {"text"}; ///< "text" (plain) or "rich" (formatted)
-        std::string createdBy;     ///< author URI
-        int64_t createdAt {0};     ///< seconds since epoch
+        std::string mimeType {"text/plain"}; ///< media type of what the document holds
+        std::string createdBy;               ///< author URI
+        int64_t createdAt {0};               ///< seconds since epoch
     };
 
     /// One entry of the document's history, as shown to a client.
@@ -153,7 +153,7 @@ public:
                                                     const std::string& conversationId,
                                                     const std::string& documentId,
                                                     const std::string& displayName,
-                                                    const std::string& kind);
+                                                    const std::string& mimeType);
     /// Open an existing document repository, or return nullptr.
     static std::shared_ptr<CollabRepository> open(const std::shared_ptr<JamiAccount>& account,
                                                   const std::string& conversationId,

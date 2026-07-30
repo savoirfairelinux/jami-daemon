@@ -62,9 +62,9 @@ public:
     ~CollaborativeEditing();
 
     /// Create a new document in @c conversationId, returning its generated id.
-    /// @c kind is a free-form hint telling clients which editor to open; the
-    /// daemon only stores it.
-    std::string createDocument(const std::string& conversationId, const std::string& name, const std::string& kind);
+    /// @c mimeType names the media type of what the document will hold, so a
+    /// client can tell whether it is able to open it; the daemon only stores it.
+    std::string createDocument(const std::string& conversationId, const std::string& name, const std::string& mimeType);
     /**
      * Open (or create the local session for) a document.
      * @return its whole state as a single base64 Y-CRDT update, which the caller

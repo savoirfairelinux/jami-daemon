@@ -276,10 +276,10 @@ std::string
 createCollaborativeDocument(const std::string& accountId,
                             const std::string& conversationId,
                             const std::string& name,
-                            const std::string& kind)
+                            const std::string& mimeType)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->collaborativeEditing()->createDocument(conversationId, name, kind);
+        return acc->collaborativeEditing()->createDocument(conversationId, name, mimeType);
     return {};
 }
 

@@ -825,7 +825,7 @@
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="conversationId" direction="in"/>
             <arg type="s" name="name" direction="in"/>
-            <arg type="s" name="kind" direction="in"/>
+            <arg type="s" name="mimeType" direction="in"/>
             <arg type="s" name="documentId" direction="out"/>
         </method>
 
