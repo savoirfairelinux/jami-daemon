@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d5e72da_10228315",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 935,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T00:45:31Z",
+      "side": 1,
+      "message": "[error] Line 935: 🔴 This can emit `onConnectionChanged_(false)` while other connection attempts are still pending in the routing table. `getActiveNodesCount() \u003d\u003d 0` only checks established nodes after removing the failed attempt, so the first failed bootstrap attempt can report disconnected even if another connecting node may still succeed. Please include connecting nodes across the whole routing table in this condition, or add a routing-table helper that reports no active and no connecting nodes before emitting `false`.",
+      "revId": "07a44ca767a805baf175fe7887fae738bc2b44d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
