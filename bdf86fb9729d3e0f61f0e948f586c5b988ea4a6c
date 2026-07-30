@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b90bee1_8627924a",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 967,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:13Z",
+      "side": 1,
+      "message": "[error] Line 967: 🔴 The QtDBus type annotation for the signal uses `In3`, but signal arguments are outbound in introspection. This can leave generated Qt bindings without the `std::vector\u003cuint8_t\u003e` type for the binary update signal. Use the matching output/signal annotation form consistent with other `ay` signal arguments in this XML, e.g. `org.qtproject.QtDBus.QtTypeName.Out3` if that is the project convention.",
+      "revId": "bdf86fb9729d3e0f61f0e948f586c5b988ea4a6c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
