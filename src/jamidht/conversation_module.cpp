@@ -3522,18 +3522,6 @@ ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId
 }
 
 void
-ConversationModule::addGitSocket(std::string_view deviceId,
-                                 std::string_view convId,
-                                 const std::shared_ptr<dhtnet::ChannelSocket>& channel)
-{
-    if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard lk(conv->mtx);
-        conv->conversation->addGitSocket(DeviceId(deviceId), channel);
-    } else
-        JAMI_WARNING("addGitSocket: Unable to find conversation {:s}", convId);
-}
-
-void
 ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view convId)
 {
     pimpl_->withConversation(convId, [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId)); });

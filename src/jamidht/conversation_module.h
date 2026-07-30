@@ -499,9 +499,6 @@ public:
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId, std::string_view convId) const;
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
-    void addGitSocket(std::string_view deviceId,
-                      std::string_view convId,
-                      const std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Clear all connection (swarm channels)
      */
