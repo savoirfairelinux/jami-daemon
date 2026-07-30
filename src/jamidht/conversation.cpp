@@ -787,10 +787,19 @@ public:
     }
     void removeGitSocket(const DeviceId& deviceId)
     {
-        std::lock_guard lk(gitSocketMtx_);
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets != gitSocketList_.end())
+        std::shared_ptr<dhtnet::ChannelSocket> socket;
+        {
+            std::lock_guard lk(gitSocketMtx_);
+            auto deviceSockets = gitSocketList_.find(deviceId);
+            if (deviceSockets == gitSocketList_.end())
+                return;
+            socket = std::move(deviceSockets->second);
             gitSocketList_.erase(deviceSockets);
+        }
+        // Wake up any fetch currently blocked reading from this socket, otherwise it keeps
+        // ConversationRepository::opMtx_ until its read times out.
+        if (socket)
+            socket->stop();
     }
 
     void disconnectFromDevice(const DeviceId& deviceId);
@@ -1840,10 +1849,15 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 void
 Conversation::shutdownConnections()
 {
+    decltype(Impl::gitSocketList_) gitSockets;
     {
         std::lock_guard lk(pimpl_->gitSocketMtx_);
+        gitSockets = std::move(pimpl_->gitSocketList_);
         pimpl_->gitSocketList_.clear();
     }
+    // Shutting down wakes up any fetch currently blocked reading from these sockets.
+    for (auto& [_, socket] : gitSockets)
+        socket->shutdown();
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
 }
