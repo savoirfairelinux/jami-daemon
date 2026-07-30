@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ced35093_d47a90ec",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 581,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:35Z",
+      "side": 1,
+      "message": "Not fixed, deliberately. There is no rolling upgrade to protect: the collaborative-editing API has never been released, so no deployed daemon sends the legacy \"op\"/\"aw\"/\"leave\" messages. The only peers that ever spoke them are development builds, which are rebuilt from this same series.\n\nKeeping the legacy path alive would mean two wire formats, two awareness identity models -- account URI on one side, client id on the other -- and the very defect this series fixes (two devices of one account overwriting each other\u0027s cursor) would survive in the legacy branch of the code. The commit message calls the break out explicitly.",
+      "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b630f620_c4890f16",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 641,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:35Z",
+      "side": 1,
+      "message": "Correct, and fixed in patch set 2. Every sub-type other than STEP1 fell through to the merge path, so an extension of the protocol -- or a malformed frame -- would have been handed to the engine as if it were an update.\n\nSTEP2 and UPDATE are now matched explicitly and anything else is ignored with a warning.",
+      "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "82010b12_b1cfd874",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:35Z",
+      "side": 1,
+      "message": "Checked, and the failure mode is not the one described, but the code did not say so. Documented in patch set 2.\n\nThe only caller of onRemotePayload() is jamiaccount.cpp, which passes cert-\u003egetLongId().toString(): a message that reached us arrived over an authenticated channel, so the device is always known and never empty.\n\nHad it been empty, JamiAccount::sendMessage() does not fall back to an \"unspecified/default device\" -- jamiaccount.cpp:3814 branches on deviceId.empty() and sends to every connected channel of that one member. That is wider than intended but still confined to the member who asked, and nothing is silently dropped. Patch set 2 states that in the comment rather than adding a guard against a case the type system already rules out.",
+      "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
