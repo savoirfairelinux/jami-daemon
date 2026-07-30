@@ -20,6 +20,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <thread>
 #include <msgpack.hpp>
 #include <filesystem>
 
@@ -75,12 +76,14 @@ private:
     void testBootstrapFailed();
     void testBootstrapNeverNewDevice();
     void testBootstrapCompat();
+    void testBootstrapAfterReactivation();
 
     CPPUNIT_TEST_SUITE(BootstrapTest);
     CPPUNIT_TEST(testBootstrapOk);
     CPPUNIT_TEST(testBootstrapFailed);
     CPPUNIT_TEST(testBootstrapNeverNewDevice);
     CPPUNIT_TEST(testBootstrapCompat);
+    CPPUNIT_TEST(testBootstrapAfterReactivation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -360,6 +363,46 @@ BootstrapTest::testBootstrapCompat()
     cv.wait_for(lk, 30s, [&]() {
         return bobData.messages.size() == bobMsgSize + 1 && bobData.bootstrap == Conversation::BootstrapStatus::FAILED;
     });
+}
+
+void
+BootstrapTest::testBootstrapAfterReactivation()
+{
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
+    auto bobUri = bobAccount->getUsername();
+
+    bobAccount->convModule()->onBootstrapStatus(
+        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            bobData.bootstrap = status;
+            cv.notify_one();
+        });
+
+    std::unique_lock lk {mtx};
+    auto convId = libjami::startConversation(aliceData.accountId);
+
+    libjami::addConversationMember(aliceData.accountId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    libjami::acceptConversationRequest(bobData.accountId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationReady
+               && bobData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
+    }));
+
+    // A mobile client deactivates its accounts every time it leaves the
+    // foreground, and activates them again when it comes back. The conversations
+    // outlive that, keeping every device they have learned, while all of their
+    // connections are dropped.
+    bobData.bootstrap = Conversation::BootstrapStatus::FAILED;
+    lk.unlock();
+    Manager::instance().setAccountActive(bobData.accountId, false, true);
+    std::this_thread::sleep_for(5s);
+    Manager::instance().setAccountActive(bobData.accountId, true, false);
+    lk.lock();
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return bobData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
+    }));
 }
 
 } // namespace test

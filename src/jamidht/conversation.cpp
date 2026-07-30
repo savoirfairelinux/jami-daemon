@@ -2978,6 +2978,17 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     if (pimpl_->swarmManager_->isShutdown()) {
         pimpl_->swarmManager_->restart();
         pimpl_->swarmManager_->maintainBuckets();
+    } else if (!pimpl_->swarmManager_->isConnected()) {
+        // Bootstrapping without a single connected node has to try the devices
+        // already known, because nothing else will: setKnownNodes() only acts
+        // on ids it has never seen before.
+        //
+        // An account that is deactivated and activated again -- what a mobile
+        // client does every time it leaves and returns to the foreground --
+        // loses every connection while its swarm managers keep the devices they
+        // learned. Their members are then neither new nor connected, and the
+        // conversation would stay silent until the process is restarted.
+        pimpl_->swarmManager_->maintainBuckets();
     }
 }
 
