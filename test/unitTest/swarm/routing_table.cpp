@@ -135,6 +135,7 @@ private:
     void testMobileNodeSplit();
     void testSendMobileNodes();
     void testBucketSplit_1n();
+    void testConnectionChangedEmittedOnce();
     void testSwarmManagersSmallBootstrapList();
     void testRoutingTableForConnectingNode();
     void testRoutingTableForShuttingNode();
@@ -146,6 +147,7 @@ private:
     CPPUNIT_TEST(testRoutingTableMainFunctions);
     CPPUNIT_TEST(testClosestNodes_multipleb);
     CPPUNIT_TEST(testBucketSplit_1n);
+    CPPUNIT_TEST(testConnectionChangedEmittedOnce);
     CPPUNIT_TEST(testBucketKnownNodes);
     CPPUNIT_TEST(testSendKnownNodes_1b);
     CPPUNIT_TEST(testSendKnownNodes_multipleb);
@@ -594,6 +596,33 @@ RoutingTableTest::testClosestNodes_multipleb()
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, closestNodes1 == closestNodes1_);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, closestNodes2 == closestNodes2_);
+}
+
+void
+RoutingTableTest::testConnectionChangedEmittedOnce()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds2.at(0), false, rd, [](auto) {
+        return false;
+    });
+
+    unsigned connectedCount = 0;
+    sm->onConnectionChanged([&](bool ok) {
+        if (ok)
+            connectedCount++;
+    });
+
+    // Adding peers grows the routing table until it splits, after which the bucket
+    // holding our own id stays empty. The swarm never gets disconnected here, so
+    // the transition to "connected" must only be reported for the first channel.
+    for (size_t i = 1; i < nodeTestChannels2.size(); i++)
+        sm->addChannel(nodeTestChannels2.at(i));
+
+    CPPUNIT_ASSERT(sm->isConnected());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Connection must be reported once while it never dropped",
+                                 1u,
+                                 connectedCount);
 }
 
 void
