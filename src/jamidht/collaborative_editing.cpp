@@ -60,9 +60,36 @@ static constexpr size_t COMPACT_CHECK_EVERY {64};
 // a cursor plus a display name.
 static constexpr size_t MAX_UPDATE_SIZE {8 * 1024 * 1024};
 static constexpr size_t MAX_AWARENESS_SIZE {8 * 1024};
+/// A whole awareness message may carry one entry per peer, not just ours.
+static constexpr size_t MAX_AWARENESS_MESSAGE_SIZE {64 * 1024};
 /// base64 costs 4 bytes per 3, plus padding and any line breaks a client adds.
 static constexpr size_t MAX_ENCODED_UPDATE_SIZE {MAX_UPDATE_SIZE / 3 * 4 + 1024};
-static constexpr size_t MAX_ENCODED_AWARENESS_SIZE {MAX_AWARENESS_SIZE / 3 * 4 + 1024};
+
+// Awareness upkeep, with the cadence the yjs protocol settled on. A state is
+// re-announced well before it is due to expire, so that losing one announcement
+// does not make an editor blink out of the document; a peer that announces
+// nothing for a whole timeout is one whose device is gone, not one who stopped
+// typing, and its cursor is withdrawn.
+static constexpr std::chrono::seconds AWARENESS_TIMEOUT {30};
+static constexpr std::chrono::seconds AWARENESS_RENEW {AWARENESS_TIMEOUT / 2};
+static constexpr std::chrono::seconds AWARENESS_SWEEP {AWARENESS_TIMEOUT / 10};
+/// How many peers may hold a state in one document at once. An authorized member
+/// picks its own client ids, so nothing but this stops one from filling the
+/// table with ids nobody is behind.
+static constexpr size_t MAX_AWARENESS_PEERS {256};
+
+/// What one client id is currently sharing in a document.
+struct AwarenessPeer
+{
+    uint64_t clock {0};
+    /// JSON, or empty once the client withdrew its state.
+    std::string state;
+    std::chrono::steady_clock::time_point lastSeen;
+    /// The account that announced this client id. Held so that a member cannot
+    /// speak for a client id another one already claimed, and so that a state
+    /// can still be attributed to a person when it reaches the clients.
+    std::string owner;
+};
 
 struct CollaborativeEditing::Session
 {
@@ -102,6 +129,24 @@ struct CollaborativeEditing::Session
     std::atomic_bool checkpointDue {false};
     // Checkpoints written since the repository was last considered for packing.
     std::atomic_size_t sinceCompactCheck {0};
+
+    // y-protocol state. Kept under its own lock: the upkeep timer walks it from
+    // the io thread while the clients write to it, and neither has any business
+    // waiting on the manager-wide lock to do so.
+    std::mutex protocolMutex;
+    // Devices we already answered a state vector to. Both sides of a pair have
+    // to offer theirs for the two to converge, but answering an offer with
+    // another one unconditionally would have them trade offers forever; a device
+    // is therefore offered ours once, and only ever answered afterwards.
+    std::set<std::string> syncedDevices;
+    std::map<uint64_t, AwarenessPeer> awareness;
+    /// This device's own entry in the table above. Its clock is what tells peers
+    /// which of two states they hold is the later one, so it only ever grows.
+    uint64_t localClock {0};
+    std::string localState;
+    std::chrono::steady_clock::time_point localAnnounced;
+    std::unique_ptr<asio::steady_timer> awarenessTimer;
+    bool upkeepRunning {false};
 };
 
 CollaborativeEditing::CollaborativeEditing(const std::shared_ptr<JamiAccount>& account)
@@ -172,6 +217,7 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
     session->documentId = documentId;
     session->doc = std::make_unique<YrsDocument>(replicaId());
     session->checkpointTimer = std::make_unique<asio::steady_timer>(*ioContext_);
+    session->awarenessTimer = std::make_unique<asio::steady_timer>(*ioContext_);
     // Only a document the conversation announced may allocate a repository on
     // disk. Live updates that arrive before the announcement is merged are kept
     // in memory and persisted once it lands.
@@ -427,6 +473,11 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             session->announcedName = name;
     }
     auto state = base64::encode(session->doc->encodeStateAsUpdate());
+    // Offer the members what this replica already holds, so that the ones with
+    // the document open answer with just the difference. This is also what makes
+    // a second device of the same account catch up on edits that were made while
+    // it was not looking, without waiting for the next checkpoint to be fetched.
+    sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
     // Catch up on repositories left uncompacted by earlier versions: a document
     // that is only ever synchronized accumulates one pack per fetch, and no
     // other trigger would ever tidy it up. Scheduled only once the state has
@@ -453,8 +504,16 @@ CollaborativeEditing::closeDocument(const std::string& conversationId, const std
         session->checkpointTimer->cancel();
     }
     checkpointNow(session);
-    // Tell other members this device is no longer editing (clears its cursor).
-    broadcastLeave(conversationId, documentId);
+    // Withdraw this device's awareness state, which is what clears its cursor
+    // for the other members. Done explicitly rather than left to expire so that
+    // closing an editor is seen at once instead of a timeout later.
+    publishAwareness(session, {});
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        // Nothing has been offered to these devices any more: a later reopen has
+        // to start the exchange over rather than assume it already happened.
+        session->syncedDevices.clear();
+    }
 }
 
 void
@@ -527,36 +586,17 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
         return;
     }
 
-    // "k" (kind) discriminates ephemeral awareness messages from CRDT ops.
-    // Absent/"op" = a CRDT update; "aw" = an opaque awareness state; "leave" =
-    // the peer closed the document; "ckpt"/"req" drive repository
-    // synchronization.
-    auto kind = root.get("k", "op").asString();
+    // "k" tells a y-protocol frame ("y") from the two envelope-level messages
+    // that drive repository synchronization. Those two are Jami's own plumbing
+    // -- they move git repositories between devices -- and have no counterpart
+    // in yjs, so they stay outside the protocol rather than being bent into it.
+    auto kind = root.get("k", "y").asString();
     // These two touch the disk and the network, so they must name a document the
-    // conversation actually announced. Live updates ("op") deliberately are not
-    // gated: they routinely overtake the announcement commit, and they only ever
-    // build in-memory state.
+    // conversation actually announced. Protocol frames deliberately are not
+    // gated here: they routinely overtake the announcement commit, and what they
+    // build is bounded by admitSession() below.
     if ((kind == "ckpt" || kind == "req") && !isAnnouncedDocument(conversationId, documentId)) {
         JAMI_WARNING("[Account {}] Ignoring collaborative {} for unannounced document {}", accountId_, kind, documentId);
-        return;
-    }
-    if (kind == "aw") {
-        // Opaque: whatever the peers agreed to put in it. The daemon only checks
-        // that it comes from someone allowed to edit this document, and that it
-        // is small enough to be a presence state rather than a payload.
-        auto state = root.get("s", "").asString();
-        if (state.size() > MAX_ENCODED_AWARENESS_SIZE) {
-            JAMI_WARNING("[Account {}] [Document {}] Dropping an oversized awareness state from {}",
-                         accountId_,
-                         documentId,
-                         from);
-            return;
-        }
-        emitSignal<libjami::ConfigurationSignal::CollaborativeAwarenessChanged>(accountId_,
-                                                                                conversationId,
-                                                                                documentId,
-                                                                                from,
-                                                                                state);
         return;
     }
     if (kind == "ckpt") {
@@ -583,45 +623,127 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
             account->syncCollabDocument(conversationId, documentId);
         return;
     }
-    if (kind == "leave") {
-        emitSignal<libjami::ConfigurationSignal::CollaborativeParticipantLeft>(accountId_,
-                                                                               conversationId,
-                                                                               documentId,
-                                                                               from);
-        return;
-    }
-    YrsDocument::Bytes update;
+    if (kind != "y")
+        return; // nothing else is spoken here
+
+    yprotocol::Bytes frame;
     try {
-        auto encoded = root["u"].asString();
+        auto encoded = root["m"].asString();
         if (encoded.size() > MAX_ENCODED_UPDATE_SIZE) {
-            JAMI_WARNING("[Account {}] [Document {}] Dropping a {} byte update from {}: over the limit",
+            JAMI_WARNING("[Account {}] [Document {}] Dropping a {} byte frame from {}: over the limit",
                          accountId_,
                          documentId,
                          encoded.size(),
                          from);
             return;
         }
-        update = base64::decode(encoded);
+        frame = base64::decode(encoded);
     } catch (const std::exception&) {
         return; // a peer sent something that is not base64
     }
-    if (update.empty())
+    if (frame.empty())
         return;
-    // No repository yet if the announcement has not been merged: the update
+
+    yprotocol::Decoder decoder(frame);
+    uint64_t messageType = 0;
+    if (!decoder.readVarUint(messageType))
+        return;
+    switch (static_cast<yprotocol::Message>(messageType)) {
+    case yprotocol::Message::SYNC:
+        onSyncMessage(conversationId, documentId, from, fromDevice, decoder);
+        break;
+    case yprotocol::Message::AWARENESS:
+        if (auto session = admitSession(conversationId, documentId))
+            onAwarenessMessage(session, from, decoder);
+        break;
+    default:
+        // A message type from a newer revision of the protocol. Ignoring it is
+        // what the yjs implementations do, and it is what lets one be added
+        // without every peer having to be upgraded first.
+        break;
+    }
+}
+
+std::shared_ptr<CollaborativeEditing::Session>
+CollaborativeEditing::admitSession(const std::string& conversationId, const std::string& documentId)
+{
+    // No repository yet if the announcement has not been merged: what arrives
     // stays in memory and is persisted once the document is opened locally.
     const bool announced = isAnnouncedDocument(conversationId, documentId);
     if (!announced && !admitUnannounced(conversationId, documentId)) {
         // An authorized member can name any id it likes here. Sessions for ids
         // the conversation never announced are therefore capped: past the cap
         // they are dropped rather than allowed to accumulate a YrsDocument each.
-        JAMI_WARNING("[Account {}] Dropping an update for unannounced document {} in conversation {}: "
-                     "too many unannounced documents already pending",
+        JAMI_WARNING("[Account {}] Dropping a collaborative message for unannounced document {} in "
+                     "conversation {}: too many unannounced documents already pending",
                      accountId_,
                      documentId,
                      conversationId);
+        return nullptr;
+    }
+    return ensureSession(conversationId, documentId, announced);
+}
+
+void
+CollaborativeEditing::onSyncMessage(const std::string& conversationId,
+                                    const std::string& documentId,
+                                    const std::string& from,
+                                    const std::string& fromDevice,
+                                    yprotocol::Decoder& decoder)
+{
+    uint64_t step = 0;
+    const uint8_t* payload = nullptr;
+    size_t payloadSize = 0;
+    if (!decoder.readVarUint(step) || !decoder.readVarUint8Array(payload, payloadSize))
+        return;
+
+    if (static_cast<yprotocol::Sync>(step) == yprotocol::Sync::STEP1) {
+        // A peer says what it holds. Answered only when this device has the
+        // document open: waking every member to build a replica each time
+        // someone opens a document would cost far more than it is worth, and a
+        // member that is not editing has nothing the repository does not already
+        // carry.
+        auto session = findSession(conversationId, documentId);
+        if (!session)
+            return;
+        yprotocol::Bytes stateVector(payload, payload + payloadSize);
+        auto diff = session->doc->encodeDiff(stateVector);
+        sendFrame(conversationId, documentId, yprotocol::syncStep2(diff), from, fromDevice);
+        // Offer ours in return, once per device: without it the exchange is
+        // one-sided and this replica's own edits would only reach that peer at
+        // the next checkpoint.
+        bool offer = false;
+        {
+            std::lock_guard<std::mutex> lk(session->protocolMutex);
+            offer = session->syncedDevices.insert(fromDevice).second;
+        }
+        if (offer)
+            sendFrame(conversationId,
+                      documentId,
+                      yprotocol::syncStep1(session->doc->encodeStateVector()),
+                      from,
+                      fromDevice);
         return;
     }
-    auto session = ensureSession(conversationId, documentId, announced);
+
+    // STEP2 and UPDATE both carry an update to merge; they differ only in what
+    // prompted them. Nothing else does, so nothing else is merged: handing an
+    // unknown sub-type to the engine would mean guessing that a later revision
+    // of the protocol, or a malformed frame, happens to carry an update there.
+    const auto sync = static_cast<yprotocol::Sync>(step);
+    if (sync != yprotocol::Sync::STEP2 && sync != yprotocol::Sync::UPDATE) {
+        JAMI_WARNING("[Account {}] [Document {}] Ignoring sync message of unknown sub-type {}",
+                     accountId_,
+                     documentId,
+                     step);
+        return;
+    }
+    if (payloadSize == 0)
+        return;
+    auto session = admitSession(conversationId, documentId);
+    if (!session)
+        return;
+    YrsDocument::Bytes update(payload, payload + payloadSize);
     if (!session->doc->applyUpdate(update))
         return; // malformed: don't hand it to the clients
     // Not persisted here: the device that produced it checkpoints it into its own
@@ -631,51 +753,239 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
 }
 
 void
+CollaborativeEditing::onAwarenessMessage(const std::shared_ptr<Session>& session,
+                                         const std::string& from,
+                                         yprotocol::Decoder& decoder)
+{
+    const uint8_t* body = nullptr;
+    size_t bodySize = 0;
+    if (!decoder.readVarUint8Array(body, bodySize) || bodySize > MAX_AWARENESS_MESSAGE_SIZE)
+        return;
+    std::vector<yprotocol::AwarenessEntry> entries;
+    if (!yprotocol::decodeAwarenessUpdate(body, bodySize, entries))
+        return;
+
+    // What the local clients have to be told, gathered while the table is locked
+    // and emitted once it is not: a signal handler is entitled to call back into
+    // this manager.
+    std::vector<std::pair<uint64_t, std::string>> changed;
+    std::vector<uint64_t> left;
+    bool contested = false;
+    const auto now = std::chrono::steady_clock::now();
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        for (const auto& entry : entries) {
+            if (entry.state.size() > MAX_AWARENESS_SIZE)
+                continue; // a presence state, not a payload
+            if (entry.clientId == clientId_) {
+                // Someone is speaking for this device. Nothing legitimate does
+                // that, and the protocol's own answer -- outrun it so that peers
+                // keep our real state -- is also the right one here.
+                contested = true;
+                continue;
+            }
+            auto it = session->awareness.find(entry.clientId);
+            if (it != session->awareness.end()) {
+                if (it->second.owner != from)
+                    continue; // a member may not speak for another's client id
+                // Strictly greater: two states with the same clock are the same
+                // state having taken two routes, and re-emitting one of them
+                // would make a cursor jump back to where it already was.
+                if (entry.clock <= it->second.clock)
+                    continue;
+            } else {
+                if (session->awareness.size() >= MAX_AWARENESS_PEERS)
+                    continue;
+                if (entry.state.empty() || entry.state == "null")
+                    continue; // a client that is gone and was never here
+            }
+            const bool gone = entry.state.empty() || entry.state == "null";
+            if (gone) {
+                session->awareness.erase(entry.clientId);
+                left.push_back(entry.clientId);
+            } else {
+                auto& peer = session->awareness[entry.clientId];
+                peer.clock = entry.clock;
+                peer.state = entry.state;
+                peer.lastSeen = now;
+                peer.owner = from;
+                changed.emplace_back(entry.clientId, entry.state);
+            }
+        }
+    }
+
+    for (const auto& [clientId, state] : changed)
+        emitSignal<libjami::ConfigurationSignal::CollaborativeAwarenessChanged>(accountId_,
+                                                                                session->conversationId,
+                                                                                session->documentId,
+                                                                                from,
+                                                                                clientId,
+                                                                                state);
+    for (auto clientId : left)
+        emitSignal<libjami::ConfigurationSignal::CollaborativeParticipantLeft>(accountId_,
+                                                                               session->conversationId,
+                                                                               session->documentId,
+                                                                               from,
+                                                                               clientId);
+    if (contested) {
+        JAMI_WARNING("[Account {}] [Document {}] {} announced this device's client id; re-announcing",
+                     accountId_,
+                     session->documentId,
+                     from);
+        std::string state;
+        {
+            std::lock_guard<std::mutex> lk(session->protocolMutex);
+            state = session->localState;
+        }
+        publishAwareness(session, state);
+    }
+    scheduleAwarenessUpkeep(session);
+}
+
+void
+CollaborativeEditing::sendFrame(const std::string& conversationId,
+                                const std::string& documentId,
+                                const yprotocol::Bytes& frame,
+                                const std::string& peer,
+                                const std::string& device)
+{
+    auto account = account_.lock();
+    if (!account || frame.empty())
+        return;
+    Json::Value root;
+    root["cid"] = conversationId;
+    root["did"] = documentId;
+    root["k"] = "y";
+    // The envelope is JSON and the frame is binary, so it travels base64 on this
+    // hop. That is a property of the transport the members already share, not of
+    // the protocol: what the clients hand over and receive is the bytes.
+    root["m"] = base64::encode(frame);
+    std::map<std::string, std::string> payload {{MIME_TYPE_COLLAB, json::toString(root)}};
+    if (peer.empty()) {
+        account->sendInstantMessage(conversationId, payload);
+        return;
+    }
+    // Answering only the device that asked. Handing the whole difference to
+    // every member would give away the very saving the state vector just bought.
+    //
+    // An empty device is a deliberate fallback, not an unaddressed send: it
+    // reaches every connected device of that one member, which is still the
+    // answer to a question only that member asked. Callers here always know the
+    // device, since it comes from the certificate the message was received on.
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(gen);
+    account->sendMessage(peer, device, payload, token, false, true);
+}
+
+void
 CollaborativeEditing::setAwareness(const std::string& conversationId,
                                    const std::string& documentId,
                                    const std::string& state)
 {
-    auto account = account_.lock();
-    if (!account)
-        return;
-    if (state.size() > MAX_ENCODED_AWARENESS_SIZE) {
+    if (state.size() > MAX_AWARENESS_SIZE) {
         JAMI_WARNING("[Account {}] [Document {}] Refusing to broadcast an oversized awareness state",
                      accountId_,
                      documentId);
         return;
     }
-    Json::Value root;
-    root["cid"] = conversationId;
-    root["did"] = documentId;
-    root["k"] = "aw";
-    root["s"] = state;
-    account->sendInstantMessage(conversationId, {{MIME_TYPE_COLLAB, json::toString(root)}});
+    // Only for a document this device has open: an awareness state is about
+    // where its editor is, and there is no editor before that.
+    if (auto session = findSession(conversationId, documentId))
+        publishAwareness(session, state);
 }
 
 void
-CollaborativeEditing::broadcastLeave(const std::string& conversationId, const std::string& documentId)
+CollaborativeEditing::publishAwareness(const std::shared_ptr<Session>& session, const std::string& state)
 {
-    auto account = account_.lock();
-    if (!account)
+    yprotocol::AwarenessEntry entry;
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        // Withdrawing a state that was never shared would tell the members about
+        // an editor they were never told about in the first place.
+        if (state.empty() && session->localState.empty())
+            return;
+        entry.clientId = clientId_;
+        entry.clock = ++session->localClock;
+        // "null" is how the protocol spells a client that is no longer there.
+        entry.state = state.empty() ? "null" : state;
+        session->localState = state;
+        session->localAnnounced = std::chrono::steady_clock::now();
+    }
+    sendFrame(session->conversationId, session->documentId, yprotocol::awarenessMessage({entry}));
+    scheduleAwarenessUpkeep(session);
+}
+
+void
+CollaborativeEditing::scheduleAwarenessUpkeep(const std::shared_ptr<Session>& session)
+{
+    if (!session->awarenessTimer)
         return;
-    Json::Value root;
-    root["cid"] = conversationId;
-    root["did"] = documentId;
-    root["k"] = "leave";
-    account->sendInstantMessage(conversationId, {{MIME_TYPE_COLLAB, json::toString(root)}});
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        // One timer at a time, and none at all while nobody is editing: a
+        // document nobody has open must not keep waking the process up.
+        if (session->upkeepRunning)
+            return;
+        if (session->awareness.empty() && session->localState.empty())
+            return;
+        session->upkeepRunning = true;
+        session->awarenessTimer->expires_after(AWARENESS_SWEEP);
+    }
+    std::weak_ptr<CollaborativeEditing> wthis = weak_from_this();
+    std::weak_ptr<Session> wsession = session;
+    session->awarenessTimer->async_wait([wthis, wsession](const asio::error_code& ec) {
+        auto sthis = wthis.lock();
+        auto session = wsession.lock();
+        if (!sthis || !session)
+            return;
+        {
+            std::lock_guard<std::mutex> lk(session->protocolMutex);
+            session->upkeepRunning = false;
+        }
+        if (!ec)
+            sthis->awarenessUpkeep(session);
+    });
+}
+
+void
+CollaborativeEditing::awarenessUpkeep(const std::shared_ptr<Session>& session)
+{
+    const auto now = std::chrono::steady_clock::now();
+    std::vector<std::pair<uint64_t, std::string>> expired;
+    std::string renew;
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        for (auto it = session->awareness.begin(); it != session->awareness.end();) {
+            if (now - it->second.lastSeen >= AWARENESS_TIMEOUT) {
+                expired.emplace_back(it->first, it->second.owner);
+                it = session->awareness.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        // Re-announced well before it would expire elsewhere, so that a single
+        // lost message does not make this device blink out of the document.
+        if (!session->localState.empty() && now - session->localAnnounced >= AWARENESS_RENEW)
+            renew = session->localState;
+    }
+    for (const auto& [clientId, owner] : expired)
+        emitSignal<libjami::ConfigurationSignal::CollaborativeParticipantLeft>(accountId_,
+                                                                               session->conversationId,
+                                                                               session->documentId,
+                                                                               owner,
+                                                                               clientId);
+    if (!renew.empty())
+        publishAwareness(session, renew); // rearms the timer on its way out
+    else
+        scheduleAwarenessUpkeep(session);
 }
 
 void
 CollaborativeEditing::onLocalUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update)
 {
-    // Real-time path: broadcast the incremental update to connected members.
-    if (auto account = account_.lock()) {
-        Json::Value root;
-        root["cid"] = session->conversationId;
-        root["did"] = session->documentId;
-        root["u"] = base64::encode(update);
-        account->sendInstantMessage(session->conversationId, {{MIME_TYPE_COLLAB, json::toString(root)}});
-    }
+    // Real-time path: hand the incremental update to the connected members.
+    sendFrame(session->conversationId, session->documentId, yprotocol::syncUpdate(update));
     // Durable path: accumulate the update for the next checkpoint.
     queueUpdate(session, update);
 }
