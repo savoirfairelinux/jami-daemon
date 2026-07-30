@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88dbe3a0_eb830213",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:45:50Z",
+      "side": 1,
+      "message": "Traced this one; the withdrawal is not lost, because it has already been sent by the time the guard fires.\n\npublishAwareness() only returns early when the new state is empty AND session-\u003elocalState is already empty. localState becomes empty in exactly one way: a previous publishAwareness(session, \"\") set it, and that call did broadcast -- it sent entry.state \u003d \"null\" with an incremented clock before clearing the field. Peers therefore removed the cursor at that moment, on receipt, not on timeout.\n\nSo the two paths into the guard are:\n- client cleared awareness, then closed: the null frame went out on the clear. The close would send a second identical withdrawal, which peers would ignore anyway -- onAwarenessMessage() drops entries whose clock does not advance past the cached one.\n- client never announced anything: no peer holds an entry for this client id, and a null frame would announce an editor the members were never told about, only to retract it.\n\nWhat the comment proposes -- tracking announcement separately from current state -- would turn the first case into a duplicate frame and the second into a spurious one, without shortening any timeout. The 30-second expiry remains the backstop for the case a withdrawal genuinely cannot be delivered, which no bookkeeping on this side can fix.",
+      "revId": "6f6be64316e4eeda4969e3c6de8fca4f32940958",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d81ed1b9_4020beaa",
+        "filename": "src/jamidht/y_protocol.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:45:50Z",
+      "side": 1,
+      "message": "Agreed, and fixed in patch set 3: decodeAwarenessUpdate() now returns d.atEnd(), so a body that does not end exactly where its entry count says it does is rejected rather than silently truncated.\n\nChecked against the real thing before changing it, since a stricter decoder is only safe if genuine frames are exact. An awareness update produced by y-protocols/awareness is [0x01, 0x19, 0x01, 0xb9, 0x60, 0x01, 0x14, ...20 bytes of JSON]: a 25-byte body holding exactly one entry, ending on the last byte of the state string. Compiled against the patched decoder, that frame is still accepted and decodes to clientId 12345 / clock 1, the same frame with one padding byte appended is now refused, and our own encoder round-trips. So the check costs nothing in interoperability.\n\nIt is also safe by construction: the body is delimited by readVarUint8Array() upstream in onAwarenessMessage(), so atEnd() is asking whether the sender filled the length it declared -- not whether more messages follow.",
+      "revId": "6f6be64316e4eeda4969e3c6de8fca4f32940958",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
