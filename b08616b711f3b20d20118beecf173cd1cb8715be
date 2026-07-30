@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4219587_fbf5c314",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:41:59Z",
+      "side": 1,
+      "message": "[error] Line 502: 🔴 `publishAwareness(session, {})` is skipped when `localState` is already empty, so closing a document after the client explicitly cleared awareness does not broadcast any final leave frame. Peers that still have this client cached will keep showing it until timeout. Track whether the local client has ever been announced separately from the current state, or send an explicit `null` withdrawal on close whenever the document was opened/announced.",
+      "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "ced35093_d47a90ec",
@@ -48,6 +65,23 @@
       "writtenOn": "2026-07-30T04:41:35Z",
       "side": 1,
       "message": "Checked, and the failure mode is not the one described, but the code did not say so. Documented in patch set 2.\n\nThe only caller of onRemotePayload() is jamiaccount.cpp, which passes cert-\u003egetLongId().toString(): a message that reached us arrived over an authenticated channel, so the device is always known and never empty.\n\nHad it been empty, JamiAccount::sendMessage() does not fall back to an \"unspecified/default device\" -- jamiaccount.cpp:3814 branches on deviceId.empty() and sends to every connected channel of that one member. That is wider than intended but still confined to the member who asked, and nothing is silently dropped. Patch set 2 states that in the comment rather than adding a guard against a case the type system already rules out.",
+      "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e01cc9c0_b2861b64",
+        "filename": "src/jamidht/y_protocol.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:41:59Z",
+      "side": 1,
+      "message": "[warning] Line 182: 🟡 `decodeAwarenessUpdate` accepts trailing bytes after the declared entries. That makes malformed or extended awareness frames look valid and can hide framing bugs. Check `d.atEnd()` before returning true so only exactly-formed awareness updates are accepted.",
       "revId": "b08616b711f3b20d20118beecf173cd1cb8715be",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
