@@ -46,7 +46,7 @@ public:
     Impl(const std::string& accountId,
          const std::string& repositoryId,
          const std::string& repository,
-         const std::shared_ptr<dhtnet::ChannelSocket>& socket)
+         const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
         : accountId_(accountId)
         , repositoryId_(repositoryId)
         , repository_(repository)
@@ -96,7 +96,7 @@ public:
     std::string accountId_ {};
     std::string repositoryId_ {};
     std::string repository_ {};
-    std::shared_ptr<dhtnet::ChannelSocket> socket_ {};
+    std::shared_ptr<dhtnet::ChannelSocketInterface> socket_ {};
     std::string wantedReference_ {};
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
@@ -583,7 +583,7 @@ GitServer::Impl::getParameters(std::string_view pkt_line)
 
 GitServer::GitServer(const std::string& accountId,
                      const std::string& conversationId,
-                     const std::shared_ptr<dhtnet::ChannelSocket>& client)
+                     const std::shared_ptr<dhtnet::ChannelSocketInterface>& client)
 {
     auto path = (fileutils::get_data_dir() / accountId / "conversations" / conversationId).string();
     pimpl_ = std::make_unique<GitServer::Impl>(accountId, conversationId, path, client);
