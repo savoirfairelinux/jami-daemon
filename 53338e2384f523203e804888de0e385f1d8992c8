@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df8b7ca0_07799894",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 969,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:43Z",
+      "side": 1,
+      "message": "Correct, and fixed in patch set 2: the signal annotation is now Out3.\n\nConfirmed against the rest of this file -- every signal carrying a custom type uses Out\u003cN\u003e (knownDevicesChanged, swarmMessageReceived, activeCallsChanged, reactionAdded and the others), and In\u003cN\u003e appears only on method input arguments. The two remaining In3 annotations here are on applyCollaborativeUpdate and addCollaborativeAttachment, which are methods, so they stay as they are.",
+      "revId": "53338e2384f523203e804888de0e385f1d8992c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
