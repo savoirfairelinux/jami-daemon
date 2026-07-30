@@ -74,7 +74,7 @@ struct SwarmMessage
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
   // Collaborative editing
-  std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& kind);
+  std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);
   std::string openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& base64Update);

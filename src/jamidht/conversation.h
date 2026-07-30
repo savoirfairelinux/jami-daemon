@@ -477,7 +477,7 @@ public:
      * client show the editable documents without first paging in the (possibly old)
      * announcing messages.
      * @return  one map per COLLAB_DOC commit ("uri" = document id, "displayName",
-     *          "kind", "author", "timestamp"), newest first
+     *          "mimeType", "author", "timestamp"), newest first
      */
     std::vector<std::map<std::string, std::string>> collaborativeDocuments() const;
     /**

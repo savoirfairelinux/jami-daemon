@@ -183,7 +183,9 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
 }
 
 std::string
-CollaborativeEditing::createDocument(const std::string& conversationId, const std::string& name, const std::string& kind)
+CollaborativeEditing::createDocument(const std::string& conversationId,
+                                     const std::string& name,
+                                     const std::string& mimeType)
 {
     std::random_device rd;
     std::uniform_int_distribution<uint64_t> dist;
@@ -192,12 +194,18 @@ CollaborativeEditing::createDocument(const std::string& conversationId, const st
     std::snprintf(buf, sizeof(buf), "%016llx", static_cast<unsigned long long>(dist(gen)));
     std::string documentId(buf);
 
+    // Settle the media type here rather than in each of the two places that
+    // record it: the repository defaults an empty one on its own, the
+    // announcement commit omits the field entirely, and a document would then be
+    // listed as having no type while its metadata claimed one.
+    const std::string type = mimeType.empty() ? CollabRepository::DEFAULT_MIME_TYPE : mimeType;
+
     auto account = account_.lock();
     if (!account)
         return {};
     // The document gets its own repository, holding its content and history. It
     // must exist before the session opens it.
-    if (!CollabRepository::create(account, conversationId, documentId, name, kind)) {
+    if (!CollabRepository::create(account, conversationId, documentId, name, type)) {
         JAMI_ERROR("[Account {}] Unable to create repository for document {}", accountId_, documentId);
         return {};
     }
@@ -233,7 +241,7 @@ CollaborativeEditing::createDocument(const std::string& conversationId, const st
         return {};
     }
     cm->createCommit(conversationId,
-                     CommitMessage::collabDocCreated(documentId, name, kind),
+                     CommitMessage::collabDocCreated(documentId, name, type),
                      true,
                      {},
                      [w = weak_from_this(), conversationId, documentId, accountId = accountId_](bool ok,
