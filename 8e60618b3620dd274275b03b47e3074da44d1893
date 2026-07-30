@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "68925b4c_8c3aa27b",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 909,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:20Z",
+      "side": 1,
+      "message": "Not fixed, deliberately. This feature has never shipped: no released daemon or client speaks the collaborative-editing API, so there is no corpus of documents carrying the legacy \"kind\" key anywhere but on a developer\u0027s disk. The commit message states that break explicitly.\n\nCarrying a translation layer would mean keeping the legacy vocabulary alive in the code, and in the format, for the lifetime of the feature -- to migrate documents that do not exist. If we are ever wrong about that, the fix is to delete the local repositories, not to ship a compatibility path.",
+      "revId": "8e60618b3620dd274275b03b47e3074da44d1893",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bfc6aaee_620d2af2",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:20Z",
+      "side": 1,
+      "message": "Correct, and fixed in patch set 2. CollabRepository::create() defaulted an empty type to text/plain while CommitMessage::toJson() omitted the field entirely, so documents() and meta() disagreed about the very same document.\n\nThe media type is now settled once at the top of createDocument(), before either recording path, and CollabRepository::DEFAULT_MIME_TYPE became a public constant so the default has a single definition instead of two.",
+      "revId": "8e60618b3620dd274275b03b47e3074da44d1893",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1eec08b4_f007695c",
+        "filename": "src/jamidht/commit_message.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-07-30T04:41:20Z",
+      "side": 1,
+      "message": "Same answer as the collab_repository.cpp comment: the break is intentional and announced. Nothing outside a development tree has ever written a COLLAB_DOC commit.",
+      "revId": "8e60618b3620dd274275b03b47e3074da44d1893",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
