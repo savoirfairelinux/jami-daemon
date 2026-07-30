@@ -18,6 +18,7 @@
 
 #include "collab_repository.h"
 #include "yrs_document.h"
+#include "y_protocol.h"
 
 #include <asio.hpp>
 #include <cstdint>
@@ -47,8 +48,12 @@ static constexpr const char MIME_TYPE_COLLAB[] {"application/x-jami-collab+json"
  * a client implement an editor for @e any document type yrs supports -- text,
  * rich text, maps, arrays, XML fragments -- without a single change here.
  *
- * Real-time path: updates are broadcast to the members as ephemeral instant
- * messages and merged on reception.
+ * Real-time path: members exchange the yjs protocols -- @c sync for the document
+ * itself, @c awareness for who is editing and where -- over ephemeral instant
+ * messages. Speaking those rather than something of our own means a replica here
+ * and a replica anywhere else in the yjs ecosystem converge without a
+ * translation layer, and it is what brings the state vector: a device joining a
+ * document is told only what it is actually missing.
  *
  * Durable path: a CollabRepository per document appends batches of updates as
  * checkpoints to a dedicated git repository, so offline peers and late joiners
@@ -104,8 +109,14 @@ public:
      * where their cursor and selection are, anything else the client wants to
      * share while editing.
      *
-     * The payload is opaque and ephemeral -- never merged, never stored -- so
-     * its shape is entirely the clients' agreement, not the daemon's.
+     * @p state is a JSON document whose shape is the clients' agreement, not the
+     * daemon's, exactly as in the yjs awareness protocol. It is never merged and
+     * never stored. Passing an empty string withdraws this device's state.
+     *
+     * Sharing a state also enrols the session in the protocol's upkeep: the
+     * state is re-announced periodically so that peers can tell a silent editor
+     * from one whose device dropped off, and a peer that stops re-announcing is
+     * dropped once its state has gone stale.
      */
     void setAwareness(const std::string& conversationId, const std::string& documentId, const std::string& state);
 
@@ -196,7 +207,37 @@ private:
     void loadPersistedState(const std::shared_ptr<Session>& session);
     /// Apply every update stored in the repository, skipping unreadable ones.
     void replayStoredUpdates(const std::shared_ptr<Session>& session);
-    void broadcastLeave(const std::string& conversationId, const std::string& documentId);
+
+    /// Wrap a y-protocol frame in the envelope that carries it to the members.
+    /// @param peer    the single member to reach, or empty to reach them all.
+    /// @param device  which of that member's devices.
+    void sendFrame(const std::string& conversationId,
+                   const std::string& documentId,
+                   const yprotocol::Bytes& frame,
+                   const std::string& peer = {},
+                   const std::string& device = {});
+    /// Handle the SYNC half of the protocol; @p from and @p fromDevice name who
+    /// to answer.
+    void onSyncMessage(const std::string& conversationId,
+                       const std::string& documentId,
+                       const std::string& from,
+                       const std::string& fromDevice,
+                       yprotocol::Decoder& decoder);
+    /// Handle the AWARENESS half; @p from owns the client ids it announces.
+    void onAwarenessMessage(const std::shared_ptr<Session>& session,
+                            const std::string& from,
+                            yprotocol::Decoder& decoder);
+    /// The session a message from a peer may build state in, or nullptr when the
+    /// document is neither announced nor within the tolerance for one that is
+    /// about to be.
+    std::shared_ptr<Session> admitSession(const std::string& conversationId, const std::string& documentId);
+    /// Announce what this device is sharing, bumping its clock. Withdraws the
+    /// state when @p state is empty, which is how a peer learns we are gone.
+    void publishAwareness(const std::shared_ptr<Session>& session, const std::string& state);
+    /// Re-announce our own state and drop the peers that stopped announcing
+    /// theirs, then rearm as long as anything is still being shared.
+    void awarenessUpkeep(const std::shared_ptr<Session>& session);
+    void scheduleAwarenessUpkeep(const std::shared_ptr<Session>& session);
     /// Queue a local update and arm the checkpoint timer, bringing the deadline
     /// forward when enough updates have piled up.
     void queueUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);

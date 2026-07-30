@@ -973,6 +973,7 @@
             <arg type="s" name="conversationId"/>
             <arg type="s" name="documentId"/>
             <arg type="s" name="peerId"/>
+            <arg type="t" name="clientId"/>
             <arg type="s" name="state"/>
         </signal>
 
@@ -984,6 +985,7 @@
             <arg type="s" name="conversationId"/>
             <arg type="s" name="documentId"/>
             <arg type="s" name="peerId"/>
+            <arg type="t" name="clientId"/>
         </signal>
 
         <signal name="collaborativeDocumentRenamed" tp:name-for-bindings="collaborativeDocumentRenamed">

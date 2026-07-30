@@ -67,8 +67,8 @@ public:
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
     virtual void messageSend(const std::string& /*message*/){}
     virtual void collaborativeDocumentUpdate(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*base64Update*/){}
-    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, const std::string& /*state*/){}
-    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/){}
+    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/, const std::string& /*state*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/){}
     virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
 };
@@ -297,8 +297,8 @@ public:
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
     virtual void messageSend(const std::string& /*message*/){}
     virtual void collaborativeDocumentUpdate(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*base64Update*/){}
-    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, const std::string& /*state*/){}
-    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/){}
+    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/, const std::string& /*state*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/){}
     virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
 };

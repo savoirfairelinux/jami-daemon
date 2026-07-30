@@ -460,6 +460,10 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
      * Ephemeral state a peer shares while editing: presence, cursor, selection.
      * Never merged and never stored; its shape is agreed between clients, not
      * imposed by the daemon.
+     *
+     * A peer is identified by @c clientId, not by @c peerId: one account can
+     * have several devices in the same document, and each of them has its own
+     * cursor. @c peerId says which person that client belongs to.
      */
     struct LIBJAMI_PUBLIC CollaborativeAwarenessChanged
     {
@@ -468,15 +472,19 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*convId*/,
                              const std::string& /*documentId*/,
                              const std::string& /*peerId*/,
+                             uint64_t /*clientId*/,
                              const std::string& /*state*/);
     };
+    /// A client withdrew its state, or stopped announcing it for long enough to
+    /// be considered gone. Anything shown for @c clientId can be dropped.
     struct LIBJAMI_PUBLIC CollaborativeParticipantLeft
     {
         constexpr static const char* name = "CollaborativeParticipantLeft";
         using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*convId*/,
                              const std::string& /*documentId*/,
-                             const std::string& /*peerId*/);
+                             const std::string& /*peerId*/,
+                             uint64_t /*clientId*/);
     };
     struct LIBJAMI_PUBLIC CollaborativeDocumentRenamed
     {
