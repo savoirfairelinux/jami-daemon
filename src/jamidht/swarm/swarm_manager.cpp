@@ -185,7 +185,7 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         auto added = false;
         {
             std::lock_guard lock(mutex);
-            emit = routing_table.findBucket(getId())->isEmpty();
+            emit = routing_table.isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
             added = routing_table.addNode(channel, bucket);
         }
@@ -934,8 +934,7 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                 bucket->removeConnectingNode(nodeId);
                 if (!bucket->hasMobileNode(nodeId))
                     bucket->addKnownNode(nodeId);
-                bucket = shared->routing_table.findBucket(shared->getId());
-                if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty() && shared->onConnectionChanged_) {
+                if (shared->routing_table.getActiveNodesCount() == 0 && shared->onConnectionChanged_) {
                     lk.unlock();
                     JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
                     shared->onConnectionChanged_(false);
