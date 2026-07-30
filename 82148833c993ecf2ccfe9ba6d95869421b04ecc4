@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffa19aa0_cfcb8a97",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3525,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T18:59:36Z",
+      "side": 1,
+      "message": "[warning] Line 3525: 🟡 The payload cache write is now followed by a timestamp sidecar write, but only the payload file open is checked. If the sidecar cannot be created, the initial send still succeeds while later buddy-online retries will mint a fallback timestamp. Treat the sidecar write as part of the cache operation: check `tsFile.is_open()` and either fail the send/cache consistently or at least log the failure here as is done in the retry path.",
+      "revId": "82148833c993ecf2ccfe9ba6d95869421b04ecc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
