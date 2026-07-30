@@ -734,8 +734,18 @@ CollaborativeEditing::onSyncMessage(const std::string& conversationId,
     if (!session)
         return;
     YrsDocument::Bytes update(payload, payload + payloadSize);
+    // Cleared before the update rather than read after it alone, so that what
+    // this update brought is not confused with what an earlier one did.
+    session->doc->takeChanged();
     if (!session->doc->applyUpdate(update))
         return; // malformed: don't hand it to the clients
+    // Nothing when the update taught the replica nothing. Opening a document
+    // makes a peer send us the state it holds, which is usually the state we
+    // already have: applying it succeeds and changes nothing, yet forwarding it
+    // lit an "unread" badge on a conversation whose document nobody had touched.
+    // The synchronization path guards itself the same way, for the same reason.
+    if (!session->doc->takeChanged())
+        return;
     // Not persisted here: the device that produced it checkpoints it into its own
     // repository and it reaches ours through synchronization. Storing it again
     // would keep one copy per member of every single edit.
