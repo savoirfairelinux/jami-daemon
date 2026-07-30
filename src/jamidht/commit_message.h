@@ -316,6 +316,23 @@ struct CommitMessage
         return msg;
     }
 
+    // Removes a collaborative document, as an edition of the commit that
+    // announced it and with no content, exactly as a message or a file is
+    // removed. Nothing here says which document: that is read from the
+    // announcement this commit edits, so a member cannot name someone else's
+    // document in a removal of their own.
+    //
+    // Editing the announcement is what carries the authority: the swarm already
+    // refuses an edition whose author is not the author of the edited commit, so
+    // only the member who created a document can remove it for everyone.
+    static CommitMessage collabDocRemoved(const std::string& announcementCommitId)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.editedId = announcementCommitId;
+        return msg;
+    }
+
     // Every Jami conversation starts with a commit of type "initial" containing a "mode" field indicating the
     // kind of conversation. There are currently two supported values for the mode: 0 (ConversationMode::ONE_TO_ONE)
     // and 2 (ConversationMode::INVITES_ONLY). In the case of one-to-one conversations (mode 0), there is an

@@ -1340,7 +1340,8 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
                     fileId = getFileId(editedId, commit->commitMsg.tid, commit->commitMsg.displayName);
                 }
                 validCommit = commit->authorId == username_
-                              && (type == CommitType::TEXT || type == CommitType::DATA_TRANSFER);
+                              && (type == CommitType::TEXT || type == CommitType::DATA_TRANSFER
+                                  || type == CommitType::COLLAB_DOC);
             }
         }
     }
@@ -1355,6 +1356,11 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         auto path = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId / fileId;
         dhtnet::fileutils::remove(path, true);
         message = CommitMessage::fileDeleted(editedId);
+    } else if (type == CommitType::COLLAB_DOC) {
+        // A document is retired by editing its announcement, like a file. What it
+        // holds lives in a repository of its own, erased on each device when the
+        // commit lands there, so nothing is removed from here.
+        message = CommitMessage::collabDocRemoved(editedId);
     } else {
         message = CommitMessage::edit(newBody, editedId);
     }

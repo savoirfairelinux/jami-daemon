@@ -494,6 +494,15 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*documentId*/,
                              const std::string& /*name*/);
     };
+    /// The author of a document retired its announcement: it is gone for everyone
+    /// and this device no longer holds it.
+    struct LIBJAMI_PUBLIC CollaborativeDocumentRemoved
+    {
+        constexpr static const char* name = "CollaborativeDocumentRemoved";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/);
+    };
     /// A synchronization brought in a binary payload the document refers to.
     /// Clients showing a placeholder for it can now read it with
     /// collaborativeAttachment().

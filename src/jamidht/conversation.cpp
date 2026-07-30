@@ -1559,7 +1559,13 @@ Conversation::Impl::handleEdition(History& history,
         if (baseCommit) {
             auto itReact = baseCommit->body.find(CommitKey::REACT_TO);
             std::string toReplace = (baseCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
-            auto body = sharedCommit->body.at(toReplace);
+            // An edition need not carry the field it replaces: retiring a
+            // collaborative document says nothing but which commit it retires.
+            // Absent means empty, which is what an edition to nothing already
+            // means everywhere below.
+            std::string body;
+            if (auto itBody = sharedCommit->body.find(toReplace); itBody != sharedCommit->body.end())
+                body = itBody->second;
             // Edit reaction
             if (itReact != baseCommit->body.end()) {
                 baseCommit->body[toReplace] = body; // Replace body if pending
@@ -1736,6 +1742,28 @@ Conversation::Impl::addToHistory(History& history,
     bool needToSetMessageStatus = !commitFromSelf && &history == &loadedHistory_;
 
     std::vector<std::shared_ptr<libjami::SwarmMessage>> sharedCommits;
+    // Apply the document removals of this batch before anything else in it.
+    //
+    // A removal is always newer than the announcement it retires, but the batch is
+    // walked oldest first when messages come in and newest first when older ones
+    // are paged back in. Acting in batch order would therefore recreate the
+    // repository of every deleted document each time the user scrolls up.
+    for (const auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        auto editIt = commit.find(CommitKey::EDIT);
+        if (editIt == commit.end() || editIt->second.empty())
+            continue;
+        // A removal names no document of its own: which one it retires is read from
+        // the announcement it edits, the only commit the swarm ties to its author.
+        // Otherwise a member could retire somebody else's document.
+        if (auto announcement = repository_->getCommit(editIt->second)) {
+            const auto& docId = announcement->commitMsg.uri;
+            if (!docId.empty())
+                acc->collaborativeEditing()->onDocumentRemoved(repository_->id(), docId);
+        }
+    }
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         if (history.quickAccess.find(commitId) != history.quickAccess.end())
@@ -1749,8 +1777,13 @@ Conversation::Impl::addToHistory(History& history,
         // be replicated. The commit itself falls through and is displayed like a
         // shared file.
         if (typeIt != commit.end() && typeIt->second == CommitType::COLLAB_DOC) {
-            if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
-                acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
+            // Removals were applied above, before any announcement of this batch.
+            auto editIt = commit.find(CommitKey::EDIT);
+            bool isRemoval = editIt != commit.end() && !editIt->second.empty();
+            if (!isRemoval) {
+                if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
+                    acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
+            }
         }
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
@@ -2255,6 +2288,30 @@ Conversation::getCommit(const std::string& commitId) const
     return pimpl_->repository_->getCommit(commitId);
 }
 
+namespace {
+/**
+ * Announcement commit ids retired by a removal, from a full conversation log.
+ *
+ * Which document a removal retires is read from the announcement it edits, never from
+ * the removal itself: the swarm only checks that an edition carries the author of the
+ * commit it edits, so trusting an id carried by the removal would let a member retire
+ * a document somebody else created.
+ */
+std::set<std::string>
+retiredAnnouncements(const std::vector<std::map<std::string, std::string>>& commits)
+{
+    std::set<std::string> retired;
+    for (const auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        if (auto editIt = commit.find(CommitKey::EDIT); editIt != commit.end() && !editIt->second.empty())
+            retired.emplace(editIt->second);
+    }
+    return retired;
+}
+} // namespace
+
 std::vector<std::map<std::string, std::string>>
 Conversation::collaborativeDocuments() const
 {
@@ -2265,6 +2322,7 @@ Conversation::collaborativeDocuments() const
     LogOptions options;
     options.skipMerge = true;
     auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
+    auto retired = retiredAnnouncements(commits);
     std::vector<std::map<std::string, std::string>> result;
     for (auto& commit : commits) {
         auto typeIt = commit.find(CommitKey::TYPE);
@@ -2272,6 +2330,9 @@ Conversation::collaborativeDocuments() const
             continue;
         auto uriIt = commit.find(CommitKey::URI);
         if (uriIt == commit.end() || uriIt->second.empty())
+            continue;
+        auto idIt = commit.find("id");
+        if (idIt != commit.end() && retired.count(idIt->second) != 0)
             continue;
         result.emplace_back(std::move(commit));
     }
