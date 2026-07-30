@@ -143,6 +143,21 @@ test(
     timeout: 300,
 )
 
+ut_conversation_cloned = executable(
+    'ut_conversation_cloned',
+    sources: files('unitTest/conversation/conversationCloned.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'conversation_cloned',
+    ut_conversation_cloned,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_gitserver = executable(
     'ut_gitserver',
     sources: files('unitTest/conversation/gitserver.cpp'),
