@@ -62,9 +62,6 @@ public:
         git_repository_free(repo);
 
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
-            std::lock_guard lk(destroyMtx_);
-            if (isDestroying_)
-                return len;
             if (parseOrder(std::string_view((const char*) buf, len)))
                 while (parseOrder())
                     ;
@@ -78,11 +75,13 @@ public:
     }
     void stop()
     {
-        std::lock_guard lk(destroyMtx_);
-        if (isDestroying_.exchange(true)) {
-            socket_->setOnRecv({});
-            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
-        }
+        if (isDestroying_.exchange(true))
+            return;
+        // Clearing the receive callback waits for an in-flight invocation to
+        // return, so no order can be parsed against a half-destroyed Impl once
+        // this call completes.
+        socket_->setOnRecv({});
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
     }
     bool parseOrder(std::string_view buf = {});
 
@@ -101,7 +100,6 @@ public:
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
-    std::mutex destroyMtx_ {};
     std::atomic_bool isDestroying_ {false};
     onFetchedCb onFetchedCb_ {};
 };
