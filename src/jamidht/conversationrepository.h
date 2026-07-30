@@ -169,7 +169,8 @@ public:
 
     /**
      * Clones a conversation on a remote device
-     * @note This will use the socket registered for the conversation with JamiAccount::addGitSocket()
+     * @note This will use the socket registered for the conversation with
+     * Conversation::addGitSocket()
      * @param account           The account getting the conversation
      * @param deviceId          Remote device
      * @param conversationId    Conversation to clone
@@ -201,7 +202,8 @@ public:
 
     /**
      * Fetch a remote repository via the given socket
-     * @note This will use the socket registered for the conversation with JamiAccount::addGitSocket()
+     * @note This will use the socket registered for the conversation with
+     * Conversation::addGitSocket()
      * @note will create a remote identified by the deviceId
      * @param remoteDeviceId    Remote device id to fetch
      * @return if the operation was successful
