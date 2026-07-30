@@ -75,12 +75,14 @@ private:
     void testBootstrapFailed();
     void testBootstrapNeverNewDevice();
     void testBootstrapCompat();
+    void testBootstrapAfterReactivation();
 
     CPPUNIT_TEST_SUITE(BootstrapTest);
     CPPUNIT_TEST(testBootstrapOk);
     CPPUNIT_TEST(testBootstrapFailed);
     CPPUNIT_TEST(testBootstrapNeverNewDevice);
     CPPUNIT_TEST(testBootstrapCompat);
+    CPPUNIT_TEST(testBootstrapAfterReactivation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -360,6 +362,56 @@ BootstrapTest::testBootstrapCompat()
     cv.wait_for(lk, 30s, [&]() {
         return bobData.messages.size() == bobMsgSize + 1 && bobData.bootstrap == Conversation::BootstrapStatus::FAILED;
     });
+}
+
+void
+BootstrapTest::testBootstrapAfterReactivation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData.accountId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
+    auto bobUri = bobAccount->getUsername();
+
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        cv.notify_one();
+    });
+
+    std::unique_lock lk {mtx};
+    auto convId = libjami::startConversation(aliceData.accountId);
+
+    libjami::addConversationMember(aliceData.accountId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobData.accountId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationReady && aliceData.messages.size() == aliceMsgSize + 1
+               && aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
+    }));
+
+    // Bob leaves, so Alice's swarm manager loses its only connected node. Hers is
+    // never shut down -- she stays active throughout -- and it keeps Bob's device
+    // as a known node.
+    Manager::instance().sendRegister(bobData.accountId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::FAILED; }));
+
+    Manager::instance().sendRegister(bobData.accountId, true);
+
+    // Alice leaves the foreground and comes back, the way a mobile client does.
+    // setAccountActive() leaves established connections alone by default, so her
+    // swarm manager is neither shut down nor connected, and Bob's device is not
+    // new to it. setKnownNodes() would find nothing to do, and the conversation
+    // would stay silent until the process is restarted.
+    aliceData.bootstrap = Conversation::BootstrapStatus::FAILED;
+    lk.unlock();
+    // Both calls are synchronous: doUnregister() joins the DHT before returning,
+    // and doRegister() is driven by the reactivation itself.
+    Manager::instance().setAccountActive(aliceData.accountId, false, false);
+    Manager::instance().setAccountActive(aliceData.accountId, true, false);
+    lk.lock();
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS; }));
 }
 
 } // namespace test
