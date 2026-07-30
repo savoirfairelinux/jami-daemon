@@ -1289,6 +1289,8 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
         return true;
     }
     JAMI_ERROR("lookupAddress: Unknown account: {}", account);
+    jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
+        account, address, (int) jami::NameDirectory::Response::error, "", "");
     return false;
 }
 
