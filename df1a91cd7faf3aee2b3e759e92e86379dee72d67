@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "995a8f06_9dbae674",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 581,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:16Z",
+      "side": 1,
+      "message": "[error] Line 581: 🔴 Changing the default kind from `op` to `y` drops real-time updates from older daemons/clients, which send legacy CRDT updates without `k` and with field `u`. During a rolling upgrade those messages now parse `m` as empty and are ignored, so collaborators stop converging. Preserve the legacy default/path (`op`, `aw`, `leave`) alongside the new `y` framing until protocol compatibility is intentionally broken.",
+      "revId": "df1a91cd7faf3aee2b3e759e92e86379dee72d67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b54684b8_3ce4535b",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 641,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:16Z",
+      "side": 1,
+      "message": "[error] Line 641: 🔴 Unknown sync subtypes are treated as update-carrying messages. Any unrecognized value other than `STEP1` currently falls through and applies the payload as a Yjs update, so a future protocol extension or malformed frame can corrupt/drop state unpredictably. Explicitly handle only `STEP2` and `UPDATE`, and ignore/log other sync values.",
+      "revId": "df1a91cd7faf3aee2b3e759e92e86379dee72d67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21b5629c_d5d731ca",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-30T04:11:16Z",
+      "side": 1,
+      "message": "[error] Line 745: 🔴 `sendFrame(..., peer, device)` does not validate that `device` is non-empty before calling `sendMessage`. If a peer sends a valid `STEP1` from a message path where `fromDevice` is unavailable, the daemon may send the diff to an unspecified/default device or fail silently, undermining the targeted state-vector exchange. Guard targeted sends with both peer and device present, or fall back deliberately to the conversation broadcast path.",
+      "revId": "df1a91cd7faf3aee2b3e759e92e86379dee72d67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
