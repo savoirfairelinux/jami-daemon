@@ -3522,9 +3522,12 @@ ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId
 }
 
 void
-ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view convId)
+ConversationModule::removeGitSocket(std::string_view deviceId,
+                                    std::string_view convId,
+                                    const std::shared_ptr<dhtnet::ChannelSocket>& expected)
 {
-    pimpl_->withConversation(convId, [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId)); });
+    pimpl_->withConversation(convId,
+                             [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId), expected); });
 }
 
 void
