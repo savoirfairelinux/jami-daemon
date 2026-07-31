@@ -873,29 +873,41 @@ public:
     {
         std::lock_guard lk(gitSocketMtx_);
         auto deviceSockets = gitSocketList_.find(deviceId);
-        return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
+        return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second.get() : nullptr;
     }
 
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket)
     {
-        std::lock_guard lk(gitSocketMtx_);
-        gitSocketList_[deviceId] = socket;
+        GitSocket replaced;
+        {
+            std::lock_guard lk(gitSocketMtx_);
+            auto& slot = gitSocketList_[deviceId];
+            // Re-registering the channel we already own must not close it.
+            if (slot.get() == socket)
+                return;
+            replaced = std::move(slot);
+            slot = socket;
+        }
+        // Closing the replaced channel, if any, happens here, outside the lock.
     }
-    void removeGitSocket(const DeviceId& deviceId)
+    void removeGitSocket(const DeviceId& deviceId,
+                         const std::shared_ptr<dhtnet::ChannelSocket>& expected = {})
     {
-        std::shared_ptr<dhtnet::ChannelSocket> socket;
+        GitSocket socket;
         {
             std::lock_guard lk(gitSocketMtx_);
             auto deviceSockets = gitSocketList_.find(deviceId);
             if (deviceSockets == gitSocketList_.end())
                 return;
+            // A dead channel must not evict the one that replaced it.
+            if (expected && deviceSockets->second.get() != expected)
+                return;
             socket = std::move(deviceSockets->second);
             gitSocketList_.erase(deviceSockets);
         }
-        // Wake up any fetch currently blocked reading from this socket, otherwise it keeps
+        // Closing the channel outside the lock tells the peer to stop serving it, and wakes up
+        // any fetch blocked reading from it, which would otherwise hold
         // ConversationRepository::opMtx_ until its read times out.
-        if (socket)
-            socket->stop();
     }
 
     void disconnectFromDevice(const DeviceId& deviceId);
@@ -1295,7 +1307,7 @@ Conversation::Impl::disconnectFromDevice(const DeviceId& deviceId)
 {
     swarmManager_->deleteNode({deviceId});
 
-    std::shared_ptr<dhtnet::ChannelSocket> socket;
+    GitSocket socket;
     {
         std::lock_guard lk(gitSocketMtx_);
         if (auto it = gitSocketList_.find(deviceId); it != gitSocketList_.end()) {
@@ -1303,8 +1315,7 @@ Conversation::Impl::disconnectFromDevice(const DeviceId& deviceId)
             gitSocketList_.erase(it);
         }
     }
-    if (socket)
-        socket->shutdown();
+    // The channel is closed here, outside the lock.
 }
 
 void
@@ -1941,23 +1952,23 @@ Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtne
 }
 
 void
-Conversation::removeGitSocket(const DeviceId& deviceId)
+Conversation::removeGitSocket(const DeviceId& deviceId,
+                              const std::shared_ptr<dhtnet::ChannelSocket>& expected)
 {
-    pimpl_->removeGitSocket(deviceId);
+    pimpl_->removeGitSocket(deviceId, expected);
 }
 
 void
 Conversation::shutdownConnections()
 {
-    decltype(Impl::gitSocketList_) gitSockets;
+    GitSocketList gitSockets;
     {
         std::lock_guard lk(pimpl_->gitSocketMtx_);
         gitSockets = std::move(pimpl_->gitSocketList_);
         pimpl_->gitSocketList_.clear();
     }
-    // Shutting down wakes up any fetch currently blocked reading from these sockets.
-    for (auto& [_, socket] : gitSockets)
-        socket->shutdown();
+    // Closing the channels wakes up any fetch currently blocked reading from them.
+    gitSockets.clear();
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
 }

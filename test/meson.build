@@ -173,6 +173,21 @@ test(
     timeout: 300,
 )
 
+ut_gitsocket = executable(
+    'ut_gitsocket',
+    sources: files('unitTest/conversation/gitsocket.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'gitsocket',
+    ut_gitsocket,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 300,
+)
+
 ut_gittransport = executable(
     'ut_gittransport',
     sources: files('unitTest/conversation/gittransport.cpp'),
