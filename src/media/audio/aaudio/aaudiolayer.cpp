@@ -307,6 +307,12 @@ AAudioLayer::dataCallback(AAudioStream* stream, void* userData, void* audioData,
     auto format = getStreamFormat(stream);
     int32_t numSamples = numFrames * format.nb_channels;
 
+    // AAudioStreamBuilder_setFormat() is a request: the granted format is whatever
+    // AAudioStream_getFormat() reports, which is why getStreamFormat() above already handles
+    // AAUDIO_FORMAT_PCM_I16. The copies below must use the same format, or they read and write four
+    // bytes per sample from and to buffers holding two.
+    const bool isFloat = format.sampleFormat == AV_SAMPLE_FMT_FLT;
+
     if (direction == AAUDIO_DIRECTION_OUTPUT) {
         // JAMI_WARNING("Playback callback: {} frames, format: {}, sample rate: {}", numFrames, (aaFormat ==
         // AAUDIO_FORMAT_PCM_FLOAT) ? "Float" : "I16", sampleRate);
@@ -329,25 +335,42 @@ AAudioLayer::dataCallback(AAudioStream* stream, void* userData, void* audioData,
 
         auto frame = stream == layer->ringStream_.get() ? layer->getToRing(format, numFrames)
                                                         : layer->getToPlay(format, numFrames);
+        auto emitSilence = [&] {
+            if (isFloat)
+                std::fill_n(static_cast<float*>(audioData), numSamples, 0.0f);
+            else
+                std::fill_n(static_cast<int16_t*>(audioData), numSamples, int16_t(0));
+        };
+
         if (stream != layer->ringStream_.get() && layer->isPlaybackMuted()) {
             // Explicit call-audio mute (see AudioLayer::mutePlayback()): still drain the
             // playback queue via getToPlay() above so it doesn't build up an ever-growing
             // backlog while muted, but discard the samples and emit silence instead.
-            std::fill_n(static_cast<float*>(audioData), numSamples, 0.0f);
+            emitSilence();
         } else if (frame && frame->pointer() && frame->pointer()->data[0]) {
-            float* output = static_cast<float*>(audioData);
-            const float* src = reinterpret_cast<const float*>(frame->pointer()->data[0]);
-            std::copy(src, src + numSamples, output);
+            const auto* data = frame->pointer()->data[0];
+            if (isFloat) {
+                const auto* src = reinterpret_cast<const float*>(data);
+                std::copy(src, src + numSamples, static_cast<float*>(audioData));
+            } else {
+                const auto* src = reinterpret_cast<const int16_t*>(data);
+                std::copy(src, src + numSamples, static_cast<int16_t*>(audioData));
+            }
         } else {
             JAMI_WARNING("Playback underflow: no data available, filling with silence");
-            std::fill_n(static_cast<float*>(audioData), numSamples, 0.0f);
+            emitSilence();
         }
     } else if (direction == AAUDIO_DIRECTION_INPUT) { // Capture
         auto out = std::make_shared<AudioFrame>(format, numFrames);
         if (out->pointer() && out->pointer()->data[0]) {
-            auto* dst = reinterpret_cast<float*>(out->pointer()->data[0]);
-            const auto* src = static_cast<const float*>(audioData);
-            std::copy(src, src + numSamples, dst);
+            auto* dst = out->pointer()->data[0];
+            if (isFloat) {
+                const auto* src = static_cast<const float*>(audioData);
+                std::copy(src, src + numSamples, reinterpret_cast<float*>(dst));
+            } else {
+                const auto* src = static_cast<const int16_t*>(audioData);
+                std::copy(src, src + numSamples, reinterpret_cast<int16_t*>(dst));
+            }
             layer->putRecorded(std::move(out));
         }
     }
