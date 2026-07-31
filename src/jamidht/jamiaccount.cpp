@@ -2572,7 +2572,7 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
                                                            socket->deviceId().toString(),
                                                            true)) {
                 socket->shutdown();
-                shared->convModule()->removeGitSocket(socket->deviceId().toString(), convId);
+                shared->convModule()->removeGitSocket(socket->deviceId().toString(), convId, socket);
                 cb({});
                 return;
             }
@@ -2607,10 +2607,15 @@ JamiAccount::onConversationNeedSocket(const std::string& convId,
                                 cb({});
                                 return;
                             }
-                            socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
-                                dht::ThreadPool::io().run([w, deviceId, convId] {
-                                    if (auto shared = w.lock())
-                                        shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                            socket->onShutdown([w, deviceId = socket->deviceId(), convId, ws = std::weak_ptr(socket)](
+                                                   const std::error_code&) {
+                                dht::ThreadPool::io().run([w, deviceId, convId, ws] {
+                                    auto shared = w.lock();
+                                    // Identify the channel, so that one dying after it has already
+                                    // been replaced doesn't unregister its replacement.
+                                    auto socket = ws.lock();
+                                    if (shared && socket)
+                                        shared->convModule()->removeGitSocket(deviceId.toString(), convId, socket);
                                 });
                             });
                             if (!cb(socket))
