@@ -49,8 +49,13 @@ public:
     int maxPayload() const override { return 0; }
     int waitForData(std::chrono::milliseconds, std::error_code& ec) const override
     {
-        ec = {};
         std::lock_guard lk(mutex_);
+        // Same contract as ChannelSocket: untouched on a timeout, set once the
+        // channel is closed and drained.
+        if (pending_.empty() and isShutdown_)
+            ec = std::make_error_code(std::errc::broken_pipe);
+        else
+            ec = {};
         return pending_.size();
     }
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override
@@ -127,12 +132,16 @@ private:
     void testSendCmdWritesTheRequest();
     void testSendCmdReportsAWriteError();
     void testReadReturnsZeroOnSuccess();
+    void testReadFailsWhenTheChannelIsClosed();
+    void testReadFailsOnAnIdleChannel();
     void testReadFailsWhenTheCommandCannotBeSent();
 
     CPPUNIT_TEST_SUITE(GitTransportTest);
     CPPUNIT_TEST(testSendCmdWritesTheRequest);
     CPPUNIT_TEST(testSendCmdReportsAWriteError);
     CPPUNIT_TEST(testReadReturnsZeroOnSuccess);
+    CPPUNIT_TEST(testReadFailsWhenTheChannelIsClosed);
+    CPPUNIT_TEST(testReadFailsOnAnIdleChannel);
     CPPUNIT_TEST(testReadFailsWhenTheCommandCannotBeSent);
     CPPUNIT_TEST_SUITE_END();
 
@@ -198,6 +207,28 @@ GitTransportTest::testReadReturnsZeroOnSuccess()
     CPPUNIT_ASSERT_EQUAL(0, P2PStreamRead(&stream_.base, buffer, sizeof(buffer), &read));
     CPPUNIT_ASSERT_EQUAL(size_t(8), read);
     CPPUNIT_ASSERT_EQUAL(std::string("0008NAK\n"), std::string(buffer, read));
+}
+
+void
+GitTransportTest::testReadFailsWhenTheChannelIsClosed()
+{
+    socket_->shutdown();
+
+    char buffer[64];
+    size_t read = 42;
+    // The peer ends a packfile with a flush packet, so a closed channel is
+    // always a dead fetch and never a normal end of stream.
+    CPPUNIT_ASSERT(P2PStreamRead(&stream_.base, buffer, sizeof(buffer), &read) < 0);
+    CPPUNIT_ASSERT_EQUAL(size_t(0), read);
+}
+
+void
+GitTransportTest::testReadFailsOnAnIdleChannel()
+{
+    char buffer[64];
+    size_t read = 42;
+    CPPUNIT_ASSERT(P2PStreamRead(&stream_.base, buffer, sizeof(buffer), &read) < 0);
+    CPPUNIT_ASSERT_EQUAL(size_t(0), read);
 }
 
 void

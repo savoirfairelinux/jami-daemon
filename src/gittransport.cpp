@@ -128,21 +128,24 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
     std::error_code ec;
     // TODO ChannelSocket needs a blocking read operation
     auto datalen = sock->waitForData(P2P_READ_TIMEOUT, ec);
-    if (datalen > 0) {
-        *read = sock->read(reinterpret_cast<unsigned char*>(buffer),
-                           std::min<size_t>(datalen, buflen),
-                           ec);
-        if (ec) {
-            giterr_set_str(GITERR_NET, ec.message().c_str());
-            return -1;
-        }
-    } else {
-        // libgit2 ends the packfile download on a zero byte read, so this is
-        // still a success even though waitForData() cannot tell a closed
-        // channel from an idle one.
-        JAMI_WARNING("[git] {}: no data received for {}s, ending stream",
-                     fs->url,
-                     std::chrono::duration_cast<std::chrono::seconds>(P2P_READ_TIMEOUT).count());
+    if (datalen <= 0) {
+        // The peer terminates a packfile with a flush packet, so libgit2 stops
+        // reading on its own once a fetch is complete. Getting nothing here
+        // always means the fetch died, and ec says whether the channel is gone
+        // or merely went quiet.
+        auto reason = ec ? fmt::format("channel closed ({})", ec.message())
+                         : fmt::format("no data received for {}", P2P_READ_TIMEOUT);
+        JAMI_WARNING("[git] {}: {}, ending stream", fs->url, reason);
+        giterr_set_str(GITERR_NET, reason.c_str());
+        return -1;
+    }
+
+    *read = sock->read(reinterpret_cast<unsigned char*>(buffer),
+                       std::min<size_t>(datalen, buflen),
+                       ec);
+    if (ec) {
+        giterr_set_str(GITERR_NET, ec.message().c_str());
+        return -1;
     }
 
     return 0;
