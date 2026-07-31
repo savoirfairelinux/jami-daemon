@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20790176_37f29260",
+        "filename": "src/jamidht/collab_repository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 765,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-31T00:34:51Z",
+      "side": 1,
+      "message": "[warning] Line 765: 🟡 create_directories errors are ignored, so marker creation failure loses the actual filesystem reason and only reports a generic warning. Check ec after create_directories and log/return false before opening the marker file.",
+      "revId": "80edc3e322556c6e9a6ebfb8be7127c42f15c503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8320d2d6_ce585868",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 636,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-31T00:34:51Z",
+      "side": 1,
+      "message": "[error] Line 636: 🔴 Clearing the local-removal marker before the document has actually been fetched makes failed or offline reopen attempts permanent: if ensureSession/openOrInit/requestCollabDocument fails or no peer responds, the document is no longer marked locally removed and future announcements/checkpoints can recreate it implicitly, while clients may see storedLocally\u003dtrue for an empty/incomplete replica. Keep the marker until the repository fetch/update succeeds, or restore it on failure.",
+      "revId": "80edc3e322556c6e9a6ebfb8be7127c42f15c503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
