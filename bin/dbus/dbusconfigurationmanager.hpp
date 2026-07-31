@@ -694,6 +694,13 @@ public:
         return libjami::removeCollaborativeDocument(accountId, conversationId, documentId);
     }
 
+    bool removeCollaborativeDocumentLocally(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& documentId)
+    {
+        return libjami::removeCollaborativeDocumentLocally(accountId, conversationId, documentId);
+    }
+
     void applyCollaborativeUpdate(const std::string& accountId,
                                   const std::string& conversationId,
                                   const std::string& documentId,
@@ -899,7 +906,7 @@ private:
             exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentRenamed>(
                 std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRenamed, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::CollaborativeDocumentRemoved>(
-                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRemoved, this, _1, _2, _3)),
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRemoved, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::CollaborativeAttachmentAdded>(
                 std::bind(&DBusConfigurationManager::emitCollaborativeAttachmentAdded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(

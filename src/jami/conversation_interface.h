@@ -167,6 +167,23 @@ LIBJAMI_PUBLIC std::vector<uint8_t> openCollaborativeDocument(const std::string&
 LIBJAMI_PUBLIC bool removeCollaborativeDocument(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& documentId);
+/**
+ * Remove a document from this device only, leaving the other members untouched.
+ *
+ * Any member may, on any document: nothing is said to the conversation, this
+ * only reclaims what this device chose to store. The document stays listed --
+ * with "storedLocally" false -- and openCollaborativeDocument() fetches it back.
+ *
+ * Edits this device made while no other member was reachable go with it. Anything
+ * a member was around to receive is already on their replica.
+ *
+ * @return false if the conversation never announced that document. True means it
+ *         is gone from here; ConfigurationSignal::CollaborativeDocumentRemoved
+ *         reports it with @c everywhere false.
+ */
+LIBJAMI_PUBLIC bool removeCollaborativeDocumentLocally(const std::string& accountId,
+                                                       const std::string& conversationId,
+                                                       const std::string& documentId);
 LIBJAMI_PUBLIC void closeCollaborativeDocument(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& documentId);
@@ -209,6 +226,13 @@ LIBJAMI_PUBLIC void setCollaborativeDocumentName(const std::string& accountId,
 LIBJAMI_PUBLIC std::string collaborativeDocumentName(const std::string& accountId,
                                                      const std::string& conversationId,
                                                      const std::string& documentId);
+/**
+ * Every collaborative document announced in a conversation, as the maps of the
+ * commits announcing them: "uri" is the document id, plus "displayName",
+ * "mimeType", "author" and "id". One key is added by the daemon rather than read
+ * from the commit: "storedLocally", "true" unless this device removed the
+ * document from itself, in which case opening it fetches it back.
+ */
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(
     const std::string& accountId, const std::string& conversationId);
 
