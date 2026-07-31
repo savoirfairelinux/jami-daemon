@@ -75,6 +75,11 @@ void
 AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
     JAMI_LOG("Hardware input audio format available: {:s}", capture.toString());
+
+    // Keep it: createAudioProcessor() sizes the echo canceller, the noise suppressor and the voice
+    // activity detector from max(playback, capture), so a stale capture format silently sizes them
+    // from the playback format alone.
+    audioInputFormat_ = capture;
 }
 
 void
