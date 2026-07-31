@@ -19,6 +19,7 @@
 
 #include "jamidht/commit_message.h"
 #include "jamidht/conversationrepository.h"
+#include "jamidht/gitsocket.h"
 #include "conversationrepository.h"
 #include "swarm/swarm_protocol.h"
 #include "jami/conversation_interface.h"
@@ -247,7 +248,7 @@ using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 using DeviceId = dht::PkId;
-using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
+using GitSocketList = std::map<DeviceId, GitSocket>;
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&, bool noNewSocket)>;
@@ -697,7 +698,9 @@ public:
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const;
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket);
-    void removeGitSocket(const DeviceId& deviceId);
+    /** If @p expected is set, only remove the socket if it is still the registered one. */
+    void removeGitSocket(const DeviceId& deviceId,
+                         const std::shared_ptr<dhtnet::ChannelSocket>& expected = {});
 
     /**
      * Stop SwarmManager, bootstrap and gitSockets
