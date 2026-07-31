@@ -498,7 +498,10 @@ public:
      * @return the related socket
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId, std::string_view convId) const;
-    void removeGitSocket(std::string_view deviceId, std::string_view convId);
+    /** If @p expected is set, only remove the socket if it is still the registered one. */
+    void removeGitSocket(std::string_view deviceId,
+                         std::string_view convId,
+                         const std::shared_ptr<dhtnet::ChannelSocket>& expected = {});
     /**
      * Clear all connection (swarm channels)
      */
