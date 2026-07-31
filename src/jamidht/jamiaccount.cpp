@@ -2962,10 +2962,12 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
 
-    // Edits made since the last checkpoint live only in memory, and only on the
-    // device that produced them: write them out before anything is torn down or
-    // they are lost for every replica. Copy the pointer under its own lock: an
-    // inbound collaborative message can still be assigning it on another thread.
+    // Edits made here since the last checkpoint are pending for persistence only
+    // on this device. Online receivers may have merged them into live replicas,
+    // but they do not checkpoint remote updates, so those copies are volatile.
+    // Write the pending updates out before anything is torn down. Copy the
+    // pointer under its own lock: an inbound collaborative message can still be
+    // assigning it on another thread.
     std::shared_ptr<CollaborativeEditing> collab;
     {
         std::lock_guard lk(moduleMtx_);

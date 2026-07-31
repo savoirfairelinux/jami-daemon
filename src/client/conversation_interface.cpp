@@ -301,6 +301,16 @@ removeCollaborativeDocument(const std::string& accountId,
     return false;
 }
 
+bool
+removeCollaborativeDocumentLocally(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->removeDocumentLocally(conversationId, documentId);
+    return false;
+}
+
 void
 closeCollaborativeDocument(const std::string& accountId,
                            const std::string& conversationId,

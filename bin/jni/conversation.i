@@ -77,6 +77,7 @@ struct SwarmMessage
   std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);
   std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   bool removeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  bool removeCollaborativeDocumentLocally(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
   void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::vector<uint8_t>& update);
   void setCollaborativeAwareness(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& state);
