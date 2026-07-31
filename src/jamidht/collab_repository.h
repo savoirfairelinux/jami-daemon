@@ -149,6 +149,26 @@ public:
     static std::vector<std::string> listDocuments(const std::string& accountId, const std::string& conversationId);
 
     /**
+     * Record that a document was removed from @b this device only.
+     *
+     * The mark outlives the repository it stands for, and that is its whole
+     * point: the document stays announced in the conversation, so an
+     * announcement paged back in, a peer's checkpoint notification or a live
+     * update would all otherwise bring back what the user just reclaimed the
+     * space of. It is deliberately kept next to the repositories rather than in
+     * the conversation: what one device holds is nobody else's business.
+     */
+    static bool markLocallyRemoved(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& documentId);
+    /// Forget that mark, so the document may be replicated here again.
+    static bool clearLocalRemoval(const std::string& accountId,
+                                  const std::string& conversationId,
+                                  const std::string& documentId);
+    /// Document ids currently marked as removed from this device.
+    static std::vector<std::string> listLocallyRemoved(const std::string& accountId, const std::string& conversationId);
+
+    /**
      * Create the repository of a new document and write its initial commit.
      * Fails if the repository already exists.
      */

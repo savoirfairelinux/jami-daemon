@@ -75,6 +75,23 @@ public:
     /// @return false if no announcement for it was found here
     bool removeDocument(const std::string& conversationId, const std::string& documentId);
     /**
+     * Remove a document from @b this device only, without touching what the
+     * other members hold. Anyone may, on any document: this says nothing to the
+     * conversation, it only reclaims what this device chose to store.
+     *
+     * The document stays announced and stays listed, marked as no longer held
+     * here; openDocument() brings it back. Until then nothing replicates it:
+     * neither an announcement paged back in, nor a peer's checkpoint, nor a live
+     * update.
+     *
+     * What this device edited and had no chance to hand on -- edits made while
+     * no other member was reachable -- goes with the repository. Anything a
+     * member was around to receive is already on their replica.
+     *
+     * @return false if the conversation never announced this document
+     */
+    bool removeDocumentLocally(const std::string& conversationId, const std::string& documentId);
+    /**
      * Open (or create the local session for) a document.
      * @return its whole state as a single Y-CRDT update, which the caller applies
      *         to its own replica. Empty for a document nothing is known about yet.
@@ -195,6 +212,18 @@ private:
     /// conversation again: this is consulted while the caller holds the
     /// conversation lock.
     bool isRemovedDocument(const std::string& conversationId, const std::string& documentId);
+    /// Whether this device removed the document from itself. Read from disk once
+    /// per conversation and cached: this is asked for every announcement seen
+    /// while paging through a conversation.
+    bool isLocallyRemoved(const std::string& conversationId, const std::string& documentId);
+    /// The local removals of a conversation, read from disk the first time.
+    /// Caller must hold @c announcedMtx_; the scan runs under it so that a
+    /// document opened again cannot be re-marked by a scan that started before.
+    std::set<std::string>& localRemovalsLocked(const std::string& conversationId);
+    /// Drop the live replica and erase the repository of a document, whichever
+    /// kind of removal asked for it. Cancels the pending checkpoint rather than
+    /// writing it: it would land in a repository about to be erased.
+    void dropLocalReplica(const std::string& conversationId, const std::string& documentId);
     /// Whether room remains to hold a session for a document the conversation
     /// never announced. Live updates arrive before the announcement is merged,
     /// so such sessions have to be tolerated -- but an authorized member can name
@@ -208,6 +237,11 @@ private:
     /// the two sets are always read together, and one lock keeps them consistent.
     /// A conversation absent from this map has not been scanned yet.
     std::map<std::string, std::set<std::string>> removed_;
+    /// Document ids this device removed from itself, per conversation, guarded by
+    /// @c announcedMtx_ as well. Unlike @c removed_ this one is durable: it is
+    /// seeded from the markers on disk the first time a conversation is asked
+    /// about, and a conversation absent from this map has not been seeded yet.
+    std::map<std::string, std::set<std::string>> locallyRemoved_;
     /// Display names already read from disk. Clients ask for a name far more
     /// often than one changes -- once per message delegate built while scrolling
     /// -- and answering from the repository means git lookups on their UI thread.

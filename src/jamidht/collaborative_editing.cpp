@@ -25,6 +25,7 @@
 #include "client/jami_signal.h"
 #include "base64.h"
 #include "json_utils.h"
+#include "string_utils.h"
 
 #include <opendht/thread_pool.h>
 
@@ -51,6 +52,11 @@ static constexpr size_t PENDING_HARD_CAP {CHECKPOINT_MAX_PENDING * 50};
 // every checkpoint; packing itself only happens once the threshold inside
 // CollabRepository::compact() is actually crossed.
 static constexpr size_t COMPACT_CHECK_EVERY {64};
+
+// Key added to a document listing, alongside those read from the announcing
+// commit: whether this device still holds the document. Part of the client API,
+// documented on getCollaborativeDocuments().
+static constexpr char DOCUMENT_STORED_LOCALLY[] = "storedLocally";
 
 // Ceilings on what a single message may carry. Both the client API and the swarm
 // hand us opaque blobs, and both decode into memory before the engine gets a say.
@@ -201,6 +207,12 @@ CollaborativeEditing::ensureSession(const std::string& conversationId,
                                     const std::string& documentId,
                                     bool allowRepoCreation)
 {
+    // No path recreates the repository of a document this device removed from
+    // itself -- not a rename, not an attachment, not anything added later. The
+    // one call that is meant to bring it back, openDocument(), clears the mark
+    // before getting here, so it is not caught by this.
+    if (allowRepoCreation && isLocallyRemoved(conversationId, documentId))
+        allowRepoCreation = false;
     std::lock_guard<std::mutex> lk(mutex_);
     auto k = key(conversationId, documentId);
     if (auto it = sessions_.find(k); it != sessions_.end()) {
@@ -349,6 +361,37 @@ CollaborativeEditing::removeDocument(const std::string& conversationId, const st
     return true;
 }
 
+bool
+CollaborativeEditing::removeDocumentLocally(const std::string& conversationId, const std::string& documentId)
+{
+    // Only documents the conversation announced: without this, a caller could
+    // have us write a marker file per id it cares to name, and each one would
+    // then be honoured for the lifetime of the account.
+    if (!isAnnouncedDocument(conversationId, documentId)) {
+        JAMI_WARNING("[Account {}] [Document {}] Not removing from this device: it was not announced in "
+                     "conversation {}",
+                     accountId_,
+                     documentId,
+                     conversationId);
+        return false;
+    }
+    // The marker goes down before anything is erased. Written the other way
+    // round, a checkpoint notification arriving in between would find no marker
+    // and no repository, and rebuild exactly what is being reclaimed.
+    if (!CollabRepository::markLocallyRemoved(accountId_, conversationId, documentId))
+        return false;
+    {
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        localRemovalsLocked(conversationId).emplace(documentId);
+    }
+    dropLocalReplica(conversationId, documentId);
+    emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRemoved>(accountId_,
+                                                                           conversationId,
+                                                                           documentId,
+                                                                           false);
+    return true;
+}
+
 void
 CollaborativeEditing::setName(const std::string& conversationId, const std::string& documentId, const std::string& name)
 {
@@ -433,7 +476,18 @@ CollaborativeEditing::documents(const std::string& conversationId)
     auto conversation = cm->getConversation(conversationId);
     if (!conversation)
         return {};
-    return conversation->collaborativeDocuments();
+    auto docs = conversation->collaborativeDocuments();
+    // The conversation knows which documents exist; only this object knows which
+    // of them this device still holds. A client has to be able to tell them
+    // apart: one opens on what is already here, the other has to be fetched
+    // back first.
+    std::lock_guard<std::mutex> lk(announcedMtx_);
+    const auto& removals = localRemovalsLocked(conversationId);
+    for (auto& doc : docs) {
+        auto it = doc.find(CommitKey::URI);
+        doc[DOCUMENT_STORED_LOCALLY] = (it != doc.end() && removals.count(it->second) != 0) ? FALSE_STR : TRUE_STR;
+    }
+    return docs;
 }
 
 bool
@@ -474,6 +528,70 @@ CollaborativeEditing::isRemovedDocument(const std::string& conversationId, const
     return it != removed_.end() && it->second.count(documentId) != 0;
 }
 
+std::set<std::string>&
+CollaborativeEditing::localRemovalsLocked(const std::string& conversationId)
+{
+    auto it = locallyRemoved_.find(conversationId);
+    if (it != locallyRemoved_.end())
+        return it->second;
+    // First question asked about this conversation. One directory read, and the
+    // answers are held for as long as the account lives.
+    auto ids = CollabRepository::listLocallyRemoved(accountId_, conversationId);
+    auto& set = locallyRemoved_[conversationId];
+    set.insert(std::make_move_iterator(ids.begin()), std::make_move_iterator(ids.end()));
+    return set;
+}
+
+bool
+CollaborativeEditing::isLocallyRemoved(const std::string& conversationId, const std::string& documentId)
+{
+    std::lock_guard<std::mutex> lk(announcedMtx_);
+    return localRemovalsLocked(conversationId).count(documentId) != 0;
+}
+
+void
+CollaborativeEditing::dropLocalReplica(const std::string& conversationId, const std::string& documentId)
+{
+    std::shared_ptr<Session> session;
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        auto k = key(conversationId, documentId);
+        if (auto it = sessions_.find(k); it != sessions_.end()) {
+            session = it->second;
+            sessions_.erase(it);
+        }
+        // Not merely tidying up: this is what lets the document be requested
+        // again if it ever comes back, since a document is only ever synced once
+        // per registration.
+        syncedDocuments_.erase(k);
+        nameCache_.erase(k);
+        ++nameEpoch_;
+    }
+    // Drop the live replica without checkpointing it first: the repository is
+    // about to go, and writing to it would only race with the erase. The timer
+    // is cancelled for the same reason -- it would fire on a repository that no
+    // longer exists.
+    if (session) {
+        if (session->checkpointTimer) {
+            std::lock_guard<std::mutex> lk(session->timerMutex);
+            session->checkpointTimer->cancel();
+        }
+        // Release the repository handle before erasing the directory under it.
+        std::lock_guard<std::mutex> lk(mutex_);
+        session->repo.reset();
+    }
+    auto path = CollabRepository::documentPath(accountId_, conversationId, documentId);
+    if (!path.empty()) {
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+        if (ec)
+            JAMI_WARNING("[Account {}] [Document {}] Could not erase the document: {}",
+                         accountId_,
+                         documentId,
+                         ec.message());
+    }
+}
+
 bool
 CollaborativeEditing::admitUnannounced(const std::string& conversationId, const std::string& documentId)
 {
@@ -509,6 +627,17 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
                      conversationId);
         return {};
     }
+    // Opening a document this device had removed from itself is what asks for it
+    // back: the mark is what a removal leaves behind, and there is nothing else
+    // to undo. Whatever the members wrote meanwhile is pulled below, so the
+    // document reopens where they left it, not where this device did.
+    bool wasLocallyRemoved = false;
+    {
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        wasLocallyRemoved = localRemovalsLocked(conversationId).erase(documentId) != 0;
+    }
+    if (wasLocallyRemoved)
+        CollabRepository::clearLocalRemoval(accountId_, conversationId, documentId);
     auto session = ensureSession(conversationId, documentId);
     // Rebuild the CRDT state from persisted commits if this session was just created,
     // so a document opens with its full content even when the daemon restarted or the
@@ -530,6 +659,19 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
     // a second device of the same account catch up on edits that were made while
     // it was not looking, without waiting for the next checkpoint to be fetched.
     sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
+    // The frame above only reaches members that have this document open; the
+    // repository is what carries the rest, and it has just been erased here. Ask
+    // for it back, as a device that fell behind would.
+    if (wasLocallyRemoved) {
+        {
+            std::lock_guard<std::mutex> lk(mutex_);
+            syncedDocuments_.emplace(key(conversationId, documentId));
+        }
+        dht::ThreadPool::io().run([w = account_, conversationId, documentId] {
+            if (auto account = w.lock())
+                account->requestCollabDocument(conversationId, documentId);
+        });
+    }
     // Catch up on repositories left uncompacted by earlier versions: a document
     // that is only ever synchronized accumulates one pack per fetch, and no
     // other trigger would ever tidy it up. Scheduled only once the state has
@@ -641,6 +783,12 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
         JAMI_WARNING("[Account {}] Ignoring collaborative {} for unannounced document {}", accountId_, kind, documentId);
         return;
     }
+    // Both of these end in a repository being written here -- one fetches into
+    // it, the other serves it and would create it to do so. A document this
+    // device removed from itself is left alone: the members go on editing it
+    // among themselves, and nothing puts it back until it is opened again.
+    if ((kind == "ckpt" || kind == "req") && isLocallyRemoved(conversationId, documentId))
+        return;
     if (kind == "ckpt") {
         // A peer checkpointed the document: pull its repository. Content is not
         // carried here, only the fact that there is something new to fetch.
@@ -715,7 +863,11 @@ CollaborativeEditing::admitSession(const std::string& conversationId, const std:
     // A document known to be removed is refused outright: it can never be opened
     // again, so a replica held for it would accumulate what nothing would ever
     // read, and peers that have not seen the removal yet keep sending updates.
-    if (isRemovedDocument(conversationId, documentId))
+    //
+    // One removed from this device only is refused for the same reason and one
+    // more: a replica built here would hold the very content the user reclaimed,
+    // and the next checkpoint would write it back to disk.
+    if (isRemovedDocument(conversationId, documentId) || isLocallyRemoved(conversationId, documentId))
         return nullptr;
     const bool announced = isAnnouncedDocument(conversationId, documentId);
     if (!announced && !admitUnannounced(conversationId, documentId)) {
@@ -1254,6 +1406,13 @@ CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, con
         if (auto it = removed_.find(conversationId); it != removed_.end() && it->second.count(documentId) != 0)
             return;
         announced_[conversationId].emplace(documentId);
+        // This device chose not to hold this one. The announcement is still
+        // recorded above -- the document does exist, it is listed, and it can be
+        // opened again -- but nothing below is done for it: paging a
+        // conversation back in is precisely what would otherwise recreate the
+        // repository the user just reclaimed.
+        if (localRemovalsLocked(conversationId).count(documentId) != 0)
+            return;
     }
     // Create the local repository if needed so the document can be replicated.
     // Nothing is loaded in memory until the document is actually opened.
@@ -1304,42 +1463,16 @@ CollaborativeEditing::onDocumentRemoved(const std::string& conversationId, const
         if (auto it = announced_.find(conversationId); it != announced_.end())
             it->second.erase(documentId);
     }
-    std::shared_ptr<Session> session;
-    {
-        std::lock_guard<std::mutex> lk(mutex_);
-        auto k = key(conversationId, documentId);
-        if (auto it = sessions_.find(k); it != sessions_.end()) {
-            session = it->second;
-            sessions_.erase(it);
-        }
-        syncedDocuments_.erase(k);
-        nameCache_.erase(k);
-        ++nameEpoch_;
+    dropLocalReplica(conversationId, documentId);
+    // A document nobody can open again has no use for a marker saying this
+    // device chose not to hold it. Left behind, it would outlive everything else
+    // the document ever wrote here.
+    if (isLocallyRemoved(conversationId, documentId)) {
+        CollabRepository::clearLocalRemoval(accountId_, conversationId, documentId);
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        localRemovalsLocked(conversationId).erase(documentId);
     }
-    // Drop the live replica without checkpointing it first: the document is gone,
-    // and writing to a repository we are about to erase would only race with the
-    // erase. The timer is cancelled for the same reason -- it would fire on a
-    // repository that no longer exists.
-    if (session) {
-        if (session->checkpointTimer) {
-            std::lock_guard<std::mutex> lk(session->timerMutex);
-            session->checkpointTimer->cancel();
-        }
-        // Release the repository handle before erasing the directory under it.
-        std::lock_guard<std::mutex> lk(mutex_);
-        session->repo.reset();
-    }
-    auto path = CollabRepository::documentPath(accountId_, conversationId, documentId);
-    if (!path.empty()) {
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
-        if (ec)
-            JAMI_WARNING("[Account {}] [Document {}] Could not erase the removed document: {}",
-                         accountId_,
-                         documentId,
-                         ec.message());
-    }
-    emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRemoved>(accountId_, conversationId, documentId);
+    emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRemoved>(accountId_, conversationId, documentId, true);
 }
 
 void
