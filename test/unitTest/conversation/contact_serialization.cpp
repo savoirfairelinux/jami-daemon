@@ -77,6 +77,10 @@ private:
     void testTrustRequestLegacyToNew();
     void testTrustRequestNewToLegacy();
     void testTrustRequestMsgpackRoundtrip();
+    // "invited" (sender-embedded invite timestamp) survives a roundtrip and defaults to unset
+    // ({}) when reading a payload from a daemon that predates this field.
+    void testTrustRequestInvitedRoundtrip();
+    void testTrustRequestInvitedMissingDefaultsUnset();
 
     CPPUNIT_TEST_SUITE(ContactSerializationTest);
     CPPUNIT_TEST(testContactLegacyToNew);
@@ -88,6 +92,8 @@ private:
     CPPUNIT_TEST(testTrustRequestLegacyToNew);
     CPPUNIT_TEST(testTrustRequestNewToLegacy);
     CPPUNIT_TEST(testTrustRequestMsgpackRoundtrip);
+    CPPUNIT_TEST(testTrustRequestInvitedRoundtrip);
+    CPPUNIT_TEST(testTrustRequestInvitedMissingDefaultsUnset);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -252,6 +258,36 @@ ContactSerializationTest::testTrustRequestMsgpackRoundtrip()
     CPPUNIT_ASSERT(out.received == req.received);
     CPPUNIT_ASSERT_EQUAL(req.conversationId, out.conversationId);
     CPPUNIT_ASSERT(out.payload == req.payload);
+}
+
+void
+ContactSerializationTest::testTrustRequestInvitedRoundtrip()
+{
+    TrustRequest req;
+    req.conversationId = "conv1";
+    req.received = timePointFromMilliseconds(1700000001123);
+    req.invited = timePointFromMilliseconds(1699999999000);
+    req.payload = {7, 8, 9};
+
+    auto out = repack<TrustRequest>(req);
+    CPPUNIT_ASSERT(out.received == req.received);
+    CPPUNIT_ASSERT(out.invited == req.invited);
+    CPPUNIT_ASSERT_EQUAL(req.conversationId, out.conversationId);
+    CPPUNIT_ASSERT(out.payload == req.payload);
+}
+
+void
+ContactSerializationTest::testTrustRequestInvitedMissingDefaultsUnset()
+{
+    // A daemon that predates the "invited" field never wrote an invitedMs key: reading its
+    // data must not spuriously invent a non-zero invite timestamp.
+    LegacyTrustRequest legacy;
+    legacy.conversationId = "conv1";
+    legacy.received = 1700000001;
+    legacy.payload = {1, 2, 3};
+
+    auto req = repack<TrustRequest>(legacy);
+    CPPUNIT_ASSERT(req.invited == TimePoint {});
 }
 
 } // namespace test
