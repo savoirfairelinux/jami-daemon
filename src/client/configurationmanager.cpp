@@ -1277,8 +1277,7 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
             jami::NameDirectory::instance(nameserver).lookupName(name, cb);
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
-        acc->lookupName(name);
-        return true;
+        return acc->lookupName(name);
     }
     JAMI_ERROR("lookupName: Unknown account: {}", account);
     return false;
@@ -1301,8 +1300,7 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
                            });
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
-        acc->lookupAddress(address);
-        return true;
+        return acc->lookupAddress(address);
     }
     JAMI_ERROR("lookupAddress: Unknown account: {}", account);
     return false;

@@ -1650,19 +1650,14 @@ JamiAccount::getVolatileAccountDetails() const
     return a;
 }
 
-void
+bool
 JamiAccount::lookupName(const std::string& name)
 {
     std::lock_guard lock(configurationMutex_);
     auto acc = getAccountID();
     if (!accountManager_) {
         JAMI_WARNING("[Account {}] Unable to look up {}: account is not loaded", acc, name);
-        emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
-                                                                      name,
-                                                                      (int) NameDirectory::Response::error,
-                                                                      "",
-                                                                      "");
-        return;
+        return false;
     }
     accountManager_->lookupUri(name,
                                config().nameServer,
@@ -1675,26 +1670,23 @@ JamiAccount::lookupName(const std::string& name)
                                                                                                  address,
                                                                                                  regName);
                                });
+    return true;
 }
 
-void
+bool
 JamiAccount::lookupAddress(const std::string& addr)
 {
     std::lock_guard lock(configurationMutex_);
     auto acc = getAccountID();
     if (!accountManager_) {
         JAMI_WARNING("[Account {}] Unable to look up {}: account is not loaded", acc, addr);
-        emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
-                                                                      addr,
-                                                                      (int) NameDirectory::Response::error,
-                                                                      "",
-                                                                      "");
-        return;
+        return false;
     }
     accountManager_->lookupAddress(
         addr, [acc, addr](const std::string& regName, const std::string& address, NameDirectory::Response response) {
             emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc, addr, (int) response, address, regName);
         });
+    return true;
 }
 
 void

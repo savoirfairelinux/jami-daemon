@@ -355,8 +355,8 @@ public:
     // overloaded methods
     void flush() override;
 
-    void lookupName(const std::string& name);
-    void lookupAddress(const std::string& address);
+    bool lookupName(const std::string& name);
+    bool lookupAddress(const std::string& address);
     void registerName(const std::string& name, const std::string& scheme, const std::string& password);
     bool searchUser(const std::string& nameQuery);
 
