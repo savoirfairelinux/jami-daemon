@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4d918f2_17553162",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-07-31T00:34:27Z",
+      "side": 1,
+      "message": "[error] Line 347: 🔴 `editMessage()` can reject the removal (for example when this member is not the announcement author) but it returns `void`, so this API reports `true` even when no removal commit was created. Make the commit path report success/failure, or pre-check authorship here before returning true.",
+      "revId": "84c46e9ba924bc278d6a8365ef284f083e807456",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
