@@ -28,6 +28,7 @@
 #include <unordered_set>
 #include <atomic>
 #include <filesystem>
+#include <fstream>
 #include <charconv>
 #include <ctime>
 
@@ -736,6 +737,79 @@ CollabRepository::listDocuments(const std::string& accountId, const std::string&
         auto name = entry.path().filename().string();
         if (isValidId(name))
             ids.emplace_back(std::move(name));
+    }
+    return ids;
+}
+
+namespace {
+/// The marker file standing for a document removed from this device.
+/// Empty if either id is invalid. It sits beside the repositories rather than
+/// inside one: the repository is exactly what removal erases.
+std::filesystem::path
+localRemovalPath(const std::string& accountId, const std::string& conversationId, const std::string& documentId)
+{
+    if (!CollabRepository::isValidId(documentId))
+        return {};
+    auto base = CollabRepository::conversationPath(accountId, conversationId);
+    if (base.empty())
+        return {};
+    // listDocuments() only ever hands back directories whose name is a valid id,
+    // so a marker can never be mistaken for a document of its own.
+    return base / (documentId + ".removed");
+}
+} // namespace
+
+bool
+CollabRepository::markLocallyRemoved(const std::string& accountId,
+                                     const std::string& conversationId,
+                                     const std::string& documentId)
+{
+    auto path = localRemovalPath(accountId, conversationId, documentId);
+    if (path.empty())
+        return false;
+    std::error_code ec;
+    std::filesystem::create_directories(path.parent_path(), ec);
+    // The file is only ever tested for existence, so it stays empty: writing
+    // anything in it would be one more thing to keep in step with the truth.
+    std::ofstream marker(path, std::ios::binary | std::ios::trunc);
+    if (!marker) {
+        JAMI_WARNING("[Account {}] [Document {}] Could not mark the document as removed from this device",
+                     accountId,
+                     documentId);
+        return false;
+    }
+    return true;
+}
+
+bool
+CollabRepository::clearLocalRemoval(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& documentId)
+{
+    auto path = localRemovalPath(accountId, conversationId, documentId);
+    if (path.empty())
+        return false;
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+    return !ec;
+}
+
+std::vector<std::string>
+CollabRepository::listLocallyRemoved(const std::string& accountId, const std::string& conversationId)
+{
+    std::vector<std::string> ids;
+    std::error_code ec;
+    auto base = conversationPath(accountId, conversationId);
+    if (base.empty())
+        return ids;
+    static constexpr std::string_view SUFFIX = ".removed";
+    for (const auto& entry : std::filesystem::directory_iterator(base, ec)) {
+        auto name = entry.path().filename().string();
+        if (name.size() <= SUFFIX.size() || !std::string_view(name).ends_with(SUFFIX))
+            continue;
+        auto id = name.substr(0, name.size() - SUFFIX.size());
+        if (isValidId(id))
+            ids.emplace_back(std::move(id));
     }
     return ids;
 }
