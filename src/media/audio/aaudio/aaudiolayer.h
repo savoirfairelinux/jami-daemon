@@ -21,6 +21,7 @@
 #include <aaudio/AAudio.h>
 #include <jni.h>
 
+#include <chrono>
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -80,6 +81,20 @@ private:
                                                       int32_t numFrames);
 
     static void errorCallback(AAudioStream* stream, void* userData, aaudio_result_t error);
+
+    /**
+     * Accumulate the peak amplitude of each raw capture buffer and, once the stream has read
+     * exactly zero for several consecutive seconds, re-open the input on the fallback path.
+     */
+    void noteCapturePeak(double peak);
+    void useCaptureFallback();
+
+    std::mutex captureLevelMutex_;
+    double capturePeak_ {0.0};
+    unsigned captureFrames_ {0};
+    unsigned captureZeroSeconds_ {0};
+    std::chrono::steady_clock::time_point captureLevelStart_ {};
+    std::atomic_bool captureFallback_ {false};
 
     void stopPlayback();
     void stopCapture();

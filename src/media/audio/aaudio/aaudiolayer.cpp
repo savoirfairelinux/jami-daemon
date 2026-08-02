@@ -18,10 +18,19 @@
 #include "aaudiolayer.h"
 #include "logger.h"
 
+#include "fileutils.h"
+
+#include <opendht/thread_pool.h>
+
 #include <aaudio/AAudio.h>
 #include <dlfcn.h>
 
+#include <algorithm>
+#include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <string>
+#include <system_error>
 
 namespace jami {
 
@@ -33,11 +42,29 @@ using SetInputPresetFunc = void (*)(AAudioStreamBuilder*, aaudio_input_preset_t)
 // Set once from JNI_OnLoad; used to create the Java AudioTrack fallback on API < 28.
 static JavaVM* sJavaVM {nullptr};
 
+// A capture stream that reads exactly zero for this long is not a quiet room.
+static constexpr unsigned CAPTURE_SILENCE_SECONDS = 5;
+
+// Records that this device cannot capture on the low-latency voice-communication path, so the
+// detection is paid once rather than at every start.
+static std::filesystem::path
+captureFallbackMarker()
+{
+    return fileutils::get_config_dir() / "capture-fallback";
+}
+
 AAudioLayer::AAudioLayer(const AudioPreference& pref)
     : AudioLayer(pref)
 {
     setHasNativeAEC(true);
     setHasNativeNS(true);
+
+    std::error_code ec;
+    if (std::filesystem::exists(captureFallbackMarker(), ec)) {
+        JAMI_WARNING("Capture is known to be silent on the low-latency path on this device, "
+                     "opening the input on the fallback path");
+        captureFallback_ = true;
+    }
 }
 
 void
@@ -98,8 +125,12 @@ AAudioLayer::buildStream(AudioDeviceType type)
     //      type == AudioDeviceType::RINGTONE ? AAUDIO_SHARING_MODE_SHARED
     //                                        : AAUDIO_SHARING_MODE_EXCLUSIVE);
     AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_FLOAT);
+    // A capture stream known to deliver silence on the low-latency path opens without it: the MMAP
+    // fast path is what the affected devices fail on, so the fallback gives up latency for audio.
+    const bool captureFallback = type == AudioDeviceType::CAPTURE and captureFallback_;
     AAudioStreamBuilder_setPerformanceMode(builder,
                                            type == AudioDeviceType::RINGTONE ? AAUDIO_PERFORMANCE_MODE_POWER_SAVING
+                                           : captureFallback                 ? AAUDIO_PERFORMANCE_MODE_NONE
                                                                              : AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 
     static auto setUsage = reinterpret_cast<SetUsageFunc>(dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setUsage"));
@@ -122,7 +153,11 @@ AAudioLayer::buildStream(AudioDeviceType type)
     }
     if (type == AudioDeviceType::CAPTURE) {
         if (setInputPreset) {
-            setInputPreset(builder, AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION);
+            // VOICE_COMMUNICATION engages the device's own voice processing and is the right
+            // default; it is also the preset the silent-capture fault is tied to.
+            setInputPreset(builder,
+                           captureFallback ? AAUDIO_INPUT_PRESET_VOICE_RECOGNITION
+                                           : AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION);
         } else {
             JAMI_WARNING("AAudioStreamBuilder_setInputPreset not available, input preset will be unknown");
         }
@@ -364,18 +399,83 @@ AAudioLayer::dataCallback(AAudioStream* stream, void* userData, void* audioData,
         auto out = std::make_shared<AudioFrame>(format, numFrames);
         if (out->pointer() && out->pointer()->data[0]) {
             auto* dst = out->pointer()->data[0];
+            // Peak of the buffer as the platform handed it over, before anything else touches it.
+            double peak = 0.0;
             if (isFloat) {
                 const auto* src = static_cast<const float*>(audioData);
+                for (int32_t i = 0; i < numSamples; ++i)
+                    peak = std::max(peak, std::abs((double) src[i]));
                 std::copy(src, src + numSamples, reinterpret_cast<float*>(dst));
             } else {
                 const auto* src = static_cast<const int16_t*>(audioData);
+                for (int32_t i = 0; i < numSamples; ++i)
+                    peak = std::max(peak, std::abs((double) src[i]) / 32768.0);
                 std::copy(src, src + numSamples, reinterpret_cast<int16_t*>(dst));
             }
+            layer->noteCapturePeak(peak);
             layer->putRecorded(std::move(out));
         }
     }
 
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
+}
+
+void
+AAudioLayer::noteCapturePeak(double peak)
+{
+    bool silent = false;
+    {
+        std::lock_guard lk(captureLevelMutex_);
+        capturePeak_ = std::max(capturePeak_, peak);
+        captureFrames_++;
+
+        auto now = std::chrono::steady_clock::now();
+        if (captureLevelStart_.time_since_epoch().count() == 0) {
+            captureLevelStart_ = now;
+            return;
+        }
+        if (now - captureLevelStart_ < std::chrono::seconds(1))
+            return;
+        captureLevelStart_ = now;
+
+        // A live microphone always leaks a noise floor, so an exactly-zero peak sustained over
+        // several seconds is an absent signal rather than a silent room. Allow a few seconds in
+        // case the stream is still settling.
+        if (captureFrames_ > 0 and capturePeak_ == 0.0)
+            silent = ++captureZeroSeconds_ >= CAPTURE_SILENCE_SECONDS;
+        else
+            captureZeroSeconds_ = 0;
+
+        captureFrames_ = 0;
+        capturePeak_ = 0.0;
+    }
+    if (silent)
+        useCaptureFallback();
+}
+
+void
+AAudioLayer::useCaptureFallback()
+{
+    if (captureFallback_.exchange(true))
+        return;
+    JAMI_ERROR("Capture has delivered only digital silence for {} s, re-opening the input on the "
+               "fallback path",
+               CAPTURE_SILENCE_SECONDS);
+    try {
+        std::ofstream marker(captureFallbackMarker());
+        marker << "the low-latency voice-communication capture path delivers only silence on this "
+                  "device\n";
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Unable to record the capture fallback: {}", e.what());
+    }
+    // Hand the restart to the loop thread rather than stopping the stream from inside its own
+    // callback: the loop holds mutex_ while calling AAudioStream_requestStop(), which waits for
+    // this callback to return, so taking mutex_ here would deadlock the two against each other.
+    dht::ThreadPool::io().run([this] {
+        std::lock_guard lk(mutex_);
+        streamsToRestart_.insert(AudioDeviceType::CAPTURE);
+        loopCv_.notify_one();
+    });
 }
 
 void
