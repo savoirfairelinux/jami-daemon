@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4cbb1a85_d01b6a0f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-08-02T18:14:02Z",
+      "side": 1,
+      "message": "Thanks for investigating this issue.\nDoes PERFORMANCE_MODE_NONE work on that device without any other change?\nWhat is the device API level?\nCould we more simply gate low latency behind an API check? If this bug happens on recent devices, we could also just use PERFORMANCE_MODE_NONE for everyone.",
+      "revId": "b8f696dd41820670891578f7b10bd8af10f8ff69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
