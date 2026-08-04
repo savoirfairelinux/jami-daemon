@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfe2cf62_85d153a7",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-04T13:52:35Z",
+      "side": 1,
+      "message": "[error] Line 203: 🔴 The collab transport accepts any URL path after the first slash as `conversationId`, so `collab://dev/conv/doc/extra` becomes `conversationId \u003d \"conv/doc/extra\"` and is passed to `Manager::collabSocket()`. That bypasses the strict three-component parsing and filesystem-id validation added in `CollabChannelHandler::parse()`. Parse collab URLs into exactly `\u003cdevice\u003e/\u003cconversationId\u003e/\u003cdocumentId\u003e` here too, and reject extra separators or non-hex ids before opening a socket.",
+      "revId": "868cc30a8045cdf951427b7cb8afd1ba5995467a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
