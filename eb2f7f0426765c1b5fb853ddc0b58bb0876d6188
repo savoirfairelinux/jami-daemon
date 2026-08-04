@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "283f6eb7_3b9a7b78",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 548,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-04T19:00:28Z",
+      "side": 1,
+      "message": "[warning] Line 548: 🟡 `dropLocalReplica()` erases the repository even when `remove_all()` reports an error, but `removeDocumentLocally()` still returns success and emits `storedLocally\u003dfalse`. That can leave files on disk while the API reports the document reclaimed. Return a success/failure from `dropLocalReplica()` and only emit success when the repository was actually removed, or surface the failure consistently.",
+      "revId": "eb2f7f0426765c1b5fb853ddc0b58bb0876d6188",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "113d4b3c_1ce05522",
+        "filename": "src/jamidht/collaborative_editing.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-04T19:00:28Z",
+      "side": 1,
+      "message": "[error] Line 629: 🔴 `ensureSession()` can return `nullptr` after the local-removal marker is cleared, but `openDocument()` immediately dereferences `session` in `loadPersistedState(session)` and again when encoding the state vector. If `openOrInit()` fails during reopen, this turns a recoverable fetch/repository failure into a crash. Check `session` after `ensureSession()` and restore/keep the local-removal state on failure before returning an empty update.",
+      "revId": "eb2f7f0426765c1b5fb853ddc0b58bb0876d6188",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
