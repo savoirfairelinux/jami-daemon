@@ -371,12 +371,13 @@ JamiAccount::shutdownConnections()
         gservers = std::move(gitServers_);
     }
     for (auto& [_id, gs] : gservers)
-        gs->stop();
+        dht::ThreadPool::io().run([gs = std::shared_ptr(std::move(gs))] { gs->stop(); });
+    gservers.clear();
+
     {
         std::lock_guard lk(connManagerMtx_);
         // Just move destruction on another thread.
-        dht::ThreadPool::io().run(
-            [conMgr = std::make_shared<decltype(connectionManager_)>(std::move(connectionManager_))] {});
+        dht::ThreadPool::io().run([conMgr = std::shared_ptr(std::move(connectionManager_))] {});
         connectionManager_.reset();
         channelHandlers_.clear();
     }
