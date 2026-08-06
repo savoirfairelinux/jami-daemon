@@ -146,6 +146,12 @@ getSignalHandlers()
         exported_callback<libjami::ConversationSignal::CallConnectionRequest>(),
         exported_callback<libjami::ConversationSignal::OnConversationError>(),
         exported_callback<libjami::ConversationSignal::ConversationPreferencesUpdated>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeDocumentUpdate>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeAwarenessChanged>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeParticipantLeft>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeDocumentRenamed>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeDocumentRemoved>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeAttachmentAdded>(),
 
 #ifdef ENABLE_PLUGIN
         exported_callback<libjami::PluginSignal::WebViewMessageReceived>(),

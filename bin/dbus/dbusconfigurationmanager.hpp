@@ -684,6 +684,118 @@ public:
         return libjami::getConversationTrackedMembers(accountId, conversationId);
     }
 
+    std::string createCollaborativeDocument(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& name,
+                                            const std::string& kind)
+    {
+        return libjami::createCollaborativeDocument(accountId, conversationId, name, kind);
+    }
+
+    std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId,
+                                                   const std::string& conversationId,
+                                                   const std::string& documentId)
+    {
+        return libjami::openCollaborativeDocument(accountId, conversationId, documentId);
+    }
+
+    void closeCollaborativeDocument(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& documentId)
+    {
+        libjami::closeCollaborativeDocument(accountId, conversationId, documentId);
+    }
+
+    bool removeCollaborativeDocument(const std::string& accountId,
+                                     const std::string& conversationId,
+                                     const std::string& documentId)
+    {
+        return libjami::removeCollaborativeDocument(accountId, conversationId, documentId);
+    }
+
+    bool removeCollaborativeDocumentLocally(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& documentId)
+    {
+        return libjami::removeCollaborativeDocumentLocally(accountId, conversationId, documentId);
+    }
+
+    void applyCollaborativeUpdate(const std::string& accountId,
+                                  const std::string& conversationId,
+                                  const std::string& documentId,
+                                  const std::vector<uint8_t>& update)
+    {
+        libjami::applyCollaborativeUpdate(accountId, conversationId, documentId, update);
+    }
+
+    void setCollaborativeAwareness(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& documentId,
+                                   const std::string& state)
+    {
+        libjami::setCollaborativeAwareness(accountId, conversationId, documentId, state);
+    }
+
+    std::vector<uint8_t> collaborativeDocumentState(const std::string& accountId,
+                                                    const std::string& conversationId,
+                                                    const std::string& documentId)
+    {
+        return libjami::collaborativeDocumentState(accountId, conversationId, documentId);
+    }
+
+    void setCollaborativeDocumentName(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::string& documentId,
+                                      const std::string& name)
+    {
+        libjami::setCollaborativeDocumentName(accountId, conversationId, documentId, name);
+    }
+
+    std::string collaborativeDocumentName(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::string& documentId)
+    {
+        return libjami::collaborativeDocumentName(accountId, conversationId, documentId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId,
+                                                                              const std::string& conversationId)
+    {
+        return libjami::getCollaborativeDocuments(accountId, conversationId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId,
+                                                                                    const std::string& conversationId,
+                                                                                    const std::string& documentId,
+                                                                                    const uint32_t& max)
+    {
+        return libjami::getCollaborativeDocumentHistory(accountId, conversationId, documentId, max);
+    }
+
+    std::vector<uint8_t> collaborativeDocumentStateAt(const std::string& accountId,
+                                                      const std::string& conversationId,
+                                                      const std::string& documentId,
+                                                      const std::string& commitId)
+    {
+        return libjami::collaborativeDocumentStateAt(accountId, conversationId, documentId, commitId);
+    }
+
+    std::string addCollaborativeAttachment(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& documentId,
+                                           const std::vector<uint8_t>& data)
+    {
+        return libjami::addCollaborativeAttachment(accountId, conversationId, documentId, data);
+    }
+
+    std::vector<uint8_t> collaborativeAttachment(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& documentId,
+                                                 const std::string& attachmentId)
+    {
+        return libjami::collaborativeAttachment(accountId, conversationId, documentId, attachmentId);
+    }
+
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
@@ -804,6 +916,18 @@ private:
                 std::bind(&DBusConfigurationManager::emitActiveCallsChanged, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ComposingStatusChanged>(
                 std::bind(&DBusConfigurationManager::emitComposingStatusChanged, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeDocumentUpdate>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentUpdate, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeAwarenessChanged>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeAwarenessChanged, this, _1, _2, _3, _4, _5, _6)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeParticipantLeft>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeParticipantLeft, this, _1, _2, _3, _4, _5)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeDocumentRenamed>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRenamed, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeDocumentRemoved>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRemoved, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeAttachmentAdded>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeAttachmentAdded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
                 std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ContactAdded>(

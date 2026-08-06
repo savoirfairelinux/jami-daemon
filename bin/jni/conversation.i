@@ -36,6 +36,12 @@ public:
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
     virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
     virtual void conversationPreferencesUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /* preferences */){}
+    virtual void collaborativeDocumentUpdate(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::vector<uint8_t>& /*update*/){}
+    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/, const std::string& /*state*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/){}
+    virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
+    virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
+    virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
 };
 %}
 
@@ -73,6 +79,23 @@ struct SwarmMessage
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
+  // Collaborative editing
+  std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);
+  std::vector<uint8_t> openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  bool removeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  bool removeCollaborativeDocumentLocally(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void closeCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void applyCollaborativeUpdate(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::vector<uint8_t>& update);
+  void setCollaborativeAwareness(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& state);
+  std::vector<uint8_t> collaborativeDocumentState(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  void setCollaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& name);
+  std::string collaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId);
+  std::vector<std::map<std::string, std::string>> getCollaborativeDocumentHistory(const std::string& accountId, const std::string& conversationId, const std::string& documentId, uint32_t max);
+  std::vector<uint8_t> collaborativeDocumentStateAt(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& commitId);
+  std::string addCollaborativeAttachment(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::vector<uint8_t>& data);
+  std::vector<uint8_t> collaborativeAttachment(const std::string& accountId, const std::string& conversationId, const std::string& documentId, const std::string& attachmentId);
+
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo, const int32_t& flag);
   uint32_t loadConversation(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
@@ -108,4 +131,10 @@ public:
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
     virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
     virtual void conversationPreferencesUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /* preferences */){}
+    virtual void collaborativeDocumentUpdate(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::vector<uint8_t>& /*update*/){}
+    virtual void collaborativeAwarenessChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/, const std::string& /*state*/){}
+    virtual void collaborativeParticipantLeft(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*peerId*/, uint64_t /*clientId*/){}
+    virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
+    virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
+    virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
 };
