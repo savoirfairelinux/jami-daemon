@@ -32,13 +32,15 @@ struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
     dhtnet::ConnectionManager& connectionManager_;
     OnMessage onMessage_;
     OnPeerStateChanged onPeerStateChanged_;
+    OnDeviceConnected onDeviceConnected_;
     std::recursive_mutex connectionsMtx_;
     std::map<std::string, std::map<DeviceId, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>>> connections_;
 
-    Impl(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer)
+    Impl(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer, OnDeviceConnected onDevice)
         : connectionManager_(cm)
         , onMessage_(std::move(onMessage))
         , onPeerStateChanged_(std::move(onPeer))
+        , onDeviceConnected_(std::move(onDevice))
     {}
 
     void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
@@ -48,9 +50,10 @@ struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
 
 MessageChannelHandler::MessageChannelHandler(dhtnet::ConnectionManager& cm,
                                              OnMessage onMessage,
-                                             OnPeerStateChanged onPeer)
+                                             OnPeerStateChanged onPeer,
+                                             OnDeviceConnected onDeviceConnected)
     : ChannelHandlerInterface()
-    , pimpl_(std::make_shared<Impl>(cm, std::move(onMessage), std::move(onPeer)))
+    , pimpl_(std::make_shared<Impl>(cm, std::move(onMessage), std::move(onPeer), std::move(onDeviceConnected)))
 {}
 
 MessageChannelHandler::~MessageChannelHandler()
@@ -162,9 +165,12 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     auto& connections = pimpl_->connections_[peerId];
     bool newPeerConnection = connections.empty();
     auto& deviceConnections = connections[device];
+    bool newDeviceConnection = deviceConnections.empty();
     deviceConnections.push_back(socket);
     if (newPeerConnection)
         pimpl_->onPeerStateChanged_(peerId, true);
+    if (newDeviceConnection)
+        pimpl_->onDeviceConnected_(peerId, device);
 
     socket->setOnRecv(dhtnet::buildMsgpackReader<Message>([onMessage = pimpl_->onMessage_, cert](Message&& msg) {
         onMessage(cert, msg.t, msg.c);
