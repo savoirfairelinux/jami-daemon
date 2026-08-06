@@ -190,6 +190,30 @@ struct JamiAccount::DiscoveredPeer
 };
 
 /**
+ * Marks a message connection to (peer, device) as being established. Owned by the
+ * connect callback, so the mark is released whether that callback is invoked or
+ * merely discarded (shutdown) and can never permanently block future requests.
+ */
+struct JamiAccount::PendingMessageConnection
+{
+    PendingMessageConnection(std::weak_ptr<JamiAccount>&& account, std::pair<std::string, DeviceId>&& key)
+        : account_(std::move(account))
+        , key_(std::move(key))
+    {}
+    ~PendingMessageConnection()
+    {
+        if (auto acc = account_.lock()) {
+            std::lock_guard lk(acc->pendingMessageConnectionsMtx_);
+            acc->pendingMessageConnections_.erase(key_);
+        }
+    }
+
+private:
+    std::weak_ptr<JamiAccount> account_;
+    std::pair<std::string, DeviceId> key_;
+};
+
+/**
  * Track sending state for a single message to one or more devices.
  */
 class JamiAccount::SendMessageContext
@@ -4248,10 +4272,22 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
             return;
         }
     }
+    // The connection manager chains every caller's callback onto the single message
+    // channel and runs them all, so without this a burst of outgoing messages would
+    // trigger the on-connected work (including a full conversation sync) once per
+    // message instead of once per connection.
+    std::shared_ptr<PendingMessageConnection> pending;
+    {
+        std::lock_guard lkp(pendingMessageConnectionsMtx_);
+        if (!pendingMessageConnections_.emplace(peerId, deviceId).second)
+            return;
+        pending = std::make_shared<PendingMessageConnection>(weak(), std::make_pair(peerId, deviceId));
+    }
     handler->connect(
         deviceId,
         "",
-        [w = weak(), peerId](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& deviceId) {
+        [w = weak(), peerId, pending = std::move(pending)](const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                                           const DeviceId& deviceId) {
             if (socket)
                 dht::ThreadPool::io().run([w, peerId, deviceId] {
                     if (auto acc = w.lock()) {

@@ -58,6 +58,8 @@
 #include <list>
 #include <map>
 #include <optional>
+#include <set>
+#include <utility>
 #include <vector>
 #include <filesystem>
 #include <shared_mutex>
@@ -628,6 +630,7 @@ private:
     struct PendingCall;
     struct PendingMessage;
     struct DiscoveredPeer;
+    struct PendingMessageConnection;
     class SendMessageContext;
 
     inline std::string getProxyConfigKey() const
@@ -962,6 +965,11 @@ private:
     void requestMessageConnection(const std::string& peerId,
                                   const DeviceId& deviceId,
                                   const std::string& connectionType);
+
+    // Message connections being established. Held as a set of keys; the matching
+    // PendingMessageConnection guard removes an entry once its attempt is over.
+    std::mutex pendingMessageConnectionsMtx_;
+    std::set<std::pair<std::string, DeviceId>> pendingMessageConnections_;
 
     // File transfers
     std::mutex transfersMtx_ {};
