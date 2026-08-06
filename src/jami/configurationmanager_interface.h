@@ -440,6 +440,87 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*from*/,
                              int /*status*/);
     };
+    /**
+     * A Y-CRDT update to merge into the client's own replica of the document.
+     *
+     * The payload is opaque: the daemon neither produces nor reads the
+     * document's content, so this one signal carries every change of every
+     * document type. An update the replica already has is a no-op, so applying
+     * it unconditionally is always correct.
+     *
+     * An empty payload is a notification, not an update: the document changed
+     * -- a synchronization brought edits while no client here had it open --
+     * but the content is withheld until the document is opened. There is
+     * nothing to apply; it exists so a client can mark the document unread.
+     */
+    struct LIBJAMI_PUBLIC CollaborativeDocumentUpdate
+    {
+        constexpr static const char* name = "CollaborativeDocumentUpdate";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::vector<uint8_t>& /*update*/);
+    };
+    /**
+     * Ephemeral state a peer shares while editing: presence, cursor, selection.
+     * Never merged and never stored; its shape is agreed between clients, not
+     * imposed by the daemon.
+     *
+     * A peer is identified by @c clientId, not by @c peerId: one account can
+     * have several devices in the same document, and each of them has its own
+     * cursor. @c peerId says which person that client belongs to.
+     */
+    struct LIBJAMI_PUBLIC CollaborativeAwarenessChanged
+    {
+        constexpr static const char* name = "CollaborativeAwarenessChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/,
+                             uint64_t /*clientId*/,
+                             const std::string& /*state*/);
+    };
+    /// A client withdrew its state, or stopped announcing it for long enough to
+    /// be considered gone. Anything shown for @c clientId can be dropped.
+    struct LIBJAMI_PUBLIC CollaborativeParticipantLeft
+    {
+        constexpr static const char* name = "CollaborativeParticipantLeft";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*peerId*/,
+                             uint64_t /*clientId*/);
+    };
+    struct LIBJAMI_PUBLIC CollaborativeDocumentRenamed
+    {
+        constexpr static const char* name = "CollaborativeDocumentRenamed";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*name*/);
+    };
+    /// A document is no longer held by this device. @c everywhere tells the two
+    /// apart: true when its author retired it and it is gone for every member,
+    /// false when this device alone removed it and the others still have it.
+    struct LIBJAMI_PUBLIC CollaborativeDocumentRemoved
+    {
+        constexpr static const char* name = "CollaborativeDocumentRemoved";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             bool /*everywhere*/);
+    };
+    /// A synchronization brought in a binary payload the document refers to.
+    /// Clients showing a placeholder for it can now read it with
+    /// collaborativeAttachment().
+    struct LIBJAMI_PUBLIC CollaborativeAttachmentAdded
+    {
+        constexpr static const char* name = "CollaborativeAttachmentAdded";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             const std::string& /*attachmentId*/);
+    };
     struct LIBJAMI_PUBLIC IncomingTrustRequest
     {
         constexpr static const char* name = "IncomingTrustRequest";
