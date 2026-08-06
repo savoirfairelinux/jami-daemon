@@ -54,11 +54,13 @@ public:
 private:
     void testAddRemoveSIPAccount();
     void testAddRemoveRINGAccount();
+    void testDisableReenableRINGAccount();
     void testClear();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
     CPPUNIT_TEST(testAddRemoveSIPAccount);
     CPPUNIT_TEST(testAddRemoveRINGAccount);
+    CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testClear);
     CPPUNIT_TEST_SUITE_END();
 
@@ -159,6 +161,30 @@ Account_factoryTest::testAddRemoveRINGAccount()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return knownDevicesChanged; }));
     details = Manager::instance().getAccountDetails(JAMI_ID);
     CPPUNIT_ASSERT(details[libjami::Account::ConfProperties::DEVICE_NAME] == "foo");
+
+    Manager::instance().removeAccount(JAMI_ID, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
+}
+
+void
+Account_factoryTest::testDisableReenableRINGAccount()
+{
+    auto accDetails = libjami::getAccountTemplate("RING");
+    Manager::instance().addAccount(accDetails, JAMI_ID);
+    auto account = Manager::instance().getAccount<JamiAccount>(JAMI_ID);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
+
+    const auto dhtPort = account->dhtUpnpMapping_.getInternalPort();
+    CPPUNIT_ASSERT(dhtPort != 0);
+
+    Manager::instance().sendRegister(JAMI_ID, false);
+    CPPUNIT_ASSERT_EQUAL(in_port_t {}, account->dhtUpnpMapping_.getInternalPort());
+
+    ringReady = false;
+    Manager::instance().sendRegister(JAMI_ID, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
+    CPPUNIT_ASSERT_EQUAL(dhtPort, account->dhtUpnpMapping_.getInternalPort());
 
     Manager::instance().removeAccount(JAMI_ID, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
