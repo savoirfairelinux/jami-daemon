@@ -186,6 +186,10 @@ public:
     /// A peer announced a document in @c conversationId: make sure a local
     /// repository exists so it can be replicated.
     void onDocumentAnnounced(const std::string& conversationId, const std::string& documentId);
+    /// Whether @p documentId names a document some conversation announced, in
+    /// whichever conversation. Lets the sync pipeline tell a document this
+    /// device chose not to hold from a conversation it was never invited to.
+    bool knowsDocument(const std::string& documentId);
     /// The author of a document retired its announcement: stop replicating it and
     /// drop what this device holds of it.
     void onDocumentRemoved(const std::string& conversationId, const std::string& documentId);

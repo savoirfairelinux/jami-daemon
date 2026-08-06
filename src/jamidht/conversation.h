@@ -543,6 +543,20 @@ public:
     ConversationMode mode() const;
 
     /**
+     * For a collaborative document (mode DOCUMENT), the id of the conversation
+     * that announced it, read from the initial commit.
+     * @return empty for any other mode
+     */
+    std::string parentConversationId() const;
+
+    /**
+     * For a collaborative document, the MIME type of what it holds, read from
+     * the initial commit.
+     * @return empty for any other mode
+     */
+    std::string documentMimeType() const;
+
+    /**
      * One to one util, get initial members
      * @return initial members
      */

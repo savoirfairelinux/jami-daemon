@@ -24,6 +24,7 @@
 #include "jamidht/account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "jamidht/presence_manager.h"
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
@@ -690,6 +691,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     const bool shouldRequestInvite = username_ != peer;
     if (!conv) {
         if (oldReq == std::nullopt && shouldRequestInvite) {
+            // A commit for a repository nothing is known about. If it names a
+            // document announced in some conversation, this device simply chose
+            // not to hold a replica: replication is per-device opt-in, and a
+            // notification is not an invitation to clone.
+            if (auto acc = account_.lock()) {
+                if (acc->collaborativeEditing()->knowsDocument(conversationId))
+                    return;
+            }
             // We didn't find a conversation or a request with the given ID.
             // This suggests that someone tried to send us an invitation but
             // that we didn't receive it, so we ask for a new one.
@@ -934,6 +943,14 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             conversation->updateMessageStatus(status);
         syncingMetadatas_.erase(conversationId);
         saveMetadata();
+
+        if (conversation->mode() == ConversationMode::DOCUMENT) {
+            // A document is not a conversation to the clients and is never
+            // synced to this account's other devices; what has a stake in the
+            // clone's completion is the CRDT session that asked for it.
+            acc->collaborativeEditing()->onRepositoryUpdated(conversation->parentConversationId(), conversationId);
+            return;
+        }
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -2018,6 +2035,10 @@ ConversationModule::getConversations() const
     for (const auto& [key, conv] : pimpl_->convInfos_) {
         if (conv.isRemoved())
             continue;
+        // Collaborative documents are swarms, not conversations: the clients
+        // list them per conversation through the collaborative-editing API.
+        if (conv.mode == ConversationMode::DOCUMENT)
+            continue;
         result.emplace_back(key);
     }
     return result;
@@ -2163,6 +2184,11 @@ ConversationModule::onNeedConversationRequest(const std::string& from, const std
     std::unique_lock lk(conv->mtx);
     if (!conv->conversation)
         return;
+    if (conv->conversation->mode() == ConversationMode::DOCUMENT) {
+        // A document is joined by cloning it, never by invitation.
+        JAMI_WARNING("{} is asking an invite for document {}", from, conversationId);
+        return;
+    }
     if (!conv->conversation->isMember(from, true)) {
         JAMI_WARNING("{} is asking a new invite for {}, but not a member", from, conversationId);
         return;
@@ -2283,6 +2309,74 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     pimpl_->needsSyncingCb_({});
     emitSignal<libjami::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
     return convId;
+}
+
+std::string
+ConversationModule::startDocument(const std::string& parentConversationId, const std::string& mimeType)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return {};
+    // The repository is created first, then loaded through the same constructor
+    // a held swarm uses, so the wiring below is identical whether the document
+    // was created here or cloned from a peer.
+    std::string docId;
+    std::shared_ptr<Conversation> conversation;
+    try {
+        {
+            auto repo = ConversationRepository::createDocument(acc, parentConversationId, mimeType);
+            if (!repo)
+                return {};
+            docId = repo->id();
+        }
+        conversation = std::make_shared<Conversation>(acc, docId);
+        conversation->onMembersChanged([w = pimpl_->weak_from_this(), docId](const auto& members) {
+            // Delay in another thread to avoid deadlocks
+            dht::ThreadPool::io().run([w, docId, members = std::move(members)] {
+                if (auto sthis = w.lock())
+                    sthis->setConversationMembers(docId, members);
+            });
+        });
+        conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
+#ifdef LIBJAMI_TEST
+        conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
+#endif
+        conversation->bootstrap([w = pimpl_->weak_from_this(), docId]() {
+            if (auto sthis = w.lock())
+                sthis->bootstrapCb(docId);
+        });
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[Account {}] Error while generating a document {}", pimpl_->accountId_, e.what());
+        return {};
+    }
+    auto conv = pimpl_->startConversation(docId);
+    std::lock_guard lk(conv->mtx);
+    conv->info.created = nowMs();
+    conv->info.mode = ConversationMode::DOCUMENT;
+    conv->info.members.emplace(pimpl_->username_);
+    conv->conversation = conversation;
+    // Saved so the document is reloaded as held on restart, but never handed to
+    // the clients as a conversation nor synced to this account's other devices:
+    // replication is a per-device choice, made by opening.
+    pimpl_->addConvInfo(conv->info);
+    return docId;
+}
+
+void
+ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::string& uri)
+{
+    auto conv = pimpl_->startConversation(documentId);
+    {
+        std::lock_guard lk(conv->mtx);
+        // Setting the mode up front spares the mode-mismatch complaint when the
+        // clone lands; a document reopened after a local removal is un-removed
+        // the same way a re-added conversation is.
+        conv->info.mode = ConversationMode::DOCUMENT;
+        conv->info.created = nowMs();
+        conv->info.erased = TimePoint {};
+        conv->info.members.emplace(pimpl_->username_);
+    }
+    pimpl_->cloneConversationFrom(documentId, uri);
 }
 
 void

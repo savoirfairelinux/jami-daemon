@@ -214,6 +214,29 @@ public:
     std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
                                   const dht::InfoHash& otherMember = {});
 
+    /**
+     * Create a collaborative document: a swarm repository of its own (mode
+     * DOCUMENT), announced in @p parentConversationId, holding CRDT
+     * checkpoints instead of messages. The creator is its only member and
+     * admin; other members join by opening it (see cloneDocumentFrom()).
+     * @param parentConversationId  the conversation that announces it
+     * @param mimeType              media type of what the document will hold
+     * @return the document's repository id, empty on failure
+     */
+    std::string startDocument(const std::string& parentConversationId, const std::string& mimeType);
+
+    /**
+     * Clone a collaborative document from a member's devices — how a device
+     * opts into holding a replica. The serving holder writes the `add` commit
+     * at serve time, so the clone this device receives already contains its
+     * invitation; the standard pending-conversation path then writes `join`.
+     * Completion is reported through CollaborativeEditing::onRepositoryUpdated
+     * rather than ConversationReady.
+     * @param documentId  the document's repository id
+     * @param uri         a member to clone from (typically the announcer)
+     */
+    void cloneDocumentFrom(const std::string& documentId, const std::string& uri);
+
     void createCommit(const std::string& conversationId,
                       CommitMessage&& commitMessage,
                       bool announce = true,

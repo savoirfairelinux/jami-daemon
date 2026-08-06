@@ -521,6 +521,16 @@ CollaborativeEditing::isAnnouncedDocument(const std::string& conversationId, con
 }
 
 bool
+CollaborativeEditing::knowsDocument(const std::string& documentId)
+{
+    std::lock_guard<std::mutex> lk(announcedMtx_);
+    for (const auto& [_, ids] : announced_)
+        if (ids.count(documentId) != 0)
+            return true;
+    return false;
+}
+
+bool
 CollaborativeEditing::isRemovedDocument(const std::string& conversationId, const std::string& documentId)
 {
     std::lock_guard<std::mutex> lk(announcedMtx_);

@@ -367,7 +367,13 @@ private:
                   if (expiry <= now)
                       return std::nullopt;
 
-                  MobileLease lease {1, conversationId, identity.second->issuer->getId(), deviceId, toSecondsSinceEpoch(now), toSecondsSinceEpoch(expiry), {}};
+                  MobileLease lease {1,
+                                     conversationId,
+                                     identity.second->issuer->getId(),
+                                     deviceId,
+                                     toSecondsSinceEpoch(now),
+                                     toSecondsSinceEpoch(expiry),
+                                     {}};
                   lease.signature = identity.first->sign(mobileLeasePayload(lease));
                   return MobileNodeInfo {deviceId, std::move(lease)};
               },
@@ -647,6 +653,25 @@ public:
         if (!repository_)
             return;
         auto convId = repository_->id();
+        if (repository_->mode() == ConversationMode::DOCUMENT) {
+            // A document's commits are not messages: nothing here goes to the
+            // clients' conversation views or to the plugins. What a merge brought
+            // in -- checkpoints, attachments, a rename -- is replayed into the
+            // live CRDT session instead. Member events still feed the internal
+            // callback so the swarm's view of who to sync with stays fresh.
+            bool memberEvent = false;
+            for (const auto& c : commits)
+                memberEvent |= c.at(CommitKey::TYPE) == CommitType::MEMBER;
+            if (memberEvent && onMembersChanged_)
+                onMembersChanged_(repository_->memberUris("", {}));
+            // Nothing to replay for our own commits: what this device wrote came
+            // out of the live session in the first place.
+            if (!commits.empty() && !commitFromSelf)
+                if (auto acc = account_.lock())
+                    if (auto collab = acc->collaborativeEditing())
+                        collab->onRepositoryUpdated(repository_->parentConversationId(), convId);
+            return;
+        }
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
         addToHistory(loadedHistory_, commits, true, commitFromSelf);
@@ -2718,6 +2743,18 @@ ConversationMode
 Conversation::mode() const
 {
     return pimpl_->repository_->mode();
+}
+
+std::string
+Conversation::parentConversationId() const
+{
+    return pimpl_->repository_->parentConversationId();
+}
+
+std::string
+Conversation::documentMimeType() const
+{
+    return pimpl_->repository_->documentMimeType();
 }
 
 std::vector<std::string>
