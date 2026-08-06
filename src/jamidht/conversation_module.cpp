@@ -2422,6 +2422,10 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
         conv->info.created = nowMs();
         conv->info.erased = TimePoint {};
         conv->info.members.emplace(pimpl_->username_);
+        // The announcer plays the part an inviter plays for a conversation:
+        // it is who the pending clone is authorized to come from, which is
+        // what isPeerAuthorized() falls back to before the repo exists.
+        conv->info.members.emplace(uri);
     }
     pimpl_->cloneConversationFrom(documentId, uri);
 }
