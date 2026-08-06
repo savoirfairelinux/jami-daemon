@@ -550,8 +550,11 @@ CollabTest::testClosedHolderConvergesViaCheckpoints()
     CPPUNIT_ASSERT(waitForCheckpoint(aliceId, convId, docId));
     CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
 
-    // No realtime traffic reached bob's (closed) client.
-    CPPUNIT_ASSERT(bobData.docUpdates[docId].empty());
+    // Bob's client is told the document changed — an empty update, so it can
+    // badge the document — but none of the content reaches a closed client.
+    CPPUNIT_ASSERT(poll([&] { return !bobData.docUpdates[docId].empty(); }));
+    for (const auto& update : bobData.docUpdates[docId])
+        CPPUNIT_ASSERT(update.empty());
 
     // Reopening hands the converged state over.
     ClientReplica bobReplica;

@@ -1552,18 +1552,20 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
     // content still measures a few bytes on any document where a character was
     // ever erased.
     //
-    // What is then sent is only what the replay brought, not the whole document:
-    // a synchronization usually carries a handful of keystrokes, and re-encoding
+    // What is sent is only what the replay brought, not the whole document: a
+    // synchronization usually carries a handful of keystrokes, and re-encoding
     // a 300 kB document for each of them would push megabytes a minute through
-    // the client API for nothing. A closed holder's client is not told at all:
-    // it gets the converged state when it reopens.
+    // the client API for nothing. A closed holder's client is not handed the
+    // content either -- it gets the converged state when it reopens -- but it
+    // is told that there is some: an update with an empty payload, which is
+    // what lets it badge a document nobody here is watching.
     bool tellClient;
     {
         std::lock_guard<std::mutex> lk(mutex_);
         tellClient = session->open;
     }
-    if (tellClient && session->doc->takeChanged())
-        emitUpdate(conversationId, documentId, session->doc->encodeDiff(before));
+    if (session->doc->takeChanged())
+        emitUpdate(conversationId, documentId, tellClient ? session->doc->encodeDiff(before) : YrsDocument::Bytes {});
     // Independent of the updates above: an attachment is not part of the CRDT,
     // so a synchronization can bring the payload of a reference the real-time
     // path delivered long before, with no update at all to show for it.

@@ -443,10 +443,15 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
     /**
      * A Y-CRDT update to merge into the client's own replica of the document.
      *
-     * The payload is base64 and opaque: the daemon neither produces nor reads
-     * the document's content, so this one signal carries every change of every
+     * The payload is opaque: the daemon neither produces nor reads the
+     * document's content, so this one signal carries every change of every
      * document type. An update the replica already has is a no-op, so applying
      * it unconditionally is always correct.
+     *
+     * An empty payload is a notification, not an update: the document changed
+     * -- a synchronization brought edits while no client here had it open --
+     * but the content is withheld until the document is opened. There is
+     * nothing to apply; it exists so a client can mark the document unread.
      */
     struct LIBJAMI_PUBLIC CollaborativeDocumentUpdate
     {
