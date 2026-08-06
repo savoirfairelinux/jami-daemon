@@ -35,7 +35,6 @@ public:
         SWARM,         // Start with "swarm:" and 40 ASCII chars
         RENDEZVOUS,    // Start with "rdv" and used for call in swarms
         GIT,           // Start with "git:"
-        COLLAB,        // Start with "collab:", to sync a collaborative document repository
         DATA_TRANSFER, // Start with "data-transfer://"
         SYNC,          // Start with "sync:"
         MESSAGE,       // Start with "msg:"

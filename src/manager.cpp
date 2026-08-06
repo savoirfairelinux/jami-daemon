@@ -3283,14 +3283,6 @@ Manager::gitSocket(std::string_view accountId, std::string_view deviceId, std::s
     return nullptr;
 }
 
-std::shared_ptr<dhtnet::ChannelSocket>
-Manager::collabSocket(std::string_view accountId, std::string_view deviceId, std::string_view documentKey)
-{
-    if (const auto acc = getAccount<JamiAccount>(accountId))
-        return acc->collabSocket(deviceId, documentKey);
-    return nullptr;
-}
-
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)
 {

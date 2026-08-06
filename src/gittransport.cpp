@@ -25,11 +25,6 @@ using namespace std::string_view_literals;
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
-// Scheme used to serve the repository of a collaborative document, kept
-// distinct from "git://" so that the conversation URLs keep their two-part
-// "<device>/<conversationId>" shape.
-constexpr auto COLLAB_SCHEME = "collab://"sv;
-
 /*
  * Create a git protocol request.
  *
@@ -182,14 +177,8 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         return -1;
     }
     std::string_view path = repoPath;
-    // Conversations are served over "git://", collaborative documents over
-    // "collab://". They live in sibling directories of the account, so the
-    // marker below also tells where the account id ends.
-    bool isCollab = std::string_view(url).starts_with(COLLAB_SCHEME);
     constexpr auto CONV_DIR = "/conversations"sv;
-    constexpr auto COLLAB_DIR = "/collab/"sv;
-    auto marker = isCollab ? COLLAB_DIR : CONV_DIR;
-    auto delimConv = path.rfind(marker);
+    auto delimConv = path.rfind(CONV_DIR);
     if (delimConv == std::string::npos) {
         JAMI_ERROR("No repository id found in {:s}", path);
         return -1;
@@ -200,20 +189,17 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         return -1;
     }
     auto accountId = path.substr(delimAccount + 1, delimConv - 1 - delimAccount);
-    std::string_view gitUrl = url + (isCollab ? COLLAB_SCHEME.size() : ("git://"sv).size());
+    std::string_view gitUrl = url + ("git://"sv).size();
     auto delim = gitUrl.find('/');
     if (delim == std::string::npos) {
         JAMI_ERROR("Incorrect url {:s}", gitUrl);
         return -1;
     }
     auto deviceId = gitUrl.substr(0, delim);
-    // For a conversation this is the conversation id; for a collaborative
-    // document it is "<conversationId>/<documentId>".
     auto conversationId = gitUrl.substr(delim + 1, gitUrl.size());
 
     if (action == GIT_SERVICE_UPLOADPACK_LS) {
-        auto gitSocket = isCollab ? jami::Manager::instance().collabSocket(accountId, deviceId, conversationId)
-                                  : jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
+        auto gitSocket = jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
         if (!gitSocket) {
             JAMI_ERROR("Unable to find related socket for {:s}, {:s}, {:s}", accountId, deviceId, conversationId);
             return -1;

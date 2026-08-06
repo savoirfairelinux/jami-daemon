@@ -32,8 +32,6 @@
 #include "server_account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
-#include "jamidht/collab_channel_handler.h"
-#include "jamidht/collab_repository.h"
 #include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
@@ -2521,63 +2519,6 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
             }
 
             startGitServer();
-        } else if (name.starts_with("collab://")) {
-            std::string targetDevice, conversationId, documentId;
-            if (!CollabChannelHandler::parse(name, targetDevice, conversationId, documentId)) {
-                channel->shutdown();
-                return;
-            }
-            auto remoteDevice = deviceId.toString();
-            auto documentKey = fmt::format("{}/{}", conversationId, documentId);
-
-            if (channel->isInitiator()) {
-                // We asked for this channel: fetchCollabDocument() already
-                // registered the socket and drives the fetch.
-                return;
-            }
-
-            if (targetDevice != currentDeviceId()) {
-                JAMI_WARNING("[Account {}] [Document {}] Git server requested for device {}, but this is not ours",
-                             getAccountID(),
-                             documentId,
-                             targetDevice);
-                channel->shutdown();
-                return;
-            }
-            // A document has no membership of its own: it is served to exactly
-            // the devices allowed to read the conversation that announced it.
-            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
-                JAMI_WARNING("[Account {}] [Document {}] Git server requested, but peer {}/{} is not authorized",
-                             getAccountID(),
-                             documentId,
-                             peerId,
-                             remoteDevice);
-                channel->shutdown();
-                return;
-            }
-            auto path = CollabRepository::documentPath(accountID_, conversationId, documentId);
-            if (path.empty() || !std::filesystem::exists(path)) {
-                channel->shutdown();
-                return;
-            }
-            JAMI_LOG("[Account {}] [Document {}] [device {}] Git server requested",
-                     accountID_,
-                     documentId,
-                     remoteDevice);
-            auto gs = std::make_unique<GitServer>(accountID_, documentId, path.string(), channel);
-            const dht::Value::Id serverId = ValueIdDist()(rand);
-            {
-                std::lock_guard lk(gitServersMtx_);
-                gitServers_[serverId] = std::move(gs);
-            }
-            channel->onShutdown([w = weak(), serverId](const std::error_code&) {
-                runOnMainThread([serverId, w]() {
-                    if (auto sthis = w.lock()) {
-                        std::lock_guard lk(sthis->gitServersMtx_);
-                        sthis->gitServers_.erase(serverId);
-                    }
-                });
-            });
         } else {
             // TODO move git://
             std::shared_lock lk(connManagerMtx_);
@@ -2834,115 +2775,6 @@ JamiAccount::collaborativeEditing()
     if (!collaborativeEditing_)
         collaborativeEditing_ = std::make_shared<CollaborativeEditing>(shared());
     return collaborativeEditing_;
-}
-
-std::shared_ptr<dhtnet::ChannelSocket>
-JamiAccount::collabSocket(std::string_view deviceId, std::string_view documentKey)
-{
-    std::lock_guard lk(collabSocketsMtx_);
-    auto itDevice = collabSockets_.find(std::string(deviceId));
-    if (itDevice == collabSockets_.end())
-        return nullptr;
-    auto itDoc = itDevice->second.find(std::string(documentKey));
-    return itDoc != itDevice->second.end() ? itDoc->second : nullptr;
-}
-
-void
-JamiAccount::fetchCollabDocument(const std::string& deviceId,
-                                 const std::string& conversationId,
-                                 const std::string& documentId)
-{
-    if (deviceId == currentDeviceId())
-        return;
-    auto documentKey = fmt::format("{}/{}", conversationId, documentId);
-    {
-        // One fetch at a time per document and per peer: concurrent fetches would
-        // fight over the same socket entry and the same repository.
-        std::lock_guard lk(collabSocketsMtx_);
-        if (!collabFetching_[deviceId].insert(documentKey).second)
-            return;
-    }
-
-    auto onDone = [w = weak(), deviceId, documentKey]() {
-        if (auto sthis = w.lock()) {
-            std::lock_guard lk(sthis->collabSocketsMtx_);
-            sthis->collabFetching_[deviceId].erase(documentKey);
-            if (auto itDevice = sthis->collabSockets_.find(deviceId); itDevice != sthis->collabSockets_.end())
-                itDevice->second.erase(documentKey);
-        }
-    };
-
-    std::shared_lock lk(connManagerMtx_);
-    auto itHandler = channelHandlers_.find(Uri::Scheme::COLLAB);
-    if (itHandler == channelHandlers_.end() || !itHandler->second) {
-        onDone();
-        return;
-    }
-    itHandler->second->connect(DeviceId(deviceId),
-                               documentKey,
-                               [w = weak(),
-                                deviceId,
-                                documentKey,
-                                conversationId,
-                                documentId,
-                                onDone](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
-                                   auto sthis = w.lock();
-                                   if (!sthis || !socket) {
-                                       onDone();
-                                       return;
-                                   }
-                                   {
-                                       // The git transport looks the socket up by name, so it must be
-                                       // registered before the fetch starts.
-                                       std::lock_guard lk(sthis->collabSocketsMtx_);
-                                       sthis->collabSockets_[deviceId][documentKey] = socket;
-                                   }
-                                   // The git transport reads the socket, so the fetch must not run on
-                                   // the connection manager's thread.
-                                   dht::ThreadPool::io().run([w, deviceId, conversationId, documentId, onDone] {
-                                       auto sthis = w.lock();
-                                       if (!sthis) {
-                                           onDone();
-                                           return;
-                                       }
-                                       if (auto repo = CollabRepository::openOrInit(sthis, conversationId, documentId)) {
-                                           if (repo->fetch(deviceId) && repo->mergeRemote(deviceId))
-                                               sthis->collaborativeEditing()->onRepositoryUpdated(conversationId,
-                                                                                                  documentId);
-                                           // Each fetch leaves its own pack behind. Documents that are
-                                           // synchronized but never edited here would otherwise never
-                                           // be compacted at all, since the other trigger sits on the
-                                           // checkpoint path. Already off the connection thread.
-                                           repo->compact();
-                                       }
-                                       onDone();
-                                   });
-                               });
-}
-
-void
-JamiAccount::syncCollabDocument(const std::string& conversationId, const std::string& documentId)
-{
-    // Tell the other devices that this document changed. They pull from us with
-    // the same fetch/merge path they would use for the conversation itself.
-    Json::Value root;
-    root["cid"] = conversationId;
-    root["did"] = documentId;
-    root["k"] = "ckpt";
-    sendInstantMessage(conversationId, {{MIME_TYPE_COLLAB, json::toString(root)}});
-}
-
-void
-JamiAccount::requestCollabDocument(const std::string& conversationId, const std::string& documentId)
-{
-    // Ask whoever holds this document to notify us, so we pull from them. A
-    // device that is behind cannot announce its own head: the others would pull
-    // from it and it would stay stale.
-    Json::Value root;
-    root["cid"] = conversationId;
-    root["did"] = documentId;
-    root["k"] = "req";
-    sendInstantMessage(conversationId, {{MIME_TYPE_COLLAB, json::toString(root)}});
 }
 
 void
@@ -5086,8 +4918,6 @@ JamiAccount::initConnectionManager()
                                                                                      *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(shared(),
                                                                                           *connectionManager_.get());
-        channelHandlers_[Uri::Scheme::COLLAB] = std::make_unique<CollabChannelHandler>(shared(),
-                                                                                       *connectionManager_.get());
         if (jami::Manager::instance().syncOnRegister) {
             channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(),
                                                                                        *connectionManager_.get());
