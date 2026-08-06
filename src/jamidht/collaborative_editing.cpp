@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
+#include <future>
 #include <random>
 
 namespace jami {
@@ -330,12 +331,18 @@ CollaborativeEditing::createDocument(const std::string& conversationId,
     // never learn about it, and the authorization that lets them replicate it is
     // derived from that very announcement. Report the failure rather than hand
     // back the id of a document nobody else can reach.
+    auto announceResult = std::make_shared<std::promise<bool>>();
+    auto announcedDone = announceResult->get_future();
     cm->createCommit(conversationId,
                      CommitMessage::collabDocCreated(documentId, stored, type),
                      true,
                      {},
-                     [w = weak_from_this(), conversationId, documentId, accountId = accountId_](bool ok,
-                                                                                                const std::string&) {
+                     [w = weak_from_this(),
+                      conversationId,
+                      documentId,
+                      accountId = accountId_,
+                      announceResult](bool ok, const std::string&) {
+                         announceResult->set_value(ok);
                          if (ok)
                              return;
                          JAMI_ERROR("[Account {}] Document {} was not announced in conversation {}: "
@@ -359,6 +366,22 @@ CollaborativeEditing::createDocument(const std::string& conversationId,
                                      cm->removeDocumentReplica(documentId);
                          }
                      });
+    // The commit is written on another thread; wait for it, so that a document
+    // this call hands back is really there: listed in the conversation, and
+    // announced to the members. Without this, creating a document then listing
+    // the conversation's documents would be a race against our own commit.
+    if (announcedDone.wait_for(std::chrono::seconds(30)) != std::future_status::ready) {
+        // Never resolving would mean the conversation vanished under us and the
+        // commit callback was dropped; the rollback above cannot run either, so
+        // all that is left is to say the announcement never happened.
+        JAMI_ERROR("[Account {}] Document {} announcement never completed in conversation {}",
+                   accountId_,
+                   documentId,
+                   conversationId);
+        return {};
+    }
+    if (!announcedDone.get())
+        return {};
     return documentId;
 }
 
