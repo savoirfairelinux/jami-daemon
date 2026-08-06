@@ -58,6 +58,8 @@ struct UserData
     bool contactRemoved {false};
     std::string profilePath;
     std::string payloadTrustRequest;
+    std::string trustRequestFrom;
+    std::string trustRequestConvId;
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesUpdated;
 };
@@ -76,6 +78,7 @@ public:
     void testDeclineRequest();
     void testSyncDeclinedRequestTwiceDoesNotRetrigger();
     void testAddContact();
+    void testIncomingTrustRequestArgumentOrder();
     void testDeclineConversationRequestRemoveTrustRequest();
     void testMalformedTrustRequest();
     void testAddContactDeleteAndReAdd();
@@ -119,6 +122,7 @@ private:
     CPPUNIT_TEST(testDeclineRequest);
     CPPUNIT_TEST(testSyncDeclinedRequestTwiceDoesNotRetrigger);
     CPPUNIT_TEST(testAddContact);
+    CPPUNIT_TEST(testIncomingTrustRequestArgumentOrder);
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
     CPPUNIT_TEST(testMalformedTrustRequest);
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
@@ -235,16 +239,21 @@ ConversationRequestTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
+            const std::string& conversationId,
+            const std::string& from,
             const std::vector<uint8_t>& payload,
             time_t /*received*/) {
             std::lock_guard lk {mtx};
             auto payloadStr = std::string(payload.data(), payload.data() + payload.size());
-            if (account_id == aliceId)
+            if (account_id == aliceId) {
                 aliceData.payloadTrustRequest = payloadStr;
-            else if (account_id == bobId)
+                aliceData.trustRequestFrom = from;
+                aliceData.trustRequestConvId = conversationId;
+            } else if (account_id == bobId) {
                 bobData.payloadTrustRequest = payloadStr;
+                bobData.trustRequestFrom = from;
+                bobData.trustRequestConvId = conversationId;
+            }
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
@@ -526,6 +535,40 @@ ConversationRequestTest::testAddContact()
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     auto bobMember = clonedPath / "members" / (bobUri + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
+}
+
+void
+ConversationRequestTest::testIncomingTrustRequestArgumentOrder()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+            return bobData.requestReceived && !aliceData.conversationId.empty();
+        }));
+    }
+
+    // The 2nd argument is the conversation id and the 3rd is the peer URI, not the
+    // opposite. Both are std::string, so only an explicit assertion can catch a swap.
+    CPPUNIT_ASSERT_EQUAL(aliceUri, bobData.trustRequestFrom);
+    CPPUNIT_ASSERT_EQUAL(aliceData.conversationId, bobData.trustRequestConvId);
+    CPPUNIT_ASSERT(bobData.trustRequestFrom != bobData.trustRequestConvId);
+
+    // The URI reported by the signal must be directly usable to accept the request.
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(bobData.trustRequestFrom));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    }
+    CPPUNIT_ASSERT_EQUAL(aliceData.conversationId, bobData.conversationId);
 }
 
 void
@@ -843,8 +886,8 @@ ConversationRequestTest::testBanContactRestartAccount()
     std::string convId = "";
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
-            const std::string& /*from*/,
             const std::string& /*conversationId*/,
+            const std::string& /*from*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             std::lock_guard lk {mtx};
