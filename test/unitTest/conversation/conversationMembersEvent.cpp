@@ -284,8 +284,8 @@ ConversationMembersEventTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
-            const std::string& /*from*/,
             const std::string& /*conversationId*/,
+            const std::string& /*from*/,
             const std::vector<uint8_t>& payload,
             time_t /*received*/) {
             auto payloadStr = std::string(payload.data(), payload.data() + payload.size());
