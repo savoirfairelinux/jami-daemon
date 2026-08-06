@@ -76,12 +76,36 @@ struct SyncedConversation
     std::mutex mtx;
     std::unique_ptr<asio::steady_timer> fallbackClone;
     std::chrono::seconds fallbackTimer {5s};
+    // Earliest time a new clone round may start. Armed together with fallbackClone so that
+    // triggers calling cloneConversation() directly honour the same backoff as the timer.
+    std::chrono::steady_clock::time_point nextCloneAttempt {};
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
     std::shared_ptr<Conversation> conversation;
 
     bool isUnrecoverable() const { return validationFailures >= MAX_VALIDATION_FAILURES; }
+
+    bool cloneThrottled() const { return std::chrono::steady_clock::now() < nextCloneAttempt; }
+
+    // Arms the retry deadline and returns the delay used. Callers must still async_wait()
+    // on fallbackClone.
+    std::chrono::seconds scheduleCloneRetry()
+    {
+        // conversation mtx must be locked
+        auto delay = fallbackTimer;
+        nextCloneAttempt = std::chrono::steady_clock::now() + delay;
+        fallbackClone->expires_at(nextCloneAttempt);
+        fallbackTimer = std::min(fallbackTimer * 2, MAX_FALLBACK);
+        return delay;
+    }
+
+    void resetCloneRetry()
+    {
+        // conversation mtx must be locked
+        nextCloneAttempt = {};
+        fallbackTimer = 5s;
+    }
 
     SyncedConversation(const std::string& convId)
         : info {convId}
@@ -564,6 +588,16 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                      deviceId);
         return;
     }
+    // A pending fetch means a round is in flight: let startFetch() arbitrate so the other
+    // devices of that round are still tried.
+    if (!conv->conversation && !conv->pending && conv->cloneThrottled()) {
+        JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Clone retry is not due yet, ignoring "
+                   "clone request",
+                   accountId_,
+                   conv->info.id,
+                   deviceId);
+        return;
+    }
     if (!conv->conversation) {
         // Note: here we don't return and connect to all members
         // the first that will successfully connect will be used for
@@ -899,6 +933,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             status = std::move(conv->pending->status);
         }
         conv->conversation = conversation;
+        conv->resetCloneRetry();
         if (removeRepo) {
             removeRepositoryImpl(*conv, false, true);
             erasePending();
@@ -963,33 +998,27 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             emitSignal<libjami::ConversationSignal::OnConversationError>(
                 accountId_, conversationId, EUNRECOVERABLE, "Conversation repository failed validation repeatedly");
         } else {
+            auto retryIn = conv->scheduleCloneRetry();
             JAMI_WARNING(
                 "[Account {}] [Conversation {}] Remote conversation failed validation ({}/{}). Re-clone in {}s",
                 accountId_,
                 conversationId,
                 conv->validationFailures,
                 MAX_VALIDATION_FAILURES,
-                conv->fallbackTimer.count());
-            conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-            conv->fallbackTimer *= 2;
-            if (conv->fallbackTimer > MAX_FALLBACK)
-                conv->fallbackTimer = MAX_FALLBACK;
+                retryIn.count());
             conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
                                                       shared_from_this(),
                                                       std::placeholders::_1,
                                                       conversationId));
         }
     } catch (const std::exception& e) {
+        auto retryIn = conv->scheduleCloneRetry();
         JAMI_WARNING(
             "[Account {}] [Conversation {}] Something went wrong when cloning conversation: {}. Re-clone in {}s",
             accountId_,
             conversationId,
             e.what(),
-            conv->fallbackTimer.count());
-        conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-        conv->fallbackTimer *= 2;
-        if (conv->fallbackTimer > MAX_FALLBACK)
-            conv->fallbackTimer = MAX_FALLBACK;
+            retryIn.count());
         conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
                                                   shared_from_this(),
                                                   std::placeholders::_1,
@@ -1140,6 +1169,7 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
         conv.info.erased = nowMs();
     if (conv.fallbackClone)
         conv.fallbackClone->cancel();
+    conv.resetCloneRetry();
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
     addConvInfo(conv.info);
@@ -1443,6 +1473,16 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                      deviceId);
         return;
     }
+    // A pending fetch means a round is in flight: let startFetch() arbitrate so the other
+    // devices of that round are still tried.
+    if (!conv->conversation && !conv->pending && conv->cloneThrottled()) {
+        JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Clone retry is not due yet, ignoring "
+                   "clone request",
+                   accountId_,
+                   conversationId,
+                   deviceId);
+        return;
+    }
     if (!conv->startFetch(deviceId, true)) {
         JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
         return;
@@ -1468,15 +1508,12 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     return true;
                 } else if (auto sthis = wthis.lock()) {
                     conv->stopFetch(deviceId);
+                    auto retryIn = conv->scheduleCloneRetry();
                     JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Clone failed. Re-clone in {}s",
                                  sthis->accountId_,
                                  conversationId,
                                  deviceId,
-                                 conv->fallbackTimer.count());
-                    conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
-                    conv->fallbackTimer *= 2;
-                    if (conv->fallbackTimer > MAX_FALLBACK)
-                        conv->fallbackTimer = MAX_FALLBACK;
+                                 retryIn.count());
                     conv->fallbackClone->async_wait(std::bind(&ConversationModule::Impl::fallbackClone,
                                                               sthis,
                                                               std::placeholders::_1,
@@ -1568,6 +1605,9 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     }
     auto conv = startConversation(request.conversationId);
     std::lock_guard lk(conv->mtx);
+    // Explicit (or auto-accepted) request: the peer just told us to clone, don't sit on a
+    // backoff armed by earlier failures.
+    conv->resetCloneRetry();
     if (conv->info.created == TimePoint {}) {
         conv->info = {request.conversationId};
         conv->info.created = request.received;
