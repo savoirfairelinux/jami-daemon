@@ -230,6 +230,7 @@ public:
      */
     bool removeConversation(const std::string& conversationId, bool forceRemove = false);
     bool removeConversationImpl(SyncedConversation& conv, bool forceRemove = false);
+    void removeDocumentReplica(const std::string& documentId);
 
     /**
      * Send a message notification to all members
@@ -1140,8 +1141,54 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
 bool
 ConversationModule::Impl::removeConversation(const std::string& conversationId, bool forceRemove)
 {
-    return withConv(conversationId,
-                    [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
+    // Leaving a conversation forfeits its documents: membership in one is
+    // derived from membership in the other, so a replica kept past the leave
+    // could neither be served nor synchronized. Collected before the removal:
+    // the conversation map lock and a conversation's own lock nest the other
+    // way around.
+    std::vector<std::string> documentIds;
+    {
+        std::lock_guard lk(conversationsMtx_);
+        for (const auto& [id, conv] : conversations_) {
+            if (id == conversationId || !conv)
+                continue;
+            std::lock_guard clk(conv->mtx);
+            if (conv->conversation && conv->conversation->mode() == ConversationMode::DOCUMENT
+                && conv->conversation->parentConversationId() == conversationId)
+                documentIds.emplace_back(id);
+        }
+    }
+    auto removed = withConv(conversationId,
+                            [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
+    if (removed)
+        for (const auto& documentId : documentIds)
+            removeDocumentReplica(documentId);
+    return removed;
+}
+
+void
+ConversationModule::Impl::removeDocumentReplica(const std::string& documentId)
+{
+    auto conv = getConversation(documentId);
+    if (!conv)
+        return;
+    std::lock_guard lk(conv->mtx);
+    if (conv->conversation && conv->conversation->mode() != ConversationMode::DOCUMENT)
+        return;
+    // Removal is local: no leave commit, so the other holders keep serving
+    // this member and reopening is just cloning again. Recording it as
+    // removed keeps the repository from being recloned on restart.
+    conv->info.removed = nowMs();
+    conv->info.erased = nowMs();
+    if (conv->fallbackClone)
+        conv->fallbackClone->cancel();
+    conv->pending.reset();
+    addConvInfo(conv->info);
+    if (conv->conversation) {
+        conv->conversation->shutdownConnections();
+        conv->conversation->erase();
+        conv->conversation.reset();
+    }
 }
 
 bool
@@ -2382,26 +2429,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
 void
 ConversationModule::removeDocumentReplica(const std::string& documentId)
 {
-    auto conv = pimpl_->getConversation(documentId);
-    if (!conv)
-        return;
-    std::lock_guard lk(conv->mtx);
-    if (conv->conversation && conv->conversation->mode() != ConversationMode::DOCUMENT)
-        return;
-    // Removal is local: no leave commit, so the other holders keep serving
-    // this member and reopening is just cloning again. Recording it as
-    // removed keeps the repository from being recloned on restart.
-    conv->info.removed = nowMs();
-    conv->info.erased = nowMs();
-    if (conv->fallbackClone)
-        conv->fallbackClone->cancel();
-    conv->pending.reset();
-    pimpl_->addConvInfo(conv->info);
-    if (conv->conversation) {
-        conv->conversation->shutdownConnections();
-        conv->conversation->erase();
-        conv->conversation.reset();
-    }
+    pimpl_->removeDocumentReplica(documentId);
 }
 
 std::string
