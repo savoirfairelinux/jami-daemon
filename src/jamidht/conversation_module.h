@@ -237,6 +237,25 @@ public:
      */
     void cloneDocumentFrom(const std::string& documentId, const std::string& uri);
 
+    /**
+     * Drop this device's replica of a collaborative document, without leaving
+     * it: no commit is written and the membership is untouched, so the
+     * document can be reopened later by cloning it again. The repository and
+     * its swarm connections are torn down and the document is recorded as
+     * removed so it is not recloned on restart.
+     * @param documentId  the document's repository id
+     */
+    void removeDocumentReplica(const std::string& documentId);
+
+    /**
+     * Store an attachment in a held collaborative document and notify the
+     * swarm of the commit that carries it.
+     * @param documentId  the document's repository id
+     * @param data        the attachment content
+     * @return the attachment id (content hash), empty on failure
+     */
+    std::string addDocumentAttachment(const std::string& documentId, const std::vector<uint8_t>& data);
+
     void createCommit(const std::string& conversationId,
                       CommitMessage&& commitMessage,
                       bool announce = true,

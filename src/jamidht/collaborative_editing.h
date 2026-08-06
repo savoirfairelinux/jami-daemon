@@ -16,7 +16,6 @@
  */
 #pragma once
 
-#include "collab_repository.h"
 #include "yrs_document.h"
 #include "y_protocol.h"
 
@@ -33,6 +32,7 @@
 namespace jami {
 
 class JamiAccount;
+class Conversation;
 
 // MIME type carrying a real-time collaborative-editing payload between members.
 static constexpr const char MIME_TYPE_COLLAB[] {"application/x-jami-collab+json"};
@@ -55,10 +55,12 @@ static constexpr const char MIME_TYPE_COLLAB[] {"application/x-jami-collab+json"
  * translation layer, and it is what brings the state vector: a device joining a
  * document is told only what it is actually missing.
  *
- * Durable path: a CollabRepository per document appends batches of updates as
- * checkpoints to a dedicated git repository, so offline peers and late joiners
- * converge and the history stays browsable, without adding anything to the
- * conversation history itself.
+ * Durable path: each document is a swarm repository of its own (a conversation
+ * in mode DOCUMENT, held by ConversationModule), where batches of updates are
+ * appended as checkpoint commits. It replicates through the very pipeline the
+ * conversations use -- same membership, same validation, same git transport --
+ * so offline peers and late joiners converge and the history stays browsable,
+ * without adding anything to the conversation history itself.
  */
 class CollaborativeEditing : public std::enable_shared_from_this<CollaborativeEditing>
 {
@@ -154,8 +156,8 @@ public:
      * blob, written once, shared by every reference to it and reclaimed by the
      * usual retention of the repository.
      *
-     * @return the attachment id, or empty when the payload is empty, over
-     *         CollabRepository::MAX_ATTACHMENT_SIZE, or could not be stored.
+     * @return the attachment id, or empty when the payload is empty, over the
+     *         attachment size limit, or could not be stored.
      */
     std::string addAttachment(const std::string& conversationId,
                               const std::string& documentId,
@@ -179,12 +181,15 @@ public:
     void onRemotePayload(const std::string& from, const std::string& fromDevice, const std::string& jsonPayload);
 
     /// Checkpoints of a document, newest first (@c max == 0 means no limit).
-    std::vector<CollabRepository::HistoryEntry> history(const std::string& conversationId,
-                                                        const std::string& documentId,
-                                                        size_t max = 0);
+    /// One map per checkpoint commit, with keys "id", "author", "device",
+    /// "timestamp" and "deltas" (how many updates the checkpoint carries).
+    std::vector<std::map<std::string, std::string>> history(const std::string& conversationId,
+                                                            const std::string& documentId,
+                                                            size_t max = 0);
 
-    /// A peer announced a document in @c conversationId: make sure a local
-    /// repository exists so it can be replicated.
+    /// A peer announced a document in @c conversationId: record it, so its id
+    /// is recognized when a client asks to open it. Nothing is replicated:
+    /// holding a replica is a per-device choice, made by opening the document.
     void onDocumentAnnounced(const std::string& conversationId, const std::string& documentId);
     /// Whether @p documentId names a document some conversation announced, in
     /// whichever conversation. Lets the sync pipeline tell a document this
@@ -204,9 +209,12 @@ private:
 
     static std::string key(const std::string& conversationId, const std::string& documentId);
     uint64_t replicaId();
+    /// The swarm holding a document's replica on this device, or nullptr when
+    /// the device does not hold it (never opened, or removed from here).
+    std::shared_ptr<Conversation> documentConversation(const std::string& documentId);
     std::shared_ptr<Session> ensureSession(const std::string& conversationId,
                                            const std::string& documentId,
-                                           bool allowRepoCreation = true);
+                                           bool announced = true);
     std::shared_ptr<Session> findSession(const std::string& conversationId, const std::string& documentId);
 
     /// Broadcast an update to the members and queue it for the next checkpoint.
@@ -219,17 +227,10 @@ private:
     /// conversation again: this is consulted while the caller holds the
     /// conversation lock.
     bool isRemovedDocument(const std::string& conversationId, const std::string& documentId);
-    /// Whether this device removed the document from itself. Read from disk once
-    /// per conversation and cached: this is asked for every announcement seen
-    /// while paging through a conversation.
-    bool isLocallyRemoved(const std::string& conversationId, const std::string& documentId);
-    /// The local removals of a conversation, read from disk the first time.
-    /// Caller must hold @c announcedMtx_; the scan runs under it so that a
-    /// document opened again cannot be re-marked by a scan that started before.
-    std::set<std::string>& localRemovalsLocked(const std::string& conversationId);
-    /// Drop the live replica and erase the repository of a document, whichever
-    /// kind of removal asked for it. Cancels the pending checkpoint rather than
-    /// writing it: it would land in a repository about to be erased.
+    /// Drop the live replica of a document, whichever kind of removal asked for
+    /// it; the repository itself is torn down by the module. Cancels the
+    /// pending checkpoint rather than writing it: it would land in a repository
+    /// about to be erased.
     void dropLocalReplica(const std::string& conversationId, const std::string& documentId);
     /// Whether room remains to hold a session for a document the conversation
     /// never announced. Live updates arrive before the announcement is merged,
@@ -244,12 +245,7 @@ private:
     /// the two sets are always read together, and one lock keeps them consistent.
     /// A conversation absent from this map has not been scanned yet.
     std::map<std::string, std::set<std::string>> removed_;
-    /// Document ids this device removed from itself, per conversation, guarded by
-    /// @c announcedMtx_ as well. Unlike @c removed_ this one is durable: it is
-    /// seeded from the markers on disk the first time a conversation is asked
-    /// about, and a conversation absent from this map has not been seeded yet.
-    std::map<std::string, std::set<std::string>> locallyRemoved_;
-    /// Display names already read from disk. Clients ask for a name far more
+    /// Display names already read from the repository. Clients ask for a name far more
     /// often than one changes -- once per message delegate built while scrolling
     /// -- and answering from the repository means git lookups on their UI thread.
     /// Refreshed on rename and dropped on synchronization. Guarded by mutex_.
@@ -315,9 +311,6 @@ private:
 
     std::mutex mutex_;
     std::map<std::string, std::shared_ptr<Session>> sessions_;
-    /// Documents already asked for since the account registered, so that paging
-    /// through history does not re-request every document over and over.
-    std::set<std::string> syncedDocuments_;
 };
 
 } // namespace jami

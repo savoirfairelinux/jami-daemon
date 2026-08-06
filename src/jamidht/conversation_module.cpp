@@ -2380,6 +2380,50 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
 }
 
 void
+ConversationModule::removeDocumentReplica(const std::string& documentId)
+{
+    auto conv = pimpl_->getConversation(documentId);
+    if (!conv)
+        return;
+    std::lock_guard lk(conv->mtx);
+    if (conv->conversation && conv->conversation->mode() != ConversationMode::DOCUMENT)
+        return;
+    // Removal is local: no leave commit, so the other holders keep serving
+    // this member and reopening is just cloning again. Recording it as
+    // removed keeps the repository from being recloned on restart.
+    conv->info.removed = nowMs();
+    conv->info.erased = nowMs();
+    if (conv->fallbackClone)
+        conv->fallbackClone->cancel();
+    conv->pending.reset();
+    pimpl_->addConvInfo(conv->info);
+    if (conv->conversation) {
+        conv->conversation->shutdownConnections();
+        conv->conversation->erase();
+        conv->conversation.reset();
+    }
+}
+
+std::string
+ConversationModule::addDocumentAttachment(const std::string& documentId, const std::vector<uint8_t>& data)
+{
+    auto conv = pimpl_->getConversation(documentId);
+    if (!conv)
+        return {};
+    std::shared_ptr<Conversation> conversation;
+    {
+        std::lock_guard lk(conv->mtx);
+        conversation = conv->conversation;
+    }
+    if (!conversation || conversation->mode() != ConversationMode::DOCUMENT)
+        return {};
+    auto [attachmentId, commitId] = conversation->addDocumentAttachment(data);
+    if (!commitId.empty())
+        pimpl_->sendMessageNotification(documentId, true, commitId);
+    return attachmentId;
+}
+
+void
 ConversationModule::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
 {
     pimpl_->cloneConversationFrom(conversationId, uri);

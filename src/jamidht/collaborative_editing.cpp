@@ -16,7 +16,6 @@
  */
 #include "collaborative_editing.h"
 
-#include "jamidht/collab_repository.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/conversation_module.h"
 #include "jamidht/conversation.h"
@@ -29,8 +28,8 @@
 
 #include <opendht/thread_pool.h>
 
+#include <algorithm>
 #include <chrono>
-#include <cstdio>
 #include <functional>
 #include <random>
 
@@ -47,11 +46,15 @@ static constexpr size_t CHECKPOINT_MAX_PENDING {200};
 /// Ceiling for a session that has no repository to drain into.
 static constexpr size_t PENDING_HARD_CAP {CHECKPOINT_MAX_PENDING * 50};
 
-// How many checkpoints between two looks at whether the repository is worth
-// packing. Checking means listing the object directories, so it is not done on
-// every checkpoint; packing itself only happens once the threshold inside
-// CollabRepository::compact() is actually crossed.
-static constexpr size_t COMPACT_CHECK_EVERY {64};
+// What a document holds when its creator did not say: the simplest thing an
+// editor can be pointed at.
+static constexpr const char DEFAULT_DOC_MIME_TYPE[] = "text/plain";
+
+// Ceilings on what the repository is asked to hold per item. A name is a label,
+// not a place to keep content; an attachment is bounded because it is stored
+// and replicated whole.
+static constexpr size_t MAX_DOCUMENT_NAME_SIZE {256};
+static constexpr size_t MAX_ATTACHMENT_SIZE {16 * 1024 * 1024};
 
 // Key added to a document listing, alongside those read from the announcing
 // commit: whether this device still holds the document. Part of the client API,
@@ -84,6 +87,37 @@ static constexpr std::chrono::seconds AWARENESS_SWEEP {AWARENESS_TIMEOUT / 10};
 /// table with ids nobody is behind.
 static constexpr size_t MAX_AWARENESS_PEERS {256};
 
+namespace {
+
+// Cap a document name, cutting on a code point boundary so the result is still
+// valid UTF-8 and can be put back into JSON.
+std::string
+truncatedName(std::string name)
+{
+    if (name.size() <= MAX_DOCUMENT_NAME_SIZE)
+        return name;
+    size_t cut = MAX_DOCUMENT_NAME_SIZE;
+    while (cut > 0 && (static_cast<unsigned char>(name[cut]) & 0xC0) == 0x80)
+        --cut;
+    name.resize(cut);
+    return name;
+}
+
+// Conversation, document, commit and device ids are all generated as
+// fixed-length lowercase hexadecimal strings. Enforcing that alphabet on what a
+// peer supplies is what keeps an id from being read as anything but an id.
+bool
+isValidId(std::string_view id)
+{
+    if (id.empty() || id.size() > 64)
+        return false;
+    return std::all_of(id.begin(), id.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+} // namespace
+
 /// What one client id is currently sharing in a document.
 struct AwarenessPeer
 {
@@ -102,7 +136,10 @@ struct CollaborativeEditing::Session
     std::string conversationId;
     std::string documentId;
     std::unique_ptr<YrsDocument> doc;
-    std::shared_ptr<CollabRepository> repo;
+    // Whether the conversation had announced the document when the session was
+    // built, i.e. whether this one counts against the unannounced cap. Flipped
+    // once the announcement lands. Guarded by mutex_.
+    bool announced {true};
     // The last name handed to the clients. A remote rename cannot be spotted by
     // reading the repository before and after a synchronization -- the merge is
     // already done by the time we hear about it -- so this is what tells a name
@@ -133,8 +170,6 @@ struct CollaborativeEditing::Session
     // Set when the pending batch reached its cap, so that continued typing stops
     // pushing the debounce timer further away and the checkpoint actually runs.
     std::atomic_bool checkpointDue {false};
-    // Checkpoints written since the repository was last considered for packing.
-    std::atomic_size_t sinceCompactCheck {0};
 
     // y-protocol state. Kept under its own lock: the upkeep timer walks it from
     // the io thread while the clients write to it, and neither has any business
@@ -194,6 +229,21 @@ CollaborativeEditing::key(const std::string& conversationId, const std::string& 
     return conversationId + '/' + documentId;
 }
 
+std::shared_ptr<Conversation>
+CollaborativeEditing::documentConversation(const std::string& documentId)
+{
+    auto account = account_.lock();
+    if (!account)
+        return nullptr;
+    auto* cm = account->convModule(true);
+    if (!cm)
+        return nullptr;
+    auto conversation = cm->getConversation(documentId);
+    if (!conversation || conversation->mode() != ConversationMode::DOCUMENT)
+        return nullptr;
+    return conversation;
+}
+
 std::shared_ptr<CollaborativeEditing::Session>
 CollaborativeEditing::findSession(const std::string& conversationId, const std::string& documentId)
 {
@@ -203,39 +253,25 @@ CollaborativeEditing::findSession(const std::string& conversationId, const std::
 }
 
 std::shared_ptr<CollaborativeEditing::Session>
-CollaborativeEditing::ensureSession(const std::string& conversationId,
-                                    const std::string& documentId,
-                                    bool allowRepoCreation)
+CollaborativeEditing::ensureSession(const std::string& conversationId, const std::string& documentId, bool announced)
 {
-    // No path recreates the repository of a document this device removed from
-    // itself -- not a rename, not an attachment, not anything added later. The
-    // one call that is meant to bring it back, openDocument(), clears the mark
-    // before getting here, so it is not caught by this.
-    if (allowRepoCreation && isLocallyRemoved(conversationId, documentId))
-        allowRepoCreation = false;
     std::lock_guard<std::mutex> lk(mutex_);
     auto k = key(conversationId, documentId);
     if (auto it = sessions_.find(k); it != sessions_.end()) {
-        // A session created from live updates has no repository yet; give it one
-        // as soon as a local call proves the document is legitimate.
-        if (allowRepoCreation && !it->second->repo)
-            if (auto account = account_.lock())
-                it->second->repo = CollabRepository::openOrInit(account, conversationId, documentId);
+        // A session created from live updates predates the announcement; stop
+        // counting it against the unannounced cap once the document is known.
+        if (announced)
+            it->second->announced = true;
         return it->second;
     }
 
     auto session = std::make_shared<Session>();
     session->conversationId = conversationId;
     session->documentId = documentId;
+    session->announced = announced;
     session->doc = std::make_unique<YrsDocument>(replicaId());
     session->checkpointTimer = std::make_unique<asio::steady_timer>(*ioContext_);
     session->awarenessTimer = std::make_unique<asio::steady_timer>(*ioContext_);
-    // Only a document the conversation announced may allocate a repository on
-    // disk. Live updates that arrive before the announcement is merged are kept
-    // in memory and persisted once it lands.
-    if (allowRepoCreation)
-        if (auto account = account_.lock())
-            session->repo = CollabRepository::openOrInit(account, conversationId, documentId);
     sessions_.emplace(k, session);
     return session;
 }
@@ -245,34 +281,39 @@ CollaborativeEditing::createDocument(const std::string& conversationId,
                                      const std::string& name,
                                      const std::string& mimeType)
 {
-    std::random_device rd;
-    std::uniform_int_distribution<uint64_t> dist;
-    std::mt19937_64 gen(rd());
-    char buf[17];
-    std::snprintf(buf, sizeof(buf), "%016llx", static_cast<unsigned long long>(dist(gen)));
-    std::string documentId(buf);
-
     // Settle the media type here rather than in each of the two places that
-    // record it: the repository defaults an empty one on its own, the
-    // announcement commit omits the field entirely, and a document would then be
-    // listed as having no type while its metadata claimed one.
-    const std::string type = mimeType.empty() ? CollabRepository::DEFAULT_MIME_TYPE : mimeType;
+    // record it: an empty one in the initial commit and none at all in the
+    // announcement would list the document as having no type while its
+    // repository claimed one.
+    const std::string type = mimeType.empty() ? DEFAULT_DOC_MIME_TYPE : mimeType;
 
     auto account = account_.lock();
     if (!account)
         return {};
-    // The document gets its own repository, holding its content and history. It
-    // must exist before the session opens it.
-    if (!CollabRepository::create(account, conversationId, documentId, name, type)) {
-        JAMI_ERROR("[Account {}] Unable to create repository for document {}", accountId_, documentId);
+    auto* cm = account->convModule();
+    if (!cm)
+        return {};
+    // The document gets a swarm repository of its own, holding its content and
+    // history; its id is the repository's. The creator is its first member.
+    auto documentId = cm->startDocument(conversationId, type);
+    if (documentId.empty()) {
+        JAMI_ERROR("[Account {}] Unable to create a document repository in conversation {}", accountId_, conversationId);
         return {};
     }
+
+    // The name describes the document, it is not part of its content: it lives
+    // in the repository's profile, like a conversation's title, and reaches the
+    // other holders through the ordinary repository synchronization.
+    const auto stored = truncatedName(name);
+    if (!stored.empty())
+        cm->updateConversationInfos(documentId, {{"title", stored}}, false);
 
     auto session = ensureSession(conversationId, documentId);
     {
         std::lock_guard<std::mutex> lk(mutex_);
-        session->announcedName = name;
-        nameCache_[key(conversationId, documentId)] = name;
+        session->persistedLoaded = true; // the repository is newborn: nothing to replay
+        session->announcedName = stored;
+        nameCache_[key(conversationId, documentId)] = stored;
         ++nameEpoch_;
     }
     {
@@ -289,17 +330,8 @@ CollaborativeEditing::createDocument(const std::string& conversationId,
     // never learn about it, and the authorization that lets them replicate it is
     // derived from that very announcement. Report the failure rather than hand
     // back the id of a document nobody else can reach.
-    auto* cm = account->convModule();
-    if (!cm) {
-        JAMI_ERROR("[Account {}] Unable to announce document {} in conversation {}",
-                   accountId_,
-                   documentId,
-                   conversationId);
-        closeDocument(conversationId, documentId);
-        return {};
-    }
     cm->createCommit(conversationId,
-                     CommitMessage::collabDocCreated(documentId, name, type),
+                     CommitMessage::collabDocCreated(documentId, stored, type),
                      true,
                      {},
                      [w = weak_from_this(), conversationId, documentId, accountId = accountId_](bool ok,
@@ -318,6 +350,13 @@ CollaborativeEditing::createDocument(const std::string& conversationId,
                                      it->second.erase(documentId);
                              }
                              sthis->closeDocument(conversationId, documentId);
+                             sthis->dropLocalReplica(conversationId, documentId);
+                             // Undo startDocument() too: a repository nobody was
+                             // ever told about would still be reloaded as held on
+                             // every restart.
+                             if (auto account = sthis->account_.lock())
+                                 if (auto* cm = account->convModule())
+                                     cm->removeDocumentReplica(documentId);
                          }
                      });
     return documentId;
@@ -364,9 +403,8 @@ CollaborativeEditing::removeDocument(const std::string& conversationId, const st
 bool
 CollaborativeEditing::removeDocumentLocally(const std::string& conversationId, const std::string& documentId)
 {
-    // Only documents the conversation announced: without this, a caller could
-    // have us write a marker file per id it cares to name, and each one would
-    // then be honoured for the lifetime of the account.
+    // Only documents the conversation announced: anything else is not a
+    // document of this conversation, whatever a caller cares to name.
     if (!isAnnouncedDocument(conversationId, documentId)) {
         JAMI_WARNING("[Account {}] [Document {}] Not removing from this device: it was not announced in "
                      "conversation {}",
@@ -375,15 +413,14 @@ CollaborativeEditing::removeDocumentLocally(const std::string& conversationId, c
                      conversationId);
         return false;
     }
-    // The marker goes down before anything is erased. Written the other way
-    // round, a checkpoint notification arriving in between would find no marker
-    // and no repository, and rebuild exactly what is being reclaimed.
-    if (!CollabRepository::markLocallyRemoved(accountId_, conversationId, documentId))
-        return false;
-    {
-        std::lock_guard<std::mutex> lk(announcedMtx_);
-        localRemovalsLocked(conversationId).emplace(documentId);
-    }
+    // Removal is the replica going away, nothing more: no marker survives it.
+    // Whether this device holds a document is simply whether its repository is
+    // here, and nothing replicates one this device did not ask for -- an
+    // announcement paged back in records an id, a peer cannot push a clone, and
+    // a commit notification for an unheld repository is ignored.
+    if (auto account = account_.lock())
+        if (auto* cm = account->convModule())
+            cm->removeDocumentReplica(documentId);
     dropLocalReplica(conversationId, documentId);
     emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRemoved>(accountId_,
                                                                            conversationId,
@@ -395,32 +432,36 @@ CollaborativeEditing::removeDocumentLocally(const std::string& conversationId, c
 void
 CollaborativeEditing::setName(const std::string& conversationId, const std::string& documentId, const std::string& name)
 {
-    auto session = ensureSession(conversationId, documentId);
-    if (!session || !session->repo)
+    auto account = account_.lock();
+    if (!account)
         return;
-    // The name describes the document, it is not part of its content: keeping it
-    // in the repository rather than inside the CRDT is what lets the daemon stay
-    // blind to what the document holds. It reaches the other members through the
-    // ordinary repository synchronization.
-    if (session->repo->setDisplayName(name).empty()) {
-        JAMI_WARNING("[Account {}] [Document {}] Unable to rename: the repository has no commit "
-                     "yet, so it has not been synchronized from the conversation",
+    auto* cm = account->convModule();
+    if (!cm)
+        return;
+    if (!documentConversation(documentId)) {
+        JAMI_WARNING("[Account {}] [Document {}] Unable to rename: this device does not hold the document",
                      accountId_,
                      documentId);
         return;
     }
+    // The name describes the document, it is not part of its content: keeping it
+    // in the repository's profile rather than inside the CRDT is what lets the
+    // daemon stay blind to what the document holds. It reaches the other holders
+    // through the ordinary repository synchronization, and the swarm's own
+    // validation is what restricts who may write it.
+    //
     // The repository caps what it stores, so remember and announce what it really
     // holds, or the cache would answer a name no other member will ever see.
-    const auto stored = CollabRepository::truncatedName(name);
+    const auto stored = truncatedName(name);
+    cm->updateConversationInfos(documentId, {{"title", stored}}, true);
     {
         std::lock_guard<std::mutex> lk(mutex_);
-        session->announcedName = stored;
+        if (auto it = sessions_.find(key(conversationId, documentId)); it != sessions_.end())
+            it->second->announcedName = stored;
         nameCache_[key(conversationId, documentId)] = stored;
         ++nameEpoch_;
     }
     emitRename(conversationId, documentId, stored);
-    if (auto account = account_.lock())
-        account->syncCollabDocument(conversationId, documentId);
 }
 
 std::string
@@ -428,12 +469,10 @@ CollaborativeEditing::documentName(const std::string& conversationId, const std:
 {
     // Reading a name must stay cheap. Clients ask for it constantly: once per
     // document to list a conversation's documents, and once per message delegate
-    // built while scrolling a conversation. Opening a session would build a CRDT
-    // replica and a checkpoint timer for every document; even reading meta.json
-    // is a commit, tree and blob lookup plus a JSON parse, on the caller's thread
-    // -- the client's UI thread -- behind the same lock compact() holds for the
-    // length of a repack. So the answer is cached, and the cache is refreshed
-    // wherever the name can change: here, in setName and on synchronization.
+    // built while scrolling a conversation. Reading it from the repository's
+    // profile means git lookups on the caller's thread -- the client's UI thread
+    // -- so the answer is cached, and the cache is refreshed wherever the name
+    // can change: in setName and on synchronization.
     const auto k = key(conversationId, documentId);
     uint64_t epoch = 0;
     {
@@ -442,22 +481,16 @@ CollaborativeEditing::documentName(const std::string& conversationId, const std:
             return it->second;
         epoch = nameEpoch_;
     }
+    auto conversation = documentConversation(documentId);
+    if (!conversation)
+        return {}; // not held here: nothing worth remembering
     std::string name;
-    if (auto session = findSession(conversationId, documentId); session && session->repo) {
-        name = session->repo->meta().displayName;
-    } else if (auto account = account_.lock()) {
-        if (auto repo = CollabRepository::open(account, conversationId, documentId))
-            name = repo->meta().displayName;
-        else
-            return {}; // no repository yet: nothing worth remembering
-    } else {
-        return {};
-    }
+    auto infos = conversation->infos();
+    if (auto it = infos.find("title"); it != infos.end())
+        name = it->second;
     std::lock_guard<std::mutex> lk(mutex_);
     // Only remember it if nothing invalidated the cache while we were reading.
-    // Opening a conversation lists its documents and synchronizes them at the
-    // same time, so a synchronization landing during the read above -- and it is
-    // a cold git_repository_open, so the window is wide -- would otherwise be
+    // A synchronization landing during the read above would otherwise be
     // overwritten by the name we read just before it, and stay wrong for good.
     if (epoch == nameEpoch_)
         nameCache_[k] = name;
@@ -477,15 +510,13 @@ CollaborativeEditing::documents(const std::string& conversationId)
     if (!conversation)
         return {};
     auto docs = conversation->collaborativeDocuments();
-    // The conversation knows which documents exist; only this object knows which
-    // of them this device still holds. A client has to be able to tell them
-    // apart: one opens on what is already here, the other has to be fetched
-    // back first.
-    std::lock_guard<std::mutex> lk(announcedMtx_);
-    const auto& removals = localRemovalsLocked(conversationId);
+    // The conversation knows which documents exist; whether this device still
+    // holds one is whether its repository is here. A client has to be able to
+    // tell them apart: one opens on what is already here, the other has to be
+    // fetched back first.
     for (auto& doc : docs) {
         auto it = doc.find(CommitKey::URI);
-        doc[DOCUMENT_STORED_LOCALLY] = (it != doc.end() && removals.count(it->second) != 0) ? FALSE_STR : TRUE_STR;
+        doc[DOCUMENT_STORED_LOCALLY] = (it != doc.end() && documentConversation(it->second)) ? TRUE_STR : FALSE_STR;
     }
     return docs;
 }
@@ -538,27 +569,6 @@ CollaborativeEditing::isRemovedDocument(const std::string& conversationId, const
     return it != removed_.end() && it->second.count(documentId) != 0;
 }
 
-std::set<std::string>&
-CollaborativeEditing::localRemovalsLocked(const std::string& conversationId)
-{
-    auto it = locallyRemoved_.find(conversationId);
-    if (it != locallyRemoved_.end())
-        return it->second;
-    // First question asked about this conversation. One directory read, and the
-    // answers are held for as long as the account lives.
-    auto ids = CollabRepository::listLocallyRemoved(accountId_, conversationId);
-    auto& set = locallyRemoved_[conversationId];
-    set.insert(std::make_move_iterator(ids.begin()), std::make_move_iterator(ids.end()));
-    return set;
-}
-
-bool
-CollaborativeEditing::isLocallyRemoved(const std::string& conversationId, const std::string& documentId)
-{
-    std::lock_guard<std::mutex> lk(announcedMtx_);
-    return localRemovalsLocked(conversationId).count(documentId) != 0;
-}
-
 void
 CollaborativeEditing::dropLocalReplica(const std::string& conversationId, const std::string& documentId)
 {
@@ -570,35 +580,16 @@ CollaborativeEditing::dropLocalReplica(const std::string& conversationId, const 
             session = it->second;
             sessions_.erase(it);
         }
-        // Not merely tidying up: this is what lets the document be requested
-        // again if it ever comes back, since a document is only ever synced once
-        // per registration.
-        syncedDocuments_.erase(k);
         nameCache_.erase(k);
         ++nameEpoch_;
     }
     // Drop the live replica without checkpointing it first: the repository is
-    // about to go, and writing to it would only race with the erase. The timer
-    // is cancelled for the same reason -- it would fire on a repository that no
-    // longer exists.
-    if (session) {
-        if (session->checkpointTimer) {
-            std::lock_guard<std::mutex> lk(session->timerMutex);
-            session->checkpointTimer->cancel();
-        }
-        // Release the repository handle before erasing the directory under it.
-        std::lock_guard<std::mutex> lk(mutex_);
-        session->repo.reset();
-    }
-    auto path = CollabRepository::documentPath(accountId_, conversationId, documentId);
-    if (!path.empty()) {
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
-        if (ec)
-            JAMI_WARNING("[Account {}] [Document {}] Could not erase the document: {}",
-                         accountId_,
-                         documentId,
-                         ec.message());
+    // going with it, and writing to it would only race with the erase. The
+    // timer is cancelled for the same reason -- it would fire on a repository
+    // that no longer exists.
+    if (session && session->checkpointTimer) {
+        std::lock_guard<std::mutex> lk(session->timerMutex);
+        session->checkpointTimer->cancel();
     }
 }
 
@@ -617,7 +608,7 @@ CollaborativeEditing::admitUnannounced(const std::string& conversationId, const 
         return true; // already held: this is not a new allocation
     size_t unannounced = 0;
     for (const auto& [_, session] : sessions_) {
-        if (session && !session->repo)
+        if (session && !session->announced)
             ++unannounced;
     }
     return unannounced < MAX_UNANNOUNCED;
@@ -627,9 +618,8 @@ YrsDocument::Bytes
 CollaborativeEditing::openDocument(const std::string& conversationId, const std::string& documentId)
 {
     // A document only exists once the conversation announced it. Opening one
-    // that was never announced would create a bare repository on disk for any id
-    // a caller cares to name, and bypass the very gate that decides which
-    // devices may replicate it.
+    // that was never announced would clone from any id a caller cares to name,
+    // and bypass the very gate that decides which documents exist here.
     if (!isAnnouncedDocument(conversationId, documentId)) {
         JAMI_WARNING("[Account {}] Refusing to open document {}: it was not announced in conversation {}",
                      accountId_,
@@ -637,28 +627,57 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
                      conversationId);
         return {};
     }
-    // Opening a document this device had removed from itself is what asks for it
-    // back: the mark is what a removal leaves behind, and there is nothing else
-    // to undo. Whatever the members wrote meanwhile is pulled below, so the
-    // document reopens where they left it, not where this device did.
-    bool wasLocallyRemoved = false;
-    {
-        std::lock_guard<std::mutex> lk(announcedMtx_);
-        wasLocallyRemoved = localRemovalsLocked(conversationId).erase(documentId) != 0;
+    auto account = account_.lock();
+    if (!account)
+        return {};
+    auto* cm = account->convModule();
+    if (!cm)
+        return {};
+    auto conversation = documentConversation(documentId);
+    if (!conversation) {
+        // Opening is what opts this device into holding a replica: clone the
+        // document's swarm from its announcer. The clone lands asynchronously
+        // -- through the very pipeline a conversation invite uses -- and
+        // reports through onRepositoryUpdated(), which replays it into this
+        // session and hands the client the difference. Until then the document
+        // is open and empty, exactly like a conversation still syncing.
+        std::string announcer;
+        for (const auto& doc : documents(conversationId)) {
+            auto uriIt = doc.find(CommitKey::URI);
+            if (uriIt == doc.end() || uriIt->second != documentId)
+                continue;
+            if (auto authorIt = doc.find("author"); authorIt != doc.end())
+                announcer = authorIt->second;
+            break;
+        }
+        if (announcer.empty()) {
+            JAMI_WARNING("[Account {}] Unable to open document {}: its announcer is unknown", accountId_, documentId);
+            return {};
+        }
+        auto session = ensureSession(conversationId, documentId);
+        {
+            // Nothing on disk yet, so nothing to replay; flagging it now is
+            // what lets the clone's completion replay into this session.
+            std::lock_guard<std::mutex> lk(mutex_);
+            session->persistedLoaded = true;
+        }
+        cm->cloneDocumentFrom(documentId, announcer);
+        // Live edits are not gated on the clone: members with the document open
+        // answer this with what this replica is missing.
+        sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
+        return session->doc->encodeStateAsUpdate();
     }
-    if (wasLocallyRemoved)
-        CollabRepository::clearLocalRemoval(accountId_, conversationId, documentId);
     auto session = ensureSession(conversationId, documentId);
     // Rebuild the CRDT state from persisted commits if this session was just created,
     // so a document opens with its full content even when the daemon restarted or the
-    // commits were never replayed through the message-history load path.
+    // commits were never replayed yet.
     loadPersistedState(session);
     // Remember the name the client is about to see, so a later rename can be
-    // told from it. Read here rather than when the session is built: this takes
-    // the repository's lock, which compact() holds for the length of a repack,
-    // and holding the manager's lock across that would stall every other caller.
-    if (session->repo) {
-        const auto name = session->repo->meta().displayName;
+    // told from it.
+    {
+        auto infos = conversation->infos();
+        auto it = infos.find("title");
+        const auto name = it != infos.end() ? it->second : std::string {};
         std::lock_guard<std::mutex> lk(mutex_);
         if (!session->announcedName)
             session->announcedName = name;
@@ -669,28 +688,6 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
     // a second device of the same account catch up on edits that were made while
     // it was not looking, without waiting for the next checkpoint to be fetched.
     sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
-    // The frame above only reaches members that have this document open; the
-    // repository is what carries the rest, and it has just been erased here. Ask
-    // for it back, as a device that fell behind would.
-    if (wasLocallyRemoved) {
-        {
-            std::lock_guard<std::mutex> lk(mutex_);
-            syncedDocuments_.emplace(key(conversationId, documentId));
-        }
-        dht::ThreadPool::io().run([w = account_, conversationId, documentId] {
-            if (auto account = w.lock())
-                account->requestCollabDocument(conversationId, documentId);
-        });
-    }
-    // Catch up on repositories left uncompacted by earlier versions: a document
-    // that is only ever synchronized accumulates one pack per fetch, and no
-    // other trigger would ever tidy it up. Scheduled only once the state has
-    // been read, because packing holds the repository lock for its whole
-    // duration and this call is what the client waits on to show the document.
-    dht::ThreadPool::io().run([repo = session->repo] {
-        if (repo)
-            repo->compact();
-    });
     return state;
 }
 
@@ -761,7 +758,7 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
         return;
     auto conversationId = root["cid"].asString();
     auto documentId = root["did"].asString();
-    if (!CollabRepository::isValidId(conversationId) || !CollabRepository::isValidId(documentId))
+    if (!isValidId(conversationId) || !isValidId(documentId))
         return;
 
     // Being able to send us a message is not the same as being allowed to edit
@@ -780,49 +777,11 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
         return;
     }
 
-    // "k" tells a y-protocol frame ("y") from the two envelope-level messages
-    // that drive repository synchronization. Those two are Jami's own plumbing
-    // -- they move git repositories between devices -- and have no counterpart
-    // in yjs, so they stay outside the protocol rather than being bent into it.
+    // "k" tells a y-protocol frame ("y") apart from whatever a newer revision
+    // of this envelope may carry. Repository synchronization is not driven from
+    // here: a document is a swarm, and its commits announce themselves through
+    // the ordinary conversation pipeline.
     auto kind = root.get("k", "y").asString();
-    // These two touch the disk and the network, so they must name a document the
-    // conversation actually announced. Protocol frames deliberately are not
-    // gated here: they routinely overtake the announcement commit, and what they
-    // build is bounded by admitSession() below.
-    if ((kind == "ckpt" || kind == "req") && !isAnnouncedDocument(conversationId, documentId)) {
-        JAMI_WARNING("[Account {}] Ignoring collaborative {} for unannounced document {}", accountId_, kind, documentId);
-        return;
-    }
-    // Both of these end in a repository being written here -- one fetches into
-    // it, the other serves it and would create it to do so. A document this
-    // device removed from itself is left alone: the members go on editing it
-    // among themselves, and nothing puts it back until it is opened again.
-    if ((kind == "ckpt" || kind == "req") && isLocallyRemoved(conversationId, documentId))
-        return;
-    if (kind == "ckpt") {
-        // A peer checkpointed the document: pull its repository. Content is not
-        // carried here, only the fact that there is something new to fetch.
-        account->fetchCollabDocument(fromDevice, conversationId, documentId);
-        return;
-    }
-    if (kind == "req") {
-        // A peer wants this document and cannot pull from us on its own: answer
-        // with a checkpoint notification so it fetches from us. Staying silent
-        // when we have nothing avoids a needless round of fetches.
-        auto session = findSession(conversationId, documentId);
-        auto repo = session ? session->repo : nullptr;
-        if (!repo) {
-            if (auto acc = account_.lock())
-                // open(), not openOrInit(): this is a peer asking, and creating a
-                // repository on its say-so would let any member make us hold a
-                // directory per document id it names. Having nothing to answer
-                // with is exactly the case the test below already covers.
-                repo = CollabRepository::open(acc, conversationId, documentId);
-        }
-        if (repo && !repo->isEmpty())
-            account->syncCollabDocument(conversationId, documentId);
-        return;
-    }
     if (kind != "y")
         return; // nothing else is spoken here
 
@@ -867,17 +826,14 @@ CollaborativeEditing::onRemotePayload(const std::string& from,
 std::shared_ptr<CollaborativeEditing::Session>
 CollaborativeEditing::admitSession(const std::string& conversationId, const std::string& documentId)
 {
-    // No repository yet if the announcement has not been merged: what arrives
-    // stays in memory and is persisted once the document is opened locally.
+    // No replica is held for the document if this device does not hold its
+    // repository: what arrives stays in memory and is persisted only where a
+    // repository exists to receive it.
     //
     // A document known to be removed is refused outright: it can never be opened
     // again, so a replica held for it would accumulate what nothing would ever
     // read, and peers that have not seen the removal yet keep sending updates.
-    //
-    // One removed from this device only is refused for the same reason and one
-    // more: admitting a live update would rebuild the replica in memory and
-    // recreate its repository, undoing the requested reclamation.
-    if (isRemovedDocument(conversationId, documentId) || isLocallyRemoved(conversationId, documentId))
+    if (isRemovedDocument(conversationId, documentId))
         return nullptr;
     const bool announced = isAnnouncedDocument(conversationId, documentId);
     if (!announced && !admitUnannounced(conversationId, documentId)) {
@@ -1213,11 +1169,12 @@ CollaborativeEditing::onLocalUpdate(const std::shared_ptr<Session>& session, con
 void
 CollaborativeEditing::replayStoredUpdates(const std::shared_ptr<Session>& session)
 {
-    if (!session->repo)
+    auto conversation = documentConversation(session->documentId);
+    if (!conversation)
         return;
     // The updates come from peers' commits, so their content is not ours to
     // trust: a malformed one must cost that one update, not the whole replay.
-    for (const auto& encoded : session->repo->updates()) {
+    for (const auto& encoded : conversation->documentUpdates()) {
         try {
             session->doc->applyUpdate(base64::decode(encoded));
         } catch (const std::exception& e) {
@@ -1241,11 +1198,7 @@ CollaborativeEditing::loadPersistedState(const std::shared_ptr<Session>& session
     // signalled: the caller encodes the converged state and hands it to the
     // client that asked to open the document.
     replayStoredUpdates(session);
-    // Only now: a session flagged as loaded is never replayed again, so flagging
-    // it before the replay would freeze a partially rebuilt document.
-    std::lock_guard<std::mutex> lk(mutex_);
-    session->persistedLoaded = true;
-    // What is already on disk is not news: the client resolves the attachments
+    // What is already stored is not news: the client resolves the attachments
     // of the state it is being handed. Only what arrives afterwards is signalled.
     // The asymmetry is deliberate. For a document being opened the client pulls,
     // asking for each reference it meets while rendering; announcing every stored
@@ -1253,21 +1206,28 @@ CollaborativeEditing::loadPersistedState(const std::shared_ptr<Session>& session
     // user may never scroll through. The signal exists for the opposite case: an
     // attachment landing in an already open document, which the client has no
     // reason to look for.
-    if (session->repo)
-        for (auto& id : session->repo->attachmentIds())
-            session->knownAttachments.insert(std::move(id));
+    std::vector<std::string> ids;
+    if (auto conversation = documentConversation(session->documentId))
+        ids = conversation->documentAttachmentIds();
+    // Only now: a session flagged as loaded is never replayed again, so flagging
+    // it before the replay would freeze a partially rebuilt document.
+    std::lock_guard<std::mutex> lk(mutex_);
+    session->persistedLoaded = true;
+    for (auto& id : ids)
+        session->knownAttachments.insert(std::move(id));
 }
 
 void
 CollaborativeEditing::queueUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update)
 {
+    const bool held = documentConversation(session->documentId) != nullptr;
     bool capReached = false;
     {
         std::lock_guard<std::mutex> lk(session->pendingMutex);
         // Without a repository nothing will ever drain this: keep the last batch
         // so a repository appearing later still saves recent work, and drop the
         // rest rather than growing without bound.
-        if (!session->repo && session->pending.size() >= PENDING_HARD_CAP)
+        if (!held && session->pending.size() >= PENDING_HARD_CAP)
             session->pending.erase(session->pending.begin(), session->pending.begin() + CHECKPOINT_MAX_PENDING);
         session->pending.emplace_back(base64::encode(update));
         capReached = session->pending.size() >= CHECKPOINT_MAX_PENDING;
@@ -1306,9 +1266,16 @@ void
 CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
 {
     session->checkpointDue = false;
-    // Before draining anything: a drained batch with nowhere to go is lost, and
-    // the session's repository is never reopened once it failed to open.
-    if (!session->repo)
+    auto account = account_.lock();
+    if (!account)
+        return;
+    auto* cm = account->convModule();
+    if (!cm)
+        return;
+    // Before draining anything: a drained batch with nowhere to go is lost.
+    // Keeping the batch queued means a replica appearing later -- the document
+    // being opened, which is what clones it -- still saves recent work.
+    if (!documentConversation(session->documentId))
         return;
     std::vector<std::string> batch;
     {
@@ -1318,59 +1285,47 @@ CollaborativeEditing::checkpointNow(const std::shared_ptr<Session>& session)
     if (batch.empty())
         return;
 
-    if (session->repo->appendCheckpoint(batch).empty()) {
-        // Keep the updates queued so the next checkpoint retries them rather
-        // than silently losing the edits they carry, and make sure a retry is
-        // actually scheduled even if the user has stopped typing.
-        {
-            std::lock_guard<std::mutex> lk(session->pendingMutex);
-            session->pending.insert(session->pending.begin(),
-                                    std::make_move_iterator(batch.begin()),
-                                    std::make_move_iterator(batch.end()));
-        }
-        scheduleCheckpoint(session, CHECKPOINT_IDLE);
-        return;
-    }
-
-    if (auto account = account_.lock())
-        account->syncCollabDocument(session->conversationId, session->documentId);
-
-    // Nothing else ever packs a document repository, and every checkpoint leaves
-    // a loose object behind. Off the io thread: packing walks the
-    // whole history and would otherwise hold up the checkpoint timers.
-    if (++session->sinceCompactCheck >= COMPACT_CHECK_EVERY) {
-        session->sinceCompactCheck = 0;
-        dht::ThreadPool::io().run([repo = session->repo] {
-            if (repo)
-                repo->compact();
-        });
-    }
+    // The checkpoint is a commit in the document's own swarm: committing it is
+    // also what announces it, so the other holders fetch it through the same
+    // pipeline that moves conversation messages. Nothing else needs sending.
+    cm->createCommit(session->documentId,
+                     CommitMessage::checkpoint(batch),
+                     true,
+                     {},
+                     [w = weak_from_this(), wsession = std::weak_ptr<Session>(session), batch](bool ok,
+                                                                                               const std::string&) {
+                         if (ok)
+                             return;
+                         // Keep the updates queued so the next checkpoint retries
+                         // them rather than silently losing the edits they carry,
+                         // and make sure a retry is actually scheduled even if the
+                         // user has stopped typing.
+                         auto sthis = w.lock();
+                         auto session = wsession.lock();
+                         if (!sthis || !session)
+                             return;
+                         {
+                             std::lock_guard<std::mutex> lk(session->pendingMutex);
+                             session->pending.insert(session->pending.begin(), batch.begin(), batch.end());
+                         }
+                         sthis->scheduleCheckpoint(session, CHECKPOINT_IDLE);
+                     });
 }
 
-std::vector<CollabRepository::HistoryEntry>
-CollaborativeEditing::history(const std::string& conversationId, const std::string& documentId, size_t max)
+std::vector<std::map<std::string, std::string>>
+CollaborativeEditing::history(const std::string& /*conversationId*/, const std::string& documentId, size_t max)
 {
-    auto session = findSession(conversationId, documentId);
-    auto repo = session ? session->repo : nullptr;
-    if (!repo) {
-        if (auto account = account_.lock())
-            repo = CollabRepository::open(account, conversationId, documentId);
-    }
-    return repo ? repo->history(max) : std::vector<CollabRepository::HistoryEntry> {};
+    auto conversation = documentConversation(documentId);
+    return conversation ? conversation->documentHistory(max) : std::vector<std::map<std::string, std::string>> {};
 }
 
 YrsDocument::Bytes
-CollaborativeEditing::documentStateAt(const std::string& conversationId,
+CollaborativeEditing::documentStateAt(const std::string& /*conversationId*/,
                                       const std::string& documentId,
                                       const std::string& commitId)
 {
-    auto session = findSession(conversationId, documentId);
-    auto repo = session ? session->repo : nullptr;
-    if (!repo) {
-        if (auto account = account_.lock())
-            repo = CollabRepository::open(account, conversationId, documentId);
-    }
-    if (!repo)
+    auto conversation = documentConversation(documentId);
+    if (!conversation)
         return {};
 
     // Nothing at all when the checkpoint is unknown, which is what the public
@@ -1378,7 +1333,7 @@ CollaborativeEditing::documentStateAt(const std::string& conversationId,
     // and holds nothing: the two would otherwise be the same answer, and a
     // client restoring an early, legitimately empty version could not tell
     // whether it was allowed to.
-    const auto stored = repo->updatesAt(commitId);
+    const auto stored = conversation->documentUpdatesAt(commitId);
     if (!stored)
         return {};
 
@@ -1402,68 +1357,19 @@ CollaborativeEditing::documentStateAt(const std::string& conversationId,
 void
 CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, const std::string& documentId)
 {
-    auto account = account_.lock();
-    if (!account)
-        return;
     // The author may have retired this announcement. Answered from the cache
     // alone, never by walking the conversation again: this runs while
     // addToHistory() holds the conversation lock, and asking the conversation
     // anything from here is what deadlocks the caller. addToHistory() applies the
     // removals of a batch before its announcements, and a removal is always newer
     // than the announcement it retires, so the cache is already right by now.
-    {
-        std::lock_guard<std::mutex> lk(announcedMtx_);
-        if (auto it = removed_.find(conversationId); it != removed_.end() && it->second.count(documentId) != 0)
-            return;
-        announced_[conversationId].emplace(documentId);
-        // This device chose not to hold this one. The announcement is still
-        // recorded above -- the document does exist, it is listed, and it can be
-        // opened again -- but nothing below is done for it: paging a
-        // conversation back in is precisely what would otherwise recreate the
-        // repository the user just reclaimed.
-        if (localRemovalsLocked(conversationId).count(documentId) != 0)
-            return;
-    }
-    // Create the local repository if needed so the document can be replicated.
-    // Nothing is loaded in memory until the document is actually opened.
-    auto repo = CollabRepository::openOrInit(account, conversationId, documentId);
-    if (!repo)
+    //
+    // Nothing is replicated here: holding a replica is a per-device choice, made
+    // by opening the document. The announcement only records that it exists.
+    std::lock_guard<std::mutex> lk(announcedMtx_);
+    if (auto it = removed_.find(conversationId); it != removed_.end() && it->second.count(documentId) != 0)
         return;
-    // Live updates may have opened a session before the announcement landed; it
-    // has no repository, so give it one now. The remote updates already merged
-    // in memory are not checkpointed here; the request below fetches their
-    // producer's durable checkpoint when it becomes available.
-    if (auto session = findSession(conversationId, documentId)) {
-        std::lock_guard<std::mutex> lk(mutex_);
-        if (!session->repo)
-            session->repo = repo;
-    }
-    // This also runs while paging older messages back in, and a conversation may
-    // announce many documents: without a guard, scrolling would cost one
-    // broadcast and one fetch per document, for every member, every time.
-    //
-    // Gating on "the repository is empty" would be wrong the other way round: a
-    // device that was offline while others edited has a non-empty but stale
-    // repository, and checkpoint notifications are best-effort and not stored in
-    // the swarm, so it would never catch up. Sync once per document per
-    // registration instead: cheap while browsing, and it still resynchronizes
-    // every document each time the account comes back online.
-    //
-    // What we send is a request, not a notification: announcing our own head
-    // makes the others pull from us, which is the wrong direction for a replica
-    // that is behind.
-    {
-        std::lock_guard<std::mutex> lk(mutex_);
-        if (!syncedDocuments_.emplace(key(conversationId, documentId)).second)
-            return;
-    }
-    // Send from another thread: addToHistory() announces documents while it holds
-    // the conversation lock, and requesting a document sends a message, which
-    // takes that same lock again. Doing it inline self-deadlocks the caller.
-    dht::ThreadPool::io().run([w = account_, conversationId, documentId] {
-        if (auto account = w.lock())
-            account->requestCollabDocument(conversationId, documentId);
-    });
+    announced_[conversationId].emplace(documentId);
 }
 
 void
@@ -1476,14 +1382,15 @@ CollaborativeEditing::onDocumentRemoved(const std::string& conversationId, const
             it->second.erase(documentId);
     }
     dropLocalReplica(conversationId, documentId);
-    // A document nobody can open again has no use for a marker saying this
-    // device chose not to hold it. Left behind, it would outlive everything else
-    // the document ever wrote here.
-    if (isLocallyRemoved(conversationId, documentId)) {
-        CollabRepository::clearLocalRemoval(accountId_, conversationId, documentId);
-        std::lock_guard<std::mutex> lk(announcedMtx_);
-        localRemovalsLocked(conversationId).erase(documentId);
-    }
+    // The repository goes too: a document nobody can open again would otherwise
+    // outlive its own removal on every device that held it. From another
+    // thread: this runs while addToHistory() holds the parent conversation's
+    // lock, and tearing a conversation down takes locks of its own.
+    dht::ThreadPool::io().run([w = account_, documentId] {
+        if (auto account = w.lock())
+            if (auto* cm = account->convModule())
+                cm->removeDocumentReplica(documentId);
+    });
     emitSignal<libjami::ConfigurationSignal::CollaborativeDocumentRemoved>(accountId_, conversationId, documentId, true);
 }
 
@@ -1499,7 +1406,8 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
         ++nameEpoch_;
     }
     auto session = findSession(conversationId, documentId);
-    if (!session || !session->repo)
+    auto conversation = documentConversation(documentId);
+    if (!session || !conversation)
         return; // not being edited here; the repository is up to date on disk
     {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -1535,7 +1443,12 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
     // It cannot be detected by reading the name around the replay: the caller
     // merges before calling us, so both reads would return the name from after
     // the merge. What we compare against is the last name we told the clients.
-    const auto name = session->repo->meta().displayName;
+    std::string name;
+    {
+        auto infos = conversation->infos();
+        if (auto it = infos.find("title"); it != infos.end())
+            name = it->second;
+    }
     auto renamed = false;
     {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -1560,9 +1473,6 @@ CollaborativeEditing::flush()
         sessions.reserve(sessions_.size());
         for (const auto& [_, session] : sessions_)
             sessions.emplace_back(session);
-        // The account is going away: let every document be synchronized again
-        // when it comes back, so a device that was offline catches up.
-        syncedDocuments_.clear();
     }
     for (const auto& session : sessions) {
         if (session->checkpointTimer) {
@@ -1601,12 +1511,14 @@ CollaborativeEditing::emitRename(const std::string& conversationId,
 void
 CollaborativeEditing::emitNewAttachments(const std::shared_ptr<Session>& session)
 {
-    if (!session->repo)
+    auto conversation = documentConversation(session->documentId);
+    if (!conversation)
         return;
+    auto ids = conversation->documentAttachmentIds();
     std::vector<std::string> fresh;
     {
         std::lock_guard<std::mutex> lk(mutex_);
-        for (auto& id : session->repo->attachmentIds())
+        for (auto& id : ids)
             if (session->knownAttachments.insert(id).second)
                 fresh.push_back(std::move(id));
     }
@@ -1622,49 +1534,44 @@ CollaborativeEditing::addAttachment(const std::string& conversationId,
                                     const std::string& documentId,
                                     const std::vector<uint8_t>& data)
 {
-    if (data.empty() || data.size() > CollabRepository::MAX_ATTACHMENT_SIZE) {
+    if (data.empty() || data.size() > MAX_ATTACHMENT_SIZE) {
         JAMI_WARNING("[Account {}] [Document {}] Attachment refused: {} byte(s), limit is {}",
                      accountId_,
                      documentId,
                      data.size(),
-                     CollabRepository::MAX_ATTACHMENT_SIZE);
+                     MAX_ATTACHMENT_SIZE);
         return {};
     }
-    auto session = ensureSession(conversationId, documentId);
-    if (!session || !session->repo)
+    auto account = account_.lock();
+    if (!account)
         return {};
-    auto id = session->repo->addAttachment(data);
+    auto* cm = account->convModule();
+    if (!cm)
+        return {};
+    // The payload is a commit in the document's own swarm, and committing it is
+    // also what announces it: peers fetch it straight away rather than showing a
+    // placeholder until the next checkpoint.
+    auto id = cm->addDocumentAttachment(documentId, data);
     if (id.empty())
         return {};
-    {
+    if (auto session = findSession(conversationId, documentId)) {
         // Ours already: the client that stored it holds the bytes, and the next
         // synchronization must not announce them back to it.
         std::lock_guard<std::mutex> lk(mutex_);
         session->knownAttachments.insert(id);
     }
-    // The reference travels on the real-time path and the payload with the
-    // repository, so peers would show a placeholder until the next checkpoint --
-    // ten seconds of nothing, or much longer on a document nobody is typing in.
-    // Announce straight away instead.
-    if (auto account = account_.lock())
-        account->syncCollabDocument(conversationId, documentId);
     return id;
 }
 
 std::vector<uint8_t>
-CollaborativeEditing::attachment(const std::string& conversationId,
+CollaborativeEditing::attachment(const std::string& /*conversationId*/,
                                  const std::string& documentId,
                                  const std::string& attachmentId)
 {
-    auto session = findSession(conversationId, documentId);
-    auto repo = session ? session->repo : nullptr;
-    if (!repo) {
-        // Readable without an editing session: a client browsing the history of
-        // a document it has not opened still has to resolve what it refers to.
-        if (auto account = account_.lock())
-            repo = CollabRepository::open(account, conversationId, documentId);
-    }
-    return repo ? repo->attachment(attachmentId) : std::vector<uint8_t> {};
+    // Readable without an editing session: a client browsing the history of a
+    // document it has not opened still has to resolve what it refers to.
+    auto conversation = documentConversation(documentId);
+    return conversation ? conversation->documentAttachment(attachmentId) : std::vector<uint8_t> {};
 }
 
 } // namespace jami

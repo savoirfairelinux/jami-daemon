@@ -382,18 +382,9 @@ getCollaborativeDocumentHistory(const std::string& accountId,
                                 const std::string& documentId,
                                 uint32_t max)
 {
-    std::vector<std::map<std::string, std::string>> result;
-    auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
-    if (!acc)
-        return result;
-    for (const auto& entry : acc->collaborativeEditing()->history(conversationId, documentId, max)) {
-        result.emplace_back(std::map<std::string, std::string> {{"id", entry.commitId},
-                                                                {"author", entry.author},
-                                                                {"device", entry.deviceId},
-                                                                {"timestamp", std::to_string(entry.timestamp)},
-                                                                {"deltas", std::to_string(entry.deltaCount)}});
-    }
-    return result;
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->history(conversationId, documentId, max);
+    return {};
 }
 
 std::vector<uint8_t>

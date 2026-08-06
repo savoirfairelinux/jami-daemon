@@ -37,6 +37,7 @@
 #include "json_utils.h"
 #include "logger.h"
 #include "presence_manager.h"
+#include "string_utils.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/infohash.h>
@@ -2757,6 +2758,97 @@ Conversation::documentMimeType() const
     return pimpl_->repository_->documentMimeType();
 }
 
+namespace {
+// The base64 update lines of every checkpoint commit in a document log,
+// oldest first, i.e. in the order the updates must be replayed.
+std::vector<std::string>
+collectUpdates(const std::vector<ConversationCommit>& commits)
+{
+    std::vector<std::string> updates;
+    for (auto it = commits.rbegin(); it != commits.rend(); ++it) {
+        if (it->commitMsg.type != CommitType::CHECKPOINT)
+            continue;
+        for (const auto& line : split_string(it->commitMsg.body, '\n'))
+            if (!line.empty())
+                updates.emplace_back(line);
+    }
+    return updates;
+}
+} // namespace
+
+std::vector<std::string>
+Conversation::documentUpdates() const
+{
+    LogOptions options;
+    options.skipMerge = true;
+    return collectUpdates(pimpl_->repository_->log(options));
+}
+
+std::optional<std::vector<std::string>>
+Conversation::documentUpdatesAt(const std::string& commitId) const
+{
+    if (!getCommit(commitId))
+        return std::nullopt;
+    LogOptions options;
+    options.from = commitId;
+    options.skipMerge = true;
+    return collectUpdates(pimpl_->repository_->log(options));
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::documentHistory(size_t max) const
+{
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->log(options);
+    std::vector<std::map<std::string, std::string>> result;
+    for (const auto& commit : commits) {
+        if (commit.commitMsg.type != CommitType::CHECKPOINT)
+            continue;
+        size_t deltas = 0;
+        for (const auto& line : split_string(commit.commitMsg.body, '\n'))
+            if (!line.empty())
+                ++deltas;
+        result.emplace_back(std::map<std::string, std::string> {
+            {"id", commit.id},
+            {"author", commit.authorId},
+            {"device", commit.author.email},
+            {"timestamp", std::to_string(commit.timestamp)},
+            {"deltas", std::to_string(deltas)},
+        });
+        if (max != 0 && result.size() >= max)
+            break;
+    }
+    return result;
+}
+
+std::pair<std::string, std::string>
+Conversation::addDocumentAttachment(const std::vector<uint8_t>& data)
+{
+    std::unique_lock lk(pimpl_->writeMtx_);
+    auto headBefore = pimpl_->repository_->getHead();
+    auto attachmentId = pimpl_->repository_->addAttachment(data);
+    if (attachmentId.empty())
+        return {};
+    auto head = pimpl_->repository_->getHead();
+    if (head == headBefore)
+        return {attachmentId, {}}; // Same content already attached, nothing new to announce
+    pimpl_->announce(head, true);
+    return {attachmentId, head};
+}
+
+std::vector<uint8_t>
+Conversation::documentAttachment(const std::string& attachmentId) const
+{
+    return pimpl_->repository_->attachment(attachmentId);
+}
+
+std::vector<std::string>
+Conversation::documentAttachmentIds() const
+{
+    return pimpl_->repository_->attachmentIds();
+}
+
 std::vector<std::string>
 Conversation::getInitialMembers() const
 {
@@ -2782,6 +2874,9 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
+            if (repo->mode() == ConversationMode::DOCUMENT)
+                return; // A document is not a conversation for the client; a rename
+                        // is reported through CollaborativeDocumentRenamed instead
             emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(sthis->pimpl_->accountId_,
                                                                                 repo->id(),
                                                                                 repo->infos());

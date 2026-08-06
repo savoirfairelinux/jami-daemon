@@ -557,6 +557,48 @@ public:
     std::string documentMimeType() const;
 
     /**
+     * For a collaborative document, every CRDT update persisted in the
+     * repository, oldest first: the base64-encoded lines of the body of each
+     * checkpoint commit, in the order they must be replayed.
+     */
+    std::vector<std::string> documentUpdates() const;
+
+    /**
+     * Same as documentUpdates() but only up to (and including) the given
+     * commit, to rebuild the document as it was at that point.
+     * @return std::nullopt when the commit is unknown, as opposed to an empty
+     *         document at a known commit
+     */
+    std::optional<std::vector<std::string>> documentUpdatesAt(const std::string& commitId) const;
+
+    /**
+     * For a collaborative document, its persisted history: one map per
+     * checkpoint commit, newest first, with keys "id", "author", "device",
+     * "timestamp" and "deltas" (the number of updates the checkpoint carries).
+     * @param max  stop after this many entries; 0 for no limit
+     */
+    std::vector<std::map<std::string, std::string>> documentHistory(size_t max) const;
+
+    /**
+     * For a collaborative document, store an attachment and announce the
+     * commit to the swarm.
+     * @return {attachmentId, commitId}; commitId is empty when the same
+     *         content was already attached (nothing new to announce) and both
+     *         are empty on failure
+     */
+    std::pair<std::string, std::string> addDocumentAttachment(const std::vector<uint8_t>& data);
+
+    /**
+     * For a collaborative document, read an attachment's content at HEAD.
+     */
+    std::vector<uint8_t> documentAttachment(const std::string& attachmentId) const;
+
+    /**
+     * For a collaborative document, list the attachment ids present at HEAD.
+     */
+    std::vector<std::string> documentAttachmentIds() const;
+
+    /**
      * One to one util, get initial members
      * @return initial members
      */
