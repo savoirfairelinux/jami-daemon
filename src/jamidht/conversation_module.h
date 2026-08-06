@@ -214,6 +214,48 @@ public:
     std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
                                   const dht::InfoHash& otherMember = {});
 
+    /**
+     * Create a collaborative document: a swarm repository of its own (mode
+     * DOCUMENT), announced in @p parentConversationId, holding CRDT
+     * checkpoints instead of messages. The creator is its only member and
+     * admin; other members join by opening it (see cloneDocumentFrom()).
+     * @param parentConversationId  the conversation that announces it
+     * @param mimeType              media type of what the document will hold
+     * @return the document's repository id, empty on failure
+     */
+    std::string startDocument(const std::string& parentConversationId, const std::string& mimeType);
+
+    /**
+     * Clone a collaborative document from a member's devices — how a device
+     * opts into holding a replica. The serving holder writes the `add` commit
+     * at serve time, so the clone this device receives already contains its
+     * invitation; the standard pending-conversation path then writes `join`.
+     * Completion is reported through CollaborativeEditing::onRepositoryUpdated
+     * rather than ConversationReady.
+     * @param documentId  the document's repository id
+     * @param uri         a member to clone from (typically the announcer)
+     */
+    void cloneDocumentFrom(const std::string& documentId, const std::string& uri);
+
+    /**
+     * Drop this device's replica of a collaborative document, without leaving
+     * it: no commit is written and the membership is untouched, so the
+     * document can be reopened later by cloning it again. The repository and
+     * its swarm connections are torn down and the document is recorded as
+     * removed so it is not recloned on restart.
+     * @param documentId  the document's repository id
+     */
+    void removeDocumentReplica(const std::string& documentId);
+
+    /**
+     * Store an attachment in a held collaborative document and notify the
+     * swarm of the commit that carries it.
+     * @param documentId  the document's repository id
+     * @param data        the attachment content
+     * @return the attachment id (content hash), empty on failure
+     */
+    std::string addDocumentAttachment(const std::string& documentId, const std::vector<uint8_t>& data);
+
     void createCommit(const std::string& conversationId,
                       CommitMessage&& commitMessage,
                       bool announce = true,
@@ -418,6 +460,31 @@ public:
                           const std::string& uri,
                           const std::string& deviceId,
                           bool includeInvited = false) const;
+
+    /**
+     * The read-only half of authorizeDocumentPeer(): whether this device could
+     * vouch for the peer, without writing anything. This is what the channel
+     * pre-check asks — accepting the channel commits us to nothing, the add
+     * commit is only written when the clone is actually served.
+     */
+    bool mayServeDocument(const std::string& documentId, const std::string& uri, const std::string& deviceId) const;
+
+    /**
+     * Serve-time admission for collaborative documents, tried after
+     * isPeerAuthorized() said no. A peer in good standing in the document's
+     * parent conversation may open the document even though no member invited
+     * it yet: the serving holder vouches for it by writing the `add` commit
+     * itself, and only then lets the clone proceed. Peers banned from the
+     * document, or documents this device does not hold, are refused.
+     * @param documentId  the document's repository id
+     * @param uri         requesting peer
+     * @param deviceId    requesting device
+     * @param cb          called with whether the peer may be served
+     */
+    void authorizeDocumentPeer(const std::string& documentId,
+                               const std::string& uri,
+                               const std::string& deviceId,
+                               std::function<void(bool)>&& cb);
 
     // Remove swarm
     /**
