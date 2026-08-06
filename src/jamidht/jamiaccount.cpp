@@ -1989,41 +1989,43 @@ JamiAccount::doRegister_()
         dhtBoundPort_ = dht_->getBoundPort();
 
         // Now that the DHT is running and we know the actual bound port,
-        // request a UPnP mapping for it.
-        if (upnpCtrl_) {
-            JAMI_LOG("[Account {:s}] UPnP: requesting mapping for DHT port {}", getAccountID(), dhtBoundPort_);
+        // request a UPnP mapping for it. A bound port of 0 means the DHT has no
+        // socket to forward (proxy-only mode): requesting a mapping would make the
+        // UPnP context allocate an arbitrary port that nothing listens on.
+        if (upnpCtrl_ and dhtUpnpMapping_.getInternalPort() != dhtBoundPort_) {
+            releaseDhtUpnpMapping();
 
-            if (dhtUpnpMapping_.isValid()) {
-                upnpCtrl_->releaseMapping(dhtUpnpMapping_);
-            }
+            if (dhtBoundPort_ != 0) {
+                JAMI_LOG("[Account {:s}] UPnP: requesting mapping for DHT port {}", getAccountID(), dhtBoundPort_);
 
-            dhtUpnpMapping_.enableAutoUpdate(true);
+                dhtUpnpMapping_.enableAutoUpdate(true);
 
-            dhtnet::upnp::Mapping desired(dhtnet::upnp::PortType::UDP, dhtBoundPort_, dhtBoundPort_);
-            dhtUpnpMapping_.updateFrom(desired);
+                dhtnet::upnp::Mapping desired(dhtnet::upnp::PortType::UDP, dhtBoundPort_, dhtBoundPort_);
+                dhtUpnpMapping_.updateFrom(desired);
 
-            dhtUpnpMapping_.setNotifyCallback([w = weak()](const dhtnet::upnp::Mapping::sharedPtr_t& mapRes) {
-                if (auto accPtr = w.lock()) {
-                    auto& dhtMap = accPtr->dhtUpnpMapping_;
-                    const auto& accId = accPtr->getAccountID();
+                dhtUpnpMapping_.setNotifyCallback([w = weak()](const dhtnet::upnp::Mapping::sharedPtr_t& mapRes) {
+                    if (auto accPtr = w.lock()) {
+                        auto& dhtMap = accPtr->dhtUpnpMapping_;
+                        const auto& accId = accPtr->getAccountID();
 
-                    JAMI_LOG("[Account {:s}] DHT UPnP mapping changed to {:s}", accId, mapRes->toString(true));
+                        JAMI_LOG("[Account {:s}] DHT UPnP mapping changed to {:s}", accId, mapRes->toString(true));
 
-                    if (dhtMap.getMapKey() != mapRes->getMapKey() or dhtMap.getState() != mapRes->getState()) {
-                        dhtMap.updateFrom(mapRes);
-                        if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
-                            JAMI_LOG("[Account {:s}] Mapping {:s} successfully allocated", accId, dhtMap.toString());
-                            accPtr->dht_->connectivityChanged();
-                        } else if (mapRes->getState() == dhtnet::upnp::MappingState::FAILED) {
-                            JAMI_WARNING("[Account {:s}] UPnP mapping failed", accId);
+                        if (dhtMap.getMapKey() != mapRes->getMapKey() or dhtMap.getState() != mapRes->getState()) {
+                            dhtMap.updateFrom(mapRes);
+                            if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
+                                JAMI_LOG("[Account {:s}] Mapping {:s} successfully allocated", accId, dhtMap.toString());
+                                accPtr->dht_->connectivityChanged();
+                            } else if (mapRes->getState() == dhtnet::upnp::MappingState::FAILED) {
+                                JAMI_WARNING("[Account {:s}] UPnP mapping failed", accId);
+                            }
+                        } else {
+                            dhtMap.updateFrom(mapRes);
                         }
-                    } else {
-                        dhtMap.updateFrom(mapRes);
                     }
-                }
-            });
+                });
 
-            upnpCtrl_->reserveMapping(dhtUpnpMapping_);
+                upnpCtrl_->reserveMapping(dhtUpnpMapping_);
+            }
         }
 
         for (const auto& bootstrap : loadBootstrap())
@@ -2806,10 +2808,10 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
     if (not isEnabled() || forceShutdownConnections)
         shutdownConnections();
 
-    // Release current UPnP mapping if any.
-    if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
-        upnpCtrl_->releaseMapping(dhtUpnpMapping_);
-    }
+    // Keep the UPnP mapping across a plain config reload: the DHT will rebind the
+    // same port and doRegister_() then reuses the mapping instead of allocating a new one.
+    if (not isEnabled() || forceShutdownConnections)
+        releaseDhtUpnpMapping();
 
     {
         std::unique_lock lock(mtx);
@@ -2823,6 +2825,18 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getChatServicesManager().cleanChatSubjects(getAccountID());
 #endif
+}
+
+void
+JamiAccount::releaseDhtUpnpMapping()
+{
+    if (dhtUpnpMapping_.getInternalPort() == 0)
+        return;
+
+    if (upnpCtrl_)
+        upnpCtrl_->releaseMapping(dhtUpnpMapping_);
+    dhtUpnpMapping_.setNotifyCallback(nullptr);
+    dhtUpnpMapping_.updateFrom(dhtnet::upnp::Mapping(dhtnet::upnp::PortType::UDP));
 }
 
 void

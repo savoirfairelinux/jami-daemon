@@ -81,6 +81,9 @@ class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
 class PresenceManager;
+namespace test {
+class Account_factoryTest;
+}
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -864,6 +867,14 @@ private:
     {
         return (upnpCtrl_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort() : config().dhtPort;
     }
+
+    /**
+     * Release the DHT UPnP mapping, if one is currently held, and reset it so that
+     * a subsequent registration requests a new one.
+     */
+    void releaseDhtUpnpMapping();
+
+    friend class test::Account_factoryTest;
 
     /* Current UPNP mapping */
     dhtnet::upnp::Mapping dhtUpnpMapping_ {dhtnet::upnp::PortType::UDP};
