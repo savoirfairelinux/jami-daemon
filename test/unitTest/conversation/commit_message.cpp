@@ -65,7 +65,7 @@ messagesEqual(const CommitMessage& a, const CommitMessage& b)
            && a.editedId == b.editedId && a.action == b.action && a.uri == b.uri && a.device == b.device
            && a.confId == b.confId && a.to == b.to && a.reason == b.reason && a.duration == b.duration && a.tid == b.tid
            && a.displayName == b.displayName && a.totalSize == b.totalSize && a.sha3sum == b.sha3sum && a.mode == b.mode
-           && a.invited == b.invited;
+           && a.invited == b.invited && a.mimeType == b.mimeType && a.parent == b.parent;
 }
 
 void
@@ -90,6 +90,8 @@ CommitMessageTest::testDefaultValues()
     CPPUNIT_ASSERT(msg.sha3sum.empty());
     CPPUNIT_ASSERT_EQUAL(-1, msg.mode);
     CPPUNIT_ASSERT(msg.invited.empty());
+    CPPUNIT_ASSERT(msg.mimeType.empty());
+    CPPUNIT_ASSERT(msg.parent.empty());
 }
 
 void
@@ -136,6 +138,18 @@ CommitMessageTest::testToStringFromStringRoundtrip()
     auto randomFileSize = [&]() -> int64_t {
         std::uniform_int_distribution<int64_t> dist(0, 1000000000);
         return dist(rng);
+    };
+
+    auto randomBase64 = [&](size_t minLen = 4, size_t maxLen = 80) -> std::string {
+        static const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::uniform_int_distribution<size_t> lenDist(minLen, maxLen);
+        std::uniform_int_distribution<int> charDist(0, sizeof(chars) - 2);
+        size_t len = lenDist(rng);
+        std::string result;
+        result.reserve(len);
+        for (size_t i = 0; i < len; ++i)
+            result += chars[charDist(rng)];
+        return result;
     };
 
     auto assertRoundtrip = [](const CommitMessage& original) {
@@ -192,6 +206,21 @@ CommitMessageTest::testToStringFromStringRoundtrip()
         // CommitMessage::fileDeleted(fileCommitId)
         assertRoundtrip(CommitMessage::fileDeleted(randomHex(40)));
 
+        // CommitMessage::collabDocCreated(documentId, name, mimeType)
+        assertRoundtrip(CommitMessage::collabDocCreated(randomHex(40), randomText(1, 50), "text/html"));
+
+        // CommitMessage::collabDocRemoved(announcementCommitId)
+        assertRoundtrip(CommitMessage::collabDocRemoved(randomHex(40)));
+
+        // CommitMessage::initialDocument(parentConversationId, mimeType)
+        assertRoundtrip(CommitMessage::initialDocument(randomHex(40), "text/html"));
+
+        // CommitMessage::checkpoint(base64Updates)
+        std::vector<std::string> updates(std::uniform_int_distribution<size_t>(1, 5)(rng));
+        for (auto& update : updates)
+            update = randomBase64();
+        assertRoundtrip(CommitMessage::checkpoint(updates));
+
         // CommitMessage::initial for one-to-one conversation
         assertRoundtrip(CommitMessage::initial(ConversationMode::ONE_TO_ONE, randomHex(40)));
 
@@ -203,6 +232,8 @@ CommitMessageTest::testToStringFromStringRoundtrip()
     assertRoundtrip(CommitMessage::initial(ConversationMode::INVITES_ONLY));
     assertRoundtrip(CommitMessage::initial(ConversationMode::PUBLIC));
     assertRoundtrip(CommitMessage::updateProfile());
+    // A checkpoint adding an attachment carries no update (the file enters the tree instead)
+    assertRoundtrip(CommitMessage::checkpoint({}));
 }
 
 void
@@ -230,11 +261,16 @@ CommitMessageTest::testFromStringToStringRoundtrip()
         R"({"displayName":"SomeFile.txt","sha3sum":"aa2a57c7793fbb73a582f973e3d09ee187fda75efaf098e93116c8287ad031bafa9bac46f35eeba63d7246e3fca18e70a05d8f888868e59b5d2c62542fb56f6a","tid":"4977122036805143","totalSize":"6600","type":"application/data-transfer+json"})",
         R"({"displayName":"aang.jpg","reply-to":"160e330e417401ecdd11094a8dad1355bd734583","sha3sum":"cae439cabde1dd86e15210f1f1486e7bbe0b901e9cb40d087b9673b7827ac5c9b2bf3d5fa3872666d418f205e986e8afa9977ddaba5e4141bdb157fd754656c2","tid":"693561489759880","totalSize":"89040","type":"application/data-transfer+json"})",
         R"({"edit":"00cae7e31da86e3524c1c34ede750f19cd78aa36","tid":"","type":"application/data-transfer+json"})",
+        R"({"displayName":"Notes","mimeType":"text/html","type":"application/collab-doc+json","uri":"332ba97d150dbad022c7d780af61d28ed25bf0a9"})",
+        R"({"edit":"8a3828b5d0450f69988d84baaf0ded8b4614cd14","type":"application/collab-doc+json"})",
+        R"({"body":"AQHZAdIBBGh0bWwDBWlucHV0\nAQLaAYgBBnJlbW92ZQ==","type":"application/checkpoint"})",
+        R"({"body":"","type":"application/checkpoint"})",
         "Merge commit 'ad512a444a7dc7d608c7ea41c86715d06f40988c'",
         R"({"invited":"f32701048c59f9ad6a095c6d14650294b4cf30a4","mode":0,"type":"initial"})",
         R"({"mode":1,"type":"initial"})",
         R"({"mode":2,"type":"initial"})",
         R"({"mode":3,"type":"initial"})",
+        R"({"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"})",
         R"({"type":"application/update-profile"})",
         R"({"type":"vote","uri":"f32701058c8888ad6a095c6d14650cd5b3ab40a3"})",
         R"({"body":"deprecated edit type","edit":"e59e317cdcd7d92a8033538a08110ec7833fc017","type":"application/edited-message"})",
@@ -486,6 +522,49 @@ CommitMessageTest::testExampleMessages()
         CPPUNIT_ASSERT(msg->tid.empty());
     }
 
+    // --- Collaborative documents ---
+
+    // Document announcement
+    {
+        auto msg = CommitMessage::fromString(
+            R"({"displayName":"Notes","mimeType":"text/html","type":"application/collab-doc+json","uri":"332ba97d150dbad022c7d780af61d28ed25bf0a9"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::COLLAB_DOC), msg->type);
+        CPPUNIT_ASSERT_EQUAL(std::string("Notes"), msg->displayName);
+        CPPUNIT_ASSERT_EQUAL(std::string("text/html"), msg->mimeType);
+        CPPUNIT_ASSERT_EQUAL(std::string("332ba97d150dbad022c7d780af61d28ed25bf0a9"), msg->uri);
+        CPPUNIT_ASSERT(msg->editedId.empty());
+    }
+
+    // Document removal (edit targeting the announcement commit)
+    {
+        auto msg = CommitMessage::fromString(
+            R"({"edit":"8a3828b5d0450f69988d84baaf0ded8b4614cd14","type":"application/collab-doc+json"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::COLLAB_DOC), msg->type);
+        CPPUNIT_ASSERT_EQUAL(std::string("8a3828b5d0450f69988d84baaf0ded8b4614cd14"), msg->editedId);
+        CPPUNIT_ASSERT(msg->uri.empty());
+        CPPUNIT_ASSERT(msg->displayName.empty());
+        CPPUNIT_ASSERT(msg->mimeType.empty());
+    }
+
+    // Checkpoint (batch of CRDT updates, base64, one per line)
+    {
+        auto msg = CommitMessage::fromString(
+            R"({"body":"AQHZAdIBBGh0bWwDBWlucHV0\nAQLaAYgBBnJlbW92ZQ==","type":"application/checkpoint"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::CHECKPOINT), msg->type);
+        CPPUNIT_ASSERT_EQUAL(std::string("AQHZAdIBBGh0bWwDBWlucHV0\nAQLaAYgBBnJlbW92ZQ=="), msg->body);
+    }
+
+    // Checkpoint adding an attachment (the file enters the tree, the body is empty)
+    {
+        auto msg = CommitMessage::fromString(R"({"body":"","type":"application/checkpoint"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::CHECKPOINT), msg->type);
+        CPPUNIT_ASSERT(msg->body.empty());
+    }
+
     // --- Initial commits ---
 
     // One-to-one conversation (mode 0 with invited)
@@ -504,6 +583,18 @@ CommitMessageTest::testExampleMessages()
         CPPUNIT_ASSERT(msg.has_value());
         CPPUNIT_ASSERT_EQUAL(std::string(CommitType::INITIAL), msg->type);
         CPPUNIT_ASSERT_EQUAL(2, msg->mode);
+        CPPUNIT_ASSERT(msg->invited.empty());
+    }
+
+    // Collaborative document (mode 4 with parent and mimeType)
+    {
+        auto msg = CommitMessage::fromString(
+            R"({"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::INITIAL), msg->type);
+        CPPUNIT_ASSERT_EQUAL(4, msg->mode);
+        CPPUNIT_ASSERT_EQUAL(std::string("f32701048c59f9ad6a095c6d14650294b4cf30a4"), msg->parent);
+        CPPUNIT_ASSERT_EQUAL(std::string("text/html"), msg->mimeType);
         CPPUNIT_ASSERT(msg->invited.empty());
     }
 
