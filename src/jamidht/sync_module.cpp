@@ -176,8 +176,15 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
-        // Sync conversations
+        // Sync conversations. Collaborative documents are excluded: replication
+        // is a per-device choice, each device joins one by opening it.
         auto c = ConversationModule::convInfos(acc->getAccountID());
+        for (auto it = c.begin(); it != c.end();) {
+            if (it->second.mode == ConversationMode::DOCUMENT)
+                it = c.erase(it);
+            else
+                ++it;
+        }
         if (!c.empty()) {
             SyncMsg msg;
             msg.c = std::move(c);
