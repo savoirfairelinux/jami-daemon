@@ -377,11 +377,11 @@ CollaborativeEditing::removeDocument(const std::string& conversationId, const st
     // what keeps a member from retiring somebody else's document.
     std::string announcementId;
     for (const auto& doc : documents(conversationId)) {
-        auto uriIt = doc.find(CommitKey::URI);
-        if (uriIt == doc.end() || uriIt->second != documentId)
+        auto idIt = doc.find("id");
+        if (idIt == doc.end() || idIt->second != documentId)
             continue;
-        if (auto idIt = doc.find("id"); idIt != doc.end())
-            announcementId = idIt->second;
+        if (auto annIt = doc.find("announcement"); annIt != doc.end())
+            announcementId = annIt->second;
         break;
     }
     if (announcementId.empty()) {
@@ -515,7 +515,7 @@ CollaborativeEditing::documents(const std::string& conversationId)
     // tell them apart: one opens on what is already here, the other has to be
     // fetched back first.
     for (auto& doc : docs) {
-        auto it = doc.find(CommitKey::URI);
+        auto it = doc.find("id");
         doc[DOCUMENT_STORED_LOCALLY] = (it != doc.end() && documentConversation(it->second)) ? TRUE_STR : FALSE_STR;
     }
     return docs;
@@ -538,7 +538,7 @@ CollaborativeEditing::isAnnouncedDocument(const std::string& conversationId, con
     // expensive, so do it once and let onDocumentAnnounced() keep the set fresh.
     std::set<std::string> ids;
     for (const auto& doc : documents(conversationId)) {
-        if (auto it = doc.find(CommitKey::URI); it != doc.end())
+        if (auto it = doc.find("id"); it != doc.end())
             ids.emplace(it->second);
     }
     std::lock_guard<std::mutex> lk(announcedMtx_);
@@ -643,8 +643,8 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
         // is open and empty, exactly like a conversation still syncing.
         std::string announcer;
         for (const auto& doc : documents(conversationId)) {
-            auto uriIt = doc.find(CommitKey::URI);
-            if (uriIt == doc.end() || uriIt->second != documentId)
+            auto idIt = doc.find("id");
+            if (idIt == doc.end() || idIt->second != documentId)
                 continue;
             if (auto authorIt = doc.find("author"); authorIt != doc.end())
                 announcer = authorIt->second;

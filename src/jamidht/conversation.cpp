@@ -2360,7 +2360,15 @@ Conversation::collaborativeDocuments() const
         auto idIt = commit.find("id");
         if (idIt != commit.end() && retired.count(idIt->second) != 0)
             continue;
-        result.emplace_back(std::move(commit));
+        // A document is addressed by its own id everywhere -- opening, renaming,
+        // removing -- so that is what "id" carries here; the commit's own id only
+        // says which timeline interaction announced it.
+        result.push_back({{"id", uriIt->second},
+                          {"announcement", idIt != commit.end() ? idIt->second : ""},
+                          {"displayName", commit[CommitKey::DISPLAY_NAME]},
+                          {"mimeType", commit[CommitKey::MIME_TYPE]},
+                          {"author", commit["author"]},
+                          {"timestamp", commit["timestamp"]}});
     }
     return result;
 }

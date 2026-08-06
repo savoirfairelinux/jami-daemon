@@ -230,11 +230,14 @@ LIBJAMI_PUBLIC std::string collaborativeDocumentName(const std::string& accountI
                                                      const std::string& conversationId,
                                                      const std::string& documentId);
 /**
- * Every collaborative document announced in a conversation, as the maps of the
- * commits announcing them: "uri" is the document id, plus "displayName",
- * "mimeType", "author" and "id". One key is added by the daemon rather than read
- * from the commit: "storedLocally", "true" unless this device removed the
- * document from itself, in which case opening it fetches it back.
+ * Every collaborative document announced in a conversation. Each entry carries
+ * "id", the document's own id -- the one every other document call takes --
+ * plus "displayName", "mimeType", "author" and "timestamp", read from the
+ * commit that announced it, and "announcement", that commit's id, so a client
+ * can tie the document to its timeline interaction. One more key is added by
+ * the daemon rather than read from the commit: "storedLocally", "true" unless
+ * this device removed the document from itself, in which case opening it
+ * fetches it back.
  */
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCollaborativeDocuments(
     const std::string& accountId, const std::string& conversationId);
