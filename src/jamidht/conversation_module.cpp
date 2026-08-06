@@ -3187,6 +3187,26 @@ ConversationModule::isPeerAuthorized(const std::string& convId,
     return false;
 }
 
+bool
+ConversationModule::mayServeDocument(const std::string& documentId,
+                                     const std::string& uri,
+                                     const std::string& deviceId) const
+{
+    auto conv = pimpl_->getConversation(documentId);
+    if (!conv)
+        return false; // We don't hold this document — nothing to vouch with
+    std::shared_ptr<Conversation> conversation;
+    {
+        std::lock_guard lk(conv->mtx);
+        conversation = conv->conversation;
+    }
+    if (!conversation || conversation->mode() != ConversationMode::DOCUMENT)
+        return false;
+    if (conversation->isMemberBanned(uri))
+        return false; // Banned from the document: only an admin's re-add can undo that
+    return isPeerAuthorized(conversation->parentConversationId(), uri, deviceId, false);
+}
+
 void
 ConversationModule::authorizeDocumentPeer(const std::string& documentId,
                                           const std::string& uri,

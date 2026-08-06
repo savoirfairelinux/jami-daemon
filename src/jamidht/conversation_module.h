@@ -462,6 +462,14 @@ public:
                           bool includeInvited = false) const;
 
     /**
+     * The read-only half of authorizeDocumentPeer(): whether this device could
+     * vouch for the peer, without writing anything. This is what the channel
+     * pre-check asks — accepting the channel commits us to nothing, the add
+     * commit is only written when the clone is actually served.
+     */
+    bool mayServeDocument(const std::string& documentId, const std::string& uri, const std::string& deviceId) const;
+
+    /**
      * Serve-time admission for collaborative documents, tried after
      * isPeerAuthorized() said no. A peer in good standing in the document's
      * parent conversation may open the document even though no member invited
