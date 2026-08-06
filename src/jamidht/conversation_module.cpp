@@ -1162,7 +1162,11 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId, 
                             [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
     if (removed)
         for (const auto& documentId : documentIds)
-            removeDocumentReplica(documentId);
+            // Each held document is left the way the conversation just was: a
+            // leave commit the other holders fetch, then the repository goes.
+            // A silent erasure instead would leave this device forever listed
+            // as a member of a document it can no longer be reached for.
+            withConv(documentId, [this](auto& conv) { return removeConversationImpl(conv, false); });
     return removed;
 }
 
@@ -1210,7 +1214,10 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
     addConvInfo(conv.info);
-    emitSignal<libjami::ConversationSignal::ConversationRemoved>(accountId_, conv.info.id);
+    // A document is not one of the account's conversations to a client: it is
+    // listed and removed through the collaborative editing API.
+    if (!conv.conversation || conv.conversation->mode() != ConversationMode::DOCUMENT)
+        emitSignal<libjami::ConversationSignal::ConversationRemoved>(accountId_, conv.info.id);
     if (isSyncing)
         return true;
 
