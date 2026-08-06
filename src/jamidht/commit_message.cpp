@@ -26,7 +26,7 @@ CommitMessage::toJson() const
 {
     Json::Value value;
     value[CommitKey::TYPE] = type;
-    if (type == CommitType::TEXT || type == CommitType::EDITED_MESSAGE) {
+    if (type == CommitType::TEXT || type == CommitType::EDITED_MESSAGE || type == CommitType::CHECKPOINT) {
         value[CommitKey::BODY] = body;
     }
     if (!replyTo.empty()) {
@@ -80,6 +80,9 @@ CommitMessage::toJson() const
     if (!mimeType.empty()) {
         value[CommitKey::MIME_TYPE] = mimeType;
     }
+    if (!parent.empty()) {
+        value[CommitKey::PARENT] = parent;
+    }
     return value;
 }
 
@@ -127,6 +130,7 @@ CommitMessage::fromString(const std::string& str)
         msg.mode = value.get(CommitKey::MODE, -1).asInt();
         msg.invited = value.get(CommitKey::INVITED, "").asString();
         msg.mimeType = value.get(CommitKey::MIME_TYPE, "").asString();
+        msg.parent = value.get(CommitKey::PARENT, "").asString();
     } catch (const std::exception& e) {
         JAMI_ERROR("Exception while parsing commit message '{}': {}", str, e.what());
         return std::nullopt;

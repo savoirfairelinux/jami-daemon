@@ -227,6 +227,9 @@ public:
     bool checkValidUserDiff(const std::string& userDevice,
                             const std::string& commitId,
                             const std::string& parentId) const;
+    bool checkValidCheckpoint(const std::string& userDevice,
+                              const std::string& commitId,
+                              const std::string& parentId) const;
     bool checkVote(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const;
     bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
     bool isValidUserAtCommit(const std::string& userDevice,
@@ -691,15 +694,11 @@ add_initial_files(GitRepository& repo,
  * Sign and create the initial commit
  * @param repo          The Git repository
  * @param account       The account who signs
- * @param mode          The mode
- * @param otherMember   If one to one
+ * @param message       The initial commit message
  * @return              The first commit hash or empty if failed
  */
 std::string
-initial_commit(GitRepository& repo,
-               const std::shared_ptr<JamiAccount>& account,
-               ConversationMode mode,
-               const std::string& otherMember = "")
+initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account, const CommitMessage& message)
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -738,7 +737,6 @@ initial_commit(GitRepository& repo,
     }
     GitTree tree {tree_ptr};
 
-    auto message = CommitMessage::initial(mode, otherMember);
     git_buf to_sign = {};
     if (git_commit_create_buffer(
             &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
@@ -1105,6 +1103,71 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
         }
     }
 
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidCheckpoint(const std::string& userDevice,
+                                                   const std::string& commitId,
+                                                   const std::string& parentId) const
+{
+    // Checkpoints carry CRDT updates in the commit message and exist only in
+    // document repositories. The author's membership is verified afterwards by
+    // isValidUserAtCommit(), like for any other commit; what is checked here is
+    // that the tree is either untouched or only adds content-addressed
+    // attachments, so a checkpoint can never alter certificates or metadata.
+    // The one exception is the author's own device certificate, which is added
+    // alongside a device's first commit exactly as for any other commit type.
+    if (mode() != ConversationMode::DOCUMENT) {
+        JAMI_ERROR("Checkpoint commit {} in a non-document repository", commitId);
+        return false;
+    }
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.empty())
+        return true;
+    auto userUri = uriFromDevice(userDevice, commitId);
+    if (userUri.empty())
+        return false;
+    std::string userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    if (not treeNew or not treeOld)
+        return false;
+    for (const auto& changedFile : changedFiles) {
+        if (changedFile.starts_with("attachments/")) {
+            // The entry's name must be the git oid of its own content: two
+            // admissible attachments sharing a name then necessarily hold the
+            // same bytes, so concurrent additions can never conflict.
+            auto blob = fileAtTree(changedFile, treeNew);
+            if (!blob) {
+                JAMI_ERROR("Attachment removed in checkpoint commit {}: {}", commitId, changedFile);
+                return false;
+            }
+            auto name = changedFile.substr(std::string_view("attachments/").size());
+            if (name != git_oid_tostr_s(git_object_id(blob.get()))) {
+                JAMI_ERROR("Attachment not content-addressed in commit {}: {}", commitId, changedFile);
+                return false;
+            }
+            continue;
+        }
+        if (changedFile == userDeviceFile) {
+            auto oldFile = fileAtTree(changedFile, treeOld);
+            std::string_view oldCert;
+            if (oldFile)
+                oldCert = as_view(oldFile);
+            auto newFile = fileAtTree(changedFile, treeNew);
+            if (!verifyCertificate(as_view(newFile), userUri, oldCert)) {
+                JAMI_ERROR("Invalid certificate {}", changedFile);
+                return false;
+            }
+            continue;
+        }
+        JAMI_ERROR("Invalid file in checkpoint commit {}: {}", commitId, changedFile);
+        return false;
+    }
     return true;
 }
 
@@ -2168,6 +2231,9 @@ ConversationRepository::Impl::mode() const
     case 3:
         mode_ = ConversationMode::PUBLIC;
         break;
+    case 4:
+        mode_ = ConversationMode::DOCUMENT;
+        break;
     default:
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                      id_,
@@ -2712,6 +2778,26 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
                                            ConversationMode mode,
                                            const std::string& otherMember)
 {
+    return create_repository(account, mode, otherMember, CommitMessage::initial(mode, otherMember));
+}
+
+std::unique_ptr<ConversationRepository>
+ConversationRepository::createDocument(const std::shared_ptr<JamiAccount>& account,
+                                       const std::string& parentConversationId,
+                                       const std::string& mimeType)
+{
+    return create_repository(account,
+                             ConversationMode::DOCUMENT,
+                             "",
+                             CommitMessage::initialDocument(parentConversationId, mimeType));
+}
+
+std::unique_ptr<ConversationRepository>
+ConversationRepository::create_repository(const std::shared_ptr<JamiAccount>& account,
+                                          ConversationMode mode,
+                                          const std::string& otherMember,
+                                          const CommitMessage& initialMessage)
+{
     // Create temporary directory because we are unable to know the first hash for now
     std::uniform_int_distribution<uint64_t> dist;
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
@@ -2738,7 +2824,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     }
 
     // Commit changes
-    auto id = initial_commit(repo, account, mode, otherMember);
+    auto id = initial_commit(repo, account, initialMessage);
     if (id.empty()) {
         JAMI_ERROR("Unable to create initial commit in {}", tmpPath);
         dhtnet::fileutils::removeAll(tmpPath, true);
@@ -3116,6 +3202,22 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                                                                                  id_,
                                                                                  EVALIDFETCH,
                                                                                  "Malformed profile updates commit");
+                    return false;
+                }
+            } else if (type == CommitType::CHECKPOINT) {
+                if (!checkValidCheckpoint(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed checkpoint commit {}. "
+                                 "Please ensure that you are using the latest "
+                                 "version of Jami, or that one of your contacts is not performing "
+                                 "any unwanted actions.",
+                                 accountId_,
+                                 id_,
+                                 commit.id);
+
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                 id_,
+                                                                                 EVALIDFETCH,
+                                                                                 "Malformed checkpoint commit");
                     return false;
                 }
             } else if (type == CommitType::EDITED_MESSAGE || !editedId.empty()) {
@@ -3883,6 +3985,111 @@ ConversationMode
 ConversationRepository::mode() const
 {
     return pimpl_->mode();
+}
+
+std::string
+ConversationRepository::parentConversationId() const
+{
+    if (auto commit = pimpl_->getCommit(pimpl_->id_))
+        return commit->commitMsg.parent;
+    return {};
+}
+
+std::string
+ConversationRepository::documentMimeType() const
+{
+    if (auto commit = pimpl_->getCommit(pimpl_->id_))
+        return commit->commitMsg.mimeType;
+    return {};
+}
+
+std::string
+ConversationRepository::addAttachment(const std::vector<uint8_t>& data)
+{
+    if (data.empty())
+        return {};
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+
+    // Store the blob first to learn its oid: the file is named after its own
+    // content hash, so the same bytes added twice converge to a single entry
+    // and concurrent additions never conflict.
+    git_oid blobId;
+    if (git_blob_create_from_buffer(&blobId, repo.get(), data.data(), data.size()) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to store attachment blob", pimpl_->accountId_, pimpl_->id_);
+        return {};
+    }
+    std::string id = git_oid_tostr_s(&blobId);
+
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto attachmentPath = repoPath / "attachments" / id;
+    if (std::filesystem::is_regular_file(attachmentPath))
+        return id; // Same content already attached
+    if (!dhtnet::fileutils::recursive_mkdir(attachmentPath.parent_path(), 0700)) {
+        JAMI_ERROR("Error when creating {}", attachmentPath.parent_path());
+        return {};
+    }
+    std::ofstream file(attachmentPath, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERROR("Unable to write data to {}", attachmentPath);
+        return {};
+    }
+    file.write(reinterpret_cast<const char*>(data.data()), data.size());
+    file.close();
+
+    if (!pimpl_->add("attachments/" + id))
+        return {};
+    // An attachment travels as a checkpoint that carries no update: the tree
+    // change is the whole payload.
+    if (pimpl_->commitMessage(CommitMessage::checkpoint({}).toString()).empty())
+        return {};
+    return id;
+}
+
+std::vector<uint8_t>
+ConversationRepository::attachment(const std::string& attachmentId) const
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
+    auto blob = pimpl_->fileAtTree("attachments/" + attachmentId, tree);
+    if (!blob)
+        return {};
+    auto content = as_view(blob);
+    return std::vector<uint8_t>(content.begin(), content.end());
+}
+
+std::vector<std::string>
+ConversationRepository::attachmentIds() const
+{
+    std::vector<std::string> ids;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return ids;
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return ids;
+    auto* entry = git_tree_entry_byname(tree.get(), "attachments");
+    if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_TREE)
+        return ids;
+    git_tree* sub_ptr = nullptr;
+    if (git_tree_lookup(&sub_ptr, repo.get(), git_tree_entry_id(entry)) < 0)
+        return ids;
+    GitTree sub {sub_ptr};
+    auto count = git_tree_entrycount(sub.get());
+    ids.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        if (auto* e = git_tree_entry_byindex(sub.get(), i))
+            if (git_tree_entry_type(e) == GIT_OBJECT_BLOB)
+                ids.emplace_back(git_tree_entry_name(e));
+    }
+    return ids;
 }
 
 std::string

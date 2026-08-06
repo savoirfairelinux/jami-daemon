@@ -44,6 +44,7 @@ constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
 constexpr const char* const MIME_TYPE {"mimeType"};
+constexpr const char* const PARENT {"parent"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -60,6 +61,11 @@ constexpr const char* const MERGE {"merge"};
 // commit only makes the document appear in the history and binds its id to this
 // conversation.
 constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
+// Batch of CRDT updates in a collaborative document repository. The updates
+// travel in the commit message itself (base64, one per line in the "body"
+// field); the tree is carried over untouched, so a checkpoint costs one
+// commit object and nothing else. Only valid in document repositories.
+constexpr const char* const CHECKPOINT {"application/checkpoint"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
@@ -73,7 +79,7 @@ constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT };
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -103,6 +109,7 @@ struct CommitMessage
     int mode {-1};
     std::string invited {};
     std::string mimeType {};
+    std::string parent {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -350,6 +357,38 @@ struct CommitMessage
         msg.mode = static_cast<int>(mode);
         if (mode == ConversationMode::ONE_TO_ONE) {
             msg.invited = invitedId;
+        }
+        return msg;
+    }
+
+    // A collaborative document repository is a swarm exactly like a conversation, distinguished
+    // by its mode: 4 (ConversationMode::DOCUMENT). Its initial commit additionally records the
+    // ID of the conversation the document was announced in ("parent") and the media type of
+    // what the document holds ("mimeType"), e.g.:
+    //
+    //     {"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"}
+    static CommitMessage initialDocument(const std::string& parentConversationId, const std::string& mimeType)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::INITIAL;
+        msg.mode = static_cast<int>(ConversationMode::DOCUMENT);
+        msg.parent = parentConversationId;
+        msg.mimeType = mimeType;
+        return msg;
+    }
+
+    // A checkpoint persists a batch of CRDT updates in a document repository. The updates are
+    // base64-encoded, one per line, in the "body" field:
+    //
+    //     {"body":"AQHZ...\nAQLa...","type":"application/checkpoint"}
+    static CommitMessage checkpoint(const std::vector<std::string>& base64Updates)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::CHECKPOINT;
+        for (const auto& u : base64Updates) {
+            if (!msg.body.empty())
+                msg.body += '\n';
+            msg.body += u;
         }
         return msg;
     }
