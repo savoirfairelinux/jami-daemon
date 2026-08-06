@@ -84,6 +84,7 @@ class PresenceManager;
 namespace test {
 class Account_factoryTest;
 }
+class CollaborativeEditing;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -495,6 +496,12 @@ public:
     SyncModule* syncModule();
 
     /**
+     * Retrieve the (lazily created) collaborative editing manager, which handles
+     * real-time shared text documents inside this account's conversations.
+     */
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing();
+
+    /**
      * Check (via the cache) if we need to send our profile to a specific device
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
@@ -567,6 +574,16 @@ public:
 #ifdef LIBJAMI_TEST
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
+
+    /**
+     * Ask a device for a realtime channel on a collaborative document.
+     * A refusal (the peer does not have the document open) needs nothing done,
+     * and an accepted socket is handed to CollaborativeEditing by the handler's
+     * onReady, so no callback is taken here.
+     * @param deviceId      The device to dial
+     * @param documentId    The document (repository) id
+     */
+    void connectYdocDevice(const DeviceId& deviceId, const std::string& documentId);
 
     dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
 
@@ -1001,6 +1018,7 @@ private:
     std::unique_ptr<ConversationModule> convModule_;
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
+    std::shared_ptr<CollaborativeEditing> collaborativeEditing_;
 
     std::mutex rdvMtx_;
 

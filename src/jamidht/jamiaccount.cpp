@@ -32,8 +32,10 @@
 #include "server_account_manager.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
+#include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "ydoc_channel_handler.h"
 #include "message_channel_handler.h"
 #include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
@@ -1216,19 +1218,28 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {
-        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
-        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               TimePoint received,
-               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
-        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            onConversationRequestAccepted(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
+    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
+                                                 onContactAdded(uri, confirmed);
+                                             },
+                                             [this](const std::string& uri, bool banned) {
+                                                 onContactRemoved(uri, banned);
+                                             },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    TimePoint received,
+                                                    TimePoint invited) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
+                                             },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
+                                                 onKnownDevicesChanged(devices);
+                                             },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) {
+                                                 onContactConfirmed(uri, convFromReq);
+                                             }};
 }
 
 void
@@ -2403,6 +2414,16 @@ JamiAccount::onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& c
 }
 
 void
+JamiAccount::connectYdocDevice(const DeviceId& deviceId, const std::string& documentId)
+{
+    std::shared_lock lk(connManagerMtx_);
+    auto itHandler = channelHandlers_.find(Uri::Scheme::YDOC);
+    if (itHandler == channelHandlers_.end() || !itHandler->second)
+        return;
+    itHandler->second->connect(deviceId, documentId, [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
+}
+
+void
 JamiAccount::onConnectionReady(const DeviceId& deviceId,
                                const std::string& name,
                                std::shared_ptr<dhtnet::ChannelSocket> channel)
@@ -2440,60 +2461,86 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 return;
             }
 
-            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
-                JAMI_WARNING("[Account {:s}] [Conversation {}] Git server requested, but peer {}/{} is not authorized",
-                             getAccountID(),
-                             conversationId,
-                             peerId,
-                             remoteDevice);
-                channel->shutdown();
-                return;
-            }
-
             auto sock = convModule()->gitSocket(remoteDevice, conversationId);
             if (sock == channel) {
                 // The onConnectionReady is already used as client (for retrieving messages)
                 // So it's not the server socket
                 return;
             }
-            JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
-                     accountID_,
-                     conversationId,
-                     remoteDevice);
-            auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
-            syncCnt_.fetch_add(1);
-            // Balances the increment above exactly once, whether the peer ends up
-            // fetching or the channel simply dies.
-            auto endSync = [w = weak(), done = std::make_shared<std::once_flag>()] {
-                std::call_once(*done, [&] {
-                    if (auto shared = w.lock())
-                        if (shared->syncCnt_.fetch_sub(1) == 1)
-                            emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
+
+            auto startGitServer = [w = weak(), conversationId, remoteDevice, channel]() {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
+                         shared->accountID_,
+                         conversationId,
+                         remoteDevice);
+                auto gs = std::make_unique<GitServer>(shared->accountID_, conversationId, channel);
+                shared->syncCnt_.fetch_add(1);
+                // Balances the increment above exactly once, whether the peer ends up
+                // fetching or the channel simply dies.
+                auto endSync = [w, done = std::make_shared<std::once_flag>()] {
+                    std::call_once(*done, [&] {
+                        if (auto shared = w.lock())
+                            if (shared->syncCnt_.fetch_sub(1) == 1)
+                                emitSignal<libjami::ConversationSignal::ConversationCloned>(
+                                    shared->getAccountID().c_str());
+                    });
+                };
+                gs->setOnFetched([w, conversationId, remoteDevice, endSync](const std::string& commit) {
+                    dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit, endSync]() {
+                        if (auto shared = w.lock()) {
+                            shared->convModule()->setFetched(conversationId, remoteDevice, commit);
+                            endSync();
+                        }
+                    });
+                });
+                const dht::Value::Id serverId = ValueIdDist()(shared->rand);
+                {
+                    std::lock_guard lk(shared->gitServersMtx_);
+                    shared->gitServers_[serverId] = std::move(gs);
+                }
+                channel->onShutdown([w, serverId, endSync](const std::error_code&) {
+                    endSync();
+                    // Run on main thread to avoid to be in mxSock's eventLoop
+                    runOnMainThread([serverId, w]() {
+                        if (auto sthis = w.lock()) {
+                            std::lock_guard lk(sthis->gitServersMtx_);
+                            sthis->gitServers_.erase(serverId);
+                        }
+                    });
                 });
             };
-            gs->setOnFetched([w = weak(), conversationId, remoteDevice, endSync](const std::string& commit) {
-                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit, endSync]() {
-                    if (auto shared = w.lock()) {
-                        shared->convModule()->setFetched(conversationId, remoteDevice, commit);
-                        endSync();
-                    }
-                });
-            });
-            const dht::Value::Id serverId = ValueIdDist()(rand);
-            {
-                std::lock_guard lk(gitServersMtx_);
-                gitServers_[serverId] = std::move(gs);
+
+            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
+                // Not a member — but if this is a collaborative document held
+                // here, a member of its parent conversation may still open it:
+                // the serving holder writes the add commit, then serves.
+                convModule()
+                    ->authorizeDocumentPeer(conversationId,
+                                            peerId,
+                                            remoteDevice,
+                                            [w = weak(), conversationId, peerId, remoteDevice, channel, startGitServer](
+                                                bool authorized) {
+                                                if (authorized) {
+                                                    startGitServer();
+                                                    return;
+                                                }
+                                                if (auto shared = w.lock())
+                                                    JAMI_WARNING("[Account {:s}] [Conversation {}] Git "
+                                                                 "server requested, but peer {}/{} is "
+                                                                 "not authorized",
+                                                                 shared->getAccountID(),
+                                                                 conversationId,
+                                                                 peerId,
+                                                                 remoteDevice);
+                                                channel->shutdown();
+                                            });
+                return;
             }
-            channel->onShutdown([w = weak(), serverId, endSync](const std::error_code&) {
-                endSync();
-                // Run on main thread to avoid to be in mxSock's eventLoop
-                runOnMainThread([serverId, w]() {
-                    if (auto sthis = w.lock()) {
-                        std::lock_guard lk(sthis->gitServersMtx_);
-                        sthis->gitServers_.erase(serverId);
-                    }
-                });
-            });
+
+            startGitServer();
         } else {
             // TODO move git://
             std::shared_lock lk(connManagerMtx_);
@@ -2748,6 +2795,15 @@ JamiAccount::syncModule()
     return syncModule_.get();
 }
 
+std::shared_ptr<CollaborativeEditing>
+JamiAccount::collaborativeEditing()
+{
+    std::lock_guard lk(moduleMtx_);
+    if (!collaborativeEditing_)
+        collaborativeEditing_ = std::make_shared<CollaborativeEditing>(shared());
+    return collaborativeEditing_;
+}
+
 void
 JamiAccount::onTextMessage(const std::string& id,
                            const std::string& from,
@@ -2783,6 +2839,28 @@ JamiAccount::doUnregister(bool forceShutdownConnections)
     if (peerDiscovery_) {
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
+
+    // Edits made here since the last checkpoint are pending for persistence only
+    // on this device. Online receivers may have merged them into live replicas,
+    // but they do not checkpoint remote updates, so those copies are volatile.
+    // Write the pending updates out before anything is torn down. Copy the
+    // pointer under its own lock: the manager is created lazily, and a channel
+    // request or a client call can still be assigning it on another thread.
+    std::shared_ptr<CollaborativeEditing> collab;
+    {
+        std::lock_guard lk(moduleMtx_);
+        collab = collaborativeEditing_;
+    }
+    if (collab) {
+        // flush() reaches convModule() and the CRDT document lock; both would
+        // deadlock against configurationMutex_, which we hold here.
+        lock.unlock();
+        collab->flush();
+        lock.lock();
+        // Another unregistration may have completed while the lock was down.
+        if (registrationState_ >= RegistrationState::ERROR_GENERIC)
+            return;
     }
 
     JAMI_WARNING("[Account {}] Unregistering account {}", getAccountID(), fmt::ptr(this));
@@ -4873,6 +4951,7 @@ JamiAccount::initConnectionManager()
                                                                                      *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(shared(),
                                                                                           *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::YDOC] = std::make_unique<YdocChannelHandler>(shared(), *connectionManager_.get());
         if (jami::Manager::instance().syncOnRegister) {
             channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(),
                                                                                        *connectionManager_.get());
