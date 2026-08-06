@@ -194,8 +194,8 @@ ServiceIntegrationTest::testQueryAndTunnelEcho()
     bool bobContactAdded = false;
     handlers_.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& accountId,
-            const std::string& /*from*/,
             const std::string& /*conversationId*/,
+            const std::string& /*from*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             std::lock_guard lk(mtx_);
