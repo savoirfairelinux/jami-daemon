@@ -43,6 +43,8 @@ constexpr const char* const TOTAL_SIZE {"totalSize"};
 constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
+constexpr const char* const MIME_TYPE {"mimeType"};
+constexpr const char* const PARENT {"parent"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -54,6 +56,18 @@ constexpr const char* const INITIAL {"initial"};
 constexpr const char* const VOTE {"vote"};
 constexpr const char* const UPDATE_PROFILE {"application/update-profile"};
 constexpr const char* const MERGE {"merge"};
+// Announces a collaborative document. The document's content does not live in
+// the conversation: it has its own repository, synchronized separately. This
+// commit only makes the document appear in the history and binds its id to this
+// conversation.
+constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
+// Batch of CRDT updates in a collaborative document repository. The updates
+// travel in the commit message itself (base64, one per line in the "body"
+// field); the tree is carried over untouched, so a checkpoint costs one
+// commit object and nothing else. The exception is a checkpoint adding an
+// attachment: the file enters the tree and the "body" is empty. Only valid
+// in document repositories.
+constexpr const char* const CHECKPOINT {"application/checkpoint"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
@@ -67,7 +81,7 @@ constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT };
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -96,6 +110,8 @@ struct CommitMessage
     std::string sha3sum {};
     int mode {-1};
     std::string invited {};
+    std::string mimeType {};
+    std::string parent {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -281,6 +297,35 @@ struct CommitMessage
         return msg;
     }
 
+    // A collaborative document is announced with a commit of type "application/collab-doc+json"
+    // carrying its initial name in "displayName" and the media type of what it holds in "mimeType".
+    // The "uri" field contains the ID of the document's repository. For example:
+    //
+    //     {"displayName":"Notes","mimeType":"text/html","type":"application/collab-doc+json","uri":"332ba97d150dbad022c7d780af61d28ed25bf0a9"}
+    //
+    // A deleted document is represented by a commit of type "application/collab-doc+json" with an "edit"
+    // field containing the ID of the original commit, e.g.:
+    //
+    //     {"edit":"8a3828b5d0450f69988d84baaf0ded8b4614cd14","type":"application/collab-doc+json"}
+    static CommitMessage collabDocCreated(const std::string& documentId,
+                                          const std::string& name,
+                                          const std::string& mimeType)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.uri = documentId;
+        msg.displayName = name;
+        msg.mimeType = mimeType;
+        return msg;
+    }
+    static CommitMessage collabDocRemoved(const std::string& announcementCommitId)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.editedId = announcementCommitId;
+        return msg;
+    }
+
     // Every Jami conversation starts with a commit of type "initial" containing a "mode" field indicating the
     // kind of conversation. There are currently two supported values for the mode: 0 (ConversationMode::ONE_TO_ONE)
     // and 2 (ConversationMode::INVITES_ONLY). In the case of one-to-one conversations (mode 0), there is an
@@ -298,6 +343,43 @@ struct CommitMessage
         msg.mode = static_cast<int>(mode);
         if (mode == ConversationMode::ONE_TO_ONE) {
             msg.invited = invitedId;
+        }
+        return msg;
+    }
+
+    // A collaborative document repository is a swarm exactly like a conversation, distinguished
+    // by its mode: 4 (ConversationMode::DOCUMENT). Its initial commit additionally records the
+    // ID of the conversation the document was announced in ("parent") and the media type of
+    // what the document holds ("mimeType"), e.g.:
+    //
+    //     {"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"}
+    static CommitMessage initialDocument(const std::string& parentConversationId, const std::string& mimeType)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::INITIAL;
+        msg.mode = static_cast<int>(ConversationMode::DOCUMENT);
+        msg.parent = parentConversationId;
+        msg.mimeType = mimeType;
+        return msg;
+    }
+
+    // A checkpoint persists a batch of CRDT updates in a document repository. The updates are
+    // base64-encoded, one per line, in the "body" field:
+    //
+    //     {"body":"AQHZ...\nAQLa...","type":"application/checkpoint"}
+    //
+    // A checkpoint that adds an attachment (an embedded file, stored in the repository tree
+    // rather than in the message) carries no update, so its "body" is empty:
+    //
+    //     {"body":"","type":"application/checkpoint"}
+    static CommitMessage checkpoint(const std::vector<std::string>& base64Updates)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::CHECKPOINT;
+        for (const auto& u : base64Updates) {
+            if (!msg.body.empty())
+                msg.body += '\n';
+            msg.body += u;
         }
         return msg;
     }
