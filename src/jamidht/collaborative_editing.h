@@ -17,7 +17,6 @@
 #pragma once
 
 #include "yrs_document.h"
-#include "y_protocol.h"
 
 #include <asio.hpp>
 #include <cstdint>
@@ -29,13 +28,14 @@
 #include <string>
 #include <vector>
 
+namespace dhtnet {
+class ChannelSocket;
+}
+
 namespace jami {
 
 class JamiAccount;
 class Conversation;
-
-// MIME type carrying a real-time collaborative-editing payload between members.
-static constexpr const char MIME_TYPE_COLLAB[] {"application/x-jami-collab+json"};
 
 /**
  * Per-account manager for real-time collaborative documents shared inside swarm
@@ -48,12 +48,13 @@ static constexpr const char MIME_TYPE_COLLAB[] {"application/x-jami-collab+json"
  * a client implement an editor for @e any document type yrs supports -- text,
  * rich text, maps, arrays, XML fragments -- without a single change here.
  *
- * Real-time path: members exchange the yjs protocols -- @c sync for the document
- * itself, @c awareness for who is editing and where -- over ephemeral instant
- * messages. Speaking those rather than something of our own means a replica here
- * and a replica anywhere else in the yjs ecosystem converge without a
- * translation layer, and it is what brings the state vector: a device joining a
- * document is told only what it is actually missing.
+ * Real-time path: devices that have a document open hold a dedicated binary
+ * channel ("ydoc://") per peer device, over which updates travel raw as they
+ * are produced, alongside awareness states -- who is editing and where. There
+ * is no handshake and no per-peer protocol state: a CRDT update commutes and
+ * repeats harmlessly, so convergence needs nothing more than every update
+ * eventually reaching every replica -- live over these channels, or with the
+ * next checkpoint for whatever a device missed while its channels were down.
  *
  * Durable path: each document is a swarm repository of its own (a conversation
  * in mode DOCUMENT, held by ConversationModule), where batches of updates are
@@ -175,10 +176,16 @@ public:
                                     const std::string& documentId,
                                     const std::string& attachmentId);
 
-    /// Handle a collaborative-editing payload received from a peer (real-time).
-    /// @param from        the sender's account URI
-    /// @param fromDevice  the sending device, needed to fetch what it announces
-    void onRemotePayload(const std::string& from, const std::string& fromDevice, const std::string& jsonPayload);
+    /// Whether a real-time channel for @p documentId from this peer is welcome:
+    /// only when the document is currently open here and the peer is one of its
+    /// members per the local replica.
+    bool acceptsRealtimeChannel(const std::string& documentId, const std::string& peer, const std::string& deviceId);
+    /// A real-time channel came up, whichever side asked for it: wire it into
+    /// the document's session, which owns it from here on.
+    void onRealtimeChannel(const std::string& documentId,
+                           const std::string& peer,
+                           const std::string& deviceId,
+                           std::shared_ptr<dhtnet::ChannelSocket> socket);
 
     /// Checkpoints of a document, newest first (@c max == 0 means no limit).
     /// One map per checkpoint commit, with keys "id", "author", "device",
@@ -212,10 +219,11 @@ private:
     /// The swarm holding a document's replica on this device, or nullptr when
     /// the device does not hold it (never opened, or removed from here).
     std::shared_ptr<Conversation> documentConversation(const std::string& documentId);
-    std::shared_ptr<Session> ensureSession(const std::string& conversationId,
-                                           const std::string& documentId,
-                                           bool announced = true);
+    std::shared_ptr<Session> ensureSession(const std::string& conversationId, const std::string& documentId);
     std::shared_ptr<Session> findSession(const std::string& conversationId, const std::string& documentId);
+    /// The session holding @p documentId, whichever conversation announced it.
+    /// A channel request names only the document: its repository is its own.
+    std::shared_ptr<Session> findSessionByDocument(const std::string& documentId);
 
     /// Broadcast an update to the members and queue it for the next checkpoint.
     void onLocalUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);
@@ -232,12 +240,6 @@ private:
     /// pending checkpoint rather than writing it: it would land in a repository
     /// about to be erased.
     void dropLocalReplica(const std::string& conversationId, const std::string& documentId);
-    /// Whether room remains to hold a session for a document the conversation
-    /// never announced. Live updates arrive before the announcement is merged,
-    /// so such sessions have to be tolerated -- but an authorized member can name
-    /// any id it likes, and each one costs a replica in memory that nothing would
-    /// ever evict. Returns false past the cap, and true for one already held.
-    bool admitUnannounced(const std::string& conversationId, const std::string& documentId);
     /// Announced document ids per conversation, so the check above stays O(1).
     std::mutex announcedMtx_;
     std::map<std::string, std::set<std::string>> announced_;
@@ -261,29 +263,28 @@ private:
     /// Apply every update stored in the repository, skipping unreadable ones.
     void replayStoredUpdates(const std::shared_ptr<Session>& session);
 
-    /// Wrap a y-protocol frame in the envelope that carries it to the members.
-    /// @param peer    the single member to reach, or empty to reach them all.
-    /// @param device  which of that member's devices.
-    void sendFrame(const std::string& conversationId,
-                   const std::string& documentId,
-                   const yprotocol::Bytes& frame,
-                   const std::string& peer = {},
-                   const std::string& device = {});
-    /// Handle the SYNC half of the protocol; @p from and @p fromDevice name who
-    /// to answer.
-    void onSyncMessage(const std::string& conversationId,
-                       const std::string& documentId,
-                       const std::string& from,
-                       const std::string& fromDevice,
-                       yprotocol::Decoder& decoder);
-    /// Handle the AWARENESS half; @p from owns the client ids it announces.
-    void onAwarenessMessage(const std::shared_ptr<Session>& session,
+    /// Open real-time channels towards the document's member devices that have
+    /// none yet. Called on open and again after every synchronization: a member
+    /// whose join was merged just now is a device to reach out to, which is also
+    /// what heals the refusal its own early request may have met with.
+    void connectRealtimeChannels(const std::shared_ptr<Session>& session);
+    /// Send one frame to every real-time channel of the session.
+    void broadcastFrame(const std::shared_ptr<Session>& session, uint8_t tag, const std::vector<uint8_t>& payload);
+    /// A frame arrived on one of the session's channels; @p from sent it.
+    void onFrame(const std::shared_ptr<Session>& session,
+                 const std::string& from,
+                 uint8_t tag,
+                 const uint8_t* payload,
+                 size_t size);
+    /// Merge an update a peer produced and hand it to the local clients.
+    void onRemoteUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);
+    /// Handle a peer's awareness message; @p from owns the client ids it announces.
+    void onAwarenessPayload(const std::shared_ptr<Session>& session,
                             const std::string& from,
-                            yprotocol::Decoder& decoder);
-    /// The session a message from a peer may build state in, or nullptr when the
-    /// document is neither announced nor within the tolerance for one that is
-    /// about to be.
-    std::shared_ptr<Session> admitSession(const std::string& conversationId, const std::string& documentId);
+                            const uint8_t* data,
+                            size_t size);
+    /// Shut every real-time channel of the session down.
+    void closeRealtimeChannels(const std::shared_ptr<Session>& session);
     /// Announce what this device is sharing, bumping its clock. Withdraws the
     /// state when @p state is empty, which is how a peer learns we are gone.
     void publishAwareness(const std::shared_ptr<Session>& session, const std::string& state);

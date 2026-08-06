@@ -35,6 +35,7 @@
 #include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "ydoc_channel_handler.h"
 #include "message_channel_handler.h"
 #include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
@@ -4161,9 +4162,6 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
         } catch (const std::exception& e) {
             JAMI_WARNING("Error parsing composing state: {}", e.what());
         }
-    } else if (m.first == MIME_TYPE_COLLAB) {
-        collaborativeEditing()->onRemotePayload(from, cert->getLongId().toString(), m.second);
-        return true;
     } else if (m.first == MIME_TYPE_IMDN) {
         try {
             static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
@@ -4918,6 +4916,7 @@ JamiAccount::initConnectionManager()
                                                                                      *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(shared(),
                                                                                           *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::YDOC] = std::make_unique<YdocChannelHandler>(shared(), *connectionManager_.get());
         if (jami::Manager::instance().syncOnRegister) {
             channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(),
                                                                                        *connectionManager_.get());

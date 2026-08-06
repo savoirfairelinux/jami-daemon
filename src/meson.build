@@ -49,6 +49,7 @@ libjami_sources = files(
     'jamidht/sync_module.cpp',
     'jamidht/transfer_channel_handler.cpp',
     'jamidht/typers.cpp',
+    'jamidht/ydoc_channel_handler.cpp',
     'jamidht/yrs_document.cpp',
     'media/audio/audio-processing/null_audio_processor.cpp',
     'media/audio/audio_frame_resizer.cpp',

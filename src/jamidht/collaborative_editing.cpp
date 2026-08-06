@@ -23,9 +23,11 @@
 #include "manager.h"
 #include "client/jami_signal.h"
 #include "base64.h"
-#include "json_utils.h"
 #include "string_utils.h"
+#include "uri.h"
 
+#include <dhtnet/multiplexed_socket.h>
+#include <msgpack.hpp>
 #include <opendht/thread_pool.h>
 
 #include <algorithm>
@@ -62,18 +64,16 @@ static constexpr size_t MAX_ATTACHMENT_SIZE {16 * 1024 * 1024};
 // documented on getCollaborativeDocuments().
 static constexpr char DOCUMENT_STORED_LOCALLY[] = "storedLocally";
 
-// Ceilings on what a single message may carry. Both the client API and the swarm
-// hand us opaque blobs, and both decode into memory before the engine gets a say.
-// The point is not to guess a "correct" size but to keep one message from being
-// able to allocate without bound: a CRDT update stays well under a megabyte even
-// when it carries the whole state of a large document, and an awareness state is
-// a cursor plus a display name.
+// Ceilings on what a single message may carry. Both the client API and the
+// channels hand us opaque blobs, and both are held in memory before the engine
+// gets a say. The point is not to guess a "correct" size but to keep one message
+// from being able to allocate without bound: a CRDT update stays well under a
+// megabyte even when it carries the whole state of a large document, and an
+// awareness state is a cursor plus a display name.
 static constexpr size_t MAX_UPDATE_SIZE {8 * 1024 * 1024};
 static constexpr size_t MAX_AWARENESS_SIZE {8 * 1024};
 /// A whole awareness message may carry one entry per peer, not just ours.
 static constexpr size_t MAX_AWARENESS_MESSAGE_SIZE {64 * 1024};
-/// base64 costs 4 bytes per 3, plus padding and any line breaks a client adds.
-static constexpr size_t MAX_ENCODED_UPDATE_SIZE {MAX_UPDATE_SIZE / 3 * 4 + 1024};
 
 // Awareness upkeep, with the cadence the yjs protocol settled on. A state is
 // re-announced well before it is due to expire, so that losing one announcement
@@ -90,6 +90,70 @@ static constexpr size_t MAX_AWARENESS_PEERS {256};
 
 namespace {
 
+// What a real-time frame carries: a Y-CRDT update or an awareness message. One
+// byte on the wire, so a frame type from a newer daemon is skipped over rather
+// than choked on.
+constexpr uint8_t FRAME_UPDATE {0};
+constexpr uint8_t FRAME_AWARENESS {1};
+
+// A frame is: varuint payload length, one tag byte, the payload. The length is
+// variable so the framing costs one byte on the frames that matter -- a
+// keystroke's update is a few dozen bytes -- while still naming sizes up to the
+// caps above.
+void
+appendVarUint(std::vector<uint8_t>& out, uint64_t value)
+{
+    while (value >= 0x80) {
+        out.push_back(static_cast<uint8_t>(0x80 | (value & 0x7F)));
+        value >>= 7;
+    }
+    out.push_back(static_cast<uint8_t>(value));
+}
+
+enum class VarUint { OK, INCOMPLETE, MALFORMED };
+
+// Reads seven bits per byte, least significant group first, the high bit
+// marking that another byte follows. What is being read comes from a peer, so
+// an integer that never terminates has to end the parse, not the process.
+VarUint
+readVarUint(const uint8_t* data, size_t size, uint64_t& value, size_t& consumed)
+{
+    value = 0;
+    for (size_t i = 0; i < size; ++i) {
+        if (i >= 10)
+            return VarUint::MALFORMED; // longer than any uint64 ever encodes to
+        value |= static_cast<uint64_t>(data[i] & 0x7F) << (7 * i);
+        if ((data[i] & 0x80) == 0) {
+            consumed = i + 1;
+            return VarUint::OK;
+        }
+    }
+    return size >= 10 ? VarUint::MALFORMED : VarUint::INCOMPLETE;
+}
+
+/// One client's slice of an awareness message, as it travels the wire.
+struct AwarenessWire
+{
+    uint64_t clientId {0};
+    /// Bumped by its owner on every change. An entry whose clock is not greater
+    /// than the one already held is ignored, which is what keeps a message that
+    /// took a longer route from resurrecting a state everyone has moved past.
+    uint64_t clock {0};
+    /// The client's state as a JSON document, or "null" for a client that is
+    /// gone. Opaque here: its shape is the editors' agreement.
+    std::string state;
+    MSGPACK_DEFINE(clientId, clock, state)
+};
+
+std::vector<uint8_t>
+encodeAwareness(const std::vector<AwarenessWire>& entries)
+{
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, entries);
+    const auto* data = reinterpret_cast<const uint8_t*>(buffer.data());
+    return {data, data + buffer.size()};
+}
+
 // Cap a document name, cutting on a code point boundary so the result is still
 // valid UTF-8 and can be put back into JSON.
 std::string
@@ -102,19 +166,6 @@ truncatedName(std::string name)
         --cut;
     name.resize(cut);
     return name;
-}
-
-// Conversation, document, commit and device ids are all generated as
-// fixed-length lowercase hexadecimal strings. Enforcing that alphabet on what a
-// peer supplies is what keeps an id from being read as anything but an id.
-bool
-isValidId(std::string_view id)
-{
-    if (id.empty() || id.size() > 64)
-        return false;
-    return std::all_of(id.begin(), id.end(), [](unsigned char c) {
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
-    });
 }
 
 } // namespace
@@ -137,10 +188,6 @@ struct CollaborativeEditing::Session
     std::string conversationId;
     std::string documentId;
     std::unique_ptr<YrsDocument> doc;
-    // Whether the conversation had announced the document when the session was
-    // built, i.e. whether this one counts against the unannounced cap. Flipped
-    // once the announcement lands. Guarded by mutex_.
-    bool announced {true};
     // The last name handed to the clients. A remote rename cannot be spotted by
     // reading the repository before and after a synchronization -- the merge is
     // already done by the time we hear about it -- so this is what tells a name
@@ -177,15 +224,17 @@ struct CollaborativeEditing::Session
     // pushing the debounce timer further away and the checkpoint actually runs.
     std::atomic_bool checkpointDue {false};
 
-    // y-protocol state. Kept under its own lock: the upkeep timer walks it from
+    // Real-time state. Kept under its own lock: the upkeep timer walks it from
     // the io thread while the clients write to it, and neither has any business
     // waiting on the manager-wide lock to do so.
     std::mutex protocolMutex;
-    // Devices we already answered a state vector to. Both sides of a pair have
-    // to offer theirs for the two to converge, but answering an offer with
-    // another one unconditionally would have them trade offers forever; a device
-    // is therefore offered ours once, and only ever answered afterwards.
-    std::set<std::string> syncedDevices;
+    // The live channels to the peer devices that also have the document open,
+    // per device. Two devices opening towards each other at once can end up
+    // with a channel each, which is why this holds a list: dropping one of the
+    // pair would have each side keep the one the other just closed. Frames are
+    // sent on every one of them and a duplicate merges as a no-op -- that is
+    // what a CRDT is for.
+    std::map<std::string, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> channels;
     std::map<uint64_t, AwarenessPeer> awareness;
     /// This device's own entry in the table above. Its clock is what tells peers
     /// which of two states they hold is the later one, so it only ever grows.
@@ -259,22 +308,26 @@ CollaborativeEditing::findSession(const std::string& conversationId, const std::
 }
 
 std::shared_ptr<CollaborativeEditing::Session>
-CollaborativeEditing::ensureSession(const std::string& conversationId, const std::string& documentId, bool announced)
+CollaborativeEditing::findSessionByDocument(const std::string& documentId)
+{
+    std::lock_guard<std::mutex> lk(mutex_);
+    for (const auto& [_, session] : sessions_)
+        if (session && session->documentId == documentId)
+            return session;
+    return nullptr;
+}
+
+std::shared_ptr<CollaborativeEditing::Session>
+CollaborativeEditing::ensureSession(const std::string& conversationId, const std::string& documentId)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     auto k = key(conversationId, documentId);
-    if (auto it = sessions_.find(k); it != sessions_.end()) {
-        // A session created from live updates predates the announcement; stop
-        // counting it against the unannounced cap once the document is known.
-        if (announced)
-            it->second->announced = true;
+    if (auto it = sessions_.find(k); it != sessions_.end())
         return it->second;
-    }
 
     auto session = std::make_shared<Session>();
     session->conversationId = conversationId;
     session->documentId = documentId;
-    session->announced = announced;
     session->doc = std::make_unique<YrsDocument>(replicaId());
     session->checkpointTimer = std::make_unique<asio::steady_timer>(*ioContext_);
     session->awarenessTimer = std::make_unique<asio::steady_timer>(*ioContext_);
@@ -619,27 +672,8 @@ CollaborativeEditing::dropLocalReplica(const std::string& conversationId, const 
         std::lock_guard<std::mutex> lk(session->timerMutex);
         session->checkpointTimer->cancel();
     }
-}
-
-bool
-CollaborativeEditing::admitUnannounced(const std::string& conversationId, const std::string& documentId)
-{
-    // Live updates travel over the real-time channel and routinely beat the
-    // announcement they belong to, so a session has to be allowed before the
-    // document is known. What must not be allowed is an unbounded number of
-    // them: an authorized member can name any id it likes, and each one costs a
-    // replica in memory that no later announcement would ever come and evict.
-    static constexpr size_t MAX_UNANNOUNCED = 16;
-    const auto k = key(conversationId, documentId);
-    std::lock_guard<std::mutex> lk(mutex_);
-    if (sessions_.count(k) != 0)
-        return true; // already held: this is not a new allocation
-    size_t unannounced = 0;
-    for (const auto& [_, session] : sessions_) {
-        if (session && !session->announced)
-            ++unannounced;
-    }
-    return unannounced < MAX_UNANNOUNCED;
+    if (session)
+        closeRealtimeChannels(session);
 }
 
 YrsDocument::Bytes
@@ -698,9 +732,9 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
                 session->announcedName = announcedName;
         }
         cm->cloneDocumentFrom(documentId, announcer);
-        // Live edits are not gated on the clone: members with the document open
-        // answer this with what this replica is missing.
-        sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
+        // No channels yet: they need the members recorded in the repository, so
+        // the clone's completion is what opens them. Until then the document is
+        // open and empty, exactly like a conversation still syncing.
         return session->doc->encodeStateAsUpdate();
     }
     auto session = ensureSession(conversationId, documentId);
@@ -720,11 +754,11 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             session->announcedName = name;
     }
     auto state = session->doc->encodeStateAsUpdate();
-    // Offer the members what this replica already holds, so that the ones with
-    // the document open answer with just the difference. This is also what makes
-    // a second device of the same account catch up on edits that were made while
-    // it was not looking, without waiting for the next checkpoint to be fetched.
-    sendFrame(conversationId, documentId, yprotocol::syncStep1(session->doc->encodeStateVector()));
+    // Reach out to the other devices editing the document. What they produced
+    // while nothing was open here is not asked for -- there is no handshake --
+    // and does not need to be: it arrives with its producer's next checkpoint,
+    // while everything from here on arrives live.
+    connectRealtimeChannels(session);
     return state;
 }
 
@@ -750,12 +784,9 @@ CollaborativeEditing::closeDocument(const std::string& conversationId, const std
     // for the other members. Done explicitly rather than left to expire so that
     // closing an editor is seen at once instead of a timeout later.
     publishAwareness(session, {});
-    {
-        std::lock_guard<std::mutex> lk(session->protocolMutex);
-        // Nothing has been offered to these devices any more: a later reopen has
-        // to start the exchange over rather than assume it already happened.
-        session->syncedDevices.clear();
-    }
+    // The channels only exist between devices that are editing, and this one no
+    // longer is. A reopen starts them over.
+    closeRealtimeChannels(session);
 }
 
 void
@@ -789,182 +820,259 @@ CollaborativeEditing::documentState(const std::string& conversationId, const std
     return session ? session->doc->encodeStateAsUpdate() : YrsDocument::Bytes {};
 }
 
-void
-CollaborativeEditing::onRemotePayload(const std::string& from,
-                                      const std::string& fromDevice,
-                                      const std::string& jsonPayload)
-{
-    Json::Value root;
-    if (!json::parse(jsonPayload, root))
-        return;
-    auto conversationId = root["cid"].asString();
-    auto documentId = root["did"].asString();
-    if (!isValidId(conversationId) || !isValidId(documentId))
-        return;
+namespace {
 
-    // Being able to send us a message is not the same as being allowed to edit
-    // this document: a plain contact could otherwise inject text into the live
-    // replicas of a swarm it does not belong to.
+/// Frame a payload and write it to one channel.
+void
+writeFrame(const std::shared_ptr<dhtnet::ChannelSocket>& socket, uint8_t tag, const std::vector<uint8_t>& payload)
+{
+    std::vector<uint8_t> frame;
+    frame.reserve(payload.size() + 11);
+    appendVarUint(frame, payload.size());
+    frame.push_back(tag);
+    frame.insert(frame.end(), payload.begin(), payload.end());
+    std::error_code ec;
+    socket->write(frame.data(), frame.size(), ec);
+    if (ec)
+        JAMI_WARNING("Unable to send a {} byte collaborative frame: {}", frame.size(), ec.message());
+}
+
+} // namespace
+
+bool
+CollaborativeEditing::acceptsRealtimeChannel(const std::string& documentId,
+                                             const std::string& peer,
+                                             const std::string& deviceId)
+{
+    // Only for a document being edited here. A closed holder replicates through
+    // the swarm and has no use for live frames; a device that never held the
+    // document has nothing to accept them into; and answering for ids nobody
+    // opened would let a peer probe what this device knows.
+    auto session = findSessionByDocument(documentId);
+    if (!session)
+        return false;
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (!session->open)
+            return false;
+    }
+    // Membership per the document's own replica, never the parent
+    // conversation's. Invited counts as in: a document member is only ever
+    // invited by a holder having just vouched for it while serving its clone,
+    // and its join follows by itself -- there is no pending-invitation state to
+    // wrongly admit. A joiner whose commits have not reached us at all is still
+    // refused, and reached out to the moment they are merged.
+    auto conversation = documentConversation(documentId);
+    if (!conversation)
+        return false; // the clone is still in flight: nothing to check against
+    return conversation->isPeerAuthorized(peer, deviceId, true);
+}
+
+void
+CollaborativeEditing::onRealtimeChannel(const std::string& documentId,
+                                        const std::string& peer,
+                                        const std::string& deviceId,
+                                        std::shared_ptr<dhtnet::ChannelSocket> socket)
+{
+    auto session = findSessionByDocument(documentId);
+    bool open = false;
+    if (session) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        open = session->open;
+    }
+    if (!open) {
+        // The document was closed while the channel was being set up.
+        socket->shutdown();
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        session->channels[deviceId].push_back(socket);
+    }
+
+    // The parsing state of this one channel. Only its own receive callback
+    // touches it, and those are delivered in order, so it needs no lock.
+    auto buffer = std::make_shared<std::vector<uint8_t>>();
+    std::weak_ptr<CollaborativeEditing> wthis = weak_from_this();
+    std::weak_ptr<Session> wsession = session;
+    std::weak_ptr<dhtnet::ChannelSocket> wsocket = socket;
+    socket->setOnRecv([wthis, wsession, wsocket, peer, buffer](const uint8_t* data, size_t size) {
+        auto sthis = wthis.lock();
+        auto session = wsession.lock();
+        if (!sthis || !session)
+            return size;
+        buffer->insert(buffer->end(), data, data + size);
+        size_t pos = 0;
+        while (pos < buffer->size()) {
+            uint64_t length = 0;
+            size_t consumed = 0;
+            const auto res = readVarUint(buffer->data() + pos, buffer->size() - pos, length, consumed);
+            if (res == VarUint::INCOMPLETE)
+                break;
+            // The length is judged before anything is held against it: a peer
+            // must not have us buffer megabytes of a frame that could only be
+            // refused once complete. Nothing recovers a framing violation --
+            // there is no way back into sync with a stream that lies about its
+            // lengths -- so the channel goes down with it.
+            if (res == VarUint::MALFORMED || length > MAX_UPDATE_SIZE) {
+                buffer->clear();
+                if (auto socket = wsocket.lock())
+                    socket->shutdown();
+                return size;
+            }
+            if (buffer->size() - pos - consumed < 1 + length)
+                break; // the rest of the frame is still in flight
+            const uint8_t tag = (*buffer)[pos + consumed];
+            sthis->onFrame(session, peer, tag, buffer->data() + pos + consumed + 1, length);
+            pos += consumed + 1 + length;
+        }
+        buffer->erase(buffer->begin(), buffer->begin() + pos);
+        return size;
+    });
+    socket->onShutdown([wsession, wsocket, deviceId](const std::error_code& /*ec*/) {
+        auto session = wsession.lock();
+        if (!session)
+            return;
+        auto socket = wsocket.lock();
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        auto it = session->channels.find(deviceId);
+        if (it == session->channels.end())
+            return;
+        auto& list = it->second;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](const auto& s) { return !socket || s == socket; }),
+                   list.end());
+        if (list.empty())
+            session->channels.erase(it);
+    });
+
+    // Tell the newcomer at once who this device is in the document: our
+    // awareness state only re-announces itself at the renewal cadence, and an
+    // editor joining a session should not stare at an empty document for
+    // fifteen seconds before the cursors appear.
+    std::vector<uint8_t> hello;
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        if (!session->localState.empty())
+            hello = encodeAwareness({{clientId_, session->localClock, session->localState}});
+    }
+    if (!hello.empty())
+        writeFrame(socket, FRAME_AWARENESS, hello);
+}
+
+void
+CollaborativeEditing::connectRealtimeChannels(const std::shared_ptr<Session>& session)
+{
     auto account = account_.lock();
     if (!account)
         return;
-    auto* convModule = account->convModule(true);
-    if (!convModule || !convModule->isPeerAuthorized(conversationId, from, fromDevice, true)) {
-        JAMI_WARNING("[Account {}] [Document {}] Ignoring collaborative payload from "
-                     "unauthorized peer {}",
-                     accountId_,
-                     documentId,
-                     from);
-        return;
-    }
-
-    // "k" tells a y-protocol frame ("y") apart from whatever a newer revision
-    // of this envelope may carry. Repository synchronization is not driven from
-    // here: a document is a swarm, and its commits announce themselves through
-    // the ordinary conversation pipeline.
-    auto kind = root.get("k", "y").asString();
-    if (kind != "y")
-        return; // nothing else is spoken here
-
-    yprotocol::Bytes frame;
-    try {
-        auto encoded = root["m"].asString();
-        if (encoded.size() > MAX_ENCODED_UPDATE_SIZE) {
-            JAMI_WARNING("[Account {}] [Document {}] Dropping a {} byte frame from {}: over the limit",
-                         accountId_,
-                         documentId,
-                         encoded.size(),
-                         from);
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (!session->open)
             return;
+    }
+    auto conversation = documentConversation(session->documentId);
+    if (!conversation)
+        return; // the clone is still in flight: its completion comes back here
+    auto& handlers = account->channelHandlers();
+    auto handlerIt = handlers.find(Uri::Scheme::YDOC);
+    if (handlerIt == handlers.end() || !handlerIt->second)
+        return;
+    // Every device the repository lists is asked, not just the ones the
+    // document's swarm is connected to right now: the channel dials through the
+    // connection manager, which reaches a device the DRT has not settled on
+    // yet. Most are declined -- the other end only accepts while it has the
+    // document open -- and the ones that matter are the editors.
+    const auto ownDevice = std::string(account->currentDeviceId());
+    for (const auto& [member, devices] : conversation->memberDevices()) {
+        for (const auto& device : devices) {
+            const auto deviceId = device.toString();
+            if (deviceId == ownDevice)
+                continue;
+            {
+                std::lock_guard<std::mutex> lk(session->protocolMutex);
+                if (session->channels.count(deviceId) != 0)
+                    continue; // already talking to it
+            }
+            // The socket is handled where the accepting side's is, in
+            // YdocChannelHandler::onReady; a refusal needs nothing done.
+            handlerIt->second->connect(device,
+                                       session->documentId,
+                                       [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
         }
-        frame = base64::decode(encoded);
-    } catch (const std::exception&) {
-        return; // a peer sent something that is not base64
     }
-    if (frame.empty())
-        return;
-
-    yprotocol::Decoder decoder(frame);
-    uint64_t messageType = 0;
-    if (!decoder.readVarUint(messageType))
-        return;
-    switch (static_cast<yprotocol::Message>(messageType)) {
-    case yprotocol::Message::SYNC:
-        onSyncMessage(conversationId, documentId, from, fromDevice, decoder);
-        break;
-    case yprotocol::Message::AWARENESS:
-        if (auto session = admitSession(conversationId, documentId))
-            onAwarenessMessage(session, from, decoder);
-        break;
-    default:
-        // A message type from a newer revision of the protocol. Ignoring it is
-        // what the yjs implementations do, and it is what lets one be added
-        // without every peer having to be upgraded first.
-        break;
-    }
-}
-
-std::shared_ptr<CollaborativeEditing::Session>
-CollaborativeEditing::admitSession(const std::string& conversationId, const std::string& documentId)
-{
-    // No replica is held for the document if this device does not hold its
-    // repository: what arrives stays in memory and is persisted only where a
-    // repository exists to receive it.
-    //
-    // A document known to be removed is refused outright: it can never be opened
-    // again, so a replica held for it would accumulate what nothing would ever
-    // read, and peers that have not seen the removal yet keep sending updates.
-    if (isRemovedDocument(conversationId, documentId))
-        return nullptr;
-    const bool announced = isAnnouncedDocument(conversationId, documentId);
-    if (!announced && !admitUnannounced(conversationId, documentId)) {
-        // An authorized member can name any id it likes here. Sessions for ids
-        // the conversation never announced are therefore capped: past the cap
-        // they are dropped rather than allowed to accumulate a YrsDocument each.
-        JAMI_WARNING("[Account {}] Dropping a collaborative message for unannounced document {} in "
-                     "conversation {}: too many unannounced documents already pending",
-                     accountId_,
-                     documentId,
-                     conversationId);
-        return nullptr;
-    }
-    return ensureSession(conversationId, documentId, announced);
 }
 
 void
-CollaborativeEditing::onSyncMessage(const std::string& conversationId,
-                                    const std::string& documentId,
-                                    const std::string& from,
-                                    const std::string& fromDevice,
-                                    yprotocol::Decoder& decoder)
+CollaborativeEditing::closeRealtimeChannels(const std::shared_ptr<Session>& session)
 {
-    uint64_t step = 0;
-    const uint8_t* payload = nullptr;
-    size_t payloadSize = 0;
-    if (!decoder.readVarUint(step) || !decoder.readVarUint8Array(payload, payloadSize))
-        return;
-
-    if (static_cast<yprotocol::Sync>(step) == yprotocol::Sync::STEP1) {
-        // A peer says what it holds. Answered only when this device has the
-        // document open: waking every member to build a replica each time
-        // someone opens a document would cost far more than it is worth, and a
-        // member that is not editing has nothing the repository does not already
-        // carry.
-        auto session = findSession(conversationId, documentId);
-        if (!session)
-            return;
-        yprotocol::Bytes stateVector(payload, payload + payloadSize);
-        auto diff = session->doc->encodeDiff(stateVector);
-        sendFrame(conversationId, documentId, yprotocol::syncStep2(diff), from, fromDevice);
-        // Offer ours in return, once per device: without it the exchange is
-        // one-sided and this replica's own edits would only reach that peer at
-        // the next checkpoint.
-        bool offer = false;
-        {
-            std::lock_guard<std::mutex> lk(session->protocolMutex);
-            offer = session->syncedDevices.insert(fromDevice).second;
-        }
-        if (offer)
-            sendFrame(conversationId,
-                      documentId,
-                      yprotocol::syncStep1(session->doc->encodeStateVector()),
-                      from,
-                      fromDevice);
-        return;
+    decltype(session->channels) channels;
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        channels = std::move(session->channels);
+        session->channels.clear();
     }
+    // Outside the lock: shutting a socket down runs its shutdown handler, which
+    // takes the same lock to unregister -- and finds nothing left to.
+    for (auto& [_, list] : channels)
+        for (auto& socket : list)
+            socket->shutdown();
+}
 
-    // STEP2 and UPDATE both carry an update to merge; they differ only in what
-    // prompted them. Nothing else does, so nothing else is merged: handing an
-    // unknown sub-type to the engine would mean guessing that a later revision
-    // of the protocol, or a malformed frame, happens to carry an update there.
-    const auto sync = static_cast<yprotocol::Sync>(step);
-    if (sync != yprotocol::Sync::STEP2 && sync != yprotocol::Sync::UPDATE) {
-        JAMI_WARNING("[Account {}] [Document {}] Ignoring sync message of unknown sub-type {}",
-                     accountId_,
-                     documentId,
-                     step);
+void
+CollaborativeEditing::broadcastFrame(const std::shared_ptr<Session>& session,
+                                     uint8_t tag,
+                                     const std::vector<uint8_t>& payload)
+{
+    if (payload.empty())
         return;
+    // Written outside the lock: a send can stall on a congested peer, and the
+    // receive path needs the lock to route what the others are saying.
+    std::vector<std::shared_ptr<dhtnet::ChannelSocket>> sockets;
+    {
+        std::lock_guard<std::mutex> lk(session->protocolMutex);
+        for (const auto& [_, list] : session->channels)
+            sockets.insert(sockets.end(), list.begin(), list.end());
     }
-    if (payloadSize == 0)
+    for (const auto& socket : sockets)
+        writeFrame(socket, tag, payload);
+}
+
+void
+CollaborativeEditing::onFrame(
+    const std::shared_ptr<Session>& session, const std::string& from, uint8_t tag, const uint8_t* payload, size_t size)
+{
+    switch (tag) {
+    case FRAME_UPDATE:
+        onRemoteUpdate(session, YrsDocument::Bytes(payload, payload + size));
+        break;
+    case FRAME_AWARENESS:
+        onAwarenessPayload(session, from, payload, size);
+        break;
+    default:
+        // A frame type from a newer daemon. Skipping it -- its length is known
+        // -- is what lets one be added without every peer upgrading first.
+        break;
+    }
+}
+
+void
+CollaborativeEditing::onRemoteUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update)
+{
+    if (update.empty())
         return;
-    auto session = admitSession(conversationId, documentId);
-    if (!session)
-        return;
-    YrsDocument::Bytes update(payload, payload + payloadSize);
     // Cleared before the update rather than read after it alone, so that what
     // this update brought is not confused with what an earlier one did.
     session->doc->takeChanged();
     if (!session->doc->applyUpdate(update))
         return; // malformed: don't hand it to the clients
-    // Nothing when the update taught the replica nothing. Opening a document
-    // makes a peer send us the state it holds, which is usually the state we
-    // already have: applying it succeeds and changes nothing, yet forwarding it
-    // lit an "unread" badge on a conversation whose document nobody had touched.
-    // The synchronization path guards itself the same way, for the same reason.
+    // Nothing when the update taught the replica nothing: a frame that raced a
+    // checkpoint fetch carries what the replay already merged, and forwarding
+    // it would light an "unread" badge on a document nobody touched.
     if (!session->doc->takeChanged())
         return;
-    // A closed holder keeps merging -- replication does not stop with the
-    // editor -- but its client is not told: reopening hands the state over.
+    // Channels only exist while the document is open here, but a frame can slip
+    // in between the close and the sockets going down; reopening hands the
+    // merged state over instead.
     {
         std::lock_guard<std::mutex> lk(mutex_);
         if (!session->open)
@@ -973,21 +1081,24 @@ CollaborativeEditing::onSyncMessage(const std::string& conversationId,
     // Not persisted here: the device that produced it checkpoints it into its own
     // repository and it reaches ours through synchronization. Storing it again
     // would keep one copy per member of every single edit.
-    emitUpdate(conversationId, documentId, update);
+    emitUpdate(session->conversationId, session->documentId, update);
 }
 
 void
-CollaborativeEditing::onAwarenessMessage(const std::shared_ptr<Session>& session,
+CollaborativeEditing::onAwarenessPayload(const std::shared_ptr<Session>& session,
                                          const std::string& from,
-                                         yprotocol::Decoder& decoder)
+                                         const uint8_t* data,
+                                         size_t size)
 {
-    const uint8_t* body = nullptr;
-    size_t bodySize = 0;
-    if (!decoder.readVarUint8Array(body, bodySize) || bodySize > MAX_AWARENESS_MESSAGE_SIZE)
+    if (size > MAX_AWARENESS_MESSAGE_SIZE)
         return;
-    std::vector<yprotocol::AwarenessEntry> entries;
-    if (!yprotocol::decodeAwarenessUpdate(body, bodySize, entries))
-        return;
+    std::vector<AwarenessWire> entries;
+    try {
+        msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(data), size);
+        oh.get().convert(entries);
+    } catch (const std::exception&) {
+        return; // a peer sent something that is not an awareness message
+    }
 
     // What the local clients have to be told, gathered while the table is locked
     // and emitted once it is not: a signal handler is entitled to call back into
@@ -1067,42 +1178,6 @@ CollaborativeEditing::onAwarenessMessage(const std::shared_ptr<Session>& session
 }
 
 void
-CollaborativeEditing::sendFrame(const std::string& conversationId,
-                                const std::string& documentId,
-                                const yprotocol::Bytes& frame,
-                                const std::string& peer,
-                                const std::string& device)
-{
-    auto account = account_.lock();
-    if (!account || frame.empty())
-        return;
-    Json::Value root;
-    root["cid"] = conversationId;
-    root["did"] = documentId;
-    root["k"] = "y";
-    // The envelope is JSON and the frame is binary, so it travels base64 on this
-    // hop. That is a property of the transport the members already share, not of
-    // the protocol: what the clients hand over and receive is the bytes.
-    root["m"] = base64::encode(frame);
-    std::map<std::string, std::string> payload {{MIME_TYPE_COLLAB, json::toString(root)}};
-    if (peer.empty()) {
-        account->sendInstantMessage(conversationId, payload);
-        return;
-    }
-    // Answering only the device that asked. Handing the whole difference to
-    // every member would give away the very saving the state vector just bought.
-    //
-    // An empty device is a deliberate fallback, not an unaddressed send: it
-    // reaches every connected device of that one member, which is still the
-    // answer to a question only that member asked. Callers here always know the
-    // device, since it comes from the certificate the message was received on.
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(gen);
-    account->sendMessage(peer, device, payload, token, false, true);
-}
-
-void
 CollaborativeEditing::setAwareness(const std::string& conversationId,
                                    const std::string& documentId,
                                    const std::string& state)
@@ -1122,7 +1197,7 @@ CollaborativeEditing::setAwareness(const std::string& conversationId,
 void
 CollaborativeEditing::publishAwareness(const std::shared_ptr<Session>& session, const std::string& state)
 {
-    yprotocol::AwarenessEntry entry;
+    AwarenessWire entry;
     {
         std::lock_guard<std::mutex> lk(session->protocolMutex);
         // Withdrawing a state that was never shared would tell the members about
@@ -1131,12 +1206,12 @@ CollaborativeEditing::publishAwareness(const std::shared_ptr<Session>& session, 
             return;
         entry.clientId = clientId_;
         entry.clock = ++session->localClock;
-        // "null" is how the protocol spells a client that is no longer there.
+        // "null" is how a client that is no longer there is spelled.
         entry.state = state.empty() ? "null" : state;
         session->localState = state;
         session->localAnnounced = std::chrono::steady_clock::now();
     }
-    sendFrame(session->conversationId, session->documentId, yprotocol::awarenessMessage({entry}));
+    broadcastFrame(session, FRAME_AWARENESS, encodeAwareness({entry}));
     scheduleAwarenessUpkeep(session);
 }
 
@@ -1208,8 +1283,8 @@ CollaborativeEditing::awarenessUpkeep(const std::shared_ptr<Session>& session)
 void
 CollaborativeEditing::onLocalUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update)
 {
-    // Real-time path: hand the incremental update to the connected members.
-    sendFrame(session->conversationId, session->documentId, yprotocol::syncUpdate(update));
+    // Real-time path: hand the incremental update to the devices editing along.
+    broadcastFrame(session, FRAME_UPDATE, update);
     // Durable path: accumulate the update for the next checkpoint.
     queueUpdate(session, update);
 }
@@ -1516,6 +1591,11 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
     }
     if (renamed)
         emitRename(conversationId, documentId, name);
+    // A synchronization is also how new editors become reachable: the clone
+    // this session may have been waiting for just landed, or a joiner's
+    // membership commits were just merged -- the very merge that entitles the
+    // device this replica refused a moment ago to its channel.
+    connectRealtimeChannels(session);
 }
 
 void
