@@ -168,6 +168,19 @@ public:
         const std::string& otherMember = "");
 
     /**
+     * Creates a new collaborative document repository (a swarm exactly like a conversation,
+     * with mode ConversationMode::DOCUMENT), where the first commit hash is the document id.
+     * @param account                  The related account
+     * @param parentConversationId     The conversation the document is announced in
+     * @param mimeType                 The media type of what the document holds
+     * @return the repository object
+     */
+    static LIBJAMI_TEST_EXPORT std::unique_ptr<ConversationRepository> createDocument(
+        const std::shared_ptr<JamiAccount>& account,
+        const std::string& parentConversationId,
+        const std::string& mimeType);
+
+    /**
      * Clones a conversation on a remote device
      * @note This will use the socket registered for the conversation with
      * Conversation::addGitSocket()
@@ -324,6 +337,34 @@ public:
     ConversationMode mode() const;
 
     /**
+     * Document repositories only (mode() == ConversationMode::DOCUMENT).
+     * Read back the fields of the initial commit: the id of the conversation
+     * the document was announced in and the media type of what it holds.
+     */
+    std::string parentConversationId() const;
+    std::string documentMimeType() const;
+
+    /**
+     * Document repositories only. Attachments are content-addressed blobs
+     * stored under attachments/<oid>: the file name is the git oid of the
+     * content, so the same bytes added twice converge to the same entry.
+     */
+    /**
+     * Store an attachment and commit it
+     * @param data  The attachment content
+     * @return the attachment id (blob oid) or empty on failure
+     */
+    std::string addAttachment(const std::vector<uint8_t>& data);
+    /**
+     * Read an attachment's content at HEAD
+     */
+    std::vector<uint8_t> attachment(const std::string& attachmentId) const;
+    /**
+     * List attachment ids present at HEAD
+     */
+    std::vector<std::string> attachmentIds() const;
+
+    /**
      * The voting system is divided in two parts. The voting phase where
      * admins can decide an action (such as kicking someone)
      * and the resolving phase, when > 50% of the admins voted, we can
@@ -462,6 +503,10 @@ public:
 
 private:
     ConversationRepository() = delete;
+    static std::unique_ptr<ConversationRepository> createRepository(const std::shared_ptr<JamiAccount>& account,
+                                                                    ConversationMode mode,
+                                                                    const std::string& otherMember,
+                                                                    const CommitMessage& initialMessage);
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
