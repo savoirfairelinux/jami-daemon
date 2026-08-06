@@ -394,6 +394,12 @@ public:
     std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
+     * The devices recorded in the repository, per member.
+     * @return member uri -> that member's device ids
+     */
+    std::map<std::string, std::vector<DeviceId>> memberDevices() const;
+
+    /**
      * Join a conversation
      * @return commit id to send
      */

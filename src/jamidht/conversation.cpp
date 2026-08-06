@@ -2226,6 +2226,12 @@ Conversation::uriFromDevice(const std::string& deviceId) const
     return pimpl_->repository_->uriFromDevice(deviceId);
 }
 
+std::map<std::string, std::vector<DeviceId>>
+Conversation::memberDevices() const
+{
+    return pimpl_->repository_->devices();
+}
+
 void
 Conversation::monitor()
 {
