@@ -148,6 +148,11 @@ struct CollaborativeEditing::Session
     // opened: announcing a rename to a client that was never told the first name
     // would be a phantom event. Guarded by mutex_.
     std::optional<std::string> announcedName;
+    // Whether a client currently has the document open. A closed holder keeps
+    // replicating -- that is what holding is -- but its client is not told about
+    // updates it is not looking at; reopening hands the converged state over
+    // instead. Guarded by mutex_.
+    bool open {false};
     std::unique_ptr<asio::steady_timer> checkpointTimer;
     // Set once the repository's stored updates have been replayed into this session.
     bool persistedLoaded {false};
@@ -686,6 +691,7 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             // what lets the clone's completion replay into this session.
             std::lock_guard<std::mutex> lk(mutex_);
             session->persistedLoaded = true;
+            session->open = true;
             // The client saw the announcement's name; recording it is what lets
             // a rename that lands with (or after) the clone be seen as one.
             if (!session->announcedName)
@@ -709,6 +715,7 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
         auto it = infos.find("title");
         const auto name = it != infos.end() ? it->second : std::string {};
         std::lock_guard<std::mutex> lk(mutex_);
+        session->open = true;
         if (!session->announcedName)
             session->announcedName = name;
     }
@@ -727,6 +734,10 @@ CollaborativeEditing::closeDocument(const std::string& conversationId, const std
     auto session = findSession(conversationId, documentId);
     if (!session)
         return;
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        session->open = false;
+    }
     // Flush pending edits, but keep the in-memory CRDT replica so that reopening
     // the document shows its current content. The session stays consistent via
     // persisted commits (replayed on load) and live updates from other members.
@@ -952,6 +963,13 @@ CollaborativeEditing::onSyncMessage(const std::string& conversationId,
     // The synchronization path guards itself the same way, for the same reason.
     if (!session->doc->takeChanged())
         return;
+    // A closed holder keeps merging -- replication does not stop with the
+    // editor -- but its client is not told: reopening hands the state over.
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (!session->open)
+            return;
+    }
     // Not persisted here: the device that produced it checkpoints it into its own
     // repository and it reaches ours through synchronization. Storing it again
     // would keep one copy per member of every single edit.
@@ -1462,8 +1480,14 @@ CollaborativeEditing::onRepositoryUpdated(const std::string& conversationId, con
     // What is then sent is only what the replay brought, not the whole document:
     // a synchronization usually carries a handful of keystrokes, and re-encoding
     // a 300 kB document for each of them would push megabytes a minute through
-    // the client API for nothing.
-    if (session->doc->takeChanged())
+    // the client API for nothing. A closed holder's client is not told at all:
+    // it gets the converged state when it reopens.
+    bool tellClient;
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        tellClient = session->open;
+    }
+    if (tellClient && session->doc->takeChanged())
         emitUpdate(conversationId, documentId, session->doc->encodeDiff(before));
     // Independent of the updates above: an attachment is not part of the CRDT,
     // so a synchronization can bring the payload of a reference the real-time
