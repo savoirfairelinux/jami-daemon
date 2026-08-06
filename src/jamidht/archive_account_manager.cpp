@@ -1372,6 +1372,14 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
     // Note we do not know accountID_ here, use path
     archive.contacts = ContactList::contactsFromPath(path_);
     archive.conversations = ConversationModule::convInfosFromPath(path_);
+    // Collaborative documents stay out of the archive: holding a replica is a
+    // per-device choice, a device linked from this archive joins by opening.
+    for (auto it = archive.conversations.begin(); it != archive.conversations.end();) {
+        if (it->second.mode == ConversationMode::DOCUMENT)
+            it = archive.conversations.erase(it);
+        else
+            ++it;
+    }
     archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
 }
 
