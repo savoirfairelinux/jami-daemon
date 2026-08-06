@@ -43,6 +43,8 @@ constexpr const char* const TOTAL_SIZE {"totalSize"};
 constexpr const char* const SHA3SUM {"sha3sum"};
 constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
+constexpr const char* const MIME_TYPE {"mimeType"};
+constexpr const char* const PARENT {"parent"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -54,6 +56,16 @@ constexpr const char* const INITIAL {"initial"};
 constexpr const char* const VOTE {"vote"};
 constexpr const char* const UPDATE_PROFILE {"application/update-profile"};
 constexpr const char* const MERGE {"merge"};
+// Announces a collaborative document. The document's content does not live in
+// the conversation: it has its own repository, synchronized separately. This
+// commit only makes the document appear in the history and binds its id to this
+// conversation.
+constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
+// Batch of CRDT updates in a collaborative document repository. The updates
+// travel in the commit message itself (base64, one per line in the "body"
+// field); the tree is carried over untouched, so a checkpoint costs one
+// commit object and nothing else. Only valid in document repositories.
+constexpr const char* const CHECKPOINT {"application/checkpoint"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
@@ -67,7 +79,7 @@ constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT };
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -96,6 +108,8 @@ struct CommitMessage
     std::string sha3sum {};
     int mode {-1};
     std::string invited {};
+    std::string mimeType {};
+    std::string parent {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -281,6 +295,51 @@ struct CommitMessage
         return msg;
     }
 
+    // A collaborative document is announced with a commit of type
+    // "application/collab-doc+json" carrying the document id in "uri", its
+    // initial name in "displayName" and the media type of what it holds in
+    // "mimeType", e.g.:
+    //
+    //     {"displayName":"Notes","mimeType":"text/html",
+    //      "type":"application/collab-doc+json","uri":"3f1c8a5b0d2e4f67"}
+    //
+    // The media type says how to read the document, not how it travels: the
+    // bytes on the wire are always a Y-CRDT update. It is what tells a client
+    // whether it can open a document at all, so a document type this client
+    // knows nothing about can be shown as such instead of opened wrongly.
+    //
+    // The commit deliberately carries no content: the document lives in its own
+    // git repository, so the conversation history stays a list of user-visible
+    // events and does not grow with the editing traffic.
+    static CommitMessage collabDocCreated(const std::string& documentId,
+                                          const std::string& name,
+                                          const std::string& mimeType)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.uri = documentId;
+        msg.displayName = name;
+        msg.mimeType = mimeType;
+        return msg;
+    }
+
+    // Removes a collaborative document, as an edition of the commit that
+    // announced it and with no content, exactly as a message or a file is
+    // removed. Nothing here says which document: that is read from the
+    // announcement this commit edits, so a member cannot name someone else's
+    // document in a removal of their own.
+    //
+    // Editing the announcement is what carries the authority: the swarm already
+    // refuses an edition whose author is not the author of the edited commit, so
+    // only the member who created a document can remove it for everyone.
+    static CommitMessage collabDocRemoved(const std::string& announcementCommitId)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::COLLAB_DOC;
+        msg.editedId = announcementCommitId;
+        return msg;
+    }
+
     // Every Jami conversation starts with a commit of type "initial" containing a "mode" field indicating the
     // kind of conversation. There are currently two supported values for the mode: 0 (ConversationMode::ONE_TO_ONE)
     // and 2 (ConversationMode::INVITES_ONLY). In the case of one-to-one conversations (mode 0), there is an
@@ -298,6 +357,38 @@ struct CommitMessage
         msg.mode = static_cast<int>(mode);
         if (mode == ConversationMode::ONE_TO_ONE) {
             msg.invited = invitedId;
+        }
+        return msg;
+    }
+
+    // A collaborative document repository is a swarm exactly like a conversation, distinguished
+    // by its mode: 4 (ConversationMode::DOCUMENT). Its initial commit additionally records the
+    // ID of the conversation the document was announced in ("parent") and the media type of
+    // what the document holds ("mimeType"), e.g.:
+    //
+    //     {"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"}
+    static CommitMessage initialDocument(const std::string& parentConversationId, const std::string& mimeType)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::INITIAL;
+        msg.mode = static_cast<int>(ConversationMode::DOCUMENT);
+        msg.parent = parentConversationId;
+        msg.mimeType = mimeType;
+        return msg;
+    }
+
+    // A checkpoint persists a batch of CRDT updates in a document repository. The updates are
+    // base64-encoded, one per line, in the "body" field:
+    //
+    //     {"body":"AQHZ...\nAQLa...","type":"application/checkpoint"}
+    static CommitMessage checkpoint(const std::vector<std::string>& base64Updates)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::CHECKPOINT;
+        for (const auto& u : base64Updates) {
+            if (!msg.body.empty())
+                msg.body += '\n';
+            msg.body += u;
         }
         return msg;
     }

@@ -83,6 +83,11 @@ private:
     void testInvalidFile();
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
+    void testCreateDocumentRepository();
+    void testDocumentCheckpointsAndAttachments();
+    void testCheckpointInConversationRejected();
+    void testCheckpointWithInvalidFileRejected();
+    void testNonContentAddressedAttachmentRejected();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -108,6 +113,11 @@ private:
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
+    CPPUNIT_TEST(testCreateDocumentRepository);
+    CPPUNIT_TEST(testDocumentCheckpointsAndAttachments);
+    CPPUNIT_TEST(testCheckpointInConversationRejected);
+    CPPUNIT_TEST(testCheckpointWithInvalidFileRejected);
+    CPPUNIT_TEST(testNonContentAddressedAttachmentRejected);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1182,6 +1192,159 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
     CPPUNIT_ASSERT(reopened != nullptr);
     CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
+}
+
+// A collaborative document repository is a conversation repository in the
+// DOCUMENT mode: same layout, same membership files, plus the id of the
+// conversation it was announced in and its media type in the initial commit.
+void
+ConversationRepositoryTest::testCreateDocumentRepository()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = DeviceId(std::string(aliceAccount->currentDeviceId()));
+    auto uri = aliceAccount->getUsername();
+
+    auto repository = ConversationRepository::createDocument(aliceAccount, "some-conversation-id", "text/html");
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    CPPUNIT_ASSERT(repository->mode() == ConversationMode::DOCUMENT);
+    CPPUNIT_ASSERT_EQUAL("some-conversation-id"s, repository->parentConversationId());
+    CPPUNIT_ASSERT_EQUAL("text/html"s, repository->documentMimeType());
+
+    // Same membership layout as a conversation: the creator is the only admin
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(repoPath / "admins" / (uri + ".crt")));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(repoPath / "devices" / (aliceDeviceId.toString() + ".crt")));
+
+    // All commits (the initial one) pass validation
+    CPPUNIT_ASSERT(repository->validCommits(repository->log()));
+}
+
+void
+ConversationRepositoryTest::testDocumentCheckpointsAndAttachments()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createDocument(aliceAccount, "some-conversation-id", "text/html");
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    // A checkpoint carries base64 CRDT updates in its message and leaves the tree untouched
+    auto checkpointId = repository->commitMessage(
+        CommitMessage::checkpoint({"dXBkYXRlMQ==", "dXBkYXRlMg=="}).toString());
+    CPPUNIT_ASSERT(!checkpointId.empty());
+    auto commit = repository->getCommit(checkpointId);
+    CPPUNIT_ASSERT(commit.has_value());
+    CPPUNIT_ASSERT_EQUAL(std::string(CommitType::CHECKPOINT), commit->commitMsg.type);
+    CPPUNIT_ASSERT_EQUAL("dXBkYXRlMQ==\ndXBkYXRlMg=="s, commit->commitMsg.body);
+
+    // Attachments are content-addressed blobs under attachments/
+    std::vector<uint8_t> data {0x01, 0x02, 0x03, 0x04};
+    auto attachmentId = repository->addAttachment(data);
+    CPPUNIT_ASSERT(!attachmentId.empty());
+    CPPUNIT_ASSERT(repository->attachment(attachmentId) == data);
+    CPPUNIT_ASSERT(repository->attachmentIds() == std::vector<std::string> {attachmentId});
+
+    // Adding the same content again converges to the same entry
+    CPPUNIT_ASSERT_EQUAL(attachmentId, repository->addAttachment(data));
+    CPPUNIT_ASSERT(repository->attachmentIds().size() == 1);
+
+    // Everything above passes validation
+    CPPUNIT_ASSERT(repository->validCommits(repository->log()));
+}
+
+// A checkpoint only means something in a document repository: in a
+// conversation it must be rejected.
+void
+ConversationRepositoryTest::testCheckpointInConversationRejected()
+{
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool isInvalid = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+        [&](const std::string&, const std::string&, int code, const std::string&) {
+            if (code == EVALIDFETCH)
+                isInvalid = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    auto checkpointId = repository->commitMessage(CommitMessage::checkpoint({"dXBkYXRlMQ=="}).toString());
+    CPPUNIT_ASSERT(!checkpointId.empty());
+
+    CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+}
+
+// A checkpoint may only touch attachments/ (and the author's device
+// certificate): any other file makes it invalid.
+void
+ConversationRepositoryTest::testCheckpointWithInvalidFileRejected()
+{
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool isInvalid = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+        [&](const std::string&, const std::string&, int code, const std::string&) {
+            if (code == EVALIDFETCH)
+                isInvalid = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createDocument(aliceAccount, "some-conversation-id", "text/html");
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::ofstream(repoPath / "invalidFile.txt").close();
+    addAll(repo);
+    auto commitId = addCommit(repo, aliceAccount, "main", CommitMessage::checkpoint({"dXBkYXRlMQ=="}).toString());
+    git_repository_free(repo);
+    CPPUNIT_ASSERT(!commitId.empty());
+
+    CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+}
+
+// An attachment's name must be the git oid of its own content, so that two
+// entries sharing a name necessarily hold the same bytes.
+void
+ConversationRepositoryTest::testNonContentAddressedAttachmentRejected()
+{
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool isInvalid = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+        [&](const std::string&, const std::string&, int code, const std::string&) {
+            if (code == EVALIDFETCH)
+                isInvalid = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createDocument(aliceAccount, "some-conversation-id", "text/html");
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::filesystem::create_directories(repoPath / "attachments");
+    std::ofstream file(repoPath / "attachments" / "0000000000000000000000000000000000000000");
+    file << "not the content this name promises";
+    file.close();
+    addAll(repo);
+    auto commitId = addCommit(repo, aliceAccount, "main", CommitMessage::checkpoint({}).toString());
+    git_repository_free(repo);
+    CPPUNIT_ASSERT(!commitId.empty());
+
+    CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
 }
 
 } // namespace test
