@@ -1691,16 +1691,10 @@ JamiAccount::lookupAddress(const std::string& addr)
                                                                       "");
         return;
     }
-    accountManager_->lookupAddress(addr,
-                                   [acc, addr](const std::string& regName,
-                                               const std::string& address,
-                                               NameDirectory::Response response) {
-                                       emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
-                                                                                                     addr,
-                                                                                                     (int) response,
-                                                                                                     address,
-                                                                                                     regName);
-                                   });
+    accountManager_->lookupAddress(
+        addr, [acc, addr](const std::string& regName, const std::string& address, NameDirectory::Response response) {
+            emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc, addr, (int) response, address, regName);
+        });
 }
 
 void
@@ -2455,52 +2449,78 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 return;
             }
 
-            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
-                JAMI_WARNING("[Account {:s}] [Conversation {}] Git server requested, but peer {}/{} is not authorized",
-                             getAccountID(),
-                             conversationId,
-                             peerId,
-                             remoteDevice);
-                channel->shutdown();
-                return;
-            }
-
             auto sock = convModule()->gitSocket(remoteDevice, conversationId);
             if (sock == channel) {
                 // The onConnectionReady is already used as client (for retrieving messages)
                 // So it's not the server socket
                 return;
             }
-            JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
-                     accountID_,
-                     conversationId,
-                     remoteDevice);
-            auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
-            syncCnt_.fetch_add(1);
-            gs->setOnFetched([w = weak(), conversationId, remoteDevice](const std::string& commit) {
-                dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit]() {
-                    if (auto shared = w.lock()) {
-                        shared->convModule()->setFetched(conversationId, remoteDevice, commit);
-                        if (shared->syncCnt_.fetch_sub(1) == 1) {
-                            emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
+
+            auto startGitServer = [w = weak(), conversationId, remoteDevice, channel]() {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
+                         shared->accountID_,
+                         conversationId,
+                         remoteDevice);
+                auto gs = std::make_unique<GitServer>(shared->accountID_, conversationId, channel);
+                shared->syncCnt_.fetch_add(1);
+                gs->setOnFetched([w, conversationId, remoteDevice](const std::string& commit) {
+                    dht::ThreadPool::computation().run([w, conversationId, remoteDevice, commit]() {
+                        if (auto shared = w.lock()) {
+                            shared->convModule()->setFetched(conversationId, remoteDevice, commit);
+                            if (shared->syncCnt_.fetch_sub(1) == 1) {
+                                emitSignal<libjami::ConversationSignal::ConversationCloned>(
+                                    shared->getAccountID().c_str());
+                            }
                         }
-                    }
+                    });
                 });
-            });
-            const dht::Value::Id serverId = ValueIdDist()(rand);
-            {
-                std::lock_guard lk(gitServersMtx_);
-                gitServers_[serverId] = std::move(gs);
+                const dht::Value::Id serverId = ValueIdDist()(shared->rand);
+                {
+                    std::lock_guard lk(shared->gitServersMtx_);
+                    shared->gitServers_[serverId] = std::move(gs);
+                }
+                channel->onShutdown([w, serverId](const std::error_code&) {
+                    // Run on main thread to avoid to be in mxSock's eventLoop
+                    runOnMainThread([serverId, w]() {
+                        if (auto sthis = w.lock()) {
+                            std::lock_guard lk(sthis->gitServersMtx_);
+                            sthis->gitServers_.erase(serverId);
+                        }
+                    });
+                });
+            };
+
+            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
+                // Not a member — but if this is a collaborative document held
+                // here, a member of its parent conversation may still open it:
+                // the serving holder writes the add commit, then serves.
+                convModule()
+                    ->authorizeDocumentPeer(conversationId,
+                                            peerId,
+                                            remoteDevice,
+                                            [w = weak(), conversationId, peerId, remoteDevice, channel, startGitServer](
+                                                bool authorized) {
+                                                if (authorized) {
+                                                    startGitServer();
+                                                    return;
+                                                }
+                                                if (auto shared = w.lock())
+                                                    JAMI_WARNING("[Account {:s}] [Conversation {}] Git "
+                                                                 "server requested, but peer {}/{} is "
+                                                                 "not authorized",
+                                                                 shared->getAccountID(),
+                                                                 conversationId,
+                                                                 peerId,
+                                                                 remoteDevice);
+                                                channel->shutdown();
+                                            });
+                return;
             }
-            channel->onShutdown([w = weak(), serverId](const std::error_code&) {
-                // Run on main thread to avoid to be in mxSock's eventLoop
-                runOnMainThread([serverId, w]() {
-                    if (auto sthis = w.lock()) {
-                        std::lock_guard lk(sthis->gitServersMtx_);
-                        sthis->gitServers_.erase(serverId);
-                    }
-                });
-            });
+
+            startGitServer();
         } else if (name.starts_with("collab://")) {
             std::string targetDevice, conversationId, documentId;
             if (!CollabChannelHandler::parse(name, targetDevice, conversationId, documentId)) {
@@ -3751,8 +3771,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     }
 
     if (not payload.empty()) {
-        req.write(reinterpret_cast<const char*>(payload.data()),
-                  static_cast<std::streamsize>(payload.size()));
+        req.write(reinterpret_cast<const char*>(payload.data()), static_cast<std::streamsize>(payload.size()));
     }
     req.close();
 

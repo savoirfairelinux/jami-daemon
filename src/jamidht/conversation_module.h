@@ -442,6 +442,23 @@ public:
                           const std::string& deviceId,
                           bool includeInvited = false) const;
 
+    /**
+     * Serve-time admission for collaborative documents, tried after
+     * isPeerAuthorized() said no. A peer in good standing in the document's
+     * parent conversation may open the document even though no member invited
+     * it yet: the serving holder vouches for it by writing the `add` commit
+     * itself, and only then lets the clone proceed. Peers banned from the
+     * document, or documents this device does not hold, are refused.
+     * @param documentId  the document's repository id
+     * @param uri         requesting peer
+     * @param deviceId    requesting device
+     * @param cb          called with whether the peer may be served
+     */
+    void authorizeDocumentPeer(const std::string& documentId,
+                               const std::string& uri,
+                               const std::string& deviceId,
+                               std::function<void(bool)>&& cb);
+
     // Remove swarm
     /**
      * Remove one to one conversations related to a contact

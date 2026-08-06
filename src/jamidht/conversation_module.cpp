@@ -3116,6 +3116,31 @@ ConversationModule::isPeerAuthorized(const std::string& convId,
 }
 
 void
+ConversationModule::authorizeDocumentPeer(const std::string& documentId,
+                                          const std::string& uri,
+                                          const std::string& deviceId,
+                                          std::function<void(bool)>&& cb)
+{
+    auto conv = pimpl_->getConversation(documentId);
+    if (!conv)
+        return cb(false); // We don't hold this document — nothing to vouch with
+    std::shared_ptr<Conversation> conversation;
+    {
+        std::lock_guard lk(conv->mtx);
+        conversation = conv->conversation;
+    }
+    if (!conversation || conversation->mode() != ConversationMode::DOCUMENT)
+        return cb(false);
+    if (conversation->isMemberBanned(uri))
+        return cb(false); // Banned from the document: only an admin's re-add can undo that
+    if (!isPeerAuthorized(conversation->parentConversationId(), uri, deviceId, false))
+        return cb(false);
+    // The add commit is what makes the clone we are about to serve
+    // self-justifying: the peer's membership is part of what it receives.
+    conversation->addMember(uri, [cb = std::move(cb)](bool ok, const std::string&) { cb(ok); });
+}
+
+void
 ConversationModule::removeContact(const std::string& uri, bool banned)
 {
     // Remove linked conversation's requests
