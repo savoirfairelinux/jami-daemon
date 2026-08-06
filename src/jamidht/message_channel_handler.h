@@ -31,7 +31,12 @@ public:
     using OnMessage
         = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&, std::string&, const std::string&)>;
     using OnPeerStateChanged = std::function<void(const std::string&, bool)>;
-    MessageChannelHandler(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer);
+    /** Called when a device becomes reachable, i.e. gets its first message channel. */
+    using OnDeviceConnected = std::function<void(const std::string&, const DeviceId&)>;
+    MessageChannelHandler(dhtnet::ConnectionManager& cm,
+                          OnMessage onMessage,
+                          OnPeerStateChanged onPeer,
+                          OnDeviceConnected onDeviceConnected);
     ~MessageChannelHandler();
 
     /**

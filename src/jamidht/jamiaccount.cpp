@@ -4235,26 +4235,23 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
             return;
         }
     }
-    handler->connect(
-        deviceId,
-        "",
-        [w = weak(), peerId](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& deviceId) {
-            if (socket)
-                dht::ThreadPool::io().run([w, peerId, deviceId] {
-                    if (auto acc = w.lock()) {
-                        acc->messageEngine_.onPeerOnline(peerId);
-                        acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
-                        if (!acc->presenceNote_.empty()) {
-                            // If a presence note is set, send it to this device.
-                            auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
-                            std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
-                            acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
-                        }
-                        acc->convModule()->syncConversations(peerId, deviceId.toString());
-                    }
-                });
-        },
-        connectionType);
+    // Nothing to do on completion: the work that has to happen once the device is
+    // reachable is driven by onMessageChannelReady().
+    handler->connect(deviceId, "", [](const std::shared_ptr<dhtnet::ChannelSocket>&, const DeviceId&) {}, connectionType);
+}
+
+void
+JamiAccount::onMessageChannelReady(const std::string& peerId, const DeviceId& deviceId)
+{
+    messageEngine_.onPeerOnline(peerId);
+    messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+    if (!presenceNote_.empty()) {
+        // If a presence note is set, send it to this device.
+        auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(presenceNote_)}};
+        sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+    }
+    convModule()->syncConversations(peerId, deviceId.toString());
 }
 
 void
@@ -4891,6 +4888,12 @@ JamiAccount::initConnectionManager()
                 asio::post(*Manager::instance().ioContext(), [w, peer, connected] {
                     if (auto acc = w.lock())
                         acc->onPeerConnected(peer, connected);
+                });
+            },
+            [w = weak()](const std::string& peer, const DeviceId& device) {
+                dht::ThreadPool::io().run([w, peer, device] {
+                    if (auto acc = w.lock())
+                        acc->onMessageChannelReady(peer, device);
                 });
             });
         channelHandlers_[Uri::Scheme::AUTH] = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
