@@ -169,15 +169,18 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         return -1;
     }
 
-    const auto* workdir = git_repository_workdir(repo);
-    if (!workdir) {
-        JAMI_ERROR("No working linked to the repository");
+    // Use the repository path rather than the working directory: repositories
+    // backing collaborative documents are bare and have no working directory.
+    const auto* repoPath = git_repository_path(repo);
+    if (!repoPath) {
+        JAMI_ERROR("No path linked to the repository");
         return -1;
     }
-    std::string_view path = workdir;
-    auto delimConv = path.rfind("/conversations");
+    std::string_view path = repoPath;
+    constexpr auto CONV_DIR = "/conversations"sv;
+    auto delimConv = path.rfind(CONV_DIR);
     if (delimConv == std::string::npos) {
-        JAMI_ERROR("No conversation id found");
+        JAMI_ERROR("No repository id found in {:s}", path);
         return -1;
     }
     auto delimAccount = path.rfind('/', delimConv - 1);

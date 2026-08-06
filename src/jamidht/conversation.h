@@ -394,6 +394,12 @@ public:
     std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
+     * The devices recorded in the repository, per member.
+     * @return member uri -> that member's device ids
+     */
+    std::map<std::string, std::vector<DeviceId>> memberDevices() const;
+
+    /**
      * Join a conversation
      * @return commit id to send
      */
@@ -472,6 +478,15 @@ public:
      */
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
     /**
+     * List every collaborative document announced in this conversation, by scanning the
+     * repository for COLLAB_DOC commits rather than the loaded message history. Lets a
+     * client show the editable documents without first paging in the (possibly old)
+     * announcing messages.
+     * @return  one map per COLLAB_DOC commit ("uri" = document id, "displayName",
+     *          "mimeType", "author", "timestamp"), newest first
+     */
+    std::vector<std::map<std::string, std::string>> collaborativeDocuments() const;
+    /**
      * Get last commit id
      * @return last commit id
      */
@@ -532,6 +547,62 @@ public:
      * @return the mode
      */
     ConversationMode mode() const;
+
+    /**
+     * For a collaborative document (mode DOCUMENT), the id of the conversation
+     * that announced it, read from the initial commit.
+     * @return empty for any other mode
+     */
+    std::string parentConversationId() const;
+
+    /**
+     * For a collaborative document, the MIME type of what it holds, read from
+     * the initial commit.
+     * @return empty for any other mode
+     */
+    std::string documentMimeType() const;
+
+    /**
+     * For a collaborative document, every CRDT update persisted in the
+     * repository, oldest first: the base64-encoded lines of the body of each
+     * checkpoint commit, in the order they must be replayed.
+     */
+    std::vector<std::string> documentUpdates() const;
+
+    /**
+     * Same as documentUpdates() but only up to (and including) the given
+     * commit, to rebuild the document as it was at that point.
+     * @return std::nullopt when the commit is unknown, as opposed to an empty
+     *         document at a known commit
+     */
+    std::optional<std::vector<std::string>> documentUpdatesAt(const std::string& commitId) const;
+
+    /**
+     * For a collaborative document, its persisted history: one map per
+     * checkpoint commit, newest first, with keys "id", "author", "device",
+     * "timestamp" and "deltas" (the number of updates the checkpoint carries).
+     * @param max  stop after this many entries; 0 for no limit
+     */
+    std::vector<std::map<std::string, std::string>> documentHistory(size_t max) const;
+
+    /**
+     * For a collaborative document, store an attachment and announce the
+     * commit to the swarm.
+     * @return {attachmentId, commitId}; commitId is empty when the same
+     *         content was already attached (nothing new to announce) and both
+     *         are empty on failure
+     */
+    std::pair<std::string, std::string> addDocumentAttachment(const std::vector<uint8_t>& data);
+
+    /**
+     * For a collaborative document, read an attachment's content at HEAD.
+     */
+    std::vector<uint8_t> documentAttachment(const std::string& attachmentId) const;
+
+    /**
+     * For a collaborative document, list the attachment ids present at HEAD.
+     */
+    std::vector<std::string> documentAttachmentIds() const;
 
     /**
      * One to one util, get initial members

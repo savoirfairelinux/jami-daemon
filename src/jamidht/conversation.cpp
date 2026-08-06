@@ -19,6 +19,7 @@
 
 #include "account_const.h"
 #include "jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
@@ -36,6 +37,7 @@
 #include "json_utils.h"
 #include "logger.h"
 #include "presence_manager.h"
+#include "string_utils.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/infohash.h>
@@ -366,7 +368,13 @@ private:
                   if (expiry <= now)
                       return std::nullopt;
 
-                  MobileLease lease {1, conversationId, identity.second->issuer->getId(), deviceId, toSecondsSinceEpoch(now), toSecondsSinceEpoch(expiry), {}};
+                  MobileLease lease {1,
+                                     conversationId,
+                                     identity.second->issuer->getId(),
+                                     deviceId,
+                                     toSecondsSinceEpoch(now),
+                                     toSecondsSinceEpoch(expiry),
+                                     {}};
                   lease.signature = identity.first->sign(mobileLeasePayload(lease));
                   return MobileNodeInfo {deviceId, std::move(lease)};
               },
@@ -646,6 +654,25 @@ public:
         if (!repository_)
             return;
         auto convId = repository_->id();
+        if (repository_->mode() == ConversationMode::DOCUMENT) {
+            // A document's commits are not messages: nothing here goes to the
+            // clients' conversation views or to the plugins. What a merge brought
+            // in -- checkpoints, attachments, a rename -- is replayed into the
+            // live CRDT session instead. Member events still feed the internal
+            // callback so the swarm's view of who to sync with stays fresh.
+            bool memberEvent = false;
+            for (const auto& c : commits)
+                memberEvent |= c.at(CommitKey::TYPE) == CommitType::MEMBER;
+            if (memberEvent && onMembersChanged_)
+                onMembersChanged_(repository_->memberUris("", {}));
+            // Nothing to replay for our own commits: what this device wrote came
+            // out of the live session in the first place.
+            if (!commits.empty() && !commitFromSelf)
+                if (auto acc = account_.lock())
+                    if (auto collab = acc->collaborativeEditing())
+                        collab->onRepositoryUpdated(repository_->parentConversationId(), convId);
+            return;
+        }
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
         addToHistory(loadedHistory_, commits, true, commitFromSelf);
@@ -1558,7 +1585,13 @@ Conversation::Impl::handleEdition(History& history,
         if (baseCommit) {
             auto itReact = baseCommit->body.find(CommitKey::REACT_TO);
             std::string toReplace = (baseCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
-            auto body = sharedCommit->body.at(toReplace);
+            // An edition need not carry the field it replaces: retiring a
+            // collaborative document says nothing but which commit it retires.
+            // Absent means empty, which is what an edition to nothing already
+            // means everywhere below.
+            std::string body;
+            if (auto itBody = sharedCommit->body.find(toReplace); itBody != sharedCommit->body.end())
+                body = itBody->second;
             // Edit reaction
             if (itReact != baseCommit->body.end()) {
                 baseCommit->body[toReplace] = body; // Replace body if pending
@@ -1735,6 +1768,28 @@ Conversation::Impl::addToHistory(History& history,
     bool needToSetMessageStatus = !commitFromSelf && &history == &loadedHistory_;
 
     std::vector<std::shared_ptr<libjami::SwarmMessage>> sharedCommits;
+    // Apply the document removals of this batch before anything else in it.
+    //
+    // A removal is always newer than the announcement it retires, but the batch is
+    // walked oldest first when messages come in and newest first when older ones
+    // are paged back in. Acting in batch order would therefore recreate the
+    // repository of every deleted document each time the user scrolls up.
+    for (const auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        auto editIt = commit.find(CommitKey::EDIT);
+        if (editIt == commit.end() || editIt->second.empty())
+            continue;
+        // A removal names no document of its own: which one it retires is read from
+        // the announcement it edits, the only commit the swarm ties to its author.
+        // Otherwise a member could retire somebody else's document.
+        if (auto announcement = repository_->getCommit(editIt->second)) {
+            const auto& docId = announcement->commitMsg.uri;
+            if (!docId.empty())
+                acc->collaborativeEditing()->onDocumentRemoved(repository_->id(), docId);
+        }
+    }
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         if (history.quickAccess.find(commitId) != history.quickAccess.end())
@@ -1743,6 +1798,19 @@ Conversation::Impl::addToHistory(History& history,
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        // A collaborative document is announced here, but its content lives in a
+        // separate repository: make sure that repository exists locally so it can
+        // be replicated. The commit itself falls through and is displayed like a
+        // shared file.
+        if (typeIt != commit.end() && typeIt->second == CommitType::COLLAB_DOC) {
+            // Removals were applied above, before any announcement of this batch.
+            auto editIt = commit.find(CommitKey::EDIT);
+            bool isRemoval = editIt != commit.end() && !editIt->second.empty();
+            if (!isRemoval) {
+                if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
+                    acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
+            }
+        }
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
@@ -2158,6 +2226,12 @@ Conversation::uriFromDevice(const std::string& deviceId) const
     return pimpl_->repository_->uriFromDevice(deviceId);
 }
 
+std::map<std::string, std::vector<DeviceId>>
+Conversation::memberDevices() const
+{
+    return pimpl_->repository_->devices();
+}
+
 void
 Conversation::monitor()
 {
@@ -2244,6 +2318,65 @@ std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
     return pimpl_->repository_->getCommit(commitId);
+}
+
+namespace {
+/**
+ * Announcement commit ids retired by a removal, from a full conversation log.
+ *
+ * Which document a removal retires is read from the announcement it edits, never from
+ * the removal itself: the swarm only checks that an edition carries the author of the
+ * commit it edits, so trusting an id carried by the removal would let a member retire
+ * a document somebody else created.
+ */
+std::set<std::string>
+retiredAnnouncements(const std::vector<std::map<std::string, std::string>>& commits)
+{
+    std::set<std::string> retired;
+    for (const auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        if (auto editIt = commit.find(CommitKey::EDIT); editIt != commit.end() && !editIt->second.empty())
+            retired.emplace(editIt->second);
+    }
+    return retired;
+}
+} // namespace
+
+std::vector<std::map<std::string, std::string>>
+Conversation::collaborativeDocuments() const
+{
+    if (!pimpl_->repository_)
+        return {};
+    // Read straight from git so documents are found even when their announcing commit
+    // is not (or no longer) in the loaded message window.
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->convCommitsToMap(pimpl_->repository_->log(options));
+    auto retired = retiredAnnouncements(commits);
+    std::vector<std::map<std::string, std::string>> result;
+    for (auto& commit : commits) {
+        auto typeIt = commit.find(CommitKey::TYPE);
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+            continue;
+        auto uriIt = commit.find(CommitKey::URI);
+        if (uriIt == commit.end() || uriIt->second.empty())
+            continue;
+        auto idIt = commit.find("id");
+        if (idIt != commit.end() && retired.count(idIt->second) != 0)
+            continue;
+        // A document is addressed by its own id everywhere -- opening, renaming,
+        // removing -- so that is what "id" carries here; the commit's own id only
+        // says which timeline interaction announced it.
+        result.push_back({{"id", uriIt->second},
+                          {"announcement", idIt != commit.end() ? idIt->second : ""},
+                          {"displayName", commit[CommitKey::DISPLAY_NAME]},
+                          {"mimeType", commit[CommitKey::MIME_TYPE]},
+                          {"author", commit["author"]},
+                          {"timestamp", commit["timestamp"]}});
+    }
+    return result;
 }
 
 void
@@ -2627,6 +2760,109 @@ Conversation::mode() const
     return pimpl_->repository_->mode();
 }
 
+std::string
+Conversation::parentConversationId() const
+{
+    return pimpl_->repository_->parentConversationId();
+}
+
+std::string
+Conversation::documentMimeType() const
+{
+    return pimpl_->repository_->documentMimeType();
+}
+
+namespace {
+// The base64 update lines of every checkpoint commit in a document log,
+// oldest first, i.e. in the order the updates must be replayed.
+std::vector<std::string>
+collectUpdates(const std::vector<ConversationCommit>& commits)
+{
+    std::vector<std::string> updates;
+    for (auto it = commits.rbegin(); it != commits.rend(); ++it) {
+        if (it->commitMsg.type != CommitType::CHECKPOINT)
+            continue;
+        for (const auto& line : split_string(it->commitMsg.body, '\n'))
+            if (!line.empty())
+                updates.emplace_back(line);
+    }
+    return updates;
+}
+} // namespace
+
+std::vector<std::string>
+Conversation::documentUpdates() const
+{
+    LogOptions options;
+    options.skipMerge = true;
+    return collectUpdates(pimpl_->repository_->log(options));
+}
+
+std::optional<std::vector<std::string>>
+Conversation::documentUpdatesAt(const std::string& commitId) const
+{
+    if (!getCommit(commitId))
+        return std::nullopt;
+    LogOptions options;
+    options.from = commitId;
+    options.skipMerge = true;
+    return collectUpdates(pimpl_->repository_->log(options));
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::documentHistory(size_t max) const
+{
+    LogOptions options;
+    options.skipMerge = true;
+    auto commits = pimpl_->repository_->log(options);
+    std::vector<std::map<std::string, std::string>> result;
+    for (const auto& commit : commits) {
+        if (commit.commitMsg.type != CommitType::CHECKPOINT)
+            continue;
+        size_t deltas = 0;
+        for (const auto& line : split_string(commit.commitMsg.body, '\n'))
+            if (!line.empty())
+                ++deltas;
+        result.emplace_back(std::map<std::string, std::string> {
+            {"id", commit.id},
+            {"author", commit.authorId},
+            {"device", commit.author.email},
+            {"timestamp", std::to_string(commit.timestamp)},
+            {"deltas", std::to_string(deltas)},
+        });
+        if (max != 0 && result.size() >= max)
+            break;
+    }
+    return result;
+}
+
+std::pair<std::string, std::string>
+Conversation::addDocumentAttachment(const std::vector<uint8_t>& data)
+{
+    std::unique_lock lk(pimpl_->writeMtx_);
+    auto headBefore = pimpl_->repository_->getHead();
+    auto attachmentId = pimpl_->repository_->addAttachment(data);
+    if (attachmentId.empty())
+        return {};
+    auto head = pimpl_->repository_->getHead();
+    if (head == headBefore)
+        return {attachmentId, {}}; // Same content already attached, nothing new to announce
+    pimpl_->announce(head, true);
+    return {attachmentId, head};
+}
+
+std::vector<uint8_t>
+Conversation::documentAttachment(const std::string& attachmentId) const
+{
+    return pimpl_->repository_->attachment(attachmentId);
+}
+
+std::vector<std::string>
+Conversation::documentAttachmentIds() const
+{
+    return pimpl_->repository_->attachmentIds();
+}
+
 std::vector<std::string>
 Conversation::getInitialMembers() const
 {
@@ -2652,6 +2888,9 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
+            if (repo->mode() == ConversationMode::DOCUMENT)
+                return; // A document is not a conversation for the client; a rename
+                        // is reported through CollaborativeDocumentRenamed instead
             emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(sthis->pimpl_->accountId_,
                                                                                 repo->id(),
                                                                                 repo->infos());
