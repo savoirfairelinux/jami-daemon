@@ -665,12 +665,15 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
         // session and hands the client the difference. Until then the document
         // is open and empty, exactly like a conversation still syncing.
         std::string announcer;
+        std::string announcedName;
         for (const auto& doc : documents(conversationId)) {
             auto idIt = doc.find("id");
             if (idIt == doc.end() || idIt->second != documentId)
                 continue;
             if (auto authorIt = doc.find("author"); authorIt != doc.end())
                 announcer = authorIt->second;
+            if (auto nameIt = doc.find("displayName"); nameIt != doc.end())
+                announcedName = nameIt->second;
             break;
         }
         if (announcer.empty()) {
@@ -683,6 +686,10 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             // what lets the clone's completion replay into this session.
             std::lock_guard<std::mutex> lk(mutex_);
             session->persistedLoaded = true;
+            // The client saw the announcement's name; recording it is what lets
+            // a rename that lands with (or after) the clone be seen as one.
+            if (!session->announcedName)
+                session->announcedName = announcedName;
         }
         cm->cloneDocumentFrom(documentId, announcer);
         // Live edits are not gated on the clone: members with the document open
