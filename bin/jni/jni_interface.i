@@ -336,7 +336,13 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::ConversationRemoved>(bind(&ConversationCallback::conversationRemoved, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&ConversationCallback::conversationMemberEvent, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::OnConversationError>(bind(&ConversationCallback::onConversationError, convM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3))
+        exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::CollaborativeDocumentUpdate>(bind(&ConversationCallback::collaborativeDocumentUpdate, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::CollaborativeAwarenessChanged>(bind(&ConversationCallback::collaborativeAwarenessChanged, convM, _1, _2, _3, _4, _5, _6)),
+        exportable_callback<ConversationSignal::CollaborativeParticipantLeft>(bind(&ConversationCallback::collaborativeParticipantLeft, convM, _1, _2, _3, _4, _5)),
+        exportable_callback<ConversationSignal::CollaborativeDocumentRenamed>(bind(&ConversationCallback::collaborativeDocumentRenamed, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::CollaborativeDocumentRemoved>(bind(&ConversationCallback::collaborativeDocumentRemoved, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::CollaborativeAttachmentAdded>(bind(&ConversationCallback::collaborativeAttachmentAdded, convM, _1, _2, _3, _4)),
     };
 
     const std::map<std::string, SharedCallback> networkServiceEvHandlers = {

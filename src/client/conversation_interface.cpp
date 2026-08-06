@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/collaborative_editing.h"
 #include "jamidht/conversation_module.h"
 
 namespace libjami {
@@ -269,6 +270,154 @@ reloadConversationsAndRequests(const std::string& accountId)
             convModule->loadConversations();
         }
     }
+}
+
+std::string
+createCollaborativeDocument(const std::string& accountId,
+                            const std::string& conversationId,
+                            const std::string& name,
+                            const std::string& mimeType)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->createDocument(conversationId, name, mimeType);
+    return {};
+}
+
+std::vector<uint8_t>
+openCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->openDocument(conversationId, documentId);
+    return {};
+}
+
+bool
+removeCollaborativeDocument(const std::string& accountId,
+                            const std::string& conversationId,
+                            const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->removeDocument(conversationId, documentId);
+    return false;
+}
+
+bool
+removeCollaborativeDocumentLocally(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->removeDocumentLocally(conversationId, documentId);
+    return false;
+}
+
+void
+closeCollaborativeDocument(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->closeDocument(conversationId, documentId);
+}
+
+void
+applyCollaborativeUpdate(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& documentId,
+                         const std::vector<uint8_t>& update)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->applyUpdate(conversationId, documentId, update);
+}
+
+void
+setCollaborativeAwareness(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& documentId,
+                          const std::string& state)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->setAwareness(conversationId, documentId, state);
+}
+
+std::vector<uint8_t>
+collaborativeDocumentState(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentState(conversationId, documentId);
+    return {};
+}
+
+void
+setCollaborativeDocumentName(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& documentId,
+                             const std::string& name)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->collaborativeEditing()->setName(conversationId, documentId, name);
+}
+
+std::string
+collaborativeDocumentName(const std::string& accountId, const std::string& conversationId, const std::string& documentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentName(conversationId, documentId);
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+getCollaborativeDocuments(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documents(conversationId);
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+getCollaborativeDocumentHistory(const std::string& accountId,
+                                const std::string& conversationId,
+                                const std::string& documentId,
+                                uint32_t max)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->history(conversationId, documentId, max);
+    return {};
+}
+
+std::vector<uint8_t>
+collaborativeDocumentStateAt(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& documentId,
+                             const std::string& commitId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->documentStateAt(conversationId, documentId, commitId);
+    return {};
+}
+
+std::string
+addCollaborativeAttachment(const std::string& accountId,
+                           const std::string& conversationId,
+                           const std::string& documentId,
+                           const std::vector<uint8_t>& data)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->addAttachment(conversationId, documentId, data);
+    return {};
+}
+
+std::vector<uint8_t>
+collaborativeAttachment(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::string& documentId,
+                        const std::string& attachmentId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->collaborativeEditing()->attachment(conversationId, documentId, attachmentId);
+    return {};
 }
 
 } // namespace libjami

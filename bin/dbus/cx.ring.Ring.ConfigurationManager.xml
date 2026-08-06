@@ -818,6 +818,233 @@
             </arg>
         </signal>
 
+        <method name="createCollaborativeDocument" tp:name-for-bindings="createCollaborativeDocument">
+            <tp:docstring>
+               Create a collaborative document in a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+            <arg type="s" name="mimeType" direction="in"/>
+            <arg type="s" name="documentId" direction="out"/>
+        </method>
+
+        <method name="openCollaborativeDocument" tp:name-for-bindings="openCollaborativeDocument">
+            <tp:docstring>
+               Open a collaborative document and start receiving its updates
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="content" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+        </method>
+
+        <method name="closeCollaborativeDocument" tp:name-for-bindings="closeCollaborativeDocument">
+            <tp:docstring>
+               Close a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+        </method>
+
+        <method name="removeCollaborativeDocument" tp:name-for-bindings="removeCollaborativeDocument">
+            <tp:docstring>
+               Remove a collaborative document from a conversation, for every member
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="b" name="removed" direction="out"/>
+        </method>
+
+        <method name="removeCollaborativeDocumentLocally" tp:name-for-bindings="removeCollaborativeDocumentLocally">
+            <tp:docstring>
+               Remove a collaborative document from this device only
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="b" name="removed" direction="out"/>
+        </method>
+
+        <method name="applyCollaborativeUpdate" tp:name-for-bindings="applyCollaborativeUpdate">
+            <tp:docstring>
+               Merge a Y-CRDT update produced by the client into a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="update" direction="in"/>
+        </method>
+
+        <method name="setCollaborativeAwareness" tp:name-for-bindings="setCollaborativeAwareness">
+            <tp:docstring>
+               Share opaque ephemeral state (presence, cursor) in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="state" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentState" tp:name-for-bindings="collaborativeDocumentState">
+            <tp:docstring>
+               Get the whole state of a collaborative document as a Y-CRDT update
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="state" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+        </method>
+
+        <method name="setCollaborativeDocumentName" tp:name-for-bindings="setCollaborativeDocumentName">
+            <tp:docstring>
+               Rename a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentName" tp:name-for-bindings="collaborativeDocumentName">
+            <tp:docstring>
+               Get the name of a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="name" direction="out"/>
+        </method>
+
+        <method name="getCollaborativeDocuments" tp:name-for-bindings="getCollaborativeDocuments">
+            <tp:docstring>
+               List the collaborative documents of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="documents" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <method name="getCollaborativeDocumentHistory" tp:name-for-bindings="getCollaborativeDocumentHistory">
+            <tp:docstring>
+               List the checkpoints of a collaborative document, newest first
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="history" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="u" name="max" direction="in"/>
+        </method>
+
+        <method name="collaborativeDocumentStateAt" tp:name-for-bindings="collaborativeDocumentStateAt">
+            <tp:docstring>
+               State of a collaborative document as of a given checkpoint, as a Y-CRDT update
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="state" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="commitId" direction="in"/>
+        </method>
+
+        <method name="addCollaborativeAttachment" tp:name-for-bindings="addCollaborativeAttachment">
+            <tp:docstring>
+               Store a binary payload a collaborative document refers to, returning its id
+            </tp:docstring>
+            <arg type="s" name="attachmentId" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="data" direction="in"/>
+        </method>
+
+        <method name="collaborativeAttachment" tp:name-for-bindings="collaborativeAttachment">
+            <tp:docstring>
+               Read back a binary payload of a collaborative document; empty when not held yet
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="data" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="documentId" direction="in"/>
+            <arg type="s" name="attachmentId" direction="in"/>
+        </method>
+
+        <signal name="collaborativeDocumentUpdate" tp:name-for-bindings="collaborativeDocumentUpdate">
+            <tp:docstring>
+               Notify clients of a Y-CRDT update to merge into their replica of the document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="std::vector&lt;uint8_t&gt;"/>
+            <arg type="ay" name="update"/>
+        </signal>
+
+        <signal name="collaborativeAwarenessChanged" tp:name-for-bindings="collaborativeAwarenessChanged">
+            <tp:docstring>
+               Notify clients that a peer shared ephemeral state in a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+            <arg type="t" name="clientId"/>
+            <arg type="s" name="state"/>
+        </signal>
+
+        <signal name="collaborativeParticipantLeft" tp:name-for-bindings="collaborativeParticipantLeft">
+            <tp:docstring>
+               Notify clients that a peer left a collaborative document
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="peerId"/>
+            <arg type="t" name="clientId"/>
+        </signal>
+
+        <signal name="collaborativeDocumentRenamed" tp:name-for-bindings="collaborativeDocumentRenamed">
+            <tp:docstring>
+               Notify clients that a collaborative document was renamed
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="name"/>
+        </signal>
+
+        <signal name="collaborativeDocumentRemoved" tp:name-for-bindings="collaborativeDocumentRemoved">
+            <tp:docstring>
+               Notify clients that a collaborative document is no longer held here,
+               either because its author retired it for every member (everywhere
+               true) or because this device alone removed it
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="b" name="everywhere"/>
+        </signal>
+
+        <signal name="collaborativeAttachmentAdded" tp:name-for-bindings="collaborativeAttachmentAdded">
+            <tp:docstring>
+               Notify clients that a binary payload referenced by a document is now available
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="s" name="attachmentId"/>
+        </signal>
+
         <method name="setVolume" tp:name-for-bindings="setVolume">
             <tp:docstring>
                 <p>Sets the volume using a linear scale [0,100].</p>
