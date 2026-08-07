@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2c9d44d_934edf61",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:15Z",
+      "side": 1,
+      "message": "[error] Line 223: 🔴 `applyCollaborativeUpdate()` is a public mutating API that silently drops invalid or oversized updates while returning `void`. That makes it impossible for clients to distinguish an accepted edit from data loss, and changing this later will be an ABI/API break. Return a `bool` or status/error enum, or provide a failure signal/callback so clients can retry or surface the failure.",
+      "revId": "580c30328c21eda5bda7d6cbb73917f87cb4cfa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f015966_18457198",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:15Z",
+      "side": 1,
+      "message": "[warning] Line 242: 🟡 `setCollaborativeAwareness()` documents that oversized states are dropped, but the API also returns `void`. Even though awareness is ephemeral, clients should be able to know that their local presence/cursor state was rejected. Consider returning `bool` or a status code before this public API is frozen.",
+      "revId": "580c30328c21eda5bda7d6cbb73917f87cb4cfa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
