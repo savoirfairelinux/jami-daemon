@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94b9a65a_08034e28",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T20:14:06Z",
+      "side": 1,
+      "message": "[error] Line 27: 🔴 Changing the read inactivity timeout from 1 minute to 1 day makes a stalled fetch hold `ConversationRepository::opMtx_` for essentially a full day, blocking every other operation on the conversation as the comment warns. Keep this bounded to a short failure interval, or move the blocking wait out from under the conversation mutex before extending the timeout.",
+      "revId": "9cff33334fa2c6cf1969b0a69de0a4d4c6b2d3aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
