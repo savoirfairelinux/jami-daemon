@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad916894_f419c99c",
+        "filename": "test/unitTest/conversation/gittransport.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T20:04:38Z",
+      "side": 1,
+      "message": "[error] Line 216: 🔴 `P2PStreamRead()` returns before writing to `read` on this error path, so this test leaves `read \u003d\u003d 42` and fails. Initialize `*read \u003d 0` at the start of `P2PStreamRead()` if that is the intended contract, or do not assert the value after an error.",
+      "revId": "a0324409e5349e17972d59ca1aa244780f28b633",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec01a5f0_6cfe7320",
+        "filename": "test/unitTest/conversation/gittransport.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T20:04:38Z",
+      "side": 1,
+      "message": "[error] Line 225: 🔴 This assertion does not match the implementation: `waitForData()` returning 0 with no error is currently treated as EOF, so `P2PStreamRead()` returns 0, not `\u003c 0`. Either make the production code treat timeout/idle as an error and set `giterr`, or update/remove this test if EOF is the intended libgit2 contract.",
+      "revId": "a0324409e5349e17972d59ca1aa244780f28b633",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
