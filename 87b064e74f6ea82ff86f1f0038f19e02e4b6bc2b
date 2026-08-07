@@ -16,6 +16,24 @@
       "message": "[warning] Line 1992: 🟡 This skips re-reserving when the previous mapping used the same internal port, even if that mapping is no longer usable, e.g. after a transient FAILED state or an invalid/released reservation. Please include the mapping validity/state in the condition, or retry reservation when `!dhtUpnpMapping_.isValid()`/state is FAILED while the bound port is unchanged.",
       "revId": "87b064e74f6ea82ff86f1f0038f19e02e4b6bc2b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a3bcfe3_c3fdd0be",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1992,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-08-07T18:10:07Z",
+      "side": 1,
+      "message": "isValid() cannot be used here because it is false for ordinary pending/no-IGD mappings that remain reserved and are managed by dhtnet auto-update. Re-reserving also races the asynchronous release. Explicit releases reset the stored internal port. There is a separate dhtnet issue where auto-update does not preserve a fixed internal port; that should be addressed in the retry implementation rather than this condition.",
+      "parentUuid": "047be453_17fdd901",
+      "revId": "87b064e74f6ea82ff86f1f0038f19e02e4b6bc2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
