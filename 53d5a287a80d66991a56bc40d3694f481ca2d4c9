@@ -16,6 +16,24 @@
       "message": "[error] Line 136: 🔴 `waitForData()` receives an error_code, but this path treats every non-positive result as a successful EOF and ignores `ec`. If the socket reports a real transport error here, libgit2 will see a clean end-of-stream and may treat a truncated pack as success or report a misleading error later. Check `ec` immediately after `waitForData()` and return `-1` with `giterr_set_str(GITERR_NET, ec.message().c_str())` before handling the timeout/zero-data EOF case.",
       "revId": "53d5a287a80d66991a56bc40d3694f481ca2d4c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d047b52a_654085c6",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-08-07T20:15:20Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "70853cfd_76243232",
+      "revId": "53d5a287a80d66991a56bc40d3694f481ca2d4c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
