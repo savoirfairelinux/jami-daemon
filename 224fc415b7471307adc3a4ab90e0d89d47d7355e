@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56e7ae17_e5cf09a7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1157,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:48Z",
+      "side": 1,
+      "message": "[error] Line 1157: 🔴 `newFile` is not checked before `as_view(newFile)`. A checkpoint that deletes the author\u0027s own device certificate can reach this branch and dereference an empty blob, potentially crashing validation instead of rejecting the commit. Add `if (!newFile) { ... return false; }` before calling `verifyCertificate`.",
+      "revId": "224fc415b7471307adc3a4ab90e0d89d47d7355e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbd713e6_61cead1c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3994,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:48Z",
+      "side": 1,
+      "message": "[warning] Line 3994: 🟡 `addAttachment()` is documented as document-repository-only but does not enforce `mode() \u003d\u003d ConversationMode::DOCUMENT`. Calling it on a normal conversation creates a checkpoint commit that this same validator later rejects, leaving the repository in an invalid state. Return an error/empty id before mutating when the mode is not `DOCUMENT`.",
+      "revId": "224fc415b7471307adc3a4ab90e0d89d47d7355e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
