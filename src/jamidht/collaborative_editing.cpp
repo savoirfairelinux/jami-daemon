@@ -973,10 +973,6 @@ CollaborativeEditing::connectRealtimeChannels(const std::shared_ptr<Session>& se
     auto conversation = documentConversation(session->documentId);
     if (!conversation)
         return; // the clone is still in flight: its completion comes back here
-    auto& handlers = account->channelHandlers();
-    auto handlerIt = handlers.find(Uri::Scheme::YDOC);
-    if (handlerIt == handlers.end() || !handlerIt->second)
-        return;
     // Every device the repository lists is asked, not just the ones the
     // document's swarm is connected to right now: the channel dials through the
     // connection manager, which reaches a device the DRT has not settled on
@@ -995,9 +991,7 @@ CollaborativeEditing::connectRealtimeChannels(const std::shared_ptr<Session>& se
             }
             // The socket is handled where the accepting side's is, in
             // YdocChannelHandler::onReady; a refusal needs nothing done.
-            handlerIt->second->connect(device,
-                                       session->documentId,
-                                       [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
+            account->connectYdocDevice(device, session->documentId);
         }
     }
 }

@@ -572,6 +572,16 @@ public:
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
 
+    /**
+     * Ask a device for a realtime channel on a collaborative document.
+     * A refusal (the peer does not have the document open) needs nothing done,
+     * and an accepted socket is handed to CollaborativeEditing by the handler's
+     * onReady, so no callback is taken here.
+     * @param deviceId      The device to dial
+     * @param documentId    The document (repository) id
+     */
+    void connectYdocDevice(const DeviceId& deviceId, const std::string& documentId);
+
     dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
 
     /// Returns true if `peerAccountUri` is an active

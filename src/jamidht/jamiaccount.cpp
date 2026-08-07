@@ -2412,6 +2412,16 @@ JamiAccount::onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& c
 }
 
 void
+JamiAccount::connectYdocDevice(const DeviceId& deviceId, const std::string& documentId)
+{
+    std::shared_lock lk(connManagerMtx_);
+    auto itHandler = channelHandlers_.find(Uri::Scheme::YDOC);
+    if (itHandler == channelHandlers_.end() || !itHandler->second)
+        return;
+    itHandler->second->connect(deviceId, documentId, [](std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&) {});
+}
+
+void
 JamiAccount::onConnectionReady(const DeviceId& deviceId,
                                const std::string& name,
                                std::shared_ptr<dhtnet::ChannelSocket> channel)
