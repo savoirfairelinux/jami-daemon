@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5da7bf91_cd391f43",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 676,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 676: 🔴 `openCollaborativeDocument` is exposed in the DBus XML as `ay`/`std::vector\u003cuint8_t\u003e`, but this wrapper returns `std::string` while `libjami::openCollaborativeDocument` returns `std::vector\u003cuint8_t\u003e`. This breaks the DBus binding build/API contract; change the return type to `std::vector\u003cuint8_t\u003e`.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02979479_95e12920",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 703,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 703: 🔴 `applyCollaborativeUpdate` receives the update as `std::string`, but the DBus XML declares `ay` and the libjami API takes `const std::vector\u003cuint8_t\u003e\u0026`. This either fails to compile or corrupts binary CRDT updates; use `const std::vector\u003cuint8_t\u003e\u0026 update` and forward it unchanged.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e56323a_1226ddfb",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 718: 🔴 `collaborativeDocumentState` is declared as a string here, but the XML and libjami API expose binary state as `std::vector\u003cuint8_t\u003e`. Return `std::vector\u003cuint8_t\u003e` to preserve arbitrary CRDT bytes and match the generated DBus signature.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9888e2e5_a051589c",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 756,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 756: 🔴 `collaborativeDocumentStateAt` has the same binary/string mismatch as the current-state API. The XML declares `ay` and libjami returns `std::vector\u003cuint8_t\u003e`; update this wrapper return type accordingly.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b1552ea_1f9775d9",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 902,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 902: 🔴 The DBus signal binding for `CollaborativeAwarenessChanged` drops one argument: the signal has accountId, conversationId, documentId, peerId, clientId, and state, but the bind only forwards five placeholders. Forward `_6` as well so clients receive the awareness state and the callback signature matches.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb72419c_16bf5428",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:55Z",
+      "side": 1,
+      "message": "[error] Line 904: 🔴 The DBus signal binding for `CollaborativeParticipantLeft` drops `clientId`: the XML/JNI callback exposes five arguments, but only four placeholders are bound. Forward `_5` so clients can distinguish which participant client left and the callback signature matches.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
