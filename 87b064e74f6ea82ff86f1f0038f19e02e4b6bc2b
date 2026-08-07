@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "047be453_17fdd901",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1992,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T17:43:15Z",
+      "side": 1,
+      "message": "[warning] Line 1992: 🟡 This skips re-reserving when the previous mapping used the same internal port, even if that mapping is no longer usable, e.g. after a transient FAILED state or an invalid/released reservation. Please include the mapping validity/state in the condition, or retry reservation when `!dhtUpnpMapping_.isValid()`/state is FAILED while the bound port is unchanged.",
+      "revId": "87b064e74f6ea82ff86f1f0038f19e02e4b6bc2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
