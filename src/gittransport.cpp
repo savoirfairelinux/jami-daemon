@@ -25,7 +25,7 @@ using namespace std::string_view_literals;
 
 // Inactivity timeout for a git fetch. Reads run with ConversationRepository::opMtx_ held, so an
 // unbounded wait here blocks every other operation on the conversation.
-constexpr auto P2P_READ_TIMEOUT = std::chrono::minutes(1);
+constexpr auto P2P_READ_TIMEOUT = std::chrono::days(1);
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
@@ -76,35 +76,37 @@ generateRequest(git_buf* request, const std::string& cmd, std::string_view url)
         .append(deviceId)
         .append(nullSeparator);
 
-    git_buf_set(request, str.data(), str.size());
-    return 0;
+    return git_buf_set(request, str.data(), str.size());
 }
 
 int
 sendCmd(P2PStream* s)
 {
-    auto res = 0;
     git_buf request = {};
-    if ((res = generateRequest(&request, s->cmd, s->url)) < 0) {
-        git_buf_dispose(&request);
-        return res;
-    }
-
-    std::error_code ec;
-    auto sock = s->socket.lock();
-    if (!sock) {
+    if (generateRequest(&request, s->cmd, s->url) < 0) {
         git_buf_dispose(&request);
         return -1;
     }
-    if ((res = static_cast<int>(sock->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec)))) {
-        s->sent_command = 1;
+
+    auto sock = s->socket.lock();
+    if (!sock) {
         git_buf_dispose(&request);
-        return res;
+        giterr_set_str(GITERR_NET, "unavailable socket");
+        return -1;
+    }
+
+    // write() reports how many bytes it managed to push, so only ec tells a
+    // short write apart from a complete one.
+    std::error_code ec;
+    sock->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec);
+    git_buf_dispose(&request);
+    if (ec) {
+        giterr_set_str(GITERR_NET, ec.message().c_str());
+        return -1;
     }
 
     s->sent_command = 1;
-    git_buf_dispose(&request);
-    return res;
+    return 0;
 }
 
 int
@@ -118,23 +120,29 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         return -1;
     }
 
-    int res = 0;
     // If it's the first read, we need to send
     // the upload-pack command
-    if (!fs->sent_command && (res = sendCmd(fs)) < 0)
-        return res;
+    if (!fs->sent_command && sendCmd(fs) < 0)
+        return -1;
 
     std::error_code ec;
     // TODO ChannelSocket needs a blocking read operation
     auto datalen = sock->waitForData(P2P_READ_TIMEOUT, ec);
-    if (datalen > 0)
-        *read = sock->read(reinterpret_cast<unsigned char*>(buffer), std::min<size_t>(datalen, buflen), ec);
-    else
-        JAMI_WARNING("[git] {}: no data received for {}s, ending stream",
-                     fs->url,
-                     std::chrono::duration_cast<std::chrono::seconds>(P2P_READ_TIMEOUT).count());
+    if (ec && ec != asio::error::eof) {
+        auto reason = fmt::format("channel closed ({})", ec.message());
+        JAMI_WARNING("[git] {}: {}, ending stream", fs->url, reason);
+        giterr_set_str(GITERR_NET, reason.c_str());
+        return -1;
+    }
 
-    return res;
+    *read = sock->read(reinterpret_cast<unsigned char*>(buffer), std::min<size_t>(datalen, buflen), ec);
+    if (ec && ec != asio::error::eof) {
+        JAMI_WARNING("[git] read error: {}", ec.message());
+        giterr_set_str(GITERR_NET, ec.message().c_str());
+        return -1;
+    }
+
+    return 0;
 }
 
 int
