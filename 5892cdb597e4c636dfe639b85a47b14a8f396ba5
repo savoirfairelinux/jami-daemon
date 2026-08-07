@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79a581c2_92fbfeab",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:59Z",
+      "side": 1,
+      "message": "[error] Line 147: 🔴 This file uses `std::function` but does not include `\u003cfunctional\u003e`, and later uses `std::cout` without including `\u003ciostream\u003e`. Relying on transitive includes is non-portable and likely explains cross-platform build failures. Add the direct standard headers needed by this translation unit.",
+      "revId": "5892cdb597e4c636dfe639b85a47b14a8f396ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d7eb6401_4c824bad",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-07T19:50:59Z",
+      "side": 1,
+      "message": "[error] Line 255: 🔴 Signal callbacks mutate UserData without taking `mtx`, while test predicates read the same fields under `lk`. These callbacks can run on daemon threads, so this is a data race and can make the tests flaky or undefined. Guard every `data-\u003e...` mutation with the fixture mutex, or switch these fields/containers to thread-safe synchronization consistently.",
+      "revId": "5892cdb597e4c636dfe639b85a47b14a8f396ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
