@@ -4949,6 +4949,8 @@ JamiAccount::initConnectionManager()
 void
 JamiAccount::updateUpnpController()
 {
+    if (upnpCtrl_ and (not config().upnpEnabled or not isUsable()))
+        releaseDhtUpnpMapping();
     Account::updateUpnpController();
     if (connectionManager_) {
         auto config = connectionManager_->getConfig();
