@@ -1,0 +1,10 @@
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Code-Review-1: Virtual Reviewer <virtual-reviewer@jami.net>
+Verified+1: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 07 Aug 2026 16:18:31 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/35410
+Comments-Total: 7
+Comments-Unresolved: 5
+Project: jami-daemon
+Branch: refs/heads/master
