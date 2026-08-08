@@ -115,6 +115,7 @@ private:
     void stopSender(bool forceStopSocket = false);
     void startReceiver();
     void stopReceiver(bool forceStopSocket = false);
+    void seedVideoBitrate(unsigned pixels);
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
@@ -126,19 +127,16 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
-    // Whether the encoder bitrate was already sized from the mixer surface for
-    // the current conference (seed once, then let RTCP adaptation drive it).
-    bool confBitrateSeeded_ {false};
-    // Mixer surface (in pixels) the budget was seeded with; a mixer
-    // resolution change triggers a re-seed.
-    unsigned confSeededPixels_ {0};
+    // Seed once per output resolution, then let RTCP adaptation drive the bitrate.
+    bool bitrateSeeded_ {false};
+    unsigned seededPixels_ {0};
+    unsigned seededCodecId_ {0};
 
     std::function<void(void)> requestKeyFrameCallback_;
 
     bool check_RCTP_Info_RR(RTCPInfo&);
     bool check_RCTP_Info_REMB(uint64_t*);
     void adaptQualityAndBitrate();
-    void storeVideoBitrateInfo();
     void setupVideoBitrateInfo();
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
