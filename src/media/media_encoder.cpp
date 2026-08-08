@@ -655,8 +655,8 @@ MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
 {
 #ifdef ENABLE_HWACCEL
     if (accel_ && accel_->getName() == "nvenc") {
-        if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARNING("Failed to set preset to 'fast'");
+        if (av_opt_set(encoderCtx, "preset", "p4", AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARNING("Failed to set preset to 'p4'");
         if (av_opt_set(encoderCtx, "level", "auto", AV_OPT_SEARCH_CHILDREN))
             JAMI_WARNING("Failed to set level to 'auto'");
         if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
