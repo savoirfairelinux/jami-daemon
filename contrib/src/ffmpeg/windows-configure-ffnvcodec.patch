@@ -3,24 +3,29 @@ From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
 Date: Tue, 19 Jul 2022 15:14:05 -0300
 Subject: [PATCH] windows ffnvcodec patch
 
+There is no ffnvcodec.pc in the MSVC contrib prefix, so configure's
+pkg-config probe would disable ffnvcodec and then fail on the explicitly
+requested nvenc encoders. The headers are copied into contrib/msvc by the
+ffnvcodec package and reached through --extra-cflags instead.
+
 ---
- configure | 8 --------
- 1 file changed, 8 deletions(-)
+ configure | 9 ---------
+ 1 file changed, 9 deletions(-)
 
 diff --git a/configure b/configure
-index d0fb8a1fc3..4a6defcc78 100755
 --- a/configure
 +++ b/configure
-@@ -6406,14 +6406,6 @@ else
+@@ -6592,15 +6592,6 @@
      check_nvcc cuda_llvm
  fi
  
 -if ! disabled ffnvcodec; then
 -    ffnv_hdr_list="ffnvcodec/nvEncodeAPI.h ffnvcodec/dynlink_cuda.h ffnvcodec/dynlink_cuviddec.h ffnvcodec/dynlink_nvcuvid.h"
--    check_pkg_config ffnvcodec "ffnvcodec >= 12.0.16.0" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 11.1.5.2 ffnvcodec < 12.0" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 11.0.10.2 ffnvcodec < 11.1" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.14 ffnvcodec < 8.2" "$ffnv_hdr_list" ""
+-    check_pkg_config ffnvcodec "ffnvcodec >= 12.1.14.0" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 12.0.16.1 ffnvcodec < 12.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 11.1.5.3 ffnvcodec < 12.0" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 11.0.10.3 ffnvcodec < 11.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.15 ffnvcodec < 8.2" "$ffnv_hdr_list" ""
 -fi
 -
  if enabled_all libglslang libshaderc; then
@@ -28,4 +33,3 @@ index d0fb8a1fc3..4a6defcc78 100755
  fi
 -- 
 2.30.2.windows.1
-
