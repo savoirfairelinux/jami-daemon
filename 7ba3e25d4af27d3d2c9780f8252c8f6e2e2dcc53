@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "71c6c777_fb060988",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3368,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-08-10T20:47:25Z",
+      "side": 1,
+      "message": "Duplicate fetches for the same device can\u0027t be scheduled, so I documented the invariant rather than adding a lock for a case that can\u0027t occur.\n\nConversationRepository::fetch() has exactly one caller, conversation.cpp:2515, reached only from Conversation::Impl::pull(deviceId). Conversation::pull() (conversation.cpp:2456) uses fetchingRemotes_ as the in-flight marker itself: it is keyed by device, a worker is spawned only when emplace() reports the entry did not already exist, and only that worker erases the entry, as it exits. Both sides run under pullcbsMtx_, so there is at most one pull(deviceId) worker, hence at most one fetch(deviceId), at a time. A request for a device already being fetched is appended to that device\u0027s deque and drained by the running worker instead of starting a second fetch.\n\nFetches for different devices do still overlap, which is what the FETCH_HEAD change is for: refs/remotes/\u003cdevice\u003e and its reflog are per device, so those don\u0027t collide, but FETCH_HEAD was repository-wide and would have handed the second fetch a GIT_ELOCKED. Same reason git_remote_create() moved back under opMtx_ - it rewrites .git/config, which is also repository-wide. Neither waits on the network, so the lock still doesn\u0027t span the peer wait.\n\nThe comment at the unlock point now spells this out, and the commit message records it, so a future second caller of fetch() has the constraint in front of it.",
+      "parentUuid": "aa42abe5_50adbd4a",
+      "revId": "7ba3e25d4af27d3d2c9780f8252c8f6e2e2dcc53",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
