@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5cacdfa9_f1207fb9",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 493,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-10T21:35:01Z",
+      "side": 1,
+      "message": "[warning] Line 493: 🟡 `aliceReplica2` is never used. Remove it to keep the test clean and avoid warning-as-error failures on stricter build configurations.",
+      "revId": "f86ae67820eee688eca535a74282ecac643ada25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
