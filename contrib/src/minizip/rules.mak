@@ -11,9 +11,13 @@ endif
 DEPS_minizip = zlib iconv
 endif
 
+# MZ_FORCE_FETCH_LIBS makes minizip git-clone its codecs at configure
+# time; bzip2 comes from sourceware.org, which rate-limits (HTTP 429) and breaks
+# CI. Nothing in Jami reads bzip2-compressed zip entries, so drop the codec.
 MINIZIP_CONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DMZ_LZMA=OFF \
+		-DMZ_BZIP2=OFF \
 		-DMZ_FORCE_FETCH_LIBS=ON \
 		-DMZ_FETCH_LIBS=ON
 
