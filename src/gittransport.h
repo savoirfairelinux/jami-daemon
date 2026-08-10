@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <atomic>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -54,6 +56,23 @@ struct P2PSubTransport
 using namespace std::string_view_literals;
 constexpr auto UPLOAD_PACK_CMD = "git-upload-pack"sv;
 constexpr auto HOST_TAG = "host="sv;
+
+#ifdef LIBJAMI_TEST
+using P2PStallHook = std::function<void(std::string_view url)>;
+
+/**
+ * Holds a fetch inside the transport, the way a peer that stops talking without
+ * hanging up does. Called with the stream url so a test only stalls its own
+ * conversation. Null by default.
+ *
+ * Held by shared_ptr because the reader blocks inside the hook for as long as
+ * the stall lasts: the transport thread loads a strong reference and keeps the
+ * callable alive while it runs, so a test can install, replace, or clear the
+ * hook at any time without racing it. A mutex could not do this - it would
+ * still be held across the stall, and the test could never take it back.
+ */
+extern std::atomic<std::shared_ptr<P2PStallHook>> P2P_STALL_HOOK;
+#endif
 
 /**
  * Send a git command on the linked socket
