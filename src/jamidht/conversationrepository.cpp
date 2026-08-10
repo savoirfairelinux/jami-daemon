@@ -3315,44 +3315,66 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
-    std::lock_guard lkOp(pimpl_->opMtx_);
-    pimpl_->resetHard();
-    // Fetch distant repository
-    git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts;
     git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
     fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
+    // We read the fetched branch through refs/remotes/<device> and never through
+    // FETCH_HEAD. Writing it would only add a repository-wide lock file that two
+    // fetches on the same conversation would fight over.
+    fetch_opts.update_fetchhead = 0;
 
     // Assert that repository exists
     auto repo = pimpl_->repository();
     if (!repo)
         return false;
-    auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
-    if (res != 0) {
-        if (res != GIT_ENOTFOUND) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up for remote {}",
-                       pimpl_->accountId_,
-                       pimpl_->id_,
-                       remoteDeviceId);
-            return false;
-        }
-        std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
+
+    // Everything up to here touches state the other operations also touch:
+    // resetHard() must not run while a commit is staging files, and creating the
+    // remote rewrites .git/config, which is repository-wide. None of it waits on
+    // the network, so the lock is held only for as long as local work takes.
+    git_remote* remote_ptr = nullptr;
+    {
+        std::lock_guard lkOp(pimpl_->opMtx_);
+        pimpl_->resetHard();
+        auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
+        if (res != 0) {
+            if (res != GIT_ENOTFOUND) {
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up for remote {}",
+                           pimpl_->accountId_,
+                           pimpl_->id_,
+                           remoteDeviceId);
+                return false;
+            }
+            std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
 #ifdef LIBJAMI_TEST
-        if (FETCH_FROM_LOCAL_REPOS) {
-            channelName
-                = fmt::format("file://{}",
-                              (fileutils::get_data_dir() / remoteDeviceId / "conversations" / pimpl_->id_).string());
-        }
+            if (FETCH_FROM_LOCAL_REPOS) {
+                channelName = fmt::format("file://{}",
+                                          (fileutils::get_data_dir() / remoteDeviceId / "conversations" / pimpl_->id_)
+                                              .string());
+            }
 #endif
-        if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str()) < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository",
-                       pimpl_->accountId_,
-                       pimpl_->id_);
-            return false;
+            if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str()) < 0) {
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository",
+                           pimpl_->accountId_,
+                           pimpl_->id_);
+                return false;
+            }
         }
     }
     GitRemote remote {remote_ptr};
 
+    // From here on the fetch waits on the peer, and it does so without opMtx_.
+    // What it writes - the object database and refs/remotes/<device> - is either
+    // append-only or private to this device, so a message being committed
+    // meanwhile no longer has to wait for a peer that has gone quiet.
+    //
+    // Two fetches for the same device would still contend on that ref, so this
+    // relies on there being at most one at a time. Conversation::pull() is the
+    // only caller and guarantees it: fetchingRemotes_ is keyed by device and is
+    // itself the in-flight marker, a worker is spawned only when the entry did
+    // not already exist, and the entry is erased only by that worker as it
+    // exits, all under pullcbsMtx_. Further requests for a device already being
+    // fetched are queued behind it rather than starting a second fetch.
     fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)

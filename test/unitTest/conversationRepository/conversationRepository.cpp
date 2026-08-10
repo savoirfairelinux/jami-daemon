@@ -16,6 +16,9 @@
  */
 
 #include "manager.h"
+#include "gittransport.h"
+#include "jamidht/conversation.h"
+#include "jamidht/conversation_module.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
@@ -29,6 +32,7 @@
 #include <git2.h>
 
 #include <dhtnet/connectionmanager.h>
+#include <dhtnet/multiplexed_socket.h>
 
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
@@ -39,8 +43,10 @@
 #include <fstream>
 #include <streambuf>
 #include <filesystem>
+#include <thread>
 
 using namespace std::string_literals;
+using namespace std::literals::chrono_literals;
 using namespace libjami::Account;
 
 namespace jami {
@@ -83,6 +89,7 @@ private:
     void testInvalidFile();
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
+    void testCommitIsNotBlockedByAStalledFetch();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -108,6 +115,7 @@ private:
     CPPUNIT_TEST(testInvalidFile);               // Passes
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
+    CPPUNIT_TEST(testCommitIsNotBlockedByAStalledFetch);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1182,6 +1190,96 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     auto reopened = std::make_unique<ConversationRepository>(aliceAccount, convId);
     CPPUNIT_ASSERT(reopened != nullptr);
     CPPUNIT_ASSERT_EQUAL(originalHead, reopened->getHead());
+}
+
+// A peer that stops talking without hanging up leaves a fetch waiting inside
+// the git transport. That wait must not take the whole repository with it: the
+// user is still typing, and their messages have to reach git.
+void
+ConversationRepositoryTest::testCommitIsNotBlockedByAStalledFetch()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    std::shared_ptr<Conversation> conv;
+    for (auto i = 0; i < 100 && !conv; ++i) {
+        conv = aliceAccount->convModule()->getConversation(convId);
+        if (!conv)
+            std::this_thread::sleep_for(50ms);
+    }
+    CPPUNIT_ASSERT(conv);
+
+    // Shared, not captured by reference: the stalled fetch is still inside the
+    // hook when an assertion unwinds this frame, so the state it waits on has to
+    // outlive the frame.
+    struct Stall
+    {
+        std::mutex mtx;
+        std::condition_variable cv;
+        bool stalling = false, release = false, committed = false, pulled = false;
+    };
+    auto stall = std::make_shared<Stall>();
+
+    // Park the fetch inside the transport, exactly where a quiet peer would
+    // park it, and keep it there until this test lets go. The guard lets go on
+    // every exit from here, including a failed assertion.
+    struct Release
+    {
+        std::shared_ptr<Stall> stall;
+        ~Release()
+        {
+            P2P_STALL_HOOK.store(nullptr);
+            std::lock_guard lk {stall->mtx};
+            stall->release = true;
+            stall->cv.notify_all();
+        }
+    } releaseOnExit {stall};
+
+    P2P_STALL_HOOK.store(std::make_shared<P2PStallHook>([stall, convId](std::string_view url) {
+        if (url.find(convId) == std::string_view::npos)
+            return;
+        std::unique_lock lk {stall->mtx};
+        stall->stalling = true;
+        stall->cv.notify_all();
+        stall->cv.wait(lk, [&] { return stall->release; });
+    }));
+
+    DeviceId quiet {std::string(64, 'b')};
+    conv->addGitSocket(quiet,
+                       std::make_shared<dhtnet::ChannelSocket>(std::weak_ptr<dhtnet::MultiplexedSocket>(),
+                                                               "git://quiet/" + convId,
+                                                               1));
+    conv->pull(quiet.toString(), [stall](bool) {
+        std::lock_guard lk {stall->mtx};
+        stall->pulled = true;
+        stall->cv.notify_all();
+    });
+
+    {
+        std::unique_lock lk {stall->mtx};
+        CPPUNIT_ASSERT(stall->cv.wait_for(lk, 30s, [&] { return stall->stalling; }));
+    }
+
+    CommitMessage message;
+    message.type = "text/plain";
+    message.body = "hello";
+    conv->createCommit(std::move(message), {}, [stall](bool ok, const std::string&) {
+        std::lock_guard lk {stall->mtx};
+        stall->committed = ok;
+        stall->cv.notify_all();
+    });
+
+    bool done = false;
+    {
+        std::unique_lock lk {stall->mtx};
+        done = stall->cv.wait_for(lk, 10s, [&] { return stall->committed; });
+        // Let the fetch go and wait for it, so the next test starts on a
+        // conversation that has no operation left running on it.
+        stall->release = true;
+        stall->cv.notify_all();
+        stall->cv.wait_for(lk, 30s, [&] { return stall->pulled; });
+    }
+    CPPUNIT_ASSERT_MESSAGE("A commit had to wait for a stalled fetch", done);
 }
 
 } // namespace test
