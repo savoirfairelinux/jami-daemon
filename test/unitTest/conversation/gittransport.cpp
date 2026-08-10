@@ -47,9 +47,10 @@ public:
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return false; }
     int maxPayload() const override { return 0; }
-    int waitForData(std::chrono::milliseconds, std::error_code& ec) const override
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override
     {
         std::lock_guard lk(mutex_);
+        waited_ = timeout;
         // Same contract as ChannelSocket: untouched on a timeout, set once the
         // channel is closed and drained.
         if (pending_.empty() and isShutdown_)
@@ -110,8 +111,15 @@ public:
         return written_;
     }
 
+    std::chrono::milliseconds waited() const
+    {
+        std::lock_guard lk(mutex_);
+        return waited_;
+    }
+
 private:
     mutable std::mutex mutex_ {};
+    mutable std::chrono::milliseconds waited_ {};
     std::atomic_bool isShutdown_ {false};
     std::error_code writeError_ {};
     std::vector<uint8_t> pending_ {};
@@ -134,6 +142,7 @@ private:
     void testReadReturnsZeroOnSuccess();
     void testReadFailsWhenTheChannelIsClosed();
     void testReadReturnsZeroOnAnIdleChannel();
+    void testReadGivesUpOnAQuietPeer();
     void testReadFailsWhenTheCommandCannotBeSent();
 
     CPPUNIT_TEST_SUITE(GitTransportTest);
@@ -142,6 +151,7 @@ private:
     CPPUNIT_TEST(testReadReturnsZeroOnSuccess);
     CPPUNIT_TEST(testReadFailsWhenTheChannelIsClosed);
     CPPUNIT_TEST(testReadReturnsZeroOnAnIdleChannel);
+    CPPUNIT_TEST(testReadGivesUpOnAQuietPeer);
     CPPUNIT_TEST(testReadFailsWhenTheCommandCannotBeSent);
     CPPUNIT_TEST_SUITE_END();
 
@@ -229,6 +239,20 @@ GitTransportTest::testReadReturnsZeroOnAnIdleChannel()
     size_t read = 42;
     CPPUNIT_ASSERT_EQUAL(0, P2PStreamRead(&stream_.base, buffer, sizeof(buffer), &read));
     CPPUNIT_ASSERT_EQUAL(size_t(0), read);
+}
+
+void
+GitTransportTest::testReadGivesUpOnAQuietPeer()
+{
+    char buffer[64];
+    size_t read = 42;
+    P2PStreamRead(&stream_.base, buffer, sizeof(buffer), &read);
+
+    // The wait holds ConversationRepository::opMtx_, which every commit on the
+    // conversation needs. A peer that stops sending must cost a retry, not
+    // every message the user writes until it comes back.
+    CPPUNIT_ASSERT(socket_->waited() > std::chrono::seconds(0));
+    CPPUNIT_ASSERT(socket_->waited() <= std::chrono::minutes(5));
 }
 
 void

@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -54,6 +55,16 @@ struct P2PSubTransport
 using namespace std::string_view_literals;
 constexpr auto UPLOAD_PACK_CMD = "git-upload-pack"sv;
 constexpr auto HOST_TAG = "host="sv;
+
+/**
+ * How long a fetch waits for the peer to send something before giving up.
+ *
+ * The wait happens with ConversationRepository::opMtx_ held, so for as long as
+ * it lasts nothing else can touch the conversation: a message the user sends
+ * meanwhile is never committed. It must stay short enough that a peer going
+ * quiet costs a retry rather than a working conversation.
+ */
+constexpr auto P2P_READ_TIMEOUT = std::chrono::minutes(1);
 
 /**
  * Send a git command on the linked socket

@@ -23,10 +23,6 @@
 
 using namespace std::string_view_literals;
 
-// Inactivity timeout for a git fetch. Reads run with ConversationRepository::opMtx_ held, so an
-// unbounded wait here blocks every other operation on the conversation.
-constexpr auto P2P_READ_TIMEOUT = std::chrono::days(1);
-
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
 /*
@@ -141,6 +137,10 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         giterr_set_str(GITERR_NET, ec.message().c_str());
         return -1;
     }
+    if (*read == 0)
+        JAMI_WARNING("[git] {}: nothing received for {}s, ending stream",
+                     fs->url,
+                     std::chrono::duration_cast<std::chrono::seconds>(P2P_READ_TIMEOUT).count());
 
     return 0;
 }
