@@ -16,6 +16,24 @@
       "message": "[error] Line 93: 🔴 The clang-format CI job failed for this patchset. Please run clang-format on the touched files; this long assignment is likely one of the lines that needs wrapping to the repository style.",
       "revId": "76eb91c0d542cfcf92036b6aa125a0dc904c755a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "33464fd3_f0aeaea4",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-08-10T13:53:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2cd49306_ddc65a6c",
+      "revId": "76eb91c0d542cfcf92036b6aa125a0dc904c755a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
