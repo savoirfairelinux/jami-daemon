@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ac12af3_3d94003f",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-10T19:02:53Z",
+      "side": 1,
+      "message": "[warning] Line 121: 🟡 P2P_STALL_HOOK is a global std::function read from the transport thread while the test assigns/clears it from another thread, which is a data race and can make the test build flaky/UB. Protect access with a mutex or use a thread-safe indirection, and have the test wait for the stalled pull to finish before clearing it.",
+      "revId": "1f7575d5ef7176b22b7e0771a319cf29590877b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d947e08_eb8aabaa",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1235,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-10T19:02:53Z",
+      "side": 1,
+      "message": "[warning] Line 1235: 🟡 If this assertion fails, the test exits with P2P_STALL_HOOK still installed and possibly waiting on stack-captured state, which can hang or corrupt later tests. Use an RAII guard/scope_exit to always release the waiter and clear the hook before any assertion can throw.",
+      "revId": "1f7575d5ef7176b22b7e0771a319cf29590877b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
