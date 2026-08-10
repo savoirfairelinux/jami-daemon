@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa42abe5_50adbd4a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3368,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-10T20:10:25Z",
+      "side": 1,
+      "message": "[warning] Line 3368: 🟡 The unlocked fetch can still race with another fetch from the same remoteDeviceId: both write refs/remotes/\u003cdevice\u003e and may contend on that ref lock even with FETCH_HEAD disabled. If duplicate pulls for a device can be scheduled, keep a per-remote fetch mutex/in-flight guard while still avoiding opMtx_, or otherwise document/enforce the single-fetch-per-device invariant at the caller.",
+      "revId": "1287d6fd8655f8f909c84a10b3ce37667a9d2a5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
