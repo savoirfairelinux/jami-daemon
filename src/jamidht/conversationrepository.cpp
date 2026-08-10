@@ -3315,8 +3315,16 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
-    std::lock_guard lkOp(pimpl_->opMtx_);
-    pimpl_->resetHard();
+    // Only resetHard() needs to exclude the other operations; it must not run
+    // while a commit is staging files. The fetch itself writes to the object
+    // database and to refs/remotes/<device>, which no other operation touches,
+    // and it waits on the network - holding opMtx_ across that wait blocks
+    // every other operation on the conversation, including the commit of a
+    // message the user is sending.
+    {
+        std::lock_guard lkOp(pimpl_->opMtx_);
+        pimpl_->resetHard();
+    }
     // Fetch distant repository
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts;

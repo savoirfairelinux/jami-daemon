@@ -23,11 +23,16 @@
 
 using namespace std::string_view_literals;
 
-// Inactivity timeout for a git fetch. Reads run with ConversationRepository::opMtx_ held, so an
-// unbounded wait here blocks every other operation on the conversation.
+// Inactivity timeout for a git fetch. The read no longer runs with
+// ConversationRepository::opMtx_ held, so a peer that goes quiet costs this
+// fetch and nothing else on the conversation.
 constexpr auto P2P_READ_TIMEOUT = std::chrono::days(1);
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
+
+#ifdef LIBJAMI_TEST
+std::function<void(std::string_view url)> P2P_STALL_HOOK {};
+#endif
 
 /*
  * Create a git protocol request.
@@ -114,6 +119,10 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 {
     *read = 0;
     auto* fs = reinterpret_cast<P2PStream*>(stream);
+#ifdef LIBJAMI_TEST
+    if (P2P_STALL_HOOK)
+        P2P_STALL_HOOK(fs->url);
+#endif
     auto sock = fs->socket.lock();
     if (!sock) {
         giterr_set_str(GITERR_NET, "unavailable socket");
@@ -126,7 +135,6 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         return -1;
 
     std::error_code ec;
-    // TODO ChannelSocket needs a blocking read operation
     auto datalen = sock->waitForData(P2P_READ_TIMEOUT, ec);
     if (ec && ec != asio::error::eof) {
         auto reason = fmt::format("channel closed ({})", ec.message());

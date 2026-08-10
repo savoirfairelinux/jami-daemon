@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -54,6 +55,15 @@ struct P2PSubTransport
 using namespace std::string_view_literals;
 constexpr auto UPLOAD_PACK_CMD = "git-upload-pack"sv;
 constexpr auto HOST_TAG = "host="sv;
+
+#ifdef LIBJAMI_TEST
+/**
+ * Holds a fetch inside the transport, the way a peer that stops talking without
+ * hanging up does. Called with the stream url so a test only stalls its own
+ * conversation. Unset by default.
+ */
+extern std::function<void(std::string_view url)> P2P_STALL_HOOK;
+#endif
 
 /**
  * Send a git command on the linked socket
