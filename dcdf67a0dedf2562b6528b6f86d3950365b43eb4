@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f2e40bf_3ee823d6",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-10T21:34:58Z",
+      "side": 1,
+      "message": "[error] Line 270: 🔴 These new libjami collaborative editing entry points are defined here but the public conversation interface header is not updated in this patchset, so native clients cannot include/call the API and C++ bindings may depend on undeclared functions. Add matching declarations to the libjami conversation interface header exported to clients.",
+      "revId": "dcdf67a0dedf2562b6528b6f86d3950365b43eb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
