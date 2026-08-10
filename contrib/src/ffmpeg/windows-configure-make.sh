@@ -3,6 +3,15 @@ set +x
 set +e
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $DIR/../../build/ffmpeg
+
+# The Windows build step deletes VERSION beforehand: ffbuild/common.mak puts the
+# source root on the include path, so on a case-insensitive filesystem MSVC
+# resolves C++20's #include <version> to that text file. Without VERSION,
+# ffbuild/version.sh falls back to `git describe`, which walks up and reports the
+# enclosing jami-daemon revision instead of FFmpeg's. Seed $revision from RELEASE
+# so FFMPEG_VERSION stays correct.
+export revision="$(cat RELEASE)"
+
 FFMPEGCONF='
             --toolchain=msvc
             --target-os=win32'
