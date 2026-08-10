@@ -190,6 +190,9 @@ VideoRtpSession::startSender()
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
         send_.linkableHW = conference_ == nullptr;
+        // A restart may be triggered by a codec configuration change
+        // (setCodecDetails), so re-read the bounds before sizing the budget.
+        setupVideoBitrateInfo();
         if (not videoMixer_)
             seedVideoBitrate(localVideoParams_.height * localVideoParams_.width);
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
@@ -800,6 +803,11 @@ VideoRtpSession::setupVideoBitrateInfo()
 {
     auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
     if (codecVideo) {
+        // Once seeded, the current bitrate belongs to RTCP adaptation and the
+        // maximum to the output resolution; only the bounds coming from the
+        // codec configuration are refreshed here.
+        const auto current = videoBitrateInfo_.videoBitrateCurrent;
+        const auto max = videoBitrateInfo_.videoBitrateMax;
         videoBitrateInfo_ = {
             codecVideo->bitrate,
             codecVideo->minBitrate,
@@ -811,6 +819,10 @@ VideoRtpSession::setupVideoBitrateInfo()
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
         };
+        if (bitrateSeeded_) {
+            videoBitrateInfo_.videoBitrateCurrent = current;
+            videoBitrateInfo_.videoBitrateMax = max;
+        }
     } else {
         videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
     }
