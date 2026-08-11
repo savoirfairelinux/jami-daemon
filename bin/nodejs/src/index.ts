@@ -186,7 +186,14 @@ export interface JamiSwig {
   setAccountDetails(accountId: string, details: StringMap): void
   addAccount(details: StringMap): string
   removeAccount(accountId: string): void
-  updateProfile(accountId: string, displayName: string, avatarPath: string, fileType: string, botOwner: string, flag: number): void
+  updateProfile(
+    accountId: string,
+    displayName: string,
+    avatarPath: string,
+    fileType: string,
+    botOwner: string,
+    flag: number,
+  ): void
   getAccountList(): StringVect
 
   // Account text messages
@@ -237,7 +244,7 @@ export interface JamiSwig {
     before: number,
     maxResult: number,
     flag: number,
-  ): boolean
+  ): number
 
   // Conversation requests
   getConversationRequests(accountId: string): VectMap
