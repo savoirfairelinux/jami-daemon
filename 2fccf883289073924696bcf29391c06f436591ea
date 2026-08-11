@@ -16,6 +16,24 @@
       "message": "[error] Line 178: 🔴 Switching from `git_repository_workdir()` to `git_repository_path()` changes the parsed repository identifier for non-bare conversation repositories: libgit2 returns the `.git/` directory, so any conversation id extracted from this path will include the trailing `/.git/` segment unless normalized. This can break existing conversation fetch/push routing while fixing bare document repositories. Please normalize the repository path by stripping a trailing `/.git/` for non-bare repositories, or branch on `git_repository_is_bare(repo)` and preserve the old workdir behavior for regular conversation repos.",
       "revId": "2fccf883289073924696bcf29391c06f436591ea",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f9b9ec9_58f3c20c",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:33:15Z",
+      "side": 1,
+      "message": "These changes were not necessary (the claim that document repositories are bare was out-of-date), so the latest patchset no longer includes them.",
+      "parentUuid": "30546c8c_315d5628",
+      "revId": "2fccf883289073924696bcf29391c06f436591ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
