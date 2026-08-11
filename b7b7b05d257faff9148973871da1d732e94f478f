@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03ab0474_1c7d9934",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 559,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-11T18:33:59Z",
+      "side": 1,
+      "message": "[error] Line 559: 🔴 `addAccount()` can emit signals for the new Bob device before `bob2Id` is assigned, so `dataFor()` returns `nullptr` and drops `ConversationReady`; the wait on `bob2Data.conversationId` can then time out even though sync succeeded. Avoid relying on a signal that can arrive before the ID is registered, e.g. poll the daemon state after assigning `bob2Id` or store pending events by account id.",
+      "revId": "b7b7b05d257faff9148973871da1d732e94f478f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
