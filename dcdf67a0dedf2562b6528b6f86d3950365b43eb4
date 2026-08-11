@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b19158f5_de14c245",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "This was done in a previous commit.",
+      "parentUuid": "4f2e40bf_3ee823d6",
+      "revId": "dcdf67a0dedf2562b6528b6f86d3950365b43eb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4cd06fc1_34253305",

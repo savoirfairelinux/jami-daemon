@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b07872cc_018f7bb8",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 676,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5da7bf91_cd391f43",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "02979479_95e12920",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-08-07T19:50:55Z",
       "side": 1,
       "message": "[error] Line 703: 🔴 `applyCollaborativeUpdate` receives the update as `std::string`, but the DBus XML declares `ay` and the libjami API takes `const std::vector\u003cuint8_t\u003e\u0026`. This either fails to compile or corrupts binary CRDT updates; use `const std::vector\u003cuint8_t\u003e\u0026 update` and forward it unchanged.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d50b1e87_99a9f50c",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 703,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "02979479_95e12920",
       "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67ac1708_f891122f",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e56323a_1226ddfb",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9888e2e5_a051589c",
@@ -65,6 +119,24 @@
       "writtenOn": "2026-08-07T19:50:55Z",
       "side": 1,
       "message": "[error] Line 756: 🔴 `collaborativeDocumentStateAt` has the same binary/string mismatch as the current-state API. The XML declares `ay` and libjami returns `std::vector\u003cuint8_t\u003e`; update this wrapper return type accordingly.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "803de731_be5fb618",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 756,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9888e2e5_a051589c",
       "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "21837ec2_0a197925",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 902,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b1552ea_1f9775d9",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eb72419c_16bf5428",
@@ -99,6 +189,24 @@
       "writtenOn": "2026-08-07T19:50:55Z",
       "side": 1,
       "message": "[error] Line 904: 🔴 The DBus signal binding for `CollaborativeParticipantLeft` drops `clientId`: the XML/JNI callback exposes five arguments, but only four placeholders are bound. Forward `_5` so clients can distinguish which participant client left and the callback signature matches.",
+      "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f25b0510_a0e4f4ef",
+        "filename": "bin/dbus/dbusconfigurationmanager.hpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T15:29:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eb72419c_16bf5428",
       "revId": "000b17d6a1c63bfaf81a375d384ad4516f23d817",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
