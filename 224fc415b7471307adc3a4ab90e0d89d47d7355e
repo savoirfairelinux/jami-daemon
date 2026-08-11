@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2eca1204_529f533d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1157,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T19:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56e7ae17_e5cf09a7",
+      "revId": "224fc415b7471307adc3a4ab90e0d89d47d7355e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dbd713e6_61cead1c",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-08-07T19:50:48Z",
       "side": 1,
       "message": "[warning] Line 3994: 🟡 `addAttachment()` is documented as document-repository-only but does not enforce `mode() \u003d\u003d ConversationMode::DOCUMENT`. Calling it on a normal conversation creates a checkpoint commit that this same validator later rejects, leaving the repository in an invalid state. Return an error/empty id before mutating when the mode is not `DOCUMENT`.",
+      "revId": "224fc415b7471307adc3a4ab90e0d89d47d7355e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7565a019_a5a80954",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3994,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T19:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dbd713e6_61cead1c",
       "revId": "224fc415b7471307adc3a4ab90e0d89d47d7355e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

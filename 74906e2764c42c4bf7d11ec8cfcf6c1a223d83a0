@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f84a90ee_aae26933",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1113,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T19:07:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "1529f6b0_4a4270c5",
+      "revId": "74906e2764c42c4bf7d11ec8cfcf6c1a223d83a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "47a69023_7d7c7963",
@@ -32,6 +50,24 @@
       "writtenOn": "2026-08-10T21:34:58Z",
       "side": 1,
       "message": "[error] Line 3206: 🔴 Document repositories still accept non-checkpoint conversation commits. `validCommits()` only adds special validation for `application/checkpoint`, but it does not reject ordinary `text/plain`, data-transfer, profile, vote, etc. commits when `mode() \u003d\u003d ConversationMode::DOCUMENT`. That lets a peer inject normal conversation history into a document swarm. Add a mode gate so document repositories only allow the initial commit, valid membership/admin changes if intended, and checkpoint commits.",
+      "revId": "74906e2764c42c4bf7d11ec8cfcf6c1a223d83a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8de4a9f0_1ce3173f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3206,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-11T19:07:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "47a69023_7d7c7963",
       "revId": "74906e2764c42c4bf7d11ec8cfcf6c1a223d83a0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
