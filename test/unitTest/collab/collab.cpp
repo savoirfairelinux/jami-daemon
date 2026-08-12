@@ -204,6 +204,8 @@ private:
     void testRemoveDocumentLocallyAndReopen();
     void testDocumentBanRefusesClone();
     void testParentConversationLeaveLeavesDocuments();
+    void testContactRemovalDropsDocuments();
+    void testReopenAfterParentRejoin();
     void testRealtimeUpdatePropagation();
     void testAwareness();
 
@@ -219,6 +221,8 @@ private:
     CPPUNIT_TEST(testRemoveDocumentLocallyAndReopen);
     CPPUNIT_TEST(testDocumentBanRefusesClone);
     CPPUNIT_TEST(testParentConversationLeaveLeavesDocuments);
+    CPPUNIT_TEST(testContactRemovalDropsDocuments);
+    CPPUNIT_TEST(testReopenAfterParentRejoin);
     CPPUNIT_TEST(testRealtimeUpdatePropagation);
     CPPUNIT_TEST(testAwareness);
     CPPUNIT_TEST_SUITE_END();
@@ -826,6 +830,119 @@ CollabTest::testParentConversationLeaveLeavesDocuments()
 
     // Alice's replica of the document saw the leave: bob is no longer a member.
     CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(aliceRepo / "members" / (bobUri + ".crt")); }));
+}
+
+void
+CollabTest::testContactRemovalDropsDocuments()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    // A one-to-one conversation, through the contact pipeline.
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    }
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    }
+    std::string convId;
+    {
+        std::lock_guard<std::mutex> lk(mtx);
+        convId = bobData.conversationId;
+    }
+
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
+    CPPUNIT_ASSERT(!docId.empty());
+    CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
+    libjami::openCollaborativeDocument(bobId, convId, docId);
+    CPPUNIT_ASSERT(poll([&] { return std::filesystem::is_directory(docRepoPath(bobId, docId)); }));
+
+    // Removing the contact deletes the one-to-one conversation on the spot,
+    // without a leave commit. The documents it held must go the same way: a
+    // replica without its parent conversation can be neither served nor
+    // synchronized.
+    bobAccount->removeContact(aliceUri, false);
+    auto convRepoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(convRepoPath); }));
+    CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(docRepoPath(bobId, docId)); }));
+}
+
+void
+CollabTest::testReopenAfterParentRejoin()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = createConversationWithBob();
+
+    // Bob creates and edits; his content lands in a checkpoint. Bob being the
+    // document's announcer is the point of this test: once he has left and
+    // come back, his replica can only come from somebody else.
+    auto docId = libjami::createCollaborativeDocument(bobId, convId, "Notes", "text/plain");
+    ClientReplica bobReplica;
+    libjami::applyCollaborativeUpdate(bobId, convId, docId, bobReplica.insert(0, "hello"));
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+
+    // Alice holds the document too, so it survives bob's leave.
+    CPPUNIT_ASSERT(poll([&] { return !documentEntry(aliceId, convId, docId).empty(); }));
+    ClientReplica aliceReplica;
+    aliceReplica.apply(libjami::openCollaborativeDocument(aliceId, convId, docId));
+    CPPUNIT_ASSERT(poll([&] { return std::filesystem::is_directory(docRepoPath(aliceId, docId)); }));
+    CPPUNIT_ASSERT(poll([&] {
+        aliceReplica.apply(libjami::collaborativeDocumentState(aliceId, convId, docId));
+        return aliceReplica.text() == "hello";
+    }));
+
+    // Bob leaves the conversation and with it the document; both repositories
+    // go once alice fetched the leaves.
+    libjami::closeCollaborativeDocument(bobId, convId, docId);
+    libjami::removeConversation(bobId, convId);
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationRemoved; }));
+    }
+    CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(docRepoPath(bobId, docId)); }));
+    auto aliceRepo = docRepoPath(aliceId, docId);
+    CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(aliceRepo / "admins" / (bobUri + ".crt")); }));
+
+    // Alice invites bob back; he accepts and re-clones the conversation.
+    {
+        std::lock_guard<std::mutex> lk(mtx);
+        bobData.requestReceived = false;
+        bobData.conversationId.clear();
+    }
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    }
+    libjami::acceptConversationRequest(bobId, convId);
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    }
+
+    // Re-opening the document must clone it back, exactly like a first open.
+    CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
+    ClientReplica bobReplica2;
+    bobReplica2.apply(libjami::openCollaborativeDocument(bobId, convId, docId));
+    CPPUNIT_ASSERT(poll([&] { return std::filesystem::is_directory(docRepoPath(bobId, docId)); }));
+    CPPUNIT_ASSERT(poll([&] {
+        bobReplica2.apply(libjami::collaborativeDocumentState(bobId, convId, docId));
+        return bobReplica2.text() == "hello";
+    }));
 }
 
 void
