@@ -3348,8 +3348,27 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             }
         }
     }
+    // The conversations go without a leave commit: the contact they were
+    // shared with is precisely who a leave would have to be synchronized
+    // with. Their documents go the same silent way, and for the same reason
+    // an ordinary leave forfeits them: membership in a document is derived
+    // from membership in its conversation.
+    std::vector<std::string> documentIds;
+    {
+        std::lock_guard lk(pimpl_->conversationsMtx_);
+        for (const auto& [id, conv] : pimpl_->conversations_) {
+            if (!conv)
+                continue;
+            std::lock_guard clk(conv->mtx);
+            if (conv->conversation && conv->conversation->mode() == ConversationMode::DOCUMENT
+                && std::find(toRm.begin(), toRm.end(), conv->conversation->parentConversationId()) != toRm.end())
+                documentIds.emplace_back(id);
+        }
+    }
     for (const auto& id : toRm)
         pimpl_->removeRepository(id, true, true);
+    for (const auto& documentId : documentIds)
+        pimpl_->removeDocumentReplica(documentId);
 }
 
 bool
@@ -3791,8 +3810,7 @@ ConversationModule::removeGitSocket(std::string_view deviceId,
                                     std::string_view convId,
                                     const std::shared_ptr<dhtnet::ChannelSocket>& expected)
 {
-    pimpl_->withConversation(convId,
-                             [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId), expected); });
+    pimpl_->withConversation(convId, [&](auto& conv) { conv.removeGitSocket(DeviceId(deviceId), expected); });
 }
 
 void
