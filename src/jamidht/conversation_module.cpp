@@ -73,6 +73,13 @@ constexpr unsigned MAX_VALIDATION_FAILURES {3};
 
 struct SyncedConversation
 {
+    struct DeferredFetch
+    {
+        std::string peer;
+        std::string deviceId;
+        std::string commitId;
+    };
+
     std::mutex mtx;
     std::unique_ptr<asio::steady_timer> fallbackClone;
     std::chrono::seconds fallbackTimer {5s};
@@ -82,6 +89,7 @@ struct SyncedConversation
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
+    std::map<std::string, DeferredFetch> deferredFetches;
     std::shared_ptr<Conversation> conversation;
 
     bool isUnrecoverable() const { return validationFailures >= MAX_VALIDATION_FAILURES; }
@@ -143,6 +151,31 @@ struct SyncedConversation
         pending->connectingTo.erase(deviceId);
         if (pending->connectingTo.empty())
             pending.reset();
+    }
+
+    void deferFetch(const std::string& peer, const std::string& deviceId, const std::string& commitId)
+    {
+        // conversation mtx must be locked
+        deferredFetches[deviceId] = {peer, deviceId, commitId};
+    }
+
+    std::optional<DeferredFetch> finishFetch(const std::string& deviceId)
+    {
+        // conversation mtx must be locked
+        stopFetch(deviceId);
+        auto deferred = deferredFetches.find(deviceId);
+        if (deferred == deferredFetches.end())
+            return std::nullopt;
+        auto request = std::move(deferred->second);
+        deferredFetches.erase(deferred);
+        return request;
+    }
+
+    void clearFetches()
+    {
+        // conversation mtx must be locked
+        pending.reset();
+        deferredFetches.clear();
     }
 
     std::vector<std::map<std::string, std::string>> getMembers(bool includeLeft, bool includeBanned) const
@@ -470,6 +503,7 @@ public:
 
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
+    std::function<void(const std::string&, const std::string&, bool)> fetchCompletedCbTest_;
 #endif
 
     uint64_t presenceListenerToken_ {0};
@@ -759,7 +793,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         }
 
         if (!conv->startFetch(deviceId)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
+            conv->deferFetch(peer, deviceId, commitId);
+            JAMI_WARNING("[Account {}] [Conversation {}] Already fetching from {}, deferring commit {}",
+                         accountId_,
+                         conversationId,
+                         deviceId,
+                         commitId);
             return;
         }
 
@@ -774,9 +813,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 std::unique_lock lk(conv->mtx);
                 auto conversation = conv->conversation;
                 if (!channel || !acc || !conversation) {
-                    conv->stopFetch(deviceId);
-                    if (sthis)
-                        sthis->syncCnt.fetch_sub(1);
+                    auto deferred = conv->finishFetch(deviceId);
+                    lk.unlock();
+                    if (sthis && deferred)
+                        sthis->fetchNewCommits(deferred->peer, deferred->deviceId, conversationId, deferred->commitId);
+                    if (sthis && sthis->syncCnt.fetch_sub(1) == 1)
+                        emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(sthis->accountId_);
                     return false;
                 }
                 conversation->addGitSocket(channel->deviceId(), channel);
@@ -788,6 +830,10 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         auto shared = w.lock();
                         if (!shared)
                             return;
+#ifdef LIBJAMI_TEST
+                        if (shared->fetchCompletedCbTest_)
+                            shared->fetchCompletedCbTest_(conversationId, commitId, ok);
+#endif
                         if (!ok) {
                             JAMI_WARNING("[Account {}] [Conversation {}] Unable to fetch new commit from "
                                          "{}, other peer may be disconnected",
@@ -800,14 +846,20 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                      deviceId);
                         }
 
+                        std::optional<SyncedConversation::DeferredFetch> deferred;
                         {
                             std::lock_guard lk(conv->mtx);
-                            conv->pending.reset();
+                            deferred = conv->finishFetch(deviceId);
                             // Notify peers that a new commit is there (DRT)
                             if (not commitId.empty() && ok) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
+                        if (deferred)
+                            shared->fetchNewCommits(deferred->peer,
+                                                    deferred->deviceId,
+                                                    conversationId,
+                                                    deferred->commitId);
                         if (shared->syncCnt.fetch_sub(1) == 1) {
                             emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(shared->accountId_);
                         }
@@ -1113,7 +1165,7 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
 {
     if (conv.conversation && (force || conv.conversation->isRemoving())) {
         // Stop fetch!
-        conv.pending.reset();
+        conv.clearFetches();
         // And abort the ones already running: the repository is about to be deleted, and erase()
         // below waits for them to release the repository write lock.
         conv.conversation->shutdownConnections();
@@ -1723,6 +1775,11 @@ ConversationModule::onBootstrapStatus(const std::function<void(std::string, Conv
     for (auto& c : pimpl_->getConversations())
         c->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 }
+void
+ConversationModule::onFetchCompleted(const std::function<void(const std::string&, const std::string&, bool)>& cb)
+{
+    pimpl_->fetchCompletedCbTest_ = cb;
+}
 #endif
 
 void
@@ -2027,9 +2084,9 @@ ConversationModule::clearPendingFetch()
     // new messages to be synced correctly.
     for (auto& conv : pimpl_->getSyncedConversations()) {
         std::lock_guard lk(conv->mtx);
-        if (conv && conv->pending) {
+        if (conv && (conv->pending || !conv->deferredFetches.empty())) {
             JAMI_ERROR("This is a bug, seems to still fetch to some device on initializing");
-            conv->pending.reset();
+            conv->clearFetches();
         }
     }
 }

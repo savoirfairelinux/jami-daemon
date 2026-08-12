@@ -104,6 +104,7 @@ public:
 
 #ifdef LIBJAMI_TEST
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
+    void onFetchCompleted(const std::function<void(const std::string&, const std::string&, bool)>& cb);
 #endif
 
     void monitor();
