@@ -87,6 +87,7 @@ public:
 
     void sendReferenceCapabilities(bool sendVersion = false);
     bool NAK();
+    void notifyUpToDate();
     void ACKCommon();
     bool ACKFirst();
     void sendPackData();
@@ -97,6 +98,11 @@ public:
     std::string repository_ {};
     std::shared_ptr<dhtnet::ChannelSocketInterface> socket_ {};
     std::string wantedReference_ {};
+    // HEAD announced during the reference advertisement, used to acknowledge peers
+    // that are already up to date and therefore never send a want.
+    std::string advertisedHead_ {};
+    bool sawWant_ {false};
+    bool upToDateNotified_ {false};
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
@@ -157,6 +163,12 @@ GitServer::Impl::parseOrder(std::string_view buf)
             // Do not do multi-ack, just send ACK + pack file In case of no common base ACK
             ACKCommon();
             NAK();
+        } else {
+            // A flush right after the reference advertisement, with neither a want nor a have,
+            // is the peer telling us it already owns everything we announced. No pack is sent,
+            // so the regular fetch acknowledgement never fires and the messages we advertised
+            // would stay marked as sending forever. Acknowledge the announced HEAD instead.
+            notifyUpToDate();
         }
         return !cachedPkt_.empty();
     }
@@ -204,6 +216,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
         // TODO can have more want
         wantedReference_ = dat.substr(0, 40);
+        sawWant_ = true;
         JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer want ref: {}",
                  accountId_,
                  repositoryId_,
@@ -295,6 +308,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         return;
     }
     std::string_view currentHead = git_oid_tostr_s(&commit_id);
+    advertisedHead_ = currentHead;
 
     // Send references
     std::ostringstream packet;
@@ -335,6 +349,21 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                      ec.message());
         dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
     }
+}
+
+void
+GitServer::Impl::notifyUpToDate()
+{
+    if (sawWant_ || upToDateNotified_ || advertisedHead_.empty())
+        return;
+    upToDateNotified_ = true;
+    JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer is already up to date at {}",
+             accountId_,
+             repositoryId_,
+             fmt::ptr(this),
+             advertisedHead_);
+    if (onFetchedCb_)
+        onFetchedCb_(advertisedHead_);
 }
 
 void
