@@ -666,11 +666,15 @@ public:
             if (memberEvent && onMembersChanged_)
                 onMembersChanged_(repository_->memberUris("", {}));
             // Nothing to replay for our own commits: what this device wrote came
-            // out of the live session in the first place.
+            // out of the live session in the first place. From another thread:
+            // announce() can run under writeMtx_ (a pull holds it) and the replay
+            // asks the module for the conversation, which takes locks of its own.
             if (!commits.empty() && !commitFromSelf)
-                if (auto acc = account_.lock())
-                    if (auto collab = acc->collaborativeEditing())
-                        collab->onRepositoryUpdated(repository_->parentConversationId(), convId);
+                dht::ThreadPool::io().run([w = account_, parentId = repository_->parentConversationId(), convId] {
+                    if (auto acc = w.lock())
+                        if (auto collab = acc->collaborativeEditing())
+                            collab->onRepositoryUpdated(parentId, convId);
+                });
             return;
         }
         auto ok = !commits.empty();
@@ -917,8 +921,7 @@ public:
         }
         // Closing the replaced channel, if any, happens here, outside the lock.
     }
-    void removeGitSocket(const DeviceId& deviceId,
-                         const std::shared_ptr<dhtnet::ChannelSocket>& expected = {})
+    void removeGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& expected = {})
     {
         GitSocket socket;
         {
@@ -2020,8 +2023,7 @@ Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtne
 }
 
 void
-Conversation::removeGitSocket(const DeviceId& deviceId,
-                              const std::shared_ptr<dhtnet::ChannelSocket>& expected)
+Conversation::removeGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& expected)
 {
     pimpl_->removeGitSocket(deviceId, expected);
 }
