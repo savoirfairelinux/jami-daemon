@@ -19,7 +19,10 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
+#include <atomic>
 #include <condition_variable>
+#include <future>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -35,6 +38,7 @@
 #include "conversation/conversationcommon.h"
 #include "fileutils.h"
 #include "jami.h"
+#include "jamidht/commit_message.h"
 #include "manager.h"
 #include <dhtnet/certstore.h>
 
@@ -91,11 +95,13 @@ private:
     void testSyncFetch();
     void testSyncAfterDisconnection();
     void testDisplayedOnLoad();
+    void testCallHistoryQueuedDuringFetch();
 
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
     CPPUNIT_TEST(testSyncFetch);
     CPPUNIT_TEST(testSyncAfterDisconnection);
     CPPUNIT_TEST(testDisplayedOnLoad);
+    CPPUNIT_TEST(testCallHistoryQueuedDuringFetch);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -587,6 +593,131 @@ ConversationFetchSentTest::testDisplayedOnLoad()
     CPPUNIT_ASSERT(waitFor(30s, [&]() {
         return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED;
+    }));
+}
+
+void
+ConversationFetchSentTest::testCallHistoryQueuedDuringFetch()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto bobDevice = std::string(bobAccount->currentDeviceId());
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return !aliceData.conversationId.empty() && !bobData.conversationId.empty(); }));
+
+    std::this_thread::sleep_for(5s);
+    aliceData.messages.clear();
+    bobData.messages.clear();
+
+    const auto conversationId = bobData.conversationId;
+    auto firstCommitPromise = std::make_shared<std::promise<std::string>>();
+    auto firstCommit = firstCommitPromise->get_future();
+    bobAccount->convModule()->createCommit(conversationId,
+                                           CommitMessage::outgoingCallEnd(aliceUri, 1000),
+                                           false,
+                                           {},
+                                           [firstCommitPromise](bool ok, const std::string& commitId) {
+                                               firstCommitPromise->set_value(ok ? commitId : std::string {});
+                                           });
+    CPPUNIT_ASSERT(firstCommit.wait_for(30s) == std::future_status::ready);
+    auto firstCommitId = firstCommit.get();
+    CPPUNIT_ASSERT(!firstCommitId.empty());
+
+    auto pauseNextFetch = std::make_shared<std::atomic_bool>(true);
+    auto fetchPausedPromise = std::make_shared<std::promise<void>>();
+    auto fetchPaused = fetchPausedPromise->get_future();
+    auto releaseFetchPromise = std::make_shared<std::promise<void>>();
+    auto releaseFetch = releaseFetchPromise->get_future().share();
+    auto fetchResumedPromise = std::make_shared<std::promise<void>>();
+    auto fetchResumed = fetchResumedPromise->get_future();
+    auto fetchReleased = std::make_shared<std::atomic_bool>(false);
+    auto unblockFetch = [releaseFetchPromise, fetchReleased] {
+        if (!fetchReleased->exchange(true))
+            releaseFetchPromise->set_value();
+    };
+    aliceAccount->convModule()->onFetchCompleted(
+        [conversationId,
+         firstCommitId,
+         pauseNextFetch,
+         fetchPausedPromise,
+         releaseFetch,
+         fetchResumedPromise](const std::string& fetchedConversationId, const std::string& fetchedCommitId, bool) {
+            if (fetchedConversationId != conversationId || fetchedCommitId != firstCommitId
+                || !pauseNextFetch->exchange(false))
+                return;
+            fetchPausedPromise->set_value();
+            releaseFetch.wait();
+            fetchResumedPromise->set_value();
+        });
+
+    aliceAccount->convModule()->fetchNewCommits(bobUri, bobDevice, conversationId, firstCommitId);
+    auto fetchIsPaused = fetchPaused.wait_for(30s) == std::future_status::ready;
+    if (!fetchIsPaused)
+        unblockFetch();
+    CPPUNIT_ASSERT(fetchIsPaused);
+
+    auto secondCommitPromise = std::make_shared<std::promise<std::string>>();
+    auto secondCommit = secondCommitPromise->get_future();
+    bobAccount->convModule()->createCommit(conversationId,
+                                           CommitMessage::outgoingCallEnd(aliceUri, 43000),
+                                           false,
+                                           {},
+                                           [secondCommitPromise](bool ok, const std::string& commitId) {
+                                               secondCommitPromise->set_value(ok ? commitId : std::string {});
+                                           });
+
+    auto secondCommitReady = secondCommit.wait_for(30s) == std::future_status::ready;
+    if (!secondCommitReady)
+        unblockFetch();
+    CPPUNIT_ASSERT(secondCommitReady);
+    auto secondCommitId = secondCommit.get();
+    if (secondCommitId.empty())
+        unblockFetch();
+    CPPUNIT_ASSERT(!secondCommitId.empty());
+    auto secondCommitAlreadyFetched
+        = aliceAccount->convModule()->getConversation(conversationId)->hasCommit(secondCommitId);
+    if (secondCommitAlreadyFetched)
+        unblockFetch();
+    CPPUNIT_ASSERT(!secondCommitAlreadyFetched);
+
+    aliceAccount->convModule()->fetchNewCommits(bobUri, bobDevice, conversationId, secondCommitId);
+    unblockFetch();
+    CPPUNIT_ASSERT(fetchResumed.wait_for(30s) == std::future_status::ready);
+    aliceAccount->convModule()->onFetchCompleted({});
+
+    CPPUNIT_ASSERT(waitFor(10s, [&]() {
+        return std::count_if(aliceData.messages.begin(),
+                             aliceData.messages.end(),
+                             [&](const auto& message) { return message.id == secondCommitId; })
+               == 1;
+    }));
+
+    const auto received = std::find_if(aliceData.messages.begin(), aliceData.messages.end(), [&](const auto& message) {
+        return message.id == secondCommitId;
+    });
+    CPPUNIT_ASSERT(received != aliceData.messages.end());
+    CPPUNIT_ASSERT_EQUAL(std::string(CommitType::CALL_HISTORY), received->type);
+    CPPUNIT_ASSERT_EQUAL(std::string("43000"), received->body.at(CommitKey::DURATION));
+    CPPUNIT_ASSERT(aliceAccount->convModule()->getConversation(conversationId)->hasCommit(secondCommitId));
+
+    auto getMsgStatus = [&](const auto& data, const auto& id, const auto& peer) {
+        for (const auto& msg : data.messages) {
+            if (msg.id == id && msg.status.find(peer) != msg.status.end())
+                return static_cast<libjami::Account::MessageStates>(msg.status.at(peer));
+        }
+        return libjami::Account::MessageStates::UNKNOWN;
+    };
+    CPPUNIT_ASSERT(waitFor(10s, [&]() {
+        return getMsgStatus(bobData, secondCommitId, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
 }
 
