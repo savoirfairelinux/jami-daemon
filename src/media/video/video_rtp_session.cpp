@@ -235,6 +235,10 @@ VideoRtpSession::startSender()
             }
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
+            {
+                std::lock_guard lock(bitratePolicyMutex_);
+                bitrateReconfigurePolicy_.reset(send_.bitrate, clock::now());
+            }
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -778,23 +782,50 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
     if (newBR < videoBitrateInfo_.videoBitrateCurrent)
         lastBitrateDecrease = clock::now();
 
-    if (videoBitrateInfo_.videoBitrateCurrent != newBR) {
+    const bool targetChanged = videoBitrateInfo_.videoBitrateCurrent != newBR;
+    if (targetChanged) {
         videoBitrateInfo_.videoBitrateCurrent = newBR;
 
 #if __ANDROID__
         if (auto input_device = std::dynamic_pointer_cast<VideoInput>(videoLocal_))
             emitSignal<libjami::VideoSignal::SetBitrate>(input_device->getConfig().name, (int) newBR);
 #endif
+    }
 
-        if (sender_) {
+    if (sender_) {
+        bool applyBitrate = targetChanged;
+        unsigned previousAppliedBitrate {0};
+        if (sender_->bitrateReconfigurationIsDisruptive()) {
+            std::lock_guard lock(bitratePolicyMutex_);
+            previousAppliedBitrate = bitrateReconfigurePolicy_.appliedBitrate();
+            applyBitrate = bitrateReconfigurePolicy_.update(newBR, clock::now()).has_value();
+        } else if (targetChanged) {
+            std::lock_guard lock(bitratePolicyMutex_);
+            previousAppliedBitrate = bitrateReconfigurePolicy_.appliedBitrate();
+            bitrateReconfigurePolicy_.reset(newBR, clock::now());
+        }
+
+        if (applyBitrate) {
             auto ret = sender_->setBitrate(newBR);
             if (ret == -1)
                 JAMI_ERROR("Fail to access the encoder");
             else if (ret == 0)
                 restartSender();
-        } else {
-            JAMI_ERROR("Fail to access the sender");
+            if (ret == -1 || (ret == 0 && not sender_)) {
+                // Nothing was applied (or the restart failed and left us without a
+                // sender): keep the policy aligned with the bitrate actually in use,
+                // otherwise later updates would be coalesced against a wrong baseline.
+                std::lock_guard lock(bitratePolicyMutex_);
+                bitrateReconfigurePolicy_.reset(previousAppliedBitrate, clock::now());
+            } else if (ret == 0) {
+                // The restart recreated the sender with send_.bitrate, which may differ
+                // from newBR (bounds are re-read while restarting).
+                std::lock_guard lock(bitratePolicyMutex_);
+                bitrateReconfigurePolicy_.reset(send_.bitrate, clock::now());
+            }
         }
+    } else if (targetChanged) {
+        JAMI_ERROR("Fail to access the sender");
     }
 }
 

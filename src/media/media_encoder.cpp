@@ -54,6 +54,7 @@ constexpr double LOGREG_PARAM_B {-5.};
 
 constexpr double LOGREG_PARAM_A_HEVC {96};
 constexpr double LOGREG_PARAM_B_HEVC {-5.};
+constexpr int64_t NVENC_CQ {23};
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
@@ -661,6 +662,16 @@ MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
             JAMI_WARNING("Failed to set level to 'auto'");
         if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
             JAMI_WARNING("Failed to set zerolatency to '1'");
+        if (encoderCtx->codec_id == AV_CODEC_ID_H264) {
+            // Spread the preset's periodic refresh across the GOP, while keeping explicit recovery
+            // requests as IDRs.
+            if (av_opt_set_int(encoderCtx, "intra-refresh", 1, AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to enable periodic intra refresh");
+            if (av_opt_set_int(encoderCtx, "forced-idr", 1, AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to preserve requested IDR frames");
+            if (av_opt_set_int(encoderCtx, "strict_gop", 1, AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to enable strict GOP rate control");
+        }
     } else
 #endif
     {
@@ -907,6 +918,17 @@ MediaEncoder::setPacketLoss(uint64_t pl)
     return 1; // OK
 }
 
+bool
+MediaEncoder::bitrateReconfigurationIsDisruptive()
+{
+    std::lock_guard lk(encMutex_);
+#ifdef ENABLE_HWACCEL
+    return accel_ && accel_->getName() == "nvenc";
+#else
+    return false;
+#endif
+}
+
 void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
@@ -921,13 +943,28 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 
     // If auto quality disabled use CRF mode
     if (mode_ == RateMode::CRF_CONSTRAINED) {
-        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        bool isNvenc = false;
+#ifdef ENABLE_HWACCEL
+        isNvenc = accel_ && accel_->getName() == "nvenc";
+#endif
+        if (not isNvenc) {
+            av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        }
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        // NVENC (VBR + cq) also needs a VBV buffer, otherwise the rate cap is only loosely
+        // enforced and congestion-control bitrate changes have little effect.
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DEBUG("H264 encoder setup: crf={:d}, maxrate={:d} kbit/s, bufsize={:d} kbit",
-                   crf,
-                   maxBitrate / 1000,
-                   bufSize / 1000);
+        if (isNvenc) {
+            JAMI_DEBUG("NVENC H264 encoder setup: cq={:d}, maxrate={:d} kbit/s, bufsize={:d} kbit",
+                       NVENC_CQ,
+                       maxBitrate / 1000,
+                       bufSize / 1000);
+        } else {
+            JAMI_DEBUG("H264 encoder setup: crf={:d}, maxrate={:d} kbit/s, bufsize={:d} kbit",
+                       crf,
+                       maxBitrate / 1000,
+                       bufSize / 1000);
+        }
     } else if (mode_ == RateMode::CBR) {
         av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
@@ -1057,7 +1094,15 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
     if (not accel_)
         return;
     if (accel_->getName() == "nvenc"sv) {
-        // Use same parameters as software
+        if (encoderCtx->codec_id == AV_CODEC_ID_H264 && mode_ == RateMode::CRF_CONSTRAINED) {
+            if (av_opt_set(encoderCtx, "rc", "vbr", AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to set NVENC rate control to VBR");
+            if (av_opt_set_int(encoderCtx, "cq", NVENC_CQ, AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to set NVENC constant quality");
+        } else if (encoderCtx->codec_id == AV_CODEC_ID_H264 && mode_ == RateMode::CBR) {
+            if (av_opt_set(encoderCtx, "rc", "cbr", AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARNING("Failed to set NVENC rate control to CBR");
+        }
     } else if (accel_->getName() == "vaapi"sv) {
         // Use VBR encoding with bitrate target set to 80% of the maxrate
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);

@@ -116,5 +116,11 @@ VideoSender::setBitrate(uint64_t br)
     return videoEncoder_->setBitrate(br);
 }
 
+bool
+VideoSender::bitrateReconfigurationIsDisruptive()
+{
+    return videoEncoder_ && videoEncoder_->bitrateReconfigurationIsDisruptive();
+}
+
 } // namespace video
 } // namespace jami
