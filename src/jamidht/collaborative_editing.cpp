@@ -730,6 +730,15 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
                 session->announcedName = announcedName;
         }
         cm->cloneDocumentFrom(documentId, announcer);
+        // The announcer is the natural source, but when that is this very
+        // account -- its creator reopening after a leave took the replica
+        // away -- the only copies left may be the other holders'. Every other
+        // member of the parent conversation is asked too; whoever holds the
+        // document serves it, and startFetch() arbitrates the candidates.
+        if (announcer == account->getUsername())
+            for (const auto& member : cm->getConversationMembers(conversationId))
+                if (auto it = member.find("uri"); it != member.end() && it->second != announcer)
+                    cm->cloneDocumentFrom(documentId, it->second);
         // No channels yet: they need the members recorded in the repository, so
         // the clone's completion is what opens them. Until then the document is
         // open and empty, exactly like a conversation still syncing.
