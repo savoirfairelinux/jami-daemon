@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d099725d_61c96393",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 932,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-12T02:58:43Z",
+      "side": 1,
+      "message": "[error] Line 932: 🔴 For NVENC in CRF_CONSTRAINED mode this skips setting `bufsize`, while `initAccel()` only adds `rc\u003dvbr` and `cq`. FFmpeg NVENC VBR with `maxrate` but no VBV buffer can ignore or poorly enforce the rate cap, which undermines congestion-control bitrate changes. Keep a sane `bufsize` for NVENC too, or explicitly set the NVENC equivalent validated for this encoder.",
+      "revId": "80ed001ed77cf5cf771d621c24b90f98ac74b257",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c56c57e_f7c00f66",
+        "filename": "src/media/video/bitrate_reconfigure_policy.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-12T02:58:43Z",
+      "side": 1,
+      "message": "[error] Line 57: 🔴 The increase coalescing can apply an immediate bitrate increase after exactly one unchanged sample, because `lastTargetChange_` is updated only when the target changes. In practice, if congestion control reports 2200 twice after 2000, the second call after a short interval passes the `targetChanged || now - lastTargetChange_ \u003c STABILITY_DELAY` condition once the delay since the first target change has elapsed, even though stability at that target may not have been established by repeated samples. Track when the same target has remained stable, or require `now - lastTargetChange_ \u003e\u003d STABILITY_DELAY` regardless of `targetChanged`.",
+      "revId": "80ed001ed77cf5cf771d621c24b90f98ac74b257",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec359426_2558a56b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 805,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-12T02:58:43Z",
+      "side": 1,
+      "message": "[warning] Line 805: 🟡 When `sender_-\u003esetBitrate(newBR)` returns `0`, `restartSender()` is called but the policy\u0027s applied bitrate has already been advanced to `newBR`. If the restart fails or recreates the sender with a different effective bitrate, future disruptive updates may be coalesced against the wrong baseline. Reset the policy after a successful restart from the bitrate actually used to initialize the new sender, or roll it back on restart failure.",
+      "revId": "80ed001ed77cf5cf771d621c24b90f98ac74b257",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
