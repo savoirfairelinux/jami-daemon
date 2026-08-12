@@ -102,6 +102,7 @@ public:
 
     int setBitrate(uint64_t br);
     int setPacketLoss(uint64_t pl);
+    bool bitrateReconfigurationIsDisruptive();
 
 #ifdef ENABLE_HWACCEL
     void enableAccel(bool enableAccel);

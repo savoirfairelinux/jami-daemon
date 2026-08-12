@@ -18,12 +18,14 @@
 
 #include "media/rtp_session.h"
 #include "media/media_device.h"
+#include "bitrate_reconfigure_policy.h"
 
 #include "media_stream.h"
 #include "threadloop.h"
 
 #include <string>
 #include <memory>
+#include <mutex>
 
 namespace jami {
 class CongestionControl;
@@ -149,6 +151,8 @@ private:
     static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
+    std::mutex bitratePolicyMutex_;
+    BitrateReconfigurePolicy bitrateReconfigurePolicy_;
     std::list<std::pair<time_point, float>> histoLoss_;
 
     // 5 tries in a row
