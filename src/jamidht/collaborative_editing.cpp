@@ -729,7 +729,41 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             if (!session->announcedName)
                 session->announcedName = announcedName;
         }
-        cm->cloneDocumentFrom(documentId, announcer);
+        // The announcer is the likeliest holder, but no peer is a reliable
+        // one: it may be offline, or be this very account -- its creator
+        // reopening after a leave took the replica away, and only the
+        // account's other devices can then serve it. Which members hold a
+        // copy cannot be known without the repository, so every joined
+        // member is a candidate; the module fetches from a couple and lets
+        // its fallback rounds walk the rest.
+        std::vector<std::string> candidates {announcer};
+        for (const auto& member : cm->getConversationMembers(conversationId)) {
+            auto uriIt = member.find("uri");
+            if (uriIt == member.end() || uriIt->second == announcer)
+                continue;
+            // Invited, banned and left members cannot hold a replica:
+            // holding one starts with an open, which they are refused.
+            auto roleIt = member.find("role");
+            if (roleIt == member.end() || (roleIt->second != "admin" && roleIt->second != "member"))
+                continue;
+            candidates.emplace_back(uriIt->second);
+        }
+        // The parent swarm already knows who is reachable right now: members
+        // with a connected device come first, so the initial fetches go to
+        // peers that can actually answer. Ties keep the announcer in front
+        // as the likeliest holder.
+        if (auto parent = cm->getConversation(conversationId)) {
+            std::set<std::string> online;
+            for (const auto& device : parent->peersToSyncWith()) {
+                auto uri = parent->uriFromDevice(device.toString());
+                if (!uri.empty())
+                    online.emplace(std::move(uri));
+            }
+            std::stable_partition(candidates.begin(), candidates.end(), [&](const auto& uri) {
+                return online.count(uri) != 0;
+            });
+        }
+        cm->cloneDocumentFrom(documentId, candidates);
         // No channels yet: they need the members recorded in the repository, so
         // the clone's completion is what opens them. Until then the document is
         // open and empty, exactly like a conversation still syncing.

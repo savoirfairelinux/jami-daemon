@@ -2511,8 +2511,10 @@ ConversationModule::startDocument(const std::string& parentConversationId, const
 }
 
 void
-ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::string& uri)
+ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::vector<std::string>& candidates)
 {
+    if (candidates.empty())
+        return;
     auto conv = pimpl_->startConversation(documentId);
     {
         std::lock_guard lk(conv->mtx);
@@ -2523,12 +2525,20 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
         conv->info.created = nowMs();
         conv->info.erased = TimePoint {};
         conv->info.members.emplace(pimpl_->username_);
-        // The announcer plays the part an inviter plays for a conversation:
+        // Each candidate plays the part an inviter plays for a conversation:
         // it is who the pending clone is authorized to come from, which is
         // what isPeerAuthorized() falls back to before the repo exists.
-        conv->info.members.emplace(uri);
+        for (const auto& uri : candidates)
+            conv->info.members.emplace(uri);
     }
-    pimpl_->cloneConversationFrom(documentId, uri);
+    // The fetch starts from the preferred candidates only: should they fail,
+    // the fallback rounds walk everybody recorded above, with backoff, and
+    // stop once the clone lands. Asking every candidate up front instead
+    // would burst connection attempts at each member of a large conversation.
+    static constexpr size_t initialSources = 2;
+    auto initiated = std::min(candidates.size(), initialSources);
+    for (size_t i = 0; i < initiated; ++i)
+        pimpl_->cloneConversationFrom(documentId, candidates[i]);
 }
 
 void

@@ -233,10 +233,13 @@ public:
      * invitation; the standard pending-conversation path then writes `join`.
      * Completion is reported through CollaborativeEditing::onRepositoryUpdated
      * rather than ConversationReady.
+     * Every candidate is recorded as an authorized clone source, but the
+     * fetch is only initiated from the first few: the fallback rounds walk
+     * the rest, with backoff, if those fail.
      * @param documentId  the document's repository id
-     * @param uri         a member to clone from (typically the announcer)
+     * @param candidates  members to clone from, in order of preference
      */
-    void cloneDocumentFrom(const std::string& documentId, const std::string& uri);
+    void cloneDocumentFrom(const std::string& documentId, const std::vector<std::string>& candidates);
 
     /**
      * Drop this device's replica of a collaborative document, without leaving
