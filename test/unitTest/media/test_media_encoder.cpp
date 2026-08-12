@@ -25,8 +25,11 @@
 #include "media/media_encoder.h"
 #include "media/media_io_handle.h"
 #include "media/system_codec_container.h"
+#include "media/video/bitrate_reconfigure_policy.h"
 
 #include "../../test_runner.h"
+
+#include <chrono>
 
 namespace jami {
 namespace test {
@@ -41,9 +44,13 @@ public:
 
 private:
     void testMultiStream();
+    void testDisruptiveBitrateIncreasesAreCoalesced();
+    void testDisruptiveBitrateDecreaseHysteresis();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
+    CPPUNIT_TEST(testDisruptiveBitrateIncreasesAreCoalesced);
+    CPPUNIT_TEST(testDisruptiveBitrateDecreaseHysteresis);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -187,6 +194,38 @@ MediaEncoderTest::testMultiStream()
     } catch (const MediaEncoderException& e) {
         CPPUNIT_FAIL(e.what());
     }
+}
+
+void
+MediaEncoderTest::testDisruptiveBitrateIncreasesAreCoalesced()
+{
+    using namespace std::chrono_literals;
+    const auto start = std::chrono::steady_clock::time_point {};
+    video::BitrateReconfigurePolicy policy(2000, start);
+
+    // A large enough jump is applied right away.
+    CPPUNIT_ASSERT(!policy.update(2200, start + 1s));
+    CPPUNIT_ASSERT(!policy.update(2800, start + 2s));
+    CPPUNIT_ASSERT_EQUAL(3000U, policy.update(3000, start + 3s).value_or(0U));
+
+    // A modest increase needs both repeated confirmations and a stable period.
+    CPPUNIT_ASSERT(!policy.update(3300, start + 4s));
+    CPPUNIT_ASSERT(!policy.update(3300, start + 9s));
+    CPPUNIT_ASSERT_EQUAL(3300U, policy.update(3300, start + 11s).value_or(0U));
+}
+
+void
+MediaEncoderTest::testDisruptiveBitrateDecreaseHysteresis()
+{
+    using namespace std::chrono_literals;
+    const auto start = std::chrono::steady_clock::time_point {};
+    video::BitrateReconfigurePolicy policy(4000, start);
+
+    CPPUNIT_ASSERT(!policy.update(3841, start + 1s));
+    CPPUNIT_ASSERT_EQUAL(3800U, policy.update(3800, start + 2s).value_or(0U));
+
+    CPPUNIT_ASSERT(!policy.update(3900, start + 3s));
+    CPPUNIT_ASSERT_EQUAL(3300U, policy.update(3300, start + 4s).value_or(0U));
 }
 
 } // namespace test

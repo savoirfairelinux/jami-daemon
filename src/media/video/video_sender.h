@@ -55,6 +55,7 @@ public:
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
     int setBitrate(uint64_t br);
+    bool bitrateReconfigurationIsDisruptive();
 
 private:
     static constexpr int KEYFRAMES_AT_START {1};    // Number of keyframes to enforce at stream startup
