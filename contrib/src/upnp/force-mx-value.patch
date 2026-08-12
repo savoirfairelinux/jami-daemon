@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jami <jami@gnu.org>
+Date: Wed, 12 Aug 2026 00:00:00 +0000
+Subject: [PATCH] upnp: force MX value to 2 in search requests
+
+Keep the caller-provided MX value for the local search timeout, but always
+advertise an MX value of 2 in SSDP M-SEARCH requests.
+---
+ upnp/src/ssdp/ssdp_ctrlpt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/upnp/src/ssdp/ssdp_ctrlpt.c b/upnp/src/ssdp/ssdp_ctrlpt.c
+index 16b9c50e..ee37a12c 100644
+--- a/upnp/src/ssdp/ssdp_ctrlpt.c
++++ b/upnp/src/ssdp/ssdp_ctrlpt.c
+@@ -419,7 +419,7 @@ static int CreateClientRequestPacket(
+ 	strcat(RqstBuf, man);
+ 
+ 	if (Mx > 0) {
+-		rc = snprintf(TempBuf, sizeof(TempBuf), "MX: %d\r\n", Mx);
++		rc = snprintf(TempBuf, sizeof(TempBuf), "MX: 2\r\n");
+ 		if (rc < 0 || (unsigned int)rc >= sizeof(TempBuf))
+ 			return UPNP_E_INTERNAL_ERROR;
+ 		if (RqstBufSize <= strlen(RqstBuf) + strlen(TempBuf))
+@@ -498,7 +498,7 @@ static int CreateClientRequestPacketUlaGua(
+ 	strcat(RqstBuf, man);
+ 
+ 	if (Mx > 0) {
+-		rc = snprintf(TempBuf, sizeof(TempBuf), "MX: %d\r\n", Mx);
++		rc = snprintf(TempBuf, sizeof(TempBuf), "MX: 2\r\n");
+ 		if (rc < 0 || (unsigned int)rc >= sizeof(TempBuf))
+ 			return UPNP_E_INTERNAL_ERROR;
+ 		if (RqstBufSize <= strlen(RqstBuf) + strlen(TempBuf))
+-- 
+2.43.0

@@ -16,6 +16,7 @@ ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
 	$(APPLY) $(SRC)/upnp/poll.patch
+	$(APPLY) $(SRC)/upnp/force-mx-value.patch
 	$(MOVE)
 
 UPNP_CONF = \
