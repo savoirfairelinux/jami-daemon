@@ -313,6 +313,7 @@ if get_option('interfaces').contains('library')
         'jami/def.h',
         'jami/jami.h',
         'jami/media_const.h',
+        'jami/networkservice_interface.h',
         'jami/presence_const.h',
         'jami/presencemanager_interface.h',
         'jami/security_const.h',
