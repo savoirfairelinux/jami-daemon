@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae604bc4_3604c2ec",
+        "filename": "bin/nodejs/Dockerfile",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "22cd5e2b_02c11326",
+      "revId": "68a5c700c775687c6b75d21d8e8e29209b8f0022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "759f9377_c237a7a5",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-07-28T17:36:53Z",
       "side": 1,
       "message": "[error] Line 97: 🔴 `chmod a+rwx /usr/local/cargo` makes a PATH directory world-writable, allowing an unprivileged build to replace Rust executables or shims. Split the read-only toolchain/bin location from a writable cargo cache, or make only non-PATH cache subdirectories writable.",
+      "revId": "68a5c700c775687c6b75d21d8e8e29209b8f0022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "826fb0f5_d8413aa3",
+        "filename": "docker/Dockerfile_ubuntu_24.04",
+        "patchSetId": 3
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "759f9377_c237a7a5",
       "revId": "68a5c700c775687c6b75d21d8e8e29209b8f0022",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

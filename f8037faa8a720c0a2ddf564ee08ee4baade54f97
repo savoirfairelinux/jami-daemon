@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "26ef2aa1_af2397aa",
+        "filename": "bin/nodejs/Dockerfile",
+        "patchSetId": 2
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "634bc699_ed503bc5",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "39229920_379140e8",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "26cff41e_15247bd7",
+        "filename": "contrib/src/yffi/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "39229920_379140e8",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e2b872fc_fcf49feb",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-07-28T02:42:36Z",
       "side": 1,
       "message": "[warning] Line 88: 🟡 This also installs Rust from the live rustup script with `--default-toolchain stable`, so CI images can change behavior whenever Rust stable advances. Pin the installer/toolchain version and verify the download before execution.",
+      "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87a9a2fd_1fbd3e05",
+        "filename": "docker/Dockerfile_ubuntu_24.04",
+        "patchSetId": 2
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e2b872fc_fcf49feb",
       "revId": "f8037faa8a720c0a2ddf564ee08ee4baade54f97",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

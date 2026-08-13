@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0bf2b24f_9a817872",
+        "filename": "contrib/src/yffi/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "e456ceaa_d66d377b",
+      "revId": "e977a1b9a0e3d67da2ea1a57ed337edb824e60ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "31d5cb36_9e94c72b",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b20f9a9_9de50092",
+        "filename": "contrib/src/yffi/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "31d5cb36_9e94c72b",
+      "revId": "e977a1b9a0e3d67da2ea1a57ed337edb824e60ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7f025d2a_f8bfab31",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-07-28T01:39:52Z",
       "side": 1,
       "message": "[error] Line 37: 🔴 `depyrs` is declared but this diff does not add it to any target dependency list, unlike the CMake change that links `PkgConfig::yrs`. Meson builds will configure-check for yrs but still fail to link once code references libyrs symbols. Add `depyrs` to the same dependency array/list used by the daemon target.",
+      "revId": "e977a1b9a0e3d67da2ea1a57ed337edb824e60ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cace869d_1bd111cf",
+        "filename": "meson.build",
+        "patchSetId": 1
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-13T21:02:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7f025d2a_f8bfab31",
       "revId": "e977a1b9a0e3d67da2ea1a57ed337edb824e60ee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
