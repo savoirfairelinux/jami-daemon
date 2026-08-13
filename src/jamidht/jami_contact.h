@@ -27,6 +27,7 @@
 #include <json/json.h>
 
 #include <map>
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -355,6 +356,89 @@ struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>
     // passive DHT redeliveries/retries aren't mistaken for a brand new invitation.
     int64_t invitedMs {0};
     MSGPACK_DEFINE_MAP(service, conversationId, payload, confirm, invitedMs)
+};
+
+// On-disk representation of a known device entry. Older daemons stored it as a
+// msgpack array [name, lastSyncSeconds] (std::pair). The current format stores
+// a self-describing map carrying milliseconds; the reader accepts both layouts
+// so upgrading keeps existing knownDevices files working (a downgrade simply
+// fails to parse the new map and re-discovers devices through sync).
+struct KnownDeviceData
+{
+    std::string name;
+    int64_t lastSyncMs {0};
+
+    template<typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        pk.pack_map(2);
+        pk.pack("name");
+        pk.pack(name);
+        pk.pack("syncMs");
+        pk.pack(lastSyncMs);
+    }
+
+    void msgpack_unpack(const msgpack::object& o)
+    {
+        if (o.type == msgpack::type::ARRAY) {
+            // Legacy layout: [name, lastSyncSeconds]
+            if (o.via.array.size > 0)
+                o.via.array.ptr[0].convert(name);
+            if (o.via.array.size > 1)
+                lastSyncMs = readLegacySyncSeconds(o.via.array.ptr[1]);
+        } else if (o.type == msgpack::type::MAP) {
+            for (uint32_t i = 0; i < o.via.map.size; ++i) {
+                const auto& kv = o.via.map.ptr[i];
+                if (kv.key.type != msgpack::type::STR)
+                    continue;
+                std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
+                if (key == "name")
+                    kv.val.convert(name);
+                else if (key == "syncMs")
+                    lastSyncMs = readSyncMs(kv.val);
+            }
+        } else {
+            throw msgpack::type_error();
+        }
+    }
+
+private:
+    // Devices that were never synced carry time_point::min(), which daemons
+    // predating the millisecond migration serialized through time_t into an
+    // unsigned field: the negative value wrapped around and was stored as a
+    // uint64 far beyond INT64_MAX. Reading such an entry as int64_t throws
+    // msgpack::type_error (a std::bad_cast), which used to abort the whole
+    // knownDevices file. Treat any out-of-range or negative timestamp as
+    // "never synced" (0) instead.
+    static int64_t readLegacySyncSeconds(const msgpack::object& o)
+    {
+        static constexpr int64_t MAX_SYNC_SECONDS = std::numeric_limits<int64_t>::max() / 1000;
+        int64_t seconds = 0;
+        if (o.type == msgpack::type::POSITIVE_INTEGER) {
+            auto raw = o.as<uint64_t>();
+            if (raw > static_cast<uint64_t>(MAX_SYNC_SECONDS))
+                return 0;
+            seconds = static_cast<int64_t>(raw);
+        } else if (o.type == msgpack::type::NEGATIVE_INTEGER) {
+            return 0;
+        } else {
+            throw msgpack::type_error();
+        }
+        return seconds * 1000;
+    }
+
+    static int64_t readSyncMs(const msgpack::object& o)
+    {
+        if (o.type == msgpack::type::POSITIVE_INTEGER) {
+            auto raw = o.as<uint64_t>();
+            if (raw > static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
+                return 0;
+            return static_cast<int64_t>(raw);
+        }
+        if (o.type == msgpack::type::NEGATIVE_INTEGER)
+            return 0;
+        throw msgpack::type_error();
+    }
 };
 
 struct KnownDevice
