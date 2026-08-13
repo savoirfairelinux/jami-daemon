@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0988f84d_d4b6e842",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-08-13T15:30:10Z",
+      "side": 1,
+      "message": "[error] Line 228: 🔴 `std::remove` is used without including `\u003ccstdio\u003e`, so this translation unit still relies on transitive standard-library includes and can fail on stricter toolchains. Add `#include \u003ccstdio\u003e` with the other standard headers.",
+      "revId": "8175e2a2594bbf3e34c1cf5da479a69f6662243c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
