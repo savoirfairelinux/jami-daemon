@@ -103,6 +103,9 @@ public:
     int setBitrate(uint64_t br);
     int setPacketLoss(uint64_t pl);
 
+    // Live RTP rather than file output. Must be set before addStream.
+    void setRealtime(bool realtime) { isRealtime_ = realtime; }
+
 #ifdef ENABLE_HWACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -155,6 +158,7 @@ private:
     bool linkableHW_ {false};
     RateMode mode_ {RateMode::CRF_CONSTRAINED};
     bool fecEnabled_ {false};
+    bool isRealtime_ {false};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;

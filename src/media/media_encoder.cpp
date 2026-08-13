@@ -1044,6 +1044,13 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initOpus(AVCodecContext* encoderCtx)
 {
+    // ffmpeg's libopus defaults (application=audio, fec=0, packet_loss=0,
+    // compression_level=10) suit file output; only tune live RTP.
+    if (not isRealtime_)
+        return;
+
+    av_opt_set(encoderCtx, "application", "voip", AV_OPT_SEARCH_CHILDREN);
+
     // Enable FEC support by default with 10% packet loss
     av_opt_set_int(encoderCtx, "fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);

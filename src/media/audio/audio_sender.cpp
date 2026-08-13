@@ -56,6 +56,7 @@ AudioSender::setup(SocketPair& socketPair)
         /* Encoder setup */
         JAMI_LOG("audioEncoder_->openOutput {}", dest_);
         audioEncoder_->openOutput(dest_, "rtp");
+        audioEncoder_->setRealtime(true);
         audioEncoder_->setOptions(args_);
         auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(args_.codec);
         auto ms = MediaStream("audio sender", codec->audioformat);
