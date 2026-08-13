@@ -32,55 +32,6 @@
 
 namespace jami {
 
-namespace {
-
-// On-disk representation of a known device entry. Older daemons stored it as a
-// msgpack array [name, lastSyncSeconds] (std::pair). The current format stores
-// a self-describing map carrying milliseconds; the reader accepts both layouts
-// so upgrading keeps existing knownDevices files working (a downgrade simply
-// fails to parse the new map and re-discovers devices through sync).
-struct KnownDeviceData
-{
-    std::string name;
-    int64_t lastSyncMs {0};
-
-    template<typename Packer>
-    void msgpack_pack(Packer& pk) const
-    {
-        pk.pack_map(2);
-        pk.pack("name");
-        pk.pack(name);
-        pk.pack("syncMs");
-        pk.pack(lastSyncMs);
-    }
-
-    void msgpack_unpack(const msgpack::object& o)
-    {
-        if (o.type == msgpack::type::ARRAY) {
-            // Legacy layout: [name, lastSyncSeconds]
-            if (o.via.array.size > 0)
-                o.via.array.ptr[0].convert(name);
-            if (o.via.array.size > 1)
-                lastSyncMs = o.via.array.ptr[1].as<int64_t>() * 1000;
-        } else if (o.type == msgpack::type::MAP) {
-            for (uint32_t i = 0; i < o.via.map.size; ++i) {
-                const auto& kv = o.via.map.ptr[i];
-                if (kv.key.type != msgpack::type::STR)
-                    continue;
-                std::string_view key(kv.key.via.str.ptr, kv.key.via.str.size);
-                if (key == "name")
-                    kv.val.convert(name);
-                else if (key == "syncMs")
-                    lastSyncMs = kv.val.as<int64_t>();
-            }
-        } else {
-            throw msgpack::type_error();
-        }
-    }
-};
-
-} // namespace
-
 ContactList::ContactList(const std::string& accountId,
                          const std::shared_ptr<crypto::Certificate>& cert,
                          const std::filesystem::path& path,
