@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e53c26a1_21edeb65",
+        "filename": "test/agent/src/bindings/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-08-13T06:22:42Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "4bd696f9_545a6d3b",
+      "range": {
+        "startLine": 90,
+        "startChar": 58,
+        "endLine": 90,
+        "endChar": 64
+      },
+      "revId": "39ce2ae908326734597634b1fc370083e70a08ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d43b4c1_458781d9",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-03-06T06:05:22Z",
       "side": 0,
       "message": "Should `refuse_` be `decline_`?",
+      "range": {
+        "startLine": 93,
+        "startChar": 48,
+        "endLine": 93,
+        "endChar": 55
+      },
+      "revId": "39ce2ae908326734597634b1fc370083e70a08ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "29c59314_8153321b",
+        "filename": "test/agent/src/bindings/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-08-13T06:22:42Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "2d43b4c1_458781d9",
       "range": {
         "startLine": 93,
         "startChar": 48,
