@@ -18,6 +18,9 @@
 #include <opendht/thread_pool.h>
 
 static constexpr const char SYNC_SCHEME[] {"sync://"};
+// Push type advertised to woken mobile peers. Kept in sync with the types the mobile
+// clients classify as actionable.
+static constexpr const char SYNC_PUSH_TYPE[] {"sync"};
 
 namespace jami {
 
@@ -33,14 +36,18 @@ void
 SyncChannelHandler::connect(const DeviceId& deviceId,
                             const std::string&,
                             ConnectCb&& cb,
-                            const std::string& /*connectionType*/,
+                            const std::string& connectionType,
                             bool /*forceNewConnection*/)
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
     connectionManager_.connectDevice(deviceId,
                                      channelName,
                                      std::move(cb),
-                                     dhtnet::ConnectDeviceOptions {.forceNewSocket = false, .uniqueName = true});
+                                     dhtnet::ConnectDeviceOptions {.forceNewSocket = false,
+                                                                   .uniqueName = true,
+                                                                   .connType = connectionType.empty()
+                                                                       ? std::string(SYNC_PUSH_TYPE)
+                                                                       : connectionType});
 }
 
 bool
