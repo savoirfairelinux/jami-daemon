@@ -17,6 +17,7 @@
 
 #include "swarm_channel_handler.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation_module.h"
 
 namespace jami {
 
@@ -32,14 +33,19 @@ void
 SwarmChannelHandler::connect(const DeviceId& deviceId,
                              const std::string& conversationId,
                              ConnectCb&& cb,
-                             const std::string& /*connectionType*/,
+                             const std::string& connectionType,
                              bool /*forceNewConnection*/)
 {
 #ifdef LIBJAMI_TEST
     if (disableSwarmManager)
         return;
 #endif
-    connectionManager_.connectDevice(deviceId, fmt::format("swarm://{}", conversationId), cb);
+    connectionManager_.connectDevice(deviceId,
+                                     fmt::format("swarm://{}", conversationId),
+                                     cb,
+                                     dhtnet::ConnectDeviceOptions {.connType = connectionType.empty()
+                                                                                   ? std::string(MIME_TYPE_GIT)
+                                                                                   : connectionType});
 }
 
 bool
