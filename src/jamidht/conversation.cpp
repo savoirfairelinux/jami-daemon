@@ -1231,24 +1231,33 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
     if (!isTracking_)
         return;
 
+    auto members = repository_->members();
+
     if (!memberUri.empty()) {
-        if (auto it = trackedMembers_.find(memberUri); it != trackedMembers_.end()) {
-            JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
-            auto& info = it->second;
-            info.failedDevices.insert(deviceId);
-            if (std::includes(info.failedDevices.begin(),
-                              info.failedDevices.end(),
-                              info.devices.begin(),
-                              info.devices.end())) {
+        auto it = trackedMembers_.find(memberUri);
+        if (it == trackedMembers_.end())
+            return;
+        JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
+        auto& info = it->second;
+        info.failedDevices.insert(deviceId);
+        if (std::includes(info.failedDevices.begin(),
+                          info.failedDevices.end(),
+                          info.devices.begin(),
+                          info.devices.end())) {
+            // Rotating only makes sense if another member can take the slot. In
+            // a one-to-one conversation there is none: dropping the peer would
+            // leave presence watched for nobody, so addKnownDevices() is never
+            // called again and the swarm stays silent until the account reloads.
+            auto replaceable = std::any_of(members.begin(), members.end(), [&](const auto& m) {
+                return m.uri != memberUri && trackedMembers_.find(m.uri) == trackedMembers_.end();
+            });
+            if (replaceable) {
                 acc->presenceManager()->untrackBuddy(it->first);
                 trackedMembers_.erase(it);
             }
-        } else {
-            return;
         }
     }
 
-    auto members = repository_->members();
     size_t N = members.size();
     size_t K = std::min(N, 3 + (size_t) std::log2(N));
 
