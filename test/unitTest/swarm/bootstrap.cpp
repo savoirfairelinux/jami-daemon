@@ -76,6 +76,7 @@ private:
     void testBootstrapNeverNewDevice();
     void testBootstrapCompat();
     void testBootstrapAfterReactivation();
+    void testKeepTrackingOnlyPeer();
 
     CPPUNIT_TEST_SUITE(BootstrapTest);
     CPPUNIT_TEST(testBootstrapOk);
@@ -83,6 +84,7 @@ private:
     CPPUNIT_TEST(testBootstrapNeverNewDevice);
     CPPUNIT_TEST(testBootstrapCompat);
     CPPUNIT_TEST(testBootstrapAfterReactivation);
+    CPPUNIT_TEST(testKeepTrackingOnlyPeer);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -410,6 +412,54 @@ BootstrapTest::testBootstrapAfterReactivation()
     Manager::instance().setAccountActive(aliceData.accountId, true, false);
     lk.lock();
 
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS; }));
+}
+
+void
+BootstrapTest::testKeepTrackingOnlyPeer()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData.accountId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
+    auto bobUri = bobAccount->getUsername();
+
+    unsigned aliceFailures = 0;
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        if (status == Conversation::BootstrapStatus::FAILED)
+            ++aliceFailures;
+        cv.notify_one();
+    });
+
+    std::unique_lock lk {mtx};
+    auto convId = libjami::startConversation(aliceData.accountId);
+
+    libjami::addConversationMember(aliceData.accountId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobData.accountId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationReady && aliceData.messages.size() == aliceMsgSize + 1
+               && aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
+    }));
+
+    // Bob leaves. Alice's attempt to reach him fails, which starts tracking
+    // his presence. His announcement outlives him on the DHT, so presence
+    // reports his device right away, a device the swarm manager already
+    // knows: that must still be retried, hence a second failure.
+    Manager::instance().sendRegister(bobData.accountId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return aliceFailures >= 1; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 90s, [&]() { return aliceFailures >= 2; }));
+
+    // Every device Alice knows of Bob failed, but he is the only other member:
+    // rotating away from him would leave nobody to watch.
+    auto conv = aliceAccount->convModule()->getConversation(convId);
+    CPPUNIT_ASSERT(conv);
+    auto tracked = conv->getTrackedMembers();
+    CPPUNIT_ASSERT(std::any_of(tracked.begin(), tracked.end(), [&](const auto& m) { return m.at("uri") == bobUri; }));
+
+    Manager::instance().sendRegister(bobData.accountId, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS; }));
 }
