@@ -1252,6 +1252,16 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
             }
         }
     }
+
+    // Rotating away from the member above excludes it from the candidates, which
+    // leaves a one-to-one conversation with nobody to track at all. Presence is
+    // then monitored for no one, so addKnownDevices() is never called again and
+    // the conversation stays silent until the account is reloaded. Keep watching
+    // the peer, clearing the devices that failed so its next announce is retried.
+    if (trackedMembers_.empty() && !memberUri.empty()) {
+        acc->presenceManager()->trackBuddy(memberUri);
+        trackedMembers_.emplace(memberUri, TrackedMember {});
+    }
 }
 
 void

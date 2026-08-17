@@ -67,8 +67,21 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
         }
     }
 
-    if (newNodes.empty())
+    if (newNodes.empty()) {
+        // Members coming back online are re-announced with the devices we already
+        // know, so addKnownNode() reports nothing new and the block below is
+        // skipped. When the routing table holds no connected node, that announce
+        // is the only chance we get to retry: nothing else calls maintainBuckets()
+        // and the swarm stays silent until the account is reloaded. Retry the
+        // candidates we already have instead of dropping the notification.
+        if (isConnected())
+            return false;
+        dht::ThreadPool::io().run([w = weak()] {
+            if (auto shared = w.lock())
+                shared->maintainBuckets();
+        });
         return false;
+    }
 
     dht::ThreadPool::io().run([w = weak(), newNodes = std::move(newNodes)] {
         auto shared = w.lock();
