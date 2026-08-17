@@ -125,6 +125,7 @@ private:
     void testRoutingTableMainFunctions();
     void testBucketKnownNodes();
     void testSwarmManagerConnectingNodes_1b();
+    void testRetryKnownNodesWhileDisconnected();
     void testClosestNodes_1b();
     void testClosestNodes_multipleb();
     void testSendKnownNodes_1b();
@@ -154,6 +155,7 @@ private:
     CPPUNIT_TEST(testClosestNodes_1b);
     CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
     CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
+    CPPUNIT_TEST(testRetryKnownNodesWhileDisconnected);
     CPPUNIT_TEST(testRoutingTableForConnectingNode);
     CPPUNIT_TEST(testMobileNodeFunctions);
     CPPUNIT_TEST(testMobileNodeWakeUp);
@@ -529,6 +531,42 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
     CPPUNIT_ASSERT(rt1.hasConnectingNode(nodeTestIds1.at(1)));
     CPPUNIT_ASSERT(!rt1.hasKnownNode(nodeTestIds1.at(0)));
     CPPUNIT_ASSERT(!rt1.hasKnownNode(nodeTestIds1.at(1)));
+}
+
+void
+RoutingTableTest::testRetryKnownNodesWhileDisconnected()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    std::vector<std::string> attempts;
+    std::condition_variable cv;
+    std::mutex mutex;
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
+    // Every attempt fails, so the node goes back to the known set.
+    sm1->needSocketCb_ = [&](const auto& n, auto cb, bool) {
+        {
+            std::lock_guard<std::mutex> lk(mutex);
+            attempts.emplace_back(n);
+        }
+        cb(nullptr);
+        cv.notify_one();
+    };
+    auto& rt1 = sm1->getRoutingTable();
+
+    std::vector<NodeId> toTest({nodeTestIds1.at(1), nodeTestIds1.at(2)});
+
+    std::unique_lock lk(mutex);
+    CPPUNIT_ASSERT(sm1->setKnownNodes(toTest));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return attempts.size() == 2; }));
+    CPPUNIT_ASSERT(rt1.hasKnownNode(toTest[0]));
+    CPPUNIT_ASSERT(rt1.hasKnownNode(toTest[1]));
+    CPPUNIT_ASSERT(!sm1->isConnected());
+
+    // Nothing new, but nobody is connected: the announce must still be acted on.
+    CPPUNIT_ASSERT(!sm1->setKnownNodes(toTest));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return attempts.size() == 4; }));
+    CPPUNIT_ASSERT(rt1.hasKnownNode(toTest[0]));
+    CPPUNIT_ASSERT(rt1.hasKnownNode(toTest[1]));
 }
 
 void
