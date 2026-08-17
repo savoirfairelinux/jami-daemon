@@ -1240,10 +1240,17 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
         JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
         auto& info = it->second;
         info.failedDevices.insert(deviceId);
-        if (std::includes(info.failedDevices.begin(),
-                          info.failedDevices.end(),
-                          info.devices.begin(),
-                          info.devices.end())) {
+        // std::includes() is vacuously true on an empty second range, so a
+        // member whose devices are still unknown would be dropped on its very
+        // first failure. That set is only filled by addKnownDevices() once
+        // the presence manager reports the member online, while a failure
+        // is reported for any device the DRT happens to try, so it is
+        // routinely empty here. Wait until we know what to reach.
+        if (!info.devices.empty()
+            && std::includes(info.failedDevices.begin(),
+                             info.failedDevices.end(),
+                             info.devices.begin(),
+                             info.devices.end())) {
             // Rotating only makes sense if another member can take the slot. In
             // a one-to-one conversation there is none: dropping the peer would
             // leave presence watched for nobody, so addKnownDevices() is never
