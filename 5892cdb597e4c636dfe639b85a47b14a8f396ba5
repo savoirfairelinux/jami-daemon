@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd0c9667_6891a5dd",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-17T17:25:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79a581c2_92fbfeab",
+      "revId": "5892cdb597e4c636dfe639b85a47b14a8f396ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d7eb6401_4c824bad",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-08-07T19:50:59Z",
       "side": 1,
       "message": "[error] Line 255: 🔴 Signal callbacks mutate UserData without taking `mtx`, while test predicates read the same fields under `lk`. These callbacks can run on daemon threads, so this is a data race and can make the tests flaky or undefined. Guard every `data-\u003e...` mutation with the fixture mutex, or switch these fields/containers to thread-safe synchronization consistently.",
+      "revId": "5892cdb597e4c636dfe639b85a47b14a8f396ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fbfd9c6d_c307a0b0",
+        "filename": "test/unitTest/collab/collab.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-17T17:25:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d7eb6401_4c824bad",
       "revId": "5892cdb597e4c636dfe639b85a47b14a8f396ba5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
