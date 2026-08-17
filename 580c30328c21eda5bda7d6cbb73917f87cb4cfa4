@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "193f4e69_1217ee0e",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-17T15:09:38Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b2c9d44d_934edf61",
+      "revId": "580c30328c21eda5bda7d6cbb73917f87cb4cfa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7f015966_18457198",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-08-07T19:50:15Z",
       "side": 1,
       "message": "[warning] Line 242: 🟡 `setCollaborativeAwareness()` documents that oversized states are dropped, but the API also returns `void`. Even though awareness is ephemeral, clients should be able to know that their local presence/cursor state was rejected. Consider returning `bool` or a status code before this public API is frozen.",
+      "revId": "580c30328c21eda5bda7d6cbb73917f87cb4cfa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "366cdb83_3422bdf8",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-08-17T15:09:38Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "7f015966_18457198",
       "revId": "580c30328c21eda5bda7d6cbb73917f87cb4cfa4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
