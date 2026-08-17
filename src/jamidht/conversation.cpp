@@ -1002,6 +1002,7 @@ public:
     {
         std::set<DeviceId> devices;
         std::set<DeviceId> failedDevices;
+        std::chrono::steady_clock::time_point trackedSince {std::chrono::steady_clock::now()};
     };
     std::map<std::string, TrackedMember> trackedMembers_;
     mutable std::mutex trackedMembersMtx_;
@@ -1240,10 +1241,22 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
         JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
         auto& info = it->second;
         info.failedDevices.insert(deviceId);
-        if (std::includes(info.failedDevices.begin(),
-                          info.failedDevices.end(),
-                          info.devices.begin(),
-                          info.devices.end())) {
+        // std::includes() is vacuously true on an empty second range, so a
+        // member whose devices are still unknown would be dropped on its very
+        // first failure. That set is only filled by addKnownDevices() once
+        // the presence manager reports the member online, while a failure
+        // is reported for any device the DRT happens to try, so it is
+        // routinely empty right after the member was picked. Give presence
+        // time to answer; past that, an empty set means nobody is online
+        // and the member is as good as fully failed.
+        constexpr auto PRESENCE_GRACE = std::chrono::seconds(30);
+        auto presencePending = info.devices.empty()
+                               && std::chrono::steady_clock::now() - info.trackedSince < PRESENCE_GRACE;
+        if (!presencePending
+            && std::includes(info.failedDevices.begin(),
+                             info.failedDevices.end(),
+                             info.devices.begin(),
+                             info.devices.end())) {
             // Rotating only makes sense if another member can take the slot. In
             // a one-to-one conversation there is none: dropping the peer would
             // leave presence watched for nobody, so addKnownDevices() is never
