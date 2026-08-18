@@ -985,6 +985,22 @@
             </arg>
         </method>
 
+        <method name="getConferenceResolution" tp:name-for-bindings="getConferenceResolution">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the resolution used for conferences
+            </tp:docstring>
+            <arg type="s" name="resolution" direction="out"/>
+        </method>
+
+        <method name="setConferenceResolution" tp:name-for-bindings="setConferenceResolution">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Set the resolution used for conferences
+            </tp:docstring>
+            <arg type="s" name="resolution" direction="in"/>
+        </method>
+
         <!--      ///////////////////////               -->
 
         <!-- Codecs-related methods -->
@@ -1950,6 +1966,28 @@
             <tp:added version="10.0.0"/>
             <tp:docstring>
                Get members of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="members" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <method name="getConversationConnectivity" tp:name-for-bindings="getConversationConnectivity">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the connectivity of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="connectivity" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
+        <method name="getConversationTrackedMembers" tp:name-for-bindings="getConversationTrackedMembers">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the tracked members of a conversation
             </tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="members" direction="out"/>

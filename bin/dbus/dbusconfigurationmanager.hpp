@@ -375,6 +375,13 @@ public:
 
     void setRecordQuality(const int32_t& quality) { libjami::setRecordQuality(quality); }
 
+    auto getConferenceResolution() -> decltype(libjami::getConferenceResolution())
+    {
+        return libjami::getConferenceResolution();
+    }
+
+    void setConferenceResolution(const std::string& resolution) { libjami::setConferenceResolution(resolution); }
+
     void setHistoryLimit(const int32_t& days) { libjami::setHistoryLimit(days); }
 
     auto getHistoryLimit() -> decltype(libjami::getHistoryLimit()) { return libjami::getHistoryLimit(); }
@@ -663,6 +670,18 @@ public:
                                                                            const std::string& conversationId)
     {
         return libjami::getConversationMembers(accountId, conversationId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getConversationConnectivity(const std::string& accountId,
+                                                                                const std::string& conversationId)
+    {
+        return libjami::getConversationConnectivity(accountId, conversationId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getConversationTrackedMembers(const std::string& accountId,
+                                                                                  const std::string& conversationId)
+    {
+        return libjami::getConversationTrackedMembers(accountId, conversationId);
     }
 
     void sendMessage(const std::string& accountId,
