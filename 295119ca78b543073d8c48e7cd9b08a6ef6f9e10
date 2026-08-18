@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbf55158_b2f1bc15",
+        "filename": "src/jami/configurationmanager_interface.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 523,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-08-18T15:56:43Z",
+      "side": 1,
+      "message": "must be part of ConversationSignal instead of ConfigurationSignal",
+      "range": {
+        "startLine": 443,
+        "startChar": 3,
+        "endLine": 523,
+        "endChar": 6
+      },
+      "revId": "295119ca78b543073d8c48e7cd9b08a6ef6f9e10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
