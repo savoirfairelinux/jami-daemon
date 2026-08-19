@@ -3,6 +3,11 @@ ONNX_VERSION := v1.27.0
 PKG_CPE += cpe:2.3:a:*:onnx:1.27.0:*:*:*:*:*:*:*
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
+# Never resolve FetchContent dependencies via find_package: onnxruntime vendors
+# its own abseil, and letting CMake pick up a system re2/abseil on top of it
+# mixes incompatible versions and breaks configure (missing absl::* targets).
+ONNX_HERMETIC_DEPS := --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=NEVER
+
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
 	$(call download_git,$(ONNX_URL),$(ONNX_VERSION),$(ONNX_VERSION),preserve .git)
 
@@ -17,24 +22,24 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
-	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --config Release --build_shared_lib --skip_tests --android_cpp_shared --use_nnapi --allow_running_as_root --compile_no_warning_as_error
+	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --config Release --build_shared_lib --skip_tests --android_cpp_shared --use_nnapi --allow_running_as_root --compile_no_warning_as_error $(ONNX_HERMETIC_DEPS)
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
 ifdef HAVE_MACOSX
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --osx_arch $(ARCH)
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --osx_arch $(ARCH) $(ONNX_HERMETIC_DEPS)
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/MacOS/Release/libonnxruntime.dylib $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.dylib
 else
 ifdef USE_NVIDIA
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --use_cuda --cuda_version $(CUDA_VERSION) --cuda_home $(CUDA_PATH) --cudnn_home $(CUDNN_PATH) --skip_tests
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --use_cuda --cuda_version $(CUDA_VERSION) --cuda_home $(CUDA_PATH) --cudnn_home $(CUDNN_PATH) --skip_tests --compile_no_warning_as_error $(ONNX_HERMETIC_DEPS)
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/nvidia-gpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/nvidia-gpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime.so
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_shared.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_shared.so
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_cuda.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_cuda.so
 else
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --allow_running_as_root
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --allow_running_as_root --compile_no_warning_as_error $(ONNX_HERMETIC_DEPS)
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.so

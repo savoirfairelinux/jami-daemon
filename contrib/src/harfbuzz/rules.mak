@@ -14,7 +14,8 @@ HARFBUZZ_CONF := --prefix="$(PREFIX)" \
 	-Ddocs=disabled \
 	-Dcairo=disabled \
 	-Dicu=disabled \
-	-Dintrospection=disabled
+	-Dintrospection=disabled \
+	-Dprefer_static=true
 
 $(TARBALLS)/harfbuzz-$(HARFBUZZ_VERSION).tar.xz:
 	$(call download,$(HARFBUZZ_URL))
