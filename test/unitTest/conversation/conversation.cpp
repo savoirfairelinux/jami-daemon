@@ -142,6 +142,8 @@ private:
     void testFetchProfileUnauthorized();
     void testSyncingWhileAccepting();
     void testCountInteractions();
+    void testLoadSwarmUntilRepeated();
+    void testLoadConversationPaginates();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testCloneFromMultipleDevice();
@@ -194,6 +196,8 @@ private:
     CPPUNIT_TEST(testFetchProfileUnauthorized);
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testCountInteractions);
+    CPPUNIT_TEST(testLoadSwarmUntilRepeated);
+    CPPUNIT_TEST(testLoadConversationPaginates);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
@@ -1718,6 +1722,121 @@ ConversationTest::testCountInteractions()
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, "", "", aliceAccount->getUsername()) == 0);
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, msgId3, "", "") == 0);
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, msgId2, "", "") == 1);
+}
+
+void
+ConversationTest::testLoadSwarmUntilRepeated()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    // A history deep enough that a client would only have part of it loaded.
+    std::vector<std::string> msgIds;
+    for (int i = 0; i < 10; ++i) {
+        std::string msgId;
+        aliceAccount->convModule()->sendMessage(convId,
+                                                std::to_string(i),
+                                                "",
+                                                true,
+                                                {},
+                                                [&](bool, std::string commitId) {
+                                                    msgId = commitId;
+                                                    cv.notify_one();
+                                                });
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId.empty(); }));
+        msgIds.emplace_back(msgId);
+    }
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::vector<libjami::SwarmMessage> loaded;
+    bool done = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t, const std::string&, const std::string&, std::vector<libjami::SwarmMessage> messages) {
+            loaded = std::move(messages);
+            done = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    const auto& newest = msgIds.back();
+    const auto& target = msgIds.front();
+
+    // Jumping to a message must always report that message back to the client,
+    // no matter how many times the client asks for it.
+    auto jumpReachesTarget = [&] {
+        loaded.clear();
+        done = false;
+        CPPUNIT_ASSERT(libjami::loadSwarmUntil(aliceId, convId, newest, target) != 0);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return done; }));
+        return std::any_of(loaded.begin(), loaded.end(), [&](const auto& m) { return m.id == target; });
+    };
+
+    CPPUNIT_ASSERT(jumpReachesTarget());
+    CPPUNIT_ASSERT(jumpReachesTarget());
+
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testLoadConversationPaginates()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    std::string newest;
+    for (int i = 0; i < 10; ++i) {
+        std::string msgId;
+        aliceAccount->convModule()->sendMessage(convId,
+                                                std::to_string(i),
+                                                "",
+                                                true,
+                                                {},
+                                                [&](bool, std::string commitId) {
+                                                    msgId = commitId;
+                                                    cv.notify_one();
+                                                });
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId.empty(); }));
+        newest = msgId;
+    }
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::vector<libjami::SwarmMessage> loaded;
+    bool done = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t, const std::string&, const std::string&, std::vector<libjami::SwarmMessage> messages) {
+            loaded = std::move(messages);
+            done = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Drop what the daemon has cached so the conversation starts out unloaded,
+    // as it is when a client opens it.
+    aliceAccount->convModule()->clearCache(convId);
+
+    // Clients page backwards by asking again from the newest message they hold,
+    // relying on the daemon to skip what they already have. Each page must bring
+    // messages they don't have yet, or scrolling up stalls.
+    std::set<std::string> seen;
+    auto loadPage = [&](const std::string& from) {
+        loaded.clear();
+        done = false;
+        CPPUNIT_ASSERT(libjami::loadConversation(aliceId, convId, from, 3) != 0);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return done; }));
+        return static_cast<size_t>(std::count_if(loaded.begin(), loaded.end(), [&](const auto& m) {
+            return seen.insert(m.id).second;
+        }));
+    };
+
+    CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(""));
+    CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
+    CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
+
+    libjami::unregisterSignalHandlers();
 }
 
 void

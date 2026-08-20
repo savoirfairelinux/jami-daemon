@@ -1471,6 +1471,7 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
 
     auto startLogging = options.from == "";
     auto breakLogging = false;
+    auto reachedIncludedTo = false;
     auto currentHistorySize = loadedHistory_.messageList.size();
     std::vector<std::string> replies;
     std::vector<std::shared_ptr<libjami::SwarmMessage>> msgList;
@@ -1482,7 +1483,7 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             }
             if (id == options.to) {
                 if (options.includeTo)
-                    breakLogging = true; // For the next commit
+                    reachedIncludedTo = true;
             }
             if (replies.empty()) { // This avoid load until
                 // NOTE: in the future, we may want to add "Reply-Body" in commit to avoid to load
@@ -1496,6 +1497,10 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
                     return CallbackResult::Break; // Stop logging
                 }
             }
+            // Arm the break only once the "to" commit itself has been let through, otherwise
+            // includeTo would drop the very commit the caller asked to load until.
+            if (reachedIncludedTo)
+                breakLogging = true;
 
             if (!startLogging && options.from != "" && options.from == id)
                 startLogging = true;
@@ -1538,7 +1543,30 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             if (!added.empty() && firstMsg) {
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *firstMsg);
             }
-            msgList.insert(msgList.end(), added.begin(), added.end());
+            if (added.empty()) {
+                // The commit is already in the in-memory history, either because it was
+                // received live or loaded by an earlier request. When an explicit range was
+                // asked for, report the cached message rather than nothing: clients keep
+                // their own window of the history and may well not have it.
+                // Paginated loads are excluded on purpose. They walk back from the newest
+                // message every time and rely on this deduplication to skip what the caller
+                // already has, so returning cached messages would pin them to the first page.
+                if (const auto it = options.to.empty() ? history->quickAccess.end()
+                                                       : history->quickAccess.find(message.at("id"));
+                    it != history->quickAccess.end()) {
+                    const auto& cached = it->second;
+                    const auto reactToIt = cached->body.find(CommitKey::REACT_TO);
+                    const auto editIt = cached->body.find(CommitKey::EDIT);
+                    // Reactions and editions are folded into the message they target and are
+                    // never returned on their own, mirroring addToHistory.
+                    const auto isFolded = (reactToIt != cached->body.end() && !reactToIt->second.empty())
+                                          || (editIt != cached->body.end() && !editIt->second.empty());
+                    if (!isFolded)
+                        msgList.emplace_back(cached);
+                }
+            } else {
+                msgList.insert(msgList.end(), added.begin(), added.end());
+            }
         },
         /* postCondition */
         [&](auto, auto, auto) {
