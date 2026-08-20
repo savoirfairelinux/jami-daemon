@@ -2377,7 +2377,21 @@ JamiAccount::onICERequest(const DeviceId& deviceId)
             return;
         }
         dht::InfoHash peer_account_id;
-        auto res = accountManager_->onPeerCertificate(cert, this->config().allowPublicIncoming, peer_account_id);
+        auto res = AccountManager::foundPeerDevice(getAccountID(), cert, peer_account_id);
+        if (res) {
+            res = accountManager_->isAllowed(*cert, this->config().allowPublicIncoming);
+            if (!res
+                && accountManager_->getCertificateStatus(cert->getLongId().toString())
+                       != dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                auto* conversationModule = convModule(true);
+                res = conversationModule && conversationModule->isPeerAuthorizedByConversation(*cert);
+            }
+            if (!res) {
+                JAMI_WARNING("[Account {}] [Auth] Discarding ICE request from unauthorized peer {}.",
+                             getAccountID(),
+                             peer_account_id);
+            }
+        }
         JAMI_LOG("[Account {}] [device {}] {} ICE request from {}",
                  getAccountID(),
                  cert->getLongId(),
