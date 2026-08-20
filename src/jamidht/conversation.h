@@ -424,6 +424,12 @@ public:
      */
     bool isPeerAuthorized(const std::string& uri, const std::string& deviceId, bool includeInvited = false) const;
 
+    /**
+     * Check whether a device certificate belongs to a confirmed, non-banned member.
+     * The device certificate is verified against the member certificate stored in the repository.
+     */
+    bool isPeerCertificateAuthorized(const dht::crypto::Certificate& certificate) const;
+
     void createCommit(CommitMessage&& message, OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
 
     /**
