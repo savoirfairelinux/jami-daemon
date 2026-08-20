@@ -464,6 +464,12 @@ public:
                           bool includeInvited = false) const;
 
     /**
+     * Check whether a device certificate belongs to a confirmed member of any active,
+     * locally loaded conversation.
+     */
+    bool isPeerAuthorizedByConversation(const dht::crypto::Certificate& certificate) const;
+
+    /**
      * The read-only half of authorizeDocumentPeer(): whether this device could
      * vouch for the peer, without writing anything. This is what the channel
      * pre-check asks — accepting the channel commits us to nothing, the add

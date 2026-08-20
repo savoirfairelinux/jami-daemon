@@ -2297,6 +2297,18 @@ Conversation::isPeerAuthorized(const std::string& uri, const std::string& device
     return !isMemberBanned(uri) && !isDeviceBanned(deviceId) && isMember(uri, includeInvited);
 }
 
+bool
+Conversation::isPeerCertificateAuthorized(const dht::crypto::Certificate& certificate) const
+{
+    if (!certificate.issuer)
+        return false;
+
+    const auto memberUri = certificate.issuer->getId().toString();
+    const auto deviceId = certificate.getLongId().toString();
+    return isPeerAuthorized(memberUri, deviceId, false)
+           && pimpl_->repository_->isDeviceCertificateFromMember(certificate);
+}
+
 void
 Conversation::createCommit(CommitMessage&& message, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {

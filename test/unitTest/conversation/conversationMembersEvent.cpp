@@ -82,6 +82,7 @@ public:
     void testRemoveMember();
     void testRemovedMemberDoesNotReceiveMessageFromAdmin();
     void testRemovedMemberDoesNotReceiveMessageFromPeer();
+    void testSwarmMessagesWithCommonContactOffline();
     void testRemoveInvitedMember();
     void testMemberBanNoBadFile();
     void testMemberTryToRemoveAdmin();
@@ -136,6 +137,7 @@ private:
     CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromAdmin);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromPeer);
+    CPPUNIT_TEST(testSwarmMessagesWithCommonContactOffline);
     CPPUNIT_TEST(testRemoveInvitedMember);
     CPPUNIT_TEST(testMemberBanNoBadFile);
     CPPUNIT_TEST(testMemberTryToRemoveAdmin);
@@ -746,6 +748,89 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromPeer()
     libjami::sendMessage(carlaId, convId, "hello"s, "");
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobMsgSize < bobData.messages.size(); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+}
+
+void
+ConversationMembersEventTest::testSwarmMessagesWithCommonContactOffline()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.deviceAnnounced; }));
+
+    // Bob has Alice and Carla as contacts, but Alice and Carla are not contacts.
+    bobAccount->addContact(aliceUri);
+    bobAccount->sendTrustRequest(aliceUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.requestReceived; }));
+    auto bobMsgSize = bobData.messages.size();
+    CPPUNIT_ASSERT(aliceAccount->acceptTrustRequest(bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() > bobMsgSize; }));
+
+    bobAccount->addContact(carlaUri);
+    bobAccount->sendTrustRequest(carlaUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    bobMsgSize = bobData.messages.size();
+    CPPUNIT_ASSERT(carlaAccount->acceptTrustRequest(bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() > bobMsgSize; }));
+
+    auto hasContact = [](const std::string& accountId, const std::string& uri) {
+        const auto contacts = libjami::getContacts(accountId);
+        return std::find_if(contacts.begin(),
+                            contacts.end(),
+                            [&](const auto& contact) {
+                                auto id = contact.find("id");
+                                return id != contact.end() && id->second == uri;
+                            })
+               != contacts.end();
+    };
+    CPPUNIT_ASSERT(hasContact(bobId, aliceUri));
+    CPPUNIT_ASSERT(hasContact(bobId, carlaUri));
+    CPPUNIT_ASSERT(!hasContact(aliceId, carlaUri));
+    CPPUNIT_ASSERT(!hasContact(carlaId, aliceUri));
+
+    // Alice creates a swarm and invites Bob, then Bob invites Carla.
+    bobData.requestReceived = false;
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == convId; }));
+
+    carlaData.requestReceived = false;
+    libjami::addConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.conversationId == convId; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return libjami::getConversationMembers(aliceId, convId).size() == 3
+               && libjami::getConversationMembers(carlaId, convId).size() == 3;
+    }));
+
+    // Alice and Carla must still exchange messages after their common contact goes offline.
+    Manager::instance().sendRegister(bobId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.stopped; }));
+
+    auto hasMessage = [](const UserData& data, const std::string& body) {
+        return std::find_if(data.messages.begin(),
+                            data.messages.end(),
+                            [&](const auto& message) {
+                                auto value = message.body.find(CommitKey::BODY);
+                                return value != message.body.end() && value->second == body;
+                            })
+               != data.messages.end();
+    };
+    libjami::sendMessage(aliceId, convId, "Message from Alice"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return hasMessage(carlaData, "Message from Alice"); }));
+
+    libjami::sendMessage(carlaId, convId, "Message from Carla"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return hasMessage(aliceData, "Message from Carla"); }));
 }
 
 void

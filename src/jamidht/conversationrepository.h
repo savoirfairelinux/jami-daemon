@@ -448,6 +448,14 @@ public:
     std::map<std::string, std::vector<DeviceId>> devices(bool ignoreExpired = true) const;
 
     /**
+     * Verify that a device certificate is signed by the corresponding confirmed member
+     * certificate stored in the repository.
+     * @param certificate    Device certificate to verify
+     * @return true if the certificate belongs to a confirmed member
+     */
+    bool isDeviceCertificateFromMember(const dht::crypto::Certificate& certificate) const;
+
+    /**
      * @param filter           If we want to remove one member
      * @param filteredRoles    If we want to ignore some roles
      * @return members' uris

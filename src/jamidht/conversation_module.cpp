@@ -3334,6 +3334,19 @@ ConversationModule::isPeerAuthorized(const std::string& convId,
 }
 
 bool
+ConversationModule::isPeerAuthorizedByConversation(const dht::crypto::Certificate& certificate) const
+{
+    if (!certificate.issuer)
+        return false;
+
+    for (const auto& conversation : pimpl_->getConversations()) {
+        if (!conversation->isRemoving() && conversation->isPeerCertificateAuthorized(certificate))
+            return true;
+    }
+    return false;
+}
+
+bool
 ConversationModule::mayServeDocument(const std::string& documentId,
                                      const std::string& uri,
                                      const std::string& deviceId) const
