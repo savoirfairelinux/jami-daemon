@@ -397,6 +397,32 @@ public:
         return memberDevices;
     }
 
+    bool isDeviceCertificateFromMember(const dht::crypto::Certificate& certificate) const
+    {
+        auto repo = repository();
+        if (!repo || !certificate.issuer)
+            return false;
+
+        const auto memberUri = certificate.issuer->getId().toString();
+        const auto repoPath = std::filesystem::path(git_repository_workdir(repo.get()));
+        auto memberPath = repoPath / MemberPath::MEMBERS / fmt::format("{}.crt", memberUri);
+        if (!std::filesystem::is_regular_file(memberPath))
+            memberPath = repoPath / MemberPath::ADMINS / fmt::format("{}.crt", memberUri);
+        if (!std::filesystem::is_regular_file(memberPath))
+            return false;
+
+        try {
+            auto storedMemberCertificate = dht::crypto::Certificate(fileutils::loadFile(memberPath));
+            return isDeviceOfMember(certificate, storedMemberCertificate, memberUri);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("Unable to validate device certificate {} against member {}: {}",
+                         certificate.getLongId(),
+                         memberUri,
+                         e.what());
+            return false;
+        }
+    }
+
     bool hasCommit(const std::string& commitId) const
     {
         auto repo = repository();
@@ -4607,6 +4633,12 @@ std::map<std::string, std::vector<DeviceId>>
 ConversationRepository::devices(bool ignoreExpired) const
 {
     return pimpl_->devices(ignoreExpired);
+}
+
+bool
+ConversationRepository::isDeviceCertificateFromMember(const dht::crypto::Certificate& certificate) const
+{
+    return pimpl_->isDeviceCertificateFromMember(certificate);
 }
 
 void
