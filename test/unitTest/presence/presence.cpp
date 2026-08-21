@@ -93,7 +93,7 @@ PresenceTest::setUp()
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
-    auto actors = load_actors("actors/alice-bob-carla.yml");
+    auto actors = load_actors("actors/alice-bob-carla-public-incoming.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];

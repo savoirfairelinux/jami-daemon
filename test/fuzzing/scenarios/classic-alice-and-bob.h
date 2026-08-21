@@ -34,7 +34,7 @@ main(void)
         assert(libjami::start("dring-sample.yml"));
     }
 
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-public-incoming.yml");
 
     auto alice = actors["alice"];
     auto bob = actors["bob"];

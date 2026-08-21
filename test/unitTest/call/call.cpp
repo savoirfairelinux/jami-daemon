@@ -92,7 +92,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(CallTest, CallTest::name());
 void
 CallTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla-public-incoming.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
