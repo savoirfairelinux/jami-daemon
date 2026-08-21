@@ -32,6 +32,7 @@
 #include "jami.h"
 #include "fileutils.h"
 #include "account_const.h"
+#include "jamidht/jamiaccount.h"
 #include "sip/sipcall.h"
 #include "call_const.h"
 
@@ -597,6 +598,9 @@ PluginsTest::testCall()
 {
     Manager::instance().pluginPreferences.setPluginsEnabled(true);
     Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId_);
+    bobAccount->addContact(aliceData.userName_);
 
     // alice calls bob
     // for handler available, toggle - check status - untoggle - checkstatus

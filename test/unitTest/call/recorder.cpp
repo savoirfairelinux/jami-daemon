@@ -120,7 +120,7 @@ RecorderTest::setUp()
     dhtnet::fileutils::recursive_mkdir(recordDir.c_str());
     CPPUNIT_ASSERT(std::filesystem::is_directory(recordDir));
 
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-public-incoming.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     bobCall.reset();
