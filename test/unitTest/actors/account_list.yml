@@ -4,7 +4,6 @@ default-account:
       archivePassword: ""
       archivePIN: ""
       archivePath: ""
-      DHT.PublicInCalls: "true"
 
 accounts:
 

@@ -161,7 +161,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
 void
 ConferenceTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla-davi.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla-davi-public-incoming.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
