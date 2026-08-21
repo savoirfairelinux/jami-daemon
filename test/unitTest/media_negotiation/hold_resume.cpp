@@ -145,7 +145,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HoldResumeTest, HoldResumeTest::name());
 void
 HoldResumeTest::setUp()
 {
-    auto actors = load_actors("actors/alice-bob-no-upnp.yml");
+    auto actors = load_actors("actors/alice-bob-no-upnp-public-incoming.yml");
 
     aliceData_.accountId_ = actors["alice"];
     bobData_.accountId_ = actors["bob"];

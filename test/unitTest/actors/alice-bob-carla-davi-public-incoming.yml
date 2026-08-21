@@ -1,9 +1,10 @@
 default-account:
       type: RING
-      upnpEnabled: "false"
+      upnpEnabled: "true"
       archivePassword: ""
       archivePIN: ""
       archivePath: ""
+      DHT.PublicInCalls: "true"
 
 accounts:
 
@@ -14,3 +15,11 @@ accounts:
   bob:
     displayName: BOB
     alias: BOB
+
+  carla:
+    displayName: CARLA
+    alias: CARLA
+
+  davi:
+    displayName: DAVI
+    alias: DAVI
