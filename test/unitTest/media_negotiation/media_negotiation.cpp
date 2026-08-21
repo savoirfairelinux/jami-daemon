@@ -181,7 +181,7 @@ public:
 
     void setUp() override
     {
-        auto actors = load_actors("actors/alice-bob-no-upnp.yml");
+        auto actors = load_actors("actors/alice-bob-no-upnp-public-incoming.yml");
         callDataMap_["ALICE"].accountId_ = actors["alice"];
         callDataMap_["BOB"].accountId_ = actors["bob"];
 
