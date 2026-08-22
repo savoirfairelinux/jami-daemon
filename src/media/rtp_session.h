@@ -19,6 +19,7 @@
 #include "socket_pair.h"
 #include "media/media_codec.h"
 
+#include <atomic>
 #include <functional>
 #include <string>
 #include <memory>
@@ -95,6 +96,9 @@ protected:
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
+    // Raised by stop() to cut short a DTLS-SRTP handshake still running in
+    // start(), which would otherwise keep mutex_ held until it times out.
+    std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 };
