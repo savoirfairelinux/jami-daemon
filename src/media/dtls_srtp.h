@@ -31,6 +31,7 @@ DtlsSrtpContext negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
                                   std::string_view remoteFingerprintHash,
                                   std::string_view remoteFingerprint,
                                   const std::shared_ptr<dht::crypto::Certificate>& localCertificate,
-                                  const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey);
+                                  const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey,
+                                  const std::shared_ptr<std::atomic_bool>& abort = {});
 
 } // namespace jami
