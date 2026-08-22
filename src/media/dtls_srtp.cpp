@@ -217,7 +217,22 @@ buildKeyInfo(const std::vector<uint8_t>& key, const std::vector<uint8_t>& salt)
 const std::shared_future<dhtnet::tls::DhParams>&
 mediaDhParams()
 {
-    static const auto future = std::async(std::launch::async, [] { return dhtnet::tls::DhParams::generate(); }).share();
+    // DTLS-SRTP never uses a finite-field Diffie-Hellman key exchange: we always
+    // negotiate with certificate credentials and the DTLS priority string puts
+    // ECDHE first, with %SERVER_PRECEDENCE letting the server pick. Since GnuTLS
+    // only consults these parameters on the server side, they are dead weight.
+    //
+    // Handing dhtnet an empty (but ready) future matters: TlsSession blocks in
+    // initCredentials() on dh_params.get() before it processes the first
+    // ClientHello, so generating a fresh 3072-bit group here would keep the
+    // passive peer silent for as long as the generation takes. On a phone that
+    // routinely outlasts the handshake timeout, and the caller just sees the
+    // handshake time out with no packet ever coming back.
+    static const auto future = [] {
+        std::promise<dhtnet::tls::DhParams> promise;
+        promise.set_value({});
+        return promise.get_future().share();
+    }();
     return future;
 }
 
