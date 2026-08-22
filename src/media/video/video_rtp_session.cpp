@@ -409,6 +409,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
 void
 VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
 {
+    dtlsAbort_->store(false);
     std::lock_guard lock(mutex_);
 
     if (not send_.enabled and not receive_.enabled) {
@@ -436,7 +437,8 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                             send_.dtls_fingerprint_type,
                                             send_.dtls_fingerprint,
                                             dtlsCertificate_,
-                                            dtlsPrivateKey_);
+                                            dtlsPrivateKey_,
+                                            dtlsAbort_);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
@@ -486,6 +488,9 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 void
 VideoRtpSession::stop()
 {
+    // Release a start() still blocked on a DTLS-SRTP handshake before asking for
+    // the mutex it holds, otherwise stopping waits out the handshake timeout.
+    dtlsAbort_->store(true);
     std::lock_guard lock(mutex_);
 
     stopSender(true);
