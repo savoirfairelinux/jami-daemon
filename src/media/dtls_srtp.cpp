@@ -18,7 +18,9 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cerrno>
+#include <chrono>
 #include <condition_variable>
 #include <cctype>
 #include <filesystem>
@@ -270,7 +272,8 @@ negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
                   std::string_view remoteFingerprintHash,
                   std::string_view remoteFingerprint,
                   const std::shared_ptr<dht::crypto::Certificate>& localCertificate,
-                  const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey)
+                  const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey,
+                  const std::shared_ptr<std::atomic_bool>& abort)
 {
     if (!localCertificate || !localPrivateKey)
         throw std::runtime_error("Missing DTLS-SRTP local identity");
@@ -318,9 +321,22 @@ negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
     dhtnet::tls::TlsSession session(std::move(transport), params, callbacks, false);
 
     {
+        // Poll instead of waiting for the full timeout in one go, so that a
+        // teardown (hangup, ICE restart) can cut the handshake short instead of
+        // holding the media session lock for the whole DTLS_SRTP_TIMEOUT.
+        static constexpr auto ABORT_POLL_INTERVAL = std::chrono::milliseconds(200);
+        const auto deadline = std::chrono::steady_clock::now() + DTLS_SRTP_TIMEOUT;
         std::unique_lock lk(stateMutex);
-        if (!stateCv.wait_for(lk, DTLS_SRTP_TIMEOUT, [&] { return completed; }))
-            throw std::runtime_error("DTLS-SRTP handshake timed out");
+        while (!completed) {
+            if (abort && abort->load()) {
+                lk.unlock();
+                session.shutdown();
+                throw std::runtime_error("DTLS-SRTP handshake aborted");
+            }
+            if (std::chrono::steady_clock::now() >= deadline)
+                throw std::runtime_error("DTLS-SRTP handshake timed out");
+            stateCv.wait_for(lk, ABORT_POLL_INTERVAL, [&] { return completed; });
+        }
     }
 
     if (finalState != dhtnet::tls::TlsSessionState::ESTABLISHED)
