@@ -141,14 +141,14 @@ formatHeader(std::string_view file, unsigned line)
     }
 
     if (!file.empty()) {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "),
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:03d}|{: >4}|{: <24s}:{: <4d}] "),
                            secs,
                            milli,
                            tid,
                            stripDirName(file),
                            line);
     } else {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}] "), secs, milli, tid);
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:03d}|{: >4}] "), secs, milli, tid);
     }
 }
 
