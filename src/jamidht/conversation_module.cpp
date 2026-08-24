@@ -2687,7 +2687,8 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
 uint32_t
 ConversationModule::loadSwarmUntil(const std::string& conversationId,
                                    const std::string& fromMessage,
-                                   const std::string& toMessage)
+                                   const std::string& toMessage,
+                                   size_t n)
 {
     auto acc = pimpl_->account_.lock();
     if (auto conv = pimpl_->getConversation(conversationId)) {
@@ -2698,6 +2699,8 @@ ConversationModule::loadSwarmUntil(const std::string& conversationId,
             options.from = fromMessage;
             options.to = toMessage;
             options.includeTo = true;
+            options.nbOfCommits = n;
+            options.keepLast = n != 0;
             auto convWeak = std::weak_ptr<Conversation>(conv->conversation);
             conv->conversation->loadMessages(
                 [accountId = pimpl_->accountId_, conversationId, id, convWeak](auto&& messages) {

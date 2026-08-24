@@ -144,6 +144,7 @@ private:
     void testCountInteractions();
     void testLoadSwarmUntilRepeated();
     void testLoadConversationPaginates();
+    void testLoadSwarmUntilWindow();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testCloneFromMultipleDevice();
@@ -198,6 +199,7 @@ private:
     CPPUNIT_TEST(testCountInteractions);
     CPPUNIT_TEST(testLoadSwarmUntilRepeated);
     CPPUNIT_TEST(testLoadConversationPaginates);
+    CPPUNIT_TEST(testLoadSwarmUntilWindow);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
@@ -1835,6 +1837,80 @@ ConversationTest::testLoadConversationPaginates()
     CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(""));
     CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
     CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
+
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testLoadSwarmUntilWindow()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    // Deep enough that the span between the newest message and the target dwarfs
+    // the window a client actually needs to show.
+    constexpr size_t kHistory = 120;
+    constexpr size_t kWindow = 10;
+    std::vector<std::string> msgIds;
+    for (size_t i = 0; i < kHistory; ++i) {
+        std::string msgId;
+        aliceAccount->convModule()->sendMessage(convId,
+                                                std::to_string(i),
+                                                "",
+                                                true,
+                                                {},
+                                                [&](bool, std::string commitId) {
+                                                    msgId = commitId;
+                                                    cv.notify_one();
+                                                });
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId.empty(); }));
+        msgIds.emplace_back(msgId);
+    }
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::vector<libjami::SwarmMessage> loaded;
+    bool done = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t, const std::string&, const std::string&, std::vector<libjami::SwarmMessage> messages) {
+            loaded = std::move(messages);
+            done = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    const auto& newest = msgIds.back();
+    const auto& target = msgIds.front();
+
+    auto jump = [&](size_t n) {
+        loaded.clear();
+        done = false;
+        aliceAccount->convModule()->clearCache(convId);
+        auto start = std::chrono::steady_clock::now();
+        CPPUNIT_ASSERT(libjami::loadSwarmUntil(aliceId, convId, newest, target, n) != 0);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return done; }));
+        auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
+                      std::chrono::steady_clock::now() - start).count() / 1000.0;
+        std::cout << "  n=" << n << " delivered=" << loaded.size() << " in " << ms << "ms" << std::endl;
+        return loaded;
+    };
+
+    // Unbounded: the client is handed the whole span just to show one message.
+    auto whole = jump(0);
+    CPPUNIT_ASSERT(whole.size() >= kHistory);
+
+    // Bounded: the same jump, but only the window around the target.
+    auto window = jump(kWindow);
+    CPPUNIT_ASSERT_EQUAL(kWindow, window.size());
+
+    // The window must be the target plus the messages immediately newer than it,
+    // not the ones nearest the head of the conversation.
+    std::set<std::string> got;
+    for (const auto& m : window)
+        got.insert(m.id);
+    for (size_t i = 0; i < kWindow; ++i)
+        CPPUNIT_ASSERT(got.count(msgIds[i]) == 1);
 
     libjami::unregisterSignalHandlers();
 }

@@ -62,6 +62,10 @@ struct LogOptions
     bool skipMerge {false};    // Do not include merge commits in the log. Used by the module to get
                                // last interaction without potential merges
     bool includeTo {false};    // If we want or not the "to" commit [from-to] or [from-to)
+    bool keepLast {false};     // With nbOfCommits, keep the commits nearest "to" rather than the
+                               // first ones walked. A git revwalk only runs newest to oldest, so
+                               // this is the only way to bound a load to the messages adjacent to
+                               // an older commit instead of dragging in the whole span.
     bool fastLog {false};      // Do not parse content, used mostly to count
     bool logIfNotFound {true}; // Add a warning in the log if commit is not found
 

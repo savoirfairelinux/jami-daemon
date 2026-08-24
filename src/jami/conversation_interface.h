@@ -98,7 +98,8 @@ LIBJAMI_PUBLIC uint32_t loadConversation(const std::string& accountId,
 LIBJAMI_PUBLIC uint32_t loadSwarmUntil(const std::string& accountId,
                                        const std::string& conversationId,
                                        const std::string& fromMessage,
-                                       const std::string& toMessage);
+                                       const std::string& toMessage,
+                                       size_t n = 0);
 LIBJAMI_PUBLIC uint32_t countInteractions(const std::string& accountId,
                                           const std::string& conversationId,
                                           const std::string& toId,

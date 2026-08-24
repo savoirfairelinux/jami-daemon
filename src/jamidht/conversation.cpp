@@ -1468,6 +1468,10 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
     // By convention, if options.nbOfCommits is zero, then we
     // don't impose a limit on the number of commits returned.
     bool limitNbOfCommits = options.nbOfCommits > 0;
+    // keepLast turns the limit into a rolling window: walk the whole range but only
+    // retain the last nbOfCommits messages, which are the ones adjacent to "to".
+    bool rollingWindow = limitNbOfCommits && options.keepLast;
+    bool stopAtNbOfCommits = limitNbOfCommits && !options.keepLast;
 
     auto startLogging = options.from == "";
     auto breakLogging = false;
@@ -1488,7 +1492,7 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             if (replies.empty()) { // This avoid load until
                 // NOTE: in the future, we may want to add "Reply-Body" in commit to avoid to load
                 // until this commit
-                if ((limitNbOfCommits
+                if ((stopAtNbOfCommits
                      && (loadedHistory_.messageList.size() - currentHistorySize) == options.nbOfCommits))
                     return CallbackResult::Break; // Stop logging
                 if (breakLogging)
@@ -1519,7 +1523,7 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
         },
         /* emplaceCb */
         [&](auto&& cc) {
-            if (limitNbOfCommits && (msgList.size() == options.nbOfCommits))
+            if (stopAtNbOfCommits && (msgList.size() == options.nbOfCommits))
                 return;
             auto optMessage = repository_->convCommitToMap(cc);
             if (!optMessage.has_value())
@@ -1567,6 +1571,11 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             } else {
                 msgList.insert(msgList.end(), added.begin(), added.end());
             }
+            if (rollingWindow && msgList.size() > options.nbOfCommits) {
+                // ponytail: linear erase, but the window is small and the walk dominates.
+                // Switch msgList to a deque if a caller ever wants a large window.
+                msgList.erase(msgList.begin(), msgList.begin() + (msgList.size() - options.nbOfCommits));
+            }
         },
         /* postCondition */
         [&](auto, auto, auto) {
@@ -1575,7 +1584,7 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             // the check at the beginning of `emplaceCb` ensures that we won't
             // return too many messages, but it prevents us from needlessly
             // iterating over a (potentially) large number of commits.
-            return limitNbOfCommits && (msgList.size() == options.nbOfCommits);
+            return stopAtNbOfCommits && (msgList.size() == options.nbOfCommits);
         },
         options.from,
         options.logIfNotFound);

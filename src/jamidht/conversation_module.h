@@ -298,9 +298,14 @@ public:
      * @return id of the operation
      */
     uint32_t loadConversation(const std::string& conversationId, const std::string& fromMessage = "", size_t n = 0);
+    /**
+     * Load the range [toMessage, fromMessage]. If n is non-zero, return at most n
+     * messages, keeping those nearest toMessage.
+     */
     uint32_t loadSwarmUntil(const std::string& conversationId,
                             const std::string& fromMessage,
-                            const std::string& toMessage);
+                            const std::string& toMessage,
+                            size_t n = 0);
     /**
      * Clear loaded interactions
      * @param conversationId
