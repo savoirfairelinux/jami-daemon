@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74230c03_91a0425f",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 1172,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-08-24T19:25:04Z",
+      "side": 1,
+      "message": "should be private?",
+      "range": {
+        "startLine": 1172,
+        "startChar": 38,
+        "endLine": 1172,
+        "endChar": 44
+      },
+      "revId": "95a82c9f25a3a5da2495487629d4408172b75de3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
