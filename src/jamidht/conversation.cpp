@@ -1476,7 +1476,6 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
     auto startLogging = options.from == "";
     auto breakLogging = false;
     auto reachedIncludedTo = false;
-    auto currentHistorySize = loadedHistory_.messageList.size();
     std::vector<std::string> replies;
     std::vector<std::shared_ptr<libjami::SwarmMessage>> msgList;
     repository_->log(
@@ -1492,8 +1491,9 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             if (replies.empty()) { // This avoid load until
                 // NOTE: in the future, we may want to add "Reply-Body" in commit to avoid to load
                 // until this commit
-                if ((stopAtNbOfCommits
-                     && (loadedHistory_.messageList.size() - currentHistorySize) == options.nbOfCommits))
+                // Stop on what we are about to return, not on what the walk happened to
+                // add to the cache, so the same request always covers the same range.
+                if (stopAtNbOfCommits && msgList.size() == options.nbOfCommits)
                     return CallbackResult::Break; // Stop logging
                 if (breakLogging)
                     return CallbackResult::Break; // Stop logging
@@ -1549,14 +1549,11 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
             }
             if (added.empty()) {
                 // The commit is already in the in-memory history, either because it was
-                // received live or loaded by an earlier request. When an explicit range was
-                // asked for, report the cached message rather than nothing: clients keep
-                // their own window of the history and may well not have it.
-                // Paginated loads are excluded on purpose. They walk back from the newest
-                // message every time and rely on this deduplication to skip what the caller
-                // already has, so returning cached messages would pin them to the first page.
-                if (const auto it = options.to.empty() ? history->quickAccess.end()
-                                                       : history->quickAccess.find(message.at("id"));
+                // received live or loaded by an earlier request. Report the cached message
+                // rather than nothing: the reply must describe the range that was asked
+                // for, not the subset the daemon happens not to have seen yet. Clients
+                // keep their own window of the history and page with an explicit cursor.
+                if (const auto it = history->quickAccess.find(message.at("id"));
                     it != history->quickAccess.end()) {
                     const auto& cached = it->second;
                     const auto reactToIt = cached->body.find(CommitKey::REACT_TO);

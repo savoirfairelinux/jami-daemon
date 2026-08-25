@@ -145,6 +145,7 @@ private:
     void testLoadSwarmUntilRepeated();
     void testLoadConversationPaginates();
     void testLoadSwarmUntilWindow();
+    void testLoadConversationIsIdempotent();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testCloneFromMultipleDevice();
@@ -200,6 +201,7 @@ private:
     CPPUNIT_TEST(testLoadSwarmUntilRepeated);
     CPPUNIT_TEST(testLoadConversationPaginates);
     CPPUNIT_TEST(testLoadSwarmUntilWindow);
+    CPPUNIT_TEST(testLoadConversationIsIdempotent);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
@@ -1789,7 +1791,6 @@ ConversationTest::testLoadConversationPaginates()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto convId = libjami::startConversation(aliceId);
 
-    std::string newest;
     for (int i = 0; i < 10; ++i) {
         std::string msgId;
         aliceAccount->convModule()->sendMessage(convId,
@@ -1802,7 +1803,6 @@ ConversationTest::testLoadConversationPaginates()
                                                     cv.notify_one();
                                                 });
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId.empty(); }));
-        newest = msgId;
     }
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
@@ -1820,23 +1820,28 @@ ConversationTest::testLoadConversationPaginates()
     // as it is when a client opens it.
     aliceAccount->convModule()->clearCache(convId);
 
-    // Clients page backwards by asking again from the newest message they hold,
-    // relying on the daemon to skip what they already have. Each page must bring
-    // messages they don't have yet, or scrolling up stalls.
+    // Clients page backwards with an explicit cursor: the oldest message they hold.
+    // The cursor itself is included in the reply, so consecutive pages overlap by
+    // one message. Each page must still bring messages they don't have yet, or
+    // scrolling up stalls.
     std::set<std::string> seen;
+    std::string cursor;
     auto loadPage = [&](const std::string& from) {
         loaded.clear();
         done = false;
         CPPUNIT_ASSERT(libjami::loadConversation(aliceId, convId, from, 3) != 0);
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return done; }));
+        if (!loaded.empty())
+            cursor = loaded.back().id;
         return static_cast<size_t>(std::count_if(loaded.begin(), loaded.end(), [&](const auto& m) {
             return seen.insert(m.id).second;
         }));
     };
 
     CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(""));
-    CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
-    CPPUNIT_ASSERT_EQUAL(size_t(3), loadPage(newest));
+    CPPUNIT_ASSERT_EQUAL(size_t(2), loadPage(cursor));
+    CPPUNIT_ASSERT_EQUAL(size_t(2), loadPage(cursor));
+    CPPUNIT_ASSERT_EQUAL(size_t(7), seen.size());
 
     libjami::unregisterSignalHandlers();
 }
@@ -1911,6 +1916,79 @@ ConversationTest::testLoadSwarmUntilWindow()
         got.insert(m.id);
     for (size_t i = 0; i < kWindow; ++i)
         CPPUNIT_ASSERT(got.count(msgIds[i]) == 1);
+
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testLoadConversationIsIdempotent()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    constexpr size_t kHistory = 60;
+    constexpr size_t kPage = 20;
+    std::vector<std::string> msgIds;
+    for (size_t i = 0; i < kHistory; ++i) {
+        std::string msgId;
+        aliceAccount->convModule()->sendMessage(convId,
+                                                std::to_string(i),
+                                                "",
+                                                true,
+                                                {},
+                                                [&](bool, std::string commitId) {
+                                                    msgId = commitId;
+                                                    cv.notify_one();
+                                                });
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId.empty(); }));
+        msgIds.emplace_back(msgId);
+    }
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::vector<libjami::SwarmMessage> loaded;
+    bool done = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t, const std::string&, const std::string&, std::vector<libjami::SwarmMessage> messages) {
+            loaded = std::move(messages);
+            done = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto page = [&](const std::string& from, size_t n) {
+        loaded.clear();
+        done = false;
+        CPPUNIT_ASSERT(libjami::loadConversation(aliceId, convId, from, n) != 0);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return done; }));
+        std::vector<std::string> ids;
+        for (const auto& m : loaded)
+            ids.emplace_back(m.id);
+        return ids;
+    };
+
+    // The same request must yield the same messages, no matter what the daemon
+    // already has in memory. Without this a client cannot retry a dropped load.
+    const auto& cursor = msgIds[40];
+    auto first = page(cursor, kPage);
+    CPPUNIT_ASSERT_EQUAL(kPage, first.size());
+    auto second = page(cursor, kPage);
+    CPPUNIT_ASSERT(first == second);
+
+    // The range is the cursor plus the kPage-1 messages older than it, newest first,
+    // which is what loadConversation has always documented.
+    for (size_t i = 0; i < kPage; ++i)
+        CPPUNIT_ASSERT_EQUAL(msgIds[40 - i], first[i]);
+
+    // Walking back with the oldest id of the previous page yields the page before it,
+    // and is likewise repeatable. The cursor is included, so pages overlap by one.
+    auto prev = page(first.back(), kPage);
+    CPPUNIT_ASSERT_EQUAL(kPage, prev.size());
+    CPPUNIT_ASSERT_EQUAL(first.back(), prev.front());
+    for (size_t i = 0; i < kPage; ++i)
+        CPPUNIT_ASSERT_EQUAL(msgIds[21 - i], prev[i]);
+    CPPUNIT_ASSERT(prev == page(first.back(), kPage));
 
     libjami::unregisterSignalHandlers();
 }
