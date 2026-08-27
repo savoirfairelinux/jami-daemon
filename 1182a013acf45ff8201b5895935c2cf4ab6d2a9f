@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a518932_a4aaa5f0",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 13
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-08-27T18:29:22Z",
+      "side": 1,
+      "message": "space",
+      "range": {
+        "startLine": 428,
+        "startChar": 33,
+        "endLine": 428,
+        "endChar": 34
+      },
+      "revId": "1182a013acf45ff8201b5895935c2cf4ab6d2a9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
