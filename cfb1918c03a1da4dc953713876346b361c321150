@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ec30129_0b18a4f8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-08-31T19:24:00Z",
+      "side": 1,
+      "message": "Formatting + commit message can probably be shorter.",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 43
+      },
+      "revId": "cfb1918c03a1da4dc953713876346b361c321150",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
