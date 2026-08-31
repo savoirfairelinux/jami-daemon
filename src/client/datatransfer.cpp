@@ -72,12 +72,23 @@ fileTransferInfo(const std::string& accountId,
                  int64_t& total,
                  int64_t& progress) noexcept
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer(conversationId))
-            return dt->info(fileId, path, total, progress) ? libjami::DataTransferError::success
-                                                           : libjami::DataTransferError::invalid_argument;
+    path.clear();
+    total = 0;
+    progress = 0;
+    auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
+    if (!acc)
+        return libjami::DataTransferError::invalid_argument;
+    if (conversationId.empty()) {
+        if (auto transferManager = acc->dataTransfer({}))
+            return transferManager->info(fileId, path, total, progress) ? libjami::DataTransferError::success
+                                                                        : libjami::DataTransferError::invalid_argument;
+        return libjami::DataTransferError::unknown;
     }
-    return libjami::DataTransferError::invalid_argument;
+    if (auto* convModule = acc->convModule(true)) {
+        if (auto info = convModule->fileTransferInfo(conversationId, fileId, path, total, progress))
+            return *info ? libjami::DataTransferError::success : libjami::DataTransferError::invalid_argument;
+    }
+    return libjami::DataTransferError::unknown;
 }
 
 } // namespace libjami

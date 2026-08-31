@@ -147,6 +147,7 @@ LIBJAMI_PUBLIC DataTransferError cancelDataTransfer(const std::string& accountId
 ///
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
 /// DataTransferError::invalid_argument if the id is unknown.
+/// DataTransferError::unknown if the account's conversation state is not available yet.
 ///
 LIBJAMI_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
                                                   const std::string& conversationId,
