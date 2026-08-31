@@ -83,16 +83,21 @@ public:
                  const libjami::DataTransferInfo& info,
                  const std::string& fileId,
                  const std::string& interactionId,
-                 const std::string& sha3Sum);
+                 const std::string& sha3Sum,
+                 const std::filesystem::path& temporaryPath,
+                 bool replaceInvalid = false);
     ~IncomingFile();
     void process() override;
     void cancel() override;
+    void onFinalize(std::function<bool()>&& cb) { finalizeCb_ = std::move(cb); }
 
 private:
     std::mutex streamMtx_;
     std::ofstream stream_;
     std::string sha3Sum_ {};
     std::filesystem::path path_;
+    bool replaceInvalid_ {false};
+    std::function<bool()> finalizeCb_ {};
 };
 
 class OutgoingFile : public FileInfo
@@ -117,6 +122,8 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
+    enum class WaitResult { waiting, complete, conflict };
+
     TransferManager(const std::string& accountId,
                     const std::string& accountUri,
                     const std::string& to,
@@ -157,18 +164,34 @@ public:
     bool info(const std::string& fileId, std::string& path, int64_t& total, int64_t& progress) const noexcept;
 
     /**
+     * Preserve an existing valid file index or index a verified file.
+     * @param fileId        id of the transfer
+     * @param candidate     file to index if the canonical entry is not already valid
+     * @param sha3sum       expected SHA3-512 digest
+     * @param total         expected file size
+     * @param independent   require independent storage using a hard link or copy
+     * @return true if the canonical entry resolves to the expected file
+     */
+    bool verifyAndIndexFile(const std::string& fileId,
+                            const std::filesystem::path& candidate,
+                            const std::string& sha3sum,
+                            std::size_t total,
+                            bool independent = false);
+
+    /**
      * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
      * @param id              of the transfer
      * @param interactionId   linked interaction
      * @param sha3sum         attended sha3sum
      * @param path            where the file will be downloaded
      * @param total           total size of the file
+     * @return true if the file still needs to be transferred
      */
-    void waitForTransfer(const std::string& fileId,
-                         const std::string& interactionId,
-                         const std::string& sha3sum,
-                         const std::string& path,
-                         std::size_t total);
+    WaitResult waitForTransfer(const std::string& fileId,
+                               const std::string& interactionId,
+                               const std::string& sha3sum,
+                               const std::string& path,
+                               std::size_t total);
 
     /**
      * Handle incoming transfer
@@ -185,6 +208,11 @@ public:
      * @param id
      */
     std::filesystem::path path(const std::string& fileId) const;
+
+    /**
+     * Retrieve the private partial-download path for a transfer destination.
+     */
+    std::filesystem::path temporaryPath(const std::string& fileId, const std::filesystem::path& destination) const;
 
     /**
      * Retrieve waiting files
