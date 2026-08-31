@@ -101,6 +101,7 @@ private:
     void testResumeTransferAfterInterruption();
     void testDontDownloadExistingFile();
     void testTransferInfo();
+    void testTransferInfoUnavailableConversation();
     void testTransferInfoInvalidPathDoesNotAbort();
     void testRemoveHardLink();
     void testTooLarge();
@@ -117,6 +118,7 @@ private:
     CPPUNIT_TEST(testResumeTransferAfterInterruption);
     CPPUNIT_TEST(testDontDownloadExistingFile);
     CPPUNIT_TEST(testTransferInfo);
+    CPPUNIT_TEST(testTransferInfoUnavailableConversation);
     CPPUNIT_TEST(testTransferInfoInvalidPathDoesNotAbort);
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
@@ -707,6 +709,28 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(bytesProgress == 640000);
     CPPUNIT_ASSERT(totalSize == 640000);
     CPPUNIT_ASSERT(dhtnet::fileutils::isFile(path));
+}
+
+void
+FileTransferTest::testTransferInfoUnavailableConversation()
+{
+    std::string path = "stale";
+    int64_t total = -1;
+    int64_t progress = -1;
+    CPPUNIT_ASSERT(libjami::fileTransferInfo(aliceId, "unknown-conversation", "unknown-file", path, total, progress)
+                   == libjami::DataTransferError::invalid_argument);
+    CPPUNIT_ASSERT(path.empty());
+    CPPUNIT_ASSERT_EQUAL(int64_t(0), total);
+    CPPUNIT_ASSERT_EQUAL(int64_t(0), progress);
+
+    path = "stale";
+    total = -1;
+    progress = -1;
+    CPPUNIT_ASSERT(libjami::fileTransferInfo("unknown-account", {}, {}, path, total, progress)
+                   == libjami::DataTransferError::invalid_argument);
+    CPPUNIT_ASSERT(path.empty());
+    CPPUNIT_ASSERT_EQUAL(int64_t(0), total);
+    CPPUNIT_ASSERT_EQUAL(int64_t(0), progress);
 }
 
 void

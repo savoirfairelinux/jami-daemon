@@ -23,6 +23,7 @@
 #include "jamidht/jami_contact.h"
 
 #include <mutex>
+#include <optional>
 #include <msgpack.hpp>
 
 namespace jami {
@@ -314,6 +315,16 @@ public:
      * @return nullptr if not found, else the manager
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id) const;
+
+    /**
+     * Get current transfer info
+     * @return the TransferManager::info() result, or nullopt if the conversation is not loaded yet
+     */
+    std::optional<bool> fileTransferInfo(const std::string& conversationId,
+                                         const std::string& fileId,
+                                         std::string& path,
+                                         int64_t& total,
+                                         int64_t& progress);
 
     /**
      * Choose if we can accept channel request

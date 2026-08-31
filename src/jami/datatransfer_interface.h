@@ -142,11 +142,13 @@ LIBJAMI_PUBLIC DataTransferError cancelDataTransfer(const std::string& accountId
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param[out] total positive number of bytes to sent/received, or -1 if unknown.
-/// \param[out] progress positive number of bytes already sent/received.
+/// \param[out] path local path of the transfer, empty if unknown.
+/// \param[out] total positive number of bytes to sent/received, or 0 if unknown.
+/// \param[out] progress positive number of bytes already sent/received, or 0 if unknown.
 ///
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
-/// DataTransferError::invalid_argument if the id is unknown.
+/// DataTransferError::invalid_argument if the account, conversation or id is unknown.
+/// DataTransferError::unknown if the account's conversation state is not available yet.
 ///
 LIBJAMI_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
                                                   const std::string& conversationId,
