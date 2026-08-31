@@ -2710,6 +2710,8 @@ Conversation::sync(const std::string& member, const std::string& deviceId, OnPul
     pull(deviceId, std::move(cb), commitId);
     dht::ThreadPool::io().run([member, deviceId, w = weak_from_this()] {
         auto sthis = w.lock();
+        if (!sthis)
+            return;
         // For waiting request, downloadFile
         for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
             sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
@@ -3025,37 +3027,53 @@ Conversation::downloadFile(const std::string& interactionId,
         JAMI_ERROR("Invalid file transfer commit (missing tid, size or sha3)");
         return false;
     }
+    if (fileId != getFileId(interactionId, tid, commit->commitMsg.displayName)) {
+        JAMI_ERROR("File id {} does not match file transfer commit {}", fileId, interactionId);
+        return false;
+    }
+    if (!path.empty() && std::filesystem::path(path).is_relative()) {
+        JAMI_ERROR("Refusing relative file transfer destination {}", path);
+        return false;
+    }
 
     // Be sure to not lock conversation
-    dht::ThreadPool().io().run([w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize] {
-        if (auto shared = w.lock()) {
-            std::filesystem::path filePath(path);
-            if (filePath.empty()) {
-                filePath = shared->dataTransfer()->path(fileId);
-            }
-
-            std::error_code ec;
-            if (std::filesystem::file_size(filePath, ec) == static_cast<size_t>(totalSize)) {
-                if (fileutils::sha3File(filePath) == sha3sum) {
-                    JAMI_WARNING("Ignoring request to download existing file: {}", filePath);
-                    return;
-                }
-            }
-
-            std::filesystem::path tempFilePath(filePath);
-            tempFilePath += ".tmp";
-            auto start = std::filesystem::file_size(tempFilePath, ec);
-            if (ec || start == static_cast<decltype(start)>(-1)) {
-                start = 0;
-            }
-            size_t end = 0;
-
-            auto acc = shared->pimpl_->account_.lock();
-            if (!acc)
-                return;
-            shared->dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
-            acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
+    dht::ThreadPool::io().run([w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        auto transferManager = shared->dataTransfer();
+        const auto emitTransferEvent = [accountId = shared->pimpl_->accountId_,
+                                        conversationId = shared->id(),
+                                        interactionId,
+                                        fileId](libjami::DataTransferEventCode code) {
+            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accountId,
+                                                                       conversationId,
+                                                                       interactionId,
+                                                                       fileId,
+                                                                       uint32_t(code));
+        };
+        switch (transferManager->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize)) {
+        case TransferManager::WaitResult::complete:
+            JAMI_LOG("Ignoring request to download available file: {}", fileId);
+            emitTransferEvent(libjami::DataTransferEventCode::finished);
+            return;
+        case TransferManager::WaitResult::conflict:
+            emitTransferEvent(libjami::DataTransferEventCode::invalid_pathname);
+            return;
+        case TransferManager::WaitResult::waiting:
+            break;
         }
+        auto acc = shared->pimpl_->account_.lock();
+        if (!acc)
+            return;
+        // Resume from the partial file left by a previous attempt, if any
+        auto destination = path.empty() ? transferManager->path(fileId) : std::filesystem::path(path);
+        std::error_code ec;
+        auto start = std::filesystem::file_size(transferManager->temporaryPath(fileId, destination), ec);
+        if (ec || start == static_cast<decltype(start)>(-1))
+            start = 0;
+        size_t end = 0;
+        acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
     });
     return true;
 }

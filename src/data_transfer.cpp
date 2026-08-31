@@ -33,6 +33,24 @@
 
 namespace jami {
 
+namespace {
+
+bool
+isExpectedFile(const std::filesystem::path& path, const std::string& sha3sum, std::size_t total)
+{
+    std::error_code ec;
+    return std::filesystem::file_size(path, ec) == total && fileutils::sha3File(path) == sha3sum;
+}
+
+bool
+isMissingPath(const std::filesystem::file_status& status, const std::error_code& ec)
+{
+    return status.type() == std::filesystem::file_type::not_found
+           || ec == std::errc::no_such_file_or_directory;
+}
+
+} // namespace
+
 libjami::DataTransferId
 generateUID(std::mt19937_64& engine)
 {
@@ -160,10 +178,11 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
                            const libjami::DataTransferInfo& info,
                            const std::string& fileId,
                            const std::string& interactionId,
-                           const std::string& sha3Sum)
+                           const std::string& sha3Sum,
+                           const std::filesystem::path& temporaryPath)
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
-    , path_(info.path + ".tmp")
+    , path_(temporaryPath)
 {
     stream_.open(path_, std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
@@ -187,6 +206,15 @@ void
 IncomingFile::cancel()
 {
     isUserCancelled_ = true;
+    {
+        std::lock_guard<std::mutex> lk(streamMtx_);
+        if (stream_.is_open())
+            stream_.close();
+    }
+    std::error_code ec;
+    std::filesystem::remove(path_, ec);
+    if (ec)
+        JAMI_WARNING("Unable to remove canceled partial file {}: {}", path_, ec.message());
     emit(libjami::DataTransferEventCode::closed_by_peer);
     if (channel_)
         dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
@@ -195,11 +223,20 @@ IncomingFile::cancel()
 void
 IncomingFile::process()
 {
+    if (!stream_.is_open()) {
+        emit(libjami::DataTransferEventCode::invalid_pathname);
+        if (channel_)
+            dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
+        return;
+    }
     channel_->setOnRecv([w = weak_from_this()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
             std::lock_guard<std::mutex> lk(shared->streamMtx_);
-            if (shared->stream_.is_open())
-                shared->stream_.write(reinterpret_cast<const char*>(buf), static_cast<long>(len));
+            if (!shared->stream_.is_open())
+                return -1;
+            shared->stream_.write(reinterpret_cast<const char*>(buf), static_cast<long>(len));
+            if (!shared->stream_)
+                return -1;
             shared->info_.bytesProgress = shared->stream_.tellp();
             return static_cast<int>(len);
         }
@@ -251,16 +288,22 @@ IncomingFile::process()
                 JAMI_ERROR("Failed to remove file {}: {}", shared->path_, ec.message());
             }
         }
+        auto installed = false;
         if (correct) {
-            std::filesystem::rename(shared->path_, shared->info_.path, ec);
-            if (ec) {
-                JAMI_ERROR("Failed to rename file from {} to {}: {}", shared->path_, shared->info_.path, ec.message());
-                correct = false;
+            if (shared->installCb_) {
+                installed = shared->installCb_(shared->path_);
+            } else {
+                std::filesystem::rename(shared->path_, shared->info_.path, ec);
+                installed = !ec;
+                if (ec)
+                    JAMI_ERROR("Failed to rename file from {} to {}: {}", shared->path_, shared->info_.path, ec.message());
             }
         }
         if (shared->isUserCancelled_)
             return;
-        auto code = correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_host;
+        auto code = !correct    ? libjami::DataTransferEventCode::closed_by_host
+                    : installed ? libjami::DataTransferEventCode::finished
+                                : libjami::DataTransferEventCode::invalid_pathname;
         shared->emit(code);
         dht::ThreadPool::io().run([s = std::move(shared)] {});
     });
@@ -307,6 +350,21 @@ public:
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
             std::lock_guard lk {mapMutex_};
             oh.get().convert(waitingIds_);
+            auto changed = false;
+            for (auto it = waitingIds_.begin(); it != waitingIds_.end();) {
+                const auto& request = it->second;
+                auto fileIdPath = std::filesystem::path(request.fileId);
+                auto destination = std::filesystem::path(request.path);
+                if (it->first != request.fileId || request.fileId.empty() || fileIdPath.filename() != fileIdPath
+                    || (!destination.empty() && destination.is_relative())) {
+                    it = waitingIds_.erase(it);
+                    changed = true;
+                } else {
+                    ++it;
+                }
+            }
+            if (changed)
+                saveWaiting();
         } catch (const std::exception& e) {
             return;
         }
@@ -385,19 +443,39 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
 bool
 TransferManager::cancel(const std::string& fileId)
 {
-    std::lock_guard lk {pimpl_->mapMutex_};
-    // Remove from waiting, this avoid auto-download
-    auto itW = pimpl_->waitingIds_.find(fileId);
-    if (itW != pimpl_->waitingIds_.end()) {
-        pimpl_->waitingIds_.erase(itW);
-        JAMI_LOG("Cancel {}", fileId);
-        pimpl_->saveWaiting();
+    std::shared_ptr<IncomingFile> incoming;
+    std::filesystem::path partialPath;
+    auto canceled = false;
+    {
+        std::lock_guard lk {pimpl_->mapMutex_};
+        // Remove from waiting, this avoid auto-download
+        auto itW = pimpl_->waitingIds_.find(fileId);
+        if (itW != pimpl_->waitingIds_.end()) {
+            auto destination = std::filesystem::path(itW->second.path);
+            if (destination.empty())
+                partialPath = temporaryPath(fileId, path(fileId));
+            else if (destination.is_absolute())
+                partialPath = temporaryPath(fileId, destination);
+            pimpl_->waitingIds_.erase(itW);
+            JAMI_LOG("Cancel {}", fileId);
+            pimpl_->saveWaiting();
+            canceled = true;
+        }
+        auto itC = pimpl_->incomings_.find(fileId);
+        if (itC != pimpl_->incomings_.end())
+            incoming = itC->second;
     }
-    auto itC = pimpl_->incomings_.find(fileId);
-    if (itC == pimpl_->incomings_.end())
-        return false;
-    itC->second->cancel();
-    return true;
+    if (incoming) {
+        incoming->cancel();
+        return true;
+    }
+    if (!partialPath.empty()) {
+        std::error_code ec;
+        std::filesystem::remove(partialPath, ec);
+        if (ec)
+            JAMI_WARNING("Unable to remove canceled partial file {}: {}", partialPath, ec.message());
+    }
+    return canceled;
 }
 
 bool
@@ -442,7 +520,7 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
         }
         return true;
     }
-    if (ec) {
+    if (ec && ec != std::errc::no_such_file_or_directory) {
         JAMI_WARNING("Unable to inspect transfer path {}: {}", path, ec.message());
     }
     if (itW != pimpl_->waitingIds_.end()) {
@@ -455,19 +533,189 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
     return false;
 }
 
-void
+bool
+TransferManager::indexFile(const std::string& fileId,
+                           const std::filesystem::path& candidate,
+                           const std::string& sha3sum,
+                           std::size_t total,
+                           bool independent)
+{
+    return installIndex(fileId, candidate, sha3sum, total, independent, false);
+}
+
+bool
+TransferManager::installIndex(const std::string& fileId,
+                              const std::filesystem::path& candidate,
+                              const std::string& sha3sum,
+                              std::size_t total,
+                              bool independent,
+                              bool verifyCandidate)
+{
+    auto canonicalPath = path(fileId);
+    {
+        std::lock_guard fileLock(dhtnet::fileutils::getFileLock(canonicalPath));
+        std::error_code ec;
+        auto canonicalStatus = std::filesystem::symlink_status(canonicalPath, ec);
+        auto canonicalMissing = isMissingPath(canonicalStatus, ec);
+        auto canonicalIsLink = canonicalStatus.type() == std::filesystem::file_type::symlink;
+        auto canonicalIsValid = !canonicalMissing && !ec && isExpectedFile(canonicalPath, sha3sum, total);
+        if (!canonicalIsValid || (independent && canonicalIsLink)) {
+            if (candidate == canonicalPath || (verifyCandidate && !isExpectedFile(candidate, sha3sum, total)))
+                return false;
+            // Only a missing or stale link may be replaced; existing content is preserved.
+            if (!canonicalMissing && (ec || !canonicalIsLink)) {
+                JAMI_WARNING("Refusing to replace existing file transfer index {}", canonicalPath);
+                return false;
+            }
+            libjami::DataTransferId stagingId;
+            {
+                std::lock_guard lk {pimpl_->mapMutex_};
+                stagingId = generateUID(pimpl_->rand_);
+            }
+            auto stagedPath = canonicalPath.parent_path() / fmt::format(".jami-index-{}-{}.tmp", fileId, stagingId);
+            auto stagedStatus = std::filesystem::symlink_status(stagedPath, ec);
+            if (!isMissingPath(stagedStatus, ec)) {
+                JAMI_WARNING("Refusing to replace occupied file transfer staging path {}", stagedPath);
+                return false;
+            }
+            if (independent)
+                std::filesystem::create_hard_link(candidate, stagedPath, ec);
+            else
+                std::filesystem::create_symlink(candidate, stagedPath, ec);
+            if (ec) {
+                JAMI_WARNING("Unable to link file transfer {} at {}, copying it: {}", fileId, stagedPath, ec.message());
+                std::filesystem::copy_file(candidate, stagedPath, ec);
+                // A link shares the verified content; only a copy can differ from it.
+                if (!ec && !isExpectedFile(stagedPath, sha3sum, total))
+                    ec = std::make_error_code(std::errc::io_error);
+                if (ec) {
+                    JAMI_ERROR("Unable to copy file transfer {} to {}: {}", fileId, stagedPath, ec.message());
+                    std::error_code removeError;
+                    std::filesystem::remove(stagedPath, removeError);
+                    return false;
+                }
+            }
+            std::filesystem::rename(stagedPath, canonicalPath, ec);
+            if (ec) {
+                JAMI_ERROR("Unable to install file transfer index {} at {}: {}", fileId, canonicalPath, ec.message());
+                std::error_code removeError;
+                std::filesystem::remove(stagedPath, removeError);
+                return false;
+            }
+        }
+    }
+
+    std::lock_guard lk {pimpl_->mapMutex_};
+    if (pimpl_->waitingIds_.erase(fileId) != 0)
+        pimpl_->saveWaiting();
+    return true;
+}
+
+bool
+TransferManager::exportFile(const std::string& fileId,
+                            const std::filesystem::path& destination,
+                            const std::string& sha3sum,
+                            std::size_t total)
+{
+    std::lock_guard fileLock(dhtnet::fileutils::getFileLock(destination));
+    std::error_code ec;
+    if (std::filesystem::equivalent(path(fileId), destination, ec) || isExpectedFile(destination, sha3sum, total))
+        return true;
+    auto status = std::filesystem::symlink_status(destination, ec);
+    if (!isMissingPath(status, ec)) {
+        JAMI_WARNING("Refusing to overwrite existing file {}", destination);
+        return false;
+    }
+    auto source = std::filesystem::canonical(path(fileId), ec);
+    if (ec) {
+        JAMI_ERROR("Unable to resolve file transfer index {}: {}", fileId, ec.message());
+        return false;
+    }
+    std::filesystem::create_hard_link(source, destination, ec);
+    if (ec) {
+        std::filesystem::copy_file(source, destination, ec);
+        if (ec) {
+            JAMI_ERROR("Unable to export file transfer {} to {}: {}", fileId, destination, ec.message());
+            std::error_code removeError;
+            std::filesystem::remove(destination, removeError);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+TransferManager::installTransfer(const std::string& fileId,
+                                 const std::filesystem::path& partial,
+                                 const std::filesystem::path& destination,
+                                 const std::string& sha3sum,
+                                 std::size_t total)
+{
+    const auto isIndex = destination.lexically_normal() == path(fileId).lexically_normal();
+    std::lock_guard fileLock(dhtnet::fileutils::getFileLock(destination));
+    std::error_code ec;
+    auto status = std::filesystem::symlink_status(destination, ec);
+    auto replaceable = isMissingPath(status, ec);
+    if (!replaceable) {
+        if (isExpectedFile(destination, sha3sum, total)) {
+            // Redundant download: the destination already holds the file.
+            std::filesystem::remove(partial, ec);
+            return isIndex || indexFile(fileId, destination, sha3sum, total);
+        }
+        // Only a stale index link may be replaced; existing content is preserved.
+        replaceable = isIndex && status.type() == std::filesystem::file_type::symlink;
+    }
+    if (!replaceable) {
+        JAMI_WARNING("Refusing to overwrite existing file {}", destination);
+        std::filesystem::remove(partial, ec);
+        return false;
+    }
+    std::filesystem::rename(partial, destination, ec);
+    if (ec) {
+        JAMI_ERROR("Unable to install file transfer {} at {}: {}", fileId, destination, ec.message());
+        std::filesystem::remove(partial, ec);
+        return false;
+    }
+    if (isIndex || indexFile(fileId, destination, sha3sum, total))
+        return true;
+    std::filesystem::remove(destination, ec);
+    return false;
+}
+
+TransferManager::WaitResult
 TransferManager::waitForTransfer(const std::string& fileId,
                                  const std::string& interactionId,
                                  const std::string& sha3sum,
                                  const std::string& path,
                                  std::size_t total)
 {
-    std::unique_lock lk(pimpl_->mapMutex_);
+    if (!path.empty() && std::filesystem::path(path).is_relative())
+        return WaitResult::conflict;
+    auto canonicalPath = this->path(fileId);
+    auto destination = path.empty() ? canonicalPath : std::filesystem::path(path);
+    const auto isIndex = destination.lexically_normal() == canonicalPath.lexically_normal();
+    if (installIndex(fileId, destination, sha3sum, total, false, true))
+        return (isIndex || exportFile(fileId, destination, sha3sum, total)) ? WaitResult::complete
+                                                                             : WaitResult::conflict;
+    std::lock_guard lk(pimpl_->mapMutex_);
     auto itW = pimpl_->waitingIds_.find(fileId);
-    if (itW != pimpl_->waitingIds_.end())
-        return;
+    if (itW != pimpl_->waitingIds_.end()) {
+        auto waited = itW->second.path.empty() ? canonicalPath : std::filesystem::path(itW->second.path);
+        auto matches = itW->second.interactionId == interactionId && itW->second.sha3sum == sha3sum
+                       && waited.lexically_normal() == destination.lexically_normal()
+                       && itW->second.totalSize == total;
+        return matches ? WaitResult::waiting : WaitResult::conflict;
+    }
+    std::error_code ec;
+    auto status = std::filesystem::symlink_status(destination, ec);
+    if (!isMissingPath(status, ec) && !(isIndex && status.type() == std::filesystem::file_type::symlink)) {
+        JAMI_WARNING("Refusing to overwrite existing file {}", destination);
+        return WaitResult::conflict;
+    }
+    // A partial file left by a previous attempt is resumed by the transfer.
     pimpl_->waitingIds_[fileId] = {fileId, interactionId, sha3sum, path, total};
     pimpl_->saveWaiting();
+    return WaitResult::waiting;
 }
 
 void
@@ -475,7 +723,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
                                         const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                                         size_t start)
 {
-    std::lock_guard lk(pimpl_->mapMutex_);
+    std::unique_lock lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itC = pimpl_->incomings_.find(fileId);
     if (itC != pimpl_->incomings_.end()) {
@@ -495,45 +743,43 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     info.totalSize = static_cast<int64_t>(itW->second.totalSize);
     info.bytesProgress = static_cast<int64_t>(start);
 
-    // Generate the file path within the conversation data directory
-    // using the file id if no path has been specified, otherwise create
-    // a symlink(Note: this will not work on Windows).
-    auto filePath = path(fileId);
-    if (info.path.empty()) {
-        info.path = filePath.string();
-    } else {
-        // We don't need to check if this is an existing symlink here, as
-        // the attempt to create one should report the error string correctly.
-        fileutils::createFileLink(filePath, info.path);
-    }
+    // Receive into a private partial file next to the destination; the destination and the
+    // index entry are only touched once the content has been verified.
+    if (info.path.empty())
+        info.path = path(fileId).string();
+    const std::filesystem::path destinationPath(info.path);
+    const auto expectedSize = itW->second.totalSize;
+    const auto expectedSha3 = itW->second.sha3sum;
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,
                                                 fileId,
                                                 itW->second.interactionId,
-                                                itW->second.sha3sum);
+                                                expectedSha3,
+                                                temporaryPath(fileId, destinationPath));
     auto res = pimpl_->incomings_.emplace(fileId, std::move(ifile));
     if (res.second) {
-        res.first->second->onFinished([w = weak(), fileId](uint32_t code) {
-            // schedule destroy transfer as not needed
-            dht::ThreadPool().computation().run([w, fileId, code] {
-                if (auto sthis_ = w.lock()) {
-                    auto& pimpl = sthis_->pimpl_;
-                    std::lock_guard lk {pimpl->mapMutex_};
-                    auto itO = pimpl->incomings_.find(fileId);
-                    if (itO != pimpl->incomings_.end())
-                        pimpl->incomings_.erase(itO);
-                    if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
-                        auto itW = pimpl->waitingIds_.find(fileId);
-                        if (itW != pimpl->waitingIds_.end()) {
-                            pimpl->waitingIds_.erase(itW);
-                            pimpl->saveWaiting();
-                        }
-                    }
-                }
+        res.first->second->onInstall(
+            [w = weak(), fileId, destinationPath, expectedSha3, expectedSize](const std::filesystem::path& partial) {
+                if (auto sthis = w.lock())
+                    return sthis->installTransfer(fileId, partial, destinationPath, expectedSha3, expectedSize);
+                return false;
             });
+        res.first->second->onFinished([w = weak(), fileId](uint32_t code) {
+            if (auto sthis = w.lock()) {
+                auto& pimpl = sthis->pimpl_;
+                std::lock_guard lk {pimpl->mapMutex_};
+                pimpl->incomings_.erase(fileId);
+                if ((code == uint32_t(libjami::DataTransferEventCode::finished)
+                     || code == uint32_t(libjami::DataTransferEventCode::invalid_pathname))
+                    && pimpl->waitingIds_.erase(fileId) != 0) {
+                    pimpl->saveWaiting();
+                }
+            }
         });
-        res.first->second->process();
+        auto incoming = res.first->second;
+        lk.unlock();
+        incoming->process();
     }
 }
 
@@ -541,6 +787,12 @@ std::filesystem::path
 TransferManager::path(const std::string& fileId) const
 {
     return pimpl_->conversationDataPath_ / fileId;
+}
+
+std::filesystem::path
+TransferManager::temporaryPath(const std::string& fileId, const std::filesystem::path& destination) const
+{
+    return destination.parent_path() / fmt::format(".jami-{}-{}-{}.tmp", pimpl_->accountId_, pimpl_->to_, fileId);
 }
 
 void
@@ -584,7 +836,12 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     dhtnet::fileutils::recursive_mkdir(recvDir);
     info.path = (recvDir / fmt::format("{:s}_{:s}_{}", deviceId, uri, tid)).string();
 
-    auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "", sha3Sum);
+    auto ifile = std::make_shared<IncomingFile>(std::move(channel),
+                                                info,
+                                                "profile.vcf",
+                                                "",
+                                                sha3Sum,
+                                                std::filesystem::path(info.path + ".tmp"));
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
     if (res.second) {
         res.first->second->onFinished([w = weak(),

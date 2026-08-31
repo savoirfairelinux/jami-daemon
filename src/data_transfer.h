@@ -79,20 +79,26 @@ protected:
 class IncomingFile : public FileInfo, public std::enable_shared_from_this<IncomingFile>
 {
 public:
+    /** Moves the verified partial file into place; false if the destination is unusable. */
+    using InstallCb = std::function<bool(const std::filesystem::path& partial)>;
+
     IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                  const libjami::DataTransferInfo& info,
                  const std::string& fileId,
                  const std::string& interactionId,
-                 const std::string& sha3Sum);
+                 const std::string& sha3Sum,
+                 const std::filesystem::path& temporaryPath);
     ~IncomingFile();
     void process() override;
     void cancel() override;
+    void onInstall(InstallCb&& cb) { installCb_ = std::move(cb); }
 
 private:
     std::mutex streamMtx_;
     std::ofstream stream_;
     std::string sha3Sum_ {};
     std::filesystem::path path_;
+    InstallCb installCb_ {};
 };
 
 class OutgoingFile : public FileInfo
@@ -117,6 +123,8 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
+    enum class WaitResult { waiting, complete, conflict };
+
     TransferManager(const std::string& accountId,
                     const std::string& accountUri,
                     const std::string& to,
@@ -157,18 +165,35 @@ public:
     bool info(const std::string& fileId, std::string& path, int64_t& total, int64_t& progress) const noexcept;
 
     /**
-     * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
+     * Make the transfer index resolve to the expected content, indexing `candidate` if needed.
+     * @param fileId        id of the transfer
+     * @param candidate     file already verified by the caller to hold the expected content
+     * @param sha3sum       expected SHA3-512 digest
+     * @param total         expected file size
+     * @param independent   require independent storage using a hard link or copy
+     * @return true if the index resolves to the expected file
+     */
+    bool indexFile(const std::string& fileId,
+                   const std::filesystem::path& candidate,
+                   const std::string& sha3sum,
+                   std::size_t total,
+                   bool independent = false);
+
+    /**
+     * Request a file at a destination.
      * @param id              of the transfer
      * @param interactionId   linked interaction
      * @param sha3sum         attended sha3sum
-     * @param path            where the file will be downloaded
+     * @param path            where the file will be downloaded, the index entry if empty
      * @param total           total size of the file
+     * @return complete if the destination already holds the file, conflict if it cannot,
+     *         waiting if the transfer is now waited (and will be automatically accepted)
      */
-    void waitForTransfer(const std::string& fileId,
-                         const std::string& interactionId,
-                         const std::string& sha3sum,
-                         const std::string& path,
-                         std::size_t total);
+    WaitResult waitForTransfer(const std::string& fileId,
+                               const std::string& interactionId,
+                               const std::string& sha3sum,
+                               const std::string& path,
+                               std::size_t total);
 
     /**
      * Handle incoming transfer
@@ -187,6 +212,11 @@ public:
     std::filesystem::path path(const std::string& fileId) const;
 
     /**
+     * Retrieve the private partial-download path for a transfer destination.
+     */
+    std::filesystem::path temporaryPath(const std::string& fileId, const std::filesystem::path& destination) const;
+
+    /**
      * Retrieve waiting files
      * @return waiting list
      */
@@ -202,6 +232,23 @@ public:
 
 private:
     std::weak_ptr<TransferManager> weak() { return std::static_pointer_cast<TransferManager>(shared_from_this()); }
+    bool installIndex(const std::string& fileId,
+                      const std::filesystem::path& candidate,
+                      const std::string& sha3sum,
+                      std::size_t total,
+                      bool independent,
+                      bool verifyCandidate);
+    /** Make `destination` hold the indexed content. */
+    bool exportFile(const std::string& fileId,
+                    const std::filesystem::path& destination,
+                    const std::string& sha3sum,
+                    std::size_t total);
+    /** Install a verified partial download at `destination` and index it. */
+    bool installTransfer(const std::string& fileId,
+                         const std::filesystem::path& partial,
+                         const std::filesystem::path& destination,
+                         const std::string& sha3sum,
+                         std::size_t total);
     NON_COPYABLE(TransferManager);
     class Impl;
     std::unique_ptr<Impl> pimpl_;
