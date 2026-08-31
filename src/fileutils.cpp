@@ -247,7 +247,7 @@ getFileExtension(std::string_view filename)
     auto sep = filename.find_last_of('.');
     if (sep != std::string_view::npos && sep != filename.size() - 1)
         result = filename.substr(sep + 1);
-    if (result.size() >= 8)
+    if (result.size() >= 8 || result.find('/') != std::string_view::npos || result.find('\\') != std::string_view::npos)
         return {};
     return result;
 }
