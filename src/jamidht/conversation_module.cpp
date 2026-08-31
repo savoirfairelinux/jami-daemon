@@ -2734,6 +2734,17 @@ ConversationModule::dataTransfer(const std::string& conversationId) const
     return pimpl_->withConversation(conversationId, [](auto& conversation) { return conversation.dataTransfer(); });
 }
 
+std::optional<bool>
+ConversationModule::fileTransferInfo(
+    const std::string& conversationId, const std::string& fileId, std::string& path, int64_t& total, int64_t& progress)
+{
+    auto transferManager = pimpl_->withConversation(conversationId,
+                                                    [](auto& conversation) { return conversation.dataTransfer(); });
+    if (!transferManager)
+        return std::nullopt;
+    return transferManager->info(fileId, path, total, progress);
+}
+
 bool
 ConversationModule::onFileChannelRequest(const std::string& conversationId,
                                          const std::string& member,
