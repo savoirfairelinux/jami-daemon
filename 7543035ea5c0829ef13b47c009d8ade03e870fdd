@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a45bcf9_0318134d",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-08-31T18:45:10Z",
+      "side": 1,
+      "message": "Unnecessary import?",
+      "range": {
+        "startLine": 41,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 17
+      },
+      "revId": "7543035ea5c0829ef13b47c009d8ade03e870fdd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
