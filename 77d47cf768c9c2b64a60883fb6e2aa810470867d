@@ -21,6 +21,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "75a15408_930a6500",
+        "filename": "src/media/dtls_srtp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-08-31T18:00:37Z",
+      "side": 1,
+      "message": "Can this not be simplified to the following?\n\n```suggestion\n        return ready \u003e 0;\n```",
+      "range": {
+        "startLine": 98,
+        "startChar": 8,
+        "endLine": 98,
+        "endChar": 33
+      },
+      "revId": "77d47cf768c9c2b64a60883fb6e2aa810470867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "40c2a5e3_dbc6faaa",
         "filename": "src/media/dtls_srtp.h",
         "patchSetId": 4
