@@ -165,6 +165,11 @@ FileTransferTest::tearDown()
         path += ".tmp";
         std::filesystem::remove(path);
     }
+    for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::current_path())) {
+        auto name = entry.path().filename().string();
+        if (name.starts_with(".jami-") && name.ends_with(".tmp"))
+            std::filesystem::remove(entry.path());
+    }
     wait_for_removal_of({aliceId, bobId, carlaId});
 }
 
@@ -557,12 +562,15 @@ FileTransferTest::testCancelInTransfer()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return bobData.code == static_cast<int>(libjami::DataTransferEventCode::ongoing);
     }));
+    auto transferManager = bobAccount->dataTransfer(convId);
+    auto partialPath = transferManager->temporaryPath(fileId, recvPath);
 
     libjami::cancelDataTransfer(bobId, convId, fileId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_peer);
     }));
     CPPUNIT_ASSERT(!dhtnet::fileutils::isFile(recvPath));
+    CPPUNIT_ASSERT(std::filesystem::symlink_status(partialPath).type() == std::filesystem::file_type::not_found);
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
 }
 
@@ -602,6 +610,10 @@ FileTransferTest::testResumeTransferAfterInterruption()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return bobData.code == static_cast<int>(libjami::DataTransferEventCode::ongoing);
     }));
+    auto bobTransferManager = bobAccount->dataTransfer(convId);
+    auto bobTransferPath = bobTransferManager->path(fileId);
+    auto partialPath = bobTransferManager->temporaryPath(fileId, recvPath);
+    CPPUNIT_ASSERT(std::filesystem::symlink_status(bobTransferPath).type() == std::filesystem::file_type::not_found);
 
     Manager::instance().sendRegister(aliceId, false);
 
@@ -610,22 +622,27 @@ FileTransferTest::testResumeTransferAfterInterruption()
     }));
 
     std::error_code ec;
-    auto receivedSize = std::filesystem::file_size(recvPath + std::string(".tmp"), ec);
+    auto receivedSize = std::filesystem::file_size(partialPath, ec);
     CPPUNIT_ASSERT(!ec);
     CPPUNIT_ASSERT(receivedSize < totalSize);
     CPPUNIT_ASSERT(0 < receivedSize);
     CPPUNIT_ASSERT(bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(std::filesystem::symlink_status(bobTransferPath).type() == std::filesystem::file_type::not_found);
 
     Manager::instance().sendRegister(aliceId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished);
     }));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobTransferPath));
 }
 
 void
 FileTransferTest::testDontDownloadExistingFile()
 {
+    CPPUNIT_ASSERT_EQUAL(std::string("commit_1"), getFileId("commit", "1", "name.ext/path"));
+    CPPUNIT_ASSERT_EQUAL(std::string("commit_1"), getFileId("commit", "1", "name.ext\\path"));
+
     // Create conversation
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -657,9 +674,87 @@ FileTransferTest::testDontDownloadExistingFile()
     auto id = bobData.messages.rbegin()->id;
     auto fileId = bobData.messages.rbegin()->body["fileId"];
 
-    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.code > 0; }));
+    // Older daemons fell back to a symlink when Android denied the hard link.
+    auto aliceTransferPath = aliceAccount->dataTransfer(convId)->path(fileId);
+    CPPUNIT_ASSERT(fileutils::createFileLink(aliceTransferPath, sendPath));
+    CPPUNIT_ASSERT(std::filesystem::is_symlink(aliceTransferPath));
+    auto originalTarget = std::filesystem::read_symlink(aliceTransferPath);
+
+    CPPUNIT_ASSERT(!libjami::downloadFile(aliceId, convId, id, "unrelated-file-id", recv2Path));
+    CPPUNIT_ASSERT(!libjami::downloadFile(aliceId, convId, id, fileId, "relative-destination"));
+    aliceData.code = 0;
+    libjami::downloadFile(aliceId, convId, id, fileId, recv2Path);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() {
+        return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished);
+    }));
+    CPPUNIT_ASSERT(!aliceAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(std::filesystem::is_symlink(aliceTransferPath));
+    CPPUNIT_ASSERT(std::filesystem::read_symlink(aliceTransferPath) == originalTarget);
+    CPPUNIT_ASSERT(compare(aliceTransferPath, sendPath));
+    CPPUNIT_ASSERT(!std::filesystem::exists(recv2Path));
+
+    constexpr auto existingContent = "Do not replace";
+    auto bobTransferManager = bobAccount->dataTransfer(convId);
+    auto partialPath = bobTransferManager->temporaryPath(fileId, recv2Path);
+    CPPUNIT_ASSERT(bobTransferManager->waitForTransfer(fileId,
+                                                       id,
+                                                       bobData.messages.rbegin()->body[CommitKey::SHA3SUM],
+                                                       recv2Path,
+                                                       totalSize)
+                   == TransferManager::WaitResult::waiting);
+    std::ofstream partialFile(partialPath);
+    CPPUNIT_ASSERT(partialFile.is_open());
+    partialFile << existingContent;
+    partialFile.close();
+    CPPUNIT_ASSERT(bobTransferManager->waitForTransfer(fileId,
+                                                       id,
+                                                       bobData.messages.rbegin()->body[CommitKey::SHA3SUM],
+                                                       recvPath,
+                                                       totalSize)
+                   == TransferManager::WaitResult::conflict);
+    CPPUNIT_ASSERT(bobTransferManager->isWaiting(fileId));
+    CPPUNIT_ASSERT(fileutils::loadTextFile(partialPath) == existingContent);
+    CPPUNIT_ASSERT(libjami::cancelDataTransfer(bobId, convId, fileId) == libjami::DataTransferError::success);
+    CPPUNIT_ASSERT(!bobTransferManager->isWaiting(fileId));
+    CPPUNIT_ASSERT(std::filesystem::symlink_status(partialPath).type() == std::filesystem::file_type::not_found);
+
+    std::ofstream existingFile(recv2Path);
+    CPPUNIT_ASSERT(existingFile.is_open());
+    existingFile << existingContent;
+    existingFile.close();
+
+    bobData.code = 0;
+    libjami::downloadFile(bobId, convId, id, fileId, recv2Path);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() {
+        return bobData.code == static_cast<int>(libjami::DataTransferEventCode::invalid_pathname);
+    }));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(fileutils::loadTextFile(recv2Path) == existingContent);
+    std::filesystem::remove(recv2Path);
+
+    auto bobTransferPath = bobAccount->dataTransfer(convId)->path(fileId);
+    std::filesystem::remove(recvPath);
+    bobData.code = 0;
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() {
+        return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished);
+    }));
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(compare(bobTransferPath, recvPath));
+
+    std::filesystem::remove(bobTransferPath);
+    std::ofstream canonicalFile(bobTransferPath);
+    CPPUNIT_ASSERT(canonicalFile.is_open());
+    canonicalFile << existingContent;
+    canonicalFile.close();
+
+    bobData.code = 0;
+    libjami::downloadFile(bobId, convId, id, fileId, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() {
+        return bobData.code == static_cast<int>(libjami::DataTransferEventCode::invalid_pathname);
+    }));
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(fileutils::loadTextFile(bobTransferPath) == existingContent);
     CPPUNIT_ASSERT(std::filesystem::file_size(recvPath) == totalSize);
 }
 
@@ -802,7 +897,12 @@ FileTransferTest::testTooLarge()
     auto fileId = bobData.messages.rbegin()->body["fileId"];
 
     // Add some data for the reception. This will break the final shasum
-    std::ofstream recvFile(recvPath + std::string(".tmp"));
+    auto transferManager = bobAccount->dataTransfer(convId);
+    CPPUNIT_ASSERT(
+        transferManager->waitForTransfer(fileId, id, bobData.messages.rbegin()->body[CommitKey::SHA3SUM], recvPath, 64000)
+        == TransferManager::WaitResult::waiting);
+    auto partialPath = transferManager->temporaryPath(fileId, recvPath);
+    std::ofstream recvFile(partialPath);
     CPPUNIT_ASSERT(recvFile.is_open());
     recvFile << std::string(1000, 'B');
     recvFile.close();
