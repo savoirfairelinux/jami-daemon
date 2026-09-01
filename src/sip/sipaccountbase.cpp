@@ -155,7 +155,7 @@ void
 SIPAccountBase::setRegistrationState(RegistrationState state, int details_code, const std::string& details_str)
 {
     if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
-        messageEngine_.load();
+        messageEngine_.onRegistrationResumed();
     else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
         messageEngine_.save();
     Account::setRegistrationState(state, details_code, details_str);

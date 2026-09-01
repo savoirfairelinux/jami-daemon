@@ -64,6 +64,11 @@ public:
     void onPeerOnline(const std::string& peer, const std::string& deviceId = {}, bool retryOnTimeout = true);
 
     /**
+     * Retry persisted and offline messages after the account becomes usable.
+     */
+    void onRegistrationResumed();
+
+    /**
      * Load persisted messages
      */
     void load();
@@ -81,6 +86,7 @@ private:
 
     void save_() const;
     void scheduleSave();
+    void normalizeLoadedMessages();
 
     struct Message
     {

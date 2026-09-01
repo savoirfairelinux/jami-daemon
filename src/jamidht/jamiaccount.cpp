@@ -2932,7 +2932,7 @@ JamiAccount::setRegistrationState(RegistrationState state, int detail_code, cons
         }
     }
     // Update registrationState_ & emit signals
-    Account::setRegistrationState(state, detail_code, detail_str);
+    SIPAccountBase::setRegistrationState(state, detail_code, detail_str);
 }
 
 void
