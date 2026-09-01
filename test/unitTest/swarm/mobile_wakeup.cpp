@@ -623,6 +623,13 @@ MobileWakeUpTest::testSignedMobileLeaseValidation()
     CPPUNIT_ASSERT(infos.front().lease.has_value());
     CPPUNIT_ASSERT(valid.lease->signature == infos.front().lease->signature);
 
+    auto renewed = valid;
+    renewed.lease->issued_at += 1;
+    renewed.lease->signature = deviceIdentity.first->sign(mobileLeasePayload(*renewed.lease));
+    manager->setMobileNodes({renewed});
+    infos = manager->getKnownMobileNodeInfos();
+    CPPUNIT_ASSERT_EQUAL(renewed.lease->issued_at, infos.front().lease->issued_at);
+
     auto replayed = valid;
     replayed.lease->conversation_id = "different-conversation";
     manager->deleteNode({deviceId});
@@ -672,6 +679,7 @@ MobileWakeUpTest::testSignedMobileLeaseValidation()
     renewalManager->shutdown();
 
     manager->setMobileNodes({makeInfo(now + 2)});
+    manager->setMobileNodes({MobileNodeInfo {deviceId, std::nullopt}});
     CPPUNIT_ASSERT_EQUAL(size_t(1), manager->getKnownMobileNodes().size());
     CPPUNIT_ASSERT(waitFor([&] { return manager->getKnownMobileNodes().empty(); }, 5s));
     manager->shutdown();
@@ -1346,12 +1354,19 @@ MobileWakeUpTest::testKnownMobileNodes()
     std::set<NodeId> expected {disconnectedMobile1, disconnectedMobile2};
     CPPUNIT_ASSERT(toSet(rt.getKnownMobileNodes()) == expected);
 
-    // A connected node flagged mobile joins the known mobile set,
-    // but only disconnected mobiles are in getMobileNodes()
-    rt.findBucket(connectedId)->changeMobility(connectedId, true);
+    // A verified mobile announcement received after connection upgrades the
+    // connected NodeInfo without creating a disconnected mobile entry.
+    CPPUNIT_ASSERT(rt.addMobileNode(connectedId));
     expected.emplace(connectedId);
     CPPUNIT_ASSERT(toSet(rt.getKnownMobileNodes()) == expected);
     CPPUNIT_ASSERT_EQUAL(size_t(2), rt.getMobileNodes().size());
+
+    rt.removeNode(connectedId);
+    CPPUNIT_ASSERT(rt.hasMobileNode(connectedId));
+    CPPUNIT_ASSERT(!rt.hasKnownNode(connectedId));
+
+    rt.addNode(connectedChannel);
+    CPPUNIT_ASSERT(toSet(rt.getKnownMobileNodes()).count(connectedId));
 
     // Mobility change back removes it
     rt.findBucket(connectedId)->changeMobility(connectedId, false);
@@ -1392,10 +1407,21 @@ MobileWakeUpTest::testConnectedMobileLifecycle()
     CPPUNIT_ASSERT(rt.hasMobileNode(mobileId));
     CPPUNIT_ASSERT(toSet(rt.getMobileNodesToNotify()).count(mobileId));
 
-    // When it reconnects, it is no longer a wake-up target
+    // Presence and DRT gossip may report the device as an ordinary known node,
+    // but must not override the persisted mobile classification.
+    CPPUNIT_ASSERT(!rt.addKnownNode(mobileId));
+    CPPUNIT_ASSERT(!rt.hasKnownNode(mobileId));
+
+    // When it reconnects, it is no longer a wake-up target, but the connected
+    // NodeInfo retains mobility so a later disconnect restores the same state.
     rt.addNode(mobileChannel);
     CPPUNIT_ASSERT(!rt.hasMobileNode(mobileId));
     CPPUNIT_ASSERT(rt.getMobileNodesToNotify().empty());
+    CPPUNIT_ASSERT(toSet(rt.getKnownMobileNodes()).count(mobileId));
+
+    rt.removeNode(mobileId);
+    CPPUNIT_ASSERT(rt.hasMobileNode(mobileId));
+    CPPUNIT_ASSERT(!rt.hasKnownNode(mobileId));
 }
 
 void
