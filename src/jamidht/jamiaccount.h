@@ -721,6 +721,13 @@ private:
     void onAccountDeviceAnnounced();
 
     /**
+     * Push priority of the DHT connection requests emitted for a connection
+     * type, as consumed by dhtnet::ConnectionManager::Config.
+     * @return 0 for a high priority push notification, 1 for a normal one.
+     */
+    static unsigned connectionPushPriority(std::string_view connType);
+
+    /**
      * Open a sync connection to one of our account's devices. This wakes the
      * device up, so it must only be called when there is something new to
      * synchronize with it (see SyncModule::needsSync / onSyncListChanged).

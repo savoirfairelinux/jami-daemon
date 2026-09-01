@@ -2271,6 +2271,37 @@ JamiAccount::onSyncListChanged()
     });
 }
 
+unsigned
+JamiAccount::connectionPushPriority(std::string_view connType)
+{
+    // A DHT connection request published with priority 0 makes the proxy send
+    // a high priority push notification, waking the remote device immediately
+    // and consuming its limited per-device push quota. Reserve it for what the
+    // user is actually waiting for: an incoming call, or a message sent to
+    // them.
+    //
+    // Everything else is background work whose latency nobody perceives:
+    //  - ""                            swarm channels, conversation fetches and
+    //                                  the opportunistic connections opened when
+    //                                  a contact's device is discovered online
+    //  - "sync"                        synchronization between our own devices
+    //  - MIME_TYPE_GIT[/<commit id>]   conversation synchronization notices
+    //  - MIME_TYPE_IM_COMPOSING        typing indicators
+    //
+    // Delivering those at normal priority keeps the quota available for calls
+    // and messages, and stops a reconnecting device from waking every peer it
+    // shares a conversation with.
+    constexpr unsigned HIGH = 0;
+    constexpr unsigned NORMAL = 1;
+
+    if (connType.empty() || connType == "sync" || connType == MIME_TYPE_IM_COMPOSING)
+        return NORMAL;
+    // The git notice carries a "/<commit id>" suffix, match on the prefix.
+    if (connType.substr(0, std::string_view(MIME_TYPE_GIT).size()) == MIME_TYPE_GIT)
+        return NORMAL;
+    return HIGH;
+}
+
 void
 JamiAccount::onAccountDeviceAnnounced()
 {
@@ -4946,6 +4977,7 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->turnCache = turnCache_;
         connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
         connectionManagerConfig->legacyMode = dhtnet::LegacyMode::Disabled;
+        connectionManagerConfig->connectionPushPriority = &JamiAccount::connectionPushPriority;
         connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM] = std::make_unique<SwarmChannelHandler>(shared(),
                                                                                      *connectionManager_.get());
