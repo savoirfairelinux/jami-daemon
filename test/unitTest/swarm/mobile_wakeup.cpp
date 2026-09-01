@@ -216,6 +216,7 @@ private:
     void testNotifyResponsibilityHandover();
     void testKnownMobileNodes();
     void testConnectedMobileLifecycle();
+    void testMaintenanceConnectionPolicy();
     void testFailedConnectionPreservesMobility();
     void testRoutingTableInfoResponsibleFlag();
     void testMobileNodesChangedCallback();
@@ -246,6 +247,7 @@ private:
     CPPUNIT_TEST(testNotifyResponsibilityHandover);
     CPPUNIT_TEST(testKnownMobileNodes);
     CPPUNIT_TEST(testConnectedMobileLifecycle);
+    CPPUNIT_TEST(testMaintenanceConnectionPolicy);
     CPPUNIT_TEST(testFailedConnectionPreservesMobility);
     CPPUNIT_TEST(testRoutingTableInfoResponsibleFlag);
     CPPUNIT_TEST(testMobileNodesChangedCallback);
@@ -1396,6 +1398,40 @@ MobileWakeUpTest::testConnectedMobileLifecycle()
     rt.addNode(mobileChannel);
     CPPUNIT_ASSERT(!rt.hasMobileNode(mobileId));
     CPPUNIT_ASSERT(rt.getMobileNodesToNotify().empty());
+}
+
+void
+MobileWakeUpTest::testMaintenanceConnectionPolicy()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    const auto candidate = nodeTestIds1.at(2);
+    RoutingTable table;
+    table.setId(nodeTestIds1.at(0));
+    CPPUNIT_ASSERT(table.addConnectingNode(candidate));
+    CPPUNIT_ASSERT(!table.addConnectingNode(candidate));
+
+    for (const auto mobile : {false, true}) {
+        auto manager = std::make_shared<SwarmManager>(nodeTestIds1.at(0), mobile, rd, [](auto) { return false; });
+        std::atomic_bool attempted {false};
+        std::atomic_bool noNewSocket {false};
+        manager->needSocketCb_ = [&](const std::string&, auto&& onSocket, bool reuseOnly) {
+            noNewSocket.store(reuseOnly);
+            onSocket(nullptr);
+            attempted.store(true);
+        };
+
+        manager->setKnownNodes({candidate});
+        CPPUNIT_ASSERT(waitFor([&] { return attempted.load(); }, CONVERGENCE_TIMEOUT));
+        CPPUNIT_ASSERT_EQUAL(mobile, noNewSocket.load());
+
+        if (mobile) {
+            attempted.store(false);
+            manager->maintainBuckets(SwarmManager::ConnectionPolicy::ALLOW_NEW);
+            CPPUNIT_ASSERT(waitFor([&] { return attempted.load(); }, CONVERGENCE_TIMEOUT));
+            CPPUNIT_ASSERT(!noNewSocket.load());
+        }
+    }
 }
 
 void
