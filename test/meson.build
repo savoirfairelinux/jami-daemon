@@ -218,6 +218,21 @@ test(
     timeout: 300,
 )
 
+ut_message_engine = executable(
+    'ut_message_engine',
+    sources: files('unitTest/im/message_engine.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'message_engine',
+    ut_message_engine,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 300,
+)
+
 ut_contact_serialization = executable(
     'ut_contact_serialization',
     sources: files('unitTest/conversation/contact_serialization.cpp'),

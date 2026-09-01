@@ -18,6 +18,7 @@
 #include "message_engine.h"
 #include "sip/sipaccountbase.h"
 #include "manager.h"
+#include "fileutils.h"
 
 #include "client/jami_signal.h"
 #include "jami/account_const.h"
@@ -26,7 +27,9 @@
 #include <opendht/thread_pool.h>
 #include <fmt/std.h>
 
+#include <cstring>
 #include <fstream>
+#include <vector>
 
 namespace jami {
 namespace im {
@@ -38,6 +41,7 @@ MessageEngine::MessageEngine(SIPAccountBase& acc, const std::filesystem::path& p
     , saveTimer_(*ioContext_)
 {
     dhtnet::fileutils::check_dir(savePath_.parent_path());
+    load();
 }
 
 MessageToken
@@ -71,7 +75,10 @@ MessageEngine::sendMessage(const std::string& to,
         }
         scheduleSave();
     }
-    asio::post(*ioContext_, [this, to, deviceId]() { retrySend(to, deviceId, true); });
+    asio::post(*ioContext_, [this, w = account_.weak_from_this(), to, deviceId]() {
+        if (w.lock())
+            retrySend(to, deviceId, true);
+    });
     return token;
 }
 
@@ -79,6 +86,36 @@ void
 MessageEngine::onPeerOnline(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
     retrySend(peer, deviceId, retryOnTimeout);
+}
+
+void
+MessageEngine::onRegistrationResumed()
+{
+    std::vector<std::string> peers;
+    std::vector<std::string> devices;
+    {
+        std::lock_guard lock(messagesMutex_);
+        peers.reserve(messages_.size());
+        for (const auto& [peer, _] : messages_)
+            peers.emplace_back(peer);
+        devices.reserve(messagesDevices_.size());
+        for (const auto& [device, _] : messagesDevices_)
+            devices.emplace_back(device);
+    }
+
+    auto w = account_.weak_from_this();
+    for (auto& peer : peers) {
+        asio::post(*ioContext_, [this, w, peer = std::move(peer)] {
+            if (w.lock())
+                retrySend(peer, {}, true);
+        });
+    }
+    for (auto& device : devices) {
+        asio::post(*ioContext_, [this, w, device = std::move(device)] {
+            if (w.lock())
+                retrySend({}, device, true);
+        });
+    }
 }
 
 void
@@ -199,34 +236,49 @@ void
 MessageEngine::load()
 {
     try {
-        decltype(messages_) root;
+        decltype(messages_) messages;
+        decltype(messagesDevices_) deviceMessages;
         {
             std::lock_guard lock(dhtnet::fileutils::getFileLock(savePath_));
-            std::ifstream file;
-            file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            file.open(savePath_);
-            if (file.is_open()) {
-                msgpack::unpacker up;
-                up.reserve_buffer(UINT16_MAX);
-                while (file.read(up.buffer(), UINT16_MAX)) {
-                    up.buffer_consumed(file.gcount());
-                    msgpack::object_handle oh;
-                    if (up.next(oh)) {
-                        root = oh.get().as<std::map<std::string, std::list<Message>>>();
-                        break;
-                    }
-                    up.reserve_buffer(UINT16_MAX);
-                }
-            }
+            const auto data = fileutils::loadFile(savePath_);
+            msgpack::unpacker unpacker;
+            unpacker.reserve_buffer(data.size());
+            std::memcpy(unpacker.buffer(), data.data(), data.size());
+            unpacker.buffer_consumed(data.size());
+
+            msgpack::object_handle object;
+            if (!unpacker.next(object))
+                throw std::runtime_error("Invalid message queue");
+            object.get().convert(messages);
+            if (unpacker.next(object))
+                object.get().convert(deviceMessages);
         }
         std::lock_guard lock(messagesMutex_);
-        messages_ = std::move(root);
-        if (not messages_.empty()) {
-            JAMI_LOG("[Account {}] Loaded {} messages from {}", account_.getAccountID(), messages_.size(), savePath_);
-        }
+        messages_ = std::move(messages);
+        messagesDevices_ = std::move(deviceMessages);
+        normalizeLoadedMessages();
+        if (not messages_.empty() || not messagesDevices_.empty())
+            JAMI_LOG("[Account {}] Loaded {} peer and {} device message queues from {}",
+                     account_.getAccountID(),
+                     messages_.size(),
+                     messagesDevices_.size(),
+                     savePath_);
     } catch (const std::exception& e) {
         JAMI_LOG("[Account {}] Unable to load messages from {}: {}", account_.getAccountID(), savePath_, e.what());
     }
+}
+
+void
+MessageEngine::normalizeLoadedMessages()
+{
+    auto normalize = [](auto& queues) {
+        for (auto& [_, messages] : queues)
+            for (auto& message : messages)
+                if (message.status == MessageStatus::SENDING)
+                    message.status = MessageStatus::IDLE;
+    };
+    normalize(messages_);
+    normalize(messagesDevices_);
 }
 
 void
@@ -253,9 +305,11 @@ MessageEngine::save_() const
     try {
         std::ofstream file;
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        file.open(savePath_, std::ios::trunc);
-        if (file.is_open())
+        file.open(savePath_, std::ios::trunc | std::ios::binary);
+        if (file.is_open()) {
             msgpack::pack(file, messages_);
+            msgpack::pack(file, messagesDevices_);
+        }
     } catch (const std::exception& e) {
         JAMI_ERROR("[Account {}] Unable to serialize pending messages: {}", account_.getAccountID(), e.what());
     }
