@@ -25,6 +25,13 @@ namespace jami {
 
 using namespace swarm_protocol;
 
+static bool
+isNewerLease(const MobileLease& candidate, const MobileLease& reference)
+{
+    return candidate.expires_at > reference.expires_at
+           || (candidate.expires_at == reference.expires_at && candidate.issued_at > reference.issued_at);
+}
+
 SwarmManager::SwarmManager(const NodeId& id,
                            bool isMobile,
                            const std::mt19937_64& rand,
@@ -139,7 +146,7 @@ SwarmManager::setMobileNodeInfo(const MobileNodeInfo& mobile,
             return false;
         std::lock_guard lock(mutex);
         bool changed = addMobileNodes(mobile.id);
-        if (!conversationId_.empty()) {
+        if (!conversationId_.empty() && !mobileNodeLeases_.contains(mobile.id)) {
             changed |= legacyMobileNodeExpiries_.try_emplace(mobile.id, LEGACY_MOBILE_NODE_SUNSET).second;
             scheduleMobileLeaseExpiryInternal();
         }
@@ -155,7 +162,7 @@ SwarmManager::setMobileNodeInfo(const MobileNodeInfo& mobile,
         // resolution when what we already verified is at least as good.
         std::lock_guard lock(mutex);
         auto known = mobileNodeLeases_.find(mobile.id);
-        if (known != mobileNodeLeases_.end() && known->second.expires_at >= lease.expires_at)
+        if (known != mobileNodeLeases_.end() && !isNewerLease(lease, known->second))
             return false;
     }
 
@@ -323,12 +330,15 @@ SwarmManager::verifyLease(const dht::crypto::Certificate& certificate, const Mob
 bool
 SwarmManager::commitLeaseInternal(const MobileLease& lease)
 {
-    pendingMobileLeases_.erase(lease.device_id);
+    auto pending = pendingMobileLeases_.find(lease.device_id);
+    if (pending != pendingMobileLeases_.end()) {
+        if (!isNewerLease(pending->second.lease, lease))
+            pendingMobileLeases_.erase(pending);
+    }
 
     bool changed = addMobileNodes(lease.device_id);
     auto current = mobileNodeLeases_.find(lease.device_id);
-    if (current == mobileNodeLeases_.end() || lease.expires_at > current->second.expires_at
-        || (lease.expires_at == current->second.expires_at && lease.issued_at > current->second.issued_at)) {
+    if (current == mobileNodeLeases_.end() || isNewerLease(lease, current->second)) {
         mobileNodeLeases_.insert_or_assign(lease.device_id, lease);
         legacyMobileNodeExpiries_.erase(lease.device_id);
         changed = true;
@@ -344,7 +354,7 @@ SwarmManager::enqueuePendingLeaseInternal(const MobileLease& lease,
     const auto& nodeId = lease.device_id;
     auto pending = pendingMobileLeases_.find(nodeId);
     if (pending != pendingMobileLeases_.end()) {
-        if (lease.expires_at > pending->second.lease.expires_at)
+        if (isNewerLease(lease, pending->second.lease))
             pending->second.lease = lease;
         if (source)
             pending->second.source = source;
@@ -595,7 +605,9 @@ SwarmManager::onCertificateResolved(const NodeId& nodeId, const std::shared_ptr<
     // Re-run the cheap checks: the lease may have expired while we were resolving.
     if (!precheckLease(*lease) || !verifyLease(*certificate, *lease)) {
         std::lock_guard lock(mutex);
-        abandonLeaseInternal(nodeId);
+        auto pending = pendingMobileLeases_.find(nodeId);
+        if (pending != pendingMobileLeases_.end() && !isNewerLease(pending->second.lease, *lease))
+            abandonLeaseInternal(nodeId);
         return;
     }
 
@@ -672,9 +684,12 @@ SwarmManager::expireMobileLeases(const asio::error_code& ec)
                 continue;
             }
             const auto nodeId = it->first;
-            routing_table.removeMobileNode(nodeId);
-            routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
             it = mobileNodeLeases_.erase(it);
+            auto legacy = legacyMobileNodeExpiries_.find(nodeId);
+            if (legacy == legacyMobileNodeExpiries_.end() || legacy->second <= now) {
+                routing_table.removeMobileNode(nodeId);
+                routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
+            }
             changed = true;
         }
         for (auto it = legacyMobileNodeExpiries_.begin(); it != legacyMobileNodeExpiries_.end();) {
@@ -683,9 +698,12 @@ SwarmManager::expireMobileLeases(const asio::error_code& ec)
                 continue;
             }
             const auto nodeId = it->first;
-            routing_table.removeMobileNode(nodeId);
-            routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
             it = legacyMobileNodeExpiries_.erase(it);
+            auto lease = mobileNodeLeases_.find(nodeId);
+            if (lease == mobileNodeLeases_.end() || lease->second.expires_at <= now) {
+                routing_table.removeMobileNode(nodeId);
+                routing_table.findBucket(nodeId)->changeMobility(nodeId, false);
+            }
             changed = true;
         }
         for (auto it = pendingMobileLeases_.begin(); it != pendingMobileLeases_.end();) {
