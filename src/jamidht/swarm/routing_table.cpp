@@ -346,10 +346,9 @@ RoutingTable::addConnectingNode(const NodeId& nodeId)
     auto bucket = findBucket(nodeId);
 
     if (bucket == buckets.end())
-        return 0;
+        return false;
 
-    bucket->addConnectingNode(nodeId);
-    return 1;
+    return bucket->addConnectingNode(nodeId);
 }
 
 void
