@@ -42,6 +42,8 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
         = std::function<void(const NodeId&, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&&)>;
 
 public:
+    enum class ConnectionPolicy { ALLOW_NEW, REUSE_EXISTING };
+
     explicit SwarmManager(const NodeId& nodeId,
                           bool isMobile,
                           const std::mt19937_64& rand,
@@ -230,6 +232,13 @@ public:
     void maintainBuckets(const std::set<NodeId>& toConnect = {});
 
     /**
+     * Maintain/Update buckets with an explicit transport creation policy.
+     * @param policy            Whether maintenance may create a device transport
+     * @param toConnect         Nodes to connect
+     */
+    void maintainBuckets(ConnectionPolicy policy, const std::set<NodeId>& toConnect = {});
+
+    /**
      * Proactively connect to a node, bypassing bucket capacity checks.
      * The node is registered as known and a connection is attempted with
      * noNewSocket=true (reuses an existing transport).
@@ -366,9 +375,14 @@ private:
     /**
      * Try to establish connection with specific node
      * @param nodeId
-     * @param noNewSocket  If true, reuse an existing transport (no new ICE negotiation)
+     * @param policy  Whether this attempt may create a device transport
      */
-    void tryConnect(const NodeId& nodeId, bool noNewSocket = false);
+    void tryConnect(const NodeId& nodeId, ConnectionPolicy policy);
+
+    ConnectionPolicy maintenancePolicy() const
+    {
+        return isMobile_ ? ConnectionPolicy::REUSE_EXISTING : ConnectionPolicy::ALLOW_NEW;
+    }
 
     /**
      * Remove node from routing table

@@ -722,6 +722,12 @@ SwarmManager::emitMobileNodesChanged()
 void
 SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
+    maintainBuckets(maintenancePolicy(), toConnect);
+}
+
+void
+SwarmManager::maintainBuckets(ConnectionPolicy policy, const std::set<NodeId>& toConnect)
+{
     std::set<NodeId> nodes = toConnect;
     std::unique_lock lock(mutex);
     auto& buckets = routing_table.getBuckets();
@@ -740,7 +746,7 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
     }
     lock.unlock();
     for (const auto& node : nodes)
-        tryConnect(node);
+        tryConnect(node, policy);
 }
 
 void
@@ -916,7 +922,7 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
 }
 
 void
-SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
+SwarmManager::tryConnect(const NodeId& nodeId, ConnectionPolicy policy)
 {
     if (needSocketCb_)
         needSocketCb_(
@@ -941,7 +947,7 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
                 }
                 return true;
             },
-            noNewSocket);
+            policy == ConnectionPolicy::REUSE_EXISTING);
 }
 
 void
@@ -963,7 +969,7 @@ SwarmManager::connectNode(const NodeId& nodeId)
         if (!routing_table.addConnectingNode(nodeId))
             return;
     }
-    tryConnect(nodeId, true);
+    tryConnect(nodeId, ConnectionPolicy::REUSE_EXISTING);
 }
 
 std::vector<NodeId>
