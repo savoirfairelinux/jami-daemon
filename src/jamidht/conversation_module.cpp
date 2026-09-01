@@ -296,11 +296,13 @@ public:
     void sendMessageNotification(const std::string& conversationId,
                                  bool sync,
                                  const std::string& commitId = "",
-                                 const std::string& deviceId = "");
+                                 const std::string& deviceId = "",
+                                 bool bootstrapReplay = false);
     void sendMessageNotification(Conversation& conversation,
                                  bool sync,
                                  const std::string& commitId = "",
-                                 const std::string& deviceId = "");
+                                 const std::string& deviceId = "",
+                                 bool bootstrapReplay = false);
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -1330,12 +1332,13 @@ void
 ConversationModule::Impl::sendMessageNotification(const std::string& conversationId,
                                                   bool sync,
                                                   const std::string& commitId,
-                                                  const std::string& deviceId)
+                                                  const std::string& deviceId,
+                                                  bool bootstrapReplay)
 {
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
-            sendMessageNotification(*conv->conversation, sync, commitId, deviceId);
+            sendMessageNotification(*conv->conversation, sync, commitId, deviceId, bootstrapReplay);
     }
 }
 
@@ -1343,12 +1346,15 @@ void
 ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   bool sync,
                                                   const std::string& commitId,
-                                                  const std::string& deviceId)
+                                                  const std::string& deviceId,
+                                                  bool bootstrapReplay)
 {
     auto acc = account_.lock();
     if (!acc)
         return;
     auto commit = commitId == "" ? conversation.lastCommitId() : commitId;
+    if (bootstrapReplay && conversation.lastCommitId() != commit)
+        return;
     Json::Value message;
     message["id"] = conversation.id();
     message["commit"] = commit;
@@ -1395,7 +1401,10 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
             JAMI_DEBUG("[Conversation {}] Not yet bootstrapped, save notification", conversation.id());
             // Because we can get some git channels but not bootstrapped, we should keep this
             // to refresh when bootstrapped.
-            notSyncedNotification_[conversation.id()] = commit;
+            if (bootstrapReplay)
+                notSyncedNotification_.try_emplace(conversation.id(), commit);
+            else
+                notSyncedNotification_[conversation.id()] = commit;
         }
     }
 
@@ -1527,10 +1536,12 @@ ConversationModule::Impl::bootstrapCb(std::string convId)
             notSyncedNotification_.erase(it);
         }
     }
-    JAMI_DEBUG("[Account {}] [Conversation {}] Resend last message notification", accountId_, convId);
+    if (commitId.empty())
+        return;
+    JAMI_DEBUG("[Account {}] [Conversation {}] Resend pending message notification", accountId_, convId);
     dht::ThreadPool::io().run([w = weak(), convId, commitId = std::move(commitId)] {
         if (auto sthis = w.lock())
-            sthis->sendMessageNotification(convId, true, commitId);
+            sthis->sendMessageNotification(convId, true, commitId, {}, true);
     });
 }
 
