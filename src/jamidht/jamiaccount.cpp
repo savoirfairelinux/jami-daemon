@@ -2275,7 +2275,17 @@ void
 JamiAccount::onAccountDeviceAnnounced()
 {
     if (jami::Manager::instance().syncOnRegister) {
-        deviceAnnounced_ = true;
+        // Only bootstrap on the first announcement following a (re)connection.
+        // The DHT re-publishes the device announcement periodically and this
+        // callback fires every time. Bootstrapping every conversation on each
+        // of those refreshes is wasteful: the conversations that matter are
+        // already connected, and every bootstrap attempt emits DHT connection
+        // requests that wake remote devices up for nothing.
+        // deviceAnnounced_ is reset in setRegistrationState() whenever the
+        // account leaves the REGISTERED/TRYING states, so a genuine
+        // reconnection still triggers a full bootstrap.
+        if (deviceAnnounced_.exchange(true))
+            return;
 
         // Bootstrap at the end to avoid to be long to load.
         dht::ThreadPool::io().run([w = weak()] {
