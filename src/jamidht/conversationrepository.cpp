@@ -369,6 +369,27 @@ public:
         return true;
     }
 
+    bool isAncestor(const std::string& ancestorId, const std::string& descendantId) const
+    {
+        auto repo = repository();
+        if (!repo)
+            return false;
+
+        git_oid ancestor;
+        git_oid descendant;
+        if (git_oid_fromstr(&ancestor, ancestorId.c_str()) < 0
+            || git_oid_fromstr(&descendant, descendantId.c_str()) < 0)
+            return false;
+        if (git_oid_equal(&ancestor, &descendant)) {
+            git_commit* commit = nullptr;
+            if (git_commit_lookup(&commit, repo.get(), &ancestor) < 0)
+                return false;
+            git_commit_free(commit);
+            return true;
+        }
+        return git_graph_descendant_of(repo.get(), &descendant, &ancestor) == 1;
+    }
+
     ConversationCommit parseCommit(git_repository* repo, const git_commit* commit) const;
 
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const
@@ -3711,6 +3732,12 @@ bool
 ConversationRepository::hasCommit(const std::string& commitId) const
 {
     return pimpl_->hasCommit(commitId);
+}
+
+bool
+ConversationRepository::isAncestor(const std::string& ancestorId, const std::string& descendantId) const
+{
+    return pimpl_->isAncestor(ancestorId, descendantId);
 }
 
 std::optional<ConversationCommit>

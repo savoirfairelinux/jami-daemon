@@ -2591,13 +2591,40 @@ uint64_t
 JamiAccount::conversationSendMessage(const std::string& uri,
                                      const DeviceId& device,
                                      const std::map<std::string, std::string>& msg,
-                                     uint64_t token)
+                                     uint64_t token,
+                                     std::optional<im::MessageDelivery> delivery)
 {
-    // No need to retrigger, sendTextMessage will call
-    // messageEngine_.sendMessage, already retriggering on
-    // main thread.
+    std::string toUri;
+    try {
+        toUri = parseJamiUri(uri);
+    } catch (...) {
+        JAMI_ERROR("Failed to send a conversation message due to an invalid URI {}", uri);
+        return 0;
+    }
+    if (msg.size() != 1) {
+        JAMI_ERROR("Multi-part conversation messages are not supported");
+        return 0;
+    }
     auto deviceId = device ? device.toString() : "";
-    return sendTextMessage(uri, deviceId, msg, token);
+    return messageEngine_.sendMessage(toUri, deviceId, msg, token, std::move(delivery));
+}
+
+void
+JamiAccount::acknowledgeConversationDeviceFetched(const std::string& conversationId,
+                                                  const std::string& deviceId,
+                                                  const std::string& commitId,
+                                                  const im::MessageEngine::CommitCovered& commitCovered)
+{
+    messageEngine_.acknowledgeDeviceFetched(conversationId, deviceId, commitId, commitCovered);
+}
+
+void
+JamiAccount::acknowledgeConversationMemberFetched(const std::string& conversationId,
+                                                  const std::string& memberUri,
+                                                  const std::string& commitId,
+                                                  const im::MessageEngine::CommitCovered& commitCovered)
+{
+    messageEngine_.acknowledgeMemberFetched(conversationId, memberUri, commitId, commitCovered);
 }
 
 void
@@ -2763,8 +2790,12 @@ JamiAccount::convModule(bool noCreation)
             shared(),
             accountManager_,
             [this](auto&& syncMsg) { conversationNeedsSyncing(std::forward<std::shared_ptr<SyncMsg>>(syncMsg)); },
-            [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
-                return conversationSendMessage(uri, device, msg, token);
+            [this](auto&& uri, auto&& device, auto&& msg, auto token, auto&& delivery) {
+                return conversationSendMessage(uri,
+                                               device,
+                                               msg,
+                                               token,
+                                               std::forward<decltype(delivery)>(delivery));
             },
             [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType, bool noNewSocket) {
                 onConversationNeedSocket(convId, deviceId, std::forward<decltype(cb)>(cb), connectionType, noNewSocket);

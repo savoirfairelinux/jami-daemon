@@ -568,6 +568,7 @@ GitServer::Impl::sendPackData()
                      fmt::ptr(this),
                      repository_,
                      ec.message());
+        return;
     }
 
     // Clear sent data

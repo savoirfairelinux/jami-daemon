@@ -280,6 +280,7 @@ public:
      * @return true if the commit was found, false if not or if an error occurred
      */
     bool hasCommit(const std::string& commitId) const;
+    bool isAncestor(const std::string& ancestorId, const std::string& descendantId) const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
 
     /**

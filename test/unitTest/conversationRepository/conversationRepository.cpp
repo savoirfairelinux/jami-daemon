@@ -216,6 +216,11 @@ ConversationRepositoryTest::testAddSomeMessages()
     auto id2 = repository->commitMessage(R"({"body":"Commit 2","type":"text/plain"})");
     auto id3 = repository->commitMessage(R"({"body":"Commit 3","type":"text/plain"})");
 
+    CPPUNIT_ASSERT(repository->isAncestor(id1, id1));
+    CPPUNIT_ASSERT(repository->isAncestor(id1, id3));
+    CPPUNIT_ASSERT(!repository->isAncestor(id3, id1));
+    CPPUNIT_ASSERT(!repository->isAncestor("invalid", id3));
+
     auto messages = repository->log();
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);

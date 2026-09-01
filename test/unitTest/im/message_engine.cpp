@@ -28,6 +28,8 @@
 
 #include <msgpack.hpp>
 
+#include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <cstring>
 #include <fstream>
@@ -45,6 +47,7 @@ public:
     {
         std::string peer;
         std::string device;
+        uint64_t token;
     };
 
     explicit MessageEngineAccount(const std::string& accountId)
@@ -83,17 +86,50 @@ public:
     void sendMessage(const std::string& peer,
                      const std::string& device,
                      const std::map<std::string, std::string>&,
-                     uint64_t,
+                     uint64_t token,
                      bool,
                      bool) override
     {
+        if (completeWrites_)
+            messageEngine_.onMessageSent(peer, token, true, device);
         std::lock_guard lock(mutex_);
-        attempts_.emplace_back(Attempt {peer, device});
+        attempts_.emplace_back(Attempt {peer, device, token});
         condition_.notify_all();
     }
 
     void resume() { setRegistrationState(RegistrationState::REGISTERED); }
     void saveMessages() { messageEngine_.save(); }
+    void completeWrites(bool complete) { completeWrites_ = complete; }
+    size_t pendingMessages() const { return messageEngine_.pendingMessageCount(); }
+
+    void sendFetched(const std::string& peer,
+                     const std::string& device,
+                     const std::string& conversation,
+                     const std::string& commit)
+    {
+        messageEngine_.sendMessage(peer,
+                                   device,
+                                   {{"application/im-gitmessage-id", commit}},
+                                   0,
+                                   im::MessageDelivery {
+                                       im::MessageCompletion::FETCHED, conversation, commit});
+    }
+
+    void acknowledgeDevice(const std::string& conversation,
+                           const std::string& device,
+                           const std::string& commit,
+                           const im::MessageEngine::CommitCovered& covered)
+    {
+        messageEngine_.acknowledgeDeviceFetched(conversation, device, commit, covered);
+    }
+
+    void acknowledgeMember(const std::string& conversation,
+                           const std::string& peer,
+                           const std::string& commit,
+                           const im::MessageEngine::CommitCovered& covered)
+    {
+        messageEngine_.acknowledgeMemberFetched(conversation, peer, commit, covered);
+    }
 
     bool waitForAttempts(size_t count)
     {
@@ -107,10 +143,21 @@ public:
         return attempts_;
     }
 
+    void completeAttempt(size_t index)
+    {
+        Attempt attempt;
+        {
+            std::lock_guard lock(mutex_);
+            attempt = attempts_.at(index);
+        }
+        messageEngine_.onMessageSent(attempt.peer, attempt.token, true, attempt.device);
+    }
+
 private:
     mutable std::mutex mutex_;
     std::condition_variable condition_;
     std::vector<Attempt> attempts_;
+    std::atomic_bool completeWrites_ {false};
 };
 
 class MessageEngineTest : public CppUnit::TestFixture
@@ -124,13 +171,19 @@ public:
 private:
     void testDeviceQueueSurvivesRestart();
     void testLegacyQueueStillLoads();
+    void testFetchedCompletion();
+    void testInFlightRefreshIgnoresStaleCompletion();
 
     static constexpr auto ACCOUNT_ID = "message-engine-test";
     static constexpr auto LEGACY_ACCOUNT_ID = "message-engine-legacy-test";
+    static constexpr auto FETCHED_ACCOUNT_ID = "message-engine-fetched-test";
+    static constexpr auto REFRESH_ACCOUNT_ID = "message-engine-refresh-test";
 
     CPPUNIT_TEST_SUITE(MessageEngineTest);
     CPPUNIT_TEST(testDeviceQueueSurvivesRestart);
     CPPUNIT_TEST(testLegacyQueueStillLoads);
+    CPPUNIT_TEST(testFetchedCompletion);
+    CPPUNIT_TEST(testInFlightRefreshIgnoresStaleCompletion);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -144,6 +197,8 @@ MessageEngineTest::setUp()
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     dhtnet::fileutils::remove(fileutils::get_cache_dir() / ACCOUNT_ID, true);
     dhtnet::fileutils::remove(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() / FETCHED_ACCOUNT_ID, true);
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() / REFRESH_ACCOUNT_ID, true);
 }
 
 void
@@ -151,6 +206,8 @@ MessageEngineTest::tearDown()
 {
     dhtnet::fileutils::remove(fileutils::get_cache_dir() / ACCOUNT_ID, true);
     dhtnet::fileutils::remove(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() / FETCHED_ACCOUNT_ID, true);
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() / REFRESH_ACCOUNT_ID, true);
 }
 
 void
@@ -205,6 +262,81 @@ MessageEngineTest::testLegacyQueueStillLoads()
     account->resume();
     CPPUNIT_ASSERT(account->waitForAttempts(1));
     CPPUNIT_ASSERT(account->attempts().front().device.empty());
+}
+
+void
+MessageEngineTest::testFetchedCompletion()
+{
+    constexpr auto conversation = "conversation";
+    constexpr auto device = "device";
+    {
+        auto account = std::make_shared<MessageEngineAccount>(FETCHED_ACCOUNT_ID);
+        account->completeWrites(true);
+        account->sendFetched("peer", device, conversation, "old");
+        CPPUNIT_ASSERT(account->waitForAttempts(1));
+        CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+        account->saveMessages();
+    }
+
+    auto account = std::make_shared<MessageEngineAccount>(FETCHED_ACCOUNT_ID);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+    account->completeWrites(true);
+    account->sendFetched("peer", device, conversation, "new");
+    CPPUNIT_ASSERT(account->waitForAttempts(1));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+
+    const auto exact = [](const auto& advertised, const auto& fetched) { return advertised == fetched; };
+    account->acknowledgeDevice(conversation, device, "old", exact);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+    account->acknowledgeDevice(conversation, device, "new", exact);
+    CPPUNIT_ASSERT_EQUAL(size_t(0), account->pendingMessages());
+
+    account->sendFetched("peer", "device-a", conversation, "member-head");
+    account->sendFetched("peer", "device-b", conversation, "member-head");
+    CPPUNIT_ASSERT(account->waitForAttempts(3));
+    CPPUNIT_ASSERT_EQUAL(size_t(2), account->pendingMessages());
+    account->acknowledgeMember(conversation, "peer", "descendant", [](const auto& advertised, const auto& fetched) {
+        return advertised == "member-head" && fetched == "descendant";
+    });
+    CPPUNIT_ASSERT_EQUAL(size_t(0), account->pendingMessages());
+
+    account->sendFetched("peer", {}, conversation, "account-head");
+    CPPUNIT_ASSERT(account->waitForAttempts(4));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+    account->acknowledgeMember(conversation, "peer", "account-head", exact);
+    CPPUNIT_ASSERT_EQUAL(size_t(0), account->pendingMessages());
+
+    account->sendTextMessage("peer", {}, {{"text/plain", "done on write"}});
+    CPPUNIT_ASSERT(account->waitForAttempts(5));
+    CPPUNIT_ASSERT_EQUAL(size_t(0), account->pendingMessages());
+}
+
+void
+MessageEngineTest::testInFlightRefreshIgnoresStaleCompletion()
+{
+    auto account = std::make_shared<MessageEngineAccount>(REFRESH_ACCOUNT_ID);
+    account->sendFetched("peer", "device", "conversation", "old");
+    CPPUNIT_ASSERT(account->waitForAttempts(1));
+
+    account->sendFetched("peer", "device", "conversation", "new");
+    CPPUNIT_ASSERT(account->waitForAttempts(2));
+    const auto attempts = account->attempts();
+    CPPUNIT_ASSERT(attempts[0].token != attempts[1].token);
+
+    account->completeAttempt(0);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+    account->acknowledgeDevice(
+        "conversation", "device", "old", [](const auto& advertised, const auto& fetched) {
+            return advertised == fetched;
+        });
+    CPPUNIT_ASSERT_EQUAL(size_t(1), account->pendingMessages());
+
+    account->completeAttempt(1);
+    account->acknowledgeDevice(
+        "conversation", "device", "new", [](const auto& advertised, const auto& fetched) {
+            return advertised == fetched;
+        });
+    CPPUNIT_ASSERT_EQUAL(size_t(0), account->pendingMessages());
 }
 
 } // namespace jami::test

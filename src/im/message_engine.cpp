@@ -39,6 +39,7 @@ MessageEngine::MessageEngine(SIPAccountBase& acc, const std::filesystem::path& p
     , savePath_(path)
     , ioContext_(Manager::instance().ioContext())
     , saveTimer_(*ioContext_)
+    , retryTimer_(*ioContext_)
 {
     dhtnet::fileutils::check_dir(savePath_.parent_path());
     load();
@@ -48,31 +49,59 @@ MessageToken
 MessageEngine::sendMessage(const std::string& to,
                            const std::string& deviceId,
                            const std::map<std::string, std::string>& payloads,
-                           uint64_t refreshToken)
+                           uint64_t refreshToken,
+                           std::optional<MessageDelivery> delivery)
 {
     if (payloads.empty() or to.empty())
         return 0;
     MessageToken token = 0;
     {
         std::lock_guard lock(messagesMutex_);
+        auto newToken = [&] {
+            return std::uniform_int_distribution<MessageToken> {1, JAMI_ID_MAX_VAL}(account_.rand);
+        };
         auto& peerMessages = deviceId.empty() ? messages_[to] : messagesDevices_[deviceId];
         if (refreshToken != 0) {
             for (auto& m : peerMessages) {
                 if (m.token == refreshToken) {
-                    token = refreshToken;
+                    token = m.status == MessageStatus::SENDING ? newToken() : refreshToken;
+                    m.token = token;
                     m.to = to;
                     m.payloads = payloads;
+                    m.delivery = delivery;
                     m.status = MessageStatus::IDLE;
+                    m.retried = 0;
+                    m.last_op = {};
                     break;
                 }
             }
         }
+        if (token == 0 && delivery && delivery->completion == MessageCompletion::FETCHED) {
+            auto existing = std::find_if(peerMessages.begin(), peerMessages.end(), [&](const auto& message) {
+                return message.delivery && message.delivery->completion == MessageCompletion::FETCHED
+                       && message.delivery->conversationId == delivery->conversationId;
+            });
+            if (existing != peerMessages.end()) {
+                token = existing->status == MessageStatus::SENDING ? newToken() : existing->token;
+                existing->token = token;
+                existing->to = to;
+                existing->payloads = payloads;
+                existing->delivery = delivery;
+                existing->status = MessageStatus::IDLE;
+                existing->retried = 0;
+                existing->last_op = {};
+            }
+        }
         if (token == 0) {
-            token = std::uniform_int_distribution<MessageToken> {1, JAMI_ID_MAX_VAL}(account_.rand);
-            auto& m = peerMessages.emplace_back(Message {token});
+            token = newToken();
+            Message message;
+            message.token = token;
+            auto& m = peerMessages.emplace_back(std::move(message));
             m.to = to;
             m.payloads = payloads;
+            m.delivery = std::move(delivery);
         }
+        scheduleFetchedRetry();
         scheduleSave();
     }
     asio::post(*ioContext_, [this, w = account_.weak_from_this(), to, deviceId]() {
@@ -117,6 +146,114 @@ MessageEngine::onRegistrationResumed()
         });
     }
 }
+
+void
+MessageEngine::acknowledgeDeviceFetched(const std::string& conversationId,
+                                        const std::string& deviceId,
+                                        const std::string& commitId,
+                                        const CommitCovered& commitCovered)
+{
+    std::set<std::string> candidates;
+    {
+        std::lock_guard lock(messagesMutex_);
+        auto queue = messagesDevices_.find(deviceId);
+        if (queue == messagesDevices_.end())
+            return;
+        for (const auto& message : queue->second)
+            if (message.delivery && message.delivery->completion == MessageCompletion::FETCHED
+                && message.delivery->conversationId == conversationId)
+                candidates.emplace(message.delivery->commitId);
+    }
+
+    std::set<std::string> acknowledged;
+    for (const auto& advertised : candidates)
+        if (commitCovered(advertised, commitId))
+            acknowledged.emplace(advertised);
+    if (acknowledged.empty())
+        return;
+
+    std::lock_guard lock(messagesMutex_);
+    auto queue = messagesDevices_.find(deviceId);
+    if (queue == messagesDevices_.end())
+        return;
+    const auto removed = std::erase_if(queue->second, [&](const auto& message) {
+        return message.delivery && message.delivery->completion == MessageCompletion::FETCHED
+               && message.delivery->conversationId == conversationId
+               && acknowledged.contains(message.delivery->commitId);
+    });
+    if (queue->second.empty())
+        messagesDevices_.erase(queue);
+    if (removed) {
+        scheduleFetchedRetry();
+        scheduleSave();
+    }
+}
+
+void
+MessageEngine::acknowledgeMemberFetched(const std::string& conversationId,
+                                        const std::string& memberUri,
+                                        const std::string& commitId,
+                                        const CommitCovered& commitCovered)
+{
+    std::set<std::string> candidates;
+    {
+        std::lock_guard lock(messagesMutex_);
+        auto collect = [&](const auto& queues) {
+            for (const auto& [_, messages] : queues)
+                for (const auto& message : messages)
+                    if (message.to == memberUri && message.delivery
+                        && message.delivery->completion == MessageCompletion::FETCHED
+                        && message.delivery->conversationId == conversationId)
+                        candidates.emplace(message.delivery->commitId);
+        };
+        collect(messages_);
+        collect(messagesDevices_);
+    }
+
+    std::set<std::string> acknowledged;
+    for (const auto& advertised : candidates)
+        if (commitCovered(advertised, commitId))
+            acknowledged.emplace(advertised);
+    if (acknowledged.empty())
+        return;
+
+    std::lock_guard lock(messagesMutex_);
+    size_t removed = 0;
+    auto eraseAcknowledged = [&](auto& queues) {
+        for (auto queue = queues.begin(); queue != queues.end();) {
+            removed += std::erase_if(queue->second, [&](const auto& message) {
+                  return message.to == memberUri && message.delivery
+                       && message.delivery->completion == MessageCompletion::FETCHED
+                       && message.delivery->conversationId == conversationId
+                       && acknowledged.contains(message.delivery->commitId);
+            });
+            if (queue->second.empty())
+                queue = queues.erase(queue);
+            else
+                ++queue;
+        }
+    };
+    eraseAcknowledged(messages_);
+    eraseAcknowledged(messagesDevices_);
+    if (removed) {
+        scheduleFetchedRetry();
+        scheduleSave();
+    }
+}
+
+#ifdef LIBJAMI_TEST
+size_t
+MessageEngine::pendingMessageCount() const
+{
+    std::lock_guard lock(messagesMutex_);
+    size_t count = 0;
+    for (const auto& [_, messages] : messages_)
+        count += messages.size();
+    for (const auto& [_, messages] : messagesDevices_)
+        count += messages.size();
+    return count;
+}
+#endif
 
 void
 MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
@@ -206,7 +343,9 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                         f->to,
                         std::to_string(token),
                         static_cast<int>(libjami::Account::MessageStates::SENT));
-                p->second.erase(f);
+                if (!f->delivery || f->delivery->completion == MessageCompletion::WRITE)
+                    p->second.erase(f);
+                scheduleFetchedRetry();
                 scheduleSave();
             } else if (f->retried >= MAX_RETRIES) {
                 f->status = MessageStatus::FAILURE;
@@ -219,6 +358,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                         std::to_string(token),
                         static_cast<int>(libjami::Account::MessageStates::FAILURE));
                 p->second.erase(f);
+                scheduleFetchedRetry();
                 scheduleSave();
             } else {
                 f->status = MessageStatus::IDLE;
@@ -274,11 +414,77 @@ MessageEngine::normalizeLoadedMessages()
     auto normalize = [](auto& queues) {
         for (auto& [_, messages] : queues)
             for (auto& message : messages)
-                if (message.status == MessageStatus::SENDING)
+                if (message.status == MessageStatus::SENDING
+                    || (message.status == MessageStatus::SENT && message.delivery
+                        && message.delivery->completion == MessageCompletion::FETCHED))
                     message.status = MessageStatus::IDLE;
     };
     normalize(messages_);
     normalize(messagesDevices_);
+}
+
+void
+MessageEngine::scheduleFetchedRetry()
+{
+    std::optional<clock::time_point> nextRetry;
+    auto findNext = [&](const auto& queues) {
+        for (const auto& [_, messages] : queues)
+            for (const auto& message : messages)
+                if (message.status == MessageStatus::SENT && message.delivery
+                    && message.delivery->completion == MessageCompletion::FETCHED) {
+                    auto retry = message.last_op + FETCH_RETRY_DELAY;
+                    if (!nextRetry || retry < *nextRetry)
+                        nextRetry = retry;
+                }
+    };
+    findNext(messages_);
+    findNext(messagesDevices_);
+    if (!nextRetry) {
+        retryTimer_.cancel();
+        return;
+    }
+
+    auto delay = *nextRetry - clock::now();
+    retryTimer_.expires_after(std::max(delay, clock::duration::zero()));
+    retryTimer_.async_wait([this, w = account_.weak_from_this()](const std::error_code& ec) {
+        if (!ec && w.lock())
+            retryFetched();
+    });
+}
+
+void
+MessageEngine::retryFetched()
+{
+    std::vector<std::string> peers;
+    std::vector<std::string> devices;
+    {
+        std::lock_guard lock(messagesMutex_);
+        const auto now = clock::now();
+        auto activate = [&](auto& queues, auto& ready) {
+            for (auto& [target, messages] : queues) {
+                bool targetReady = false;
+                for (auto& message : messages)
+                    if (message.status == MessageStatus::SENT && message.delivery
+                        && message.delivery->completion == MessageCompletion::FETCHED
+                        && message.last_op + FETCH_RETRY_DELAY <= now) {
+                        message.status = MessageStatus::IDLE;
+                        targetReady = true;
+                    }
+                if (targetReady)
+                    ready.emplace_back(target);
+            }
+        };
+        activate(messages_, peers);
+        activate(messagesDevices_, devices);
+        scheduleFetchedRetry();
+        if (!peers.empty() || !devices.empty())
+            scheduleSave();
+    }
+
+    for (const auto& peer : peers)
+        retrySend(peer, {}, true);
+    for (const auto& device : devices)
+        retrySend({}, device, true);
 }
 
 void

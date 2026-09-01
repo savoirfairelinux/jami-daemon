@@ -21,6 +21,7 @@
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jami_contact.h"
+#include "im/message_engine.h"
 
 #include <mutex>
 #include <msgpack.hpp>
@@ -74,7 +75,11 @@ using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&, bool noNewSocket)>;
 using SengMsgCb
-    = std::function<uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
+    = std::function<uint64_t(const std::string&,
+                             const DeviceId&,
+                             std::map<std::string, std::string>,
+                             uint64_t,
+                             std::optional<im::MessageDelivery>)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using OneToOneRecvCb = std::function<void(const std::string&, const std::string&)>;
 

@@ -376,6 +376,15 @@ public:
      */
     void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+    void acknowledgeConversationDeviceFetched(const std::string& conversationId,
+                                               const std::string& deviceId,
+                                               const std::string& commitId,
+                                               const im::MessageEngine::CommitCovered& commitCovered);
+    void acknowledgeConversationMemberFetched(const std::string& conversationId,
+                                               const std::string& memberUri,
+                                               const std::string& commitId,
+                                               const im::MessageEngine::CommitCovered& commitCovered);
+
     std::string getUserUri() const override;
 
     /**
@@ -674,7 +683,8 @@ private:
     uint64_t conversationSendMessage(const std::string& uri,
                                      const DeviceId& device,
                                      const std::map<std::string, std::string>& msg,
-                                     uint64_t token = 0);
+                                     uint64_t token = 0,
+                                     std::optional<im::MessageDelivery> delivery = {});
     void onConversationNeedSocket(const std::string& convId,
                                   const std::string& deviceId,
                                   ChannelCb&& cb,

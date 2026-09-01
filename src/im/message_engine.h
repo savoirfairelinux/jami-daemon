@@ -22,6 +22,8 @@
 #include <mutex>
 #include <cstdint>
 #include <filesystem>
+#include <functional>
+#include <optional>
 
 #include <msgpack.hpp>
 #include <asio/steady_timer.hpp>
@@ -35,6 +37,17 @@ namespace im {
 using MessageToken = uint64_t;
 
 enum class MessageStatus : std::int8_t { UNKNOWN = 0, IDLE, SENDING, SENT, FAILURE };
+
+enum class MessageCompletion : std::int8_t { WRITE = 0, FETCHED };
+
+struct MessageDelivery
+{
+    MessageCompletion completion {MessageCompletion::WRITE};
+    std::string conversationId;
+    std::string commitId;
+
+    MSGPACK_DEFINE_MAP(completion, conversationId, commitId)
+};
 
 class MessageEngine
 {
@@ -51,7 +64,8 @@ public:
     MessageToken sendMessage(const std::string& to,
                              const std::string& deviceId,
                              const std::map<std::string, std::string>& payloads,
-                             uint64_t refreshToken);
+                             uint64_t refreshToken,
+                             std::optional<MessageDelivery> delivery = {});
 
     MessageStatus getStatus(MessageToken t) const;
 
@@ -68,6 +82,20 @@ public:
      */
     void onRegistrationResumed();
 
+    using CommitCovered = std::function<bool(const std::string&, const std::string&)>;
+    void acknowledgeDeviceFetched(const std::string& conversationId,
+                                  const std::string& deviceId,
+                                  const std::string& commitId,
+                                  const CommitCovered& commitCovered);
+    void acknowledgeMemberFetched(const std::string& conversationId,
+                                  const std::string& memberUri,
+                                  const std::string& commitId,
+                                  const CommitCovered& commitCovered);
+
+#ifdef LIBJAMI_TEST
+    size_t pendingMessageCount() const;
+#endif
+
     /**
      * Load persisted messages
      */
@@ -80,12 +108,15 @@ public:
 
 private:
     static const constexpr unsigned MAX_RETRIES = 20;
+    static const constexpr auto FETCH_RETRY_DELAY = std::chrono::minutes(2);
     using clock = std::chrono::system_clock;
 
     void retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout);
 
     void save_() const;
     void scheduleSave();
+    void scheduleFetchedRetry();
+    void retryFetched();
     void normalizeLoadedMessages();
 
     struct Message
@@ -96,14 +127,16 @@ private:
         MessageStatus status {MessageStatus::IDLE};
         unsigned retried {0};
         clock::time_point last_op {};
+        std::optional<MessageDelivery> delivery;
 
-        MSGPACK_DEFINE_MAP(token, to, payloads, status, retried, last_op)
+        MSGPACK_DEFINE_MAP(token, to, payloads, status, retried, last_op, delivery)
     };
 
     SIPAccountBase& account_;
     const std::filesystem::path savePath_;
     std::shared_ptr<asio::io_context> ioContext_;
     asio::steady_timer saveTimer_;
+    asio::steady_timer retryTimer_;
 
     std::map<std::string, std::list<Message>> messages_;
     std::map<std::string, std::list<Message>> messagesDevices_;
@@ -115,3 +148,4 @@ private:
 } // namespace jami
 
 MSGPACK_ADD_ENUM(jami::im::MessageStatus);
+MSGPACK_ADD_ENUM(jami::im::MessageCompletion);

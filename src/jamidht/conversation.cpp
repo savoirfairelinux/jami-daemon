@@ -2327,6 +2327,12 @@ Conversation::hasCommit(const std::string& commitId) const
     return pimpl_->repository_->hasCommit(commitId);
 }
 
+bool
+Conversation::isAncestor(const std::string& ancestorId, const std::string& descendantId) const
+{
+    return pimpl_->repository_->isAncestor(ancestorId, descendantId);
+}
+
 std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
@@ -3063,13 +3069,23 @@ Conversation::downloadFile(const std::string& interactionId,
 void
 Conversation::hasFetched(const std::string& deviceId, const std::string& commitId)
 {
-    dht::ThreadPool::io().run([w = weak(), deviceId, commitId]() {
+    auto account = pimpl_->account_.lock();
+    auto commitCovered = [this](const auto& advertised, const auto& fetched) {
+        return isAncestor(advertised, fetched);
+    };
+    if (account)
+        account->acknowledgeConversationDeviceFetched(id(), deviceId, commitId, commitCovered);
+    auto uri = uriFromDevice(deviceId);
+    if (uri.empty())
+        return;
+    if (account)
+        account->acknowledgeConversationMemberFetched(id(), uri, commitId, commitCovered);
+    if (uri == pimpl_->userId_)
+        return;
+
+    dht::ThreadPool::io().run([w = weak(), uri = std::move(uri), commitId]() {
         auto sthis = w.lock();
         if (!sthis)
-            return;
-        // Update fetched for Uri
-        auto uri = sthis->uriFromDevice(deviceId);
-        if (uri.empty() || uri == sthis->pimpl_->userId_)
             return;
         // When a user fetches a commit, the message is sent for this person
         sthis->pimpl_->updateStatus(uri,
@@ -3091,6 +3107,15 @@ Conversation::Impl::updateStatus(const std::string& uri,
     // send us a status and will emit to other connected devices.
     LogOptions options;
     std::map<std::string, std::map<std::string, std::string>> newStatus;
+    if (st == libjami::Account::MessageStates::SENT)
+        if (auto account = account_.lock())
+            account->acknowledgeConversationMemberFetched(
+                repository_->id(),
+                uri,
+                commitId,
+                [this](const auto& advertised, const auto& fetched) {
+                    return repository_->isAncestor(advertised, fetched);
+                });
     {
         // Update internal structures.
         std::lock_guard lk(messageStatusMtx_);

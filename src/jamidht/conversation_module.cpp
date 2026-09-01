@@ -771,7 +771,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                          accountId_,
                          conversationId);
-            sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0);
+            sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0, {});
         }
         return;
     }
@@ -895,7 +895,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                      accountId_,
                      conversationId);
-        sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0);
+        sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0, {});
     }
 }
 
@@ -1357,13 +1357,14 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
 
     // Send message notification will announce the new commit in 3 steps.
     const auto messageMap = std::map<std::string, std::string> {{MIME_TYPE_GIT, text}};
+    const auto delivery = im::MessageDelivery {im::MessageCompletion::FETCHED, conversation.id(), commit};
 
     // First, because our account can have several devices, announce to other devices
     if (sync) {
         // Announce to our devices
         std::lock_guard lk(refreshMtx_);
         auto& refresh = refreshMessage[username_];
-        refresh = sendMsgCb_(username_, {}, messageMap, refresh);
+        refresh = sendMsgCb_(username_, {}, messageMap, refresh, delivery);
     }
 
     // Then, we announce to 2 random members in the conversation that aren't in the DRT
@@ -1402,7 +1403,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     std::lock_guard lk(refreshMtx_);
     for (const auto& member : nonConnectedMembers) {
         auto& refresh = refreshMessage[member];
-        refresh = sendMsgCb_(member, {}, messageMap, refresh);
+        refresh = sendMsgCb_(member, {}, messageMap, refresh, delivery);
     }
 
     // Finally we send to devices that the DRT choose.
@@ -1412,7 +1413,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
         auto& refresh = refreshMessage[deviceIdStr];
-        refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
+        refresh = sendMsgCb_(memberUri, device, messageMap, refresh, delivery);
     }
 
     // And we wake up the mobile devices we are responsible for (i.e. closer
@@ -1428,7 +1429,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         if (deviceIdStr == deviceId)
             continue;
         auto& refresh = refreshMessage[deviceIdStr];
-        refresh = sendMsgCb_(target.uri, device, messageMap, refresh);
+        refresh = sendMsgCb_(target.uri, device, messageMap, refresh, delivery);
     }
 }
 
@@ -2355,7 +2356,7 @@ ConversationModule::onNeedConversationRequest(const std::string& from, const std
         pimpl_->convInfos_[conversationId] = std::move(info);
         pimpl_->saveConvInfos();
     }
-    pimpl_->sendMsgCb_(from, {}, std::move(invite), 0);
+    pimpl_->sendMsgCb_(from, {}, std::move(invite), 0, {});
 }
 
 void
@@ -3068,7 +3069,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
             pimpl_->convInfos_[conversationId] = std::move(info);
             pimpl_->saveConvInfos();
         }
-        pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
+        pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0, {});
         return;
     }
 
@@ -3092,7 +3093,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                                   pimpl_->convInfos_[conversationId] = std::move(info);
                                                   pimpl_->saveConvInfos();
                                               }
-                                              pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
+                                              pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0, {});
                                           }
                                       }
                                   });
