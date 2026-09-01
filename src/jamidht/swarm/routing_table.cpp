@@ -45,6 +45,7 @@ bool
 Bucket::addNode(NodeInfo&& info)
 {
     auto nodeId = info.socket->deviceId();
+    info.isMobile_ |= hasMobileNode(nodeId);
     if (nodes.try_emplace(nodeId, std::move(info)).second) {
         connecting_nodes.erase(nodeId);
         known_nodes.erase(nodeId);
@@ -89,7 +90,7 @@ Bucket::hasNode(const NodeId& nodeId) const
 bool
 Bucket::addKnownNode(const NodeId& nodeId)
 {
-    if (!hasNode(nodeId)) {
+    if (!hasNode(nodeId) && !hasMobileNode(nodeId)) {
         if (known_nodes.emplace(nodeId).second) {
             return true;
         }
@@ -112,13 +113,15 @@ Bucket::getKnownNode(unsigned index) const
 bool
 Bucket::addMobileNode(const NodeId& nodeId)
 {
-    if (!hasNode(nodeId)) {
-        if (mobile_nodes.emplace(nodeId).second) {
-            known_nodes.erase(nodeId);
-            return true;
-        }
+    bool changed = known_nodes.erase(nodeId) != 0;
+    if (auto connected = nodes.find(nodeId); connected != nodes.end()) {
+        changed |= mobile_nodes.erase(nodeId) != 0;
+        changed |= !connected->second.isMobile_;
+        connected->second.isMobile_ = true;
+    } else {
+        changed |= mobile_nodes.emplace(nodeId).second;
     }
-    return false;
+    return changed;
 }
 
 bool
