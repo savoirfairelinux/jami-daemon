@@ -108,14 +108,16 @@ initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
     if (!account)
         return;
 
-    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-        // Use the account device identity so Jami calls can negotiate
-        // DTLS-SRTP through the hybrid SDES+DTLS offer (RFC 5764 4.1).
-        const auto& identity = jamiAccount->identity();
-        if (identity.first && identity.second) {
-            privateKey = identity.first;
-            certificate = identity.second;
+    if (std::dynamic_pointer_cast<JamiAccount>(account)) {
+        try {
+            auto identity = generateDtlsSrtpIdentity();
+            privateKey = std::move(identity.first);
+            certificate = std::move(identity.second);
             sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[account:{}] Unable to generate ephemeral DTLS-SRTP identity: {}",
+                       account->getAccountID(),
+                       e.what());
         }
         return;
     }
@@ -4270,6 +4272,8 @@ SIPCall::merge(Call& call)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setSipTransport(std::move(subcall.sipTransport_), std::move(subcall.contactHeader_));
     sdp_ = std::move(subcall.sdp_);
+    dtlsCertificate_ = std::move(subcall.dtlsCertificate_);
+    dtlsPrivateKey_ = std::move(subcall.dtlsPrivateKey_);
     peerHold_ = subcall.peerHold_;
     upnp_ = std::move(subcall.upnp_);
     localAudioPort_ = subcall.localAudioPort_;
