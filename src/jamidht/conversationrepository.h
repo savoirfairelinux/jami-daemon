@@ -22,10 +22,12 @@
 
 #include <opendht/default_types.h>
 
+#include <algorithm>
 #include <optional>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace jami {
@@ -38,6 +40,16 @@ constexpr auto EVALIDFETCH = 3;
 constexpr auto EUNAUTHORIZED = 4;
 constexpr auto ECOMMIT = 5;
 constexpr auto EUNRECOVERABLE = 6;
+
+constexpr size_t CONVERSATION_ID_LENGTH = 40;
+
+constexpr bool
+isConversationId(std::string_view id) noexcept
+{
+    return id.size() == CONVERSATION_ID_LENGTH && std::all_of(id.begin(), id.end(), [](char c) {
+               return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+           });
+}
 
 class JamiAccount;
 
