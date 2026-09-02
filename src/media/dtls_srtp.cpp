@@ -240,6 +240,12 @@ mediaDtlsCertStore()
 
 } // namespace
 
+dht::crypto::Identity
+generateDtlsSrtpIdentity()
+{
+    return dht::crypto::generateEcIdentity("SRTP");
+}
+
 std::string
 getDtlsFingerprint(const dht::crypto::Certificate& certificate, std::string_view hash)
 {
