@@ -2,16 +2,11 @@
 
 #include "media_codec.h"
 
+#include <opendht/crypto.h>
+
 #include <memory>
 #include <string>
 #include <string_view>
-
-namespace dht {
-namespace crypto {
-struct Certificate;
-struct PrivateKey;
-} // namespace crypto
-} // namespace dht
 
 namespace dhtnet {
 class IceSocket;
@@ -25,6 +20,8 @@ struct DtlsSrtpContext
     std::string outboundKeyInfo {};
     std::string inboundKeyInfo {};
 };
+
+dht::crypto::Identity generateDtlsSrtpIdentity();
 
 std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate,
                                std::string_view hash = "SHA-256");
