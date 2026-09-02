@@ -1984,6 +1984,7 @@ ConversationModule::loadConversations()
                         // the value of `sconv->info.members`.
                         members.emplace(acc->getUsername());
                         sconv->info.members = std::move(members);
+                        sconv->info.mode = conv->mode();
                         // convInfosMtx_ is already locked
                         pimpl_->convInfos_[repository] = sconv->info;
                     }
