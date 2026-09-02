@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e0bc404_fe1a8c54",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2287,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-02T13:23:16Z",
+      "side": 1,
+      "message": "[error] Line 2287: 🔴 `AccountManager::startSync` invokes this callback even when the permanent `put` completes with `ok \u003d\u003d false` (account_manager.cpp:302-309); that failure is expected to be retried when the DHT reconnects. `exchange(true)` therefore marks the device as announced and suppresses the later successful callback. If the transient failure does not produce a registration-state transition, this connection never bootstraps its conversations and the volatile detail is also reported as true. Propagate the put result and consume the one-shot guard only after a successful announcement, while preserving retries.",
+      "revId": "6f8cb1f7ad316e25c6276043db8b2d9914420558",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
