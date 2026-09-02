@@ -152,12 +152,14 @@ public:
 
 private:
     // Test cases.
+    void generates_ephemeral_self_signed_dtls_identity_test();
     void audio_video_srtp_enabled_test();
     void advertises_aes256_with_aes128_fallback_test();
     void advertises_dtls_srtp_with_fingerprint_test();
     void audio_dtls_srtp_enabled_test();
 
     CPPUNIT_TEST_SUITE(SipSrtpTest);
+    CPPUNIT_TEST(generates_ephemeral_self_signed_dtls_identity_test);
     CPPUNIT_TEST(audio_video_srtp_enabled_test);
     CPPUNIT_TEST(advertises_aes256_with_aes128_fallback_test);
     CPPUNIT_TEST(advertises_dtls_srtp_with_fingerprint_test);
@@ -578,6 +580,27 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     JAMI_LOG("Call terminated on both sides");
+}
+
+void
+SipSrtpTest::generates_ephemeral_self_signed_dtls_identity_test()
+{
+    const auto first = generateDtlsSrtpIdentity();
+    const auto second = generateDtlsSrtpIdentity();
+
+    CPPUNIT_ASSERT(first.first);
+    CPPUNIT_ASSERT(first.second);
+    CPPUNIT_ASSERT(second.first);
+    CPPUNIT_ASSERT(second.second);
+    unsigned int keyBits = 0;
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(GNUTLS_PK_EC),
+                         gnutls_x509_privkey_get_pk_algorithm2(first.first->x509_key, &keyBits));
+    CPPUNIT_ASSERT_EQUAL(256u, keyBits);
+    CPPUNIT_ASSERT_EQUAL(first.first->getPublicKey().getId().toString(), first.second->getId().toString());
+    CPPUNIT_ASSERT_EQUAL(second.first->getPublicKey().getId().toString(), second.second->getId().toString());
+    CPPUNIT_ASSERT_EQUAL(first.second->getDN(), first.second->getIssuerDN());
+    CPPUNIT_ASSERT_EQUAL(second.second->getDN(), second.second->getIssuerDN());
+    CPPUNIT_ASSERT(getDtlsFingerprint(*first.second) != getDtlsFingerprint(*second.second));
 }
 
 void

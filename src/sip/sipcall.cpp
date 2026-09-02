@@ -105,14 +105,16 @@ initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
     if (!account)
         return;
 
-    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-        // Use the account device identity so Jami calls can negotiate
-        // DTLS-SRTP through the hybrid SDES+DTLS offer (RFC 5764 4.1).
-        const auto& identity = jamiAccount->identity();
-        if (identity.first && identity.second) {
-            privateKey = identity.first;
-            certificate = identity.second;
+    if (std::dynamic_pointer_cast<JamiAccount>(account)) {
+        try {
+            auto identity = generateDtlsSrtpIdentity();
+            privateKey = std::move(identity.first);
+            certificate = std::move(identity.second);
             sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[account:{}] Unable to generate ephemeral DTLS-SRTP identity: {}",
+                       account->getAccountID(),
+                       e.what());
         }
         return;
     }
