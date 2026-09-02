@@ -1906,9 +1906,8 @@ ConversationModule::loadConversations()
 
     std::error_code ec;
     for (const auto& convIt : std::filesystem::directory_iterator(conversationPath, ec)) {
-        // ignore if not regular file or hidden
         auto name = convIt.path().filename().string();
-        if (!convIt.is_directory() || name[0] == '.')
+        if (!convIt.is_directory() || !isConversationId(name))
             continue;
         dht::ThreadPool::io().run(
             [this, ctx, repository = std::move(name), acc, _ = std::make_shared<PendingConvCounter>(ctx)] {
@@ -2107,7 +2106,10 @@ ConversationModule::loadSingleConversation(const std::string& convId)
     auto conversationsRepositoryIds = dhtnet::fileutils::readDirectory(fileutils::get_data_dir() / pimpl_->accountId_
                                                                        / "conversations");
     for (auto repositoryId : conversationsRepositoryIds) {
-        if (repositoryId != convId) {
+        // Only canonical conversation ids: the directory may also hold transient
+        // artifacts, and a dummy conversation created from one would advertise a
+        // bogus id to the rest of the module.
+        if (repositoryId != convId && isConversationId(repositoryId)) {
             auto conv = std::make_shared<SyncedConversation>(repositoryId);
             pimpl_->conversations_.emplace(repositoryId, conv);
         }
@@ -2817,6 +2819,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
     bool listChanged = false;
     for (const auto& [key, convInfo] : msg.c) {
         const auto& convId = convInfo.id;
+        if (!isConversationId(convId))
+            continue;
         {
             std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
             pimpl_->rmConversationRequest(convId);
@@ -3830,6 +3834,7 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
         msgpack::unpacked result;
         msgpack::unpack(result, (const char*) file.data(), file.size());
         result.get().convert(convInfos);
+        std::erase_if(convInfos, [](const auto& item) { return !isConversationId(item.first); });
     } catch (const std::exception& e) {
         JAMI_WARNING("[convInfo] error loading convInfo: {}", e.what());
     }
