@@ -7,10 +7,17 @@ PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJE
 # passed to --with-gnutls (it adds -I<prefix>/include unconditionally).
 # Resolve the real GnuTLS prefix via pkg-config so both the header and library checks succeed;
 # fall back to the contrib prefix for cross builds where GnuTLS is built into contrib.
+# PKG_CONFIG stays the host tool when cross-compiling (see main.mak), so querying it
+# would report the host prefix and place -I/usr/include ahead of the sysroot on the
+# cross compiler's command line. GnuTLS is always built into contrib in that case.
 ifndef IGNORE_SYSTEM_LIBS
+ifndef HAVE_CROSS_COMPILE
 PJPROJECT_GNUTLS_PREFIX := $(shell $(PKG_CONFIG) --variable=prefix gnutls 2>/dev/null)
 endif
-PJPROJECT_GNUTLS_PREFIX ?= $(PREFIX)
+endif
+ifeq ($(PJPROJECT_GNUTLS_PREFIX),)
+PJPROJECT_GNUTLS_PREFIX := $(PREFIX)
+endif
 
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
