@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ec6855e_ae788746",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2300,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-02T13:20:45Z",
+      "side": 1,
+      "message": "[error] Line 2300: 🔴 `MIME_TYPE_GIT/\u003ccommit id\u003e` is not background-only: `sendMessageNotification()` constructs a `MIME_TYPE_GIT` payload for new conversation messages, `sendTextMessage()` appends the conversation ID, and `requestMessageConnection()` passes that value as `connType`. This prefix branch therefore returns `NORMAL` for offline recipients\u0027 new-message notifications, delaying the user-visible message and defeating the stated high-priority policy. Classify only the exact `MIME_TYPE_GIT` fetch type as normal (and keep the suffixed notification type high), with coverage for both forms; also require the delimiter if prefix matching remains.",
+      "revId": "b9b841aa116a0ba51c012a5c5d731cb4a0387483",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
