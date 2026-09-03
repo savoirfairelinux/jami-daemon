@@ -92,6 +92,8 @@ public:
     void testCheckAdminFakeAVoteIsDetected();
     void testAdminCannotKickThemselves();
     void testCommitUnauthorizedUser();
+    void testForgedDeviceCertificateRejected();
+    void testForgedMemberJoinRejected();
     void testMemberJoinsNoBadFile();
     void testMemberAddedNoCertificate();
     void testMemberJoinsInviteRemoved();
@@ -146,6 +148,8 @@ private:
     CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
     CPPUNIT_TEST(testAdminCannotKickThemselves);
     CPPUNIT_TEST(testCommitUnauthorizedUser);
+    CPPUNIT_TEST(testForgedDeviceCertificateRejected);
+    CPPUNIT_TEST(testForgedMemberJoinRejected);
     CPPUNIT_TEST(testMemberJoinsNoBadFile);
     CPPUNIT_TEST(testMemberAddedNoCertificate);
     CPPUNIT_TEST(testMemberJoinsInviteRemoved);
@@ -1107,6 +1111,94 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
 
     libjami::sendMessage(bobId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
+ConversationMembersEventTest::testForgedDeviceCertificateRejected()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Bob mints a device certificate whose issuer DN is Alice's account (a public
+    // string) but which is signed with a key Bob controls, and adds it to /devices.
+    auto aliceAccountCert = aliceAccount->identity().second->issuer;
+    CPPUNIT_ASSERT(aliceAccountCert);
+    dht::crypto::Identity forgedIssuer {bobAccount->identity().first, aliceAccountCert};
+    auto rogue = dht::crypto::generateIdentity("rogue", forgedIssuer, 2048);
+    CPPUNIT_ASSERT_EQUAL(aliceUri, rogue.second->getIssuerUID());
+
+    auto repoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    addFile(bobAccount, convId, fmt::format("devices/{}.crt", rogue.second->getLongId()), rogue.second->toString(false));
+    auto message = CommitMessage::text("I am Alice");
+    CPPUNIT_ASSERT(!commitInRepo(repoPath, rogue, "rogue", message.toString()).empty());
+
+    // Alice fetches the forged history when Bob announces a new commit.
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "trigger sync"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+    CPPUNIT_ASSERT_EQUAL(aliceMsgSize, aliceData.messages.size());
+}
+
+void
+ConversationMembersEventTest::testForgedMemberJoinRejected()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    // Carla is invited but offline: she never joins by herself.
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+
+    // Bob forges a join for Carla: her (public) account certificate as member
+    // certificate, and a device certificate claiming her as issuer but signed by Bob.
+    auto carlaAccountCert = carlaAccount->identity().second->issuer;
+    CPPUNIT_ASSERT(carlaAccountCert);
+    dht::crypto::Identity forgedIssuer {bobAccount->identity().first, carlaAccountCert};
+    auto rogue = dht::crypto::generateIdentity("rogue", forgedIssuer, 2048);
+    CPPUNIT_ASSERT_EQUAL(carlaUri, rogue.second->getIssuerUID());
+
+    auto repoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    dhtnet::fileutils::remove(repoPath / "invited" / carlaUri);
+    addFile(bobAccount, convId, fmt::format("members/{}.crt", carlaUri), carlaAccountCert->toString(true));
+    addFile(bobAccount, convId, fmt::format("devices/{}.crt", rogue.second->getLongId()), rogue.second->toString(false));
+    addAll(bobAccount, convId);
+    auto message = CommitMessage::member(CommitAction::JOIN, carlaUri);
+    CPPUNIT_ASSERT(!commitInRepo(repoPath, rogue, "rogue", message.toString()).empty());
+
+    libjami::sendMessage(bobId, convId, "trigger sync"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+    // Carla must still be seen as invited only
+    auto members = libjami::getConversationMembers(aliceId, convId);
+    bool carlaFound = false;
+    for (const auto& member : members)
+        if (member.at("uri") == carlaUri) {
+            carlaFound = true;
+            CPPUNIT_ASSERT_EQUAL(std::string("invited"), member.at("role"));
+        }
+    CPPUNIT_ASSERT(carlaFound);
 }
 
 void
