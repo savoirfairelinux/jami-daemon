@@ -2777,6 +2777,17 @@ ConversationRepository::Impl::parseCommit(git_repository* repo, const git_commit
 
 //////////////////////////////////
 
+// Transient conversation artifacts (clone staging areas and the backups taken
+// before a clone is swapped into place) live here rather than in `conversations`,
+// so that the conversation loader never sees a directory whose name is not a
+// conversation id. It is a sibling of `conversations` so moves between the two
+// stay on one filesystem, and therefore atomic.
+static std::filesystem::path
+conversationsStagingPath(const std::string& accountId)
+{
+    return fileutils::get_data_dir() / accountId / "conversations.staging";
+}
+
 std::unique_ptr<ConversationRepository>
 ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& account,
                                            ConversationMode mode,
@@ -2802,11 +2813,15 @@ ConversationRepository::createRepository(const std::shared_ptr<JamiAccount>& acc
                                          const std::string& otherMember,
                                          const CommitMessage& initialMessage)
 {
-    // Create temporary directory because we are unable to know the first hash for now
+    // Create temporary directory because we are unable to know the first hash for now.
+    // It is staged outside of `conversations` so that the conversation loader never
+    // sees a directory whose name is not a conversation id.
     std::uniform_int_distribution<uint64_t> dist;
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
-    auto tmpPath = conversationsPath / std::to_string(dist(account->rand));
+    auto stagingPath = conversationsStagingPath(account->getAccountID());
+    dhtnet::fileutils::check_dir(stagingPath);
+    auto tmpPath = stagingPath / std::to_string(dist(account->rand));
     if (std::filesystem::is_directory(tmpPath)) {
         JAMI_ERROR("{} already exists. Abort create conversations", tmpPath);
         return {};
@@ -2864,13 +2879,17 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
     auto path = conversationsPath / conversationId;
-    // Clone into a temporary sibling directory and only atomically swap it
-    // into place once the clone has succeeded and been validated. This
-    // guarantees that a failing clone (network error, oversized pack, bad
-    // remote, failed commit validation, ...) cannot destroy a pre-existing
-    // local conversation at `path`.
-    const auto tmpClonePath = conversationsPath / (conversationId + ".clone.tmp");
-    const auto backupPath = conversationsPath / (conversationId + ".bak.tmp");
+    // Clone into the staging directory and only atomically swap it into place
+    // once the clone has succeeded and been validated. This guarantees that a
+    // failing clone (network error, oversized pack, bad remote, failed commit
+    // validation, ...) cannot destroy a pre-existing local conversation at
+    // `path`. Staging is a sibling of `conversations` so the swap stays on one
+    // filesystem while these transient directories remain invisible to the
+    // conversation loader.
+    auto stagingPath = conversationsStagingPath(account->getAccountID());
+    dhtnet::fileutils::check_dir(stagingPath);
+    const auto tmpClonePath = stagingPath / (conversationId + ".clone");
+    const auto backupPath = stagingPath / (conversationId + ".bak");
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 #ifdef LIBJAMI_TEST
     if (FETCH_FROM_LOCAL_REPOS) {
