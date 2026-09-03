@@ -2986,10 +2986,11 @@ Conversation::onFileChannelRequest(const std::string& member,
     if (!isMember(member))
         return false;
 
-    auto sep = fileId.find('_');
-    if (sep == std::string::npos)
+    if (!isValidFileId(fileId)) {
+        JAMI_WARNING("[Account {:s}] {} requested file with invalid id {}", pimpl_->accountId_, member, fileId);
         return false;
-
+    }
+    auto sep = fileId.find('_');
     auto interactionId = fileId.substr(0, sep);
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->commitMsg.tid.empty() || commit->commitMsg.sha3sum.empty()
@@ -2997,6 +2998,15 @@ Conversation::onFileChannelRequest(const std::string& member,
         JAMI_WARNING("[Account {:s}] {} requested invalid file transfer commit {}",
                      pimpl_->accountId_,
                      member,
+                     interactionId);
+        return false;
+    }
+    // The commit is the only source of truth for the file name
+    if (fileId != getFileId(interactionId, commit->commitMsg.tid, commit->commitMsg.displayName)) {
+        JAMI_WARNING("[Account {:s}] {} requested file {} not matching commit {}",
+                     pimpl_->accountId_,
+                     member,
+                     fileId,
                      interactionId);
         return false;
     }
@@ -3027,7 +3037,7 @@ Conversation::downloadFile(const std::string& interactionId,
         JAMI_ERROR("Invalid file transfer commit (missing tid, size or sha3)");
         return false;
     }
-    if (fileId != getFileId(interactionId, tid, commit->commitMsg.displayName)) {
+    if (!isValidFileId(fileId) || fileId != getFileId(interactionId, tid, commit->commitMsg.displayName)) {
         JAMI_ERROR("File id {} does not match file transfer commit {}", fileId, interactionId);
         return false;
     }

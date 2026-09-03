@@ -1498,7 +1498,8 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
                 }
                 validCommit = commit->authorId == username_
                               && (type == CommitType::TEXT || type == CommitType::DATA_TRANSFER
-                                  || type == CommitType::COLLAB_DOC);
+                                  || type == CommitType::COLLAB_DOC)
+                              && (type != CommitType::DATA_TRANSFER || !fileId.empty());
             }
         }
     }

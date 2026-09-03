@@ -45,6 +45,8 @@ namespace fileutils {
 
 using namespace std::literals;
 
+constexpr size_t MAX_EXTENSION_SIZE = 7;
+
 std::filesystem::path get_config_dir(const char* pkg);
 std::filesystem::path get_data_dir(const char* pkg);
 std::filesystem::path get_cache_dir(const char* pkg);
