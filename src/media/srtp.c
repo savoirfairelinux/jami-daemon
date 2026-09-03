@@ -182,29 +182,68 @@ static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
     jami_secure_memzero(indexbuf, sizeof(indexbuf));
 }
 
+/* RFC 3711 section 3.3.2: reject indexes already received or too old */
+static int replay_check(const struct SRTPReplayList *r, uint64_t index)
+{
+    uint64_t diff;
+    if (!r->initialized || index > r->highest)
+        return 1;
+    diff = r->highest - index;
+    if (diff >= SRTP_REPLAY_WINDOW_SIZE)
+        return 0;
+    return !(r->bitmap[diff / 64] & ((uint64_t)1 << (diff % 64)));
+}
+
+/* Only call once the packet is authenticated */
+static void replay_update(struct SRTPReplayList *r, uint64_t index)
+{
+    uint64_t diff;
+    int i;
+    if (!r->initialized || index > r->highest) {
+        uint64_t shift = r->initialized ? index - r->highest : SRTP_REPLAY_WINDOW_SIZE;
+        if (shift >= SRTP_REPLAY_WINDOW_SIZE) {
+            memset(r->bitmap, 0, sizeof(r->bitmap));
+        } else {
+            /* Slide the window up by `shift` bits */
+            for (i = SRTP_REPLAY_WINDOW_WORDS - 1; i >= 0; i--) {
+                int from = i - (int)(shift / 64);
+                uint64_t v = from >= 0 ? r->bitmap[from] << (shift % 64) : 0;
+                if (shift % 64 && from - 1 >= 0)
+                    v |= r->bitmap[from - 1] >> (64 - shift % 64);
+                r->bitmap[i] = v;
+            }
+        }
+        r->highest = index;
+        r->initialized = 1;
+        r->bitmap[0] |= 1;
+        return;
+    }
+    diff = r->highest - index;
+    r->bitmap[diff / 64] |= (uint64_t)1 << (diff % 64);
+}
+
 int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 {
     uint8_t iv[16] = { 0 }, hmac[20];
     int len = *lenptr;
-#ifdef _MSC_VER
-#pragma message (__FILE__ "(" STR2(__LINE__) ") : -NOTE- " seq_largest and roc may be unitialized)
-#else
-#warning seq_largest and roc may be unitialized
-#endif
-    int av_uninit(seq_largest);
-    uint32_t ssrc, av_uninit(roc);
-    uint64_t index;
+    int seq_largest = 0;
+    uint32_t ssrc, roc = 0;
+    uint64_t index = 0;
     int rtcp, hmac_size;
+    struct SRTPReplayList *replay;
 
-    // TODO: Missing replay protection
+    /* Nothing is handed out unless the packet is fully authenticated */
+    *lenptr = 0;
 
     if (len < 2)
         return AVERROR_INVALIDDATA;
 
     rtcp = RTP_PT_IS_RTCP(buf[1]);
     hmac_size = rtcp ? s->rtcp_hmac_size : s->rtp_hmac_size;
+    replay = rtcp ? &s->rtcp_replay : &s->rtp_replay;
 
-    if (len < hmac_size)
+    /* Fixed header (+ SRTCP index) and authentication tag */
+    if (len < (rtcp ? 8 + 4 : 12) + hmac_size)
         return AVERROR_INVALIDDATA;
 
     // Authentication HMAC
@@ -237,6 +276,13 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 
         AV_WB32(rocbuf, roc);
         av_hmac_update(s->hmac, rocbuf, 4);
+    } else {
+        index = AV_RB32(buf + len - hmac_size - 4) & 0x7fffffff;
+    }
+
+    if (!replay_check(replay, index)) {
+        av_log(NULL, AV_LOG_DEBUG, "SRTP replayed packet\n");
+        return AVERROR_INVALIDDATA;
     }
 
     av_hmac_final(s->hmac, hmac, sizeof(hmac));
@@ -246,50 +292,49 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
     }
 
     len -= hmac_size;
-    *lenptr = len;
-
-    if (len < 12)
-        return AVERROR_INVALIDDATA;
 
     if (rtcp) {
         uint32_t srtcp_index = AV_RB32(buf + len - 4);
         len -= 4;
-        *lenptr = len;
 
         ssrc = AV_RB32(buf + 4);
-        index = srtcp_index & 0x7fffffff;
 
         buf += 8;
         len -= 8;
+        replay_update(replay, index);
+        *lenptr = len + 8;
         if (!(srtcp_index & 0x80000000))
             return 0;
     } else {
         int ext, csrc;
-        s->seq_initialized = 1;
-        s->seq_largest     = seq_largest;
-        s->roc             = roc;
+        int payload_start;
 
         csrc = buf[0] & 0x0f;
         ext  = buf[0] & 0x10;
         ssrc = AV_RB32(buf + 8);
 
-        buf += 12;
-        len -= 12;
-
-        buf += (ptrdiff_t)4 * csrc;
-        len -= 4 * csrc;
-        if (len < 0)
+        payload_start = 12 + 4 * csrc;
+        if (len < payload_start)
             return AVERROR_INVALIDDATA;
 
         if (ext) {
-            if (len < 4)
+            if (len < payload_start + 4)
                 return AVERROR_INVALIDDATA;
-            ext = (AV_RB16(buf + 2) + 1) * 4;
-            if (len < ext)
+            ext = (AV_RB16(buf + payload_start + 2) + 1) * 4;
+            if (len < payload_start + ext)
                 return AVERROR_INVALIDDATA;
-            len -= ext;
-            buf += ext;
+            payload_start += ext;
         }
+
+        /* Authenticated and well-formed: commit the receiver state */
+        s->seq_initialized = 1;
+        s->seq_largest     = seq_largest;
+        s->roc             = roc;
+        replay_update(replay, index);
+        *lenptr = len;
+
+        buf += payload_start;
+        len -= payload_start;
     }
 
     create_iv(iv, rtcp ? s->rtcp_salt : s->rtp_salt, index, ssrc);
