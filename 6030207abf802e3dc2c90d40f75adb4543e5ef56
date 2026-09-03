@@ -16,6 +16,24 @@
       "message": "With two mobile devices, previously sent messages are not delivered until a new message is sent.",
       "revId": "6030207abf802e3dc2c90d40f75adb4543e5ef56",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31e462bf_45213fbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-09-03T15:55:46Z",
+      "side": 1,
+      "message": "A mobile device does not change its status after returning to the foreground, so  onPeerOnline never triggers",
+      "parentUuid": "4d2a76df_bae92f29",
+      "revId": "6030207abf802e3dc2c90d40f75adb4543e5ef56",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
