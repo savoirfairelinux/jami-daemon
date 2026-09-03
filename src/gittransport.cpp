@@ -31,7 +31,7 @@ constexpr auto P2P_READ_TIMEOUT = std::chrono::days(1);
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
 #ifdef LIBJAMI_TEST
-std::atomic<std::shared_ptr<P2PStallHook>> P2P_STALL_HOOK {};
+P2PStallHookHolder P2P_STALL_HOOK {};
 #endif
 
 /*

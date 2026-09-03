@@ -19,6 +19,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <git2/remote.h>
@@ -68,10 +69,29 @@ using P2PStallHook = std::function<void(std::string_view url)>;
  * Held by shared_ptr because the reader blocks inside the hook for as long as
  * the stall lasts: the transport thread loads a strong reference and keeps the
  * callable alive while it runs, so a test can install, replace, or clear the
- * hook at any time without racing it. A mutex could not do this - it would
- * still be held across the stall, and the test could never take it back.
+ * hook at any time without racing it. The lock only guards the pointer copy,
+ * never the call, so the test can always take it back.
+ * @note std::atomic<std::shared_ptr> is not available on every libc++.
  */
-extern std::atomic<std::shared_ptr<P2PStallHook>> P2P_STALL_HOOK;
+class P2PStallHookHolder
+{
+public:
+    std::shared_ptr<P2PStallHook> load() const
+    {
+        std::lock_guard lk(mtx_);
+        return hook_;
+    }
+    void store(std::shared_ptr<P2PStallHook> hook)
+    {
+        std::lock_guard lk(mtx_);
+        hook_ = std::move(hook);
+    }
+
+private:
+    mutable std::mutex mtx_;
+    std::shared_ptr<P2PStallHook> hook_;
+};
+extern P2PStallHookHolder P2P_STALL_HOOK;
 #endif
 
 /**
