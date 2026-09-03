@@ -39,4 +39,14 @@ void addAll(std::shared_ptr<JamiAccount> account, const std::string& convId);
 void commit(const std::shared_ptr<JamiAccount>& account, const std::string& convId, const CommitMessage& message);
 
 std::string commitInRepo(const std::string& repoPath, std::shared_ptr<JamiAccount> account, const std::string& message);
+
+/**
+ * Commit the current index of repoPath, authored by and signed with the given identity
+ * (device id derived from the certificate). Bypasses every check done by
+ * ConversationRepository so tests can build malformed histories.
+ */
+std::string commitInRepo(const std::string& repoPath,
+                         const dht::crypto::Identity& identity,
+                         const std::string& name,
+                         const std::string& message);
 } // namespace jami
