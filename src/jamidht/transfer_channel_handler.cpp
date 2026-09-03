@@ -16,6 +16,8 @@
  */
 
 #include "jamidht/transfer_channel_handler.h"
+#include "jamidht/conversationrepository.h"
+#include "data_transfer.h"
 
 #include <opendht/thread_pool.h>
 #include <charconv>
@@ -23,6 +25,20 @@
 #include "fileutils.h"
 
 namespace jami {
+
+namespace {
+
+/** "<uri>.vcf" for a member's profile: the uri must be an account hash */
+bool
+isMemberProfileName(std::string_view fileId)
+{
+    constexpr std::string_view SUFFIX = ".vcf";
+    if (fileId.size() != 40 + SUFFIX.size() || !fileId.ends_with(SUFFIX))
+        return false;
+    return static_cast<bool>(dht::InfoHash(fileId.substr(0, 40)));
+}
+
+} // namespace
 
 TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount>& account,
                                                dhtnet::ConnectionManager& cm)
@@ -67,10 +83,15 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     }
     sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
+    if (sep == std::string_view::npos || lastSep == sep)
+        return false;
     auto conversationId = std::string(idstr.substr(0, sep));
     auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
     auto fileId = idstr.substr(lastSep + 1);
     if (fileHost == acc->currentDeviceId())
+        return false;
+    // Both ids end up in filesystem paths
+    if (!ConversationRepository::isValidConversationId(conversationId))
         return false;
 
     // Check if peer is member of the conversation
@@ -80,9 +101,11 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; }) != members.end();
     } else if (fileHost == "profile") {
         // If a profile is sent, check if it's from another device
-        return uri == acc->getUsername();
+        return uri == acc->getUsername() && isMemberProfileName(fileId);
     }
 
+    if (!isValidFileId(fileId))
+        return false;
     return cm->onFileChannelRequest(conversationId, uri, std::string(fileId), acc->sha3SumVerify());
 }
 
@@ -177,7 +200,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
             if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
                 acc->dataTransfer()->transferFile(channel, fileId, "", profilePath.string());
                 return;
-            } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
+            } else if (isContactProfile && isMemberProfileName(fileId)) {
                 auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
                 acc->dataTransfer()->transferFile(channel, fileId, "", path.string());
                 return;
@@ -186,13 +209,16 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 return;
             }
             // Check if it's a file in a conversation
-            auto dt = acc->dataTransfer(conversationId);
-            auto sep = fileId.find('_');
-            if (!dt or sep == std::string::npos) {
+            if (!ConversationRepository::isValidConversationId(conversationId) || !isValidFileId(fileId)) {
                 channel->shutdown();
                 return;
             }
-            auto interactionId = fileId.substr(0, sep);
+            auto dt = acc->dataTransfer(conversationId);
+            if (!dt) {
+                channel->shutdown();
+                return;
+            }
+            auto interactionId = fileId.substr(0, fileId.find('_'));
             auto path = dt->path(fileId);
             dt->transferFile(channel, fileId, interactionId, path.string(), start, end);
         }

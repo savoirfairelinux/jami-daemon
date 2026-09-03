@@ -57,13 +57,63 @@ generateUID(std::mt19937_64& engine)
     return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(engine);
 }
 
+namespace {
+
+constexpr size_t COMMIT_ID_SIZE = 40; // hex SHA-1
+constexpr size_t MAX_TID_SIZE = 20;   // decimal uint64_t
+constexpr size_t MAX_EXTENSION_SIZE = 7;
+
+bool
+isLowerHex(std::string_view s)
+{
+    return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+bool
+isDecimal(std::string_view s)
+{
+    return !s.empty() && s.size() <= MAX_TID_SIZE
+           && std::all_of(s.begin(), s.end(), [](unsigned char c) { return c >= '0' && c <= '9'; });
+}
+
+/** Characters that are path separators or otherwise special in file names on some platform */
+bool
+isSafeExtension(std::string_view ext)
+{
+    if (ext.empty() || ext.size() > MAX_EXTENSION_SIZE)
+        return false;
+    return std::none_of(ext.begin(), ext.end(), [](unsigned char c) {
+        return c < 0x20 || c == 0x7f || c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' || c == '"'
+               || c == '<' || c == '>' || c == '|' || c == '.';
+    });
+}
+
+} // namespace
+
 std::string
 getFileId(const std::string& commitId, const std::string& tid, const std::string& displayName)
 {
+    if (!isLowerHex(commitId) || !isDecimal(tid))
+        return {};
     auto extension = fileutils::getFileExtension(displayName);
-    if (extension.empty())
+    if (!isSafeExtension(extension))
         return fmt::format("{}_{}", commitId, tid);
     return fmt::format("{}_{}.{}", commitId, tid, extension);
+}
+
+bool
+isValidFileId(std::string_view fileId) noexcept
+{
+    auto sep = fileId.find('_');
+    if (sep != COMMIT_ID_SIZE || !isLowerHex(fileId.substr(0, sep)))
+        return false;
+    auto rest = fileId.substr(sep + 1);
+    auto dot = rest.find('.');
+    if (dot == std::string_view::npos)
+        return isDecimal(rest);
+    return isDecimal(rest.substr(0, dot)) && isSafeExtension(rest.substr(dot + 1));
 }
 
 FileInfo::FileInfo(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
@@ -353,9 +403,8 @@ public:
             auto changed = false;
             for (auto it = waitingIds_.begin(); it != waitingIds_.end();) {
                 const auto& request = it->second;
-                auto fileIdPath = std::filesystem::path(request.fileId);
                 auto destination = std::filesystem::path(request.path);
-                if (it->first != request.fileId || request.fileId.empty() || fileIdPath.filename() != fileIdPath
+                if (it->first != request.fileId || !isValidFileId(request.fileId)
                     || (!destination.empty() && destination.is_relative())) {
                     it = waitingIds_.erase(it);
                     changed = true;
@@ -551,6 +600,10 @@ TransferManager::installIndex(const std::string& fileId,
                               bool independent,
                               bool verifyCandidate)
 {
+    if (!isValidFileId(fileId)) {
+        JAMI_WARNING("Refusing to index file transfer with invalid id '{}'", fileId);
+        return false;
+    }
     auto canonicalPath = path(fileId);
     {
         std::lock_guard fileLock(dhtnet::fileutils::getFileLock(canonicalPath));
@@ -689,6 +742,10 @@ TransferManager::waitForTransfer(const std::string& fileId,
                                  const std::string& path,
                                  std::size_t total)
 {
+    if (!isValidFileId(fileId)) {
+        JAMI_WARNING("Refusing to wait for file transfer with invalid id '{}'", fileId);
+        return WaitResult::conflict;
+    }
     if (!path.empty() && std::filesystem::path(path).is_relative())
         return WaitResult::conflict;
     auto canonicalPath = this->path(fileId);
@@ -723,6 +780,10 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
                                         const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                                         size_t start)
 {
+    if (!isValidFileId(fileId)) {
+        dht::ThreadPool().io().run([channel] { channel->shutdown(); });
+        return;
+    }
     std::unique_lock lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itC = pimpl_->incomings_.find(fileId);
