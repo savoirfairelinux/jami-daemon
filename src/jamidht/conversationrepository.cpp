@@ -74,6 +74,37 @@ as_view(const git_blob* blob)
 {
     return std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
 }
+/**
+ * Check that a certificate stored under devices/<deviceId>.crt is the certificate of
+ * that device: the file name must be the id of the embedded public key.
+ */
+inline bool
+isCertificateOfDevice(const dht::crypto::Certificate& cert, std::string_view deviceId)
+{
+    return cert.getLongId().to_view() == deviceId;
+}
+
+/**
+ * Check that deviceCert was issued by the holder of memberCert's key, i.e. that its
+ * signature verifies with memberCert's public key, and that memberCert is the
+ * certificate of memberUri.
+ * @note Issuer chains embedded in the certificates are ignored (they are not
+ * authenticated) and validity periods are checked against the commit time by the caller.
+ */
+bool
+isDeviceOfMember(const dht::crypto::Certificate& deviceCert,
+                 const dht::crypto::Certificate& memberCert,
+                 std::string_view memberUri)
+{
+    if (not deviceCert.cert or not memberCert.cert)
+        return false;
+    if (memberCert.getId().toString() != memberUri)
+        return false;
+    unsigned result = 0;
+    auto err = gnutls_x509_crt_verify(deviceCert.cert, &memberCert.cert, 1, GNUTLS_VERIFY_DISABLE_TIME_CHECKS, &result);
+    return err == GNUTLS_E_SUCCESS and not(result & GNUTLS_CERT_INVALID);
+}
+
 inline std::string_view
 as_view(const GitObject& blob)
 {
@@ -323,9 +354,9 @@ public:
         if (!repo or !acc)
             return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
-        std::string deviceDir = fmt::format("{}devices/", git_repository_workdir(repo.get()));
+        std::filesystem::path repoPath = git_repository_workdir(repo.get());
         std::error_code ec;
-        for (const auto& fileIt : std::filesystem::directory_iterator(deviceDir, ec)) {
+        for (const auto& fileIt : std::filesystem::directory_iterator(repoPath / "devices", ec)) {
             try {
                 auto cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(fileIt.path()));
                 if (!cert)
@@ -333,21 +364,32 @@ public:
                 if (ignoreExpired && cert->getExpiration() < std::chrono::system_clock::now())
                     continue;
                 auto issuerUid = cert->getIssuerUID();
+                if (issuerUid.empty())
+                    continue;
+                // Only trust the issuer UID once the device is proven to be certified by that member
+                auto memberFile = repoPath / "members" / fmt::format("{}.crt", issuerUid);
+                auto adminFile = repoPath / "admins" / fmt::format("{}.crt", issuerUid);
+                auto parentCert = std::make_shared<dht::crypto::Certificate>(
+                    fileutils::loadFile(std::filesystem::is_regular_file(memberFile, ec) ? memberFile : adminFile));
+                if (!isDeviceOfMember(*cert, *parentCert, issuerUid)) {
+                    JAMI_WARNING("[Account {}] [Conversation {}] Device {} is not certified by {}, ignoring",
+                                 accountId_,
+                                 id_,
+                                 cert->getLongId(),
+                                 issuerUid);
+                    continue;
+                }
                 if (!acc->certStore().getCertificate(issuerUid)) {
-                    // Check that parentCert
-                    auto memberFile = fmt::format("{}members/{}.crt", git_repository_workdir(repo.get()), issuerUid);
-                    auto adminFile = fmt::format("{}admins/{}.crt", git_repository_workdir(repo.get()), issuerUid);
-                    auto parentCert = std::make_shared<dht::crypto::Certificate>(dhtnet::fileutils::loadFile(
-                        std::filesystem::is_regular_file(memberFile, ec) ? memberFile : adminFile));
-                    if (parentCert && (ignoreExpired || parentCert->getExpiration() < std::chrono::system_clock::now()))
+                    if (ignoreExpired || parentCert->getExpiration() < std::chrono::system_clock::now())
                         acc->certStore().pinCertificate(parentCert,
                                                         true); // Pin certificate to local store if not already done
                 }
                 if (!acc->certStore().getCertificate(cert->getPublicKey().getLongId().toString())) {
+                    cert->issuer = parentCert;
                     acc->certStore().pinCertificate(cert,
                                                     true); // Pin certificate to local store if not already done
                 }
-                memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
+                memberDevices[issuerUid].emplace_back(cert->getPublicKey().getLongId());
 
             } catch (const std::exception&) {
             }
@@ -416,6 +458,9 @@ public:
     /**
      * Retrieve the user related to a device using the account's certificate store.
      * @note deviceToUri_ is used to cache result and avoid always loading the certificate
+     * @note Only verified bindings are returned: either the certificate store knows the
+     * device certificate with its (verified) issuer, or the device certificate found in the
+     * repository is signed by the member certificate it claims as issuer.
      */
     std::string uriFromDevice(const std::string& deviceId, const std::string& commitId = "") const
     {
@@ -429,44 +474,41 @@ public:
         if (!acc)
             return {};
 
+        std::string uri;
         auto cert = acc->certStore().getCertificate(deviceId);
-        if (!cert || !cert->issuer) {
-            if (!commitId.empty()) {
-                std::string uri = uriFromDeviceAtCommit(deviceId, commitId);
-                if (!uri.empty()) {
-                    deviceToUri_.insert({deviceId, uri});
-                    return uri;
-                }
-            }
-            // Not pinned, so load certificate from repo
-            auto repo = repository();
-            if (!repo)
-                return {};
-            auto deviceFile = std::filesystem::path(git_repository_workdir(repo.get())) / "devices"
-                              / fmt::format("{}.crt", deviceId);
-            if (!std::filesystem::is_regular_file(deviceFile))
-                return {};
-            try {
-                cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
-            } catch (const std::exception&) {
-                JAMI_WARNING("Unable to load certificate from {}", deviceFile);
-            }
-            if (!cert)
-                return {};
+        if (cert && cert->issuer && isCertificateOfDevice(*cert, deviceId)) {
+            // Do not trust the pinned chain blindly, it may come from an unverified bundle.
+            auto issuerId = cert->issuer->getId().toString();
+            if (isDeviceOfMember(*cert, *cert->issuer, issuerId))
+                uri = std::move(issuerId);
         }
-        auto issuerUid = cert->issuer ? cert->issuer->getId().toString() : cert->getIssuerUID();
-        if (issuerUid.empty())
+        if (uri.empty()) {
+            if (!commitId.empty()) {
+                uri = uriFromDeviceAtCommit(deviceId, commitId);
+            } else {
+                // Not pinned, so load certificate from the repository's head
+                auto repo = repository();
+                if (!repo)
+                    return {};
+                git_oid head;
+                if (git_reference_name_to_id(&head, repo.get(), "HEAD") < 0)
+                    return {};
+                uri = uriFromDeviceAtCommit(deviceId, git_oid_tostr_s(&head));
+            }
+        }
+        if (uri.empty())
             return {};
 
-        deviceToUri_.insert({deviceId, issuerUid});
-        return issuerUid;
+        deviceToUri_.insert({deviceId, uri});
+        return uri;
     }
     mutable std::mutex deviceToUriMtx_;
     mutable std::map<std::string, std::string> deviceToUri_;
 
     /**
      * Retrieve the user related to a device using certificate directly from the repository at a
-     * specific commit.
+     * specific commit. The device certificate must be signed by the member (or admin)
+     * certificate present in the same tree, otherwise the device is not resolved.
      * @note Prefer uriFromDevice() if possible as it uses the cache.
      */
     std::string uriFromDeviceAtCommit(const std::string& deviceId, const std::string& commitId) const
@@ -475,72 +517,110 @@ public:
         if (!repo)
             return {};
         auto tree = treeAtCommit(repo.get(), commitId);
+        if (!tree)
+            return {};
         auto deviceFile = fmt::format("devices/{}.crt", deviceId);
         auto blob_device = fileAtTree(deviceFile, tree);
         if (!blob_device) {
             JAMI_ERROR("{} announced but not found", deviceId);
             return {};
         }
-        auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
-        return deviceCert.getIssuerUID();
+        try {
+            auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+            auto uri = verifiedUriFromDeviceCert(deviceCert, deviceId, tree);
+            if (uri.empty())
+                JAMI_ERROR("Device certificate {} is not issued by a member of the conversation", deviceId);
+            return uri;
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Unable to load certificate for device {}: {}", deviceId, e.what());
+            return {};
+        }
+    }
+
+    /**
+     * Resolve the member owning a device certificate found in a tree, verifying the
+     * signature of the device certificate with the member certificate stored in the tree.
+     * @return the member URI, or an empty string if the chain is unable to be verified
+     */
+    std::string verifiedUriFromDeviceCert(const dht::crypto::Certificate& deviceCert,
+                                          std::string_view deviceId,
+                                          const GitTree& tree) const
+    {
+        if (!isCertificateOfDevice(deviceCert, deviceId))
+            return {};
+        auto uri = deviceCert.getIssuerUID();
+        if (uri.empty()) {
+            if (deviceCert.issuer)
+                uri = deviceCert.issuer->getId().toString();
+            if (uri.empty())
+                return {};
+        }
+        auto blob_member = memberCertificate(uri, tree);
+        if (!blob_member)
+            return {};
+        try {
+            auto memberCert = dht::crypto::Certificate(as_view(blob_member));
+            if (!isDeviceOfMember(deviceCert, memberCert, uri))
+                return {};
+        } catch (const std::exception&) {
+            return {};
+        }
+        return uri;
     }
 
     /**
      * Verify that a certificate modification is correct
-     * @param certPath      Where the certificate is saved (relative path)
+     * @param certContent   Content of the new certificate
      * @param userUri       Account we want for this certificate
+     * @param tree          Tree of the commit the certificate is taken from (used to
+     *                      retrieve the member certificate signing a device certificate)
+     * @param deviceId      If not empty, the certificate is the device certificate of this
+     *                      device and MUST be signed by userUri's member certificate.
+     *                      Otherwise, it's the member certificate of userUri.
      * @param oldCert       Previous certificate. getId() should return the same id as the new
      *                      certificate.
-     * @note There is a few exception because JAMS certificates are buggy right now
      */
     bool verifyCertificate(std::string_view certContent,
                            const std::string& userUri,
+                           const GitTree& tree,
+                           std::string_view deviceId,
                            std::string_view oldCert = ""sv) const
     {
-        auto cert = dht::crypto::Certificate(certContent);
-        auto isDeviceCertificate = cert.getId().toString() != userUri;
-        auto issuerUid = cert.getIssuerUID();
-        if (isDeviceCertificate && issuerUid.empty()) {
-            // Err for Jams certificates
-            JAMI_ERROR("Empty issuer for {}", cert.getId().toString());
-        }
-        if (!oldCert.empty()) {
-            auto deviceCert = dht::crypto::Certificate(oldCert);
-            if (isDeviceCertificate) {
-                if (issuerUid != deviceCert.getIssuerUID()) {
-                    // NOTE: Here, because JAMS certificate can be incorrectly formatted, there is
-                    // just one valid possibility: passing from an empty issuer to
-                    // the valid issuer.
-                    if (issuerUid != userUri) {
-                        JAMI_ERROR("Device certificate with a bad issuer {}", cert.getId().toString());
-                        return false;
-                    }
+        try {
+            auto cert = dht::crypto::Certificate(certContent);
+            if (not deviceId.empty()) {
+                if (!isCertificateOfDevice(cert, deviceId)) {
+                    JAMI_ERROR("Certificate stored for device {} belongs to another key", deviceId);
+                    return false;
+                }
+                // The device certificate MUST be issued by the member it's attributed to.
+                // Its issuer DN is not authenticated, so only the signature is trusted.
+                auto blob_member = memberCertificate(userUri, tree);
+                if (!blob_member) {
+                    JAMI_ERROR("No member certificate found for {}", userUri);
+                    return false;
+                }
+                auto memberCert = dht::crypto::Certificate(as_view(blob_member));
+                if (!isDeviceOfMember(cert, memberCert, userUri)) {
+                    JAMI_ERROR("Device certificate {} is not signed by {}", deviceId, userUri);
+                    return false;
                 }
             } else if (cert.getId().toString() != userUri) {
                 JAMI_ERROR("Certificate with a bad ID {}", cert.getId().toString());
                 return false;
             }
-            if (cert.getId() != deviceCert.getId()) {
-                JAMI_ERROR("Certificate with a bad ID {}", cert.getId().toString());
-                return false;
+            if (!oldCert.empty()) {
+                auto previousCert = dht::crypto::Certificate(oldCert);
+                if (cert.getId() != previousCert.getId()) {
+                    JAMI_ERROR("Certificate with a bad ID {}", cert.getId().toString());
+                    return false;
+                }
             }
             return true;
-        }
-
-        // If it's a device certificate, we need to verify that the issuer is not modified
-        if (isDeviceCertificate) {
-            // Check that issuer is the one we want.
-            // NOTE: Still one case due to incorrectly formatted certificates from JAMS
-            if (issuerUid != userUri && !issuerUid.empty()) {
-                JAMI_ERROR("Device certificate with a bad issuer {}", cert.getId().toString());
-                return false;
-            }
-        } else if (cert.getId().toString() != userUri) {
-            JAMI_ERROR("Certificate with a bad ID {}", cert.getId().toString());
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Unable to parse certificate for {}: {}", deviceId.empty() ? userUri : deviceId, e.what());
             return false;
         }
-
-        return true;
     }
 
     std::mutex opMtx_; // Mutex for operations
@@ -1083,7 +1163,7 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
                 return false;
             }
             auto newFile = fileAtTree(changedFile, treeNew);
-            if (!verifyCertificate(as_view(newFile), userUri, as_view(oldFile))) {
+            if (!newFile || !verifyCertificate(as_view(newFile), userUri, treeNew, "", as_view(oldFile))) {
                 JAMI_ERROR("Invalid certificate {}", changedFile);
                 return false;
             }
@@ -1094,7 +1174,7 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
             if (oldFile)
                 oldCert = as_view(oldFile);
             auto newFile = fileAtTree(changedFile, treeNew);
-            if (!verifyCertificate(as_view(newFile), userUri, oldCert)) {
+            if (!newFile || !verifyCertificate(as_view(newFile), userUri, treeNew, userDevice, oldCert)) {
                 JAMI_ERROR("Invalid certificate {}", changedFile);
                 return false;
             }
@@ -1165,7 +1245,7 @@ ConversationRepository::Impl::checkValidCheckpoint(const std::string& userDevice
             std::string_view oldCert;
             if (oldFile)
                 oldCert = as_view(oldFile);
-            if (!verifyCertificate(as_view(newFile), userUri, oldCert)) {
+            if (!verifyCertificate(as_view(newFile), userUri, treeNew, userDevice, oldCert)) {
                 JAMI_ERROR("Invalid certificate {}", changedFile);
                 return false;
             }
@@ -1482,15 +1562,20 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
         JAMI_ERROR("{} announced but not found", deviceFile);
         return false;
     }
-    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
     auto blob_member = fileAtTree(membersFile, treeNew);
     if (!blob_member) {
         JAMI_ERROR("{} announced but not found", userDevice);
         return false;
     }
-    auto memberCert = dht::crypto::Certificate(as_view(blob_member));
-    if (memberCert.getId().toString() != deviceCert.getIssuerUID() || deviceCert.getIssuerUID() != uriMember) {
-        JAMI_ERROR("Incorrect device certificate {} for user {}", userDevice, uriMember);
+    try {
+        auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+        auto memberCert = dht::crypto::Certificate(as_view(blob_member));
+        if (!isCertificateOfDevice(deviceCert, userDevice) || !isDeviceOfMember(deviceCert, memberCert, uriMember)) {
+            JAMI_ERROR("Incorrect device certificate {} for user {}", userDevice, uriMember);
+            return false;
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Unable to parse certificates for {} joining with {}: {}", uriMember, userDevice, e.what());
         return false;
     }
 
@@ -1544,8 +1629,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
             JAMI_ERROR("Device not found added ({})", deviceFile);
             return false;
         }
-        auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
-        auto userUri = deviceCert.getIssuerUID();
+        auto userUri = uriFromDeviceAtCommit(deviceUri, parentId);
 
         if (uriMember != userUri and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
@@ -1635,7 +1719,9 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
                 return false;
             }
         }
-        if (uriMember != uriFromDevice(deviceUri) and uriMember != deviceUri /* If device is removed */) {
+        // The device certificate is in the old tree when banned, in the new one when unbanned
+        auto deviceOwner = uriFromDevice(deviceUri, voteType == "ban" ? parentId : commitId);
+        if (uriMember != deviceOwner and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
             return false;
         }
@@ -1726,7 +1812,7 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
             if (oldFile)
                 oldCert = as_view(oldFile);
             auto newFile = fileAtTree(f, treeNew);
-            if (!verifyCertificate(as_view(newFile), userUri, oldCert)) {
+            if (!newFile || !verifyCertificate(as_view(newFile), userUri, treeNew, userDevice, oldCert)) {
                 JAMI_ERROR("Invalid certificate {}", f);
                 return false;
             }
@@ -1877,16 +1963,23 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         JAMI_ERROR("{} announced but not found", deviceFile);
         return false;
     }
-    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
-    auto userUri = deviceCert.getIssuerUID();
+    std::shared_ptr<dht::crypto::Certificate> deviceCert, parentCert;
+    try {
+        deviceCert = std::make_shared<dht::crypto::Certificate>(as_view(blob_device));
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Unable to parse {}: {}", deviceFile, e.what());
+        return false;
+    }
+    if (!isCertificateOfDevice(*deviceCert, userDevice)) {
+        JAMI_ERROR("{} belongs to another key", deviceFile);
+        return false;
+    }
+    auto userUri = deviceCert->getIssuerUID();
     if (userUri.empty()) {
         JAMI_ERROR("{} got no issuer UID", deviceFile);
         if (not hasPinnedCert) {
             return false;
         } else {
-            // HACK: JAMS device's certificate does not contains any issuer
-            // So, getIssuerUID() will be empty here, so there is no way
-            // to get the userURI from this certificate.
             // Uses pinned certificate if one.
             userUri = cert->issuer->getId().toString();
         }
@@ -1899,9 +1992,21 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         return false;
     }
 
-    // Check that certificates were still valid
-    auto parentCert = dht::crypto::Certificate(as_view(blob_parent));
+    try {
+        parentCert = std::make_shared<dht::crypto::Certificate>(as_view(blob_parent));
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Unable to parse certificate of {}: {}", userUri, e.what());
+        return false;
+    }
 
+    // The issuer UID is a plain string chosen by whoever built the device certificate:
+    // the device MUST be proven to be issued by the member's key.
+    if (!isDeviceOfMember(*deviceCert, *parentCert, userUri)) {
+        JAMI_ERROR("Device {} is not certified by {}", userDevice, userUri);
+        return false;
+    }
+
+    // Check that certificates were still valid
     git_oid oid;
     git_commit* commit_ptr = nullptr;
     if (git_oid_fromstr(&oid, commitId.c_str()) < 0 || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
@@ -1911,33 +2016,33 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     GitCommit commit {commit_ptr};
 
     auto commitTime = std::chrono::system_clock::from_time_t(git_commit_time(commit.get()));
-    if (deviceCert.getExpiration() < commitTime) {
-        JAMI_ERROR("Certificate {} expired", deviceCert.getId().toString());
+    if (deviceCert->getExpiration() < commitTime) {
+        JAMI_ERROR("Certificate {} expired", deviceCert->getId().toString());
         return false;
     }
-    if (parentCert.getExpiration() < commitTime) {
-        JAMI_ERROR("Certificate {} expired", parentCert.getId().toString());
+    if (parentCert->getExpiration() < commitTime) {
+        JAMI_ERROR("Certificate {} expired", parentCert->getId().toString());
         return false;
     }
 
     //  Verify the signature (git verify-commit)
     auto pk = base64::decode(std::string_view(sig.ptr, sig.size));
-    bool valid_signature = deviceCert.getPublicKey().checkSignature(reinterpret_cast<const uint8_t*>(sig_data.ptr),
-                                                                    sig_data.size,
-                                                                    pk.data(),
-                                                                    pk.size());
+    bool valid_signature = deviceCert->getPublicKey().checkSignature(reinterpret_cast<const uint8_t*>(sig_data.ptr),
+                                                                     sig_data.size,
+                                                                     pk.data(),
+                                                                     pk.size());
 
     if (!valid_signature) {
         JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
         return false;
     }
 
-    auto res = parentCert.getId().toString() == userUri;
-    if (res && not hasPinnedCert) {
-        acc->certStore().pinCertificate(std::move(deviceCert));
-        acc->certStore().pinCertificate(std::move(parentCert));
+    if (not hasPinnedCert) {
+        // Pin the verified chain, dropping any unauthenticated chain embedded in the file
+        deviceCert->issuer = parentCert;
+        acc->certStore().pinCertificate(deviceCert);
     }
-    return res;
+    return true;
 }
 
 bool
@@ -1987,14 +2092,14 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
         if (changedFile == adminsFile) {
             hasAdmin = true;
             auto newFile = fileAtTree(changedFile, treeNew);
-            if (!verifyCertificate(as_view(newFile), userUri)) {
+            if (!newFile || !verifyCertificate(as_view(newFile), userUri, treeNew, "")) {
                 JAMI_ERROR("Invalid certificate found {}", changedFile);
                 return false;
             }
         } else if (changedFile == deviceFile) {
             hasDevice = true;
             auto newFile = fileAtTree(changedFile, treeNew);
-            if (!verifyCertificate(as_view(newFile), userUri)) {
+            if (!newFile || !verifyCertificate(as_view(newFile), userUri, treeNew, userDevice)) {
                 JAMI_ERROR("Invalid certificate found {}", changedFile);
                 return false;
             }
@@ -2531,10 +2636,9 @@ ConversationRepository::Impl::getInitialMembers() const
     auto& commit = *firstCommitOpt;
 
     auto authorDevice = commit.author.email;
-    auto cert = acc->certStore().getCertificate(authorDevice);
-    if (!cert || !cert->issuer)
+    auto authorId = uriFromDevice(authorDevice, id_);
+    if (authorId.empty())
         return {};
-    auto authorId = cert->issuer->getId().toString();
     if (mode() == ConversationMode::ONE_TO_ONE) {
         auto invitedId = commit.commitMsg.invited;
         if (!invitedId.empty() && invitedId != authorId)
@@ -3095,6 +3199,20 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                                                                              id_,
                                                                              EVALIDFETCH,
                                                                              "Malformed initial commit");
+                return false;
+            }
+            // The initial commit MUST be signed by the device that claims to create the conversation
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit, *sig, *sig_data)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Initial commit {} not signed by its author. Please "
+                             "ensure that you are using the latest version of Jami, or that one of your "
+                             "contacts is not performing any unwanted actions.",
+                             accountId_,
+                             id_,
+                             commit.id);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Invalid user");
                 return false;
             }
         } else if (commit.parents.size() == 1) {
