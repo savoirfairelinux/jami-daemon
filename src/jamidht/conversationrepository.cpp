@@ -90,6 +90,8 @@ public:
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
     {
+        if (!isValidConversationId(id_))
+            throw std::logic_error(fmt::format("Invalid conversation id: {}", id_));
         conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / id_;
         membersCache_ = conversationDataPath_ / "members";
         checkLocks();
@@ -2788,6 +2790,18 @@ conversationsStagingPath(const std::string& accountId)
     return fileutils::get_data_dir() / accountId / "conversations.staging";
 }
 
+bool
+ConversationRepository::isValidConversationId(std::string_view id) noexcept
+{
+    // git SHA-1 object id, as printed by git_oid_tostr_s()
+    constexpr size_t SHA1_HEX_SIZE = 40;
+    if (id.size() != SHA1_HEX_SIZE)
+        return false;
+    return std::all_of(id.begin(), id.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
 std::unique_ptr<ConversationRepository>
 ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& account,
                                            ConversationMode mode,
@@ -2870,9 +2884,12 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                                           const std::string& deviceId,
                                           const std::string& conversationId)
 {
-    // Verify conversationId is not empty to avoid deleting the entire conversations directory
-    if (conversationId.empty()) {
-        JAMI_ERROR("[Account {}] Clone conversation with empty conversationId", account->getAccountID());
+    // The id becomes a directory name that is swapped, backed up and erased below:
+    // never let anything but a commit hash reach the filesystem.
+    if (!isValidConversationId(conversationId)) {
+        JAMI_ERROR("[Account {}] Clone conversation with invalid conversationId '{}'",
+                   account->getAccountID(),
+                   conversationId);
         return {};
     }
 

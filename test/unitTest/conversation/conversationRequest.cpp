@@ -29,6 +29,7 @@
 
 #include "manager.h"
 #include "jamidht/conversation.h"
+#include "jamidht/conversation_module.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
@@ -81,6 +82,7 @@ public:
     void testIncomingTrustRequestArgumentOrder();
     void testDeclineConversationRequestRemoveTrustRequest();
     void testMalformedTrustRequest();
+    void testRequestWithInvalidConversationId();
     void testAddContactDeleteAndReAdd();
     void testRemoveContact();
     void testRemoveContactMultiDevice();
@@ -125,6 +127,7 @@ private:
     CPPUNIT_TEST(testIncomingTrustRequestArgumentOrder);
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
     CPPUNIT_TEST(testMalformedTrustRequest);
+    CPPUNIT_TEST(testRequestWithInvalidConversationId);
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testRemoveContactMultiDevice);
@@ -642,6 +645,74 @@ ConversationRequestTest::testMalformedTrustRequest()
     } while (not requestDeclined and std::chrono::steady_clock::now() - start < 2s);
 
     CPPUNIT_ASSERT(requestDeclined);
+}
+
+void
+ConversationRequestTest::testRequestWithInvalidConversationId()
+{
+    connectSignals();
+
+    CPPUNIT_ASSERT(ConversationRepository::isValidConversationId("0123456789abcdef0123456789abcdef01234567"));
+    CPPUNIT_ASSERT(!ConversationRepository::isValidConversationId(""));
+    CPPUNIT_ASSERT(!ConversationRepository::isValidConversationId("0123456789abcdef0123456789abcdef0123456"));
+    CPPUNIT_ASSERT(!ConversationRepository::isValidConversationId("0123456789ABCDEF0123456789ABCDEF01234567"));
+    CPPUNIT_ASSERT(!ConversationRepository::isValidConversationId("../../../../../../tmp/jami-evil-directory"));
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    // Alice is a confirmed contact of Bob: a one-to-one request from her would be cloned
+    // without any user interaction, so the id must be refused before reaching the disk.
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    }
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    }
+
+    auto evilPath = std::filesystem::temp_directory_path() / "jami-evil-directory";
+    auto convsPath = fileutils::get_data_dir() / bobId / "conversations";
+    auto depth = std::distance(convsPath.begin(), convsPath.end());
+    std::string evilId;
+    for (decltype(depth) i = 0; i < depth; ++i)
+        evilId += "../";
+    evilId += evilPath.relative_path().string();
+    std::error_code ec;
+    std::filesystem::create_directories(evilPath, ec);
+    auto witness = evilPath / "witness";
+    std::ofstream(witness) << "keep me";
+
+    auto nbConvs = libjami::getConversations(bobId).size();
+    auto nbRequests = libjami::getConversationRequests(bobId).size();
+    for (const auto& id : {evilId, std::string("../") + bobData.conversationId, std::string("")}) {
+        for (auto mode : {"0", "1"}) {
+            ConversationRequest req;
+            req.conversationId = id;
+            req.from = aliceUri;
+            req.metadatas["mode"] = mode;
+            req.received = nowMs();
+            bobAccount->convModule()->onConversationRequest(aliceUri, req.toJson());
+            bobAccount->convModule()->onTrustRequest(aliceUri, id, {}, req.received, req.received);
+            bobAccount->convModule()->fetchNewCommits(aliceUri, std::string(aliceAccount->currentDeviceId()), id, "");
+        }
+    }
+    std::this_thread::sleep_for(2s);
+
+    CPPUNIT_ASSERT_EQUAL(nbConvs, libjami::getConversations(bobId).size());
+    CPPUNIT_ASSERT_EQUAL(nbRequests, libjami::getConversationRequests(bobId).size());
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(witness));
+    CPPUNIT_ASSERT(!std::filesystem::exists(evilPath.string() + ".bak.tmp"));
+    CPPUNIT_ASSERT(!std::filesystem::exists(evilPath.string() + ".clone.tmp"));
+    for (const auto& [id, info] : ConversationModule::convInfos(bobId))
+        CPPUNIT_ASSERT(ConversationRepository::isValidConversationId(id));
+    std::filesystem::remove_all(evilPath, ec);
 }
 
 void
