@@ -168,6 +168,14 @@ public:
     static bool FETCH_FROM_LOCAL_REPOS;
 #endif
     /**
+     * Check that an identifier can be the id of a conversation (or document) repository:
+     * the hex SHA-1 of its initial commit, exactly 40 lowercase hex digits.
+     * Ids received from peers or read from disk are used as directory names and
+     * MUST pass this check before touching the filesystem.
+     */
+    static LIBJAMI_TEST_EXPORT bool isValidConversationId(std::string_view id) noexcept;
+
+    /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
      * @param mode          The wanted mode

@@ -1771,6 +1771,10 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
 void
 ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
 {
+    if (!ConversationRepository::isValidConversationId(conversationId)) {
+        JAMI_WARNING("[Account {}] Invalid conversation id detected: '{}'", accountId_, conversationId);
+        return;
+    }
     auto memberHash = dht::InfoHash(uri);
     if (!memberHash) {
         JAMI_WARNING("Invalid member detected: {}", uri);
@@ -2236,6 +2240,13 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                    TimePoint received,
                                    TimePoint invited)
 {
+    if (!ConversationRepository::isValidConversationId(conversationId)) {
+        JAMI_WARNING("[Account {}] Ignoring trust request from {} with invalid conversation id '{}'",
+                     pimpl_->accountId_,
+                     uri,
+                     conversationId);
+        return;
+    }
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req;
     req.from = uri;
@@ -2276,6 +2287,13 @@ void
 ConversationModule::onConversationRequest(const std::string& from, const Json::Value& value)
 {
     ConversationRequest req(value);
+    if (!ConversationRepository::isValidConversationId(req.conversationId)) {
+        JAMI_WARNING("[Account {}] Ignoring conversation request from {} with invalid conversation id '{}'",
+                     pimpl_->accountId_,
+                     from,
+                     req.conversationId);
+        return;
+    }
     auto isOneToOne = req.isOneToOne();
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
@@ -2337,6 +2355,8 @@ ConversationModule::peerFromConversationRequest(const std::string& convId) const
 void
 ConversationModule::onNeedConversationRequest(const std::string& from, const std::string& conversationId)
 {
+    if (!ConversationRepository::isValidConversationId(conversationId))
+        return;
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
         return;
@@ -2950,6 +2970,13 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
     }
 
     for (const auto& [convId, req] : msg.cr) {
+        if (!ConversationRepository::isValidConversationId(convId)) {
+            JAMI_WARNING("[Account {}] [device {}] Ignoring synced request with invalid conversation id '{}'",
+                         pimpl_->accountId_,
+                         deviceId,
+                         convId);
+            continue;
+        }
         if (req.from == pimpl_->username_) {
             JAMI_WARNING("Detected request from ourself, ignore {}.", convId);
             continue;
@@ -3069,6 +3096,13 @@ ConversationModule::fetchNewCommits(const std::string& peer,
                                     const std::string& conversationId,
                                     const std::string& commitId)
 {
+    if (!ConversationRepository::isValidConversationId(conversationId)) {
+        JAMI_WARNING("[Account {}] [device {}] Ignoring commit notification for invalid conversation id '{}'",
+                     pimpl_->accountId_,
+                     deviceId,
+                     conversationId);
+        return;
+    }
     pimpl_->fetchNewCommits(peer, deviceId, conversationId, commitId);
 }
 
@@ -3867,6 +3901,16 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
     } catch (const std::exception& e) {
         JAMI_WARNING("[convInfo] error loading convInfo: {}", e.what());
     }
+    // Ids are used as directory names: drop anything persisted before ids were validated
+    for (auto it = convInfos.begin(); it != convInfos.end();) {
+        if (!ConversationRepository::isValidConversationId(it->first)
+            || !ConversationRepository::isValidConversationId(it->second.id)) {
+            JAMI_WARNING("[convInfo] dropping conversation with invalid id '{}'", it->first);
+            it = convInfos.erase(it);
+        } else {
+            ++it;
+        }
+    }
     return convInfos;
 }
 
@@ -3890,6 +3934,15 @@ ConversationModule::convRequestsFromPath(const std::filesystem::path& path)
         result.get().convert(convRequests);
     } catch (const std::exception& e) {
         JAMI_WARNING("[convInfo] error loading convInfo: {}", e.what());
+    }
+    for (auto it = convRequests.begin(); it != convRequests.end();) {
+        if (!ConversationRepository::isValidConversationId(it->first)
+            || !ConversationRepository::isValidConversationId(it->second.conversationId)) {
+            JAMI_WARNING("[convRequests] dropping request with invalid conversation id '{}'", it->first);
+            it = convRequests.erase(it);
+        } else {
+            ++it;
+        }
     }
     return convRequests;
 }
