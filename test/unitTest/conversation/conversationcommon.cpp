@@ -166,9 +166,18 @@ commit(const std::shared_ptr<JamiAccount>& account, const std::string& convId, c
 std::string
 commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, const std::string& msg)
 {
+    return commitInRepo(path, account->identity(), account->getDisplayName(), msg);
+}
+
+std::string
+commitInRepo(const std::string& path,
+             const dht::crypto::Identity& identity,
+             const std::string& displayName,
+             const std::string& msg)
+{
     ConversationRepository::DISABLE_RESET = true;
-    auto deviceId = std::string(account->currentDeviceId());
-    auto name = account->getDisplayName();
+    auto deviceId = identity.second->getLongId().toString();
+    auto name = displayName;
     if (name.empty())
         name = deviceId;
 
@@ -236,7 +245,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
 
     // git commit -S
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    auto signed_buf = identity.first->sign(to_sign_vec);
     std::string signed_str = base64::encode(signed_buf);
     if (git_commit_create_with_signature(&commit_id, repo, to_sign.ptr, signed_str.c_str(), "signature") < 0) {
         const git_error* err = giterr_last();
