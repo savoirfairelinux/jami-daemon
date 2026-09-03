@@ -32,6 +32,21 @@ enum {
     SRTP_MASTER_SALT_SIZE = 14,
     SRTP_MAX_SESSION_KEY_SIZE = 32,
     SRTP_AUTH_KEY_SIZE = 20,
+    /* Replay list size in packets (RFC 3711 section 3.3.2 requires at least 64) */
+    SRTP_REPLAY_WINDOW_WORDS = 2,
+    SRTP_REPLAY_WINDOW_SIZE = SRTP_REPLAY_WINDOW_WORDS * 64,
+};
+
+/**
+ * Sliding replay list (RFC 4303 section 3.4.3): remembers the highest
+ * authenticated packet index and which of the SRTP_REPLAY_WINDOW_SIZE indexes
+ * below it were already received.
+ */
+struct SRTPReplayList
+{
+    uint64_t highest;
+    uint64_t bitmap[SRTP_REPLAY_WINDOW_WORDS];
+    int initialized;
 };
 
 struct SRTPContext
@@ -51,10 +66,19 @@ struct SRTPContext
     uint32_t roc;
 
     uint32_t rtcp_index;
+
+    /* Receive side only */
+    struct SRTPReplayList rtp_replay, rtcp_replay;
 };
 
 int ff_srtp_set_crypto(struct SRTPContext* s, const char* suite, const char* params);
 void ff_srtp_free(struct SRTPContext* s);
+/**
+ * Authenticate, replay-check and decrypt an SRTP or SRTCP packet in place.
+ * @param lenptr  in: packet size, out: decrypted payload size, or 0 when the packet
+ *                is rejected so that nothing unauthenticated can be forwarded
+ * @return 0 on success, a negative AVERROR code when the packet MUST be dropped
+ */
 int ff_srtp_decrypt(struct SRTPContext* s, uint8_t* buf, int* lenptr);
 int ff_srtp_encrypt(struct SRTPContext* s, const uint8_t* in, int len, uint8_t* out, int outlen);
 
