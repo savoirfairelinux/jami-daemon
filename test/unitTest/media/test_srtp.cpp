@@ -30,6 +30,82 @@ concat(const std::array<uint8_t, N>& first, const std::array<uint8_t, M>& second
     return value;
 }
 
+// AES_CM_128_HMAC_SHA1_80 master key + salt (30 bytes), as carried in SDES
+constexpr const char* TEST_SUITE = "AES_CM_128_HMAC_SHA1_80";
+constexpr const char* TEST_PARAMS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn";
+constexpr int TAG_SIZE = 10;
+
+struct Contexts
+{
+    SRTPContext sender {};
+    SRTPContext receiver {};
+    Contexts()
+    {
+        CPPUNIT_ASSERT_EQUAL(0, ff_srtp_set_crypto(&sender, TEST_SUITE, TEST_PARAMS));
+        CPPUNIT_ASSERT_EQUAL(0, ff_srtp_set_crypto(&receiver, TEST_SUITE, TEST_PARAMS));
+    }
+    ~Contexts()
+    {
+        ff_srtp_free(&sender);
+        ff_srtp_free(&receiver);
+    }
+};
+
+std::vector<uint8_t>
+rtpPacket(uint16_t seq, const std::string& payload, uint32_t ssrc = 0x11223344)
+{
+    std::vector<uint8_t> pkt(12, 0);
+    pkt[0] = 0x80;
+    pkt[1] = 96;
+    pkt[2] = seq >> 8;
+    pkt[3] = seq & 0xff;
+    pkt[8] = ssrc >> 24;
+    pkt[9] = (ssrc >> 16) & 0xff;
+    pkt[10] = (ssrc >> 8) & 0xff;
+    pkt[11] = ssrc & 0xff;
+    pkt.insert(pkt.end(), payload.begin(), payload.end());
+    return pkt;
+}
+
+// Receiver Report with a single report block (32 bytes)
+std::vector<uint8_t>
+rtcpRR(uint8_t fractionLost, uint32_t ssrc = 0x11223344)
+{
+    std::vector<uint8_t> pkt(32, 0);
+    pkt[0] = 0x81;
+    pkt[1] = 201;
+    pkt[3] = 7; // length in 32-bit words minus one
+    pkt[4] = ssrc >> 24;
+    pkt[5] = (ssrc >> 16) & 0xff;
+    pkt[6] = (ssrc >> 8) & 0xff;
+    pkt[7] = ssrc & 0xff;
+    pkt[12] = fractionLost;
+    return pkt;
+}
+
+std::vector<uint8_t>
+protect(SRTPContext& ctx, const std::vector<uint8_t>& plain)
+{
+    std::vector<uint8_t> out(plain.size() + TAG_SIZE + 4);
+    auto len = ff_srtp_encrypt(&ctx, plain.data(), static_cast<int>(plain.size()), out.data(), static_cast<int>(out.size()));
+    CPPUNIT_ASSERT(len > static_cast<int>(plain.size()));
+    out.resize(len);
+    return out;
+}
+
+// Returns the decrypted size, 0 when the packet was rejected
+int
+unprotect(SRTPContext& ctx, std::vector<uint8_t> pkt, int* err = nullptr)
+{
+    int len = static_cast<int>(pkt.size());
+    auto ret = ff_srtp_decrypt(&ctx, pkt.data(), &len);
+    if (err)
+        *err = ret;
+    if (ret < 0)
+        CPPUNIT_ASSERT_EQUAL(0, len);
+    return ret < 0 ? 0 : len;
+}
+
 } // namespace
 
 class SrtpTest : public CppUnit::TestFixture
@@ -41,11 +117,23 @@ private:
     void aes256KeyDerivationMatchesRfc6188();
     void aes256CounterModeMatchesRfc6188();
     void aes256ShortAuthTagSuiteIsAccepted();
+    void rtpRoundTrip();
+    void tamperedRtpYieldsNoData();
+    void shortPacketsAreRejected();
+    void replayedRtpIsRejected();
+    void reorderedRtpWithinWindowIsAccepted();
+    void rtcpRoundTripAndReplay();
 
     CPPUNIT_TEST_SUITE(SrtpTest);
     CPPUNIT_TEST(aes256KeyDerivationMatchesRfc6188);
     CPPUNIT_TEST(aes256CounterModeMatchesRfc6188);
     CPPUNIT_TEST(aes256ShortAuthTagSuiteIsAccepted);
+    CPPUNIT_TEST(rtpRoundTrip);
+    CPPUNIT_TEST(tamperedRtpYieldsNoData);
+    CPPUNIT_TEST(shortPacketsAreRejected);
+    CPPUNIT_TEST(replayedRtpIsRejected);
+    CPPUNIT_TEST(reorderedRtpWithinWindowIsAccepted);
+    CPPUNIT_TEST(rtcpRoundTripAndReplay);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -150,6 +238,132 @@ SrtpTest::aes256ShortAuthTagSuiteIsAccepted()
     CPPUNIT_ASSERT_EQUAL(10, context.rtcp_hmac_size);
 
     ff_srtp_free(&context);
+}
+
+void
+SrtpTest::rtpRoundTrip()
+{
+    Contexts ctx;
+    auto plain = rtpPacket(1, "hello");
+    auto wire = protect(ctx.sender, plain);
+    CPPUNIT_ASSERT_EQUAL(plain.size() + TAG_SIZE, wire.size());
+    CPPUNIT_ASSERT(!std::equal(plain.begin() + 12, plain.end(), wire.begin() + 12)); // payload is encrypted
+
+    auto received = wire;
+    int len = static_cast<int>(received.size());
+    CPPUNIT_ASSERT_EQUAL(0, ff_srtp_decrypt(&ctx.receiver, received.data(), &len));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()), len);
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+}
+
+void
+SrtpTest::tamperedRtpYieldsNoData()
+{
+    Contexts ctx;
+    auto wire = protect(ctx.sender, rtpPacket(1, "hello"));
+
+    // Flip a payload bit: the tag no longer matches
+    auto tampered = wire;
+    tampered[13] ^= 0x01;
+    int err = 0;
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, tampered, &err));
+    CPPUNIT_ASSERT(err < 0);
+
+    // Plain RTP forged without the key
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, rtpPacket(2, "forged"), &err));
+    CPPUNIT_ASSERT(err < 0);
+
+    // A rejected packet must not have moved the receiver state: the genuine one still decrypts
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(wire.size() - TAG_SIZE), unprotect(ctx.receiver, wire));
+}
+
+void
+SrtpTest::shortPacketsAreRejected()
+{
+    Contexts ctx;
+    for (size_t size = 0; size < 12 + TAG_SIZE; ++size) {
+        std::vector<uint8_t> pkt(size, 0);
+        if (size > 1)
+            pkt[1] = 96;
+        int err = 0;
+        CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, pkt, &err));
+        CPPUNIT_ASSERT(err < 0);
+    }
+    // RTCP: header + index + tag
+    for (size_t size = 2; size < 8 + 4 + TAG_SIZE; ++size) {
+        std::vector<uint8_t> pkt(size, 0);
+        pkt[1] = 201;
+        int err = 0;
+        CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, pkt, &err));
+        CPPUNIT_ASSERT(err < 0);
+    }
+}
+
+void
+SrtpTest::replayedRtpIsRejected()
+{
+    Contexts ctx;
+    auto first = protect(ctx.sender, rtpPacket(1000, "one"));
+    auto second = protect(ctx.sender, rtpPacket(1001, "two"));
+
+    CPPUNIT_ASSERT(unprotect(ctx.receiver, first) > 0);
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, first)); // exact replay
+    CPPUNIT_ASSERT(unprotect(ctx.receiver, second) > 0);
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, first)); // replay of an older packet
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, second));
+
+    // Anything older than the window is dropped even if never seen before
+    Contexts late;
+    auto oldest = protect(late.sender, rtpPacket(0, "never delivered on time"));
+    for (uint16_t seq = 1; seq < SRTP_REPLAY_WINDOW_SIZE; ++seq)
+        (void) protect(late.sender, rtpPacket(seq, "x"));
+    auto latest = protect(late.sender, rtpPacket(SRTP_REPLAY_WINDOW_SIZE, "latest"));
+    CPPUNIT_ASSERT(unprotect(late.receiver, latest) > 0);
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(late.receiver, oldest));
+}
+
+void
+SrtpTest::reorderedRtpWithinWindowIsAccepted()
+{
+    Contexts ctx;
+    std::vector<std::vector<uint8_t>> wire;
+    for (uint16_t seq = 10; seq < 20; ++seq)
+        wire.emplace_back(protect(ctx.sender, rtpPacket(seq, "p" + std::to_string(seq))));
+
+    // Deliver out of order: every packet is new, all must pass
+    for (auto i : {5, 2, 9, 0, 7, 1, 8, 3, 6, 4})
+        CPPUNIT_ASSERT(unprotect(ctx.receiver, wire[i]) > 0);
+    // …and none of them twice
+    for (const auto& pkt : wire)
+        CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, pkt));
+}
+
+void
+SrtpTest::rtcpRoundTripAndReplay()
+{
+    Contexts ctx;
+    auto plain = rtcpRR(42);
+    auto wire = protect(ctx.sender, plain);
+    // SRTCP appends the 4-byte index and the tag; the payload is encrypted (E bit set)
+    CPPUNIT_ASSERT_EQUAL(plain.size() + 4 + TAG_SIZE, wire.size());
+    CPPUNIT_ASSERT_EQUAL(0x80, wire[plain.size()] & 0x80);
+    CPPUNIT_ASSERT(!std::equal(plain.begin() + 8, plain.end(), wire.begin() + 8));
+
+    auto received = wire;
+    int len = static_cast<int>(received.size());
+    CPPUNIT_ASSERT_EQUAL(0, ff_srtp_decrypt(&ctx.receiver, received.data(), &len));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()), len);
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+
+    // Replay and forgery are rejected
+    int err = 0;
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, wire, &err));
+    CPPUNIT_ASSERT(err < 0);
+    CPPUNIT_ASSERT_EQUAL(0, unprotect(ctx.receiver, rtcpRR(255), &err));
+    CPPUNIT_ASSERT(err < 0);
+
+    // The next genuine report is still accepted
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()), unprotect(ctx.receiver, protect(ctx.sender, rtcpRR(43))));
 }
 
 } // namespace test
