@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d74b93b4_0f843364",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-09-04T20:14:06Z",
+      "side": 1,
+      "message": "return WaitResult",
+      "revId": "a38f9a003e59e50b838322cd6050b6bf74c96850",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
