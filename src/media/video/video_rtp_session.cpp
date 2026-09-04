@@ -320,7 +320,6 @@ VideoRtpSession::startReceiver()
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
-        receiveThread_->startLoop();
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
         if (videoMixer_ and conference_) {
@@ -338,6 +337,10 @@ VideoRtpSession::startReceiver()
                     shared->attachRemoteRecorder(ms);
             });
         });
+
+        // Started last: setup() reads the callbacks above from the receiver's
+        // own thread, so they must all be in place before it can run.
+        receiveThread_->startLoop();
     } else {
         JAMI_LOG("[{}] Video receiver disabled", fmt::ptr(this));
         if (videoMixer_ and conference_) {
