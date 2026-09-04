@@ -923,9 +923,12 @@ else()
     if (JAMI_DBUS)
         find_program(DBusXml2Cpp sdbus-c++-xml2cpp REQUIRED)
         pkg_search_module (DBusCpp REQUIRED IMPORTED_TARGET sdbus-c++)
+        # Substituted into net.jami.daemon.service.in, which needs the absolute
+        # path D-Bus activation will exec.
+        set(LIBEXECDIR ${CMAKE_INSTALL_FULL_LIBEXECDIR})
         configure_file(
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/net.jami.daemon.service.in
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service
+            ${CMAKE_CURRENT_BINARY_DIR}/cx.ring.Ring.service
             @ONLY)
         set(DBUS_XML_FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.CallManager.xml
@@ -975,7 +978,7 @@ else()
         install (TARGETS jamid DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 
         # Install service file
-        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/dbus-1/services")
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cx.ring.Ring.service DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/dbus-1/services")
 
         # Install interface XML files
         install(FILES ${DBUS_XML_FILES} DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/dbus-1/interfaces")
