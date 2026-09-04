@@ -3309,13 +3309,27 @@ SIPCall::deinitRecorder()
 void
 SIPCall::InvSessionDeleter::operator()(pjsip_inv_session* inv) const noexcept
 {
-    // prevent this from getting accessed in callbacks
-    // JAMI_WARN: this is not thread-safe!
     if (!inv)
         return;
+
+    // The session lives in the dialog pool.  Dropping the last reference
+    // runs inv_session_destroy(), which decrements the dialog session count
+    // and, when no transaction is left, destroys the dialog and frees that
+    // pool, then goes on to read the session's own fields from the freed
+    // memory.  pjsip only ever does this while holding the dialog lock,
+    // which keeps the dialog alive until the lock is released.  We drop our
+    // reference from the main thread, outside of any such lock, so take it
+    // here.  Keep the dialog pointer in a local, as it must outlive inv.
+    auto* dlg = inv->dlg;
+    pjsip_dlg_inc_lock(dlg);
+
+    // prevent this from getting accessed in callbacks
     inv->mod_data[Manager::instance().sipVoIPLink().getModId()] = nullptr;
-    // NOTE: the counter is incremented by sipvoiplink (transaction_request_cb)
+    // NOTE: the counter is incremented by setInviteSession()
     pjsip_inv_dec_ref(inv);
+
+    // Actually destroys the dialog if it has no other session.
+    pjsip_dlg_dec_lock(dlg);
 }
 
 bool
