@@ -87,6 +87,17 @@ struct SyncedConversation
     // Earliest time a new clone round may start. Armed together with fallbackClone so that
     // triggers calling cloneConversation() directly honour the same backoff as the timer.
     std::chrono::steady_clock::time_point nextCloneAttempt {};
+    // The devices whose clone failed in the current backoff window. The devices of a round
+    // are enumerated asynchronously, and the first refusal lands before the others were
+    // even asked: a device that does not hold the repository -- every device of a member
+    // but the ones that opened a document -- declines the git channel in a few ms. Holding
+    // the whole conversation back on it would throttle the very device able to serve the
+    // clone, so the backoff binds only the devices that already failed in this window; the
+    // others still get their one try.
+    std::set<std::string> cloneFailedDevices;
+    // A failure not tied to a device (the repository failed validation, the clone threw)
+    // backs every device off, as before.
+    bool cloneBackoffAllDevices {false};
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
@@ -95,18 +106,35 @@ struct SyncedConversation
 
     bool isUnrecoverable() const { return validationFailures >= MAX_VALIDATION_FAILURES; }
 
-    bool cloneThrottled() const { return std::chrono::steady_clock::now() < nextCloneAttempt; }
-
-    // Arms the retry deadline and returns the delay used. Callers must still async_wait()
-    // on fallbackClone.
-    std::chrono::seconds scheduleCloneRetry()
+    bool cloneThrottled(const std::string& deviceId) const
     {
         // conversation mtx must be locked
-        auto delay = fallbackTimer;
-        nextCloneAttempt = std::chrono::steady_clock::now() + delay;
+        if (std::chrono::steady_clock::now() >= nextCloneAttempt)
+            return false;
+        return cloneBackoffAllDevices || cloneFailedDevices.find(deviceId) != cloneFailedDevices.end();
+    }
+
+    // Arms the retry deadline and returns the delay until it. Callers must still async_wait()
+    // on fallbackClone. A failure inside an armed window joins it rather than extending it,
+    // so a round of N refusals still retries after one delay, not N doublings of it. An empty
+    // deviceId backs every device off.
+    std::chrono::seconds scheduleCloneRetry(const std::string& deviceId = {})
+    {
+        // conversation mtx must be locked
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= nextCloneAttempt) {
+            // A new window: what failed in the previous one is not held against this round.
+            cloneFailedDevices.clear();
+            cloneBackoffAllDevices = false;
+            nextCloneAttempt = now + fallbackTimer;
+            fallbackTimer = std::min(fallbackTimer * 2, MAX_FALLBACK);
+        }
+        if (deviceId.empty())
+            cloneBackoffAllDevices = true;
+        else
+            cloneFailedDevices.emplace(deviceId);
         fallbackClone->expires_at(nextCloneAttempt);
-        fallbackTimer = std::min(fallbackTimer * 2, MAX_FALLBACK);
-        return delay;
+        return std::chrono::ceil<std::chrono::seconds>(nextCloneAttempt - now);
     }
 
     void resetCloneRetry()
@@ -114,6 +142,8 @@ struct SyncedConversation
         // conversation mtx must be locked
         nextCloneAttempt = {};
         fallbackTimer = 5s;
+        cloneFailedDevices.clear();
+        cloneBackoffAllDevices = false;
     }
 
     SyncedConversation(const std::string& convId)
@@ -626,9 +656,10 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                      deviceId);
         return;
     }
-    // A pending fetch means a round is in flight: let startFetch() arbitrate so the other
-    // devices of that round are still tried.
-    if (!conv->conversation && !conv->pending && conv->cloneThrottled()) {
+    // Checked whether or not a fetch is pending: a device that already failed in this
+    // window stays out even while another one is being tried, and one that did not is
+    // let in either way -- startFetch() arbitrates the round.
+    if (!conv->conversation && conv->cloneThrottled(deviceId)) {
         JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Clone retry is not due yet, ignoring "
                    "clone request",
                    accountId_,
@@ -1611,9 +1642,10 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                      deviceId);
         return;
     }
-    // A pending fetch means a round is in flight: let startFetch() arbitrate so the other
-    // devices of that round are still tried.
-    if (!conv->conversation && !conv->pending && conv->cloneThrottled()) {
+    // Checked whether or not a fetch is pending: a device that already failed in this
+    // window stays out even while another one is being tried, and one that did not is
+    // let in either way -- startFetch() arbitrates the round.
+    if (!conv->conversation && conv->cloneThrottled(deviceId)) {
         JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Clone retry is not due yet, ignoring "
                    "clone request",
                    accountId_,
@@ -1646,7 +1678,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     return true;
                 } else if (auto sthis = wthis.lock()) {
                     conv->stopFetch(deviceId);
-                    auto retryIn = conv->scheduleCloneRetry();
+                    auto retryIn = conv->scheduleCloneRetry(deviceId);
                     JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Clone failed. Re-clone in {}s",
                                  sthis->accountId_,
                                  conversationId,
