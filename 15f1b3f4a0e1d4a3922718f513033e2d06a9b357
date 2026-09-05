@@ -16,6 +16,24 @@
       "message": "[error] Line 661: 🔴 The per-device throttle is still gated by `!conv-\u003epending`. If another device has an in-flight clone, a device already recorded in `cloneFailedDevices` bypasses the backoff and `startFetch()` adds it to the same pending fetch; subsequent sync/fallback callbacks can retry that failed device before `nextCloneAttempt`, defeating the change and recreating connection storms. Check `cloneThrottled(deviceId)` independently of `conv-\u003epending` in both clone entry points (the per-device set already allows unfailed devices to join the round).",
       "revId": "15f1b3f4a0e1d4a3922718f513033e2d06a9b357",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "43683be3_034e8db0",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-05T19:01:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "51baa05e_58e70409",
+      "revId": "15f1b3f4a0e1d4a3922718f513033e2d06a9b357",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
