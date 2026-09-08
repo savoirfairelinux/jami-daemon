@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6463e962_f1e39449",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1155,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-08T20:48:21Z",
+      "side": 1,
+      "message": "Alice shouldn\u0027t merge any commits from Bob, so I think it\u0027d be better to replace this by\n```\nCPPUNIT_ASSERT_EQUAL(aliceMsgSize, aliceData.messages.size());\n```",
+      "range": {
+        "startLine": 1150,
+        "startChar": 4,
+        "endLine": 1155,
+        "endChar": 5
+      },
+      "revId": "3b1a79701175f3edf0570a6adde61e7bb02a5ccb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8387f7c6_da35f2c9",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1202,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-08T20:48:21Z",
+      "side": 1,
+      "message": "This would pass even if Carla wasn\u0027t a member. Probably better to explicitly assert it, e.g.\n```\n    bool carlaFound \u003d false;\n    for (const auto\u0026 member : members)\n        if (member.at(\"uri\") \u003d\u003d carlaUri) {\n            carlaFound \u003d true;\n            CPPUNIT_ASSERT_EQUAL(std::string(\"invited\"), member.at(\"role\"));\n        }\n    CPPUNIT_ASSERT(carlaFound);\n```",
+      "range": {
+        "startLine": 1200,
+        "startChar": 4,
+        "endLine": 1202,
+        "endChar": 76
+      },
+      "revId": "3b1a79701175f3edf0570a6adde61e7bb02a5ccb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
