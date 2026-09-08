@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 3a92a7ee340dbc1f4730fcaf32acac9a54cacf1b
+PJPROJECT_VERSION := 48a63353a378e88a169551e265f33eae59ebd26c
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 # pjproject's aconfigure locates the GnuTLS *library* through pkg-config, but it
