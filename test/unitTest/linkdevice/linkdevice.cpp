@@ -65,6 +65,7 @@ public:
 
 private:
     const std::string JAMI_ID = "JAMI_ID";
+    void testMalformedUri();
     void testQrConnection();
     void testExportNoPassword();
     void testExportWithCorrectPassword();
@@ -96,6 +97,7 @@ private:
     // data to the wrong connection (test leaking password, archive)
 
     CPPUNIT_TEST_SUITE(LinkDeviceTest);
+    CPPUNIT_TEST(testMalformedUri);
     CPPUNIT_TEST(testQrConnection);
     CPPUNIT_TEST(testExportNoPassword);
     CPPUNIT_TEST(testExportWithCorrectPassword);
@@ -225,6 +227,15 @@ LinkDeviceTest::setupSignals()
             cvOld.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
+}
+
+void
+LinkDeviceTest::testMalformedUri()
+{
+    auto invalidUri = "jami-auth://"s + std::string(64, '1') + "/12345x";
+    auto result = libjami::addDevice(oldDeviceId, invalidUri);
+
+    CPPUNIT_ASSERT_EQUAL(static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI), result);
 }
 
 // Tests the QR code generation that relies on Dht to generate an auth uri
