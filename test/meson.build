@@ -130,7 +130,7 @@ test(
 
 ut_commit_message = executable(
     'ut_commit_message',
-    sources: files('unitTest/conversation/commit_message_test.cpp'),
+    sources: files('unitTest/conversation/commit_message.cpp'),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
     link_with: ut_library,
