@@ -752,17 +752,21 @@ TransferManager::waitForTransfer(const std::string& fileId,
     auto canonicalPath = this->path(fileId);
     auto destination = path.empty() ? canonicalPath : std::filesystem::path(path);
     const auto isIndex = destination.lexically_normal() == canonicalPath.lexically_normal();
+    {
+        std::lock_guard lk(pimpl_->mapMutex_);
+        auto itW = pimpl_->waitingIds_.find(fileId);
+        if (itW != pimpl_->waitingIds_.end()) {
+            auto waited = itW->second.path.empty() ? canonicalPath : std::filesystem::path(itW->second.path);
+            auto matches = itW->second.interactionId == interactionId && itW->second.sha3sum == sha3sum
+                           && waited.lexically_normal() == destination.lexically_normal()
+                           && itW->second.totalSize == total;
+            return matches ? WaitResult::waiting : WaitResult::conflict;
+        }
+    }
     if (installIndex(fileId, destination, sha3sum, total, false, true))
         return (isIndex || exportFile(fileId, destination, sha3sum, total)) ? WaitResult::complete
                                                                             : WaitResult::conflict;
     std::lock_guard lk(pimpl_->mapMutex_);
-    auto itW = pimpl_->waitingIds_.find(fileId);
-    if (itW != pimpl_->waitingIds_.end()) {
-        auto waited = itW->second.path.empty() ? canonicalPath : std::filesystem::path(itW->second.path);
-        auto matches = itW->second.interactionId == interactionId && itW->second.sha3sum == sha3sum
-                       && waited.lexically_normal() == destination.lexically_normal() && itW->second.totalSize == total;
-        return matches ? WaitResult::waiting : WaitResult::conflict;
-    }
     std::error_code ec;
     auto status = std::filesystem::symlink_status(destination, ec);
     if (!isMissingPath(status, ec) && !(isIndex && status.type() == std::filesystem::file_type::symlink)) {
