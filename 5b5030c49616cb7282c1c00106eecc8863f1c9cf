@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92ba8848_8ef8ecbd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-09T14:55:55Z",
+      "side": 1,
+      "message": "`ConversationModule::Impl::editMessage` needs to be updated to take into account the fact that `getFileId` can return an empty string, which wasn\u0027t the case before.",
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2611090c_68b6797f",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-09T14:55:55Z",
+      "side": 1,
+      "message": "If I understand correctly, this constant was chosen to match the hardcoded limit in `fileutils::getFileExtension`, so I\u0027d suggest moving it to `fileutils` and replacing the check `result.size() \u003e\u003d 8` in `getFileExtension` by `result.size() \u003e MAX_EXTENSION_SIZE`.",
+      "range": {
+        "startLine": 64,
+        "startChar": 17,
+        "endLine": 64,
+        "endChar": 40
+      },
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3e04c02_2943f624",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-09T14:55:55Z",
+      "side": 1,
+      "message": "We should also check that the size of `commitId` is `COMMIT_ID_SIZE`.",
+      "range": {
+        "startLine": 98,
+        "startChar": 8,
+        "endLine": 98,
+        "endChar": 29
+      },
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
