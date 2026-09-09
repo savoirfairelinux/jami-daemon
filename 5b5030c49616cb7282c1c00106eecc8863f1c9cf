@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bef046a8_0401a666",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-09-09T18:45:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92ba8848_8ef8ecbd",
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2611090c_68b6797f",
@@ -41,6 +59,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c243183_b90c67e1",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-09-09T18:45:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2611090c_68b6797f",
+      "range": {
+        "startLine": 64,
+        "startChar": 17,
+        "endLine": 64,
+        "endChar": 40
+      },
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b3e04c02_2943f624",
@@ -54,6 +96,30 @@
       "writtenOn": "2026-09-09T14:55:55Z",
       "side": 1,
       "message": "We should also check that the size of `commitId` is `COMMIT_ID_SIZE`.",
+      "range": {
+        "startLine": 98,
+        "startChar": 8,
+        "endLine": 98,
+        "endChar": 29
+      },
+      "revId": "5b5030c49616cb7282c1c00106eecc8863f1c9cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "888182b5_f294ecd0",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-09-09T18:45:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b3e04c02_2943f624",
       "range": {
         "startLine": 98,
         "startChar": 8,
