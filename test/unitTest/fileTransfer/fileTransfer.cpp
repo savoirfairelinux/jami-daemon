@@ -36,6 +36,9 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <array>
+#include <barrier>
+#include <future>
 #include <string>
 #include <filesystem>
 #include <random>
@@ -103,6 +106,9 @@ private:
     void testCancelInTransfer();
     void testResumeTransferAfterInterruption();
     void testDontDownloadExistingFile();
+    void testConcurrentWaitingRequests();
+    void testIndependentWaitingRequests();
+    void testRecoverCompletedWaitingRequest();
     void testTransferInfo();
     void testTransferInfoUnavailableConversation();
     void testTransferInfoInvalidPathDoesNotAbort();
@@ -121,6 +127,9 @@ private:
     CPPUNIT_TEST(testCancelInTransfer);
     CPPUNIT_TEST(testResumeTransferAfterInterruption);
     CPPUNIT_TEST(testDontDownloadExistingFile);
+    CPPUNIT_TEST(testConcurrentWaitingRequests);
+    CPPUNIT_TEST(testIndependentWaitingRequests);
+    CPPUNIT_TEST(testRecoverCompletedWaitingRequest);
     CPPUNIT_TEST(testTransferInfo);
     CPPUNIT_TEST(testTransferInfoUnavailableConversation);
     CPPUNIT_TEST(testTransferInfoInvalidPathDoesNotAbort);
@@ -794,6 +803,124 @@ FileTransferTest::testDontDownloadExistingFile()
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
     CPPUNIT_ASSERT(fileutils::loadTextFile(bobTransferPath) == existingContent);
     CPPUNIT_ASSERT(std::filesystem::file_size(recvPath) == totalSize);
+}
+
+void
+FileTransferTest::testConcurrentWaitingRequests()
+{
+    const std::string interactionId = "0123456789abcdef0123456789abcdef01234567";
+    const auto fileId = getFileId(interactionId, "1", "");
+    std::mt19937_64 random;
+    TransferManager transferManager(aliceId, {}, "concurrent-waiting", random);
+
+    for (unsigned attempt = 0; attempt < 32; ++attempt) {
+        constexpr std::size_t requestCount = 8;
+        std::barrier start(requestCount);
+        std::array<std::future<TransferManager::WaitResult>, requestCount> requests;
+        for (std::size_t index = 0; index < requestCount; ++index) {
+            requests[index] = std::async(std::launch::async, [&, index] {
+                start.arrive_and_wait();
+                return transferManager.waitForTransfer(fileId,
+                                                       interactionId,
+                                                       "sha3sum",
+                                                       recvPath.string() + std::to_string(index),
+                                                       128000);
+            });
+        }
+        std::size_t accepted = 0;
+        std::string acceptedPath;
+        for (std::size_t index = 0; index < requestCount; ++index) {
+            const auto result = requests[index].get();
+            if (result == TransferManager::WaitResult::waiting) {
+                ++accepted;
+                acceptedPath = recvPath.string() + std::to_string(index);
+            } else {
+                CPPUNIT_ASSERT(result == TransferManager::WaitResult::conflict);
+            }
+        }
+        CPPUNIT_ASSERT_EQUAL(std::size_t(1), accepted);
+        const auto waiting = transferManager.waitingRequests();
+        CPPUNIT_ASSERT_EQUAL(std::size_t(1), waiting.size());
+        CPPUNIT_ASSERT_EQUAL(acceptedPath, waiting.front().path);
+        CPPUNIT_ASSERT(transferManager.cancel(fileId));
+    }
+}
+
+void
+FileTransferTest::testIndependentWaitingRequests()
+{
+    const std::string interactionId = "0123456789abcdef0123456789abcdef01234567";
+    const auto blockedFileId = getFileId(interactionId, "1", "");
+    const auto independentFileId = getFileId(interactionId, "2", "");
+    std::mt19937_64 random;
+    TransferManager transferManager(aliceId, {}, "independent-waiting", random);
+    std::future<TransferManager::WaitResult> blockedRequest;
+    std::future<TransferManager::WaitResult> independentRequest;
+    std::unique_lock fileLock(dhtnet::fileutils::getFileLock(transferManager.path(blockedFileId)));
+
+    blockedRequest = std::async(std::launch::async, [&] {
+        return transferManager.waitForTransfer(blockedFileId, interactionId, "sha3sum", recvPath, 128000);
+    });
+    const auto blockedStatus = blockedRequest.wait_for(100ms);
+    independentRequest = std::async(std::launch::async, [&] {
+        return transferManager.waitForTransfer(independentFileId, interactionId, "sha3sum", recv2Path, 128000);
+    });
+    const auto independentStatus = independentRequest.wait_for(5s);
+    fileLock.unlock();
+    const auto blockedResult = blockedRequest.get();
+    const auto independentResult = independentRequest.get();
+
+    CPPUNIT_ASSERT(blockedStatus == std::future_status::timeout);
+    CPPUNIT_ASSERT(independentStatus == std::future_status::ready);
+    CPPUNIT_ASSERT(blockedResult == TransferManager::WaitResult::waiting);
+    CPPUNIT_ASSERT(independentResult == TransferManager::WaitResult::waiting);
+    CPPUNIT_ASSERT(transferManager.cancel(blockedFileId));
+    CPPUNIT_ASSERT(transferManager.cancel(independentFileId));
+}
+
+void
+FileTransferTest::testRecoverCompletedWaitingRequest()
+{
+    const std::string interactionId = "0123456789abcdef0123456789abcdef01234567";
+    const auto fileId = getFileId(interactionId, "1", "");
+    const std::string content(128000, 'A');
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << content;
+    sendFile.close();
+    const auto sha3sum = fileutils::sha3File(sendPath);
+    std::mt19937_64 random;
+
+    for (const auto& requestedPath : {recvPath.string(), std::string()}) {
+        std::filesystem::path destination;
+        std::filesystem::path canonicalPath;
+        {
+            TransferManager transferManager(aliceId, {}, "completed-waiting", random);
+            canonicalPath = transferManager.path(fileId);
+            destination = requestedPath.empty() ? canonicalPath : std::filesystem::path(requestedPath);
+            CPPUNIT_ASSERT(transferManager.waitForTransfer(fileId, interactionId, sha3sum, requestedPath, content.size())
+                           == TransferManager::WaitResult::waiting);
+            CPPUNIT_ASSERT(transferManager.waitForTransfer(fileId, interactionId, sha3sum, requestedPath, content.size())
+                           == TransferManager::WaitResult::waiting);
+            std::filesystem::copy_file(sendPath, destination);
+        }
+        {
+            TransferManager transferManager(aliceId, {}, "completed-waiting", random);
+            CPPUNIT_ASSERT(transferManager.isWaiting(fileId));
+            CPPUNIT_ASSERT(transferManager.waitForTransfer(fileId, interactionId, sha3sum, requestedPath, content.size())
+                           == TransferManager::WaitResult::complete);
+            CPPUNIT_ASSERT(!transferManager.isWaiting(fileId));
+            CPPUNIT_ASSERT(compare(sendPath, destination));
+            CPPUNIT_ASSERT(compare(sendPath, canonicalPath));
+        }
+        {
+            TransferManager transferManager(aliceId, {}, "completed-waiting", random);
+            CPPUNIT_ASSERT(!transferManager.isWaiting(fileId));
+        }
+        std::filesystem::remove(canonicalPath);
+        if (!requestedPath.empty())
+            std::filesystem::remove(destination);
+    }
 }
 
 void

@@ -434,6 +434,7 @@ public:
     std::filesystem::path conversationDataPath_ {};
 
     std::mutex mapMutex_ {};
+    std::map<std::string, std::weak_ptr<std::mutex>> waitingMutexes_ {};
     std::map<std::string, WaitingRequest> waitingIds_ {};
     std::map<std::shared_ptr<dhtnet::ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
     std::map<std::string, std::shared_ptr<IncomingFile>> incomings_ {};
@@ -752,17 +753,38 @@ TransferManager::waitForTransfer(const std::string& fileId,
     auto canonicalPath = this->path(fileId);
     auto destination = path.empty() ? canonicalPath : std::filesystem::path(path);
     const auto isIndex = destination.lexically_normal() == canonicalPath.lexically_normal();
+    std::shared_ptr<std::mutex> waitingMutex;
+    {
+        std::lock_guard lk(pimpl_->mapMutex_);
+        std::erase_if(pimpl_->waitingMutexes_, [](const auto& entry) { return entry.second.expired(); });
+        auto& mutex = pimpl_->waitingMutexes_[fileId];
+        waitingMutex = mutex.lock();
+        if (!waitingMutex) {
+            waitingMutex = std::make_shared<std::mutex>();
+            mutex = waitingMutex;
+        }
+    }
+    std::lock_guard waitingLock(*waitingMutex);
+    {
+        std::lock_guard lk(pimpl_->mapMutex_);
+        auto itW = pimpl_->waitingIds_.find(fileId);
+        if (itW != pimpl_->waitingIds_.end()) {
+            auto waited = itW->second.path.empty() ? canonicalPath : std::filesystem::path(itW->second.path);
+            auto matches = itW->second.interactionId == interactionId && itW->second.sha3sum == sha3sum
+                           && waited.lexically_normal() == destination.lexically_normal()
+                           && itW->second.totalSize == total;
+            if (!matches)
+                return WaitResult::conflict;
+            if (pimpl_->incomings_.contains(fileId))
+                return WaitResult::waiting;
+        }
+    }
     if (installIndex(fileId, destination, sha3sum, total, false, true))
         return (isIndex || exportFile(fileId, destination, sha3sum, total)) ? WaitResult::complete
                                                                             : WaitResult::conflict;
     std::lock_guard lk(pimpl_->mapMutex_);
-    auto itW = pimpl_->waitingIds_.find(fileId);
-    if (itW != pimpl_->waitingIds_.end()) {
-        auto waited = itW->second.path.empty() ? canonicalPath : std::filesystem::path(itW->second.path);
-        auto matches = itW->second.interactionId == interactionId && itW->second.sha3sum == sha3sum
-                       && waited.lexically_normal() == destination.lexically_normal() && itW->second.totalSize == total;
-        return matches ? WaitResult::waiting : WaitResult::conflict;
-    }
+    if (pimpl_->waitingIds_.contains(fileId))
+        return WaitResult::waiting;
     std::error_code ec;
     auto status = std::filesystem::symlink_status(destination, ec);
     if (!isMissingPath(status, ec) && !(isIndex && status.type() == std::filesystem::file_type::symlink)) {
