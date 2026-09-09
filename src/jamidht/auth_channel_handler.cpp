@@ -37,23 +37,17 @@ AuthChannelHandler::connect(const DeviceId& deviceId,
                             const std::string& /*connectionType*/,
                             bool /*forceNewConnection*/)
 {
-    JAMI_DEBUG("[AuthChannel {}] connecting to name = {}", deviceId.toString(), name);
+    JAMI_DEBUG("[AuthChannel {}] Connecting", deviceId.toString());
     connectionManager_.connectDevice(deviceId, name, std::move(cb));
 }
 
 bool
-AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
+AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /*name*/)
 {
-    JAMI_DEBUG("[AuthChannel] New auth channel requested for `{}`.", cert->getId().toString());
-    auto acc = account_.lock();
-    if (!cert || !cert->issuer || !acc)
-        return false;
-
-    JAMI_DEBUG("[AuthChannel] New auth channel requested with name = `{}`.", name);
-
-    if (auto acc = account_.lock())
-        return true;
-
+    // Link device always happens the other way (outgoing auth channel to temporary connection manager),
+    // so reject any incoming request.
+    if (cert)
+        JAMI_WARNING("[AuthChannel] Rejecting unexpected incoming auth channel from {}", cert->getLongId());
     return false;
 }
 

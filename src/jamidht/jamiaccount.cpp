@@ -1092,7 +1092,7 @@ JamiAccount::provideAccountAuthentication(const std::string& credentialsFromUser
 int32_t
 JamiAccount::addDevice(const std::string& uriProvided)
 {
-    JAMI_LOG("[LinkDevice] JamiAccount::addDevice({}, {})", getAccountID(), uriProvided);
+    JAMI_LOG("[LinkDevice] JamiAccount::addDevice({})", getAccountID());
     if (not accountManager_) {
         JAMI_ERROR("[LinkDevice] Invalid AccountManager instance while adding a device.");
         return static_cast<int32_t>(AccountManager::AddDeviceError::GENERIC);
