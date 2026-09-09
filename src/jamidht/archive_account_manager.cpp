@@ -32,8 +32,12 @@
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
 
+#include <charconv>
 #include <memory>
 #include <fstream>
+#include <mutex>
+#include <optional>
+#include <unordered_map>
 
 #include "config/yamlparser.h"
 
@@ -43,6 +47,17 @@ const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 constexpr auto AUTH_URI_SCHEME = "jami-auth://"sv;
 constexpr auto CHANNEL_SCHEME = "auth:"sv;
 constexpr auto OP_TIMEOUT = 5min;
+
+static std::optional<uint64_t>
+parseOperationId(std::string_view value)
+{
+    uint64_t result {};
+    const auto* end = value.data() + value.size();
+    auto [ptr, error] = std::from_chars(value.data(), end, result);
+    if (error != std::errc {} || ptr != end)
+        return std::nullopt;
+    return result;
+}
 
 void
 ArchiveAccountManager::initAuthentication(std::string deviceName,
@@ -324,11 +339,11 @@ struct ArchiveAccountManager::AuthMsg
 
     void logMsg() { JAMI_DEBUG("[LinkDevice]\nLinkDevice::logMsg:\n{}", formatMsg()); }
 
-    std::string formatMsg()
+    std::string formatMsg() const
     {
         std::string logStr = fmt::format("=========\nscheme: {}\n", schemeId);
         for (const auto& [msgKey, msgVal] : payload) {
-            logStr += fmt::format(" - {}: {}\n", msgKey, msgVal);
+            logStr += fmt::format(" - {}: <{} bytes>\n", msgKey, msgVal.size());
         }
         logStr += "=========";
         return logStr;
@@ -464,6 +479,9 @@ struct ArchiveAccountManager::LinkDeviceContext : public DeviceContextBase
     dhtnet::ConnectionManager tempConnMgr;
     unsigned numOpenChannels {0};
     unsigned maxOpenChannels {1};
+    unsigned maxFailedChannelRequests {3};
+    std::mutex channelRequestMtx;
+    std::unordered_map<std::string, unsigned> failedChannelRequests;
     std::shared_ptr<dhtnet::ChannelSocket> channel;
     msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
     std::string authScheme {fileutils::ARCHIVE_AUTH_SCHEME_NONE};
@@ -474,6 +492,13 @@ struct ArchiveAccountManager::LinkDeviceContext : public DeviceContextBase
         , tmpId(config->id)
         , tempConnMgr(config)
     {}
+
+    void channelClosed()
+    {
+        std::lock_guard lock(channelRequestMtx);
+        if (numOpenChannels > 0)
+            --numOpenChannels;
+    }
 };
 
 struct ArchiveAccountManager::AddDeviceContext : public DeviceContextBase
@@ -608,7 +633,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                          AUTH_URI_SCHEME,
                                          ctx->linkDevCtx->tmpId.second->getLongId(),
                                          ctx->linkDevCtx->opId);
-        JAMI_LOG("[LinkDevice] auth scheme will be: {}", accountScheme);
+        JAMI_LOG("[LinkDevice] Authentication token generated");
 
         DeviceAuthInfo info;
         info.set(DeviceAuthInfo::token, accountScheme);
@@ -625,38 +650,52 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         });
 
         ctx->linkDevCtx->tempConnMgr.onChannelRequest(
-            [wthis, ctx](const std::shared_ptr<dht::crypto::Certificate>& /*cert*/, const std::string& name) {
+            [ctx](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
+                if (!cert || !cert->issuer) {
+                    JAMI_WARNING("[LinkDevice] Temporary connection manager received an unauthenticated request");
+                    return false;
+                }
+
+                auto& linkCtx = *ctx->linkDevCtx;
+                std::lock_guard lock(linkCtx.channelRequestMtx);
+                auto peerId = cert->issuer->getId().toString();
+                auto& failedRequests = linkCtx.failedChannelRequests[peerId];
+                if (failedRequests >= linkCtx.maxFailedChannelRequests) {
+                    JAMI_WARNING("[LinkDevice] Too many invalid channel requests from {}", peerId);
+                    return false;
+                }
+
                 std::string_view url(name);
                 if (!starts_with(url, CHANNEL_SCHEME)) {
-                    JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid scheme: {}", name);
+                    JAMI_WARNING("[LinkDevice] Temporary connection manager received an invalid channel scheme");
+                    ++failedRequests;
                     return false;
                 }
                 auto opStr = url.substr(CHANNEL_SCHEME.size());
-                auto parsedOpId = jami::to_int<uint64_t>(opStr);
+                auto parsedOpId = parseOperationId(opStr);
 
-                if (ctx->linkDevCtx->opId == parsedOpId
-                    && ctx->linkDevCtx->numOpenChannels < ctx->linkDevCtx->maxOpenChannels) {
-                    ctx->linkDevCtx->numOpenChannels++;
-                    JAMI_DEBUG("[LinkDevice] Opening channel ({}/{}): {}",
-                               ctx->linkDevCtx->numOpenChannels,
-                               ctx->linkDevCtx->maxOpenChannels,
-                               name);
+                if (parsedOpId && linkCtx.opId == *parsedOpId
+                    && linkCtx.numOpenChannels < linkCtx.maxOpenChannels) {
+                    linkCtx.numOpenChannels++;
+                    JAMI_DEBUG("[LinkDevice] Opening authentication channel ({}/{})",
+                               linkCtx.numOpenChannels,
+                               linkCtx.maxOpenChannels);
                     return true;
                 }
+                ++failedRequests;
                 return false;
             });
 
         ctx->linkDevCtx->tempConnMgr.onConnectionReady([ctx,
-                                                        accountScheme,
-                                                        wthis](const DeviceId& /*deviceId*/,
-                                                               const std::string& name,
+                                wthis](const DeviceId& /*deviceId*/,
+                                    const std::string& /*name*/,
                                                                const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
             if (!socket) {
                 JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid socket.");
                 if (ctx->timeout)
                     ctx->timeout->cancel();
                 ctx->timeout.reset();
-                ctx->linkDevCtx->numOpenChannels--;
+                ctx->linkDevCtx->channelClosed();
                 if (auto sthis = wthis.lock())
                     sthis->authCtx_.reset();
                 ctx->linkDevCtx->state = AuthDecodingState::ERR;
@@ -678,7 +717,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 if (auto ctx = c.lock()) {
                     if (!ctx->linkDevCtx->isCompleted()) {
                         ctx->linkDevCtx->state = AuthDecodingState::TIMEOUT;
-                        JAMI_WARNING("[LinkDevice] timeout: {}", socket->name());
+                        JAMI_WARNING("[LinkDevice] Authentication channel timed out");
 
                         // Create and send timeout message
                         msgpack::sbuffer buffer(UINT16_MAX);
@@ -690,12 +729,12 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 }
             });
 
-            socket->onShutdown([ctx, name, wthis](const std::error_code& /*error_code*/) {
-                JAMI_WARNING("[LinkDevice] Temporary connection manager closing socket: {}", name);
+            socket->onShutdown([ctx, wthis](const std::error_code& /*error_code*/) {
+                JAMI_WARNING("[LinkDevice] Temporary connection manager closing authentication channel");
                 if (ctx->timeout)
                     ctx->timeout->cancel();
                 ctx->timeout.reset();
-                ctx->linkDevCtx->numOpenChannels--;
+                ctx->linkDevCtx->channelClosed();
                 ctx->linkDevCtx->channel.reset();
                 if (auto sthis = wthis.lock())
                     sthis->authCtx_.reset();
@@ -796,7 +835,13 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                                                                      DeviceAuthInfo {});
                     try {
                         auto archive = AccountArchive(std::string_view(accDataIt->second));
-                        if (auto this_ = wthis.lock()) {
+                        auto peerCert = ctx->linkDevCtx->channel->peerCertificate();
+                        if (!peerCert || !peerCert->issuer || !archive.id.second
+                            || archive.id.second->getId() != peerCert->issuer->getId()) {
+                            ctx->linkDevCtx->state = AuthDecodingState::ERR;
+                            ctx->linkDevCtx->archiveTransferredWithoutFailure = false;
+                            JAMI_WARNING("[LinkDevice] NEW: Archive identity does not match source peer");
+                        } else if (auto this_ = wthis.lock()) {
                             JAMI_DEBUG("[LinkDevice] NEW: Reading archive from peer.");
                             this_->onArchiveLoaded(*ctx, std::move(archive), true);
                             JAMI_DEBUG("[LinkDevice] NEW: Successfully loaded archive.");
@@ -851,24 +896,24 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
         JAMI_WARNING("[LinkDevice] addDevice: auth context already exists.");
         return static_cast<int32_t>(AccountManager::AddDeviceError::ALREADY_LINKING);
     }
-    JAMI_LOG("[LinkDevice] ArchiveAccountManager::addDevice({}, {})", accountId_, uriProvided);
+    JAMI_LOG("[LinkDevice] ArchiveAccountManager::addDevice({})", accountId_);
     std::string_view url(uriProvided);
     if (!starts_with(url, AUTH_URI_SCHEME)) {
-        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        JAMI_ERROR("[LinkDevice] Invalid device authentication URI provided");
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
 
     url.remove_prefix(AUTH_URI_SCHEME.length());
     auto slashPos = url.find('/');
     if (slashPos == std::string_view::npos || slashPos != 64) {
-        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        JAMI_ERROR("[LinkDevice] Invalid device authentication URI provided");
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
     auto peerTempAcc = url.substr(0, slashPos);
     url.remove_prefix(slashPos + 1);
     auto peerCodeS = url.substr(0, url.find('/'));
-    if (peerCodeS.size() != 6) {
-        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+    if (peerCodeS.size() != 6 || !parseOperationId(peerCodeS)) {
+        JAMI_ERROR("[LinkDevice] Invalid device authentication URI provided");
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
     auto peerId = dht::PkId(peerTempAcc);
@@ -876,7 +921,7 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
         JAMI_ERROR("[LinkDevice] Invalid peer id in uri: {}", peerTempAcc);
         return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
-    JAMI_LOG("[LinkDevice] ======\n * tempAcc =  {}\n * code = {}", peerTempAcc, peerCodeS);
+    JAMI_LOG("[LinkDevice] Connecting to temporary account {}", peerTempAcc);
 
     auto gen = Manager::instance().getSeededRandomEngine();
     auto token = std::uniform_int_distribution<int32_t>(1, std::numeric_limits<int32_t>::max())(gen);
