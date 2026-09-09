@@ -614,6 +614,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         config->turnServerUserName = DEFAULT_TURN_USERNAME;
         config->turnServerPwd = DEFAULT_TURN_PWD;
         config->turnServerRealm = DEFAULT_TURN_REALM;
+        config->legacyMode = dhtnet::LegacyMode::Supported;
 
         ctx->linkDevCtx = std::make_shared<LinkDeviceContext>(config);
         JAMI_LOG("[LinkDevice] Established linkDevCtx. {} {} {}.",
@@ -674,8 +675,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 auto opStr = url.substr(CHANNEL_SCHEME.size());
                 auto parsedOpId = parseOperationId(opStr);
 
-                if (parsedOpId && linkCtx.opId == *parsedOpId
-                    && linkCtx.numOpenChannels < linkCtx.maxOpenChannels) {
+                if (parsedOpId && linkCtx.opId == *parsedOpId && linkCtx.numOpenChannels < linkCtx.maxOpenChannels) {
                     linkCtx.numOpenChannels++;
                     JAMI_DEBUG("[LinkDevice] Opening authentication channel ({}/{})",
                                linkCtx.numOpenChannels,
@@ -687,8 +687,8 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             });
 
         ctx->linkDevCtx->tempConnMgr.onConnectionReady([ctx,
-                                wthis](const DeviceId& /*deviceId*/,
-                                    const std::string& /*name*/,
+                                                        wthis](const DeviceId& /*deviceId*/,
+                                                               const std::string& /*name*/,
                                                                const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
             if (!socket) {
                 JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid socket.");
