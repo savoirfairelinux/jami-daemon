@@ -82,6 +82,8 @@ public:
 
     void enableRtcpMux(bool enable) { rtcpMuxEnabled_ = enable; }
     bool isRtcpMuxEnabled() const { return rtcpMuxEnabled_; }
+    void enableBundle(bool enable) { bundleEnabled_ = enable; }
+    bool isBundleEnabled() const { return bundleEnabled_; }
 
     /**
      *  Read accessor. Get the local passive sdp session information before negotiation
@@ -264,6 +266,13 @@ private:
 
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
     void addRTCPMuxAttribute(pjmedia_sdp_media* med);
+    void addMidAttribute(pjmedia_sdp_media* med, std::string_view mid);
+    void addExtmapAttribute(pjmedia_sdp_media* med, unsigned id, std::string_view uri);
+    void addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view feedbackType);
+    void addBundleGroupAttribute();
+    bool shouldUseBundle() const;
+    bool isBundlePayloadTypeUsed(unsigned payloadType) const;
+    unsigned nextBundleDynamicPayloadType(unsigned startPayloadType = 96) const;
 
     std::shared_ptr<SystemCodecInfo> findCodecByPayload(const unsigned payloadType);
     std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName, const unsigned clockrate = 0) const;
@@ -313,6 +322,7 @@ private:
     std::string localDtlsFingerprintHash_ {};
     std::string localDtlsFingerprint_ {};
     bool rtcpMuxEnabled_ {false};
+    bool bundleEnabled_ {false};
 };
 
 } // namespace jami
