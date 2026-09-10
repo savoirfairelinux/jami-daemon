@@ -103,12 +103,16 @@ public:
 private:
     void offerDoesNotAdvertiseRtcpMuxByDefault();
     void offerAdvertisesRtcpMuxWhenEnabled();
+    void answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt();
+    void answerAdvertisesRtcpMuxWhenOfferDoes();
     void remoteSdpFallsBackToRtcpNextPort();
     void remoteSdpKeepsMuxOnRtpPort();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
     CPPUNIT_TEST(offerDoesNotAdvertiseRtcpMuxByDefault);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxWhenEnabled);
+    CPPUNIT_TEST(answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt);
+    CPPUNIT_TEST(answerAdvertisesRtcpMuxWhenOfferDoes);
     CPPUNIT_TEST(remoteSdpFallsBackToRtcpNextPort);
     CPPUNIT_TEST(remoteSdpKeepsMuxOnRtpPort);
     CPPUNIT_TEST_SUITE_END();
@@ -166,6 +170,87 @@ RtcpMuxSdpTest::offerAdvertisesRtcpMuxWhenEnabled()
 
     CPPUNIT_ASSERT(localSession);
     CPPUNIT_ASSERT(hasMediaAttribute(localSession, "rtcp-mux"));
+
+    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
+    CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(TEST_AUDIO_RTP_PORT), descriptions[0].rtcp_addr.getPort());
+}
+
+void
+RtcpMuxSdpTest::answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("rtcp-mux-test-answer-legacy");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, TEST_AUDIO_RTCP_PORT);
+    sdp.enableRtcpMux(true);
+
+    auto pool = makePool("rtcp-mux-answer-legacy");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=audio 5004 RTP/AVP 0\r\n"
+                                    "a=rtpmap:0 PCMU/8000\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT(!hasMediaAttribute(localSession, "rtcp-mux"));
+    CPPUNIT_ASSERT(hasMediaAttribute(localSession, "rtcp"));
+
+    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_mux);
+    CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(TEST_AUDIO_RTCP_PORT), descriptions[0].rtcp_addr.getPort());
+}
+
+void
+RtcpMuxSdpTest::answerAdvertisesRtcpMuxWhenOfferDoes()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("rtcp-mux-test-answer-mux");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+
+    auto pool = makePool("rtcp-mux-answer-mux");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=audio 5004 RTP/AVP 0\r\n"
+                                    "a=rtpmap:0 PCMU/8000\r\n"
+                                    "a=rtcp-mux\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT(hasMediaAttribute(localSession, "rtcp-mux"));
+    CPPUNIT_ASSERT(!hasMediaAttribute(localSession, "rtcp"));
 
     const auto descriptions = sdp.getMediaDescriptions(localSession, false);
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
