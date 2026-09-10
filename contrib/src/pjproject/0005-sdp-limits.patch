@@ -1,0 +1,27 @@
+Raise pjmedia SDP limits to fit real browser (WebRTC) SDP.
+
+Chromium/Firefox offers routed through the external media endpoint API
+carry more formats and attributes per media line than pjmedia's
+defaults (an audio+video Chromium offer has ~80 attributes on the
+video m= line, over the default PJMEDIA_MAX_SDP_ATTR of 68). The
+parser silently drops the excess, losing rtpmap lines and failing
+validation.
+
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -24,3 +24,15 @@
+ /* Set permanent permissions on the TURN
+    server for all peer candidates */
+ #define PJ_ICE_ST_USE_TURN_PERMANENT_PERM       PJ_TRUE
++
++/*
++* PJMEDIA settings.
++* Browser (WebRTC) SDP offers used by the external media endpoint API carry
++* far more formats and attributes per media line than pjmedia's defaults
++* (an audio+video Chromium offer has ~80 attributes on the video m= line,
++* over the default PJMEDIA_MAX_SDP_ATTR of 68). The parser silently drops
++* the excess, losing rtpmap lines and failing validation, so raise the
++* limits to comfortably fit real browser SDP.
++*/
++#define PJMEDIA_MAX_SDP_FMT                     64
++#define PJMEDIA_MAX_SDP_ATTR                    256
