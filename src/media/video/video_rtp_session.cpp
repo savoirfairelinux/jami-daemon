@@ -30,6 +30,7 @@
 #include "conference.h"
 #include "congestion_control.h"
 #include "dtls_srtp.h"
+#include "transport_cc_controller.h"
 
 #include <dhtnet/ice_socket.h>
 #include <asio/post.hpp>
@@ -37,6 +38,10 @@
 
 #include <string>
 #include <chrono>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <map>
 
 namespace jami {
 namespace video {
@@ -44,7 +49,99 @@ namespace video {
 using std::string;
 
 static constexpr unsigned MAX_REMB_DEC {1};
+static constexpr uint64_t BITS_PER_KILOBIT {1000};
+static constexpr float REMB_DECREASE_RATIO {0.85f};
+static constexpr float REMB_INCREASE_RATIO {1.05f};
+// Pace RTP output above the encoder target so transient overshoots
+// (keyframes, CRF bursts) drain without building queue delay, as WebRTC
+// pacers do. Congestion control remains responsible for the average rate.
+static constexpr float PACING_RATE_MULTIPLIER {2.5f};
+// Minimum delay between two outgoing PLI packets, and between two keyframes
+// forced by incoming PLI/FIR feedback (WebRTC peers repeat PLI until a
+// keyframe arrives).
 static constexpr auto MIN_KEYFRAME_FEEDBACK_INTERVAL {std::chrono::milliseconds(500)};
+
+const char*
+transportCcStateName(TransportCcBandwidthState state)
+{
+    switch (state) {
+    case TransportCcBandwidthState::Hold:
+        return "hold";
+    case TransportCcBandwidthState::Increase:
+        return "increase";
+    case TransportCcBandwidthState::Decrease:
+        return "decrease";
+    }
+    return "unknown";
+}
+
+const char*
+transportCcEstimatorStateName(TransportCcEstimatorState state)
+{
+    switch (state) {
+    case TransportCcEstimatorState::Startup:
+        return "startup";
+    case TransportCcEstimatorState::Probing:
+        return "probing";
+    case TransportCcEstimatorState::Normal:
+        return "normal";
+    case TransportCcEstimatorState::Overusing:
+        return "overusing";
+    case TransportCcEstimatorState::Underusing:
+        return "underusing";
+    case TransportCcEstimatorState::Recovering:
+        return "recovering";
+    case TransportCcEstimatorState::AppLimited:
+        return "app-limited";
+    }
+    return "unknown";
+}
+
+const char*
+transportCcReasonName(TransportCcEstimateReason reason)
+{
+    switch (reason) {
+    case TransportCcEstimateReason::Stable:
+        return "stable";
+    case TransportCcEstimateReason::DelayIncrease:
+        return "delay";
+    case TransportCcEstimateReason::PacketLoss:
+        return "loss";
+    case TransportCcEstimateReason::AppLimited:
+        return "app-limited";
+    }
+    return "unknown";
+}
+
+const char*
+transportCcLossTypeName(TransportCcLossType lossType)
+{
+    switch (lossType) {
+    case TransportCcLossType::None:
+        return "none";
+    case TransportCcLossType::Random:
+        return "random";
+    case TransportCcLossType::Burst:
+        return "burst";
+    case TransportCcLossType::Congestion:
+        return "congestion";
+    }
+    return "unknown";
+}
+
+const char*
+transportCcFeedbackStateName(TransportCcFeedbackState feedbackState)
+{
+    switch (feedbackState) {
+    case TransportCcFeedbackState::Normal:
+        return "normal";
+    case TransportCcFeedbackState::Missing:
+        return "missing";
+    case TransportCcFeedbackState::Reordered:
+        return "reordered";
+    }
+    return "unknown";
+}
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
@@ -60,6 +157,7 @@ VideoRtpSession::VideoRtpSession(const string& callId,
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
     , cc(std::make_unique<CongestionControl>())
+    , transportCcController_(std::make_unique<TransportCcController>())
 {
     recorder_ = rec;
     setupVideoBitrateInfo(); // reset bitrate
@@ -235,6 +333,7 @@ VideoRtpSession::startSender()
         auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
+        setupVideoBitrateInfo();
         send_.linkableHW = conference_ == nullptr;
         // A restart may be triggered by a codec configuration change
         // (setCodecDetails), so re-read the bounds before sizing the budget.
@@ -242,6 +341,7 @@ VideoRtpSession::startSender()
         if (not videoMixer_)
             seedVideoBitrate(localVideoParams_.height * localVideoParams_.width);
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
+        socketPair_->setRtpPacingBitrate(uint64_t(send_.bitrate * PACING_RATE_MULTIPLIER) * BITS_PER_KILOBIT);
         // NOTE:
         // Current implementation does not handle resolution change
         // (needed by window sharing feature) with HW codecs, so HW
@@ -295,9 +395,10 @@ VideoRtpSession::startSender()
         lastMediaRestart_ = clock::now();
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
-        if (autoQuality and not rtcpCheckerThread_.isRunning())
+        const auto needsRtcpChecker = autoQuality || shouldSendTransportCcFeedback();
+        if (needsRtcpChecker and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
-        else if (not autoQuality and rtcpCheckerThread_.isRunning())
+        else if (not needsRtcpChecker and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
         // Block reads to received feedback packets
         if (socketPair_)
@@ -539,6 +640,8 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         JAMI_ERROR("[{}] Socket creation failed: {}", fmt::ptr(this), e.what());
         return;
     }
+
+    transportCcController_->reset();
 
     startReceiver();
     startSender();
@@ -785,22 +888,127 @@ VideoRtpSession::check_RCTP_Info_REMB(uint64_t* br)
 
     if (!rtcpInfoVect.empty()) {
         auto pkt = rtcpInfoVect.back();
-        auto temp = cc->parseREMB(pkt);
-        *br = (temp >> 10) | ((temp << 6) & 0xff00) | ((temp << 16) & 0x30000);
-        return true;
+        auto bitrateBps = cc->parseREMB(pkt);
+        if (bitrateBps) {
+            *br = bitrateBps;
+            return true;
+        }
     }
     return false;
+}
+
+bool
+VideoRtpSession::check_RTCP_Info_TCC(uint64_t* br, RTCPInfo& rtcpi)
+{
+    auto reports = socketPair_->getRtcpTransportCcReports();
+    if (reports.empty())
+        return false;
+
+    const auto currentBitrateBps = uint64_t(videoBitrateInfo_.videoBitrateCurrent) * BITS_PER_KILOBIT;
+    transportCcController_->setBitrateBounds(uint64_t(videoBitrateInfo_.videoBitrateMin) * BITS_PER_KILOBIT,
+                                             uint64_t(videoBitrateInfo_.videoBitrateMax) * BITS_PER_KILOBIT);
+    auto estimate = transportCcController_->update(currentBitrateBps, reports);
+    if (!estimate)
+        return false;
+
+    *br = clampVideoBitrateBps(estimate->targetBitrateBps);
+    JAMI_DEBUG("[BandwidthAdapt][TCC] target={} Kbps ack={} Kbps sent={} Kbps confidence={:.2f} feedbackAge={} us "
+               "loss={:.2f}% lossType={} delay={} us queue={} us received={} lost={} feedback={} "
+               "missingFeedback={} reorderedFeedback={} missingHistory={} probe={} probeTarget={} Kbps "
+               "probeDuration={} us probeObserved={} us probeMinPackets={} validatedProbe={} probeSucceeded={} "
+               "failedProbes={} action={} "
+               "mode={} reason={}",
+               *br / BITS_PER_KILOBIT,
+               estimate->acknowledgedBitrateBps / BITS_PER_KILOBIT,
+               estimate->sentBitrateBps / BITS_PER_KILOBIT,
+               estimate->confidence,
+               estimate->feedbackAgeUs,
+               estimate->packetLossRatio * 100.0,
+               transportCcLossTypeName(estimate->lossType),
+               estimate->delayTrendUs,
+               estimate->queueDelayUs,
+               estimate->receivedPackets,
+               estimate->lostPackets,
+               transportCcFeedbackStateName(estimate->feedbackState),
+               estimate->missingFeedbackReports,
+               estimate->reorderedFeedbackReports,
+               estimate->missingSendHistoryPackets,
+               estimate->probeClusterId,
+               estimate->probeTargetBitrateBps / BITS_PER_KILOBIT,
+               estimate->probeDurationUs,
+               estimate->probeObservedDurationUs,
+               estimate->probeMinPackets,
+               estimate->validatedProbeClusterId,
+               estimate->probeSucceeded,
+               estimate->failedProbeClusters,
+               transportCcStateName(estimate->state),
+               transportCcEstimatorStateName(estimate->estimatorState),
+               transportCcReasonName(estimate->reason));
+    rtcpi.packetLoss = static_cast<float>(estimate->packetLossRatio * 100.0);
+    rtcpi.jitter = 0;
+    rtcpi.nb_sample = estimate->receivedPackets;
+    rtcpi.latency = static_cast<float>(socketPair_->getLastLatency());
+    emitMediaQualityState(*estimate, *br);
+    return true;
+}
+
+void
+VideoRtpSession::emitMediaQualityState(const TransportCcControllerEstimate& estimate, uint64_t targetBitrateBps) const
+{
+    std::map<std::string, std::string> state {
+        {"callId", callId_},
+        {"streamId", streamId_},
+        {"mediaType", "video"},
+        {"controller", "transport-cc"},
+        {"targetBitrateBps", std::to_string(targetBitrateBps)},
+        {"targetBitrateKbps", std::to_string(targetBitrateBps / BITS_PER_KILOBIT)},
+        {"estimatedTargetBitrateBps", std::to_string(estimate.targetBitrateBps)},
+        {"currentBitrateKbps", std::to_string(videoBitrateInfo_.videoBitrateCurrent)},
+        {"minBitrateKbps", std::to_string(videoBitrateInfo_.videoBitrateMin)},
+        {"maxBitrateKbps", std::to_string(videoBitrateInfo_.videoBitrateMax)},
+        {"acknowledgedBitrateBps", std::to_string(estimate.acknowledgedBitrateBps)},
+        {"sentBitrateBps", std::to_string(estimate.sentBitrateBps)},
+        {"packetLossRatio", std::to_string(estimate.packetLossRatio)},
+        {"receivedPackets", std::to_string(estimate.receivedPackets)},
+        {"lostPackets", std::to_string(estimate.lostPackets)},
+        {"delayTrendUs", std::to_string(estimate.delayTrendUs)},
+        {"queueDelayUs", std::to_string(estimate.queueDelayUs)},
+        {"confidence", std::to_string(estimate.confidence)},
+        {"feedbackAgeUs", std::to_string(estimate.feedbackAgeUs)},
+        {"missingFeedbackReports", std::to_string(estimate.missingFeedbackReports)},
+        {"reorderedFeedbackReports", std::to_string(estimate.reorderedFeedbackReports)},
+        {"missingSendHistoryPackets", std::to_string(estimate.missingSendHistoryPackets)},
+        {"probeClusterId", std::to_string(estimate.probeClusterId)},
+        {"probeTargetBitrateBps", std::to_string(estimate.probeTargetBitrateBps)},
+        {"validatedProbeClusterId", std::to_string(estimate.validatedProbeClusterId)},
+        {"probeResultValid", estimate.probeResultValid ? TRUE_STR : FALSE_STR},
+        {"probeSucceeded", estimate.probeSucceeded ? TRUE_STR : FALSE_STR},
+        {"failedProbeClusters", std::to_string(estimate.failedProbeClusters)},
+        {"bandwidthState", transportCcStateName(estimate.state)},
+        {"estimatorState", transportCcEstimatorStateName(estimate.estimatorState)},
+        {"reason", transportCcReasonName(estimate.reason)},
+        {"lossType", transportCcLossTypeName(estimate.lossType)},
+        {"feedbackState", transportCcFeedbackStateName(estimate.feedbackState)},
+    };
+    emitSignal<libjami::VideoSignal::MediaQualityChanged>(callId_, streamId_, state);
 }
 
 void
 VideoRtpSession::adaptQualityAndBitrate()
 {
+    setupVideoBitrateInfo();
+
     uint64_t br;
-    if (check_RCTP_Info_REMB(&br)) {
-        delayProcessing(static_cast<int>(br));
+    RTCPInfo rtcpi {};
+    if (check_RTCP_Info_TCC(&br, rtcpi)) {
+        delayProcessing(br);
+        return;
     }
 
-    RTCPInfo rtcpi {};
+    if (check_RCTP_Info_REMB(&br)) {
+        delayProcessing(br);
+    }
+
     if (check_RCTP_Info_RR(rtcpi)) {
         dropProcessing(&rtcpi);
     }
@@ -850,20 +1058,46 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 }
 
 void
-VideoRtpSession::delayProcessing(int br)
+VideoRtpSession::delayProcessing(uint64_t bitrateBps)
 {
-    int newBitrate = static_cast<int>(videoBitrateInfo_.videoBitrateCurrent);
-    if (br == 0x6803)
-        newBitrate = static_cast<int>(std::lround(newBitrate * 0.85f));
-    else if (br == 0x7378) {
-        auto now = clock::now();
-        auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBitrateDecrease);
-        auto increaseCoefficient = std::min(static_cast<float>(msSinceLastDecrease.count()) / 600000.0f + 1.0f, 1.05f);
-        newBitrate = static_cast<int>(std::lround(newBitrate * increaseCoefficient));
-    } else
+    if (bitrateBps == 0)
         return;
 
+    const auto bitrateKbps = (bitrateBps + BITS_PER_KILOBIT - 1) / BITS_PER_KILOBIT;
+    const auto newBitrate = static_cast<unsigned>(std::min<uint64_t>(bitrateKbps, std::numeric_limits<unsigned>::max()));
+
     setNewBitrate(newBitrate);
+}
+
+uint64_t
+VideoRtpSession::clampVideoBitrateBps(uint64_t bitrateBps) const
+{
+    const auto minBitrateBps = uint64_t(videoBitrateInfo_.videoBitrateMin) * BITS_PER_KILOBIT;
+    const auto maxBitrateBps = uint64_t(videoBitrateInfo_.videoBitrateMax) * BITS_PER_KILOBIT;
+
+    if (minBitrateBps && bitrateBps < minBitrateBps)
+        bitrateBps = minBitrateBps;
+    if (maxBitrateBps && bitrateBps > maxBitrateBps)
+        bitrateBps = maxBitrateBps;
+    return bitrateBps;
+}
+
+void
+VideoRtpSession::sendReceiverEstimatedMaxBitrate(uint64_t bitrateBps)
+{
+    if (!socketPair_)
+        return;
+
+    const auto remoteSsrc = socketPair_->getRemoteSsrc();
+    if (!remoteSsrc)
+        return;
+
+    const auto senderSsrc = socketPair_->getLocalSsrc().value_or(0);
+    auto packet = cc->createREMB(bitrateBps, senderSsrc, {*remoteSsrc});
+    if (packet.empty())
+        return;
+
+    socketPair_->writeRtcpData(packet.data(), static_cast<int>(packet.size()));
 }
 
 void
@@ -871,6 +1105,8 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 {
     newBR = std::max(newBR, videoBitrateInfo_.videoBitrateMin);
     newBR = std::min(newBR, videoBitrateInfo_.videoBitrateMax);
+    if (socketPair_)
+        socketPair_->setRtpPacingBitrate(uint64_t(newBR * PACING_RATE_MULTIPLIER) * BITS_PER_KILOBIT);
 
     if (newBR < videoBitrateInfo_.videoBitrateCurrent)
         lastBitrateDecrease = clock::now();
@@ -923,13 +1159,45 @@ VideoRtpSession::setupVideoBitrateInfo()
     } else {
         videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
     }
+    applyConferenceBitrateLimit();
+}
+
+size_t
+VideoRtpSession::conferenceSenderCount() const
+{
+    if (!conference_)
+        return 1;
+    return std::max<size_t>(1, conference_->getSubCalls().size());
+}
+
+void
+VideoRtpSession::applyConferenceBitrateLimit()
+{
+    if (!conference_ || videoBitrateInfo_.videoBitrateMax == 0)
+        return;
+
+    const auto senderCount = conferenceSenderCount();
+    if (senderCount <= 1)
+        return;
+
+    const auto maxPerSender = std::max<unsigned>(videoBitrateInfo_.videoBitrateMin,
+                                                 videoBitrateInfo_.videoBitrateMax / senderCount);
+    videoBitrateInfo_.videoBitrateMax = maxPerSender;
+    videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, maxPerSender);
 }
 
 void
 VideoRtpSession::processRtcpChecker()
 {
-    adaptQualityAndBitrate();
-    socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
+    auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
+    if (codecVideo->isAutoQualityEnabled)
+        adaptQualityAndBitrate();
+    sendTransportCcFeedback();
+
+    auto waitInterval = std::chrono::duration_cast<std::chrono::milliseconds>(rtcp_checking_interval);
+    if (shouldSendTransportCcFeedback())
+        waitInterval = std::chrono::milliseconds(100);
+    socketPair_->waitForRTCP(waitInterval);
 }
 
 void
@@ -1044,6 +1312,12 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
 void
 VideoRtpSession::delayMonitor(int gradient, int deltaT)
 {
+    const auto currentBitrateBps = uint64_t(videoBitrateInfo_.videoBitrateCurrent) * BITS_PER_KILOBIT;
+    if (currentBitrateBps == 0)
+        return;
+    if (receiverEstimatedBitrateBps_ == 0)
+        receiverEstimatedBitrateBps_ = clampVideoBitrateBps(currentBitrateBps);
+
     float estimation = cc->kalmanFilter(gradient);
     float thresh = cc->get_thresh();
 
@@ -1057,27 +1331,24 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         if ((not remb_dec_cnt_) or (remb_timer_dec > DELAY_AFTER_REMB_DEC)) {
             last_REMB_dec_ = now;
             remb_dec_cnt_ = 0;
+            remb_timer_dec = now - last_REMB_dec_;
         }
 
         // Limit REMB decrease to MAX_REMB_DEC every DELAY_AFTER_REMB_DEC ms
         if (remb_dec_cnt_ < MAX_REMB_DEC && remb_timer_dec < DELAY_AFTER_REMB_DEC) {
             remb_dec_cnt_++;
             JAMI_WARNING("[BandwidthAdapt] Detected reception bandwidth overuse");
-            uint8_t* buf = nullptr;
-            uint64_t br = 0x6803; // Decrease 3
-            auto v = cc->createREMB(br);
-            buf = &v[0];
-            socketPair_->writeData(buf, static_cast<int>(v.size()));
+            receiverEstimatedBitrateBps_ = clampVideoBitrateBps(
+                static_cast<uint64_t>(std::lround(receiverEstimatedBitrateBps_ * REMB_DECREASE_RATIO)));
+            sendReceiverEstimatedMaxBitrate(receiverEstimatedBitrateBps_);
             last_REMB_inc_ = clock::now();
         }
     } else if (bwState == BandwidthUsage::bwNormal) {
         auto remb_timer_inc = now - last_REMB_inc_;
         if (remb_timer_inc > DELAY_AFTER_REMB_INC) {
-            uint8_t* buf = nullptr;
-            uint64_t br = 0x7378; // INcrease
-            auto v = cc->createREMB(br);
-            buf = &v[0];
-            socketPair_->writeData(buf, static_cast<int>(v.size()));
+            receiverEstimatedBitrateBps_ = clampVideoBitrateBps(
+                static_cast<uint64_t>(std::lround(receiverEstimatedBitrateBps_ * REMB_INCREASE_RATIO)));
+            sendReceiverEstimatedMaxBitrate(receiverEstimatedBitrateBps_);
             last_REMB_inc_ = clock::now();
         }
     }
