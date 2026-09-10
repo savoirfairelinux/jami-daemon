@@ -1292,6 +1292,27 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     processInviteResponseHelper(inv, event);
 #endif
 
+    // Capture the verbatim remote SDP answer of a call whose media is delegated
+    // to an external endpoint (e.g. a WebRTC browser). Only the caller (UAC)
+    // receives a 2xx INVITE response. pjsip does not run the endpoint response
+    // module chain for these in-dialog messages, so this inv-usage transaction
+    // callback is the reliable capture point. The pjmedia negotiator rewrites
+    // (and mangles) WebRTC codec lines, so the endpoint must be given the
+    // untouched SDP rather than the negotiated session.
+    if (call->hasExternalMedia() and tsx->role == PJSIP_ROLE_UAC and tsx->method.id == PJSIP_INVITE_METHOD
+        and event->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+        if (auto* const respData = event->body.tsx_state.src.rdata) {
+            const auto* respMsg = respData->msg_info.msg;
+            if (respMsg and respMsg->type == PJSIP_RESPONSE_MSG and respMsg->line.status.code / 100 == 2) {
+                const pjsip_msg_body* body = respMsg->body;
+                if (body and body->data and body->len > 0 and pj_stricmp2(&body->content_type.type, "application") == 0
+                    and pj_stricmp2(&body->content_type.subtype, "sdp") == 0) {
+                    call->reportExternalRemoteAnswer(std::string(static_cast<const char*>(body->data), body->len));
+                }
+            }
+        }
+    }
+
     // We process here only incoming request message
     if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING
         or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {

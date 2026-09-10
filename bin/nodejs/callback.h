@@ -167,7 +167,9 @@ swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
 
 // Callback management
 
-void setCallback(std::string signal, napi_value func) {
+void
+setCallback(std::string signal, napi_value func)
+{
     auto& ref = callbackRefs[std::move(signal)];
     if (ref) {
         napi_delete_reference(g_env, ref);
@@ -575,6 +577,32 @@ incomingCall(const std::string& accountId,
     uv_async_send(&signalAsync);
 }
 
+void
+remoteSdpReceived(const std::string& accountId, const std::string& callId, const std::string& sdp)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, sdp]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(sdp)};
+        callCallback("RemoteSdpReceived", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+videoOrientationChanged(const std::string& accountId,
+                        const std::string& callId,
+                        int streamIdx,
+                        int rotation)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, streamIdx, rotation]() {
+        napi_value args[] = {
+            napiString(accountId), napiString(callId), napiInt32(streamIdx), napiInt32(rotation)};
+        callCallback("VideoOrientationChanged", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
 // Data transfer signals
 
 void
@@ -970,7 +998,10 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
         = {exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
            exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3, _4)),
            exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3, _4)),
-           exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3))};
+           exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3)),
+           exportable_callback<CallSignal::RemoteSdpReceived>(bind(&remoteSdpReceived, _1, _2, _3)),
+           exportable_callback<CallSignal::VideoOrientationChanged>(
+               bind(&videoOrientationChanged, _1, _2, _3, _4))};
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
@@ -987,8 +1018,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
         exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&deviceAuthStateChanged, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&addDeviceStateChanged, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4)),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
-            bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(
             bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::MessageSend>(bind(&logMessage, _1)),
