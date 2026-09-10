@@ -691,6 +691,13 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
+    if (mainCall->hasExternalMedia()) {
+        // Propagate the external SDP session to the per-device subcall.
+        std::vector<libjami::MediaMap> mediaList;
+        mediaList.emplace_back(
+            libjami::MediaMap {{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, mainCall->externalSdp()}});
+        return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+    }
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
     return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
@@ -893,15 +900,23 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 
     sdp.setPublishedIP(addrSdp);
 
-    auto mediaAttrList = call->getMediaAttributeList();
-    if (mediaAttrList.empty()) {
-        JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
-        return;
-    }
+    if (call->hasExternalMedia()) {
+        // The offer is provided by an external media endpoint.
+        if (not sdp.createOfferFromExternalSdp(call->externalSdp())) {
+            JAMI_ERROR("[call:{}] Unable to use the external SDP offer", call->getCallId());
+            return;
+        }
+    } else {
+        auto mediaAttrList = call->getMediaAttributeList();
+        if (mediaAttrList.empty()) {
+            JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
+            return;
+        }
 
-    if (not sdp.createOffer(mediaAttrList)) {
-        JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
-        return;
+        if (not sdp.createOffer(mediaAttrList)) {
+            JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
+            return;
+        }
     }
 
     // Note: pj_ice_strans_create can call onComplete in the same thread
