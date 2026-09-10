@@ -691,6 +691,13 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
+    if (mainCall->hasExternalMedia()) {
+        // Propagate the external SDP session to the per-device subcall.
+        std::vector<libjami::MediaMap> mediaList;
+        mediaList.emplace_back(
+            libjami::MediaMap {{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, mainCall->externalSdp()}});
+        return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+    }
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
     return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
@@ -893,15 +900,23 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 
     sdp.setPublishedIP(addrSdp);
 
-    auto mediaAttrList = call->getMediaAttributeList();
-    if (mediaAttrList.empty()) {
-        JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
-        return;
-    }
+    if (call->hasExternalMedia()) {
+        // The offer is provided by an external media endpoint.
+        if (not sdp.createOfferFromExternalSdp(call->externalSdp())) {
+            JAMI_ERROR("[call:{}] Unable to use the external SDP offer", call->getCallId());
+            return;
+        }
+    } else {
+        auto mediaAttrList = call->getMediaAttributeList();
+        if (mediaAttrList.empty()) {
+            JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
+            return;
+        }
 
-    if (not sdp.createOffer(mediaAttrList)) {
-        JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
-        return;
+        if (not sdp.createOffer(mediaAttrList)) {
+            JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
+            return;
+        }
     }
 
     // Note: pj_ice_strans_create can call onComplete in the same thread
@@ -1217,28 +1232,19 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    TimePoint received,
-                                                    TimePoint invited) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               TimePoint received,
+               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void

@@ -172,9 +172,19 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     sdp_->setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
 #endif
 
-    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    // Detect an SDP session provided by an external media endpoint. In that
+    // case the call media is delegated: no local ICE/RTP is created.
+    std::vector<MediaAttribute> mediaAttrList;
+    if (mediaList.size() == 1 and mediaList.front().count(libjami::Media::MediaAttributeKey::EXTERNAL_SDP)
+        and not mediaList.front().at(libjami::Media::MediaAttributeKey::EXTERNAL_SDP).empty()) {
+        JAMI_LOG("[call:{}] Media delegated to an external endpoint", getCallId());
+        externalSdp_ = mediaList.front().at(libjami::Media::MediaAttributeKey::EXTERNAL_SDP);
+        enableIce_ = false;
+    } else {
+        mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    }
 
-    if (mediaAttrList.size() == 0) {
+    if (mediaAttrList.size() == 0 and not hasExternalMedia()) {
         if (type_ == Call::CallType::INCOMING) {
             // Handle incoming call without media offer.
             JAMI_WARNING("[call:{}] No media offered in the incoming invite. An offer will be provided in "
@@ -587,7 +597,9 @@ SIPCall::remoteOfferSupportsBundle() const
         return false;
 
     auto* remoteSession = sdp_->getRemoteSdpSession();
-    if (not remoteSession || remoteSession->media_count < 2)
+    // Note: a BUNDLE group with a single media is valid (RFC 9143), e.g. an
+    // audio-only WebRTC offer.
+    if (not remoteSession)
         return false;
 
     for (unsigned i = 0; i < remoteSession->attr_count; ++i) {
@@ -980,6 +992,14 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         return;
     }
 
+    if (mediaList.size() == 1) {
+        const auto it = mediaList.front().find(libjami::Media::MediaAttributeKey::EXTERNAL_SDP);
+        if (it != mediaList.front().end() and not it->second.empty()) {
+            answerWithExternalSdp(it->second);
+            return;
+        }
+    }
+
     auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     if (newMediaAttrList.empty() and rtpStreams_.empty()) {
@@ -1094,6 +1114,93 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     }
 
     setState(CallState::ACTIVE, ConnectionState::CONNECTED);
+}
+
+void
+SIPCall::answerWithExternalSdp(const std::string& sdp)
+{
+    JAMI_LOG("[call:{}] Answering with an external SDP session", getCallId());
+
+    auto account = getSIPAccount();
+    if (not account) {
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
+        return;
+    }
+
+    externalSdp_ = sdp;
+    enableIce_ = false;
+    rtpStreams_.clear();
+
+    if (not sdp_->setLocalAnswerFromExternalSdp(sdp)) {
+        JAMI_ERROR("[call:{}] Unable to use the external SDP answer", getCallId());
+        return;
+    }
+
+    if (!inviteSession_->last_answer)
+        throw std::runtime_error("Should only be called for initial answer");
+
+    // Set the SIP final answer (200 OK).
+    pjsip_tx_data* tdata;
+    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata) != PJ_SUCCESS)
+        throw std::runtime_error("Unable to init invite request answer (200 OK)");
+
+    // pjsip_inv_answer attaches the pjmedia-negotiated local answer to the
+    // response. That negotiation rewrites (and mangles) WebRTC codec lines
+    // (e.g. it drops payload types while keeping their rtcp-fb attributes), so
+    // send the verbatim external answer instead.
+    {
+        pj_str_t type = CONST_PJ_STR("application");
+        pj_str_t subtype = CONST_PJ_STR("sdp");
+        pj_str_t content {const_cast<char*>(sdp.data()), (pj_ssize_t) sdp.size()};
+        tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
+    }
+
+    if (contactHeader_.empty()) {
+        throw std::runtime_error("Unable to answer with an invalid contact header");
+    }
+
+    sip_utils::addContactHeader(contactHeader_, tdata);
+    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
+
+    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
+        setInviteSession();
+        throw std::runtime_error("Unable to send invite request answer (200 OK)");
+    }
+
+    setState(CallState::ACTIVE, ConnectionState::CONNECTED);
+}
+
+void
+SIPCall::reportExternalRemoteAnswer(std::string sdp)
+{
+    std::lock_guard lk {callMutex_};
+    externalRemoteSdp_ = std::move(sdp);
+    emitRemoteSdp();
+}
+
+void
+SIPCall::emitRemoteSdp() const
+{
+    std::string sdpStr;
+    if (hasExternalMedia() and not externalRemoteSdp_.empty()) {
+        // The media is delegated to an external endpoint: report the raw
+        // remote SDP received on the wire. The pjmedia negotiator rewrites
+        // WebRTC codec lines (e.g. it drops payload types while keeping their
+        // rtcp-fb attributes), producing an SDP that the endpoint rejects.
+        sdpStr = externalRemoteSdp_;
+    } else {
+        const auto* session = sdp_->getActiveRemoteSdpSession();
+        if (not session)
+            session = sdp_->getRemoteSdpSession();
+        sdpStr = Sdp::toString(session);
+    }
+    if (sdpStr.empty()) {
+        JAMI_WARNING("[call:{}] No remote SDP session to report", getCallId());
+        return;
+    }
+    // Notify using the parent Id if it's a subcall.
+    auto callId = isSubcall() ? parent_->getCallId() : getCallId();
+    emitSignal<libjami::CallSignal::RemoteSdpReceived>(getAccountId(), callId, sdpStr);
 }
 
 void
@@ -2930,6 +3037,19 @@ SIPCall::onMediaNegotiationComplete()
                 return;
             }
 
+            if (this_->hasExternalMedia()) {
+                // The media is delegated to an external endpoint: report the
+                // remote SDP to the API client instead of starting local media.
+                // For an outgoing call, the verbatim remote answer is reported
+                // from the SIP transaction callback (transaction_state_changed_cb):
+                // the pjmedia negotiator rewrites (and mangles) WebRTC codec
+                // lines, so the negotiated session must not be used here.
+                if (this_->isIncoming())
+                    this_->emitRemoteSdp();
+                this_->reportMediaNegotiationStatus();
+                return;
+            }
+
             // This method is called to report media negotiation (SDP) for initial
             // invite or subsequent invites (re-invite).
             // If ICE is negotiated, the media update will be handled in the
@@ -3523,6 +3643,10 @@ SIPCall::setActiveMediaStream(const std::string& accountUri,
 void
 SIPCall::setRotation(int streamIdx, int rotation)
 {
+    if (not externalSdp_.empty())
+        emitSignal<libjami::CallSignal::VideoOrientationChanged>(
+            getAccountId(), getCallId(), streamIdx, rotation);
+
     // Retrigger on another thread to avoid to lock PJSIP
     dht::ThreadPool::io().run([w = weak(), streamIdx, rotation] {
         if (auto shared = w.lock()) {

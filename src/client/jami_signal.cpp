@@ -26,6 +26,7 @@ getSignalHandlers()
         /* Call */
         exported_callback<libjami::CallSignal::StateChange>(),
         exported_callback<libjami::CallSignal::TransferFailed>(),
+        exported_callback<libjami::CallSignal::RemoteSdpReceived>(),
         exported_callback<libjami::CallSignal::TransferSucceeded>(),
         exported_callback<libjami::CallSignal::RecordPlaybackStopped>(),
         exported_callback<libjami::CallSignal::VoiceMailNotify>(),
@@ -42,6 +43,7 @@ getSignalHandlers()
         exported_callback<libjami::CallSignal::PeerHold>(),
         exported_callback<libjami::CallSignal::VideoMuted>(),
         exported_callback<libjami::CallSignal::AudioMuted>(),
+        exported_callback<libjami::CallSignal::VideoOrientationChanged>(),
         exported_callback<libjami::CallSignal::ConnectionUpdate>(),
         exported_callback<libjami::CallSignal::OnConferenceInfosUpdated>(),
         exported_callback<libjami::CallSignal::RemoteRecordingChanged>(),
