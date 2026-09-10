@@ -26,6 +26,9 @@
 #include "media/media_decoder.h"
 #include "media/media_device.h"
 #include "media/media_io_handle.h"
+#ifdef ENABLE_HWACCEL
+#include "media/video/accel.h"
+#endif
 
 #include "../../test_runner.h"
 
@@ -33,7 +36,6 @@
 #include <cerrno>
 #include <ctime>
 #include <string_view>
-#include <vector>
 
 namespace {
 
@@ -139,6 +141,11 @@ __wrap_nanosleep(const timespec* requested, timespec* remaining)
 }
 #endif
 
+#include <algorithm>
+#include <cstdlib>
+#include <fstream>
+#include <vector>
+
 namespace jami {
 namespace test {
 
@@ -169,6 +176,8 @@ private:
     void checkV4L2NonBlocking(const char* format, unsigned attempts);
     void checkV4L2Pacing(const char* format, unsigned rate, bool receivedFrame, bool pastDeadline);
 #endif
+    void testVideoResolutionChangeCallback();
+    void testVideoToolboxDecodeResolutionChange();
 
     CPPUNIT_TEST_SUITE(MediaDecoderTest);
     CPPUNIT_TEST(testUnsetPixelFormat);
@@ -187,15 +196,119 @@ private:
     CPPUNIT_TEST(testV4L2HighRatePacing);
     CPPUNIT_TEST(testNonV4L2PacingUnchanged);
 #endif
+    CPPUNIT_TEST(testVideoResolutionChangeCallback);
+    CPPUNIT_TEST(testVideoToolboxDecodeResolutionChange);
     CPPUNIT_TEST_SUITE_END();
 
     void writeWav(); // writes a minimal wav file to test decoding
+    bool writeH264ResolutionChangeFile();
 
     std::unique_ptr<MediaDecoder> decoder_;
     std::string filename_ = "test.wav";
+    std::string videoFilename_ = "test_resolution_change.h264";
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaDecoderTest, MediaDecoderTest::name());
+
+static AVFrame*
+getVideoFrame(int width, int height, int frameIndex)
+{
+    AVFrame* frame = av_frame_alloc();
+    if (!frame)
+        return nullptr;
+
+    frame->format = AV_PIX_FMT_YUV420P;
+    frame->width = width;
+    frame->height = height;
+
+    if (av_frame_get_buffer(frame, 32) < 0) {
+        av_frame_free(&frame);
+        return nullptr;
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++)
+            frame->data[0][y * frame->linesize[0] + x] = x + y + frameIndex * 3;
+    }
+
+    for (int y = 0; y < height / 2; y++) {
+        for (int x = 0; x < width / 2; x++) {
+            frame->data[1][y * frame->linesize[1] + x] = 128 + y + frameIndex * 2;
+            frame->data[2][y * frame->linesize[2] + x] = 64 + x + frameIndex * 5;
+        }
+    }
+
+    return frame;
+}
+
+static bool
+writePendingPackets(AVCodecContext* encoderCtx, std::ofstream& output)
+{
+    AVPacket* packet = av_packet_alloc();
+    if (!packet)
+        return false;
+
+    bool success = true;
+    while (true) {
+        const auto ret = avcodec_receive_packet(encoderCtx, packet);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            break;
+        if (ret < 0) {
+            success = false;
+            break;
+        }
+        output.write(reinterpret_cast<const char*>(packet->data), packet->size);
+        success = success && output.good();
+        av_packet_unref(packet);
+    }
+
+    av_packet_free(&packet);
+    return success;
+}
+
+static bool
+writeH264Segment(std::ofstream& output, const AVCodec* codec, int width, int height, int startPts)
+{
+    AVCodecContext* encoderCtx = avcodec_alloc_context3(codec);
+    if (!encoderCtx)
+        return false;
+
+    encoderCtx->width = width;
+    encoderCtx->height = height;
+    encoderCtx->time_base = {1, 30};
+    encoderCtx->framerate = {30, 1};
+    encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+    encoderCtx->bit_rate = 400000;
+    encoderCtx->gop_size = 1;
+    encoderCtx->max_b_frames = 0;
+    av_opt_set(encoderCtx->priv_data, "preset", "ultrafast", 0);
+    av_opt_set(encoderCtx->priv_data, "tune", "zerolatency", 0);
+    av_opt_set(encoderCtx->priv_data, "x264-params", "repeat-headers=1:annexb=1", 0);
+
+    if (avcodec_open2(encoderCtx, codec, nullptr) < 0) {
+        avcodec_free_context(&encoderCtx);
+        return false;
+    }
+
+    bool success = true;
+    for (int i = 0; i < 8 && success; ++i) {
+        AVFrame* frame = getVideoFrame(width, height, i);
+        if (!frame) {
+            success = false;
+            break;
+        }
+        frame->pts = startPts + i;
+        success = avcodec_send_frame(encoderCtx, frame) >= 0;
+        av_frame_free(&frame);
+        success = success && writePendingPackets(encoderCtx, output);
+    }
+
+    if (success)
+        success = avcodec_send_frame(encoderCtx, nullptr) >= 0 && writePendingPackets(encoderCtx, output);
+
+    avcodec_free_context(&encoderCtx);
+    return success;
+}
 
 void
 MediaDecoderTest::setUp()
@@ -211,6 +324,7 @@ void
 MediaDecoderTest::tearDown()
 {
     dhtnet::fileutils::remove(filename_);
+    dhtnet::fileutils::remove(videoFilename_);
     libjami::fini();
 }
 
@@ -461,6 +575,116 @@ MediaDecoderTest::testAudioFile()
         }
     }
     CPPUNIT_ASSERT(done);
+}
+
+void
+MediaDecoderTest::testVideoResolutionChangeCallback()
+{
+    if (!avcodec_find_decoder(AV_CODEC_ID_H264) || !writeH264ResolutionChangeFile())
+        return;
+
+    std::vector<std::pair<int, int>> resolutions;
+    decoder_.reset(new MediaDecoder);
+#ifdef ENABLE_HWACCEL
+    decoder_->enableAccel(false);
+#endif
+    decoder_->setResolutionChangedCallback(
+        [&resolutions](int width, int height) { resolutions.emplace_back(width, height); });
+
+    DeviceParams dev;
+    dev.input = videoFilename_;
+    dev.format = "h264";
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupVideo() >= 0);
+
+    bool done = false;
+    int guard = 0;
+    while (!done && guard++ < 200) {
+        switch (decoder_->decode()) {
+        case MediaDemuxer::Status::ReadError:
+            CPPUNIT_ASSERT_MESSAGE("Decode error", false);
+            done = true;
+            break;
+        case MediaDemuxer::Status::EndOfFile:
+            done = true;
+            break;
+        case MediaDemuxer::Status::Success:
+        default:
+            break;
+        }
+    }
+
+    CPPUNIT_ASSERT(done);
+    CPPUNIT_ASSERT(std::find(resolutions.begin(), resolutions.end(), std::pair<int, int> {320, 240})
+                   != resolutions.end());
+}
+
+void
+MediaDecoderTest::testVideoToolboxDecodeResolutionChange()
+{
+#ifndef ENABLE_HWACCEL
+    return;
+#else
+    if (!std::getenv("JAMI_TEST_HW_DECODERS") || !avcodec_find_decoder(AV_CODEC_ID_H264)
+        || !writeH264ResolutionChangeFile())
+        return;
+
+    auto compatibleAccel = video::HardwareAccel::getCompatibleAccel(AV_CODEC_ID_H264, 160, 120, CODEC_DECODER);
+    auto videoToolbox = std::find_if(compatibleAccel.begin(), compatibleAccel.end(), [](const auto& accel) {
+        return accel.getName() == "videotoolbox";
+    });
+    if (videoToolbox == compatibleAccel.end())
+        return;
+
+    std::vector<std::pair<int, int>> resolutions;
+    decoder_.reset(new MediaDecoder);
+    decoder_->enableAccel(true);
+    decoder_->setResolutionChangedCallback(
+        [&resolutions](int width, int height) { resolutions.emplace_back(width, height); });
+
+    DeviceParams dev;
+    dev.input = videoFilename_;
+    dev.format = "h264";
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupVideo() >= 0);
+    if (decoder_->getPixelFormat() != videoToolbox->getFormat())
+        return;
+
+    bool done = false;
+    int guard = 0;
+    while (!done && guard++ < 200) {
+        switch (decoder_->decode()) {
+        case MediaDemuxer::Status::ReadError:
+            CPPUNIT_ASSERT_MESSAGE("Decode error", false);
+            done = true;
+            break;
+        case MediaDemuxer::Status::EndOfFile:
+            done = true;
+            break;
+        case MediaDemuxer::Status::Success:
+        default:
+            break;
+        }
+    }
+
+    CPPUNIT_ASSERT(done);
+    CPPUNIT_ASSERT(std::find(resolutions.begin(), resolutions.end(), std::pair<int, int> {320, 240})
+                   != resolutions.end());
+#endif
+}
+
+bool
+MediaDecoderTest::writeH264ResolutionChangeFile()
+{
+    const auto* codec = avcodec_find_encoder_by_name("libx264");
+    if (!codec)
+        return false;
+
+    std::ofstream output(videoFilename_, std::ios::binary | std::ios::trunc);
+    if (!output)
+        return false;
+
+    return writeH264Segment(output, codec, 160, 120, 0) && writeH264Segment(output, codec, 320, 240, 100);
 }
 
 // write bytes to file using native endianness

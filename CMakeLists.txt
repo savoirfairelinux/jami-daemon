@@ -1116,6 +1116,8 @@ else()
         add_test_executable(rtcp_keyframe test/unitTest/media/test_rtcp_keyframe.cpp)
         add_test_executable(rtp_pacer test/unitTest/media/test_rtp_pacer.cpp)
         add_test_executable(transport_cc_controller test/unitTest/media/test_transport_cc_controller.cpp)
+        add_test_executable(transport_cc test/unitTest/media/test_transport_cc.cpp)
+        add_test_executable(congestion_control test/unitTest/media/test_congestion_control.cpp)
         add_test_executable(linkdevice test/unitTest/linkdevice/linkdevice.cpp)
 
         if (JAMI_VIDEO)

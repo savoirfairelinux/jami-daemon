@@ -249,6 +249,9 @@ struct MediaDescription
     unsigned payload_type {};
     std::string mid {};
     unsigned mid_rtp_ext_id {0};
+    unsigned transport_cc_rtp_ext_id {0};
+    bool rtcp_fb_transport_cc {false};
+    bool rtcp_fb_goog_remb {false};
     bool rtcp_fb_nack_pli {false};
     bool rtcp_fb_ccm_fir {false};
     std::string receiving_sdp {};

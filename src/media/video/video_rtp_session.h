@@ -29,6 +29,8 @@ namespace jami {
 class CongestionControl;
 class Conference;
 class MediaRecorder;
+class TransportCcController;
+struct TransportCcControllerEstimate;
 } // namespace jami
 
 namespace jami {
@@ -157,14 +159,20 @@ private:
 
     bool check_RCTP_Info_RR(RTCPInfo&);
     bool check_RCTP_Info_REMB(uint64_t*);
+    bool check_RTCP_Info_TCC(uint64_t*, RTCPInfo&);
     void adaptQualityAndBitrate();
     void setupVideoBitrateInfo();
+    size_t conferenceSenderCount() const;
+    void applyConferenceBitrateLimit();
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
     void delayMonitor(int gradient, int deltaT);
     void dropProcessing(RTCPInfo* rtcpi);
-    void delayProcessing(int br);
+    void delayProcessing(uint64_t bitrateBps);
     void setNewBitrate(unsigned int newBR);
+    uint64_t clampVideoBitrateBps(uint64_t bitrateBps) const;
+    void sendReceiverEstimatedMaxBitrate(uint64_t bitrateBps);
+    void emitMediaQualityState(const TransportCcControllerEstimate& estimate, uint64_t targetBitrateBps) const;
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
@@ -194,9 +202,11 @@ private:
     time_point lastPliSent_ {time_point::min()};
     time_point lastKeyframeRequestReceived_ {time_point::min()};
 
+    uint64_t receiverEstimatedBitrateBps_ {0};
     unsigned remb_dec_cnt_ {0};
 
     std::unique_ptr<CongestionControl> cc;
+    std::unique_ptr<TransportCcController> transportCcController_;
 
     std::function<void(void)> cbKeyFrameRequest_;
 

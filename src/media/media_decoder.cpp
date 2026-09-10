@@ -747,6 +747,20 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     auto* frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
+    if (ret == AVERROR_INPUT_CHANGED || ret == AVERROR_OUTPUT_CHANGED) {
+#ifdef ENABLE_HWACCEL
+        if (accel_) {
+            JAMI_WARNING("Decoder input changed with hardware acceleration, falling back to software");
+            fallback_ = true;
+            accel_.reset();
+            avcodec_flush_buffers(decoderCtx_);
+            setupStream();
+            return DecodeStatus::FallBack;
+        }
+#endif
+        avcodec_flush_buffers(decoderCtx_);
+        return DecodeStatus::Success;
+    }
     // time_base is not set in AVCodecContext for decoding
     // fail to set it causes pts to be incorrectly computed down in the function
     if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
@@ -757,14 +771,6 @@ MediaDecoder::decode(AVPacket& packet)
         decoderCtx_->time_base.den = decoderCtx_->sample_rate;
     }
     frame->time_base = decoderCtx_->time_base;
-    if (resolutionChangedCallback_) {
-        if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
-            JAMI_LOG("Resolution changed from {}x{} to {}x{}", width_, height_, decoderCtx_->width, decoderCtx_->height);
-            width_ = decoderCtx_->width;
-            height_ = decoderCtx_->height;
-            resolutionChangedCallback_(width_, height_);
-        }
-    }
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
         return DecodeStatus::DecodeError;
     }
@@ -773,6 +779,16 @@ MediaDecoder::decode(AVPacket& packet)
 
     if (frameFinished) {
         if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
+            if (resolutionChangedCallback_) {
+                const auto decodedWidth = frame->width > 0 ? frame->width : decoderCtx_->width;
+                const auto decodedHeight = frame->height > 0 ? frame->height : decoderCtx_->height;
+                if (decodedWidth != width_ or decodedHeight != height_) {
+                    JAMI_LOG("Resolution changed from {}x{} to {}x{}", width_, height_, decodedWidth, decodedHeight);
+                    width_ = decodedWidth;
+                    height_ = decodedHeight;
+                    resolutionChangedCallback_(width_, height_);
+                }
+            }
             frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         } else {
             // It's possible (albeit rare) for avcodec_receive_frame to return a frame with
