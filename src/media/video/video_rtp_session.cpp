@@ -44,6 +44,7 @@ namespace video {
 using std::string;
 
 static constexpr unsigned MAX_REMB_DEC {1};
+static constexpr auto MIN_KEYFRAME_FEEDBACK_INTERVAL {std::chrono::milliseconds(500)};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
@@ -126,6 +127,50 @@ void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
     cbKeyFrameRequest_ = std::move(cb);
+}
+
+bool
+VideoRtpSession::sendRtcpPli()
+{
+    if (not(send_.rtcp_fb_nack_pli and receive_.rtcp_fb_nack_pli) or not socketPair_)
+        return false;
+
+    const auto remoteSsrc = socketPair_->getRemoteSsrc();
+    if (not remoteSsrc)
+        return false;
+
+    const auto now = clock::now();
+    if (withinInterval(now, lastPliSent_, MIN_KEYFRAME_FEEDBACK_INTERVAL))
+        return true; // Negotiated and recently requested; nothing more to do.
+    lastPliSent_ = now;
+
+    const auto packet = SocketPair::createRtcpPli(socketPair_->getLocalSsrc().value_or(0), *remoteSsrc);
+    JAMI_LOG("[{}] Sending RTCP PLI to request a keyframe", fmt::ptr(this));
+    return socketPair_->writeRtcpData(packet.data(), static_cast<int>(packet.size())) > 0;
+}
+
+void
+VideoRtpSession::requestPeerKeyframe()
+{
+    if (sendRtcpPli())
+        return;
+    if (cbKeyFrameRequest_)
+        cbKeyFrameRequest_();
+}
+
+void
+VideoRtpSession::onKeyframeRequestReceived()
+{
+    const auto now = clock::now();
+    if (withinInterval(now, lastKeyframeRequestReceived_, MIN_KEYFRAME_FEEDBACK_INTERVAL))
+        return;
+    lastKeyframeRequestReceived_ = now;
+
+    JAMI_LOG("[{}] Keyframe requested over RTCP (PLI/FIR)", fmt::ptr(this));
+    asio::post(*Manager::instance().ioContext(), [w = weak_from_this()]() {
+        if (auto shared = w.lock())
+            shared->forceKeyFrame();
+    });
 }
 
 void
@@ -238,8 +283,10 @@ VideoRtpSession::startSender()
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
-            if (socketPair_)
-                socketPair_->setPacketLossCallback([this]() { cbKeyFrameRequest_(); });
+            if (socketPair_) {
+                socketPair_->setPacketLossCallback([this]() { requestPeerKeyframe(); });
+                socketPair_->setKeyframeRequestCallback([this]() { onKeyframeRequestReceived(); });
+            }
 
         } catch (const MediaEncoderException& e) {
             JAMI_ERROR("{}", e.what());
@@ -414,6 +461,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 {
     dtlsAbort_->store(false);
     std::lock_guard lock(mutex_);
+    dtlsAbort_->store(false);
 
     if (not send_.enabled and not receive_.enabled) {
         stop();
@@ -425,7 +473,20 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         DtlsSrtpContext dtlsSrtp {};
         const auto rtcpMux = isRtcpMuxNegotiated();
 
-        if (rtp_sock) {
+        if (bundleSocketContext_) {
+            if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
+                dtlsSrtp = SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
+                                                               receive_.dtls_setup,
+                                                               send_.dtls_fingerprint_type,
+                                                               send_.dtls_fingerprint,
+                                                               dtlsCertificate_,
+                                                               dtlsPrivateKey_,
+                                                               dtlsAbort_);
+                hasDtlsSrtp = true;
+            }
+            socketPair_.reset(new SocketPair(bundleSocketContext_, rtcpMux, bundleRtpPayloadType_));
+            socketPair_->setDefaultRemoteAddresses(send_.addr, getRemoteRtcpAddr());
+        } else if (rtp_sock) {
             if (send_.addr) {
                 rtp_sock->setDefaultRemoteAddress(send_.addr);
             }
@@ -437,12 +498,12 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
                 dtlsSrtp = negotiateDtlsSrtp(*rtp_sock,
-                                            receive_.dtls_setup,
-                                            send_.dtls_fingerprint_type,
-                                            send_.dtls_fingerprint,
-                                            dtlsCertificate_,
-                                            dtlsPrivateKey_,
-                                            dtlsAbort_);
+                                             receive_.dtls_setup,
+                                             send_.dtls_fingerprint_type,
+                                             send_.dtls_fingerprint,
+                                             dtlsCertificate_,
+                                             dtlsPrivateKey_,
+                                             dtlsAbort_);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux));
@@ -450,23 +511,24 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             if (send_.key_exchange == KeyExchangeProtocol::DTLS || receive_.key_exchange == KeyExchangeProtocol::DTLS)
                 throw std::runtime_error("DTLS-SRTP currently requires ICE media sockets");
 
-            socketPair_.reset(new SocketPair(send_.addr,
-                                             getRemoteRtcpAddr(),
-                                             receive_.addr.getPort(),
-                                             getLocalRtcpPort(),
-                                             rtcpMux));
+            socketPair_.reset(
+                new SocketPair(send_.addr, getRemoteRtcpAddr(), receive_.addr.getPort(), getLocalRtcpPort(), rtcpMux));
         }
 
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
 
         socketPair_->setRtpDelayCallback([&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
+        configureBundleSocketPair();
 
         if (hasDtlsSrtp) {
             socketPair_->createSRTP(dtlsSrtp.suite.c_str(),
                                     dtlsSrtp.outboundKeyInfo.c_str(),
                                     dtlsSrtp.suite.c_str(),
                                     dtlsSrtp.inboundKeyInfo.c_str());
+            // WebRTC endpoints require SRTCP (RFC 5764); legacy SDES peers
+            // exchange plaintext RTCP.
+            socketPair_->setRtcpProtection(true);
         } else if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
                                     receive_.crypto.getSrtpKeyInfo().c_str(),
