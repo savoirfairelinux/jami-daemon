@@ -52,6 +52,10 @@ constexpr static char MUTED[] = "MUTED";           // bool
 constexpr static char SOURCE[] = "SOURCE";         // string
 constexpr static char LABEL[] = "LABEL";           // string
 constexpr static char HOLD[] = "HOLD";             // bool
+// SDP session provided by an external media endpoint (e.g. a WebRTC
+// browser). When present, the daemon delegates the call media to that
+// endpoint and only performs the signaling.
+constexpr static char EXTERNAL_SDP[] = "EXTERNAL_SDP"; // string
 } // namespace MediaAttributeKey
 
 namespace MediaAttributeValue {

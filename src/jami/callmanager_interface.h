@@ -60,6 +60,16 @@ LIBJAMI_PUBLIC std::vector<std::string> getCallList(const std::string& accountId
 LIBJAMI_PUBLIC bool acceptWithMedia(const std::string& accountId,
                                     const std::string& callId,
                                     const std::vector<libjami::MediaMap>& mediaList);
+
+/* External media endpoint APIs. The SDP session is provided/consumed by the
+ * API caller (e.g. a WebRTC browser endpoint): the daemon performs the call
+ * signaling but does not run local ICE/RTP for the call media. */
+LIBJAMI_PUBLIC std::string placeCallWithExternalMedia(const std::string& accountId,
+                                                      const std::string& to,
+                                                      const std::string& sdpOffer);
+LIBJAMI_PUBLIC bool acceptWithExternalMedia(const std::string& accountId,
+                                            const std::string& callId,
+                                            const std::string& sdpAnswer);
 LIBJAMI_PUBLIC bool requestMediaChange(const std::string& accountId,
                                        const std::string& callId,
                                        const std::vector<libjami::MediaMap>& mediaList);
@@ -191,6 +201,12 @@ struct LIBJAMI_PUBLIC CallSignal
     {
         constexpr static const char* name = "TransferFailed";
         using cb_type = void(void);
+    };
+    struct LIBJAMI_PUBLIC RemoteSdpReceived
+    {
+        constexpr static const char* name = "RemoteSdpReceived";
+        // accountId, callId, sdp
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC TransferSucceeded
     {
