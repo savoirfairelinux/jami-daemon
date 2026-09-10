@@ -133,12 +133,15 @@ constexpr std::array<std::string_view, 2> SDES_OFFER_CRYPTO_SUITES {
     "AES_CM_128_HMAC_SHA1_80",
 };
 
+constexpr std::string_view MID_RTP_EXTENSION_URI {"urn:ietf:params:rtp-hdrext:sdes:mid"};
+constexpr unsigned DEFAULT_MID_RTP_EXTENSION_ID {1};
+
 const CryptoSuiteDefinition*
 findCryptoSuiteDefinition(std::string_view cryptoSuite)
 {
-    const auto it = std::find_if(CryptoSuites.begin(),
-                                 CryptoSuites.end(),
-                                 [cryptoSuite](const auto& suite) { return suite.name == cryptoSuite; });
+    const auto it = std::find_if(CryptoSuites.begin(), CryptoSuites.end(), [cryptoSuite](const auto& suite) {
+        return suite.name == cryptoSuite;
+    });
     return it != CryptoSuites.end() ? &*it : nullptr;
 }
 
@@ -249,6 +252,210 @@ getDtlsSetup(const pjmedia_sdp_session* session, unsigned mediaIndex)
     return DtlsSetup::NONE;
 }
 
+std::string
+getMidValue(const pjmedia_sdp_media* media)
+{
+    if (not media)
+        return {};
+
+    if (auto* midAttr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "mid", nullptr); midAttr)
+        return {midAttr->value.ptr, static_cast<size_t>(midAttr->value.slen)};
+
+    return {};
+}
+
+bool
+hasBundleGroup(const pjmedia_sdp_session* session)
+{
+    if (not session)
+        return false;
+
+    for (unsigned i = 0; i < session->attr_count; ++i) {
+        auto* attr = session->attr[i];
+        if (not attr || pj_stricmp2(&attr->name, "group") != 0)
+            continue;
+
+        const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
+        if (value.rfind("BUNDLE ", 0) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+unsigned
+findExtmapId(unsigned attrCount, pjmedia_sdp_attr* const* attrs, std::string_view uri)
+{
+    for (unsigned i = 0; i < attrCount; ++i) {
+        auto* attr = attrs[i];
+        if (not attr || pj_stricmp2(&attr->name, "extmap") != 0)
+            continue;
+
+        const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
+        const auto separator = value.find(' ');
+        if (separator == std::string_view::npos)
+            continue;
+
+        const auto idToken = value.substr(0, separator);
+        const auto slash = idToken.find('/');
+        const auto numericId = idToken.substr(0, slash);
+
+        unsigned extId = 0;
+        for (const auto ch : numericId) {
+            if (!std::isdigit(static_cast<unsigned char>(ch))) {
+                extId = 0;
+                break;
+            }
+            extId = (extId * 10) + static_cast<unsigned>(ch - '0');
+        }
+
+        if (extId == 0)
+            continue;
+
+        const auto mappedUri = value.substr(separator + 1);
+        const auto uriSeparator = mappedUri.find(' ');
+        if (mappedUri.substr(0, uriSeparator) == uri)
+            return extId;
+    }
+
+    return 0;
+}
+
+unsigned
+getExtmapId(const pjmedia_sdp_session* session, unsigned mediaIndex, std::string_view uri)
+{
+    if (not session)
+        return 0;
+
+    if (mediaIndex < session->media_count) {
+        if (const auto extId = findExtmapId(session->media[mediaIndex]->attr_count,
+                                            session->media[mediaIndex]->attr,
+                                            uri)) {
+            return extId;
+        }
+    }
+
+    return findExtmapId(session->attr_count, session->attr, uri);
+}
+
+unsigned
+getBundleExtmapId(const pjmedia_sdp_session* session, std::string_view uri)
+{
+    if (not session)
+        return 0;
+
+    unsigned bundleExtId = 0;
+    for (unsigned i = 0; i < session->media_count; ++i) {
+        const auto extId = getExtmapId(session, i, uri);
+        if (extId == 0)
+            continue;
+
+        if (bundleExtId == 0) {
+            bundleExtId = extId;
+            continue;
+        }
+
+        if (bundleExtId != extId) {
+            JAMI_WARNING("Ignoring inconsistent extmap id {} for {} in BUNDLE group, using {}", extId, uri, bundleExtId);
+            return bundleExtId;
+        }
+    }
+
+    return bundleExtId;
+}
+
+bool
+parsePayloadTypeToken(std::string_view token, unsigned payloadType)
+{
+    if (token == "*")
+        return true;
+    if (token.empty())
+        return false;
+
+    unsigned parsedPayloadType = 0;
+    for (const auto character : token) {
+        if (!std::isdigit(static_cast<unsigned char>(character)))
+            return false;
+        parsedPayloadType = (parsedPayloadType * 10) + static_cast<unsigned>(character - '0');
+    }
+
+    return parsedPayloadType == payloadType;
+}
+
+bool
+findRtcpFeedback(unsigned attrCount, pjmedia_sdp_attr* const* attrs, unsigned payloadType, std::string_view feedbackType)
+{
+    for (unsigned attrIndex = 0; attrIndex < attrCount; ++attrIndex) {
+        auto* attr = attrs[attrIndex];
+        if (not attr || pj_stricmp2(&attr->name, "rtcp-fb") != 0)
+            continue;
+
+        const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
+        const auto separator = value.find(' ');
+        if (separator == std::string_view::npos)
+            continue;
+
+        if (!parsePayloadTypeToken(value.substr(0, separator), payloadType))
+            continue;
+
+        const auto feedbackStart = value.find_first_not_of(' ', separator + 1);
+        if (feedbackStart == std::string_view::npos)
+            continue;
+
+        // Match the full feedback value (e.g. "nack pli", "ccm fir") when the
+        // requested type contains a parameter, otherwise match the first token
+        // only (e.g. "transport-cc", plain "nack").
+        const auto feedback = value.substr(feedbackStart);
+        if (feedbackType.find(' ') != std::string_view::npos) {
+            if (feedback == feedbackType)
+                return true;
+            continue;
+        }
+        const auto feedbackSeparator = feedback.find(' ');
+        if (feedback.substr(0, feedbackSeparator) == feedbackType)
+            return true;
+    }
+
+    return false;
+}
+
+bool
+hasRtcpFeedback(const pjmedia_sdp_session* session,
+                unsigned mediaIndex,
+                unsigned payloadType,
+                std::string_view feedbackType)
+{
+    if (not session)
+        return false;
+
+    if (mediaIndex < session->media_count) {
+        if (findRtcpFeedback(session->media[mediaIndex]->attr_count,
+                             session->media[mediaIndex]->attr,
+                             payloadType,
+                             feedbackType)) {
+            return true;
+        }
+    }
+
+    return findRtcpFeedback(session->attr_count, session->attr, payloadType, feedbackType);
+}
+
+bool
+hasAnyRtcpFeedback(const pjmedia_sdp_session* session, unsigned mediaIndex, std::string_view feedbackType)
+{
+    if (not session || mediaIndex >= session->media_count)
+        return false;
+
+    auto* media = session->media[mediaIndex];
+    for (unsigned fmtIndex = 0; fmtIndex < media->desc.fmt_count; ++fmtIndex) {
+        const auto payloadType = pj_strtoul(&media->desc.fmt[fmtIndex]);
+        if (hasRtcpFeedback(session, mediaIndex, payloadType, feedbackType))
+            return true;
+    }
+
+    return false;
+}
+
 } // namespace
 
 void
@@ -278,8 +485,8 @@ Sdp::generateSdesAttribute(std::string_view tag, std::string_view cryptoSuite)
     keyAndSalt.resize(suite->masterKeyLength / 8 + suite->masterSaltLength / 8);
     randomFill(keyAndSalt);
 
-    std::string crypto_attr = std::string(tag) + " " + std::string(cryptoSuite) + " inline:"
-                            + base64::encode(keyAndSalt);
+    std::string crypto_attr = std::string(tag) + " " + std::string(cryptoSuite)
+                              + " inline:" + base64::encode(keyAndSalt);
     pj_str_t val {sip_utils::CONST_PJ_STR(crypto_attr)};
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
 }
@@ -413,6 +620,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 {
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
+    const auto useBundle = shouldUseBundle();
 
     JAMI_LOG("Add media description [{}]", mediaAttr.toString(true));
 
@@ -439,7 +647,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     // Set the transport protocol of the media
     if (secure) {
         med->desc.transport = secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS
-                                  ? sip_utils::CONST_PJ_STR("UDP/TLS/RTP/SAVP")
+                                  ? sip_utils::CONST_PJ_STR("UDP/TLS/RTP/SAVPF")
                                   : sip_utils::CONST_PJ_STR("RTP/SAVP");
     } else {
         med->desc.transport = sip_utils::CONST_PJ_STR("RTP/AVP");
@@ -458,6 +666,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         if (type == MediaType::MEDIA_AUDIO) {
             auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(audio_codec_list_[i]);
             payload = accountAudioCodec->payloadType;
+            if (useBundle && payload >= 96 && isBundlePayloadTypeUsed(payload))
+                payload = nextBundleDynamicPayloadType(payload);
             enc_name = accountAudioCodec->name;
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
@@ -473,7 +683,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
         } else {
             // FIXME: get this key from header
-            payload = dynamic_payload++;
+            payload = useBundle ? nextBundleDynamicPayloadType(dynamic_payload) : dynamic_payload;
+            dynamic_payload = payload + 1;
             enc_name = video_codec_list_[i]->name;
             rtpmap.clock_rate = 90000;
         }
@@ -497,9 +708,15 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
             const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(video_codec_list_[i]);
-            const auto& profileLevelID = accountVideoCodec->parameters.empty()
+            std::string profileLevelID = accountVideoCodec->parameters.empty()
                                              ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
                                              : accountVideoCodec->parameters;
+            // RFC 6184 5.4: without packetization-mode the single NAL unit
+            // mode (0) is assumed, but our RTP payloader emits FU-A fragments
+            // for NALs larger than the MTU (mode 1 behavior). Advertise mode 1
+            // so strict receivers such as browsers accept fragmented keyframes.
+            if (profileLevelID.find("packetization-mode=") == std::string::npos)
+                profileLevelID += ";packetization-mode=1";
             auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), value.c_str(), NULL);
         }
@@ -527,6 +744,44 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
+    if (useBundle && mediaAttr.enabled_) {
+        auto mid = !mediaAttr.label_.empty() ? mediaAttr.label_ : std::to_string(mediaIndex);
+        if (sdpDirection_ == SdpDirection::ANSWER && remoteSession_ && mediaIndex < remoteSession_->media_count) {
+            if (auto remoteMid = getMidValue(remoteSession_->media[mediaIndex]); not remoteMid.empty())
+                mid = std::move(remoteMid);
+        }
+
+        addMidAttribute(med, mid);
+
+        unsigned midExtmapId = DEFAULT_MID_RTP_EXTENSION_ID;
+        if (sdpDirection_ == SdpDirection::ANSWER) {
+            midExtmapId = hasBundleGroup(remoteSession_)
+                              ? getBundleExtmapId(remoteSession_, MID_RTP_EXTENSION_URI)
+                              : getExtmapId(remoteSession_, mediaIndex, MID_RTP_EXTENSION_URI);
+        }
+
+        if (midExtmapId != 0)
+            addExtmapAttribute(med, midExtmapId, MID_RTP_EXTENSION_URI);
+    }
+
+    if (mediaAttr.enabled_ and direction != DIRECTION_STR[MediaDirection::INACTIVE]) {
+        if (type == MediaType::MEDIA_VIDEO) {
+            // Picture Loss Indication (RFC 4585 6.3.1) and Full Intra Request
+            // (RFC 5104 4.3.1) let a video receiver request a keyframe over
+            // RTCP, as WebRTC endpoints expect.
+            auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER;
+            auto firFeedback = sdpDirection_ != SdpDirection::ANSWER;
+            if (sdpDirection_ == SdpDirection::ANSWER) {
+                pliFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "nack pli");
+                firFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "ccm fir");
+            }
+            if (pliFeedback)
+                addRtcpFeedbackAttribute(med, "*", "nack pli");
+            if (firFeedback)
+                addRtcpFeedbackAttribute(med, "*", "ccm fir");
+        }
+    }
+
     if (secure and sdpDirection_ == SdpDirection::OFFER) {
         if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
             addDtlsAttributes(med, DtlsSetup::ACTPASS);
@@ -548,6 +803,48 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     }
 
     return med;
+}
+
+bool
+Sdp::shouldUseBundle() const
+{
+    if (!bundleEnabled_)
+        return false;
+
+    return sdpDirection_ != SdpDirection::ANSWER || hasBundleGroup(remoteSession_);
+}
+
+bool
+Sdp::isBundlePayloadTypeUsed(unsigned payloadType) const
+{
+    if (payloadType == telephoneEventPayload_)
+        return true;
+
+    if (!shouldUseBundle() || !localSession_)
+        return false;
+
+    for (unsigned mediaIdx = 0; mediaIdx < localSession_->media_count; ++mediaIdx) {
+        auto* media = localSession_->media[mediaIdx];
+        for (unsigned fmtIdx = 0; fmtIdx < media->desc.fmt_count; ++fmtIdx) {
+            if (pj_strtoul(&media->desc.fmt[fmtIdx]) == payloadType)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+unsigned
+Sdp::nextBundleDynamicPayloadType(unsigned startPayloadType) const
+{
+    auto payloadType = std::max(96u, startPayloadType);
+    while (payloadType < 128 && isBundlePayloadTypeUsed(payloadType))
+        ++payloadType;
+
+    if (payloadType >= 128)
+        throw SdpException("No dynamic RTP payload type available for bundled media");
+
+    return payloadType;
 }
 
 void
@@ -575,9 +872,62 @@ Sdp::addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port)
 void
 Sdp::addRTCPMuxAttribute(pjmedia_sdp_media* med)
 {
-    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "rtcp-mux", nullptr))
-        != PJ_SUCCESS) {
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "rtcp-mux", nullptr)) != PJ_SUCCESS) {
         throw SdpException("Unable to add rtcp-mux attribute to media");
+    }
+}
+
+void
+Sdp::addMidAttribute(pjmedia_sdp_media* med, std::string_view mid)
+{
+    const pj_str_t value = sip_utils::CONST_PJ_STR(mid);
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "mid", &value)) != PJ_SUCCESS)
+        throw SdpException("Unable to add mid attribute to media");
+}
+
+void
+Sdp::addExtmapAttribute(pjmedia_sdp_media* med, unsigned id, std::string_view uri)
+{
+    const auto value = fmt::format("{} {}", id, uri);
+    const pj_str_t pjValue = sip_utils::CONST_PJ_STR(value);
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "extmap", &pjValue)) != PJ_SUCCESS) {
+        throw SdpException("Unable to add extmap attribute to media");
+    }
+}
+
+void
+Sdp::addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view feedbackType)
+{
+    const auto value = fmt::format("{} {}", payloadType, feedbackType);
+    const pj_str_t pjValue = sip_utils::CONST_PJ_STR(value);
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "rtcp-fb", &pjValue)) != PJ_SUCCESS) {
+        throw SdpException("Unable to add rtcp-fb attribute to media");
+    }
+}
+
+void
+Sdp::addBundleGroupAttribute()
+{
+    if (!shouldUseBundle() || !localSession_ || localSession_->media_count < 2)
+        return;
+
+    std::string mids {"BUNDLE"};
+    for (unsigned i = 0; i < localSession_->media_count; ++i) {
+        auto* media = localSession_->media[i];
+        auto* midAttr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "mid", nullptr);
+        if (!midAttr)
+            continue;
+
+        mids.append(" ");
+        mids.append(midAttr->value.ptr, midAttr->value.slen);
+    }
+
+    const pj_str_t value = sip_utils::CONST_PJ_STR(mids);
+    if (pjmedia_sdp_attr_add(&localSession_->attr_count,
+                             localSession_->attr,
+                             pjmedia_sdp_attr_create(memPool_.get(), "group", &value))
+        != PJ_SUCCESS) {
+        throw SdpException("Unable to add BUNDLE group attribute to session");
     }
 }
 
@@ -763,6 +1113,8 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
         }
     }
 
+    addBundleGroupAttribute();
+
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERROR("Failed to add medias");
         return false;
@@ -811,6 +1163,8 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
             localSession_->media[localSession_->media_count++] = addMediaDescription(media);
         }
     }
+
+    addBundleGroupAttribute();
 
     for (unsigned i = 0; i < localSession_->media_count and i < remoteSession_->media_count; ++i) {
         auto* localMedia = localSession_->media[i];
@@ -1056,6 +1410,9 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
         descr.direction_ = getMediaDirection(media);
         descr.transport = getMediaTransport(media);
+        descr.mid = getMidValue(media);
+        descr.mid_rtp_ext_id = hasBundleGroup(session) ? getBundleExtmapId(session, MID_RTP_EXTENSION_URI)
+                                                       : getExtmapId(session, i, MID_RTP_EXTENSION_URI);
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
@@ -1093,6 +1450,11 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             break;
         }
 
+        if (descr.enabled) {
+            descr.rtcp_fb_nack_pli = hasRtcpFeedback(session, i, descr.payload_type, "nack pli");
+            descr.rtcp_fb_ccm_fir = hasRtcpFeedback(session, i, descr.payload_type, "ccm fir");
+        }
+
         if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
 
@@ -1114,7 +1476,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             descr.dtls_fingerprint_type = std::move(fingerprintType);
             descr.dtls_fingerprint = std::move(fingerprint);
             descr.dtls_setup = getDtlsSetup(securitySession, i);
-            if (not remote and session == activeLocalSession_ and activeRemoteSession_ and i < activeRemoteSession_->media_count) {
+            if (not remote and session == activeLocalSession_ and activeRemoteSession_
+                and i < activeRemoteSession_->media_count) {
                 descr.dtls_setup = negotiateLocalDtlsSetup(descr.dtls_setup, getDtlsSetup(activeRemoteSession_, i));
             }
             continue;
@@ -1127,7 +1490,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
-        if (not remote and session == activeLocalSession_ and activeRemoteSession_ and i < activeRemoteSession_->media_count) {
+        if (not remote and session == activeLocalSession_ and activeRemoteSession_
+            and i < activeRemoteSession_->media_count) {
             const auto remoteCrypto = getCrypto(activeRemoteSession_->media[i]);
             const auto selectedRemoteCrypto = SdesNegotiator::negotiate(remoteCrypto);
             if (selectedRemoteCrypto) {
@@ -1136,13 +1500,11 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                 // used (e.g. an older Jami hardcodes tag 1), so the local tag
                 // must not take part in the comparison.
                 const auto& remoteSuite = selectedRemoteCrypto.getCryptoSuite();
-                const auto matchingLocalCrypto = std::find_if(
-                    crypto.begin(),
-                    crypto.end(),
-                    [&remoteSuite](const auto& item) {
-                        const auto local = SdesNegotiator::negotiate(std::vector<std::string> {item});
-                        return local and local.getCryptoSuite() == remoteSuite;
-                    });
+                const auto matchingLocalCrypto
+                    = std::find_if(crypto.begin(), crypto.end(), [&remoteSuite](const auto& item) {
+                          const auto local = SdesNegotiator::negotiate(std::vector<std::string> {item});
+                          return local and local.getCryptoSuite() == remoteSuite;
+                      });
                 if (matchingLocalCrypto != crypto.end()) {
                     descr.key_exchange = KeyExchangeProtocol::SDES;
                     descr.crypto = SdesNegotiator::negotiate(std::vector<std::string> {*matchingLocalCrypto});
@@ -1356,7 +1718,7 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
 
         const auto dtlsFingerprint = getDtlsFingerprint(sdpSession, idx);
         mediaAttr.secure_ = (transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty())
-                    || (isDtlsTransport(transp) and not dtlsFingerprint.second.empty());
+                            || (isDtlsTransport(transp) and not dtlsFingerprint.second.empty());
 
         if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
             mediaAttr.label_ = "audio_" + std::to_string(audioIdx++);

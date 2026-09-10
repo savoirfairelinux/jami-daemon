@@ -253,6 +253,7 @@ public:
 
     virtual bool isTlsEnabled() const override { return true; }
     bool isSrtpEnabled() const override { return true; }
+    KeyExchangeProtocol getSrtpKeyExchange() const override { return KeyExchangeProtocol::SDES; }
 
     bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,

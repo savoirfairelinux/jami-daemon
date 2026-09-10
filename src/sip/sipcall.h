@@ -40,6 +40,7 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <atomic>
 #include <optional>
 
 extern "C" {
@@ -382,9 +383,14 @@ private:
 
     void generateMediaPorts();
     void refreshLocalPublishedPorts();
+    bool accountSupportsBundle(const std::shared_ptr<SIPAccountBase>& account) const;
     void setRtcpMuxEnabled(bool enabled);
+    void setBundleEnabled(bool enabled);
     bool remoteOfferSupportsRtcpMux() const;
+    bool remoteOfferSupportsBundle() const;
     unsigned getIceCompCountPerStream() const;
+    unsigned getIceStreamsCount() const;
+    unsigned getRtpCompId(unsigned streamIdx) const;
 
     void openPortsUPnP();
 
@@ -455,6 +461,11 @@ private:
     void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall = false);
     void setupNegotiatedMedia();
     void startAllMedia();
+    // Start every negotiated RTP stream, optionally binding them to a shared
+    // bundle transport (RFC 8843).
+    void startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundleSocketContext,
+                         bool iceRunning,
+                         const std::vector<MediaAttribute>& remoteMediaList);
     void stopAllMedia();
 
     /**
@@ -587,6 +598,7 @@ private:
     bool enableIce_ {true};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
+    bool bundleEnabled_ {false};
 
     // ICE media transport
     std::shared_ptr<dhtnet::IceTransport> iceMedia_;

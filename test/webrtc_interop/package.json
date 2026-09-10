@@ -1,0 +1,15 @@
+{
+    "name": "jami-webrtc-interop",
+    "private": true,
+    "version": "1.0.0",
+    "type": "commonjs",
+    "scripts": {
+        "interop": "node interop.js",
+        "interop:live": "node interop.js",
+        "interop:browser": "node browser_interop.js",
+        "interop:all": "node interop.js && node browser_interop.js"
+    },
+    "dependencies": {
+        "werift": "0.23.0"
+    }
+}
