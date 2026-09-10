@@ -8,6 +8,10 @@ const {
     RTP_EXTENSION_URI,
     RtpHeader,
     RtpPacket,
+    useOPUS,
+    usePCMU,
+    useTWCC,
+    useVP8,
 } = require('werift');
 
 function onceEvent(register) {
@@ -15,6 +19,9 @@ function onceEvent(register) {
 }
 
 const BRIDGE_EVENTS = new Set(['SDP', 'CONNECTED', 'RTP_SENT', 'RESULT']);
+const BRIDGE_EVENT_TIMEOUT_MS = 20000;
+const BRIDGE_CLOSE_TIMEOUT_MS = 2000;
+const TRANSPORT_CC_URI = 'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01';
 
 function assert(condition, message) {
     if (!condition) {
@@ -25,6 +32,11 @@ function assert(condition, message) {
 function assertMediaTransport(sdp, kind, message) {
     const pattern = new RegExp(`m=${kind}\\s+\\d+\\s+UDP/TLS/RTP/SAVPF`);
     assert(pattern.test(sdp), message);
+}
+
+function assertTransportCc(sdp, message) {
+    assert(sdp.includes(TRANSPORT_CC_URI), `${message}: missing transport-cc extmap`);
+    assert(/a=rtcp-fb:(\*|\d+) transport-cc/.test(sdp), `${message}: missing rtcp-fb transport-cc`);
 }
 
 function extractSdp(output) {
@@ -55,14 +67,33 @@ function resolveBridgePath() {
     return bridgePath;
 }
 
+function withTransportCc(codec) {
+    const feedback = codec.rtcpFeedback || [];
+    if (!feedback.some((entry) => entry.type === 'transport-cc')) {
+        codec.rtcpFeedback = [...feedback, useTWCC()];
+    }
+    return codec;
+}
+
+function transportCcHeaderExtensions() {
+    return [
+        new RTCRtpHeaderExtensionParameters({ uri: RTP_EXTENSION_URI.sdesMid }),
+        new RTCRtpHeaderExtensionParameters({ uri: TRANSPORT_CC_URI }),
+    ];
+}
+
 function makePeer() {
     return new RTCPeerConnection({
         bundlePolicy: 'max-bundle',
+        codecs: {
+            audio: [withTransportCc(useOPUS()), withTransportCc(usePCMU())],
+            video: [withTransportCc(useVP8())],
+        },
         iceServers: [],
         iceUseIpv6: false,
         headerExtensions: {
-            audio: [new RTCRtpHeaderExtensionParameters({ uri: RTP_EXTENSION_URI.sdesMid })],
-            video: [new RTCRtpHeaderExtensionParameters({ uri: RTP_EXTENSION_URI.sdesMid })],
+            audio: transportCcHeaderExtensions(),
+            video: transportCcHeaderExtensions(),
         },
     });
 }
@@ -136,7 +167,7 @@ function startJamiLive(bridgePath, mode) {
         }
     });
 
-    const nextLine = () => new Promise((resolve, reject) => {
+    const nextLine = (timeoutMs = BRIDGE_EVENT_TIMEOUT_MS) => new Promise((resolve, reject) => {
         if (queue.length) {
             resolve(queue.shift());
             return;
@@ -145,13 +176,20 @@ function startJamiLive(bridgePath, mode) {
             reject(new Error(`jami_webrtc_sdp_bridge ${mode} exited early (${child.exitCode}): ${stderr.trim()}`));
             return;
         }
-        const onExit = (code) => {
-            reject(new Error(`jami_webrtc_sdp_bridge ${mode} exited early (${code}): ${stderr.trim()}`));
-        };
+        const onExit = (code) => reject(new Error(`jami_webrtc_sdp_bridge ${mode} exited early (${code}): ${stderr.trim()}`));
         const resolver = (line) => {
+            clearTimeout(timeout);
             child.off('close', onExit);
             resolve(line);
         };
+        const timeout = setTimeout(() => {
+            const index = waiters.indexOf(resolver);
+            if (index >= 0) {
+                waiters.splice(index, 1);
+            }
+            child.off('close', onExit);
+            reject(new Error(`Timed out waiting for jami_webrtc_sdp_bridge ${mode} event (stderr=${stderr.trim()}, buffered=${buffered.trim()})`));
+        }, timeoutMs);
         child.once('close', onExit);
         waiters.push(resolver);
     });
@@ -170,7 +208,14 @@ function startJamiLive(bridgePath, mode) {
             resolve();
             return;
         }
-        child.once('close', resolve);
+        const timeout = setTimeout(() => {
+            child.kill();
+            resolve();
+        }, BRIDGE_CLOSE_TIMEOUT_MS);
+        child.once('close', () => {
+            clearTimeout(timeout);
+            resolve();
+        });
         child.stdin.end();
     });
 
@@ -255,6 +300,20 @@ async function waitForLiveConnected(session) {
     }
 }
 
+async function waitForLiveIceReady(session) {
+    while (true) {
+        const line = await session.nextLine();
+        const event = parseBridgeLine(line);
+        if (event.name === 'CONNECTED' && event.fields.dtls === 'pending') {
+            return event;
+        }
+        if (event.name === 'CONNECTED' && event.fields.dtls === 'true') {
+            return event;
+        }
+        throw new Error(`Unexpected bridge event before ICE readiness: ${line}`);
+    }
+}
+
 async function waitForLiveResult(session) {
     while (true) {
         const line = await session.nextLine();
@@ -307,7 +366,7 @@ function waitForRtpFromJami(pc) {
             new Promise((_, reject) => {
                 setTimeout(
                     () => reject(new Error(`Timed out waiting for SRTP from Jami (rawMediaPackets=${rawMediaPackets}, lastRawMediaBytes=${lastRawMediaBytes}, lastRawMediaPrefix=${lastRawMediaPrefix}, lastRawMediaDecrypt=${lastRawMediaDecrypt})`)),
-                    5000);
+                    15000);
             }),
         ]).finally(() => rawSubscription.unSubscribe()),
     };
@@ -374,11 +433,13 @@ async function validateWeriftOfferToJamiAnswer(bridgePath) {
         const localOffer = pc.localDescription && pc.localDescription.sdp;
         assert(localOffer && localOffer.includes('a=group:BUNDLE'), 'werift offer did not advertise BUNDLE');
         assert(localOffer.includes('urn:ietf:params:rtp-hdrext:sdes:mid'), 'werift offer did not advertise MID extmap');
+        assertTransportCc(localOffer, 'werift offer did not advertise Transport-CC');
 
         const { stdout: jamiAnswer } = await runJami(bridgePath, 'answer', localOffer);
         assert(jamiAnswer.includes('a=group:BUNDLE'), 'Jami answer did not advertise BUNDLE');
         assert(jamiAnswer.includes('a=mid:0'), 'Jami answer missing mid 0');
         assert(jamiAnswer.includes('a=mid:1'), 'Jami answer missing mid 1');
+        assertTransportCc(jamiAnswer, 'Jami answer did not negotiate Transport-CC');
         assertMediaTransport(jamiAnswer, 'audio', 'Jami answer audio transport mismatch');
         assertMediaTransport(jamiAnswer, 'video', 'Jami answer video transport mismatch');
 
@@ -399,6 +460,7 @@ async function validateJamiOfferToWeriftAnswer(bridgePath) {
     const { stdout: jamiOffer } = await runJami(bridgePath, 'offer');
     assert(jamiOffer.includes('a=group:BUNDLE'), 'Jami offer did not advertise BUNDLE');
     assert(jamiOffer.includes('urn:ietf:params:rtp-hdrext:sdes:mid'), 'Jami offer did not advertise MID extmap');
+    assertTransportCc(jamiOffer, 'Jami offer did not advertise Transport-CC');
     assertMediaTransport(jamiOffer, 'audio', 'Jami offer audio transport mismatch');
     assertMediaTransport(jamiOffer, 'video', 'Jami offer video transport mismatch');
 
@@ -419,6 +481,7 @@ async function validateJamiOfferToWeriftAnswer(bridgePath) {
         assert(localAnswer && localAnswer.includes('a=group:BUNDLE'), 'werift answer did not advertise BUNDLE');
         assert(localAnswer.includes('a=mid:audio_0'), 'werift answer did not preserve Jami audio MID');
         assert(localAnswer.includes('a=mid:video_0'), 'werift answer did not preserve Jami video MID');
+        assertTransportCc(localAnswer, 'werift answer did not negotiate Transport-CC');
 
         return {
             offerLength: jamiOffer.length,
@@ -442,6 +505,7 @@ async function validateWeriftOfferToJamiLive(bridgePath) {
 
         const localOffer = pc.localDescription && pc.localDescription.sdp;
         assert(localOffer && localOffer.includes('a=group:BUNDLE'), 'werift live offer did not advertise BUNDLE');
+        assertTransportCc(localOffer, 'werift live offer did not advertise Transport-CC');
 
         session.sendSdp('offer', localOffer);
 
@@ -450,15 +514,18 @@ async function validateWeriftOfferToJamiLive(bridgePath) {
         assert(answerLine.fields.type === 'answer', 'Bridge did not send a live answer');
 
         const jamiAnswer = Buffer.from(answerLine.fields.payload, 'base64').toString('utf8');
+        assertTransportCc(jamiAnswer, 'Jami live answer did not negotiate Transport-CC');
         await pc.setRemoteDescription({ type: 'answer', sdp: jamiAnswer });
         const dtlsTransport = pc.dtlsTransports[0];
         assert(dtlsTransport, 'werift did not expose a DTLS transport');
-        await waitForConnection(pc);
-        await waitForLiveConnected(session);
-        await waitForWeriftSrtp(dtlsTransport);
-        await waitForWeriftNominatedPair(dtlsTransport);
+        await waitForLiveIceReady(session);
         const { rtpPromise } = waitForRtpFromJami(pc);
         session.startRtp();
+        const bridgeConnected = waitForLiveConnected(session);
+        await waitForConnection(pc);
+        await bridgeConnected;
+        await waitForWeriftSrtp(dtlsTransport);
+        await waitForWeriftNominatedPair(dtlsTransport);
 
         const liveEvent = await waitForLiveResult(session);
         const live = await finalizeLiveFlow(pc, session, liveEvent, rtpPromise, dtlsTransport);
@@ -487,6 +554,7 @@ async function validateJamiOfferToWeriftLive(bridgePath) {
         assert(offerLine.fields.type === 'offer', 'Bridge did not send a live offer');
 
         const jamiOffer = Buffer.from(offerLine.fields.payload, 'base64').toString('utf8');
+        assertTransportCc(jamiOffer, 'Jami live offer did not advertise Transport-CC');
         await pc.setRemoteDescription({ type: 'offer', sdp: jamiOffer });
 
         const answer = await pc.createAnswer();
@@ -494,16 +562,19 @@ async function validateJamiOfferToWeriftLive(bridgePath) {
 
         const localAnswer = pc.localDescription && pc.localDescription.sdp;
         assert(localAnswer && localAnswer.includes('a=group:BUNDLE'), 'werift live answer did not advertise BUNDLE');
+        assertTransportCc(localAnswer, 'werift live answer did not negotiate Transport-CC');
         const dtlsTransport = pc.dtlsTransports[0];
         assert(dtlsTransport, 'werift did not expose a DTLS transport');
         session.sendSdp('answer', localAnswer);
 
-        await waitForConnection(pc);
-        await waitForLiveConnected(session);
-        await waitForWeriftSrtp(dtlsTransport);
-        await waitForWeriftNominatedPair(dtlsTransport);
+        await waitForLiveIceReady(session);
         const { rtpPromise } = waitForRtpFromJami(pc);
         session.startRtp();
+        const bridgeConnected = waitForLiveConnected(session);
+        await waitForConnection(pc);
+        await bridgeConnected;
+        await waitForWeriftSrtp(dtlsTransport);
+        await waitForWeriftNominatedPair(dtlsTransport);
         const liveEvent = await waitForLiveResult(session);
         const live = await finalizeLiveFlow(pc, session, liveEvent, rtpPromise, dtlsTransport);
 
