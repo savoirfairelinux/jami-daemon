@@ -44,6 +44,16 @@ using socklen_t = int;
 #include <vector>
 #include <condition_variable>
 #include <functional>
+#include <optional>
+#include <string>
+#include <string_view>
+
+namespace dht {
+namespace crypto {
+struct Certificate;
+struct PrivateKey;
+} // namespace crypto
+} // namespace dht
 
 namespace jami {
 
@@ -126,9 +136,32 @@ typedef struct
     std::chrono::steady_clock::time_point receive_ts;
 } TS_Frame;
 
+struct DtlsSrtpContext;
+enum class DtlsSetup : uint8_t;
+
 class SocketPair
 {
 public:
+    struct BundleContext;
+
+    static std::shared_ptr<BundleContext> createBundleContext(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                                                              std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                                                              bool rtcpMux = false,
+                                                              bool installReceiveCallbacks = true);
+
+    // Runs (once) the DTLS-SRTP handshake on the shared bundle transport
+    // (RFC 8843 + RFC 5764: a single DTLS association per transport) and then
+    // installs the bundle receive callbacks. Concurrent callers block until
+    // the first handshake completes and share its result. Throws on failure
+    // or when aborted.
+    static DtlsSrtpContext ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
+                                                   DtlsSetup localSetup,
+                                                   std::string_view remoteFingerprintType,
+                                                   std::string_view remoteFingerprint,
+                                                   const std::shared_ptr<dht::crypto::Certificate>& certificate,
+                                                   const std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
+                                                   const std::shared_ptr<std::atomic_bool>& abort);
+
     SocketPair(const dhtnet::IpAddr& rtpDestAddr,
                const dhtnet::IpAddr& rtcpDestAddr,
                int localRtpPort,
@@ -137,6 +170,9 @@ public:
     SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
                std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
                bool rtcpMux = false);
+    SocketPair(const std::shared_ptr<BundleContext>& bundleContext,
+               bool rtcpMux = false,
+               std::optional<unsigned> rtpPayloadType = std::nullopt);
     ~SocketPair();
 
     void interrupt();
@@ -155,6 +191,7 @@ public:
                      int localRtpPort,
                      int localRtcpPort);
     void closeSockets();
+    void setDefaultRemoteAddresses(const dhtnet::IpAddr& rtpDestAddr, const dhtnet::IpAddr& rtcpDestAddr);
 
     /*
        Supported suites are:
@@ -176,15 +213,48 @@ public:
     */
     void createSRTP(const char* out_suite, const char* out_params, const char* in_suite, const char* in_params);
 
+    /**
+     * Enable SRTCP protection of RTCP packets (RFC 3711 3.4) with the keys
+     * given to createSRTP(): outgoing RTCP is encrypted and authenticated,
+     * incoming RTCP is decrypted (with a plaintext fallback for robustness).
+     *
+     * This must be enabled when the SRTP keys were negotiated with DTLS-SRTP
+     * (RFC 5764), as WebRTC endpoints require protected RTCP. It is kept
+     * disabled for SDES sessions where legacy Jami peers exchange RTCP in
+     * plaintext.
+     */
+    void setRtcpProtection(bool enabled) { rtcpProtection_ = enabled; }
+
     void stopSendOp(bool state = true);
     std::list<rtcpRRHeader> getRtcpRR();
     std::list<rtcpREMBHeader> getRtcpREMB();
+    void setLocalSsrc(uint32_t ssrc);
+    void setRemoteSsrc(uint32_t ssrc);
+    std::optional<uint32_t> getLocalSsrc() const;
+    std::optional<uint32_t> getRemoteSsrc() const;
+    int writeRtcpData(const uint8_t* buf, int buf_size);
+
+    /**
+     * Build a Picture Loss Indication feedback packet (RFC 4585 6.3.1).
+     */
+    static std::vector<uint8_t> createRtcpPli(uint32_t senderSsrc, uint32_t mediaSsrc);
+
+    /**
+     * Return true if the buffer holds a PSFB keyframe request:
+     * PLI (RFC 4585 6.3.1) or FIR (RFC 5104 4.3.1).
+     */
+    static bool isRtcpKeyframeRequest(const uint8_t* buf, size_t len);
 
     bool waitForRTCP(std::chrono::seconds interval);
     double getLastLatency();
 
     void setPacketLossCallback(std::function<void(void)> cb) { packetLossCallback_ = std::move(cb); }
+    void setKeyframeRequestCallback(std::function<void(void)> cb) { keyframeRequestCallback_ = std::move(cb); }
     void setRtpDelayCallback(std::function<void(int, int)> cb);
+    void setBundleMidExtension(std::string localMid,
+                               std::optional<unsigned> localMidExtId,
+                               std::string remoteMid,
+                               std::optional<unsigned> remoteMidExtId);
 
     int writeData(const uint8_t* buf, int buf_size);
 
@@ -192,6 +262,7 @@ public:
 
 private:
     NON_COPYABLE(SocketPair);
+    struct PacketState;
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
@@ -207,27 +278,25 @@ private:
     void saveRtcpRRPacket(uint8_t* buf, size_t len);
     void saveRtcpREMBPacket(uint8_t* buf, size_t len);
 
-    std::mutex dataBuffMutex_;
-    std::condition_variable cv_;
-    std::list<std::vector<uint8_t>> rtpDataBuff_;
-    std::list<std::vector<uint8_t>> rtcpDataBuff_;
+    dhtnet::IceSocket* getRtpSocket() const;
+    dhtnet::IceSocket* getRtcpSocket() const;
 
-    std::unique_ptr<dhtnet::IceSocket> rtp_sock_;
-    std::unique_ptr<dhtnet::IceSocket> rtcp_sock_;
+    std::shared_ptr<PacketState> packetState_;
+    std::shared_ptr<BundleContext> bundleContext_;
 
     int rtpHandle_ {-1};
     int rtcpHandle_ {-1};
     dhtnet::IpAddr rtpDestAddr_;
     dhtnet::IpAddr rtcpDestAddr_;
     bool rtcpMux_ {false};
-    std::atomic_bool interrupted_ {false};
-    // Read operations are blocking. This will allow unblocking the
-    // receiver thread if the peer stops/mutes the media (RTP)
-    std::atomic_bool readBlockingMode_ {false};
     std::atomic_bool noWrite_ {false};
+    std::atomic_bool rtcpProtection_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;
+    std::function<void(void)> keyframeRequestCallback_;
     std::function<void(int, int)> rtpDelayCallback_;
+    std::optional<unsigned> localRtpMidExtId_ {};
+    std::string localRtpMid_ {};
     bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
     bool parse_RTP_ext(uint8_t* buf, float* abs);
 

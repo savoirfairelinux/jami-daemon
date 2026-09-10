@@ -158,6 +158,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 
     sdp_->setSecureMediaKeyExchange(account->getSrtpKeyExchange());
     setRtcpMuxEnabled(type == Call::CallType::OUTGOING && account->isRtcpMuxEnabled());
+    setBundleEnabled(accountSupportsBundle(account));
     initializeDtlsSrtpIdentity(account, dtlsCertificate_, dtlsPrivateKey_, *sdp_);
 
     if (account->getUPnPActive())
@@ -457,19 +458,29 @@ SIPCall::generateMediaPorts()
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
+    const auto previousAudioPort = localAudioPort_;
+#ifdef ENABLE_VIDEO
+    const auto previousVideoPort = localVideoPort_;
+#endif
+
     const unsigned callLocalAudioPort = account->generateAudioPort();
-    if (localAudioPort_ != 0)
-        account->releasePort(localAudioPort_);
+    if (previousAudioPort != 0)
+        account->releasePort(previousAudioPort);
     localAudioPort_ = callLocalAudioPort;
 
 #ifdef ENABLE_VIDEO
-    // https://projects.savoirfairelinux.com/issues/17498
-    const unsigned int callLocalVideoPort = account->generateVideoPort();
-    if (localVideoPort_ != 0)
-        account->releasePort(localVideoPort_);
-    // this should already be guaranteed by SIPAccount
-    assert(localAudioPort_ != callLocalVideoPort);
-    localVideoPort_ = callLocalVideoPort;
+    if (previousVideoPort != 0 && previousVideoPort != previousAudioPort)
+        account->releasePort(previousVideoPort);
+
+    if (bundleEnabled_) {
+        localVideoPort_ = localAudioPort_;
+    } else {
+        // https://projects.savoirfairelinux.com/issues/17498
+        const unsigned int callLocalVideoPort = account->generateVideoPort();
+        // this should already be guaranteed by SIPAccount
+        assert(localAudioPort_ != callLocalVideoPort);
+        localVideoPort_ = callLocalVideoPort;
+    }
 #endif
 
     refreshLocalPublishedPorts();
@@ -485,18 +496,69 @@ SIPCall::refreshLocalPublishedPorts()
         sdp_->setLocalPublishedAudioPorts(localAudioPort_, rtcpMuxEnabled_ ? 0 : localAudioPort_ + 1);
 
 #ifdef ENABLE_VIDEO
-    if (localVideoPort_ != 0)
-        sdp_->setLocalPublishedVideoPorts(localVideoPort_, rtcpMuxEnabled_ ? 0 : localVideoPort_ + 1);
+    const auto publishedVideoPort = bundleEnabled_ && localAudioPort_ != 0 ? localAudioPort_ : localVideoPort_;
+    if (publishedVideoPort != 0)
+        sdp_->setLocalPublishedVideoPorts(publishedVideoPort, rtcpMuxEnabled_ ? 0 : publishedVideoPort + 1);
 #endif
+}
+
+bool
+SIPCall::accountSupportsBundle(const std::shared_ptr<SIPAccountBase>& account) const
+{
+    if (!account)
+        return false;
+
+    return std::dynamic_pointer_cast<JamiAccount>(account) != nullptr
+           || account->getSrtpKeyExchange() == KeyExchangeProtocol::DTLS;
 }
 
 void
 SIPCall::setRtcpMuxEnabled(bool enabled)
 {
+    const auto wasBundleEnabled = bundleEnabled_;
     rtcpMuxEnabled_ = enabled;
-    if (sdp_)
+    if (!rtcpMuxEnabled_)
+        bundleEnabled_ = false;
+    if (sdp_) {
         sdp_->enableRtcpMux(enabled);
+        sdp_->enableBundle(bundleEnabled_);
+    }
+
+    if (wasBundleEnabled && !bundleEnabled_ && localAudioPort_ != 0
+#ifdef ENABLE_VIDEO
+        && localVideoPort_ == localAudioPort_
+#endif
+    ) {
+        generateMediaPorts();
+        return;
+    }
+
     refreshLocalPublishedPorts();
+}
+
+void
+SIPCall::setBundleEnabled(bool enabled)
+{
+    const auto useBundle = enabled && enableIce_ && rtcpMuxEnabled_;
+    if (bundleEnabled_ == useBundle) {
+        if (sdp_)
+            sdp_->enableBundle(bundleEnabled_);
+        return;
+    }
+
+    bundleEnabled_ = useBundle;
+    if (sdp_)
+        sdp_->enableBundle(bundleEnabled_);
+
+    if (localAudioPort_ != 0
+#ifdef ENABLE_VIDEO
+        || localVideoPort_ != 0
+#endif
+    ) {
+        generateMediaPorts();
+    } else {
+        refreshLocalPublishedPorts();
+    }
 }
 
 bool
@@ -518,10 +580,45 @@ SIPCall::remoteOfferSupportsRtcpMux() const
     });
 }
 
+bool
+SIPCall::remoteOfferSupportsBundle() const
+{
+    if (not sdp_)
+        return false;
+
+    auto* remoteSession = sdp_->getRemoteSdpSession();
+    if (not remoteSession || remoteSession->media_count < 2)
+        return false;
+
+    for (unsigned i = 0; i < remoteSession->attr_count; ++i) {
+        auto* attribute = remoteSession->attr[i];
+        if (pj_stricmp2(&attribute->name, "group") != 0)
+            continue;
+
+        const std::string_view value(attribute->value.ptr, attribute->value.slen);
+        if (value.starts_with("BUNDLE "))
+            return true;
+    }
+
+    return false;
+}
+
 unsigned
 SIPCall::getIceCompCountPerStream() const
 {
     return rtcpMuxEnabled_ ? 1u : ICE_COMP_COUNT_PER_STREAM;
+}
+
+unsigned
+SIPCall::getIceStreamsCount() const
+{
+    return bundleEnabled_ ? 1u : static_cast<unsigned>(rtpStreams_.size());
+}
+
+unsigned
+SIPCall::getRtpCompId(unsigned streamIdx) const
+{
+    return bundleEnabled_ ? ICE_COMP_ID_RTP : 1u + streamIdx * getIceCompCountPerStream();
 }
 
 const std::string&
@@ -919,6 +1016,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 
     // Create the SDP answer
     setRtcpMuxEnabled(account->isRtcpMuxEnabled() && remoteOfferSupportsRtcpMux());
+    setBundleEnabled(accountSupportsBundle(account) && remoteOfferSupportsBundle());
     sdp_->processIncomingOffer(mediaAttrList);
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
@@ -939,6 +1037,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         JAMI_WARNING("[call:{}] No negotiator session, peer sent an empty INVITE (without SDP)", getCallId());
 
         setRtcpMuxEnabled(account->isRtcpMuxEnabled());
+        setBundleEnabled(accountSupportsBundle(account));
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
 
         generateMediaPorts();
@@ -1861,6 +1960,30 @@ SIPCall::addLocalIceAttributes()
 
     sdp_->addIceAttributes(iceMedia->getLocalAttributes());
 
+    if (bundleEnabled_) {
+        const auto bundledCandidates = account->isIceCompIdRfc5245Compliant()
+                                           ? iceMedia->getLocalCandidates(0, ICE_COMP_ID_RTP)
+                                           : iceMedia->getLocalCandidates(ICE_COMP_ID_RTP);
+
+        for (unsigned idx = 0; idx < rtpStreams_.size(); ++idx) {
+            auto const& stream = rtpStreams_[idx];
+            if (not stream.mediaAttribute_->enabled_) {
+                JAMI_DEBUG("[call:{}] Media [{}] @ {} is disabled, don't add bundled local candidates",
+                           getCallId(),
+                           stream.mediaAttribute_->toString(),
+                           idx);
+                continue;
+            }
+
+            JAMI_DEBUG("[call:{}] Add bundled ICE local candidates for media [{}] @ {}",
+                       getCallId(),
+                       stream.mediaAttribute_->toString(),
+                       idx);
+            sdp_->addIceCandidates(idx, bundledCandidates);
+        }
+        return;
+    }
+
     if (account->isIceCompIdRfc5245Compliant()) {
         unsigned streamIdx = 0;
         for (auto const& stream : rtpStreams_) {
@@ -1916,6 +2039,25 @@ std::vector<IceCandidate>
 SIPCall::getAllRemoteCandidates(dhtnet::IceTransport& transport) const
 {
     std::vector<IceCandidate> rem_candidates;
+
+    if (bundleEnabled_) {
+        for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
+            if (!rtpStreams_[mediaIdx].mediaAttribute_ || !rtpStreams_[mediaIdx].mediaAttribute_->enabled_)
+                continue;
+
+            IceCandidate cand;
+            for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
+                if (transport.parseIceAttributeLine(0, line, cand)) {
+                    JAMI_DEBUG("[call:{}] Add bundled remote ICE candidate: {}", getCallId(), line);
+                    rem_candidates.emplace_back(std::move(cand));
+                }
+            }
+            break;
+        }
+
+        return rem_candidates;
+    }
+
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
@@ -2092,10 +2234,12 @@ SIPCall::setupNegotiatedMedia()
             continue;
         }
 
-        const auto localSecureReady = (local.key_exchange == KeyExchangeProtocol::SDES && static_cast<bool>(local.crypto))
+        const auto localSecureReady = (local.key_exchange == KeyExchangeProtocol::SDES
+                                       && static_cast<bool>(local.crypto))
                                       || (local.key_exchange == KeyExchangeProtocol::DTLS
                                           && !local.dtls_fingerprint.empty());
-        const auto remoteSecureReady = (remote.key_exchange == KeyExchangeProtocol::SDES && static_cast<bool>(remote.crypto))
+        const auto remoteSecureReady = (remote.key_exchange == KeyExchangeProtocol::SDES
+                                        && static_cast<bool>(remote.crypto))
                                        || (remote.key_exchange == KeyExchangeProtocol::DTLS
                                            && !remote.dtls_fingerprint.empty());
 
@@ -2116,7 +2260,8 @@ SIPCall::setupNegotiatedMedia()
         }
 
         if (isSrtpEnabled() and local.enabled and remote.enabled and local.key_exchange != remote.key_exchange) {
-            JAMI_WARNING("[call:{}] [SDP:slot#{}] Mismatched SRTP key exchange methods (local={}, remote={}). Ignoring the media",
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Mismatched SRTP key exchange methods (local={}, remote={}). Ignoring "
+                         "the media",
                          getCallId(),
                          streamIdx,
                          sip_utils::getKeyExchangeName(local.key_exchange),
@@ -2158,61 +2303,43 @@ SIPCall::startAllMedia()
     if (getState() != CallState::HOLD) {
         bool iceRunning = isIceRunning();
         auto remoteMediaList = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveRemoteSdpSession());
-        size_t idx = 0;
-        for (auto& rtpStream : rtpStreams_) {
-            if (not rtpStream.mediaAttribute_) {
-                throw std::runtime_error("Missing media attribute");
+
+        std::unique_ptr<dhtnet::IceSocket> bundleRtpSocket;
+        std::unique_ptr<dhtnet::IceSocket> bundleRtcpSocket;
+        if (iceRunning && bundleEnabled_) {
+            auto bundleStream = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), [](const auto& stream) {
+                return stream.mediaAttribute_ && stream.mediaAttribute_->enabled_ && stream.rtpSocket_;
+            });
+
+            if (bundleStream != rtpStreams_.end()) {
+                bundleRtpSocket = std::move(bundleStream->rtpSocket_);
+                bundleRtcpSocket = std::move(bundleStream->rtcpSocket_);
             }
-            if (idx >= remoteMediaList.size()) {
-                JAMI_ERROR("[call:{}] Remote media list smaller than streams (idx={}, size={})",
-                           getCallId(),
-                           idx,
-                           remoteMediaList.size());
-                break;
-            }
-            rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
-            if (not rtpStream.mediaAttribute_->enabled_) {
-                JAMI_DEBUG("[call:{}] Skipping start for disabled stream @{}", getCallId(), idx);
-                idx++;
-                continue;
-            }
-            if (rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
-                rtpStream.rtpSession_->setMuted(rtpStream.remoteMediaAttribute_->muted_, RtpSession::Direction::RECV);
-            }
-            dht::ThreadPool::io().run(
-                [w = weak(),
-                 idx,
-                 isVideo = rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO,
-                 iceRunning,
-                 rtpSession = rtpStream.rtpSession_,
-                 rtpSocketPair
-                 = std::make_shared<std::pair<std::unique_ptr<dhtnet::IceSocket>, std::unique_ptr<dhtnet::IceSocket>>>(
-                     std::move(rtpStream.rtpSocket_), std::move(rtpStream.rtcpSocket_))]() mutable {
-                    try {
-                        if (iceRunning) {
-                            rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second));
-                        } else {
-                            rtpSession->start(nullptr, nullptr);
-                        }
-                        if (isVideo) {
-                            if (auto call = w.lock())
-                                call->requestKeyframe(static_cast<int>(idx));
-                        }
-#ifdef ENABLE_PLUGIN
-                        if (auto call = w.lock()) {
-                            // Create AVStreams associated with the call
-                            call->createCallAVStreams();
-                        }
-#endif
-                    } catch (const std::exception& e) {
-                        JAMI_ERROR("[call:{}] Failed to start RTP session {}: {}",
-                                   w.lock() ? w.lock()->getCallId() : "unknown",
-                                   idx,
-                                   e.what());
-                    }
-                });
-            idx++;
         }
+
+        std::shared_ptr<SocketPair::BundleContext> bundleSocketContext;
+        if (bundleRtpSocket) {
+            // When DTLS-SRTP is negotiated, the handshake owns the shared ICE
+            // receive callback until it completes (RFC 5764: one DTLS
+            // association per transport). The RTP sessions run the handshake
+            // through SocketPair::ensureBundleDtlsContext() when they start,
+            // and the bundle demultiplexer callbacks are installed then.
+            bool bundleDtls = false;
+            if (dtlsCertificate_ && dtlsPrivateKey_) {
+                for (const auto& [local, remote] : sdp_->getMediaSlots()) {
+                    if (local.enabled and remote.enabled and local.key_exchange == KeyExchangeProtocol::DTLS
+                        and remote.key_exchange == KeyExchangeProtocol::DTLS and not remote.dtls_fingerprint.empty()) {
+                        bundleDtls = true;
+                        break;
+                    }
+                }
+            }
+            bundleSocketContext = SocketPair::createBundleContext(std::move(bundleRtpSocket),
+                                                                  std::move(bundleRtcpSocket),
+                                                                  rtcpMuxEnabled_,
+                                                                  /*installReceiveCallbacks=*/!bundleDtls);
+        }
+        startRtpStreams(bundleSocketContext, iceRunning, remoteMediaList);
     }
 
     // Media is restarted, we can process the last hold request.
@@ -2244,6 +2371,77 @@ SIPCall::startAllMedia()
     }
 
     mediaRestartRequired_ = false;
+}
+
+void
+SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundleSocketContext,
+                         bool iceRunning,
+                         const std::vector<MediaAttribute>& remoteMediaList)
+{
+    size_t idx = 0;
+    for (auto& rtpStream : rtpStreams_) {
+        if (not rtpStream.mediaAttribute_) {
+            throw std::runtime_error("Missing media attribute");
+        }
+        if (idx >= remoteMediaList.size()) {
+            JAMI_ERROR("[call:{}] Remote media list smaller than streams (idx={}, size={})",
+                       getCallId(),
+                       idx,
+                       remoteMediaList.size());
+            break;
+        }
+        rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
+        if (not rtpStream.mediaAttribute_->enabled_) {
+            rtpStream.rtpSession_->clearBundleSocketContext();
+            JAMI_DEBUG("[call:{}] Skipping start for disabled stream @{}", getCallId(), idx);
+            idx++;
+            continue;
+        }
+        if (bundleSocketContext) {
+            rtpStream.rtpSession_->setBundleSocketContext(bundleSocketContext,
+                                                          rtpStream.rtpSession_->getSendPayloadType());
+        } else {
+            rtpStream.rtpSession_->clearBundleSocketContext();
+        }
+        if (rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
+            rtpStream.rtpSession_->setMuted(rtpStream.remoteMediaAttribute_->muted_, RtpSession::Direction::RECV);
+        }
+        const bool useBundleSocketContext = static_cast<bool>(bundleSocketContext);
+        auto rtpSocketPair
+            = std::make_shared<std::pair<std::unique_ptr<dhtnet::IceSocket>, std::unique_ptr<dhtnet::IceSocket>>>(
+                useBundleSocketContext ? std::unique_ptr<dhtnet::IceSocket> {} : std::move(rtpStream.rtpSocket_),
+                useBundleSocketContext ? std::unique_ptr<dhtnet::IceSocket> {} : std::move(rtpStream.rtcpSocket_));
+        dht::ThreadPool::io().run([w = weak(),
+                                   idx,
+                                   isVideo = rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO,
+                                   iceRunning,
+                                   rtpSession = rtpStream.rtpSession_,
+                                   rtpSocketPair = std::move(rtpSocketPair)]() mutable {
+            try {
+                if (iceRunning) {
+                    rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second));
+                } else {
+                    rtpSession->start(nullptr, nullptr);
+                }
+                if (isVideo) {
+                    if (auto call = w.lock())
+                        call->requestKeyframe(static_cast<int>(idx));
+                }
+#ifdef ENABLE_PLUGIN
+                if (auto call = w.lock()) {
+                    // Create AVStreams associated with the call
+                    call->createCallAVStreams();
+                }
+#endif
+            } catch (const std::exception& e) {
+                JAMI_ERROR("[call:{}] Failed to start RTP session {}: {}",
+                           w.lock() ? w.lock()->getCallId() : "unknown",
+                           idx,
+                           e.what());
+            }
+        });
+        idx++;
+    }
 }
 
 void
@@ -2872,13 +3070,14 @@ SIPCall::onIceNegoSucceed()
         if (isIceEnabled())
             switchToIceReinviteIfNeeded();
 
-        for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += getIceCompCountPerStream()) {
+        for (unsigned int idx = 0; idx < rtpStreams_.size(); idx++) {
             // Create sockets for RTP and RTCP, and start the session.
             auto& rtpStream = rtpStreams_[idx];
             if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
                 JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
                 continue;
             }
+            const auto compId = getRtpCompId(idx);
             rtpStream.rtpSocket_ = newIceSocket(compId);
 
             if (not rtcpMuxEnabled_) {
@@ -2898,8 +3097,7 @@ SIPCall::onIceNegoSucceed()
                 if (auto call = w.lock()) {
                     std::lock_guard lk {call->callMutex_};
 
-                    if (not call->inviteSession_
-                        or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+                    if (not call->inviteSession_ or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
                         or not call->sdp_) {
                         JAMI_DEBUG("[call:{}] Skipping media restart after ICE, call is no longer valid",
                                    call->getCallId());
@@ -3566,16 +3764,24 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     };
 
     iceOptions.master = master;
-    iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
+    iceOptions.streamsCount = getIceStreamsCount();
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     const auto compCountPerStream = getIceCompCountPerStream();
     iceOptions.compCountPerStream = compCountPerStream;
-    iceOptions.qosType.reserve(rtpStreams_.size() * compCountPerStream);
-    for (const auto& stream : rtpStreams_) {
-        iceOptions.qosType.push_back(stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO ? dhtnet::QosType::VOICE
-                                                                                             : dhtnet::QosType::VIDEO);
+    iceOptions.qosType.reserve(iceOptions.streamsCount * compCountPerStream);
+    if (bundleEnabled_) {
+        const auto bundledQos = hasVideo() ? dhtnet::QosType::VIDEO : dhtnet::QosType::VOICE;
+        iceOptions.qosType.push_back(bundledQos);
         if (compCountPerStream > 1)
             iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
+    } else {
+        for (const auto& stream : rtpStreams_) {
+            iceOptions.qosType.push_back(stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO
+                                             ? dhtnet::QosType::VOICE
+                                             : dhtnet::QosType::VIDEO);
+            if (compCountPerStream > 1)
+                iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
+        }
     }
 
     // Init ICE.

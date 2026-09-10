@@ -65,6 +65,19 @@ class VideoRtpSession : public RtpSession, public std::enable_shared_from_this<V
 public:
     using BaseType = RtpSession;
 
+    /**
+     * Return whether `last` marks an event within `interval` of `now`.
+     * time_point::min() is the "never happened" sentinel: naive subtraction
+     * from it overflows the duration representation and must not be treated
+     * as a recent event.
+     */
+    static bool withinInterval(std::chrono::steady_clock::time_point now,
+                               std::chrono::steady_clock::time_point last,
+                               std::chrono::steady_clock::duration interval)
+    {
+        return last != std::chrono::steady_clock::time_point::min() && now - last < interval;
+    }
+
     VideoRtpSession(const std::string& callId,
                     const std::string& streamId,
                     const DeviceParams& localVideoParams,
@@ -119,6 +132,14 @@ private:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
+    /**
+     * Ask the remote sender for a keyframe: over RTCP PLI when negotiated,
+     * otherwise through the out-of-band keyframe request callback.
+     */
+    void requestPeerKeyframe();
+    bool sendRtcpPli();
+    void onKeyframeRequestReceived();
+
     DeviceParams localVideoParams_;
 
     std::unique_ptr<VideoSender> sender_;
@@ -170,6 +191,8 @@ private:
     time_point last_REMB_inc_ {time_point::min()};
     time_point last_REMB_dec_ {time_point::min()};
     time_point lastBitrateDecrease {clock::now()};
+    time_point lastPliSent_ {time_point::min()};
+    time_point lastKeyframeRequestReceived_ {time_point::min()};
 
     unsigned remb_dec_cnt_ {0};
 
