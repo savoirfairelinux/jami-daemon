@@ -22,13 +22,19 @@
 
 #include <cstdlib>
 #include <cstdint>
+#include <libavformat/version_major.h>
 
 #ifndef AVFORMAT_AVIO_H
 struct AVIOContext;
 #endif
 
 typedef int (*io_readcallback)(void* opaque, uint8_t* buf, int buf_size);
-typedef int (*io_writecallback)(void* opaque, uint8_t* buf, int buf_size);
+#if LIBAVFORMAT_VERSION_MAJOR >= 61
+using io_writebuffer = const uint8_t;
+#else
+using io_writebuffer = uint8_t;
+#endif
+typedef int (*io_writecallback)(void* opaque, io_writebuffer* buf, int buf_size);
 typedef int64_t (*io_seekcallback)(void* opaque, int64_t offset, int whence);
 
 namespace jami {
