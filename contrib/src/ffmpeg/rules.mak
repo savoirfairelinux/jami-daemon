@@ -1,4 +1,4 @@
-FFMPEG_VERSION := 6.1.3
+FFMPEG_VERSION := 9.0.1
 PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:$(FFMPEG_VERSION):*:*:*:*:*:*:*
 FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_VERSION).tar.xz
 
@@ -18,8 +18,7 @@ FFMPEGCONF += \
 	--enable-swscale \
 	--enable-bsfs \
 	--disable-filters \
-	--disable-programs \
-	--disable-postproc
+	--disable-programs
 
 ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
@@ -440,7 +439,7 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_VERSION).tar.xz:
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
 
-ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz
+ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz .sum-ffmpeg
 	rm -Rf $@ $@-$(FFMPEG_VERSION)
 	mkdir -p $@-$(FFMPEG_VERSION)
 	(cd $@-$(FFMPEG_VERSION) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
