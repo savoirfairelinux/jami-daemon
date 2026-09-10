@@ -247,6 +247,10 @@ struct MediaDescription
     /** RTP */
     std::shared_ptr<SystemCodecInfo> codec {};
     unsigned payload_type {};
+    std::string mid {};
+    unsigned mid_rtp_ext_id {0};
+    bool rtcp_fb_nack_pli {false};
+    bool rtcp_fb_ccm_fir {false};
     std::string receiving_sdp {};
     unsigned bitrate {};
     unsigned rtp_clockrate {8000};

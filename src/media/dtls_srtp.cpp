@@ -187,9 +187,7 @@ formatFingerprint(gnutls_x509_crt_t certificate, gnutls_digest_algorithm_t diges
 }
 
 int
-verifyRemoteFingerprint(gnutls_session_t session,
-                        std::string_view expectedHash,
-                        std::string_view expectedFingerprint)
+verifyRemoteFingerprint(gnutls_session_t session, std::string_view expectedHash, std::string_view expectedFingerprint)
 {
     const auto digest = parseDigest(expectedHash);
     if (digest == GNUTLS_DIG_UNKNOWN)
@@ -253,8 +251,9 @@ mediaDtlsLogger()
 dhtnet::tls::CertificateStore&
 mediaDtlsCertStore()
 {
-    static auto store = std::make_unique<dhtnet::tls::CertificateStore>(
-        std::filesystem::temp_directory_path() / "jami-media-dtls", mediaDtlsLogger());
+    static auto store = std::make_unique<dhtnet::tls::CertificateStore>(std::filesystem::temp_directory_path()
+                                                                            / "jami-media-dtls",
+                                                                        mediaDtlsLogger());
     return *store;
 }
 
