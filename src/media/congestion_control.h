@@ -20,12 +20,23 @@
 
 #include <vector>
 #include <cstdint>
+#include <list>
+#include <optional>
 
 #include "socket_pair.h"
 
 namespace jami {
 
 enum BandwidthUsage : uint8_t { bwNormal = 0, bwUnderusing = 1, bwOverusing = 2 };
+
+struct TransportCcBitrateEstimate
+{
+    uint64_t bitrateBps {};
+    float packetLoss {};
+    size_t receivedPackets {};
+    size_t lostPackets {};
+    int64_t delayTrendUs {};
+};
 
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
 class CongestionControl
@@ -35,7 +46,11 @@ public:
     ~CongestionControl();
 
     uint64_t parseREMB(const rtcpREMBHeader& packet);
-    std::vector<uint8_t> createREMB(uint64_t bitrate_bps);
+    std::vector<uint8_t> createREMB(uint64_t bitrate_bps,
+                                    uint32_t senderSsrc,
+                                    const std::vector<uint32_t>& feedbackSsrcs);
+    std::optional<TransportCcBitrateEstimate> estimateTransportCcBitrate(uint64_t currentBitrateBps,
+                                                                         const std::list<TransportCcReport>& reports);
     float kalmanFilter(int gradiant_delay);
     float update_thresh(float m, int deltaT);
     float get_thresh();

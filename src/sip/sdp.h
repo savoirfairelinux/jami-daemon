@@ -124,6 +124,25 @@ public:
      */
     bool createOffer(const std::vector<MediaAttribute>& mediaList);
 
+    /**
+     * Use an SDP session provided by an external media endpoint (e.g. a
+     * WebRTC browser) as the local offer, and create the SDP negotiator
+     * instance with it.
+     */
+    bool createOfferFromExternalSdp(const std::string& sdp);
+
+    /**
+     * Use an SDP session provided by an external media endpoint as the
+     * local answer to the received offer, and create the SDP negotiator
+     * instance with it.
+     */
+    bool setLocalAnswerFromExternalSdp(const std::string& sdp);
+
+    /**
+     * Serialize an SDP session to a string.
+     */
+    static std::string toString(const pjmedia_sdp_session* session);
+
     void setReceivedOffer(const pjmedia_sdp_session* remote);
 
     /**

@@ -25,6 +25,8 @@ namespace test {
 namespace {
 
 constexpr std::string_view MID_RTP_EXTENSION_URI {"urn:ietf:params:rtp-hdrext:sdes:mid"};
+constexpr std::string_view TRANSPORT_CC_RTP_EXTENSION_URI {
+    "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"};
 
 constexpr auto TEST_ACCOUNT_ALIAS = "SDP_RTPCMUX_TEST";
 constexpr uint16_t TEST_AUDIO_RTP_PORT = 4000;
@@ -174,11 +176,15 @@ private:
     void offerSkipsRtcpMuxWhenDisabled();
     void offerAdvertisesRtcpMuxWhenEnabled();
     void offerAdvertisesBundleAndMid();
+    void offerAdvertisesTransportCcAndRemb();
+    void offerAdvertisesTransportCcOnlyForActiveDirections();
     void offerAdvertisesPliAndFirForVideoOnly();
     void offerAdvertisesH264PacketizationMode1();
     void answerNegotiatesPliAndFir();
     void answerSkipsPliAndFirWhenOfferDoesNot();
     void answerPreservesRemoteBundleMidAndExtmap();
+    void answerNegotiatesTransportCcAndRemb();
+    void answerKeepsRembFallbackWithoutTransportCcExtmap();
     void answerNormalizesInconsistentBundleMidExtmap();
     void answerAcceptsSessionLevelBundleMidExtmap();
     void answerSkipsBundleWhenOfferDoesNotAdvertiseIt();
@@ -186,17 +192,22 @@ private:
     void answerAdvertisesRtcpMuxWhenOfferDoes();
     void remoteSdpFallsBackToRtcpNextPort();
     void remoteSdpKeepsMuxOnRtpPort();
+    void remoteSdpParsesTransportCcFeedback();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxByDefault);
     CPPUNIT_TEST(offerSkipsRtcpMuxWhenDisabled);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxWhenEnabled);
     CPPUNIT_TEST(offerAdvertisesBundleAndMid);
+    CPPUNIT_TEST(offerAdvertisesTransportCcAndRemb);
+    CPPUNIT_TEST(offerAdvertisesTransportCcOnlyForActiveDirections);
     CPPUNIT_TEST(offerAdvertisesPliAndFirForVideoOnly);
     CPPUNIT_TEST(offerAdvertisesH264PacketizationMode1);
     CPPUNIT_TEST(answerNegotiatesPliAndFir);
     CPPUNIT_TEST(answerSkipsPliAndFirWhenOfferDoesNot);
     CPPUNIT_TEST(answerPreservesRemoteBundleMidAndExtmap);
+    CPPUNIT_TEST(answerNegotiatesTransportCcAndRemb);
+    CPPUNIT_TEST(answerKeepsRembFallbackWithoutTransportCcExtmap);
     CPPUNIT_TEST(answerNormalizesInconsistentBundleMidExtmap);
     CPPUNIT_TEST(answerAcceptsSessionLevelBundleMidExtmap);
     CPPUNIT_TEST(answerSkipsBundleWhenOfferDoesNotAdvertiseIt);
@@ -204,6 +215,7 @@ private:
     CPPUNIT_TEST(answerAdvertisesRtcpMuxWhenOfferDoes);
     CPPUNIT_TEST(remoteSdpFallsBackToRtcpNextPort);
     CPPUNIT_TEST(remoteSdpKeepsMuxOnRtpPort);
+    CPPUNIT_TEST(remoteSdpParsesTransportCcFeedback);
     CPPUNIT_TEST_SUITE_END();
 
     std::string accountId_ {};
@@ -343,6 +355,85 @@ RtcpMuxSdpTest::offerAdvertisesBundleAndMid()
     CPPUNIT_ASSERT(descriptions[0].payload_type != descriptions[1].payload_type);
     CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
     CPPUNIT_ASSERT(descriptions[1].rtcp_mux);
+}
+
+void
+RtcpMuxSdpTest::offerAdvertisesTransportCcAndRemb()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("transport-cc-offer");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.createOffer({audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0],
+                                          "extmap",
+                                          std::string("3 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* transport-cc"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* goog-remb"));
+
+    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT_EQUAL(3u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+}
+
+void
+RtcpMuxSdpTest::offerAdvertisesTransportCcOnlyForActiveDirections()
+{
+    CPPUNIT_ASSERT(account_);
+
+    struct DirectionCase
+    {
+        const char* name;
+        bool muted;
+        bool hold;
+        const char* direction;
+        bool expectTransportCc;
+    };
+    const std::array<DirectionCase, 4> cases {{
+        {"sendrecv", false, false, "sendrecv", true},
+        {"recvonly", true, false, "recvonly", true},
+        {"sendonly", false, true, "sendonly", true},
+        {"inactive", true, true, "inactive", false},
+    }};
+
+    for (const auto& directionCase : cases) {
+        Sdp sdp(std::string("transport-cc-direction-") + directionCase.name);
+        sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+        sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+        sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+
+        MediaAttribute video(MediaType::MEDIA_VIDEO);
+        video.label_ = "video_0";
+        video.enabled_ = true;
+        video.muted_ = directionCase.muted;
+        video.hold_ = directionCase.hold;
+
+        CPPUNIT_ASSERT(sdp.createOffer({video}));
+        auto* localSession = sdp.getLocalSdpSession();
+        CPPUNIT_ASSERT(localSession);
+        CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+        auto* media = localSession->media[0];
+        CPPUNIT_ASSERT(hasMediaAttributeName(media, directionCase.direction));
+
+        CPPUNIT_ASSERT_EQUAL(directionCase.expectTransportCc,
+                             hasMediaAttributeValue(media,
+                                                    "extmap",
+                                                    std::string("3 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
+        CPPUNIT_ASSERT_EQUAL(directionCase.expectTransportCc,
+                             hasMediaAttributeValue(media, "rtcp-fb", "* transport-cc"));
+    }
 }
 
 void
@@ -600,6 +691,102 @@ RtcpMuxSdpTest::answerPreservesRemoteBundleMidAndExtmap()
 }
 
 void
+RtcpMuxSdpTest::answerNegotiatesTransportCcAndRemb()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("transport-cc-answer");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+
+    auto pool = makePool("transport-cc-answer");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=audio 5004 UDP/TLS/RTP/SAVPF 0\r\n"
+                                    "a=rtpmap:0 PCMU/8000\r\n"
+                                    "a=rtcp-mux\r\n"
+                                    "a=extmap:7 "
+                                    + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)
+                                    + "\r\n"
+                                      "a=rtcp-fb:0 transport-cc\r\n"
+                                      "a=rtcp-fb:0 goog-remb\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0],
+                                          "extmap",
+                                          std::string("7 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* transport-cc"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* goog-remb"));
+
+    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT_EQUAL(7u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+}
+
+void
+RtcpMuxSdpTest::answerKeepsRembFallbackWithoutTransportCcExtmap()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("transport-cc-answer-no-extmap");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+
+    auto pool = makePool("transport-cc-answer-no-extmap");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=audio 5004 UDP/TLS/RTP/SAVPF 0\r\n"
+                                    "a=rtpmap:0 PCMU/8000\r\n"
+                                    "a=rtcp-mux\r\n"
+                                    "a=rtcp-fb:0 transport-cc\r\n"
+                                    "a=rtcp-fb:0 goog-remb\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* transport-cc"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* goog-remb"));
+
+    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT_EQUAL(0u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+}
+
+void
 RtcpMuxSdpTest::answerNormalizesInconsistentBundleMidExtmap()
 {
     CPPUNIT_ASSERT(account_);
@@ -808,8 +995,18 @@ RtcpMuxSdpTest::answerSkipsBundleWhenOfferDoesNotAdvertiseIt()
     CPPUNIT_ASSERT(!hasSessionAttribute(localSession, "group", "BUNDLE"));
     CPPUNIT_ASSERT(!hasMediaAttributeName(localSession->media[0], "mid"));
     CPPUNIT_ASSERT(!hasMediaAttributeName(localSession->media[1], "mid"));
-    CPPUNIT_ASSERT(!hasMediaAttributeName(localSession->media[0], "extmap"));
-    CPPUNIT_ASSERT(!hasMediaAttributeName(localSession->media[1], "extmap"));
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0],
+                                           "extmap",
+                                           std::string("1 ") + std::string(MID_RTP_EXTENSION_URI)));
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[1],
+                                           "extmap",
+                                           std::string("1 ") + std::string(MID_RTP_EXTENSION_URI)));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0],
+                                          "extmap",
+                                          std::string("3 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[1],
+                                          "extmap",
+                                          std::string("3 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
 
     const auto descriptions = sdp.getMediaDescriptions(localSession, false);
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(2), descriptions.size());
@@ -817,6 +1014,8 @@ RtcpMuxSdpTest::answerSkipsBundleWhenOfferDoesNotAdvertiseIt()
     CPPUNIT_ASSERT(descriptions[1].mid.empty());
     CPPUNIT_ASSERT_EQUAL(0u, descriptions[0].mid_rtp_ext_id);
     CPPUNIT_ASSERT_EQUAL(0u, descriptions[1].mid_rtp_ext_id);
+    CPPUNIT_ASSERT_EQUAL(3u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT_EQUAL(3u, descriptions[1].transport_cc_rtp_ext_id);
 }
 
 void
@@ -931,6 +1130,9 @@ RtcpMuxSdpTest::remoteSdpFallsBackToRtcpNextPort()
     const auto descriptions = sdp.getMediaDescriptions(session, true);
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
     CPPUNIT_ASSERT(!descriptions[0].rtcp_mux);
+    CPPUNIT_ASSERT_EQUAL(0u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_fb_goog_remb);
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(5004), descriptions[0].addr.getPort());
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(5005), descriptions[0].rtcp_addr.getPort());
 }
@@ -968,8 +1170,49 @@ RtcpMuxSdpTest::remoteSdpKeepsMuxOnRtpPort()
     const auto descriptions = sdp.getMediaDescriptions(session, true);
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
     CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
+    CPPUNIT_ASSERT_EQUAL(0u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(!descriptions[0].rtcp_fb_goog_remb);
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(5004), descriptions[0].addr.getPort());
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(5004), descriptions[0].rtcp_addr.getPort());
+}
+
+void
+RtcpMuxSdpTest::remoteSdpParsesTransportCcFeedback()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("transport-cc-remote");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, TEST_AUDIO_RTCP_PORT);
+
+    auto pool = makePool("transport-cc-remote");
+    const std::string remoteSdp = "v=0\r\n"
+                                  "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                  "s=-\r\n"
+                                  "c=IN IP4 127.0.0.1\r\n"
+                                  "t=0 0\r\n"
+                                  "a=group:BUNDLE 0\r\n"
+                                  "m=audio 5004 UDP/TLS/RTP/SAVPF 0\r\n"
+                                  "a=rtpmap:0 PCMU/8000\r\n"
+                                  "a=rtcp-mux\r\n"
+                                  "a=mid:0\r\n"
+                                  "a=extmap:3 "
+                                  + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)
+                                  + "\r\n"
+                                    "a=rtcp-fb:* transport-cc\r\n"
+                                    "a=rtcp-fb:0 goog-remb\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteSdp);
+    CPPUNIT_ASSERT(session);
+
+    const auto descriptions = sdp.getMediaDescriptions(session, true);
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
+    CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
+    CPPUNIT_ASSERT_EQUAL(3u, descriptions[0].transport_cc_rtp_ext_id);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
+    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
 }
 
 } // namespace test
