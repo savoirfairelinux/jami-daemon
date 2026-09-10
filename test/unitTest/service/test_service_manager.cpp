@@ -23,6 +23,8 @@
 #include "jamidht/svc_protocol.h"
 #include "uri.h"
 
+#include <unistd.h>
+
 #include <filesystem>
 #include <fstream>
 #include <set>
