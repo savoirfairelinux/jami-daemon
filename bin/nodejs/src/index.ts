@@ -73,6 +73,8 @@ export enum JamiSignal {
   IncomingCall = 'IncomingCall',
   IncomingCallWithMedia = 'IncomingCallWithMedia',
   MediaChangeRequested = 'MediaChangeRequested',
+  RemoteSdpReceived = 'RemoteSdpReceived',
+  VideoOrientationChanged = 'VideoOrientationChanged',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
@@ -270,6 +272,13 @@ export interface JamiSwig {
   // Calls
   getCallList(accountId: string): StringVect
   getCallDetails(accountId: string, callId: string): StringMap
+  placeCallWithMedia(accountId: string, to: string, mediaList: VectMap): string
+  placeCallWithExternalMedia(accountId: string, to: string, sdpOffer: string): string
+  acceptWithMedia(accountId: string, callId: string, mediaList: VectMap): boolean
+  acceptWithExternalMedia(accountId: string, callId: string, sdpAnswer: string): boolean
+  setVideoOrientation(accountId: string, callId: string, streamIdx: number, rotation: number): boolean
+  refuse(accountId: string, callId: string): boolean
+  hangUp(accountId: string, callId: string): boolean
 
   // File transfer
   sendFile(accountId: string, conversationId: string, path: string, displayName: string, replyTo: string): void

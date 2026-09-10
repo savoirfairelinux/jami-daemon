@@ -121,6 +121,23 @@ private:
 
 public:
     void answer(const std::vector<libjami::MediaMap>& mediaList) override;
+
+    /**
+     * True when the call media is delegated to an external endpoint
+     * (e.g. a WebRTC browser): the daemon performs the signaling but does
+     * not run local ICE/RTP for the call media.
+     */
+    bool hasExternalMedia() const { return not externalSdp_.empty(); }
+    const std::string& externalSdp() const { return externalSdp_; }
+
+    /**
+     * Report the raw remote SDP answer received on the wire for a call whose
+     * media is delegated to an external endpoint. This must be the verbatim
+     * peer answer: the pjmedia negotiator rewrites (and mangles) WebRTC codec
+     * lines, so the external endpoint must be given the untouched SDP.
+     */
+    void reportExternalRemoteAnswer(std::string sdp);
+
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
@@ -319,6 +336,11 @@ private:
     bool accountSupportsBundle(const std::shared_ptr<SIPAccountBase>& account) const;
     void setRtcpMuxEnabled(bool enabled);
     void setBundleEnabled(bool enabled);
+    // Answer an incoming call with an SDP session provided by an external
+    // media endpoint.
+    void answerWithExternalSdp(const std::string& sdp);
+    // Report the negotiated remote SDP session to the API client.
+    void emitRemoteSdp() const;
     bool remoteOfferSupportsRtcpMux() const;
     bool remoteOfferSupportsBundle() const;
     unsigned getIceCompCountPerStream() const;
@@ -349,7 +371,7 @@ private:
      * @param streamIdx  The stream to rotate
      * @param rotation   Device orientation (0/90/180/270) (counterclockwise)
      */
-    void setVideoOrientation(int streamIdx, int rotation);
+    void setVideoOrientation(int streamIdx, int rotation) override;
 
     mutable std::mutex transportMtx_ {};
 
@@ -494,6 +516,15 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
+
+    // SDP session provided by an external media endpoint. When set, the
+    // call media is delegated: no local ICE/RTP is created.
+    std::string externalSdp_ {};
+
+    // Raw remote SDP answer received on the wire for an external-media call.
+    // Reported verbatim to the endpoint instead of the pjmedia-negotiated
+    // session, which mangles WebRTC codec lines.
+    std::string externalRemoteSdp_ {};
 
     // ICE media transport
     std::shared_ptr<dhtnet::IceTransport> iceMedia_;
