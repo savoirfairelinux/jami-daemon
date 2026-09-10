@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "38a7949f_45612221",
+        "filename": "src/jamidht/auth_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-09-10T14:52:21Z",
+      "side": 1,
+      "message": "If I understand correctly, we expect this function to never be called because auth channel requests are supposed to be handled by a temporary connection manager (`ArchiveAccountManager::LinkDeviceContext::tempConnMgr`) rather than by the usual account connection manager (`JamiAccount::connectionManager_`). I think it\u0027d be worth adding a comment to clarify this.",
+      "range": {
+        "startLine": 45,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 108
+      },
+      "revId": "0660a2557fd030cd74c50a25f26582a078a37bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
