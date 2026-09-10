@@ -24,6 +24,7 @@
 #include "logger.h"
 #include "connectivity/security/memory.h"
 #include "media/dtls_srtp.h"
+#include "media/transport_cc.h"
 
 #include <dhtnet/ice_socket.h>
 
@@ -32,6 +33,7 @@
 #include <chrono>
 #include <optional>
 #include <string_view>
+#include <thread>
 
 extern "C" {
 #include "srtp.h"
@@ -78,6 +80,7 @@ static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
 static constexpr auto UDP_HEADER_SIZE = 8;
 static constexpr auto SRTP_OVERHEAD = 10;
+static constexpr int64_t RTP_PACING_MAX_QUEUE_DELAY_US = 200'000;
 static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 static constexpr unsigned RTP_FIXED_HEADER_SIZE = 12;
@@ -320,6 +323,33 @@ getOneByteRtpExtensionString(const uint8_t* buf, size_t len, unsigned extId)
     return std::nullopt;
 }
 
+static size_t
+getOneByteRtpExtensionContentSize(const uint8_t* extension, size_t payloadSize)
+{
+    size_t offset = 0;
+    size_t contentSize = 0;
+    while (offset < payloadSize) {
+        const auto entry = extension[offset];
+        if (entry == 0) {
+            ++offset;
+            continue;
+        }
+
+        const auto entryId = static_cast<unsigned>(entry >> 4);
+        if (entryId == 15)
+            break;
+
+        const auto entrySize = static_cast<size_t>((entry & 0x0F) + 1);
+        const auto entryEnd = offset + 1 + entrySize;
+        if (entryEnd > payloadSize)
+            break;
+
+        offset = entryEnd;
+        contentSize = entryEnd;
+    }
+    return contentSize;
+}
+
 static int
 appendOneByteRtpExtensionString(
     const uint8_t* src, int len, unsigned extId, std::string_view value, uint8_t* dst, size_t dstCapacity)
@@ -339,8 +369,12 @@ appendOneByteRtpExtensionString(
     }
 
     const auto oldExtensionPayloadSize = layout->hasExtension ? layout->extensionPayloadSize : 0u;
+    const auto oldExtensionContentSize = layout->hasExtension
+                                             ? getOneByteRtpExtensionContentSize(src + layout->extensionOffset + 4,
+                                                                                 oldExtensionPayloadSize)
+                                             : 0u;
     const auto newEntrySize = 1u + value.size();
-    const auto newExtensionPayloadSize = (oldExtensionPayloadSize + newEntrySize + 3u) & ~size_t(3);
+    const auto newExtensionPayloadSize = (oldExtensionContentSize + newEntrySize + 3u) & ~size_t(3);
     const auto newHeaderSize = layout->baseHeaderSize + 4u + newExtensionPayloadSize;
     const auto newPacketSize = newHeaderSize + (static_cast<size_t>(len) - layout->payloadOffset);
 
@@ -359,9 +393,9 @@ appendOneByteRtpExtensionString(
     dst[extensionOffset + 3] = static_cast<uint8_t>(extensionWordCount & 0xFF);
 
     auto extensionCursor = extensionOffset + 4;
-    if (oldExtensionPayloadSize != 0) {
-        std::memcpy(dst + extensionCursor, src + layout->extensionOffset + 4, oldExtensionPayloadSize);
-        extensionCursor += oldExtensionPayloadSize;
+    if (oldExtensionContentSize != 0) {
+        std::memcpy(dst + extensionCursor, src + layout->extensionOffset + 4, oldExtensionContentSize);
+        extensionCursor += oldExtensionContentSize;
     }
 
     dst[extensionCursor++] = static_cast<uint8_t>((extId << 4) | ((value.size() - 1) & 0x0F));
@@ -393,6 +427,9 @@ rtcpReferencesSsrc(const uint8_t* buf, size_t len, uint32_t ssrc)
         if (len >= 24 && readUint32(buf + 20) == ssrc)
             return true;
     }
+
+    if (pt == TRANSPORT_CC_RTCP_PACKET_TYPE && (buf[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT && len >= 12)
+        return readUint32(buf + 8) == ssrc;
 
     return false;
 }
@@ -444,9 +481,33 @@ struct SocketPair::PacketState
     std::atomic_bool readBlockingMode {false};
     std::optional<unsigned> rtpPayloadType {};
     std::optional<unsigned> rtpMidExtId {};
+    std::optional<unsigned> transportCcExtId {};
     std::string remoteMid {};
     std::optional<uint32_t> remoteSsrc {};
     std::optional<uint32_t> localSsrc {};
+    std::shared_ptr<TransportCcState> transportCcState {};
+};
+
+struct SocketPair::TransportCcState
+{
+    struct ReceivedPacket
+    {
+        uint16_t sequenceNumber {};
+        std::chrono::steady_clock::time_point receiveTime {};
+    };
+
+    struct SentPacket
+    {
+        uint16_t sequenceNumber {};
+        std::chrono::steady_clock::time_point sendTime {};
+        size_t packetSize {};
+    };
+
+    std::mutex mutex;
+    uint16_t nextSequenceNumber {};
+    uint8_t feedbackPacketCount {};
+    std::vector<ReceivedPacket> receivedPackets {};
+    std::vector<SentPacket> sentPackets {};
 };
 
 struct SocketPair::BundleContext
@@ -457,6 +518,7 @@ struct SocketPair::BundleContext
         : rtp_sock_(std::move(rtp_sock))
         , rtcp_sock_(std::move(rtcp_sock))
         , rtcpMux_(rtcpMux)
+        , transportCcState_(std::make_shared<TransportCcState>())
     {}
 
     ~BundleContext()
@@ -517,6 +579,9 @@ struct SocketPair::BundleContext
 
         const auto deliverPacket =
             [&](const std::shared_ptr<PacketState>& subscriber, bool deliverRtcp, std::optional<uint32_t> remoteSsrc) {
+                if (!deliverRtcp)
+                    SocketPair::recordTransportCcReceive(subscriber, packet.data(), packet.size());
+
                 std::lock_guard lk(subscriber->dataBuffMutex);
                 if (subscriber->interrupted)
                     return;
@@ -611,6 +676,7 @@ struct SocketPair::BundleContext
     bool rtcpMux_ {false};
     std::mutex subscribersMutex_;
     std::vector<std::weak_ptr<PacketState>> subscribers_;
+    std::shared_ptr<TransportCcState> transportCcState_;
     // DTLS-SRTP keying material negotiated once on the shared bundle
     // transport. dtlsMutex_ also serializes the handshake itself so a single
     // DTLS association runs per transport.
@@ -681,6 +747,7 @@ SocketPair::SocketPair(const dhtnet::IpAddr& rtpDestAddr,
     : packetState_(std::make_shared<PacketState>())
     , rtcpMux_(rtcpMux)
 {
+    packetState_->transportCcState = std::make_shared<TransportCcState>();
     openSockets(rtpDestAddr, rtcpDestAddr, localRtpPort, localRtcpPort);
 }
 
@@ -740,6 +807,7 @@ SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
     : packetState_(std::make_shared<PacketState>())
     , rtcpMux_(rtcpMux)
 {
+    packetState_->transportCcState = std::make_shared<TransportCcState>();
     bundleContext_ = createBundleContext(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux_);
     bundleContext_->registerSubscriber(packetState_);
 }
@@ -755,6 +823,7 @@ SocketPair::SocketPair(const std::shared_ptr<BundleContext>& bundleContext,
         throw std::runtime_error("Missing shared ICE socket context");
 
     packetState_->rtpPayloadType = rtpPayloadType;
+    packetState_->transportCcState = bundleContext_->transportCcState_;
     bundleContext_->registerSubscriber(packetState_);
 }
 
@@ -766,11 +835,12 @@ SocketPair::~SocketPair()
 }
 
 bool
-SocketPair::waitForRTCP(std::chrono::seconds interval)
+SocketPair::waitForRTCP(std::chrono::milliseconds interval)
 {
     std::unique_lock lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
-        return packetState_->interrupted or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
+        return packetState_->interrupted or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty()
+               or not listRtcpTransportCc_.empty();
     });
 }
 
@@ -819,6 +889,31 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
     cvRtcpPacketReadyToRead_.notify_one();
 }
 
+void
+SocketPair::saveRtcpTransportCcPacket(uint8_t* buf, size_t len)
+{
+    auto feedback = parseTransportCcFeedbackPacket(buf, len);
+    if (!feedback)
+        return;
+
+    auto report = createTransportCcReport(*feedback);
+
+    std::lock_guard lock(rtcpInfo_mutex_);
+
+    if (listRtcpTransportCc_.size() >= MAX_LIST_SIZE)
+        listRtcpTransportCc_.pop_front();
+
+    listRtcpTransportCc_.push_back(std::move(*feedback));
+
+    if (report) {
+        if (listRtcpTransportCcReports_.size() >= MAX_LIST_SIZE)
+            listRtcpTransportCcReports_.pop_front();
+        listRtcpTransportCcReports_.push_back(std::move(*report));
+    }
+
+    cvRtcpPacketReadyToRead_.notify_one();
+}
+
 std::list<rtcpRRHeader>
 SocketPair::getRtcpRR()
 {
@@ -831,6 +926,31 @@ SocketPair::getRtcpREMB()
 {
     std::lock_guard lock(rtcpInfo_mutex_);
     return std::move(listRtcpREMBHeader_);
+}
+
+std::list<TransportCcFeedback>
+SocketPair::getRtcpTransportCc()
+{
+    std::lock_guard lock(rtcpInfo_mutex_);
+    return std::move(listRtcpTransportCc_);
+}
+
+std::list<TransportCcReport>
+SocketPair::getRtcpTransportCcReports()
+{
+    std::lock_guard lock(rtcpInfo_mutex_);
+    return std::move(listRtcpTransportCcReports_);
+}
+
+size_t
+SocketPair::getTransportCcSentPacketCount() const
+{
+    const auto state = packetState_->transportCcState;
+    if (!state)
+        return 0;
+
+    std::lock_guard<std::mutex> lock(state->mutex);
+    return state->sentPackets.size();
 }
 
 void
@@ -886,6 +1006,147 @@ SocketPair::getRemoteSsrc() const
     return packetState_->remoteSsrc;
 }
 
+std::optional<uint16_t>
+SocketPair::nextTransportCcSequenceNumber()
+{
+    const auto state = packetState_->transportCcState;
+    if (!state)
+        return std::nullopt;
+
+    std::lock_guard l(state->mutex);
+    return state->nextSequenceNumber++;
+}
+
+void
+SocketPair::recordTransportCcSend(uint16_t sequenceNumber, size_t packetSize)
+{
+    const auto state = packetState_->transportCcState;
+    if (!state)
+        return;
+
+    std::lock_guard l(state->mutex);
+    static constexpr size_t MAX_TRANSPORT_CC_SEND_HISTORY = 4096;
+    if (state->sentPackets.size() >= MAX_TRANSPORT_CC_SEND_HISTORY)
+        state->sentPackets.erase(state->sentPackets.begin());
+
+    state->sentPackets.push_back({sequenceNumber, std::chrono::steady_clock::now(), packetSize});
+}
+
+std::optional<TransportCcReport>
+SocketPair::createTransportCcReport(const TransportCcFeedback& feedback)
+{
+    const auto state = packetState_->transportCcState;
+    if (!state)
+        return std::nullopt;
+
+    std::vector<TransportCcState::SentPacket> sentPackets;
+    {
+        std::lock_guard l(state->mutex);
+        sentPackets = state->sentPackets;
+    }
+
+    if (sentPackets.empty())
+        return std::nullopt;
+
+    TransportCcReport report;
+    report.feedback = feedback;
+    report.feedbackReceiveTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
+                                       std::chrono::steady_clock::now().time_since_epoch())
+                                       .count();
+    report.packets.reserve(feedback.packets.size());
+    std::vector<uint16_t> reportedSequences;
+    reportedSequences.reserve(feedback.packets.size());
+
+    bool hasBaseSendTime = false;
+    int64_t baseSendTimeUs = 0;
+    auto receiveTimeUs = int64_t(feedback.referenceTime) * 64000;
+    for (const auto& packet : feedback.packets) {
+        const auto sentPacket = std::find_if(sentPackets.begin(), sentPackets.end(), [&packet](const auto& sent) {
+            return sent.sequenceNumber == packet.sequenceNumber;
+        });
+        if (sentPacket == sentPackets.end()) {
+            ++report.missingSendHistoryPackets;
+            continue;
+        }
+
+        const auto sendTimeUs
+            = std::chrono::duration_cast<std::chrono::microseconds>(sentPacket->sendTime.time_since_epoch()).count();
+        if (!hasBaseSendTime) {
+            baseSendTimeUs = sendTimeUs;
+            hasBaseSendTime = true;
+        }
+
+        TransportCcPacketReport packetReport;
+        packetReport.sequenceNumber = packet.sequenceNumber;
+        packetReport.status = packet.status;
+        packetReport.payloadSize = sentPacket->packetSize;
+        packetReport.sendTimeOffsetUs = sendTimeUs - baseSendTimeUs;
+
+        if (packet.status != TransportCcPacketStatus::NotReceived) {
+            receiveTimeUs += int64_t(packet.deltaTicks) * TRANSPORT_CC_DELTA_UNIT_US;
+            packetReport.receiveTimeOffsetUs = receiveTimeUs;
+        }
+
+        report.packets.push_back(packetReport);
+        reportedSequences.push_back(packet.sequenceNumber);
+    }
+
+    if (report.packets.empty())
+        return std::nullopt;
+
+    {
+        std::lock_guard l(state->mutex);
+        state->sentPackets.erase(std::remove_if(state->sentPackets.begin(),
+                                                state->sentPackets.end(),
+                                                [&reportedSequences](const auto& sent) {
+                                                    return std::find(reportedSequences.begin(),
+                                                                     reportedSequences.end(),
+                                                                     sent.sequenceNumber)
+                                                           != reportedSequences.end();
+                                                }),
+                                 state->sentPackets.end());
+    }
+
+    return report;
+}
+
+void
+SocketPair::recordTransportCcReceive(const std::shared_ptr<PacketState>& packetState, const uint8_t* buf, size_t len)
+{
+    std::optional<unsigned> extId;
+    std::shared_ptr<TransportCcState> state;
+    {
+        std::lock_guard l(packetState->dataBuffMutex);
+        extId = packetState->transportCcExtId;
+        state = packetState->transportCcState;
+    }
+
+    if (!extId || !state)
+        return;
+
+    const auto value = getOneByteRtpExtensionString(buf, len, *extId);
+    if (!value)
+        return;
+
+    const auto sequenceNumber = parseTransportCcExtension(reinterpret_cast<const uint8_t*>(value->data()),
+                                                          value->size());
+    if (!sequenceNumber)
+        return;
+
+    std::lock_guard l(state->mutex);
+    if (std::any_of(state->receivedPackets.begin(), state->receivedPackets.end(), [sequenceNumber](const auto& packet) {
+            return packet.sequenceNumber == *sequenceNumber;
+        })) {
+        return;
+    }
+
+    static constexpr size_t MAX_TRANSPORT_CC_RECEIVE_HISTORY = 512;
+    if (state->receivedPackets.size() >= MAX_TRANSPORT_CC_RECEIVE_HISTORY)
+        state->receivedPackets.erase(state->receivedPackets.begin());
+
+    state->receivedPackets.push_back({*sequenceNumber, std::chrono::steady_clock::now()});
+}
+
 std::vector<uint8_t>
 SocketPair::createRtcpPli(uint32_t senderSsrc, uint32_t mediaSsrc)
 {
@@ -914,6 +1175,77 @@ SocketPair::isRtcpKeyframeRequest(const uint8_t* buf, size_t len)
     const auto fmt = buf[0] & 0x1f;
     // PLI (RFC 4585 6.3.1) or FIR (RFC 5104 4.3.1)
     return fmt == 1 || fmt == 4;
+}
+
+std::vector<uint8_t>
+SocketPair::createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsrc)
+{
+    const auto state = packetState_->transportCcState;
+    if (!state)
+        return {};
+
+    std::vector<TransportCcState::ReceivedPacket> receivedPackets;
+    uint8_t feedbackPacketCount = 0;
+    {
+        std::lock_guard l(state->mutex);
+        if (state->receivedPackets.empty())
+            return {};
+
+        receivedPackets = std::move(state->receivedPackets);
+        state->receivedPackets.clear();
+        feedbackPacketCount = state->feedbackPacketCount++;
+    }
+
+    const auto baseSequenceNumber = receivedPackets.front().sequenceNumber;
+    std::sort(receivedPackets.begin(), receivedPackets.end(), [baseSequenceNumber](const auto& lhs, const auto& rhs) {
+        return static_cast<uint16_t>(lhs.sequenceNumber - baseSequenceNumber)
+               < static_cast<uint16_t>(rhs.sequenceNumber - baseSequenceNumber);
+    });
+
+    const auto firstReceiveTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
+                                        receivedPackets.front().receiveTime.time_since_epoch())
+                                        .count();
+    const auto referenceTimeUs = (firstReceiveTimeUs / 64000) * 64000;
+
+    TransportCcFeedback feedback;
+    feedback.senderSsrc = senderSsrc;
+    feedback.mediaSsrc = mediaSsrc;
+    feedback.baseSequenceNumber = receivedPackets.front().sequenceNumber;
+    feedback.referenceTime = static_cast<uint32_t>((firstReceiveTimeUs / 64000) & 0x00ffffff);
+    feedback.feedbackPacketCount = feedbackPacketCount;
+    feedback.packets.reserve(receivedPackets.size());
+
+    static constexpr size_t MAX_TRANSPORT_CC_FEEDBACK_PACKETS = 512;
+    auto expectedSequenceNumber = feedback.baseSequenceNumber;
+    auto previousReceiveTimeUs = referenceTimeUs;
+    for (const auto& receivedPacket : receivedPackets) {
+        while (expectedSequenceNumber != receivedPacket.sequenceNumber
+               && feedback.packets.size() < MAX_TRANSPORT_CC_FEEDBACK_PACKETS) {
+            feedback.packets.push_back({expectedSequenceNumber, TransportCcPacketStatus::NotReceived, 0});
+            ++expectedSequenceNumber;
+        }
+        if (expectedSequenceNumber != receivedPacket.sequenceNumber
+            || feedback.packets.size() >= MAX_TRANSPORT_CC_FEEDBACK_PACKETS) {
+            break;
+        }
+
+        const auto receiveTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
+                                       receivedPacket.receiveTime.time_since_epoch())
+                                       .count();
+        auto deltaTicks = (receiveTimeUs - previousReceiveTimeUs) / TRANSPORT_CC_DELTA_UNIT_US;
+        deltaTicks = std::clamp<int64_t>(deltaTicks,
+                                         std::numeric_limits<int16_t>::min(),
+                                         std::numeric_limits<int16_t>::max());
+
+        feedback.packets.push_back({receivedPacket.sequenceNumber,
+                                    deltaTicks >= 0 && deltaTicks <= 255 ? TransportCcPacketStatus::SmallDelta
+                                                                         : TransportCcPacketStatus::LargeDelta,
+                                    static_cast<int16_t>(deltaTicks)});
+        previousReceiveTimeUs = receiveTimeUs;
+        ++expectedSequenceNumber;
+    }
+
+    return jami::createTransportCcFeedbackPacket(feedback);
 }
 
 bool
@@ -1245,6 +1577,10 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
                         saveRtcpREMBPacket(packet, packetSize);
                     }
                 }
+                // 205 = RTPFB PT, FMT 15 = Transport-CC
+                else if (header->pt == TRANSPORT_CC_RTCP_PACKET_TYPE && (packet[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT) {
+                    saveRtcpTransportCcPacket(packet, packetSize);
+                }
                 // 200 = SR PT
                 else if (header->pt == 200) {
                     // not used yet
@@ -1267,6 +1603,12 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     if (len <= 0)
         return len;
+
+    if (!fromRTCP) {
+        if (const auto remoteSsrc = getRtpSsrc(buf, static_cast<size_t>(len)); remoteSsrc)
+            setRemoteSsrc(*remoteSsrc);
+        recordTransportCcReceive(packetState_, buf, static_cast<size_t>(len));
+    }
 
     if (not fromRTCP && (buf_size < static_cast<int>(MINIMUM_RTP_HEADER_SIZE)))
         return len;
@@ -1368,35 +1710,58 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
 
     int ret;
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
-    std::array<uint8_t, RTP_MAX_PACKET_LENGTH> bundlePacket {};
-    if (!isRTCP) {
-        if (const auto ssrc = getRtpSsrc(buf, static_cast<size_t>(buf_size)))
-            setLocalSsrc(*ssrc);
-    }
+    std::array<uint8_t, RTP_MAX_PACKET_LENGTH> firstPatchedPacket {};
+    std::array<uint8_t, RTP_MAX_PACKET_LENGTH> secondPatchedPacket {};
+    bool useFirstPatchedPacket = true;
     unsigned int ts_LSB, ts_MSB;
     double currentSRTS, currentLatency;
 
-    if (!isRTCP && localRtpMidExtId_ && !localRtpMid_.empty()) {
-        const auto patchedSize = appendOneByteRtpExtensionString(buf,
-                                                                 buf_size,
-                                                                 *localRtpMidExtId_,
-                                                                 localRtpMid_,
-                                                                 bundlePacket.data(),
-                                                                 bundlePacket.size());
+    const auto appendRtpExtension = [&](unsigned extId, std::string_view value) {
+        auto* patchedPacket = useFirstPatchedPacket ? firstPatchedPacket.data() : secondPatchedPacket.data();
+        const auto patchedSize
+            = appendOneByteRtpExtensionString(buf, buf_size, extId, value, patchedPacket, RTP_MAX_PACKET_LENGTH);
         if (patchedSize != buf_size) {
-            buf = bundlePacket.data();
+            buf = patchedPacket;
             buf_size = patchedSize;
+            useFirstPatchedPacket = !useFirstPatchedPacket;
+            return true;
         }
-    } else if (isRTCP && !localRtpMid_.empty()) {
+        return false;
+    };
+
+    if (isRTCP) {
+        if (const auto senderSsrc = getRtcpSenderSsrc(buf, static_cast<size_t>(buf_size)); senderSsrc)
+            setLocalSsrc(*senderSsrc);
+    } else {
+        if (const auto localSsrc = getRtpSsrc(buf, static_cast<size_t>(buf_size)); localSsrc)
+            setLocalSsrc(*localSsrc);
+    }
+
+    if (!isRTCP && localRtpMidExtId_ && !localRtpMid_.empty()) {
+        appendRtpExtension(*localRtpMidExtId_, localRtpMid_);
+    }
+
+    std::optional<uint16_t> transportCcSequenceNumber;
+    if (!isRTCP && localTransportCcExtId_) {
+        if (const auto sequenceNumber = nextTransportCcSequenceNumber()) {
+            const auto extension = createTransportCcExtension(*sequenceNumber);
+            if (appendRtpExtension(*localTransportCcExtId_,
+                                   {reinterpret_cast<const char*>(extension.data()), extension.size()})) {
+                transportCcSequenceNumber = *sequenceNumber;
+            }
+        }
+    }
+
+    if (isRTCP && !localRtpMid_.empty()) {
         if (const auto senderSsrc = getRtcpSenderSsrc(buf, static_cast<size_t>(buf_size)); senderSsrc) {
             const auto patchedSize = appendRtcpMidSdesItem(buf,
                                                            buf_size,
                                                            *senderSsrc,
                                                            localRtpMid_,
-                                                           bundlePacket.data(),
-                                                           bundlePacket.size());
+                                                           firstPatchedPacket.data(),
+                                                           firstPatchedPacket.size());
             if (patchedSize != buf_size) {
-                buf = bundlePacket.data();
+                buf = firstPatchedPacket.data();
                 buf_size = patchedSize;
             }
         }
@@ -1444,13 +1809,53 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
         buf = srtpContext_->encryptbuf;
     }
 
+    std::optional<RtpPacerPacket> pacedPacket;
+    if (!isRTCP && rtpPacingBitrateBps_.load(std::memory_order_relaxed) != 0) {
+        pacedPacket = paceRtpPacket(buf, buf_size);
+        if (!pacedPacket)
+            return packetState_->interrupted ? -EINTR : buf_size;
+        buf = pacedPacket->payload.data();
+        buf_size = static_cast<int>(pacedPacket->payload.size());
+    }
+
     do {
         if (packetState_->interrupted)
             return -EINTR;
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 
+    if (ret > 0 && transportCcSequenceNumber)
+        recordTransportCcSend(*transportCcSequenceNumber, static_cast<size_t>(buf_size));
+
     return ret < 0 ? -errno : ret;
+}
+
+std::optional<RtpPacerPacket>
+SocketPair::paceRtpPacket(const uint8_t* buf, int buf_size)
+{
+    if (!buf || buf_size <= 0)
+        return std::nullopt;
+
+    auto nowUs = std::chrono::duration_cast<std::chrono::microseconds>(clock::now().time_since_epoch()).count();
+    std::unique_lock lock(rtpPacerMutex_);
+    if (!rtpPacer_.enqueue(std::vector<uint8_t>(buf, buf + buf_size), nowUs))
+        return std::nullopt;
+
+    while (!packetState_->interrupted) {
+        if (auto packet = rtpPacer_.popReady(nowUs))
+            return packet;
+
+        const auto nextReadyTimeUs = rtpPacer_.nextReadyTimeUs();
+        if (!nextReadyTimeUs)
+            return std::nullopt;
+
+        const auto delayUs = std::max<int64_t>(0, *nextReadyTimeUs - nowUs);
+        lock.unlock();
+        std::this_thread::sleep_for(std::chrono::microseconds(delayUs));
+        nowUs = std::chrono::duration_cast<std::chrono::microseconds>(clock::now().time_since_epoch()).count();
+        lock.lock();
+    }
+    return std::nullopt;
 }
 
 double
@@ -1484,6 +1889,24 @@ SocketPair::setBundleMidExtension(std::string localMid,
     std::lock_guard lk(packetState_->dataBuffMutex);
     packetState_->remoteMid = std::move(remoteMid);
     packetState_->rtpMidExtId = (remoteMidExtId && *remoteMidExtId != 0) ? remoteMidExtId : std::nullopt;
+}
+
+void
+SocketPair::setTransportCcExtension(std::optional<unsigned> localExtId, std::optional<unsigned> remoteExtId)
+{
+    localTransportCcExtId_ = (localExtId && *localExtId != 0 && *localExtId < 15) ? localExtId : std::nullopt;
+
+    std::lock_guard lk(packetState_->dataBuffMutex);
+    packetState_->transportCcExtId = (remoteExtId && *remoteExtId != 0 && *remoteExtId < 15) ? remoteExtId
+                                                                                             : std::nullopt;
+}
+
+void
+SocketPair::setRtpPacingBitrate(uint64_t bitrateBps)
+{
+    rtpPacingBitrateBps_.store(bitrateBps, std::memory_order_relaxed);
+    std::lock_guard lock(rtpPacerMutex_);
+    rtpPacer_.setConfig({bitrateBps, RTP_PACING_MAX_QUEUE_DELAY_US});
 }
 
 bool
