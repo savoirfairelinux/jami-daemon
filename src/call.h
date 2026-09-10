@@ -220,6 +220,8 @@ public:
      */
     virtual void answer(const std::vector<libjami::MediaMap>& mediaList) = 0;
 
+    virtual void setVideoOrientation(int, int) {}
+
     /**
      * Check the media of an incoming media change request.
      * This method checks the new media against the current media. It

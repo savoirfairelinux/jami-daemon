@@ -20,6 +20,7 @@
 
 #include "callmanager_interface.h"
 #include "call_factory.h"
+#include "jami/media_const.h"
 
 #include "sip/siptransport.h"
 #include "sip/sipvoiplink.h"
@@ -58,6 +59,18 @@ placeCallWithMedia(const std::string& accountId, const std::string& to, const st
     } else {
         return jami::Manager::instance().outgoingCall(accountId, to, mediaList);
     }
+}
+
+std::string
+placeCallWithExternalMedia(const std::string& accountId, const std::string& to, const std::string& sdpOffer)
+{
+    if (to.empty() or sdpOffer.empty()) {
+        JAMI_LOG("Missing destination or SDP offer - Call aborted");
+        return {};
+    }
+    std::vector<libjami::MediaMap> mediaList;
+    mediaList.emplace_back(libjami::MediaMap {{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, sdpOffer}});
+    return jami::Manager::instance().outgoingCall(accountId, to, mediaList);
 }
 
 bool
@@ -102,9 +115,7 @@ accept(const std::string& accountId, const std::string& callId)
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (account->getCall(callId)) {
-            dht::ThreadPool::io().run([accountId, callId] {
-                jami::Manager::instance().acceptCall(accountId, callId);
-            });
+            dht::ThreadPool::io().run([accountId, callId] { jami::Manager::instance().acceptCall(accountId, callId); });
             return true;
         }
     }
@@ -116,9 +127,33 @@ acceptWithMedia(const std::string& accountId, const std::string& callId, const s
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (account->getCall(callId)) {
-            dht::ThreadPool::io().run([accountId, callId, mediaList] {
-                jami::Manager::instance().acceptCall(accountId, callId, mediaList);
-            });
+            dht::ThreadPool::io().run(
+                [accountId, callId, mediaList] { jami::Manager::instance().acceptCall(accountId, callId, mediaList); });
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+acceptWithExternalMedia(const std::string& accountId, const std::string& callId, const std::string& sdpAnswer)
+{
+    if (sdpAnswer.empty())
+        return false;
+    std::vector<libjami::MediaMap> mediaList;
+    mediaList.emplace_back(libjami::MediaMap {{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, sdpAnswer}});
+    return acceptWithMedia(accountId, callId, mediaList);
+}
+
+bool
+setVideoOrientation(const std::string& accountId,
+                    const std::string& callId,
+                    int streamIdx,
+                    int rotation)
+{
+    if (auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto call = account->getCall(callId)) {
+            call->setVideoOrientation(streamIdx, rotation);
             return true;
         }
     }
