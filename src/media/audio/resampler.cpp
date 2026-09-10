@@ -226,7 +226,6 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
             newOutput->format = output->format;
             newOutput->nb_samples = static_cast<int>(targetOutputLength);
             newOutput->ch_layout = output->ch_layout;
-            newOutput->channel_layout = output->channel_layout;
             newOutput->sample_rate = output->sample_rate;
             int bufferRet = av_frame_get_buffer(newOutput, 0);
             if (bufferRet < 0) {
