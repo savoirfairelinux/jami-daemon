@@ -50,32 +50,32 @@ diff --git a/libavfilter/Makefile b/libavfilter/Makefile
 index b3d3d981dd..abe7c3cd0d 100644
 --- a/libavfilter/Makefile
 +++ b/libavfilter/Makefile
-@@ -583,6 +583,7 @@ OBJS-$(CONFIG_NULLSRC_FILTER)                += vsrc_testsrc.o
+@@ -624,6 +624,7 @@ OBJS-$(CONFIG_NULLSRC_FILTER)                += vsrc_testsrc.o
  OBJS-$(CONFIG_OPENCLSRC_FILTER)              += vf_program_opencl.o opencl.o
  OBJS-$(CONFIG_PAL75BARS_FILTER)              += vsrc_testsrc.o
  OBJS-$(CONFIG_PAL100BARS_FILTER)             += vsrc_testsrc.o
 +OBJS-$(CONFIG_PIPEWIREGRAB_FILTER)           += vsrc_pipewiregrab.o
- OBJS-$(CONFIG_RGBTESTSRC_FILTER)             += vsrc_testsrc.o
- OBJS-$(CONFIG_SIERPINSKI_FILTER)             += vsrc_sierpinski.o
- OBJS-$(CONFIG_SMPTEBARS_FILTER)              += vsrc_testsrc.o
+ OBJS-$(CONFIG_PERLIN_FILTER)                 += vsrc_perlin.o perlin.o
+ OBJS-$(CONFIG_QRENCODE_FILTER)               += qrencode.o textutils.o
+ OBJS-$(CONFIG_QRENCODESRC_FILTER)            += qrencode.o textutils.o
 diff --git a/libavfilter/allfilters.c b/libavfilter/allfilters.c
 index d7db46c2af..87204fec71 100644
 --- a/libavfilter/allfilters.c
 +++ b/libavfilter/allfilters.c
-@@ -548,6 +548,7 @@ extern const AVFilter ff_vsrc_nullsrc;
- extern const AVFilter ff_vsrc_openclsrc;
- extern const AVFilter ff_vsrc_pal75bars;
- extern const AVFilter ff_vsrc_pal100bars;
-+extern const AVFilter ff_vsrc_pipewiregrab;
- extern const AVFilter ff_vsrc_rgbtestsrc;
- extern const AVFilter ff_vsrc_sierpinski;
- extern const AVFilter ff_vsrc_smptebars;
+@@ -588,6 +588,7 @@ extern const FFFilter ff_vsrc_openclsrc;
+ extern const FFFilter ff_vsrc_qrencodesrc;
+ extern const FFFilter ff_vsrc_pal75bars;
+ extern const FFFilter ff_vsrc_pal100bars;
++extern const FFFilter ff_vsrc_pipewiregrab;
+ extern const FFFilter ff_vsrc_perlin;
+ extern const FFFilter ff_vsrc_rgbtestsrc;
+ extern const FFFilter ff_vsrc_sierpinski;
 diff --git a/libavfilter/vsrc_pipewiregrab.c b/libavfilter/vsrc_pipewiregrab.c
 new file mode 100644
 index 0000000000..44d64b1eac
 --- /dev/null
 +++ b/libavfilter/vsrc_pipewiregrab.c
-@@ -0,0 +1,1376 @@
+@@ -0,0 +1,1378 @@
 +/*
 + * PipeWire input grabber (ScreenCast)
 + * Copyright (C) 2024-2026 Savoir-faire Linux, Inc.
@@ -117,6 +117,7 @@ index 0000000000..44d64b1eac
 +#include <sys/mman.h>
 +#include <sys/queue.h>
 +
++#include "libavutil/mem.h"
 +#include "libavutil/internal.h"
 +#include "libavutil/mathematics.h"
 +#include "libavutil/opt.h"
@@ -127,8 +128,8 @@ index 0000000000..44d64b1eac
 +#include "libavformat/internal.h"
 +#include "libavutil/avassert.h"
 +#include "avfilter.h"
++#include "filters.h"
 +#include "formats.h"
-+#include "internal.h"
 +#include "video.h"
 +
 +#include <pipewire/pipewire.h>
@@ -1351,6 +1352,7 @@ index 0000000000..44d64b1eac
 +static int pipewiregrab_config_props(AVFilterLink *outlink)
 +{
 +    AVFrame *frame;
++    FilterLink *l = ff_filter_link(outlink);
 +    PipewireGrabContext *pw_ctx = outlink->src->priv;
 +
 +    AVRational time_base = av_inv_q(pw_ctx->framerate);
@@ -1360,7 +1362,7 @@ index 0000000000..44d64b1eac
 +    outlink->w = pw_ctx->width;
 +    outlink->h = pw_ctx->height;
 +    outlink->time_base = AV_TIME_BASE_Q;
-+    outlink->frame_rate = pw_ctx->framerate;
++    l->frame_rate = pw_ctx->framerate;
 +
 +    frame = ff_get_video_buffer(outlink, pw_ctx->width, pw_ctx->height);
 +    if (!frame)
@@ -1441,14 +1443,14 @@ index 0000000000..44d64b1eac
 +    },
 +};
 +
-+const AVFilter ff_vsrc_pipewiregrab= {
-+    .name = "pipewiregrab",
-+    .description = NULL_IF_CONFIG_SMALL("Capture screen or window using PipeWire."),
-+    .priv_size = sizeof(struct PipewireGrabContext),
-+    .priv_class = &pipewiregrab_class,
-+    .init = pipewiregrab_init,
-+    .uninit = pipewiregrab_uninit,
-+    .inputs = NULL,
++const FFFilter ff_vsrc_pipewiregrab = {
++    .p.name        = "pipewiregrab",
++    .p.description = NULL_IF_CONFIG_SMALL("Capture screen or window using PipeWire."),
++    .p.priv_class  = &pipewiregrab_class,
++    .p.inputs      = NULL,
++    .priv_size     = sizeof(struct PipewireGrabContext),
++    .init          = pipewiregrab_init,
++    .uninit        = pipewiregrab_uninit,
 +    FILTER_OUTPUTS(pipewiregrab_outputs),
 +    FILTER_QUERY_FUNC(pipewiregrab_query_formats),
 +};
