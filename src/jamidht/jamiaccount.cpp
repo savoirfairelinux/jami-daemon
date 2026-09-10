@@ -117,7 +117,6 @@ using namespace std::placeholders;
 
 namespace jami {
 
-constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_PIDF[] {"application/pidf+xml"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
@@ -4976,9 +4975,6 @@ JamiAccount::initConnectionManager()
                     servicesJson.empty() ? "[]" : servicesJson);
             });
         serviceManager_->setOnChanged([w = weak()]() {
-            auto self = w.lock();
-            if (!self)
-                return;
             runOnMainThread([w]() {
                 auto self = w.lock();
                 if (!self)
