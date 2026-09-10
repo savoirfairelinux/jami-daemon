@@ -158,7 +158,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     jami_tracepoint(call_start, callId.c_str());
 
     sdp_->setSecureMediaKeyExchange(account->getSrtpKeyExchange());
-    sdp_->enableRtcpMux(account->isRtcpMuxEnabled());
+    setRtcpMuxEnabled(type == Call::CallType::OUTGOING && account->isRtcpMuxEnabled());
     initializeDtlsSrtpIdentity(account, dtlsCertificate_, dtlsPrivateKey_, *sdp_);
 
     if (account->getUPnPActive())
@@ -463,7 +463,6 @@ SIPCall::generateMediaPorts()
     if (localAudioPort_ != 0)
         account->releasePort(localAudioPort_);
     localAudioPort_ = callLocalAudioPort;
-    sdp_->setLocalPublishedAudioPorts(callLocalAudioPort, rtcpMuxEnabled_ ? 0 : callLocalAudioPort + 1);
 
 #ifdef ENABLE_VIDEO
     // https://projects.savoirfairelinux.com/issues/17498
@@ -473,8 +472,58 @@ SIPCall::generateMediaPorts()
     // this should already be guaranteed by SIPAccount
     assert(localAudioPort_ != callLocalVideoPort);
     localVideoPort_ = callLocalVideoPort;
-    sdp_->setLocalPublishedVideoPorts(callLocalVideoPort, rtcpMuxEnabled_ ? 0 : callLocalVideoPort + 1);
 #endif
+
+    refreshLocalPublishedPorts();
+}
+
+void
+SIPCall::refreshLocalPublishedPorts()
+{
+    if (not sdp_)
+        return;
+
+    if (localAudioPort_ != 0)
+        sdp_->setLocalPublishedAudioPorts(localAudioPort_, rtcpMuxEnabled_ ? 0 : localAudioPort_ + 1);
+
+#ifdef ENABLE_VIDEO
+    if (localVideoPort_ != 0)
+        sdp_->setLocalPublishedVideoPorts(localVideoPort_, rtcpMuxEnabled_ ? 0 : localVideoPort_ + 1);
+#endif
+}
+
+void
+SIPCall::setRtcpMuxEnabled(bool enabled)
+{
+    rtcpMuxEnabled_ = enabled;
+    if (sdp_)
+        sdp_->enableRtcpMux(enabled);
+    refreshLocalPublishedPorts();
+}
+
+bool
+SIPCall::remoteOfferSupportsRtcpMux() const
+{
+    if (not sdp_)
+        return false;
+
+    auto* remoteSession = sdp_->getRemoteSdpSession();
+    if (not remoteSession)
+        return false;
+
+    const auto mediaDescriptions = sdp_->getMediaDescriptions(remoteSession, true);
+    if (mediaDescriptions.empty())
+        return false;
+
+    return std::all_of(mediaDescriptions.begin(), mediaDescriptions.end(), [](const auto& media) {
+        return not media.enabled or media.rtcp_mux;
+    });
+}
+
+unsigned
+SIPCall::getIceCompCountPerStream() const
+{
+    return rtcpMuxEnabled_ ? 1u : ICE_COMP_COUNT_PER_STREAM;
 }
 
 const std::string&
@@ -908,6 +957,14 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
                pjsip_inv_state_name(inviteSession_->state));
     JAMI_DEBUG("[call:{}] New ICE required for this re-invite: [{}]", getCallId(), needNewIce ? "Yes" : "No");
 
+    auto acc = getSIPAccount();
+    if (not acc) {
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
+        return !PJ_SUCCESS;
+    }
+
+    setRtcpMuxEnabled(acc->isRtcpMuxEnabled());
+
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
@@ -915,12 +972,6 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
     sdp_->clearIce();
     sdp_->setActiveRemoteSdpSession(nullptr);
     sdp_->setActiveLocalSdpSession(nullptr);
-
-    auto acc = getSIPAccount();
-    if (not acc) {
-        JAMI_ERROR("[call:{}] No account detected", getCallId());
-        return !PJ_SUCCESS;
-    }
 
     if (recovering_) {
         auto newAddress = iceOptions ? iceOptions->accountPublicAddr : dhtnet::IpAddr {};
@@ -1223,6 +1274,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     }
 
     // Create the SDP answer
+    setRtcpMuxEnabled(account->isRtcpMuxEnabled() && remoteOfferSupportsRtcpMux());
     sdp_->processIncomingOffer(mediaAttrList);
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
@@ -1242,6 +1294,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 
         JAMI_WARNING("[call:{}] No negotiator session, peer sent an empty INVITE (without SDP)", getCallId());
 
+        setRtcpMuxEnabled(account->isRtcpMuxEnabled());
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
 
         generateMediaPorts();
@@ -1349,6 +1402,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
 
     if (!updateAllMediaStreams(mediaAttrList, isRemote))
         return;
+
+    setRtcpMuxEnabled(account->isRtcpMuxEnabled() && remoteOfferSupportsRtcpMux());
 
     if (not sdp_->processIncomingOffer(mediaAttrList)) {
         JAMI_WARNING("[call:{}] Unable to process the new offer, ignoring", getCallId());
@@ -3217,51 +3272,77 @@ SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIc
 void
 SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall)
 {
-    std::lock_guard lk {callMutex_};
+    {
+        std::lock_guard lk {callMutex_};
 
-    JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
+        JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
 
-    // Check if the call is already ended, so we don't need to restart medias
-    // This is typically the case in a multi-device context where one device
-    // can stop a call. So do not start medias
-    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
-        JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
-        return;
-    }
-    if (negotiatedIce != getIceMedia())
-        return;
-
-    // Update the negotiated media.
-    setupNegotiatedMedia();
-
-    // If this callback is for a re-invite session then update
-    // the ICE media transport.
-    if (isIceEnabled())
-        switchToIceReinviteIfNeeded();
-
-    for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += 2) {
-        // Create sockets for RTP and RTCP, and start the session.
-        auto& rtpStream = rtpStreams_[idx];
-        if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
-            JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
-            continue;
+        // Check if the call is already ended, so we don't need to restart medias
+        // This is typically the case in a multi-device context where one device
+        // can stop a call. So do not start medias
+        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
+            JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
+            return;
         }
-        rtpStream.rtpSocket_ = newIceSocket(compId);
+        if (negotiatedIce != getIceMedia())
+            return;
 
-        if (not rtcpMuxEnabled_) {
-            rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
+        // Update the negotiated media.
+        setupNegotiatedMedia();
+
+        // If this callback is for a re-invite session then update
+        // the ICE media transport.
+        if (isIceEnabled())
+            switchToIceReinviteIfNeeded();
+
+        for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += getIceCompCountPerStream()) {
+            // Create sockets for RTP and RTCP, and start the session.
+            auto& rtpStream = rtpStreams_[idx];
+            if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
+                JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
+                continue;
+            }
+            rtpStream.rtpSocket_ = newIceSocket(compId);
+
+            if (not rtcpMuxEnabled_) {
+                rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
+            }
         }
     }
 
-    // Start/Restart the media using the new transport
-    stopAllMedia();
-    startAllMedia();
-    if (recovering_ and not fromSubcall and negotiatedIce == getIceMedia()
-        and (negotiatedIce == recoveryIce_ or negotiatedIce == pendingRecoveryAnswerIce_)) {
-        negotiatedRecoveryIce_ = negotiatedIce;
-        completeRecoveryIfReadyLocked();
-    }
-    reportMediaNegotiationStatus();
+    dht::ThreadPool::io().run([w = weak(), negotiatedIce, fromSubcall] {
+        if (auto call = w.lock()) {
+            {
+                std::lock_guard lk {call->callMutex_};
+                if (negotiatedIce != call->getIceMedia())
+                    return;
+                call->stopAllMedia();
+            }
+
+            runOnMainThread([w, negotiatedIce, fromSubcall] {
+                if (auto call = w.lock()) {
+                    std::lock_guard lk {call->callMutex_};
+
+                    if (not call->inviteSession_
+                        or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+                        or not call->sdp_ or negotiatedIce != call->getIceMedia()) {
+                        JAMI_DEBUG("[call:{}] Skipping media restart after ICE, call is no longer valid",
+                                   call->getCallId());
+                        return;
+                    }
+
+                    call->startAllMedia();
+                    if (call->recovering_ and not fromSubcall
+                        and (negotiatedIce == call->recoveryIce_
+                             or negotiatedIce == call->pendingRecoveryAnswerIce_)) {
+                        call->negotiatedRecoveryIce_ = negotiatedIce;
+                        call->completeRecoveryIfReadyLocked();
+                    }
+                    call->reportMediaNegotiationStatus();
+                }
+            });
+        }
+    });
 }
 
 bool
@@ -3909,12 +3990,14 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     iceOptions.master = master;
     iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
-    iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
-    iceOptions.qosType.reserve(rtpStreams_.size() * ICE_COMP_COUNT_PER_STREAM);
+    const auto compCountPerStream = getIceCompCountPerStream();
+    iceOptions.compCountPerStream = compCountPerStream;
+    iceOptions.qosType.reserve(rtpStreams_.size() * compCountPerStream);
     for (const auto& stream : rtpStreams_) {
         iceOptions.qosType.push_back(stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO ? dhtnet::QosType::VOICE
                                                                                              : dhtnet::QosType::VIDEO);
-        iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
+        if (compCountPerStream > 1)
+            iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
     }
 
     // Init ICE.
