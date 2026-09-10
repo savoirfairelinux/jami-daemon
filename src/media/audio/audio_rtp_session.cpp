@@ -433,7 +433,12 @@ void
 AudioRtpSession::processRtcpChecker()
 {
     adaptQualityAndBitrate();
-    socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
+    sendTransportCcFeedback();
+
+    auto waitInterval = std::chrono::duration_cast<std::chrono::milliseconds>(rtcp_checking_interval);
+    if (shouldSendTransportCcFeedback())
+        waitInterval = std::chrono::milliseconds(100);
+    socketPair_->waitForRTCP(waitInterval);
 }
 
 void

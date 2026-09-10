@@ -86,17 +86,24 @@ Sdp::~Sdp()
 std::shared_ptr<SystemCodecInfo>
 Sdp::findCodecBySpec(std::string_view codec, const unsigned clockrate) const
 {
+    // Codec names are case-insensitive (RFC 4566 6.).
+    const auto sameName = [&codec](std::string_view name) {
+        return name.size() == codec.size() and std::equal(name.begin(), name.end(), codec.begin(), [](char a, char b) {
+                   return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+               });
+    };
+
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
         auto audioCodecInfo = std::static_pointer_cast<SystemAudioCodecInfo>(accountCodec);
-        if (audioCodecInfo->name == codec
+        if (sameName(audioCodecInfo->name)
             and (audioCodecInfo->isPCMG722() ? (clockrate == 8000)
                                              : (audioCodecInfo->audioformat.sample_rate == clockrate)))
             return accountCodec;
     }
 
     for (const auto& accountCodec : video_codec_list_) {
-        if (accountCodec->name == codec)
+        if (sameName(accountCodec->name))
             return accountCodec;
     }
     return nullptr;
@@ -135,6 +142,13 @@ constexpr std::array<std::string_view, 2> SDES_OFFER_CRYPTO_SUITES {
 
 constexpr std::string_view MID_RTP_EXTENSION_URI {"urn:ietf:params:rtp-hdrext:sdes:mid"};
 constexpr unsigned DEFAULT_MID_RTP_EXTENSION_ID {1};
+constexpr unsigned DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID {3};
+constexpr std::array<std::string_view, 3> TRANSPORT_CC_RTP_EXTENSION_URIS {
+    "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+    "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-02",
+    "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-03",
+};
+constexpr auto TRANSPORT_CC_RTP_EXTENSION_URI = TRANSPORT_CC_RTP_EXTENSION_URIS.front();
 
 const CryptoSuiteDefinition*
 findCryptoSuiteDefinition(std::string_view cryptoSuite)
@@ -339,6 +353,17 @@ getExtmapId(const pjmedia_sdp_session* session, unsigned mediaIndex, std::string
 }
 
 unsigned
+getExtmapId(const pjmedia_sdp_session* session, unsigned mediaIndex, const std::array<std::string_view, 3>& uris)
+{
+    for (const auto uri : uris) {
+        if (const auto extId = getExtmapId(session, mediaIndex, uri))
+            return extId;
+    }
+
+    return 0;
+}
+
+unsigned
 getBundleExtmapId(const pjmedia_sdp_session* session, std::string_view uri)
 {
     if (not session)
@@ -357,6 +382,37 @@ getBundleExtmapId(const pjmedia_sdp_session* session, std::string_view uri)
 
         if (bundleExtId != extId) {
             JAMI_WARNING("Ignoring inconsistent extmap id {} for {} in BUNDLE group, using {}", extId, uri, bundleExtId);
+            return bundleExtId;
+        }
+    }
+
+    return bundleExtId;
+}
+
+unsigned
+getBundleExtmapId(const pjmedia_sdp_session* session,
+                  const std::array<std::string_view, 3>& uris,
+                  std::string_view label)
+{
+    if (not session)
+        return 0;
+
+    unsigned bundleExtId = 0;
+    for (unsigned mediaIndex = 0; mediaIndex < session->media_count; ++mediaIndex) {
+        const auto extId = getExtmapId(session, mediaIndex, uris);
+        if (extId == 0)
+            continue;
+
+        if (bundleExtId == 0) {
+            bundleExtId = extId;
+            continue;
+        }
+
+        if (bundleExtId != extId) {
+            JAMI_WARNING("Ignoring inconsistent extmap id {} for {} in BUNDLE group, using {}",
+                         extId,
+                         label,
+                         bundleExtId);
             return bundleExtId;
         }
     }
@@ -765,6 +821,28 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     }
 
     if (mediaAttr.enabled_ and direction != DIRECTION_STR[MediaDirection::INACTIVE]) {
+        auto transportCcExtmapId = DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID;
+        auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER;
+        auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER;
+
+        if (sdpDirection_ == SdpDirection::ANSWER) {
+            transportCcExtmapId = hasBundleGroup(remoteSession_)
+                                      ? getBundleExtmapId(remoteSession_,
+                                                          TRANSPORT_CC_RTP_EXTENSION_URIS,
+                                                          "transport-cc")
+                                      : getExtmapId(remoteSession_, mediaIndex, TRANSPORT_CC_RTP_EXTENSION_URIS);
+            transportCcFeedback = transportCcExtmapId != 0
+                                  && hasAnyRtcpFeedback(remoteSession_, mediaIndex, "transport-cc");
+            googRembFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "goog-remb");
+        }
+
+        if (transportCcFeedback && transportCcExtmapId != 0) {
+            addExtmapAttribute(med, transportCcExtmapId, TRANSPORT_CC_RTP_EXTENSION_URI);
+            addRtcpFeedbackAttribute(med, "*", "transport-cc");
+        }
+        if (googRembFeedback)
+            addRtcpFeedbackAttribute(med, "*", "goog-remb");
+
         if (type == MediaType::MEDIA_VIDEO) {
             // Picture Loss Indication (RFC 4585 6.3.1) and Full Intra Request
             // (RFC 5104 4.3.1) let a video receiver request a keyframe over
@@ -908,7 +986,13 @@ Sdp::addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadTy
 void
 Sdp::addBundleGroupAttribute()
 {
-    if (!shouldUseBundle() || !localSession_ || localSession_->media_count < 2)
+    if (!shouldUseBundle() || !localSession_)
+        return;
+
+    // Answers must echo the offered BUNDLE group (RFC 9143), even with a
+    // single media. Offers only use BUNDLE when grouping several medias.
+    const bool answerToBundle = sdpDirection_ == SdpDirection::ANSWER && hasBundleGroup(remoteSession_);
+    if (localSession_->media_count < 2 && !answerToBundle)
         return;
 
     std::string mids {"BUNDLE"};
@@ -1140,6 +1224,84 @@ Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
     remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
 }
 
+static pjmedia_sdp_session*
+parseExternalSdp(pj_pool_t* pool, const std::string& sdp)
+{
+    pjmedia_sdp_session* session = nullptr;
+    // The parsed session keeps pointers into the buffer, so it must
+    // live as long as the pool.
+    auto* buffer = static_cast<char*>(pj_pool_alloc(pool, sdp.size()));
+    std::memcpy(buffer, sdp.data(), sdp.size());
+    if (pjmedia_sdp_parse(pool, buffer, sdp.size(), &session) != PJ_SUCCESS) {
+        JAMI_ERROR("Failed to parse external SDP session");
+        return nullptr;
+    }
+    if (pjmedia_sdp_validate(session) != PJ_SUCCESS) {
+        JAMI_ERROR("Invalid external SDP session");
+        return nullptr;
+    }
+    return session;
+}
+
+bool
+Sdp::createOfferFromExternalSdp(const std::string& sdp)
+{
+    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    if (not session)
+        return false;
+
+    sdpDirection_ = SdpDirection::OFFER;
+    localSession_ = session;
+
+    if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
+        JAMI_ERROR("Failed to create an initial SDP negotiator");
+        return false;
+    }
+
+    printSession(localSession_, "Local session (external):", sdpDirection_);
+    return true;
+}
+
+bool
+Sdp::setLocalAnswerFromExternalSdp(const std::string& sdp)
+{
+    if (not remoteSession_) {
+        JAMI_ERROR("No remote offer to answer");
+        return false;
+    }
+
+    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    if (not session)
+        return false;
+
+    sdpDirection_ = SdpDirection::ANSWER;
+    localSession_ = session;
+
+    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_, remoteSession_, &negotiator_)
+        != PJ_SUCCESS) {
+        JAMI_ERROR("Failed to initialize media negotiation");
+        return false;
+    }
+
+    printSession(localSession_, "Local session (external answer):", sdpDirection_);
+    return true;
+}
+
+std::string
+Sdp::toString(const pjmedia_sdp_session* session)
+{
+    if (not session)
+        return {};
+    static constexpr size_t BUF_SZ = 16 * 1024;
+    std::vector<char> buffer(BUF_SZ);
+    auto size = pjmedia_sdp_print(session, buffer.data(), buffer.size());
+    if (size < 0) {
+        JAMI_ERROR("Failed to serialize SDP session");
+        return {};
+    }
+    return std::string(buffer.data(), size);
+}
+
 bool
 Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 {
@@ -1178,6 +1340,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
             // fingerprint and we have a DTLS identity of our own.
             const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
             if (not localDtlsFingerprint_.empty() and not remoteFingerprint.second.empty()) {
+                // The answer must echo the offered transport (RFC 3264 6.),
+                // e.g. UDP/TLS/RTP/SAVPF when offered by a WebRTC endpoint.
+                pj_strdup(memPool_.get(), &localMedia->desc.transport, &remoteMedia->desc.transport);
                 addDtlsAttributes(localMedia,
                                   negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
                 continue;
@@ -1413,6 +1578,9 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         descr.mid = getMidValue(media);
         descr.mid_rtp_ext_id = hasBundleGroup(session) ? getBundleExtmapId(session, MID_RTP_EXTENSION_URI)
                                                        : getExtmapId(session, i, MID_RTP_EXTENSION_URI);
+        descr.transport_cc_rtp_ext_id = hasBundleGroup(session)
+                                            ? getBundleExtmapId(session, TRANSPORT_CC_RTP_EXTENSION_URIS, "transport-cc")
+                                            : getExtmapId(session, i, TRANSPORT_CC_RTP_EXTENSION_URIS);
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
@@ -1451,6 +1619,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         }
 
         if (descr.enabled) {
+            descr.rtcp_fb_transport_cc = hasRtcpFeedback(session, i, descr.payload_type, "transport-cc");
+            descr.rtcp_fb_goog_remb = hasRtcpFeedback(session, i, descr.payload_type, "goog-remb");
             descr.rtcp_fb_nack_pli = hasRtcpFeedback(session, i, descr.payload_type, "nack pli");
             descr.rtcp_fb_ccm_fir = hasRtcpFeedback(session, i, descr.payload_type, "ccm fir");
         }

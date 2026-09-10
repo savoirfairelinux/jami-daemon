@@ -64,8 +64,12 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
     }
 
     if (auto* packet = input_frame->packet()) {
-        videoEncoder_->send(*packet);
+        // Pre-encoded packets (hardware encoders on mobile) are stamped in
+        // microseconds.
+        videoEncoder_->setPassthrough(true);
+        videoEncoder_->send(*packet, -1, AVRational {1, 1'000'000});
     } else {
+        videoEncoder_->setPassthrough(false);
         bool is_keyframe = forceKeyFrame_ > 0 or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
         if (is_keyframe)
@@ -113,7 +117,12 @@ VideoSender::setBitrate(uint64_t br)
     if (!videoEncoder_)
         return -1; // NOK
 
-    return videoEncoder_->setBitrate(br);
+    const auto width = videoEncoder_->getWidth();
+    const auto height = videoEncoder_->getHeight();
+    const auto ret = videoEncoder_->setBitrate(br);
+    if (ret == 1 && (width != videoEncoder_->getWidth() || height != videoEncoder_->getHeight()))
+        forceKeyFrame();
+    return ret;
 }
 
 } // namespace video

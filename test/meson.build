@@ -167,6 +167,24 @@ ut_transport_cc_controller = executable(
 )
 test('transport_cc_controller', ut_transport_cc_controller, workdir: ut_workdir, is_parallel: false, timeout: 1800)
 
+ut_transport_cc = executable(
+    'ut_transport_cc',
+    sources: files('unitTest/media/test_transport_cc.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('transport_cc', ut_transport_cc, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
+ut_congestion_control = executable(
+    'ut_congestion_control',
+    sources: files('unitTest/media/test_congestion_control.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('congestion_control', ut_congestion_control, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
 ut_sdes_negotiator = executable(
     'ut_sdes_negotiator',
     sources: files('unitTest/sip/sdes_negotiator.cpp'),

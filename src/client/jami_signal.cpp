@@ -116,6 +116,7 @@ getSignalHandlers()
         exported_callback<libjami::VideoSignal::DeviceEvent>(),
         exported_callback<libjami::VideoSignal::DecodingStarted>(),
         exported_callback<libjami::VideoSignal::DecodingStopped>(),
+        exported_callback<libjami::VideoSignal::MediaQualityChanged>(),
 #ifdef __ANDROID__
         exported_callback<libjami::VideoSignal::GetCameraInfo>(),
         exported_callback<libjami::VideoSignal::SetParameters>(),
