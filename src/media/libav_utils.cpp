@@ -48,13 +48,23 @@ namespace libav_utils {
 AVSampleFormat
 choose_sample_fmt(const AVCodec* codec, const AVSampleFormat* preferred_formats, int preferred_formats_count)
 {
-    if (codec->sample_fmts)
-        for (int i = 0; i < preferred_formats_count; ++i) {
-            for (const auto* it = codec->sample_fmts; *it != -1; ++it) {
-                if (*it == preferred_formats[i])
-                    return preferred_formats[i];
-            }
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 13, 100)
+    const void* supportedConfig = nullptr;
+    if (avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, &supportedConfig, nullptr) < 0)
+        return AV_SAMPLE_FMT_NONE;
+    const auto* supportedFormats = static_cast<const AVSampleFormat*>(supportedConfig);
+#else
+    const auto* supportedFormats = codec->sample_fmts;
+#endif
+    if (!supportedFormats)
+        return preferred_formats_count > 0 ? preferred_formats[0] : AV_SAMPLE_FMT_NONE;
+
+    for (int i = 0; i < preferred_formats_count; ++i) {
+        for (const auto* it = supportedFormats; *it != AV_SAMPLE_FMT_NONE; ++it) {
+            if (*it == preferred_formats[i])
+                return preferred_formats[i];
         }
+    }
     return AV_SAMPLE_FMT_NONE;
 }
 
