@@ -18,8 +18,10 @@
 #include "logger.h"
 #include "media/congestion_control.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cmath>
+#include <limits>
 
 namespace jami {
 static constexpr uint8_t packetVersion = 2;
@@ -74,49 +76,147 @@ insert4Byte(std::vector<uint8_t>& v, uint32_t val)
     v.insert(v.end(), val & 0xff);
 }
 
+static uint32_t
+read4Byte(const uint8_t* v)
+{
+    return (uint32_t(v[0]) << 24) | (uint32_t(v[1]) << 16) | (uint32_t(v[2]) << 8) | uint32_t(v[3]);
+}
+
 uint64_t
 CongestionControl::parseREMB(const rtcpREMBHeader& packet)
 {
-    if (packet.fmt != 15 || packet.pt != 206) {
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&packet);
+    const auto version = bytes[0] >> 6;
+    const auto fmt = bytes[0] & 0x1f;
+    const auto brExp = bytes[17] >> 2;
+    const auto brMantissa = (uint32_t(bytes[17] & 0x03) << 16) | (uint32_t(bytes[18]) << 8) | uint32_t(bytes[19]);
+
+    if (version != packetVersion || fmt != packetFMT || bytes[1] != packetType
+        || read4Byte(bytes + 12) != uniqueIdentifier) {
         JAMI_ERROR("Unable to parse REMB packet.");
         return 0;
     }
-    uint64_t bitrate_bps = (packet.br_mantis << packet.br_exp);
-    bool shift_overflow = (bitrate_bps >> packet.br_exp) != packet.br_mantis;
+
+    uint64_t bitrate_bps = (uint64_t(brMantissa) << brExp);
+    bool shift_overflow = (bitrate_bps >> brExp) != brMantissa;
     if (shift_overflow) {
-        JAMI_ERROR("Invalid remb bitrate value : {}*2^{}", packet.br_mantis, packet.br_exp);
+        JAMI_ERROR("Invalid remb bitrate value : {}*2^{}", brMantissa, brExp);
         return 0;
     }
     return bitrate_bps;
 }
 
 std::vector<uint8_t>
-CongestionControl::createREMB(uint64_t bitrate_bps)
+CongestionControl::createREMB(uint64_t bitrate_bps, uint32_t senderSsrc, const std::vector<uint32_t>& feedbackSsrcs)
 {
     std::vector<uint8_t> remb;
-    remb.reserve(24);
+    if (feedbackSsrcs.empty() || feedbackSsrcs.size() > std::numeric_limits<uint8_t>::max()) {
+        JAMI_ERROR("Unable to create REMB packet with {} feedback SSRCs", feedbackSsrcs.size());
+        return remb;
+    }
+
+    const auto packetSize = 20u + 4u * static_cast<unsigned>(feedbackSsrcs.size());
+    remb.reserve(packetSize);
 
     remb.insert(remb.end(), packetVersion << 6 | packetFMT);
     remb.insert(remb.end(), packetType);
-    insert2Byte(remb, 5);                // (sizeof(rtcpREMBHeader)/4)-1 -> not safe
-    insert4Byte(remb, 0x12345678);       // ssrc
+    insert2Byte(remb, static_cast<uint16_t>(packetSize / 4u - 1u));
+    insert4Byte(remb, senderSsrc);
     insert4Byte(remb, 0x0);              // ssrc source
     insert4Byte(remb, uniqueIdentifier); // uid
-    remb.insert(remb.end(), 1);          // n_ssrc
+    remb.insert(remb.end(), static_cast<uint8_t>(feedbackSsrcs.size()));
 
     const uint32_t maxMantissa = 0x3ffff; // 18 bits.
     uint64_t mantissa = bitrate_bps;
-    uint8_t exponenta = 0;
+    uint8_t exponent = 0;
     while (mantissa > maxMantissa) {
         mantissa >>= 1;
-        ++exponenta;
+        ++exponent;
     }
 
-    remb.insert(remb.end(), (exponenta << 2) | (mantissa >> 16));
+    remb.insert(remb.end(), (exponent << 2) | (mantissa >> 16));
     insert2Byte(remb, mantissa & 0xffff);
-    insert4Byte(remb, 0x2345678b);
+    for (auto ssrc : feedbackSsrcs)
+        insert4Byte(remb, ssrc);
 
     return remb;
+}
+
+std::optional<TransportCcBitrateEstimate>
+CongestionControl::estimateTransportCcBitrate(uint64_t currentBitrateBps, const std::list<TransportCcReport>& reports)
+{
+    size_t totalPackets = 0;
+    size_t receivedPackets = 0;
+    size_t lostPackets = 0;
+    uint64_t receivedBytes = 0;
+    int64_t firstReceiveTimeUs = 0;
+    int64_t lastReceiveTimeUs = 0;
+    int64_t previousSendTimeUs = 0;
+    int64_t previousReceiveTimeUs = 0;
+    int64_t delayTrendUs = 0;
+    bool hasReceiveTime = false;
+    bool hasPreviousReceivedPacket = false;
+
+    for (const auto& report : reports) {
+        for (const auto& packet : report.packets) {
+            ++totalPackets;
+            if (packet.status == TransportCcPacketStatus::NotReceived) {
+                ++lostPackets;
+                continue;
+            }
+
+            ++receivedPackets;
+            receivedBytes += packet.payloadSize;
+            if (!hasReceiveTime) {
+                firstReceiveTimeUs = packet.receiveTimeOffsetUs;
+                hasReceiveTime = true;
+            }
+            lastReceiveTimeUs = packet.receiveTimeOffsetUs;
+
+            if (hasPreviousReceivedPacket) {
+                delayTrendUs += (packet.receiveTimeOffsetUs - previousReceiveTimeUs)
+                                - (packet.sendTimeOffsetUs - previousSendTimeUs);
+            }
+            previousSendTimeUs = packet.sendTimeOffsetUs;
+            previousReceiveTimeUs = packet.receiveTimeOffsetUs;
+            hasPreviousReceivedPacket = true;
+        }
+    }
+
+    if (totalPackets == 0)
+        return std::nullopt;
+
+    const auto packetLoss = static_cast<float>(lostPackets * 100) / static_cast<float>(totalPackets);
+    uint64_t observedBitrateBps = 0;
+    const auto receiveSpanUs = lastReceiveTimeUs - firstReceiveTimeUs;
+    if (receivedPackets > 1 && receiveSpanUs > 0) {
+        observedBitrateBps = static_cast<uint64_t>((receivedBytes * 8 * 1000000ULL)
+                                                   / static_cast<uint64_t>(receiveSpanUs));
+    }
+
+    auto targetBitrateBps = currentBitrateBps ? currentBitrateBps : observedBitrateBps;
+    if (targetBitrateBps == 0)
+        return std::nullopt;
+
+    static constexpr float LOSS_CONGESTION_THRESHOLD = 2.0f;
+    static constexpr int64_t DELAY_CONGESTION_THRESHOLD_US = 15000;
+    if (packetLoss > LOSS_CONGESTION_THRESHOLD || delayTrendUs > DELAY_CONGESTION_THRESHOLD_US) {
+        auto decreaseRatio = packetLoss > LOSS_CONGESTION_THRESHOLD ? 1.0 - std::min<double>(packetLoss / 100.0, 0.5)
+                                                                    : 0.85;
+        targetBitrateBps = static_cast<uint64_t>(static_cast<double>(targetBitrateBps) * decreaseRatio);
+        if (observedBitrateBps)
+            targetBitrateBps = std::min<uint64_t>(targetBitrateBps, observedBitrateBps * 9 / 10);
+    } else if (observedBitrateBps > targetBitrateBps) {
+        targetBitrateBps = std::min<uint64_t>(targetBitrateBps + targetBitrateBps / 12, observedBitrateBps * 11 / 10);
+    }
+
+    TransportCcBitrateEstimate estimate;
+    estimate.bitrateBps = targetBitrateBps;
+    estimate.packetLoss = packetLoss;
+    estimate.receivedPackets = receivedPackets;
+    estimate.lostPackets = lostPackets;
+    estimate.delayTrendUs = delayTrendUs;
+    return estimate;
 }
 
 float
