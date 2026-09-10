@@ -148,6 +148,11 @@ Account_factoryTest::testAddRemoveRINGAccount()
     auto newAccount = Manager::instance().addAccount(accDetails, JAMI_ID);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
 
+    auto account = Manager::instance().getAccount<JamiAccount>(JAMI_ID);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(account->isSrtpEnabled());
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, account->getSrtpKeyExchange());
+
     CPPUNIT_ASSERT(accountFactory->hasAccount(JAMI_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->empty());
