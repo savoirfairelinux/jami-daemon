@@ -22,6 +22,8 @@
 #include "jamidht/service_manager.h"
 #include "jamidht/svc_protocol.h"
 
+#include <unistd.h>
+
 #include <atomic>
 #include <filesystem>
 #include <random>

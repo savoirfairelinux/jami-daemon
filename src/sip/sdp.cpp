@@ -515,7 +515,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
-    if (mediaAttr.enabled_ and rtcpMuxEnabled_)
+    const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
+    const auto remoteAllowsRtcpMux = sdpDirection_ != SdpDirection::ANSWER
+                                     || (remoteSession_ and mediaIndex < remoteSession_->media_count
+                                         and hasRtcpMuxAttribute(remoteSession_->media[mediaIndex]));
+
+    if (mediaAttr.enabled_ and rtcpMuxEnabled_ and remoteAllowsRtcpMux)
         addRTCPMuxAttribute(med);
 
     char const* direction = mediaDirection(mediaAttr);

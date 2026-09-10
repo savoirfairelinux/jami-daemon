@@ -425,13 +425,13 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         DtlsSrtpContext dtlsSrtp {};
         const auto rtcpMux = isRtcpMuxNegotiated();
 
-        if (rtp_sock and rtcp_sock) {
+        if (rtp_sock) {
             if (send_.addr) {
                 rtp_sock->setDefaultRemoteAddress(send_.addr);
             }
 
             auto rtcpAddr = getRemoteRtcpAddr();
-            if (rtcpAddr) {
+            if (rtcp_sock and rtcpAddr) {
                 rtcp_sock->setDefaultRemoteAddress(rtcpAddr);
             }
 
