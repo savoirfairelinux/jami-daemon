@@ -179,8 +179,7 @@ public:
      * @return The created call
      */
     virtual std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                                  const std::vector<libjami::MediaMap>& mediaList)
-        = 0;
+                                                  const std::vector<libjami::MediaMap>& mediaList) = 0;
 
     /**
      * If supported, send a text message from this account.
@@ -212,8 +211,7 @@ public:
                                const std::string& /*avatar*/,
                                const std::string& /*fileType*/,
                                const std::string& /*botOwner*/,
-                               int32_t /*flag*/)
-        = 0;
+                               int32_t /*flag*/) = 0;
 
     vCard::utils::VCardData getProfileVcard() const;
 
@@ -398,8 +396,8 @@ public:
     void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
 
     // Enable/disable advertisement of RTCP multiplexing support (RFC 5761).
-    // Step 1 only offers the capability and keeps the legacy split transport
-    // paths available for backward compatibility.
+    // The split RTP/RTCP transport remains available as a negotiation fallback
+    // for peers that do not support multiplexing.
     bool isRtcpMuxEnabled() const { return rtcpMuxEnabled_; }
     void enableRtcpMux(bool enable) { rtcpMuxEnabled_ = enable; }
 
@@ -502,7 +500,7 @@ protected:
 
     bool iceForMediaEnabled_ {true};
     bool iceCompIdRfc5245Compliant_ {false};
-    bool rtcpMuxEnabled_ {false};
+    bool rtcpMuxEnabled_ {true};
     /**
      * Auto load conversations when creatinf convModule()
      */
