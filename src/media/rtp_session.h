@@ -109,6 +109,12 @@ public:
                                            send_.mid,
                                            send_.mid_rtp_ext_id ? std::optional<unsigned> {send_.mid_rtp_ext_id}
                                                                 : std::nullopt);
+        socketPair_->setTransportCcExtension(receive_.rtcp_fb_transport_cc && receive_.transport_cc_rtp_ext_id
+                                                 ? std::optional<unsigned> {receive_.transport_cc_rtp_ext_id}
+                                                 : std::nullopt,
+                                             send_.rtcp_fb_transport_cc && send_.transport_cc_rtp_ext_id
+                                                 ? std::optional<unsigned> {send_.transport_cc_rtp_ext_id}
+                                                 : std::nullopt);
     }
 
     inline std::string streamId() const { return streamId_; }
@@ -137,6 +143,23 @@ protected:
 
     bool isRtcpMuxNegotiated() const { return send_.rtcp_mux && receive_.rtcp_mux; }
 
+    bool shouldSendTransportCcFeedback() const { return send_.rtcp_fb_transport_cc && send_.transport_cc_rtp_ext_id; }
+
+    void sendTransportCcFeedback()
+    {
+        if (!shouldSendTransportCcFeedback() || !socketPair_)
+            return;
+
+        const auto remoteSsrc = socketPair_->getRemoteSsrc();
+        if (!remoteSsrc)
+            return;
+
+        const auto senderSsrc = socketPair_->getLocalSsrc().value_or(0);
+        const auto packet = socketPair_->createRtcpTransportCcFeedback(senderSsrc, *remoteSsrc);
+        if (!packet.empty())
+            socketPair_->writeRtcpData(packet.data(), static_cast<int>(packet.size()));
+    }
+
     dhtnet::IpAddr getRemoteRtcpAddr() const
     {
         if (isRtcpMuxNegotiated())
@@ -159,6 +182,41 @@ protected:
             return receive_.rtcp_addr.getPort();
 
         return receive_.addr.getPort() + 1;
+    }
+
+    static const char* mediaTypeLabel(MediaType mediaType)
+    {
+        switch (mediaType) {
+        case MEDIA_AUDIO:
+            return "audio";
+        case MEDIA_VIDEO:
+            return "video";
+        default:
+            return "media";
+        }
+    }
+
+    void logSrtpConfiguration(std::string_view keyExchange,
+                              std::string_view outboundSuite,
+                              std::string_view inboundSuite) const
+    {
+        if (outboundSuite == inboundSuite) {
+            JAMI_DEBUG("[call:{}][stream:{}] Starting {} RTP session with {} suite {}",
+                       callId_,
+                       streamId_,
+                       mediaTypeLabel(mediaType_),
+                       keyExchange,
+                       outboundSuite);
+            return;
+        }
+
+        JAMI_DEBUG("[call:{}][stream:{}] Starting {} RTP session with {} suites outbound={} inbound={}",
+                   callId_,
+                   streamId_,
+                   mediaTypeLabel(mediaType_),
+                   keyExchange,
+                   outboundSuite,
+                   inboundSuite);
     }
 };
 
