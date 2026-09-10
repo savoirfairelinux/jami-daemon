@@ -149,6 +149,24 @@ test(
     timeout: 1800,
 )
 
+ut_rtp_pacer = executable(
+    'ut_rtp_pacer',
+    sources: files('unitTest/media/test_rtp_pacer.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('rtp_pacer', ut_rtp_pacer, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
+ut_transport_cc_controller = executable(
+    'ut_transport_cc_controller',
+    sources: files('unitTest/media/test_transport_cc_controller.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('transport_cc_controller', ut_transport_cc_controller, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
 ut_sdes_negotiator = executable(
     'ut_sdes_negotiator',
     sources: files('unitTest/sip/sdes_negotiator.cpp'),
