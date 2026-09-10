@@ -200,6 +200,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 {
     dtlsAbort_->store(false);
     std::lock_guard lock(mutex_);
+    dtlsAbort_->store(false);
 
     if (not send_.enabled and not receive_.enabled) {
         stop();
@@ -211,7 +212,20 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         DtlsSrtpContext dtlsSrtp {};
         const auto rtcpMux = isRtcpMuxNegotiated();
 
-        if (rtp_sock) {
+        if (bundleSocketContext_) {
+            if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
+                dtlsSrtp = SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
+                                                               receive_.dtls_setup,
+                                                               send_.dtls_fingerprint_type,
+                                                               send_.dtls_fingerprint,
+                                                               dtlsCertificate_,
+                                                               dtlsPrivateKey_,
+                                                               dtlsAbort_);
+                hasDtlsSrtp = true;
+            }
+            socketPair_.reset(new SocketPair(bundleSocketContext_, rtcpMux, bundleRtpPayloadType_));
+            socketPair_->setDefaultRemoteAddresses(send_.addr, getRemoteRtcpAddr());
+        } else if (rtp_sock) {
             if (send_.addr) {
                 rtp_sock->setDefaultRemoteAddress(send_.addr);
             }
@@ -223,12 +237,12 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
                 dtlsSrtp = negotiateDtlsSrtp(*rtp_sock,
-                                            receive_.dtls_setup,
-                                            send_.dtls_fingerprint_type,
-                                            send_.dtls_fingerprint,
-                                            dtlsCertificate_,
-                                            dtlsPrivateKey_,
-                                            dtlsAbort_);
+                                             receive_.dtls_setup,
+                                             send_.dtls_fingerprint_type,
+                                             send_.dtls_fingerprint,
+                                             dtlsCertificate_,
+                                             dtlsPrivateKey_,
+                                             dtlsAbort_);
                 hasDtlsSrtp = true;
             }
 
@@ -237,18 +251,20 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             if (send_.key_exchange == KeyExchangeProtocol::DTLS || receive_.key_exchange == KeyExchangeProtocol::DTLS)
                 throw std::runtime_error("DTLS-SRTP currently requires ICE media sockets");
 
-            socketPair_.reset(new SocketPair(send_.addr,
-                                             getRemoteRtcpAddr(),
-                                             receive_.addr.getPort(),
-                                             getLocalRtcpPort(),
-                                             rtcpMux));
+            socketPair_.reset(
+                new SocketPair(send_.addr, getRemoteRtcpAddr(), receive_.addr.getPort(), getLocalRtcpPort(), rtcpMux));
         }
+
+        configureBundleSocketPair();
 
         if (hasDtlsSrtp) {
             socketPair_->createSRTP(dtlsSrtp.suite.c_str(),
                                     dtlsSrtp.outboundKeyInfo.c_str(),
                                     dtlsSrtp.suite.c_str(),
                                     dtlsSrtp.inboundKeyInfo.c_str());
+            // WebRTC endpoints require SRTCP (RFC 5764); legacy SDES peers
+            // exchange plaintext RTCP.
+            socketPair_->setRtcpProtection(true);
         } else if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
                                     receive_.crypto.getSrtpKeyInfo().c_str(),
