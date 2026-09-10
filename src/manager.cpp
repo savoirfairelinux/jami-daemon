@@ -38,6 +38,8 @@
 #include "call_factory.h"
 
 #include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
+#include "sip/sdp.h"
 #include "sip/sipaccount_config.h"
 
 #include "im/instant_messaging.h"
@@ -2586,6 +2588,14 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
     JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
 
     emitSignal<libjami::CallSignal::IncomingCall>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
+
+    // Also report the raw remote SDP offer, so an external media endpoint
+    // (e.g. a WebRTC browser) can answer the call media directly.
+    if (auto* sipCall = dynamic_cast<SIPCall*>(&incomCall)) {
+        auto remoteSdp = Sdp::toString(sipCall->getSDP().getRemoteSdpSession());
+        if (not remoteSdp.empty())
+            emitSignal<libjami::CallSignal::RemoteSdpReceived>(accountId, incomCallId, remoteSdp);
+    }
 
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
