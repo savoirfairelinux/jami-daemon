@@ -8,22 +8,14 @@ Subject: [PATCH] windows configure patch
  1 file changed, 1 insertion(+), 34 deletions(-)
 
 diff --git a/configure b/configure
-index 6b5ef6332e..d0fb8a1fc3 100755
+index 175969427..bf40c272c 100755
 --- a/configure
 +++ b/configure
-@@ -1621,7 +1621,7 @@ require_cpp_condition(){
- require_pkg_config(){
-     log require_pkg_config "$@"
-     pkg_version="$2"
+@@ -1814 +1814 @@
 -    check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
 +    #check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
- }
- 
- require_pkg_config_cpp(){
-@@ -6620,28 +6620,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
- enabled libvorbis         && require_pkg_config libvorbis vorbis vorbis/codec.h vorbis_info_init &&
-                              require_pkg_config libvorbisenc vorbisenc vorbis/vorbisenc.h vorbis_encode_init
- 
+@@ -7399,22 +7398,0 @@
+-
 -enabled libvpx            && {
 -    enabled libvpx_vp8_decoder && {
 -        check_pkg_config libvpx_vp8_decoder "vpx >= 1.4.0" "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_vp8_dx ||
@@ -45,14 +37,7 @@ index 6b5ef6332e..d0fb8a1fc3 100755
 -        die "libvpx enabled but no supported decoders found"
 -    fi
 -}
--
- enabled libwebp           && {
-     enabled libwebp_encoder      && require_pkg_config libwebp "libwebp >= 0.2.0" webp/encode.h WebPGetEncoderVersion
-     enabled libwebp_anim_encoder && check_pkg_config libwebp_anim_encoder "libwebpmux >= 0.4.0" webp/mux.h WebPAnimEncoderOptionsInit; }
-@@ -7325,17 +7303,6 @@ flatten_extralibs_wrapper(){
-     eval printf \''%s'\' \""\$$list_name"\"
- }
- 
+@@ -8247,10 +8224,0 @@
 -for linkunit in $LIBRARY_LIST; do
 -    unset current_extralibs
 -    eval components=\$$(toupper ${linkunit})_COMPONENTS_LIST
@@ -63,10 +48,6 @@ index 6b5ef6332e..d0fb8a1fc3 100755
 -    done
 -    eval prepend ${linkunit}_extralibs $current_extralibs
 -done
--
- for linkunit in $LIBRARY_LIST $PROGRAM_LIST $EXTRALIBS_LIST; do
-     eval ${linkunit}_extralibs=\$\(flatten_extralibs_wrapper ${linkunit}_extralibs\)
- done
 -- 
 2.30.2.windows.1
 
