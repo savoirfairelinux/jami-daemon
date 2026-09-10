@@ -11,6 +11,24 @@ ut_library = static_library(
     dependencies: ut_dependencies,
 )
 
+jami_webrtc_sdp_bridge = executable(
+    'jami_webrtc_sdp_bridge',
+    sources: files('webrtc_interop/jami_sdp_bridge.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+
+alias_target('webrtc_interop_bridge', jami_webrtc_sdp_bridge)
+test(
+    'webrtc_sdp_bridge_offer',
+    jami_webrtc_sdp_bridge,
+    args: ['offer'],
+    workdir: meson.project_build_root(),
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_account_archive = executable(
     'ut_account_archive',
     sources: files('unitTest/account_archive/account_archive.cpp'),
@@ -101,6 +119,36 @@ test(
     timeout: 1800,
 )
 
+ut_rtcp_crypto = executable(
+    'ut_rtcp_crypto',
+    sources: files('unitTest/media/test_rtcp_crypto.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'rtcp_crypto',
+    ut_rtcp_crypto,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_rtcp_keyframe = executable(
+    'ut_rtcp_keyframe',
+    sources: files('unitTest/media/test_rtcp_keyframe.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'rtcp_keyframe',
+    ut_rtcp_keyframe,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_sdes_negotiator = executable(
     'ut_sdes_negotiator',
     sources: files('unitTest/sip/sdes_negotiator.cpp'),
@@ -141,6 +189,21 @@ ut_rtcp_mux = executable(
 test(
     'rtcp_mux',
     ut_rtcp_mux,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
+ut_dtls_call = executable(
+    'ut_dtls_call',
+    sources: files('unitTest/call/dtls_call.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'dtls_call',
+    ut_dtls_call,
     workdir: ut_workdir,
     is_parallel: false,
     timeout: 1800,

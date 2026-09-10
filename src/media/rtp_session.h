@@ -18,12 +18,16 @@
 
 #include "socket_pair.h"
 #include "media/media_codec.h"
+#include "logger.h"
 
 #include <atomic>
 #include <functional>
 #include <string>
 #include <memory>
+#include <atomic>
 #include <mutex>
+#include <optional>
+#include <string_view>
 
 namespace dht {
 namespace crypto {
@@ -79,6 +83,33 @@ public:
     std::shared_ptr<SystemCodecInfo> getCodec() const { return send_.codec; }
     const dhtnet::IpAddr& getSendAddr() const { return send_.addr; };
     const dhtnet::IpAddr& getRecvAddr() const { return receive_.addr; };
+    unsigned getSendPayloadType() const { return send_.payload_type; }
+
+    void setBundleSocketContext(const std::shared_ptr<SocketPair::BundleContext>& bundleSocketContext,
+                                std::optional<unsigned> rtpPayloadType = std::nullopt)
+    {
+        bundleSocketContext_ = bundleSocketContext;
+        bundleRtpPayloadType_ = rtpPayloadType;
+    }
+
+    void clearBundleSocketContext()
+    {
+        bundleSocketContext_.reset();
+        bundleRtpPayloadType_.reset();
+    }
+
+    void configureBundleSocketPair()
+    {
+        if (!bundleSocketContext_ || !socketPair_)
+            return;
+
+        socketPair_->setBundleMidExtension(receive_.mid,
+                                           receive_.mid_rtp_ext_id ? std::optional<unsigned> {receive_.mid_rtp_ext_id}
+                                                                   : std::nullopt,
+                                           send_.mid,
+                                           send_.mid_rtp_ext_id ? std::optional<unsigned> {send_.mid_rtp_ext_id}
+                                                                : std::nullopt);
+    }
 
     inline std::string streamId() const { return streamId_; }
 
@@ -96,9 +127,11 @@ protected:
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
-    // Raised by stop() to cut short a DTLS-SRTP handshake still running in
-    // start(), which would otherwise keep mutex_ held until it times out.
-    std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
+    // Set by stop() (without taking mutex_) to abort an in-progress
+    // DTLS-SRTP handshake blocking start() so teardown stays responsive.
+    const std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
+    std::shared_ptr<SocketPair::BundleContext> bundleSocketContext_ {};
+    std::optional<unsigned> bundleRtpPayloadType_ {};
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 
