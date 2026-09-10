@@ -246,7 +246,7 @@ index 64a68ba497..76e654b424 100644
      st->codecpar->codec_id   = AV_CODEC_ID_RAWVIDEO;
      st->codecpar->width      = c->width;
 @@ -829,23 +734,26 @@ static av_cold int xcbgrab_read_header(AVFormatContext *s)
-         sscanf(s->url, "+%d,%d", &c->x, &c->y);
+         }
      }
  
 -    c->conn = xcb_connect(display_name[0] ? display_name : NULL, &screen_num);
@@ -299,4 +299,3 @@ index 64a68ba497..76e654b424 100644
          if (!(c->draw_mouse = check_xfixes(c->conn))) {
 -- 
 2.34.1
-
