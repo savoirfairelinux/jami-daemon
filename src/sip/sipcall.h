@@ -381,6 +381,10 @@ private:
     std::function<void()> processRemainingRequest();
 
     void generateMediaPorts();
+    void refreshLocalPublishedPorts();
+    void setRtcpMuxEnabled(bool enabled);
+    bool remoteOfferSupportsRtcpMux() const;
+    unsigned getIceCompCountPerStream() const;
 
     void openPortsUPnP();
 
