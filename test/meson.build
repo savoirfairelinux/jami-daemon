@@ -245,6 +245,23 @@ test(
     timeout: 1800,
 )
 
+ut_external_media_call = executable(
+    'ut_external_media_call',
+    sources: files('unitTest/call/external_media_call.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('external_media_call', ut_external_media_call, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
+jami_external_media_bridge = executable(
+    'jami_external_media_bridge',
+    sources: files('webrtc_interop/external_media_bridge.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),
