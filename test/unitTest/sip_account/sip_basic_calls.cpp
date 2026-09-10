@@ -153,6 +153,8 @@ SipBasicCallTest::addTestAccount(const std::string& alias, uint16_t port)
     details[ConfProperties::DISPLAYNAME] = alias;
     details[ConfProperties::ALIAS] = alias;
     details[ConfProperties::LOCAL_PORT] = std::to_string(port);
+    details[ConfProperties::BIND_ADDRESS] = "127.0.0.1";
+    details[ConfProperties::PUBLISHED_SAMEAS_LOCAL] = "true";
     details[ConfProperties::UPNP_ENABLED] = "false";
     callData.accountId_ = Manager::instance().addAccount(details);
     testAccounts_.insert(callData.accountId_);

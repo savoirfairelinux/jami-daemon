@@ -20,6 +20,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <set>
+#include <sstream>
 #include <string>
 
 #include "manager.h"
@@ -43,6 +45,24 @@ using namespace libjami::Call;
 
 namespace jami {
 namespace test {
+
+namespace {
+
+std::set<unsigned>
+getIceCandidateComponents(const std::vector<std::string>& candidates)
+{
+    std::set<unsigned> components;
+    for (const auto& candidate : candidates) {
+        std::istringstream iss(candidate);
+        std::string foundation;
+        unsigned componentId = 0;
+        if (iss >> foundation >> componentId)
+            components.insert(componentId);
+    }
+    return components;
+}
+
+} // namespace
 
 struct CallData
 {
@@ -162,7 +182,8 @@ private:
     // Helpers
     void test_call();
     static void configureTest(CallData& bob, CallData& alice);
-    static std::string getUserAlias(const std::string& callId);
+    static std::string getAccountId(const std::string& callId);
+    static std::string getUserAlias(const std::string& accountId);
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal a like the StateChange signal.
     static bool waitForSignal(CallData& callData, const std::string& signal, const std::string& expectedEvent = {});
@@ -184,6 +205,7 @@ IceSdpParsingTest::setUp()
     aliceData_.listeningPort_ = 5080;
     std::map<std::string, std::string> details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
+    details[ConfProperties::USERNAME] = "ALICE";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
     details[ConfProperties::LOCAL_PORT] = std::to_string(aliceData_.listeningPort_);
@@ -193,6 +215,7 @@ IceSdpParsingTest::setUp()
     bobData_.listeningPort_ = 5082;
     details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
+    details[ConfProperties::USERNAME] = "BOB";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
     details[ConfProperties::LOCAL_PORT] = std::to_string(bobData_.listeningPort_);
@@ -212,7 +235,7 @@ IceSdpParsingTest::tearDown()
 }
 
 std::string
-IceSdpParsingTest::getUserAlias(const std::string& callId)
+IceSdpParsingTest::getAccountId(const std::string& callId)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
 
@@ -223,9 +246,25 @@ IceSdpParsingTest::getUserAlias(const std::string& callId)
 
     auto const& account = call->getAccount().lock();
     if (account)
-        return account->getAccountDetails()[ConfProperties::ALIAS];
+        return account->getAccountID();
 
     JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
+    return {};
+}
+
+std::string
+IceSdpParsingTest::getUserAlias(const std::string& accountId)
+{
+    if (accountId.empty()) {
+        JAMI_WARNING("No account ID is empty");
+        return {};
+    }
+
+    auto account = Manager::instance().getAccount<SIPAccount>(accountId);
+    if (account)
+        return account->getAccountDetails()[ConfProperties::ALIAS];
+
+    JAMI_WARNING("No matching test account {}", accountId.c_str());
     return {};
 }
 
@@ -267,33 +306,18 @@ IceSdpParsingTest::onCallStateChange(const std::string& /* accountId */,
                                      const std::string& state,
                                      CallData& callData)
 {
-    auto call = Manager::instance().getCallFromCallID(callId);
-    if (not call) {
-        JAMI_WARNING("Call [{}] does not exist!", callId);
-        return;
-    }
-
-    auto account = call->getAccount().lock();
-    if (not account) {
-        JAMI_WARNING("Account owning the call [{}] does not exist!", callId);
-        return;
-    }
-
     JAMI_LOG("Signal [{}] - user [{}] - call [{}] - state [{}]",
              libjami::CallSignal::StateChange::name,
              callData.alias_,
              callId,
              state);
 
-    if (account->getAccountID() != callData.accountId_)
-        return;
-
     {
         std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -444,14 +468,14 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
             const std::string& callId,
             const std::string&,
             const std::vector<libjami::MediaMap> mediaList) {
-            auto user = getUserAlias(callId);
+            auto user = getUserAlias(accountId);
             if (not user.empty())
                 onIncomingCall(accountId, callId, mediaList, user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
-            auto user = getUserAlias(callId);
+            auto user = getUserAlias(accountId);
             if (not user.empty())
                 onCallStateChange(accountId, callId, state, user == aliceData.alias_ ? aliceData : bobData);
         }));
@@ -460,7 +484,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
-            auto user = getUserAlias(callId);
+            auto user = getUserAlias(getAccountId(callId));
             if (not user.empty())
                 onMediaNegotiationStatus(callId, event, user == aliceData.alias_ ? aliceData : bobData);
         }));
@@ -500,11 +524,11 @@ IceSdpParsingTest::test_call()
 
     CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, offer.size());
     CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, answer.size());
-    auto bobAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
-    bobAddr.setPort(bobData_.listeningPort_);
+    CPPUNIT_ASSERT(not bobData_.userName_.empty());
+    std::string bobUri = bobData_.userName_ + "@127.0.0.1:" + std::to_string(bobData_.listeningPort_);
 
     aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
-                                                     bobAddr.toString(true),
+                                                     bobUri,
                                                      MediaAttribute::mediaAttributesToMediaMaps(offer));
     CPPUNIT_ASSERT(not aliceData_.callId_.empty());
 
@@ -550,6 +574,23 @@ IceSdpParsingTest::test_call()
     for (const auto& [local, remote] : mediaSlots) {
         CPPUNIT_ASSERT_EQUAL(aliceData_.rtcpMuxEnabled_, local.rtcp_mux);
         CPPUNIT_ASSERT_EQUAL(bobData_.rtcpMuxEnabled_, remote.rtcp_mux);
+    }
+
+    for (size_t mediaIndex = 0; mediaIndex < MEDIA_COUNT; ++mediaIndex) {
+        const auto components = getIceCandidateComponents(call->getSDP().getIceCandidates(mediaIndex));
+        const auto expectedRtpComponent = aliceData_.compliancyEnabled_
+                                              ? 1u
+                                              : static_cast<unsigned>(mediaIndex)
+                                                        * (aliceData_.rtcpMuxEnabled_ ? 1u : 2u)
+                                                    + 1u;
+        CPPUNIT_ASSERT(components.find(expectedRtpComponent) != components.end());
+        if (aliceData_.rtcpMuxEnabled_) {
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), components.size());
+        } else {
+            CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(2), components.size());
+            const auto expectedRtcpComponent = aliceData_.compliancyEnabled_ ? 2u : expectedRtpComponent + 1u;
+            CPPUNIT_ASSERT(components.find(expectedRtcpComponent) != components.end());
+        }
     }
 
     auto rtpList = call->getRtpSessionList();
