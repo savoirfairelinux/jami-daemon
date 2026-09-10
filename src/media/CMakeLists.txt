@@ -39,6 +39,8 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/media_stream.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/recordable.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/recordable.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/rtp_pacer.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/rtp_pacer.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/rtp_session.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/socket_pair.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/socket_pair.h"
@@ -46,6 +48,10 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/srtp.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_codec_container.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_codec_container.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transport_cc.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transport_cc.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transport_cc_controller.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transport_cc_controller.h"
 )
 
 set (Source_Files__media ${Source_Files__media} PARENT_SCOPE)
