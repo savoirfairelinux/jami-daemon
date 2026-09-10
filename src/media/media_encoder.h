@@ -33,6 +33,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 extern "C" {
@@ -77,7 +78,24 @@ public:
     void setIOContext(AVIOContext* ioctx) { ioCtx_ = ioctx; }
     void resetStreams(int width, int height);
 
-    bool send(AVPacket& packet, int streamIdx = -1);
+    /**
+     * Mux a packet on the output stream.
+     *
+     * Packets coming from the internal encoder carry timestamps in the
+     * encoder time base. Pre-encoded packets (hardware encoders on mobile)
+     * carry timestamps in microseconds and must be sent with
+     * sourceTimeBase = {1, 1000000} so the muxer can rescale them to the
+     * stream time base (90 kHz for RTP video).
+     */
+    bool send(AVPacket& packet, int streamIdx = -1, std::optional<AVRational> sourceTimeBase = {});
+
+    /**
+     * Signal that video packets are pre-encoded by an external encoder
+     * (hardware encoders on mobile). The internal encoder then must not
+     * re-target the output resolution on bitrate changes, as it does not
+     * control the source and resetting the stream breaks remote decoders.
+     */
+    void setPassthrough(bool passthrough) { passthrough_ = passthrough; }
 
 #ifdef ENABLE_VIDEO
     int encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe, int64_t frame_number);
@@ -116,6 +134,7 @@ public:
 
 private:
     NON_COPYABLE(MediaEncoder);
+    bool passthrough_ {false};
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
@@ -126,7 +145,7 @@ private:
     AVCodecContext* getCurrentVideoAVCtx();
     AVCodecContext* getCurrentAudioAVCtx();
     void stopEncoder();
-    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
+    AVCodecContext* initCodec(AVMediaType mediaType, const SystemCodecInfo& systemCodecInfo, uint64_t br);
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
     void initH265(AVCodecContext* encoderCtx, uint64_t br);
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
@@ -136,6 +155,8 @@ private:
     bool isDynBitrateSupported(AVCodecID codecid);
     bool isDynPacketLossSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+    std::pair<int, int> targetVideoSize(uint64_t br) const;
+    bool applyVideoBitrateTarget(uint64_t br);
 #ifdef ENABLE_VIDEO
     int getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_ptr<VideoFrame>& output);
     std::shared_ptr<VideoFrame> getUnlinkedHWFrame(const VideoFrame& input);
@@ -175,6 +196,8 @@ protected:
     MediaStream videoOpts_;
     MediaStream audioOpts_;
     std::optional<SystemCodecInfo> videoCodecInfo_ {};
+    int sourceVideoWidth_ {0};
+    int sourceVideoHeight_ {0};
 };
 
 } // namespace jami

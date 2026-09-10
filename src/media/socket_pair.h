@@ -22,6 +22,8 @@
 #endif
 
 #include "media_io_handle.h"
+#include "rtp_pacer.h"
+#include "transport_cc.h"
 
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -228,11 +230,10 @@ public:
     void stopSendOp(bool state = true);
     std::list<rtcpRRHeader> getRtcpRR();
     std::list<rtcpREMBHeader> getRtcpREMB();
-    void setLocalSsrc(uint32_t ssrc);
-    void setRemoteSsrc(uint32_t ssrc);
-    std::optional<uint32_t> getLocalSsrc() const;
-    std::optional<uint32_t> getRemoteSsrc() const;
-    int writeRtcpData(const uint8_t* buf, int buf_size);
+    std::list<TransportCcFeedback> getRtcpTransportCc();
+    std::list<TransportCcReport> getRtcpTransportCcReports();
+    size_t getTransportCcSentPacketCount() const;
+    std::vector<uint8_t> createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsrc);
 
     /**
      * Build a Picture Loss Indication feedback packet (RFC 4585 6.3.1).
@@ -245,7 +246,7 @@ public:
      */
     static bool isRtcpKeyframeRequest(const uint8_t* buf, size_t len);
 
-    bool waitForRTCP(std::chrono::seconds interval);
+    bool waitForRTCP(std::chrono::milliseconds interval);
     double getLastLatency();
 
     void setPacketLossCallback(std::function<void(void)> cb) { packetLossCallback_ = std::move(cb); }
@@ -255,14 +256,21 @@ public:
                                std::optional<unsigned> localMidExtId,
                                std::string remoteMid,
                                std::optional<unsigned> remoteMidExtId);
+    void setTransportCcExtension(std::optional<unsigned> localExtId, std::optional<unsigned> remoteExtId);
+    void setRtpPacingBitrate(uint64_t bitrateBps);
 
     int writeData(const uint8_t* buf, int buf_size);
+    int writeRtcpData(const uint8_t* buf, int buf_size);
+
+    std::optional<uint32_t> getLocalSsrc() const;
+    std::optional<uint32_t> getRemoteSsrc() const;
 
     uint16_t lastSeqValOut();
 
 private:
     NON_COPYABLE(SocketPair);
     struct PacketState;
+    struct TransportCcState;
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
@@ -274,9 +282,19 @@ private:
     int readRtpData(void* buf, int buf_size);
     int readRtcpData(void* buf, int buf_size);
     void queuePacket(std::vector<uint8_t>&& packet, bool isRtcp);
+    void setLocalSsrc(uint32_t ssrc);
+    void setRemoteSsrc(uint32_t ssrc);
+    std::optional<RtpPacerPacket> paceRtpPacket(const uint8_t* buf, int buf_size);
+    std::optional<uint16_t> nextTransportCcSequenceNumber();
+    void recordTransportCcSend(uint16_t sequenceNumber, size_t packetSize);
+    std::optional<TransportCcReport> createTransportCcReport(const TransportCcFeedback& feedback);
+    static void recordTransportCcReceive(const std::shared_ptr<PacketState>& packetState,
+                                         const uint8_t* buf,
+                                         size_t len);
     static bool isRtcpPacket(const uint8_t* buf, size_t len);
     void saveRtcpRRPacket(uint8_t* buf, size_t len);
     void saveRtcpREMBPacket(uint8_t* buf, size_t len);
+    void saveRtcpTransportCcPacket(uint8_t* buf, size_t len);
 
     dhtnet::IceSocket* getRtpSocket() const;
     dhtnet::IceSocket* getRtcpSocket() const;
@@ -297,11 +315,17 @@ private:
     std::function<void(int, int)> rtpDelayCallback_;
     std::optional<unsigned> localRtpMidExtId_ {};
     std::string localRtpMid_ {};
+    std::optional<unsigned> localTransportCcExtId_ {};
+    std::atomic<uint64_t> rtpPacingBitrateBps_ {0};
+    RtpPacer rtpPacer_ {};
+    std::mutex rtpPacerMutex_ {};
     bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
     bool parse_RTP_ext(uint8_t* buf, float* abs);
 
     std::list<rtcpRRHeader> listRtcpRRHeader_;
     std::list<rtcpREMBHeader> listRtcpREMBHeader_;
+    std::list<TransportCcFeedback> listRtcpTransportCc_;
+    std::list<TransportCcReport> listRtcpTransportCcReports_;
     std::mutex rtcpInfo_mutex_;
     std::condition_variable cvRtcpPacketReadyToRead_;
     static constexpr unsigned MAX_LIST_SIZE {10};

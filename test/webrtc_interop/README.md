@@ -6,6 +6,7 @@ Current scope:
 - Jami offer -> werift answer
 - werift offer -> Jami answer
 - BUNDLE, MID, `rtcp-mux`, and `UDP/TLS/RTP/SAVPF` negotiation
+- Transport-CC `extmap` and `rtcp-fb` negotiation with werift and Chrome/Chromium
 - Live ICE connectivity and DTLS-SRTP handshake in both directions
 - A minimal encrypted RTP packet from Jami to werift
 - A minimal encrypted RTCP receiver report from werift back to Jami
@@ -64,6 +65,7 @@ npm run interop:browser
 ```
 
 If Chrome lives outside the default macOS application paths, set `JAMI_WEBRTC_BROWSER` or `CHROME_BIN` to the browser binary.
+The browser checks include a live bandwidth-quality scenario that negotiates Transport-CC, sends a shaped RTP profile through the Jami bridge, and asserts both the shaped send rate and Chrome's exposed target bitrate.
 
 If the bridge lives elsewhere, pass its path explicitly:
 
