@@ -67,7 +67,7 @@ index 9b9a610343..8ec5bfc1ad 100644
 +        av_log(avc, AV_LOG_WARNING, "Recovered %d samples with FEC/PLC\n",
 +                   nb_samples);
 +
-+        outptr += nb_samples * avc->channels * av_get_bytes_per_sample(avc->sample_fmt);
++        outptr += nb_samples * avc->ch_layout.nb_channels * av_get_bytes_per_sample(avc->sample_fmt);
 +        nb_samples_left -= nb_samples;
 +        if (pkt->pts != AV_NOPTS_VALUE) {
 +            pkt->pts -= nb_samples;
