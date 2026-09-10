@@ -249,6 +249,13 @@ struct LIBJAMI_PUBLIC VideoSignal
         constexpr static const char* name = "DecodingStopped";
         using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
     };
+    struct LIBJAMI_PUBLIC MediaQualityChanged
+    {
+        constexpr static const char* name = "MediaQualityChanged";
+        using cb_type = void(const std::string& /*callId*/,
+                             const std::string& /*streamId*/,
+                             const std::map<std::string, std::string>& /*state*/);
+    };
 #ifdef __ANDROID__
     struct LIBJAMI_PUBLIC SetParameters
     {
