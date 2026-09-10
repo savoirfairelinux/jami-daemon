@@ -63,10 +63,15 @@ namespace libjami {
 std::string placeCallWithMedia(const std::string& accountId,
                                const std::string& to,
                                const std::vector<std::map<std::string, std::string>>& mediaList);
+std::string placeCallWithExternalMedia(const std::string& accountId,
+                                       const std::string& to,
+                                       const std::string& sdpOffer);
 bool requestMediaChange(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool refuse(const std::string& accountId, const std::string& callId);
 bool accept(const std::string& accountId, const std::string& callId);
 bool acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
+bool acceptWithExternalMedia(const std::string& accountId, const std::string& callId, const std::string& sdpAnswer);
+bool setVideoOrientation(const std::string& accountId, const std::string& callId, int streamIdx, int rotation);
 bool answerMediaChangeRequest(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool hangUp(const std::string& accountId, const std::string& callId);
 bool hold(const std::string& accountId, const std::string& callId);
