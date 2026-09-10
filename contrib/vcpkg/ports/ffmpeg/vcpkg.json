@@ -1,15 +1,18 @@
 {
   "name": "ffmpeg",
-  "version": "6.1.3",
-  "port-version": 2,
+  "version": "9.0.2",
   "description": [
-    "a library to decode, encode, transcode, mux, demux, stream, filter and play pretty much anything that humans and machines have created.",
+    "A library to decode, encode, transcode, mux, demux, stream, filter and play pretty much anything that humans and machines have created.",
     "FFmpeg is the leading multimedia framework, able to decode, encode, transcode, mux, demux, stream, filter and play pretty much anything that humans and machines have created. It supports the most obscure ancient formats up to the cutting edge. No matter if they were designed by some standards committee, the community or a corporation. It is also highly portable: FFmpeg compiles, runs, and passes our testing infrastructure FATE across Linux, Mac OS X, Microsoft Windows, the BSDs, Solaris, etc. under a wide variety of build environments, machine architectures, and configurations.",
-    "Jami overlay: pinned 6.1.3, Jami patches, --disable-everything component set (see jami-options.cmake)."
+    "Jami overlay: upstream vcpkg port plus Jami patches and --disable-everything component set (see jami-options.cmake)."
   ],
   "homepage": "https://ffmpeg.org",
   "license": null,
   "dependencies": [
+    {
+      "name": "ffmpeg-bin2c",
+      "host": true
+    },
     {
       "name": "vcpkg-cmake-get-vars",
       "host": true
@@ -35,6 +38,13 @@
           "name": "ffmpeg",
           "default-features": false,
           "features": [
+            "sdl2"
+          ]
+        },
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": [
             "aom",
             "avcodec",
             "avdevice",
@@ -54,8 +64,10 @@
             "swresample",
             "swscale",
             "theora",
+            "twolame",
             "vorbis",
             "vpx",
+            "vulkan",
             "webp",
             "xml2",
             "zlib"
@@ -68,14 +80,6 @@
             "alsa"
           ],
           "platform": "linux"
-        },
-        {
-          "name": "ffmpeg",
-          "default-features": false,
-          "features": [
-            "sdl2"
-          ],
-          "platform": "!osx"
         },
         {
           "name": "ffmpeg",
@@ -106,14 +110,6 @@
           "default-features": false,
           "features": [
             "modplug"
-          ],
-          "platform": "!uwp"
-        },
-        {
-          "name": "ffmpeg",
-          "default-features": false,
-          "features": [
-            "opencl"
           ],
           "platform": "!uwp"
         },
@@ -161,17 +157,25 @@
           "name": "ffmpeg",
           "default-features": false,
           "features": [
-            "opengl"
+            "opencl"
           ],
-          "platform": "!uwp & !(arm64 & windows)"
+          "platform": "!uwp & !osx"
         },
         {
           "name": "ffmpeg",
           "default-features": false,
           "features": [
-            "tensorflow"
+            "svt-av1"
           ],
-          "platform": "x64 & !static & !uwp & !windows"
+          "platform": "!x86 & !arm32 & !uwp"
+        },
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": [
+            "opengl"
+          ],
+          "platform": "!uwp & !(arm64 & windows)"
         },
         {
           "name": "ffmpeg",
@@ -195,7 +199,7 @@
           "features": [
             "qsv"
           ],
-          "platform": "linux | (!osx & !uwp & !(arm & windows))"
+          "platform": "(x64 | x86) & (windows | linux) & !uwp"
         },
         {
           "name": "ffmpeg",
@@ -215,8 +219,7 @@
           "default-features": false,
           "features": [
             "all",
-            "gpl",
-            "postproc"
+            "gpl"
           ]
         },
         {
@@ -281,7 +284,11 @@
     "ass": {
       "description": "Libass subtitles rendering, needed for subtitles and ass filter support in ffmpeg",
       "dependencies": [
-        "libass"
+        "libass",
+        {
+          "name": "libiconv",
+          "platform": "windows & static"
+        }
       ]
     },
     "avcodec": {
@@ -342,6 +349,33 @@
       "description": "AV1 decoding via libdav1d",
       "dependencies": [
         "dav1d"
+      ]
+    },
+    "drawtext": {
+      "description": "Enable the drawtext filter",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": [
+            "freetype"
+          ]
+        },
+        "harfbuzz"
+      ]
+    },
+    "dvdvideo": {
+      "description": "DVD-Video demuxer",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": [
+            "gpl"
+          ]
+        },
+        "libdvdnav",
+        "libdvdread"
       ]
     },
     "fdk-aac": {
@@ -505,7 +539,7 @@
       ]
     },
     "openssl": {
-      "description": "Needed for https support if gnutls, libtls or mbedtls is not used",
+      "description": "Use OpenSSL for TLS support",
       "dependencies": [
         {
           "name": "ffmpeg",
@@ -523,8 +557,14 @@
         "opus"
       ]
     },
-    "postproc": {
-      "description": "Build the postproc library",
+    "qsv": {
+      "description": "Intel QSV Codec via oneVPL",
+      "dependencies": [
+        "libvpl"
+      ]
+    },
+    "rubberband": {
+      "description": "Enable rubberband support",
       "dependencies": [
         {
           "name": "ffmpeg",
@@ -532,13 +572,8 @@
           "features": [
             "gpl"
           ]
-        }
-      ]
-    },
-    "qsv": {
-      "description": "Intel QSV Codec",
-      "dependencies": [
-        "mfx-dispatch"
+        },
+        "rubberband"
       ]
     },
     "sdl2": {
@@ -596,18 +631,18 @@
         "libssh"
       ]
     },
+    "svt-av1": {
+      "description": "AV1 encoding via libSvtAv1Enc",
+      "supports": "!x86 & !arm32 & !uwp",
+      "dependencies": [
+        "svt-av1"
+      ]
+    },
     "swresample": {
       "description": "Build the swresample library"
     },
     "swscale": {
       "description": "Build the swscale library"
-    },
-    "tensorflow": {
-      "description": "TensorFlow as a DNN module backend for DNN based filters like sr",
-      "supports": "!static",
-      "dependencies": [
-        "tensorflow"
-      ]
     },
     "tesseract": {
       "description": "Tesseract, needed for ocr filter",
@@ -620,6 +655,23 @@
       "description": "Theora encoding via libtheora",
       "dependencies": [
         "libtheora"
+      ]
+    },
+    "twolame": {
+      "description": "MP2 encoding via libtwolame",
+      "dependencies": [
+        "libtwolame"
+      ]
+    },
+    "vaapi": {
+      "description": "VAAPI video decoding/encoding acceleration",
+      "supports": "linux",
+      "dependencies": [
+        {
+          "name": "libva",
+          "default-features": false,
+          "platform": "linux"
+        }
       ]
     },
     "version3": {
@@ -642,6 +694,12 @@
           ]
         },
         "libvpx"
+      ]
+    },
+    "vulkan": {
+      "description": "H.264, HEVC and AV1 de/encoding via Vulkan",
+      "dependencies": [
+        "vulkan-headers"
       ]
     },
     "webp": {
@@ -686,6 +744,12 @@
       "description": "zlib support",
       "dependencies": [
         "zlib"
+      ]
+    },
+    "zmq": {
+      "description": "Enable ZeroMQ support",
+      "dependencies": [
+        "zeromq"
       ]
     }
   }
