@@ -49,9 +49,41 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     sip-tester
 
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
+    apt-get install -y nodejs && \
+    node --version && \
+    npm --version
+
 WORKDIR /daemon
 
 COPY . .
+
+# Install SWIG 4.3+
+RUN apt-get update && apt-get install -y \
+    wget \
+    pcre2-utils \
+    libpcre2-dev \
+    && \
+    wget https://github.com/swig/swig/archive/refs/tags/v4.3.1.tar.gz -O /tmp/swig.tar.gz && \
+    tar -xzf /tmp/swig.tar.gz -C /tmp && \
+    cd /tmp/swig-4.3.1 && \
+    ./autogen.sh && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/swig*
+
+# Install the pinned Rust toolchain used by the daemon contrib build.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --profile minimal --default-toolchain 1.96.0
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+RUN rustc --version && \
+    cargo --version
+
+RUN cd /daemon/bin/nodejs && \
+    npm install --no-save node-addon-api
 
 # Build the daemon
 RUN mkdir -p build && \
