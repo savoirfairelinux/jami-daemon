@@ -123,10 +123,11 @@ Debug/
 build-aux/
 configure
 jami.pc
-bin/dbus/*.adaptor.h
-bin/dbus/cx.ring.Ring.service
-bin/dbus/jamid
-bin/nodejs/dist/
+/bin/dbus/*.adaptor.h
+/bin/dbus/cx.ring.Ring.service
+/bin/dbus/jamid
+/bin/jni/java/
+/bin/nodejs/dist/
 **/node_modules/
 doltcompile
 doltlibtool
