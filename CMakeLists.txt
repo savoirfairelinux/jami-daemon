@@ -1118,6 +1118,7 @@ else()
         target_link_libraries(ut_namedirectory PRIVATE restinio::restinio)
 
         add_test_executable(account_factory test/unitTest/account_factory/testAccount_factory.cpp)
+        add_test_executable(self_contact test/unitTest/account_factory/self_contact.cpp)
         add_test_executable(call test/unitTest/call/call.cpp)
         add_test_executable(recorder test/unitTest/call/recorder.cpp)
         add_test_executable(migration test/unitTest/account_archive/migration.cpp)
