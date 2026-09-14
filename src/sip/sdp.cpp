@@ -39,6 +39,7 @@
 #include <array>
 #include <cassert>
 #include <cctype>
+#include <optional>
 
 namespace jami {
 
@@ -57,6 +58,39 @@ static bool
 hasRtcpMuxAttribute(const pjmedia_sdp_media* media)
 {
     return media and pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp-mux", nullptr) != nullptr;
+}
+
+static std::optional<unsigned>
+findOfferedPayloadType(const pjmedia_sdp_media* media, std::string_view codecName, unsigned clockRate)
+{
+    static constexpr pj_str_t STR_RTPMAP {sip_utils::CONST_PJ_STR("rtpmap")};
+
+    if (not media)
+        return std::nullopt;
+
+    for (unsigned i = 0; i < media->desc.fmt_count; ++i) {
+        auto* attribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[i]);
+        if (not attribute)
+            continue;
+
+        pjmedia_sdp_rtpmap rtpmap {};
+        if (pjmedia_sdp_attr_get_rtpmap(attribute, &rtpmap) != PJ_SUCCESS)
+            continue;
+
+        const auto offeredName = sip_utils::as_view(rtpmap.enc_name);
+        const auto sameName = offeredName.size() == codecName.size()
+                              and std::equal(offeredName.begin(),
+                                             offeredName.end(),
+                                             codecName.begin(),
+                                             [](char a, char b) {
+                                                 return std::tolower(static_cast<unsigned char>(a))
+                                                        == std::tolower(static_cast<unsigned char>(b));
+                                             });
+        if (sameName and rtpmap.clock_rate == clockRate)
+            return pj_strtoul(&rtpmap.pt);
+    }
+
+    return std::nullopt;
 }
 
 Sdp::Sdp(const std::string& id)
@@ -677,6 +711,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
     const auto useBundle = shouldUseBundle();
+    const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
+    const auto* remoteMedia = sdpDirection_ == SdpDirection::ANSWER and remoteSession_
+                                      and mediaIndex < remoteSession_->media_count
+                                  ? remoteSession_->media[mediaIndex]
+                                  : nullptr;
 
     JAMI_LOG("Add media description [{}]", mediaAttr.toString(true));
 
@@ -745,6 +784,9 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             rtpmap.clock_rate = 90000;
         }
 
+        if (const auto offeredPayload = findOfferedPayloadType(remoteMedia, enc_name, rtpmap.clock_rate))
+            payload = *offeredPayload;
+
         auto payloadStr = std::to_string(payload);
         auto pjPayload = sip_utils::CONST_PJ_STR(payloadStr);
         pj_strdup(memPool_.get(), &med->desc.fmt[i], &pjPayload);
@@ -788,7 +830,6 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
-    const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
     const auto remoteAllowsRtcpMux = sdpDirection_ != SdpDirection::ANSWER
                                      || (remoteSession_ and mediaIndex < remoteSession_->media_count
                                          and hasRtcpMuxAttribute(remoteSession_->media[mediaIndex]));
