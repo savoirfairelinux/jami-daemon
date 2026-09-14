@@ -16,13 +16,13 @@
  */
 
 #include "sync_module.h"
+#include "sync_msg_reader.h"
 
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
 #include "fileutils.h"
 
 #include <dhtnet/multiplexed_socket.h>
-#include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
 
 #include <fstream>
@@ -47,7 +47,9 @@ public:
     mutable std::mutex versionMtx_;
     uint64_t localVersion_ {0};
     std::map<DeviceId, uint64_t> lastSynced_;
+    std::string metadataDigest_;
 
+    std::string metadataDigest() const;
     void loadVersions();
     void saveVersions(); // versionMtx_ must be held
     uint64_t bumpVersion();
@@ -70,7 +72,8 @@ struct SyncVersionData
 {
     uint64_t version {0};
     std::map<DeviceId, uint64_t> synced;
-    MSGPACK_DEFINE_MAP(version, synced)
+    std::string metadataDigest;
+    MSGPACK_DEFINE_MAP(version, synced, metadataDigest)
 };
 } // namespace
 
@@ -80,6 +83,34 @@ SyncModule::Impl::Impl(const std::shared_ptr<JamiAccount>& account)
 {
     versionPath_ = account->getPath() / "syncVersions";
     loadVersions();
+    // A crash between the durable register write and the debounced list-version
+    // bump must not leave other devices permanently considered up to date.
+    try {
+        auto digest = metadataDigest();
+        std::lock_guard lk(versionMtx_);
+        if (metadataDigest_ != digest) {
+            metadataDigest_ = std::move(digest);
+            ++localVersion_;
+            saveVersions();
+        }
+    } catch (const std::exception& e) {
+        JAMI_WARNING("[Account {}] Cannot load metadata sync version: {}", accountId_, e.what());
+    }
+}
+
+std::string
+SyncModule::Impl::metadataDigest() const
+{
+    if (auto account = account_.lock())
+        if (auto manager = account->accountManager()) {
+            auto metadata = manager->accountMetadataState();
+            if (metadata.entries.empty())
+                return {};
+            msgpack::sbuffer buffer;
+            msgpack::pack(buffer, metadata);
+            return dht::InfoHash::get(std::string_view(buffer.data(), buffer.size())).toString();
+        }
+    return {};
 }
 
 void
@@ -93,6 +124,7 @@ SyncModule::Impl::loadVersions()
         std::lock_guard lk(versionMtx_);
         localVersion_ = data.version;
         lastSynced_ = std::move(data.synced);
+        metadataDigest_ = std::move(data.metadataDigest);
     } catch (const std::exception&) {
         // No (or unreadable) file yet: start fresh. Every known device will be
         // considered out-of-date and synced once on first contact.
@@ -108,6 +140,7 @@ SyncModule::Impl::saveVersions()
         SyncVersionData data;
         data.version = localVersion_;
         data.synced = lastSynced_;
+        data.metadataDigest = metadataDigest_;
         msgpack::pack(file, data);
     } catch (const std::exception& e) {
         JAMI_WARNING("[Account {}] Unable to save sync versions: {:s}", accountId_, e.what());
@@ -117,8 +150,10 @@ SyncModule::Impl::saveVersions()
 uint64_t
 SyncModule::Impl::bumpVersion()
 {
+    auto digest = metadataDigest();
     std::lock_guard lk(versionMtx_);
     ++localVersion_;
+    metadataDigest_ = std::move(digest);
     saveVersions();
     return localVersion_;
 }
@@ -157,12 +192,32 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     auto acc = account_.lock();
     if (!acc)
         return false;
-    msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
+    // Initial capacity, not a message limit: ChannelSocket fragments large writes,
+    // and buildSyncMsgReader bounds and reassembles each SyncMsg before decoding.
+    msgpack::sbuffer buffer(UINT16_MAX);
     std::error_code ec;
     if (!syncMsg) {
+        // Account-private registers use only the authenticated same-account sync channel.
+        // Send them independently of ConversationModule availability.
+        if (auto manager = acc->accountManager()) {
+            try {
+                SyncMsg msg;
+                msg.am = manager->accountMetadataState();
+                if (!msg.am.entries.empty()) {
+                    msgpack::pack(buffer, msg);
+                    auto written = socket->write(reinterpret_cast<const unsigned char*>(buffer.data()),
+                                                 buffer.size(),
+                                                 ec);
+                    if (ec || written != buffer.size())
+                        return false;
+                }
+            } catch (const std::exception& e) {
+                JAMI_ERROR("[Account {}] Cannot sync account metadata: {}", accountId_, e.what());
+                return false;
+            }
+        }
+        buffer.clear();
         // Send contacts infos
-        // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
-        // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all information).
         if (auto info = acc->accountManager()->getInfo()) {
             if (info->contacts) {
                 SyncMsg msg;
@@ -285,14 +340,17 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
-    socket->setOnRecv(dhtnet::buildMsgpackReader<SyncMsg>([acc = pimpl_->account_, device, peerId](SyncMsg&& msg) {
+    socket->setOnRecv(buildSyncMsgReader([acc = pimpl_->account_, device, peerId](SyncMsg&& msg) {
         auto account = acc.lock();
         if (!account)
             return std::make_error_code(std::errc::operation_canceled);
 
         try {
-            if (auto manager = account->accountManager())
+            if (auto manager = account->accountManager()) {
+                if (!msg.am.entries.empty() || msg.am.clock)
+                    manager->mergeAccountMetadata(msg.am);
                 manager->onSyncData(std::move(msg.ds), false);
+            }
 
             if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                 if (auto cm = account->convModule(true))
@@ -302,6 +360,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                          account->getAccountID(),
                          device.to_view(),
                          e.what());
+            return std::make_error_code(std::errc::io_error);
         }
         return std::error_code();
     }));

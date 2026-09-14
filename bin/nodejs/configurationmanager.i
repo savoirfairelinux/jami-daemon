@@ -27,6 +27,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
@@ -69,6 +70,20 @@ public:
 
 %feature("director") ConfigurationCallback;
 
+%exception libjami::getAccountMetadata {
+    try {
+        $action
+    } catch (const std::exception& e) {
+        if (SWIG_IsNewObj(res1)) delete arg1;
+        Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+        return env.Undefined();
+    } catch (...) {
+        if (SWIG_IsNewObj(res1)) delete arg1;
+        Napi::Error::New(env, "Unable to read account metadata").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+}
+
 namespace libjami {
 
 struct Message
@@ -79,6 +94,8 @@ struct Message
 };
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
+std::map<std::string, std::string> getAccountMetadata(const std::string& accountId);
+bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates, bool onlyIfAbsent = false);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 void setAccountActive(const std::string& accountId, bool active);
@@ -248,6 +265,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/) {}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}

@@ -44,12 +44,21 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
         throw std::runtime_error("failed to parse JSON");
     }
 
+    // Unlike optional legacy configuration, malformed registers must fail import:
+    // silently dropping stamps could resurrect removed memberships on another device.
+    metadata = {};
+    if (value.isMember("accountMetadata")) {
+        auto packed = base64::decode(value["accountMetadata"].asString());
+        metadata = AccountMetadataStore::decode(
+            std::string_view(reinterpret_cast<const char*>(packed.data()), packed.size()));
+    }
+
     // Import content
     try {
         for (Json::ValueIterator itr = value.begin(); itr != value.end(); itr++) {
             try {
                 const auto key = itr.key().asString();
-                if (key.empty())
+                if (key.empty() || key == "accountMetadata")
                     continue;
                 if (key.compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
@@ -107,6 +116,11 @@ AccountArchive::serialize() const
 
     for (const auto& it : config)
         root[it.first] = it.second;
+
+    AccountMetadataStore::validate(metadata);
+    msgpack::sbuffer packed;
+    msgpack::pack(packed, metadata);
+    root["accountMetadata"] = base64::encode(std::string_view(packed.data(), packed.size()));
 
     if (ca_key and *ca_key)
         root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());

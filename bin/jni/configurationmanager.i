@@ -27,6 +27,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
@@ -72,6 +73,22 @@ public:
 %feature("director") ConfigurationCallback;
 %template(MessageVect) std::vector<libjami::Message>;
 
+%exception libjami::getAccountMetadata {
+    try {
+        $action
+    } catch (const std::exception& e) {
+        jclass exception = jenv->FindClass("java/lang/IllegalStateException");
+        if (exception)
+            jenv->ThrowNew(exception, e.what());
+        return $null;
+    } catch (...) {
+        jclass exception = jenv->FindClass("java/lang/IllegalStateException");
+        if (exception)
+            jenv->ThrowNew(exception, "Unable to read account metadata");
+        return $null;
+    }
+}
+
 namespace libjami {
 
 struct Message
@@ -82,6 +99,8 @@ struct Message
 };
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
+std::map<std::string, std::string> getAccountMetadata(const std::string& accountId);
+bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates, bool onlyIfAbsent = false);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
@@ -252,6 +271,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/) {}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
