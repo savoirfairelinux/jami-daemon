@@ -16,6 +16,24 @@
       "message": "[error] Line 350: 🔴 `buildMsgpackReader\u003cSyncMsg\u003e` has already reassembled and deserialized the complete stream before this callback can call `mergeAccountMetadata`, so the store\u0027s 4 MiB limit is enforced too late. An authenticated device can send a `SyncMsg` containing an arbitrarily large metadata map/value and force unbounded allocation and parsing work, despite the documented metadata limit. Bound the metadata object during reassembly (or use a size-limited metadata envelope/reader) and reject oversized input before materializing it.",
       "revId": "c4915db6c042d5df4cae58a9425bedcf291a2728",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a02c9c6_9bbac86b",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-14T11:21:02Z",
+      "side": 1,
+      "message": "Fixed in PS3 by replacing buildMsgpackReader\u003cSyncMsg\u003e with buildSyncMsgReader. It first runs the existing incremental MessagePack visitor API without constructing msgpack objects. Copy/reserve is bounded per wire object (8MiB), with bounded feed chunks, depth32 and 262144 declared child/object slots; hostile map32/array32 counts are rejected from their headers. The visitor separately checks metadata entries\u003c\u003d16384, keys\u003c\u003d1024 bytes, values\u003c\u003d65536 bytes, writer length64 and the existing 4MiB accounted budget BEFORE object-tree construction or map/string conversion. Only a complete preflighted message is unpacked with explicit parser limits. Metadata rules do not constrain unrelated preference strings, and multiple valid coalesced objects may exceed8MiB in aggregate. Invalid input/application error permanently closes the reader; callback exceptions propagate. Added regressions for header-only oversized declarations, oversize keys/values/writers, aggregate metadata/node budgets, deep/incomplete input, both legacy layouts, multiple coalesced large objects and callback failure. All24 reader/serialization cases pass in each layout.",
+      "parentUuid": "49981db3_3fc6d27b",
+      "revId": "c4915db6c042d5df4cae58a9425bedcf291a2728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
