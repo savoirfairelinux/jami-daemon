@@ -39,6 +39,7 @@
 #include <array>
 #include <cassert>
 #include <cctype>
+#include <optional>
 
 namespace jami {
 
@@ -57,6 +58,119 @@ static bool
 hasRtcpMuxAttribute(const pjmedia_sdp_media* media)
 {
     return media and pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp-mux", nullptr) != nullptr;
+}
+
+static const pjmedia_sdp_media*
+findEnabledMedia(const pjmedia_sdp_session* session, unsigned enabledIndex)
+{
+    if (not session)
+        return nullptr;
+
+    for (unsigned index = 0; index < session->media_count; ++index) {
+        const auto* media = session->media[index];
+        if (media->desc.port == 0)
+            continue;
+        if (enabledIndex-- == 0)
+            return media;
+    }
+    return nullptr;
+}
+
+static bool
+equalsIgnoreCase(std::string_view first, std::string_view second)
+{
+    return first.size() == second.size()
+           and std::equal(first.begin(), first.end(), second.begin(), [](char a, char b) {
+                   return std::tolower(static_cast<unsigned char>(a))
+                          == std::tolower(static_cast<unsigned char>(b));
+               });
+}
+
+static std::optional<std::string_view>
+findFormatParameter(std::string_view parameters, std::string_view name)
+{
+    while (not parameters.empty()) {
+        const auto separator = parameters.find(';');
+        auto parameter = parameters.substr(0, separator);
+        const auto start = parameter.find_first_not_of(" \t");
+        const auto end = parameter.find_last_not_of(" \t");
+        if (start != std::string_view::npos)
+            parameter = parameter.substr(start, end - start + 1);
+
+        const auto equals = parameter.find('=');
+        if (equals != std::string_view::npos and equalsIgnoreCase(parameter.substr(0, equals), name))
+            return parameter.substr(equals + 1);
+
+        if (separator == std::string_view::npos)
+            break;
+        parameters.remove_prefix(separator + 1);
+    }
+    return std::nullopt;
+}
+
+static std::string_view
+getFormatParameters(const pjmedia_sdp_media* media, const pj_str_t& payload)
+{
+    static constexpr pj_str_t STR_FMTP {sip_utils::CONST_PJ_STR("fmtp")};
+    auto* attribute = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &payload);
+    if (not attribute)
+        return {};
+
+    const auto value = sip_utils::as_view(attribute->value);
+    const auto separator = value.find(' ');
+    return separator == std::string_view::npos ? std::string_view {} : value.substr(separator + 1);
+}
+
+static std::optional<unsigned>
+findOfferedPayloadType(const pjmedia_sdp_media* media,
+                       std::string_view codecName,
+                       unsigned clockRate,
+                       std::optional<unsigned> channels,
+                       std::string_view formatParameters)
+{
+    static constexpr pj_str_t STR_RTPMAP {sip_utils::CONST_PJ_STR("rtpmap")};
+
+    if (not media)
+        return std::nullopt;
+
+    for (unsigned i = 0; i < media->desc.fmt_count; ++i) {
+        auto* attribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[i]);
+        if (not attribute)
+            continue;
+
+        pjmedia_sdp_rtpmap rtpmap {};
+        if (pjmedia_sdp_attr_get_rtpmap(attribute, &rtpmap) != PJ_SUCCESS)
+            continue;
+
+        if (not equalsIgnoreCase(sip_utils::as_view(rtpmap.enc_name), codecName)
+            or rtpmap.clock_rate != clockRate) {
+            continue;
+        }
+
+        if (channels) {
+            const auto offeredChannels = rtpmap.param.slen == 0 ? 1u : pj_strtoul(&rtpmap.param);
+            if (offeredChannels != *channels)
+                continue;
+        } else if (rtpmap.param.slen != 0) {
+            continue;
+        }
+
+        const auto offeredParameters = getFormatParameters(media, media->desc.fmt[i]);
+        const auto profile = findFormatParameter(formatParameters, "profile-level-id");
+        const auto packetizationMode = findFormatParameter(formatParameters, "packetization-mode");
+        const auto offeredProfile = findFormatParameter(offeredParameters, "profile-level-id");
+        const auto offeredPacketizationMode = findFormatParameter(offeredParameters, "packetization-mode");
+        if ((profile and (not offeredProfile or not equalsIgnoreCase(*profile, *offeredProfile)))
+            or (packetizationMode
+                and (not offeredPacketizationMode
+                     or not equalsIgnoreCase(*packetizationMode, *offeredPacketizationMode)))) {
+            continue;
+        }
+
+        return pj_strtoul(&rtpmap.pt);
+    }
+
+    return std::nullopt;
 }
 
 Sdp::Sdp(const std::string& id)
@@ -677,6 +791,9 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
     const auto useBundle = shouldUseBundle();
+    const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
+    const auto* remoteMedia
+        = sdpDirection_ == SdpDirection::ANSWER ? findEnabledMedia(remoteSession_, mediaIndex) : nullptr;
 
     JAMI_LOG("Add media description [{}]", mediaAttr.toString(true));
 
@@ -717,6 +834,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
         std::string channels; // must have the lifetime of rtpmap
         std::string enc_name;
+        std::string formatParameters;
+        std::optional<unsigned> channelCount;
         unsigned payload;
 
         if (type == MediaType::MEDIA_AUDIO) {
@@ -725,6 +844,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             if (useBundle && payload >= 96 && isBundlePayloadTypeUsed(payload))
                 payload = nextBundleDynamicPayloadType(payload);
             enc_name = accountAudioCodec->name;
+            channelCount = accountAudioCodec->audioformat.nb_channels;
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
                 channels = std::to_string(accountAudioCodec->audioformat.nb_channels);
@@ -743,7 +863,25 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             dynamic_payload = payload + 1;
             enc_name = video_codec_list_[i]->name;
             rtpmap.clock_rate = 90000;
+
+#ifdef ENABLE_VIDEO
+            if (enc_name == "H264") {
+                const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(video_codec_list_[i]);
+                formatParameters = accountVideoCodec->parameters.empty()
+                                       ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
+                                       : accountVideoCodec->parameters;
+                if (formatParameters.find("packetization-mode=") == std::string::npos)
+                    formatParameters += ";packetization-mode=1";
+            }
+#endif
         }
+
+        if (const auto offeredPayload = findOfferedPayloadType(remoteMedia,
+                                                              enc_name,
+                                                              rtpmap.clock_rate,
+                                                              channelCount,
+                                                              formatParameters))
+            payload = *offeredPayload;
 
         auto payloadStr = std::to_string(payload);
         auto pjPayload = sip_utils::CONST_PJ_STR(payloadStr);
@@ -761,19 +899,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
 #ifdef ENABLE_VIDEO
         if (enc_name == "H264") {
-            // FIXME: this should not be hardcoded, it will determine what profile and level
-            // our peer will send us
-            const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(video_codec_list_[i]);
-            std::string profileLevelID = accountVideoCodec->parameters.empty()
-                                             ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
-                                             : accountVideoCodec->parameters;
             // RFC 6184 5.4: without packetization-mode the single NAL unit
             // mode (0) is assumed, but our RTP payloader emits FU-A fragments
             // for NALs larger than the MTU (mode 1 behavior). Advertise mode 1
             // so strict receivers such as browsers accept fragmented keyframes.
-            if (profileLevelID.find("packetization-mode=") == std::string::npos)
-                profileLevelID += ";packetization-mode=1";
-            auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
+            auto value = fmt::format("fmtp:{} {}", payload, formatParameters);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), value.c_str(), NULL);
         }
 #endif
@@ -788,10 +918,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
-    const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
-    const auto remoteAllowsRtcpMux = sdpDirection_ != SdpDirection::ANSWER
-                                     || (remoteSession_ and mediaIndex < remoteSession_->media_count
-                                         and hasRtcpMuxAttribute(remoteSession_->media[mediaIndex]));
+    const auto remoteAllowsRtcpMux
+        = sdpDirection_ != SdpDirection::ANSWER || hasRtcpMuxAttribute(remoteMedia);
 
     if (mediaAttr.enabled_ and rtcpMuxEnabled_ and remoteAllowsRtcpMux)
         addRTCPMuxAttribute(med);
