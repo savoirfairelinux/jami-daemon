@@ -43,6 +43,14 @@ ut_account_factory = executable(
     dependencies: ut_dependencies,
     link_with: ut_library,
 )
+ut_self_contact = executable(
+    'ut_self_contact',
+    sources: files('unitTest/account_factory/self_contact.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('self_contact', ut_self_contact, workdir: ut_workdir, is_parallel: false, timeout: 120)
 test(
     'account_factory',
     ut_account_factory,

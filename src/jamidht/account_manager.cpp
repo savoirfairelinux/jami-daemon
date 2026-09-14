@@ -39,8 +39,8 @@ namespace jami {
 void
 AccountManager::notifyMetadataChanged(const AccountMetadataStore::Change& change)
 {
-    if (change.changed && metadataChanged_)
-        metadataChanged_();
+    if (change.changed && accountDataChanged_)
+        accountDataChanged_();
     if (change.valuesChanged)
         emitSignal<libjami::ConfigurationSignal::AccountMetadataChanged>(accountId_, change.snapshot);
 }
@@ -120,10 +120,8 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 
     // Sync contacts
     if (!sync.peers.empty()) {
-        for (const auto& peer : sync.peers) {
-            info_->contacts->updateContact(peer.first, peer.second);
-        }
-        info_->contacts->saveContacts();
+        if (info_->contacts->updateContacts(sync.peers) && accountDataChanged_)
+            accountDataChanged_();
     }
 
     // Sync trust requests
@@ -320,7 +318,8 @@ void
 AccountManager::reloadContacts()
 {
     if (info_) {
-        info_->contacts->load();
+        if (info_->contacts->load() && accountDataChanged_)
+            accountDataChanged_();
     }
 }
 

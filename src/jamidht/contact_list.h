@@ -28,6 +28,10 @@
 
 namespace jami {
 
+namespace test {
+class SelfContactTest;
+}
+
 class ContactList
 {
 public:
@@ -62,7 +66,7 @@ public:
 
     const std::string& accountId() const { return accountId_; }
 
-    void load();
+    bool load();
     void save();
 
     /* Contacts */
@@ -97,6 +101,10 @@ public:
     const std::map<dht::InfoHash, Contact>& getContacts() const;
     void setContacts(const std::map<dht::InfoHash, Contact>&);
     void updateContact(const dht::InfoHash&, const Contact&, bool emit = true);
+    /** Merge and persist contacts; return whether the self record changed. */
+    bool updateContacts(const std::map<dht::InfoHash, Contact>&, bool emit = true);
+    /** Repair only an inactive self-ban, retaining the contact as a removal tombstone. */
+    static bool normalizeSelfContact(const dht::InfoHash&, std::map<dht::InfoHash, Contact>&);
 
     static std::map<dht::InfoHash, Contact> contactsFromPath(const std::filesystem::path& path);
 
@@ -154,11 +162,16 @@ private:
     dht::crypto::TrustList accountTrust_;
     // Trust store for to match peer certificates
     std::unique_ptr<dhtnet::tls::TrustStore> trust_;
+    std::shared_ptr<crypto::Certificate> accountCertificate_;
     std::string accountUri_;
+    std::string accountCertificateId_;
 
     OnChangeCallback callbacks_;
+    friend class test::SelfContactTest;
 
-    void loadContacts();
+    bool loadContacts();
+    bool ingestContacts(const std::map<dht::InfoHash, Contact>&, bool replace, bool emit);
+    void saveContacts(const std::map<dht::InfoHash, Contact>&) const;
     void loadTrustRequests();
 
     void loadKnownDevices();

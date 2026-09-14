@@ -150,7 +150,7 @@ public:
     std::map<std::string, std::string> getAccountMetadata() const { return metadata_.values(); }
     bool setAccountMetadata(const std::map<std::string, std::string>& updates, bool onlyIfAbsent = false);
     bool mergeAccountMetadata(const AccountMetadata& remote);
-    void setMetadataChangedCallback(std::function<void()> cb) { metadataChanged_ = std::move(cb); }
+    void setAccountDataChangedCallback(std::function<void()> cb) { accountDataChanged_ = std::move(cb); }
 
     void reloadContacts();
 
@@ -297,7 +297,7 @@ protected:
 private:
     void notifyMetadataChanged(const AccountMetadataStore::Change& change);
     std::recursive_mutex metadataChangeMutex_;
-    std::function<void()> metadataChanged_;
+    std::function<void()> accountDataChanged_;
 };
 
 } // namespace jami
