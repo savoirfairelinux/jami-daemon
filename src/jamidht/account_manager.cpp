@@ -36,6 +36,41 @@
 
 namespace jami {
 
+void
+AccountManager::notifyMetadataChanged(const AccountMetadataStore::Change& change)
+{
+    if (change.changed && metadataChanged_)
+        metadataChanged_();
+    if (change.valuesChanged)
+        emitSignal<libjami::ConfigurationSignal::AccountMetadataChanged>(accountId_, change.snapshot);
+}
+
+bool
+AccountManager::setAccountMetadata(const std::map<std::string, std::string>& updates, bool onlyIfAbsent)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    if (!info_)
+        return false;
+    try {
+        auto change = metadata_.update(info_->deviceId, updates, onlyIfAbsent);
+        notifyMetadataChanged(change);
+        return true;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[Account {}] Cannot update account metadata: {}", accountId_, e.what());
+        return false;
+    }
+}
+
+bool
+AccountManager::mergeAccountMetadata(const AccountMetadata& remote)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    // Let import/sync callers handle failure. A failed merge must not be acknowledged.
+    auto change = metadata_.merge(remote);
+    notifyMetadataChanged(change);
+    return change.changed;
+}
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {

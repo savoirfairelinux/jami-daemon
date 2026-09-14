@@ -7,6 +7,7 @@
 list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/abstract_sip_transport.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/account_manager.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/account_metadata.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/account_manager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/accountarchive.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/accountarchive.h"

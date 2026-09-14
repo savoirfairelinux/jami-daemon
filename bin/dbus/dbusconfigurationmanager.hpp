@@ -51,6 +51,24 @@ public:
         return libjami::getVolatileAccountDetails(accountID);
     }
 
+    auto getAccountMetadata(const std::string& accountID) -> decltype(libjami::getAccountMetadata(accountID))
+    {
+        try {
+            return libjami::getAccountMetadata(accountID);
+        } catch (const std::exception& e) {
+            throw sdbus::Error(sdbus::Error::Name("cx.ring.Ring.Error.AccountMetadata"), e.what());
+        } catch (...) {
+            throw sdbus::Error(sdbus::Error::Name("cx.ring.Ring.Error.AccountMetadata"),
+                               "Unable to read account metadata");
+        }
+    }
+
+    bool setAccountMetadata(const std::string& accountID, const std::map<std::string, std::string>& updates,
+                            const bool& onlyIfAbsent)
+    {
+        return libjami::setAccountMetadata(accountID, updates, onlyIfAbsent);
+    }
+
     void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
     {
         libjami::setAccountDetails(accountID, details);
@@ -898,6 +916,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitAccountsChanged, this)),
             exportable_serialized_callback<ConfigurationSignal::AccountDetailsChanged>(
                 std::bind(&DBusConfigurationManager::emitAccountDetailsChanged, this, _1, _2)),
+            exportable_serialized_callback<ConfigurationSignal::AccountMetadataChanged>(
+                std::bind(&DBusConfigurationManager::emitAccountMetadataChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::StunStatusFailed>(
                 std::bind(&DBusConfigurationManager::emitStunStatusFailure, this, _1)),
             exportable_serialized_callback<ConfigurationSignal::RegistrationStateChanged>(

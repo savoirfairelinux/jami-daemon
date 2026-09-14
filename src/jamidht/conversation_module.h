@@ -25,6 +25,7 @@
 #include <mutex>
 #include <optional>
 #include <msgpack.hpp>
+#include "account_metadata.h"
 
 namespace jami {
 static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
@@ -54,20 +55,22 @@ struct SyncMsg
      * }}
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+    AccountMetadata am;
 
-    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms, am)
 
     /**
      * Whether this message carries contact/conversation *list* state, i.e.
      * contacts, devices, trust requests, conversations or conversation
-     * requests. Propagating such a change may require (re)connecting to
+     * requests, or account-private registers. Propagating such a change may require (re)connecting to
      * devices that are not currently connected. Metadata-only messages
      * (preferences `p`, read/fetched status `ms`, deprecated last-displayed
      * `ld`) return false and only need to ride existing connections.
      */
     bool affectsList() const
     {
-        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty();
+        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty()
+               || !c.empty() || !cr.empty() || !am.entries.empty();
     }
 };
 

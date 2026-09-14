@@ -22,6 +22,7 @@
 #include "../../test_runner.h"
 
 #include "jamidht/conversation.h"
+#include "jamidht/conversation_module.h"
 
 #include <msgpack.hpp>
 
@@ -57,6 +58,17 @@ struct LegacyConversationRequest
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
 };
 
+struct LegacySyncMsg
+{
+    DeviceSync ds;
+    std::map<std::string, ConvInfo> c;
+    std::map<std::string, ConversationRequest> cr;
+    std::map<std::string, std::map<std::string, std::string>> p;
+    std::map<std::string, std::map<std::string, std::string>> ld;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+};
+
 class ConvInfoSerializationTest : public CppUnit::TestFixture
 {
 public:
@@ -79,6 +91,7 @@ private:
     void testRequestToMapStaysSeconds();
     // isRemoved() distinguishes events within the same second
     void testIsRemovedMsResolution();
+    void testAccountMetadataSyncCompatibility();
 
     CPPUNIT_TEST_SUITE(ConvInfoSerializationTest);
     CPPUNIT_TEST(testConvInfoLegacyToNew);
@@ -90,6 +103,7 @@ private:
     CPPUNIT_TEST(testRequestMsgpackRoundtrip);
     CPPUNIT_TEST(testRequestToMapStaysSeconds);
     CPPUNIT_TEST(testIsRemovedMsResolution);
+    CPPUNIT_TEST(testAccountMetadataSyncCompatibility);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -105,6 +119,25 @@ repack(const In& in)
     Out out;
     oh.get().convert(out);
     return out;
+}
+
+void
+ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
+{
+    LegacySyncMsg legacy;
+    legacy.p["conversation"]["color"] = "blue";
+    auto current = repack<SyncMsg>(legacy);
+    CPPUNIT_ASSERT(current.p == legacy.p);
+    CPPUNIT_ASSERT(current.am.entries.empty());
+    CPPUNIT_ASSERT(!current.affectsList());
+    current.am.clock = 42;
+    current.am.entries["jami.channels.v1/id/deleted"] = {42, std::string(64, 'a'), "1"};
+    CPPUNIT_ASSERT(current.affectsList());
+    auto oldReader = repack<LegacySyncMsg>(current);
+    CPPUNIT_ASSERT(oldReader.p == legacy.p);
+    auto newReader = repack<SyncMsg>(current);
+    CPPUNIT_ASSERT(newReader.am == current.am);
+    CPPUNIT_ASSERT(newReader.p == legacy.p);
 }
 
 void

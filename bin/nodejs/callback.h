@@ -251,6 +251,17 @@ accountsChanged()
 }
 
 void
+accountMetadataChanged(const std::string& accountId, const std::map<std::string, std::string>& metadata)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, metadata]() {
+        napi_value args[] = {napiString(accountId), stringMapToJsMap(metadata)};
+        callCallback("AccountMetadataChanged", 2, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 accountDetailsChanged(const std::string& accountId, const std::map<std::string, std::string>& details)
 {
     std::lock_guard lock(pendingSignalsLock);
@@ -975,6 +986,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
         exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&accountDetailsChanged, _1, _2)),
+        exportable_callback<ConfigurationSignal::AccountMetadataChanged>(bind(&accountMetadataChanged, _1, _2)),
         exportable_callback<ConfigurationSignal::RegistrationStateChanged>(
             bind(&registrationStateChanged, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(composingStatusChanged, _1, _2, _3, _4)),
