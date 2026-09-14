@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd79029c_773d89a5",
+        "filename": "src/jamidht/account_metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T02:34:12Z",
+      "side": 1,
+      "message": "[error] Line 167: 🔴 An authenticated peer\u0027s `clock` is accepted without a bound. A linked device (or a crafted imported state) can advertise `UINT64_MAX`; the next local update then hits clock exhaustion permanently, turning one metadata merge into an account-wide write DoS. Reject states that cannot support a subsequent local revision, or define a saturating/recovery policy before persisting the remote clock.",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a517ec6_efe72993",
+        "filename": "src/jamidht/account_metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T02:34:12Z",
+      "side": 1,
+      "message": "[error] Line 243: 🔴 The destination has already been renamed before the parent-directory `fsync` is attempted. If this `fsync` fails, the method reports failure while the new state may already be visible on disk, but the in-memory `state_` remains unchanged; subsequent reads and syncs return the old snapshot and a later update can overwrite the committed state with stale data. Reconcile/reload the state after a post-rename failure (or otherwise make the store unusable until recovery) so the reported failure cannot leave divergent in-memory and on-disk state.",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ea967ad_94d618b0",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T02:34:12Z",
+      "side": 1,
+      "message": "[error] Line 205: 🔴 The full metadata snapshot is serialized into a single `SyncMsg`, while the metadata store accepts up to 4 MiB and this sync transport uses a 16-bit message-size limit. Valid metadata larger than the transport limit therefore cannot be synchronized (and a wrapped/truncated length can break framing). Fragment the metadata with authenticated reassembly, or enforce the actual transport limit before accepting/storing values.",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
