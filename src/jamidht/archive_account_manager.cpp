@@ -1175,6 +1175,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
     dhtnet::fileutils::check_dir(path_, 0700);
     mergeAccountMetadata(a.metadata);
     a.metadata = accountMetadataState();
+    ContactList::normalizeSelfContact(a.id.second->getId(), a.contacts);
 
     if (isLinkDevProtocol) {
         a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] = ctx.linkDevCtx->authScheme.empty()

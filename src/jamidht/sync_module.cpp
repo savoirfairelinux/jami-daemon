@@ -48,8 +48,10 @@ public:
     uint64_t localVersion_ {0};
     std::map<DeviceId, uint64_t> lastSynced_;
     std::string metadataDigest_;
+    std::string selfContactDigest_;
 
     std::string metadataDigest() const;
+    std::string selfContactDigest() const;
     void loadVersions();
     void saveVersions(); // versionMtx_ must be held
     uint64_t bumpVersion();
@@ -73,7 +75,8 @@ struct SyncVersionData
     uint64_t version {0};
     std::map<DeviceId, uint64_t> synced;
     std::string metadataDigest;
-    MSGPACK_DEFINE_MAP(version, synced, metadataDigest)
+    std::string selfContactDigest;
+    MSGPACK_DEFINE_MAP(version, synced, metadataDigest, selfContactDigest)
 };
 } // namespace
 
@@ -83,19 +86,35 @@ SyncModule::Impl::Impl(const std::shared_ptr<JamiAccount>& account)
 {
     versionPath_ = account->getPath() / "syncVersions";
     loadVersions();
-    // A crash between the durable register write and the debounced list-version
+    // A crash between a durable register/self-contact repair and the debounced list-version
     // bump must not leave other devices permanently considered up to date.
     try {
         auto digest = metadataDigest();
+        auto contactDigest = selfContactDigest();
         std::lock_guard lk(versionMtx_);
-        if (metadataDigest_ != digest) {
+        if (metadataDigest_ != digest || selfContactDigest_ != contactDigest) {
             metadataDigest_ = std::move(digest);
+            selfContactDigest_ = std::move(contactDigest);
             ++localVersion_;
             saveVersions();
         }
     } catch (const std::exception& e) {
         JAMI_WARNING("[Account {}] Cannot load metadata sync version: {}", accountId_, e.what());
     }
+}
+
+std::string
+SyncModule::Impl::selfContactDigest() const
+{
+    if (auto account = account_.lock())
+        if (auto manager = account->accountManager())
+            if (auto info = manager->getInfo())
+                if (auto contact = info->contacts->getContactInfo(dht::InfoHash(info->accountId))) {
+                    msgpack::sbuffer buffer;
+                    msgpack::pack(buffer, *contact);
+                    return dht::InfoHash::get(std::string_view(buffer.data(), buffer.size())).toString();
+                }
+    return {};
 }
 
 std::string
@@ -125,6 +144,7 @@ SyncModule::Impl::loadVersions()
         localVersion_ = data.version;
         lastSynced_ = std::move(data.synced);
         metadataDigest_ = std::move(data.metadataDigest);
+        selfContactDigest_ = std::move(data.selfContactDigest);
     } catch (const std::exception&) {
         // No (or unreadable) file yet: start fresh. Every known device will be
         // considered out-of-date and synced once on first contact.
@@ -141,6 +161,7 @@ SyncModule::Impl::saveVersions()
         data.version = localVersion_;
         data.synced = lastSynced_;
         data.metadataDigest = metadataDigest_;
+        data.selfContactDigest = selfContactDigest_;
         msgpack::pack(file, data);
     } catch (const std::exception& e) {
         JAMI_WARNING("[Account {}] Unable to save sync versions: {:s}", accountId_, e.what());
@@ -151,9 +172,11 @@ uint64_t
 SyncModule::Impl::bumpVersion()
 {
     auto digest = metadataDigest();
+    auto contactDigest = selfContactDigest();
     std::lock_guard lk(versionMtx_);
     ++localVersion_;
     metadataDigest_ = std::move(digest);
+    selfContactDigest_ = std::move(contactDigest);
     saveVersions();
     return localVersion_;
 }

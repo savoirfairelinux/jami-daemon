@@ -15,6 +15,16 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "contact_list.h"
+#include <algorithm>
+#include <tuple>
+#include <stdexcept>
+#include <system_error>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 #include "logger.h"
 #include "jamiaccount.h"
 #include "fileutils.h"
@@ -38,22 +48,29 @@ ContactList::ContactList(const std::string& accountId,
                          OnChangeCallback cb)
     : accountId_(accountId)
     , path_(path)
+    , accountCertificate_(cert)
+    , accountUri_(cert ? cert->getId().toString() : "")
+    , accountCertificateId_(cert ? cert->getLongId().toString() : "")
     , callbacks_(std::move(cb))
 {
     if (cert) {
         trust_ = std::make_unique<dhtnet::tls::TrustStore>(jami::Manager::instance().certStore(accountId_));
         accountTrust_.add(*cert);
+        // Device identity already authenticates this authority. Use the normal
+        // TrustStore verifier (including its CRLs), independently of contacts.
+        trust_->setCertificateStatus(cert, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED, false);
     }
 }
 
 ContactList::~ContactList() {}
 
-void
+bool
 ContactList::load()
 {
-    loadContacts();
+    auto selfChanged = loadContacts();
     loadTrustRequests();
     loadKnownDevices();
+    return selfChanged;
 }
 
 void
@@ -67,6 +84,11 @@ ContactList::save()
 bool
 ContactList::setCertificateStatus(const std::string& cert_id, const dhtnet::tls::TrustStore::PermissionStatus status)
 {
+    if (status == dhtnet::tls::TrustStore::PermissionStatus::BANNED
+        && !accountUri_.empty() && (cert_id == accountUri_ || cert_id == accountCertificateId_)) {
+        JAMI_WARNING("[Account {}] Refusing to ban the account's own identity", accountId_);
+        return false;
+    }
     std::unique_lock lk(mutex_);
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
         JAMI_LOG("[Account {}] [Contacts] Unable to set certificate status for existing contacts {}",
@@ -74,6 +96,8 @@ ContactList::setCertificateStatus(const std::string& cert_id, const dhtnet::tls:
                  cert_id);
         return false;
     }
+    if (auto cert = jami::Manager::instance().certStore(accountId_).getCertificate(cert_id))
+        return setCertificateStatus(cert, status, false);
     return trust_->setCertificateStatus(cert_id, status);
 }
 
@@ -82,6 +106,13 @@ ContactList::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
                                   dhtnet::tls::TrustStore::PermissionStatus status,
                                   bool local)
 {
+    if (!cert)
+        return false;
+    if (status == dhtnet::tls::TrustStore::PermissionStatus::BANNED
+        && cert->getLongId().toString() == accountCertificateId_) {
+        JAMI_WARNING("[Account {}] Refusing to ban the account's own identity", accountId_);
+        return false;
+    }
     return trust_->setCertificateStatus(cert, status, local);
 }
 
@@ -129,6 +160,10 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
 bool
 ContactList::removeContact(const dht::InfoHash& h, bool ban)
 {
+    if (ban && h.toString() == accountUri_) {
+        JAMI_WARNING("[Account {}] [Contacts] Refusing to block the account's own identity", accountId_);
+        return false;
+    }
     std::unique_lock lk(mutex_);
     JAMI_WARNING("[Account {}] [Contacts] removeContact: {} (banned: {})", accountId_, h, ban);
     auto c = contacts_.find(h);
@@ -139,9 +174,10 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     c->second.banned = ban;
     c->second.conversationId = "";
     auto uri = h.toString();
-    trust_->setCertificateStatus(uri,
-                                 ban ? dhtnet::tls::TrustStore::PermissionStatus::BANNED
-                                     : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED);
+    if (uri != accountUri_)
+        trust_->setCertificateStatus(uri,
+                                     ban ? dhtnet::tls::TrustStore::PermissionStatus::BANNED
+                                         : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED);
     if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
@@ -186,6 +222,7 @@ ContactList::getContactDetails(const dht::InfoHash& h) const
 std::optional<Contact>
 ContactList::getContactInfo(const dht::InfoHash& h) const
 {
+    std::lock_guard lk(mutex_);
     const auto c = contacts_.find(h);
     if (c == std::end(contacts_)) {
         JAMI_WARNING("[Account {}] [Contacts] Contact '{}' not found", accountId_, h.to_view());
@@ -207,8 +244,7 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
              accountId_,
              contacts_.size(),
              contacts.size());
-    contacts_ = contacts;
-    saveContacts();
+    ingestContacts(contacts, true, false);
     // Set contacts is used when creating a new device, so just announce new contacts
     for (auto& peer : contacts)
         if (peer.second.isActive())
@@ -218,37 +254,118 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
 void
 ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool emit)
 {
-    if (not id) {
-        JAMI_ERROR("[Account {}] [Contacts] updateContact: invalid contact ID", accountId_);
-        return;
-    }
-    bool stateChanged {false};
-    auto c = contacts_.find(id);
-    if (c == contacts_.end()) {
-        // JAMI_LOG("[Contacts] New contact: {}", id);
-        c = contacts_.emplace(id, contact).first;
-        stateChanged = c->second.isActive() or c->second.isBanned();
-    } else {
-        // JAMI_LOG("[Contacts] Updated contact: {}", id);
-        stateChanged = c->second.update(contact);
-    }
-    if (stateChanged) {
-        {
-            std::lock_guard lk(mutex_);
-            if (trustRequests_.erase(id) > 0)
-                saveTrustRequests();
+    updateContacts({{id, contact}}, emit);
+}
+
+bool
+ContactList::normalizeSelfContact(const dht::InfoHash& account, std::map<dht::InfoHash, Contact>& contacts)
+{
+    auto it = contacts.find(account);
+    if (!account || it == contacts.end() || !it->second.isBanned())
+        return false;
+    auto& contact = it->second;
+    // Older daemons compare seconds. A millisecond-only bump could tie their
+    // original ban, so advance past its whole second as well as its ms stamp.
+    if (contact.removed > TimePoint::max() - std::chrono::seconds(1))
+        throw std::overflow_error("Self-contact removal timestamp cannot be advanced");
+    auto nextSecond = std::chrono::time_point_cast<std::chrono::seconds>(contact.removed)
+                      + std::chrono::seconds(1);
+    contact.removed = std::max(nowMs(), TimePoint(nextSecond));
+    contact.banned = false;
+    return true;
+}
+
+bool
+ContactList::updateContacts(const std::map<dht::InfoHash, Contact>& contacts, bool emit)
+{
+    return ingestContacts(contacts, false, emit);
+}
+
+bool
+ContactList::ingestContacts(const std::map<dht::InfoHash, Contact>& contacts, bool replace, bool emit)
+{
+    auto equal = [](const Contact& a, const Contact& b) {
+        return std::tie(a.added, a.removed, a.confirmed, a.banned, a.conversationId)
+               == std::tie(b.added, b.removed, b.confirmed, b.banned, b.conversationId);
+    };
+    std::unique_lock lk(mutex_);
+    auto next = replace ? std::map<dht::InfoHash, Contact> {} : contacts_;
+    for (const auto& [id, contact] : contacts) {
+        if (!id) {
+            JAMI_WARNING("[Account {}] [Contacts] Ignoring an invalid contact ID", accountId_);
+            continue;
         }
-        if (c->second.isActive()) {
+        auto [it, inserted] = next.emplace(id, contact);
+        if (!inserted)
+            it->second.update(contact);
+    }
+    const dht::InfoHash self(accountUri_);
+    normalizeSelfContact(self, next);
+    auto oldSelf = contacts_.find(self);
+    auto newSelf = next.find(self);
+    bool selfChanged = (oldSelf == contacts_.end()) != (newSelf == next.end())
+                       || (oldSelf != contacts_.end() && newSelf != next.end()
+                           && !equal(oldSelf->second, newSelf->second));
+    bool changed = next.size() != contacts_.size();
+    if (!changed)
+        for (const auto& [id, contact] : next) {
+            auto old = contacts_.find(id);
+            if (old == contacts_.end() || !equal(old->second, contact)) {
+                changed = true;
+                break;
+            }
+        }
+    // Commit the complete batch before changing live permissions or notifying
+    // anyone. This also avoids a partial contacts file during startup repair.
+    if (changed || replace)
+        saveContacts(next);
+    auto previous = contacts_;
+    if (replace)
+        contacts_ = std::move(next);
+    else if (changed)
+        for (const auto& [id, contact] : next) {
+            auto [it, inserted] = contacts_.emplace(id, contact);
+            if (!inserted && !equal(it->second, contact))
+                it->second = contact;
+        }
+    std::vector<std::pair<dht::InfoHash, Contact>> notifications;
+    for (const auto& [id, contact] : contacts_) {
+        auto old = previous.find(id);
+        bool stateChanged = old == previous.end() ? contact.isActive() || contact.isBanned()
+                                                  : contact.hasDifferentState(old->second);
+        bool selfTombstone = id == self && !contact.isActive() && !contact.banned;
+        if (selfTombstone) {
+            // Clear only the invalid owner permission, never its device/CA
+            // permissions or revocations. No ContactRemoved: that deletes notes.
+            auto banned = trust_->getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus::BANNED);
+            bool restoreOwner = false;
+            for (const auto& ownerId : {accountUri_, accountCertificateId_})
+                if (std::find(banned.begin(), banned.end(), ownerId) != banned.end())
+                    restoreOwner = true;
+            if (restoreOwner) {
+                trust_->setCertificateStatus(accountCertificateId_, dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED);
+                trust_->setCertificateStatus(accountCertificate_, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED, false);
+            }
+        }
+        if (!stateChanged)
+            continue;
+        if (!selfTombstone && trustRequests_.erase(id) > 0)
+            saveTrustRequests();
+        if (contact.isActive())
             trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
-            if (emit)
-                callbacks_.contactAdded(id.toString(), c->second.confirmed);
-        } else {
-            if (c->second.banned)
-                trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::BANNED);
-            if (emit)
-                callbacks_.contactRemoved(id.toString(), c->second.banned);
-        }
+        else if (contact.isBanned())
+            trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::BANNED);
+        if (emit && !selfTombstone)
+            notifications.emplace_back(id, contact);
     }
+    lk.unlock();
+    for (const auto& [id, contact] : notifications) {
+        if (contact.isActive())
+            callbacks_.contactAdded(id.toString(), contact.confirmed);
+        else
+            callbacks_.contactRemoved(id.toString(), contact.banned);
+    }
+    return selfChanged;
 }
 
 std::map<dht::InfoHash, Contact>
@@ -266,22 +383,69 @@ ContactList::contactsFromPath(const std::filesystem::path& path)
     return contacts;
 }
 
-void
+bool
 ContactList::loadContacts()
 {
     auto contacts = contactsFromPath(path_);
     JAMI_WARNING("[Account {}] [Contacts] Loaded {} contacts", accountId_, contacts.size());
-    for (auto& peer : contacts)
-        updateContact(peer.first, peer.second, false);
+    return ingestContacts(contacts, false, false);
 }
 
 void
 ContactList::saveContacts() const
 {
-    JAMI_LOG("[Account {}] [Contacts] saving {} contacts", accountId_, contacts_.size());
+    saveContacts(contacts_);
+}
+
+void
+ContactList::saveContacts(const std::map<dht::InfoHash, Contact>& contacts) const
+{
+    JAMI_LOG("[Account {}] [Contacts] saving {} contacts", accountId_, contacts.size());
     std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
-    std::ofstream file(path_ / "contacts", std::ios::trunc | std::ios::binary);
-    msgpack::pack(file, contacts_);
+    auto staging = path_ / "contacts.new";
+    try {
+        std::ofstream file;
+        file.exceptions(std::ios::failbit | std::ios::badbit);
+        file.open(staging, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, contacts);
+        file.flush();
+        file.close();
+#ifdef _WIN32
+        auto handle = CreateFileW(staging.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
+                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (handle == INVALID_HANDLE_VALUE)
+            throw std::system_error(GetLastError(), std::system_category(), "Opening contacts for flush");
+        auto ok = FlushFileBuffers(handle);
+        auto error = GetLastError();
+        CloseHandle(handle);
+        if (!ok)
+            throw std::system_error(error, std::system_category(), "Flushing contacts");
+        if (!MoveFileExW(staging.c_str(), (path_ / "contacts").c_str(),
+                         MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+            throw std::system_error(GetLastError(), std::system_category(), "Replacing contacts");
+#else
+        int fd = open(staging.c_str(), O_RDONLY | O_CLOEXEC);
+        if (fd < 0)
+            throw std::system_error(errno, std::generic_category(), "Opening contacts for flush");
+        auto error = fsync(fd) == 0 ? 0 : errno;
+        if (close(fd) != 0 && !error)
+            error = errno;
+        if (error)
+            throw std::system_error(error, std::generic_category(), "Flushing contacts");
+        std::filesystem::rename(staging, path_ / "contacts");
+        fd = open(path_.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        if (fd < 0)
+            throw std::system_error(errno, std::generic_category(), "Opening contacts directory");
+        error = fsync(fd) == 0 ? 0 : errno;
+        close(fd);
+        if (error)
+            throw std::system_error(error, std::generic_category(), "Flushing contacts directory");
+#endif
+    } catch (...) {
+        std::error_code ec;
+        std::filesystem::remove(staging, ec);
+        throw;
+    }
 }
 
 void
@@ -615,10 +779,10 @@ ContactList::getSyncData() const
     DeviceSync sync_data;
     sync_data.date = clock::now().time_since_epoch().count();
     // sync_data.device_name = deviceName_;
+    std::lock_guard lk(mutex_);
     sync_data.peers = getContacts();
 
     static constexpr size_t MAX_TRUST_REQUESTS = 20;
-    std::lock_guard lk(mutex_);
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
             sync_data.trust_requests.emplace(req.first,
