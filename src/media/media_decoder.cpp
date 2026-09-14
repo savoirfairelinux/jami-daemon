@@ -92,6 +92,22 @@ MediaDemuxer::openInput(const DeviceParams& params)
     if (!iformat && !params.format.empty())
         JAMI_WARNING("Unable to find format \"{}\"", params.format);
 
+    // A failed avformat_open_input frees the context, but capture may retry.
+    if (!inputCtx_) {
+        inputCtx_ = avformat_alloc_context();
+        if (!inputCtx_) {
+            JAMI_ERROR("Unable to allocate input format context");
+            return AVERROR(ENOMEM);
+        }
+    }
+    inputCtx_->interrupt_callback = interruptCallback_;
+
+    if (iformat && iformat == av_find_input_format("video4linux2")) {
+        // Both V4L2 aliases resolve to this format. O_NONBLOCK keeps VIDIOC_DQBUF
+        // from blocking capture shutdown; decode() already handles EAGAIN.
+        inputCtx_->flags |= AVFMT_FLAG_NONBLOCK;
+    }
+
     std::string input;
 
     if (params.input == "pipewiregrab") {
@@ -261,12 +277,9 @@ MediaDemuxer::selectStream(AVMediaType type)
 void
 MediaDemuxer::setInterruptCallback(int (*cb)(void*), void* opaque)
 {
-    if (cb) {
-        inputCtx_->interrupt_callback.callback = cb;
-        inputCtx_->interrupt_callback.opaque = opaque;
-    } else {
-        inputCtx_->interrupt_callback.callback = 0;
-    }
+    interruptCallback_ = {cb, opaque};
+    if (inputCtx_)
+        inputCtx_->interrupt_callback = interruptCallback_;
 }
 void
 MediaDemuxer::setNeedFrameCb(std::function<void()> cb)
@@ -416,6 +429,18 @@ MediaDemuxer::decode()
     libjami::PacketBuffer packet(av_packet_alloc());
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
+        if ((inputParams_.format == "video4linux2" || inputParams_.format == "v4l2")
+            && (inputCtx_->flags & AVFMT_FLAG_NONBLOCK)) {
+            // A stalled camera must yield even after its last frame deadline.
+            // Keep polling waits short so capture shutdown can join promptly.
+            int64_t delay = 10000;
+            if (inputParams_.framerate.numerator() > 0) {
+                rational<double> frameTime = 1e6 / inputParams_.framerate;
+                delay = std::clamp<int64_t>(frameTime.real<int64_t>(), 1000, 10000);
+            }
+            std::this_thread::sleep_for(std::chrono::microseconds(delay));
+            return Status::Success;
+        }
         /*no data available. Calculate time until next frame.
          We do not use the emulated frame mechanism from the decoder because it will affect all
          platforms. With the current implementation, the demuxer will be waiting just in case when
