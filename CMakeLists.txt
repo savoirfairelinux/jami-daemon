@@ -1153,6 +1153,14 @@ else()
         add_test_executable(conversation_fetch_sent test/unitTest/conversation/conversationFetchSent.cpp test/unitTest/conversation/conversationcommon.cpp)
         add_test_executable(media_encoder test/unitTest/media/test_media_encoder.cpp)
         add_test_executable(media_decoder test/unitTest/media/test_media_decoder.cpp)
+        if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT BUILD_SHARED_LIBS)
+            target_compile_definitions(ut_media_decoder PRIVATE JAMI_TEST_WRAP_AVFORMAT_OPEN_INPUT)
+            target_link_options(ut_media_decoder PRIVATE
+                "LINKER:--wrap=avformat_open_input"
+                "LINKER:--wrap=av_read_frame"
+                "LINKER:--wrap=av_gettime_relative"
+                "LINKER:--wrap=nanosleep")
+        endif()
         add_test_executable(resampler test/unitTest/media/audio/test_resampler.cpp)
         add_test_executable(audio_frame_resizer test/unitTest/media/audio/test_audio_frame_resizer.cpp)
         add_test_executable(routing_table test/unitTest/swarm/routing_table.cpp)

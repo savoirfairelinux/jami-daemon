@@ -134,6 +134,7 @@ private:
     bool streamInfoFound_ {false};
     std::unique_ptr<asio::steady_timer> streamInfoTimer_;
     AVFormatContext* inputCtx_ = nullptr;
+    AVIOInterruptCB interruptCallback_ {};
     std::vector<StreamCallback> streams_;
     int64_t startTime_;
     int64_t lastReadPacketTime_ {};

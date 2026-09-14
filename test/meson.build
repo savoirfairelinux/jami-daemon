@@ -392,9 +392,23 @@ test(
     timeout: 1800,
 )
 
+media_decoder_cpp_args = []
+media_decoder_link_args = []
+if host_machine.system() == 'linux' and get_option('default_library') == 'static'
+    media_decoder_cpp_args += ['-DJAMI_TEST_WRAP_AVFORMAT_OPEN_INPUT']
+    media_decoder_link_args += [
+        '-Wl,--wrap=avformat_open_input',
+        '-Wl,--wrap=av_read_frame',
+        '-Wl,--wrap=av_gettime_relative',
+        '-Wl,--wrap=nanosleep',
+    ]
+endif
+
 ut_media_decoder = executable(
     'ut_media_decoder',
     sources: files('unitTest/media/test_media_decoder.cpp'),
+    cpp_args: media_decoder_cpp_args,
+    link_args: media_decoder_link_args,
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
     link_with: ut_library,
