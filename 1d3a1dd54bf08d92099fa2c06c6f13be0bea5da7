@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ef4bd0e_1668de16",
+        "filename": "src/jamidht/account_metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-14T10:45:43Z",
+      "side": 1,
+      "message": "Fixed in PS2. validate rejects UINT64_MAX before decoding/import/merge can persist it. merge additionally limits a single remote advance to 2^32 relative to the current durable local clock, rejecting near-exhaustion values (including UINT64_MAX-1) without changing disk or memory. The bound is documented. Regressions verify atomic rejection, rejection of a decoded imported state with an excessive clock, subsequent successful local writes, and writes/reload at the accepted jump boundary.",
+      "parentUuid": "cd79029c_773d89a5",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1a517ec6_efe72993",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d08c84ff_63aa4d98",
+        "filename": "src/jamidht/account_metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-14T10:45:43Z",
+      "side": 1,
+      "message": "The reviewed PS1 already sets loaded_\u003dfalse in save()\u0027s catch block and rethrows, forcing state()/values()/update()/merge() to reload before using the cached state. Added an executable regression in PS2 rather than another redundant recovery path: the Linux test linker injects EIO specifically in the directory fsync AFTER rename; the write reports failure, a fresh reader sees the renamed value, the original instance reloads that same value, and a later unrelated update preserves it. This passes using the real file write/rename/fsync path.",
+      "parentUuid": "1a517ec6_efe72993",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0ea967ad_94d618b0",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-09-14T02:34:12Z",
       "side": 1,
       "message": "[error] Line 205: 🔴 The full metadata snapshot is serialized into a single `SyncMsg`, while the metadata store accepts up to 4 MiB and this sync transport uses a 16-bit message-size limit. Valid metadata larger than the transport limit therefore cannot be synchronized (and a wrapped/truncated length can break framing). Fragment the metadata with authenticated reassembly, or enforce the actual transport limit before accepting/storing values.",
+      "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c880e5df_bd819660",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-14T10:45:43Z",
+      "side": 1,
+      "message": "The 16-bit limit is per multiplexed frame, not per SyncMsg. Bundled dhtnet ChannelSocket::write (src/channel_socket.cpp:454-474) already fragments size_t writes into \u003c\u003dUINT16_MAX frames; the persistent buildMsgpackReader reconstructs the byte stream. sbuffer(UINT16_MAX) is initial capacity, not a cap. PS2 clarifies the stale comment and adds actual production-reader regressions at serialized sizes 65534/65535/65536 plus store-validated near-4MiB metadata across split and coalesced chunk patterns, for current and legacy readers; malformed input is rejected. The 13-test serializer suite passes. No extra fragmentation protocol or lower storage limit is necessary. These are reader regressions, not a claim of end-to-end 4MiB TLS testing.",
+      "parentUuid": "0ea967ad_94d618b0",
       "revId": "1d3a1dd54bf08d92099fa2c06c6f13be0bea5da7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
