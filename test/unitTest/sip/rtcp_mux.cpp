@@ -180,6 +180,7 @@ private:
     void offerAdvertisesTransportCcOnlyForActiveDirections();
     void offerAdvertisesPliAndFirForVideoOnly();
     void offerAdvertisesH264PacketizationMode1();
+    void answerUsesOfferedH264PayloadForFmtp();
     void answerNegotiatesPliAndFir();
     void answerSkipsPliAndFirWhenOfferDoesNot();
     void answerPreservesRemoteBundleMidAndExtmap();
@@ -203,6 +204,7 @@ private:
     CPPUNIT_TEST(offerAdvertisesTransportCcOnlyForActiveDirections);
     CPPUNIT_TEST(offerAdvertisesPliAndFirForVideoOnly);
     CPPUNIT_TEST(offerAdvertisesH264PacketizationMode1);
+    CPPUNIT_TEST(answerUsesOfferedH264PayloadForFmtp);
     CPPUNIT_TEST(answerNegotiatesPliAndFir);
     CPPUNIT_TEST(answerSkipsPliAndFirWhenOfferDoesNot);
     CPPUNIT_TEST(answerPreservesRemoteBundleMidAndExtmap);
@@ -513,6 +515,50 @@ RtcpMuxSdpTest::offerAdvertisesH264PacketizationMode1()
             h264FmtpHasPacketizationMode1 = true;
     }
     CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), h264FmtpHasPacketizationMode1);
+}
+
+void
+RtcpMuxSdpTest::answerUsesOfferedH264PayloadForFmtp()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("h264-answer-payload");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+
+    auto pool = makePool("h264-answer-payload");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=video 5004 UDP/TLS/RTP/SAVPF 103\r\n"
+                                    "a=rtpmap:103 H264/90000\r\n"
+                                    "a=fmtp:103 profile-level-id=428029;packetization-mode=1\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({video}));
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+
+    auto* activeLocalSession = sdp.getActiveLocalSdpSession();
+    CPPUNIT_ASSERT(activeLocalSession);
+    CPPUNIT_ASSERT_EQUAL(1u, activeLocalSession->media_count);
+
+    const auto answer = printSdp(activeLocalSession);
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("m=video 4000 UDP/TLS/RTP/SAVPF 103\r\n") != std::string::npos);
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("a=rtpmap:103 H264/90000\r\n") != std::string::npos);
+    CPPUNIT_ASSERT_MESSAGE(answer,
+                           answer.find("a=fmtp:103 profile-level-id=428029;packetization-mode=1\r\n")
+                               != std::string::npos);
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("a=fmtp:96 ") == std::string::npos);
 }
 
 void
