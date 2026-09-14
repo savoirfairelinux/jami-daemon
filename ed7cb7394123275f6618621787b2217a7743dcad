@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6771095d_9d069294",
+        "filename": ".vscode/settings.json",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-09-14T19:24:13Z",
+      "side": 1,
+      "message": "related?",
+      "range": {
+        "startLine": 8,
+        "startChar": 4,
+        "endLine": 8,
+        "endChar": 31
+      },
+      "revId": "ed7cb7394123275f6618621787b2217a7743dcad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2114bbca_c459558a",
+        "filename": ".vscode/settings.json",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-09-14T19:24:13Z",
+      "side": 1,
+      "message": "okay",
+      "range": {
+        "startLine": 14,
+        "startChar": 4,
+        "endLine": 16,
+        "endChar": 5
+      },
+      "revId": "ed7cb7394123275f6618621787b2217a7743dcad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
