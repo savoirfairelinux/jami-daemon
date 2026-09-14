@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9373009c_aee846bd",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T02:42:36Z",
+      "side": 1,
+      "message": "[error] Line 112: 🔴 The pointer overload only rejects a ban when `cert-\u003egetLongId()` matches the current account certificate. The account identity and TrustStore permission key are the certificate\u0027s short `getId()` (`accountUri_`), so a reissued/alternate certificate for the same account identity with a different long ID can still be banned through this overload. Reject `BANNED` when `cert-\u003egetId().toString() \u003d\u003d accountUri_` as well, while retaining the long-ID check if needed.",
+      "revId": "87d251db2e7a0f1ba2bd93980c9025b40c6293f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "465b8e0f_474fedca",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T02:42:36Z",
+      "side": 1,
+      "message": "[error] Line 257: 🔴 `updateContact` now routes through `updateContacts` but discards its `selfChanged` result. `ServerAccountManager::syncContacts` still uses this overload for server-imported contacts; a legacy self-ban is therefore repaired and persisted while the self-tombstone callback is intentionally suppressed, but no `accountDataChanged_`/`onSyncListChanged` is triggered to propagate the repair to the account\u0027s other devices. Propagate the returned self-change (or update every import caller to notify explicitly) so server imports have the same synchronization behavior as DHT sync.",
+      "revId": "87d251db2e7a0f1ba2bd93980c9025b40c6293f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "63041071_a084de56",
         "filename": "src/jamidht/contact_list.cpp",
         "patchSetId": 1
