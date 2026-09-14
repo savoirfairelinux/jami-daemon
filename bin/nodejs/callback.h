@@ -167,7 +167,9 @@ swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
 
 // Callback management
 
-void setCallback(std::string signal, napi_value func) {
+void
+setCallback(std::string signal, napi_value func)
+{
     auto& ref = callbackRefs[std::move(signal)];
     if (ref) {
         napi_delete_reference(g_env, ref);
@@ -247,6 +249,17 @@ accountsChanged()
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([]() { callCallback("AccountsChanged", 0, nullptr); });
+    uv_async_send(&signalAsync);
+}
+
+void
+accountMetadataChanged(const std::string& accountId, const std::map<std::string, std::string>& metadata)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, metadata]() {
+        napi_value args[] = {napiString(accountId), stringMapToJsMap(metadata)};
+        callCallback("AccountMetadataChanged", 2, args);
+    });
     uv_async_send(&signalAsync);
 }
 
@@ -975,6 +988,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
         exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&accountDetailsChanged, _1, _2)),
+        exportable_callback<ConfigurationSignal::AccountMetadataChanged>(bind(&accountMetadataChanged, _1, _2)),
         exportable_callback<ConfigurationSignal::RegistrationStateChanged>(
             bind(&registrationStateChanged, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(composingStatusChanged, _1, _2, _3, _4)),
@@ -987,8 +1001,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
         exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&deviceAuthStateChanged, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&addDeviceStateChanged, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4)),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
-            bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(
             bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::MessageSend>(bind(&logMessage, _1)),

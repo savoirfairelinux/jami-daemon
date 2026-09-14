@@ -22,10 +22,15 @@
 #include "../../test_runner.h"
 
 #include "jamidht/conversation.h"
+#include "jamidht/conversation_module.h"
 
+#include <dhtnet/channel_utils.h>
 #include <msgpack.hpp>
 
+#include <algorithm>
+#include <cstdint>
 #include <string>
+#include <vector>
 
 namespace jami {
 namespace test {
@@ -57,6 +62,17 @@ struct LegacyConversationRequest
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
 };
 
+struct LegacySyncMsg
+{
+    DeviceSync ds;
+    std::map<std::string, ConvInfo> c;
+    std::map<std::string, ConversationRequest> cr;
+    std::map<std::string, std::map<std::string, std::string>> p;
+    std::map<std::string, std::map<std::string, std::string>> ld;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+};
+
 class ConvInfoSerializationTest : public CppUnit::TestFixture
 {
 public:
@@ -79,6 +95,10 @@ private:
     void testRequestToMapStaysSeconds();
     // isRemoved() distinguishes events within the same second
     void testIsRemovedMsResolution();
+    void testAccountMetadataSyncCompatibility();
+    void testAccountMetadataSyncFrameBoundaries();
+    void testAccountMetadataSyncLargeStream();
+    void testAccountMetadataSyncMalformedStream();
 
     CPPUNIT_TEST_SUITE(ConvInfoSerializationTest);
     CPPUNIT_TEST(testConvInfoLegacyToNew);
@@ -90,6 +110,10 @@ private:
     CPPUNIT_TEST(testRequestMsgpackRoundtrip);
     CPPUNIT_TEST(testRequestToMapStaysSeconds);
     CPPUNIT_TEST(testIsRemovedMsResolution);
+    CPPUNIT_TEST(testAccountMetadataSyncCompatibility);
+    CPPUNIT_TEST(testAccountMetadataSyncFrameBoundaries);
+    CPPUNIT_TEST(testAccountMetadataSyncLargeStream);
+    CPPUNIT_TEST(testAccountMetadataSyncMalformedStream);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -105,6 +129,142 @@ repack(const In& in)
     Out out;
     oh.get().convert(out);
     return out;
+}
+
+void
+ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
+{
+    LegacySyncMsg legacy;
+    legacy.p["conversation"]["color"] = "blue";
+    auto current = repack<SyncMsg>(legacy);
+    CPPUNIT_ASSERT(current.p == legacy.p);
+    CPPUNIT_ASSERT(current.am.entries.empty());
+    CPPUNIT_ASSERT(!current.affectsList());
+    current.am.clock = 42;
+    current.am.entries["jami.channels.v1/id/deleted"] = {42, std::string(64, 'a'), "1"};
+    CPPUNIT_ASSERT(current.affectsList());
+    auto oldReader = repack<LegacySyncMsg>(current);
+    CPPUNIT_ASSERT(oldReader.p == legacy.p);
+    auto newReader = repack<SyncMsg>(current);
+    CPPUNIT_ASSERT(newReader.am == current.am);
+    CPPUNIT_ASSERT(newReader.p == legacy.p);
+}
+
+void
+ConvInfoSerializationTest::testAccountMetadataSyncFrameBoundaries()
+{
+    for (size_t size : {size_t(UINT16_MAX) - 1, size_t(UINT16_MAX), size_t(UINT16_MAX) + 1}) {
+        SyncMsg sent;
+        sent.am.clock = 1;
+        auto& entry = sent.am.entries["jami.channels.v1/id/content"];
+        entry = {1, std::string(64, 'a'), std::string(size - 512, 'v')};
+        msgpack::sbuffer buffer(UINT16_MAX);
+        msgpack::pack(buffer, sent);
+        CPPUNIT_ASSERT(buffer.size() < size);
+        entry.value.append(size - buffer.size(), 'v');
+        buffer.clear();
+        msgpack::pack(buffer, sent);
+        CPPUNIT_ASSERT_EQUAL(size, buffer.size());
+        CPPUNIT_ASSERT_NO_THROW(AccountMetadataStore::validate(sent.am));
+
+        size_t received = 0;
+        auto reader = dhtnet::buildMsgpackReader<SyncMsg>([&](SyncMsg&& msg) {
+            CPPUNIT_ASSERT(msg.am == sent.am);
+            ++received;
+            return std::error_code {};
+        });
+        auto bytes = reinterpret_cast<const uint8_t*>(buffer.data());
+        // A partial object must not be delivered, including when it spans frames.
+        CPPUNIT_ASSERT_EQUAL(ssize_t(size - 1), reader(bytes, size - 1));
+        CPPUNIT_ASSERT_EQUAL(size_t(0), received);
+        CPPUNIT_ASSERT_EQUAL(ssize_t(1), reader(bytes + size - 1, 1));
+        CPPUNIT_ASSERT_EQUAL(size_t(1), received);
+    }
+}
+
+void
+ConvInfoSerializationTest::testAccountMetadataSyncLargeStream()
+{
+    SyncMsg sent;
+    size_t remaining = AccountMetadataStore::MAX_STATE_BYTES;
+    while (remaining) {
+        auto key = "jami.channels.v1/" + std::to_string(sent.am.entries.size()) + "/content";
+        // Match the store's conservative serialized-size accounting.
+        const auto overhead = key.size() + 64 + 64;
+        CPPUNIT_ASSERT(remaining >= overhead);
+        const auto length = std::min(AccountMetadataStore::MAX_VALUE_BYTES, remaining - overhead);
+        const auto revision = ++sent.am.clock;
+        sent.am.entries.emplace(std::move(key),
+                                AccountMetadataEntry {revision,
+                                                      std::string(64, 'a'),
+                                                      std::string(length, static_cast<char>('a' + revision % 26))});
+        remaining -= overhead + length;
+    }
+    CPPUNIT_ASSERT_NO_THROW(AccountMetadataStore::validate(sent.am));
+    msgpack::sbuffer large(UINT16_MAX);
+    msgpack::pack(large, sent);
+    CPPUNIT_ASSERT(large.size() > AccountMetadataStore::MAX_STATE_BYTES - AccountMetadataStore::MAX_VALUE_BYTES);
+
+    LegacySyncMsg before;
+    before.p["conversation"]["color"] = "blue";
+    sent.p["conversation"]["color"] = "green";
+    SyncMsg after;
+    after.p["conversation"]["color"] = "red";
+    const std::vector<SyncMsg> expected {repack<SyncMsg>(before), sent, after};
+
+    // The production reader sees a byte stream, not multiplexed frame boundaries.
+    // Exercise complete/coalesced objects, full-sized frames, and split headers/strings.
+    msgpack::sbuffer stream(UINT16_MAX);
+    msgpack::pack(stream, before);
+    msgpack::pack(stream, sent);
+    msgpack::pack(stream, after);
+    const std::vector<std::vector<size_t>> chunkings {
+        {UINT16_MAX},
+        {size_t(UINT16_MAX) + 1},
+        {1, 2, 3, 7, 4093, UINT16_MAX},
+        {stream.size()},
+    };
+    for (const auto& chunks : chunkings) {
+        size_t received = 0;
+        auto reader = dhtnet::buildMsgpackReader<SyncMsg>([&](SyncMsg&& msg) {
+            CPPUNIT_ASSERT(received < expected.size());
+            CPPUNIT_ASSERT(msg.am == expected[received].am);
+            CPPUNIT_ASSERT(msg.p == expected[received].p);
+            ++received;
+            return std::error_code {};
+        });
+        size_t legacyReceived = 0;
+        auto oldReader = dhtnet::buildMsgpackReader<LegacySyncMsg>([&](LegacySyncMsg&& msg) {
+            CPPUNIT_ASSERT(legacyReceived < expected.size());
+            CPPUNIT_ASSERT(msg.p == expected[legacyReceived].p);
+            ++legacyReceived;
+            return std::error_code {};
+        });
+        for (size_t offset = 0, chunk = 0; offset < stream.size(); ++chunk) {
+            const auto length = std::min(chunks[chunk % chunks.size()], stream.size() - offset);
+            auto bytes = reinterpret_cast<const uint8_t*>(stream.data() + offset);
+            CPPUNIT_ASSERT_EQUAL(ssize_t(length), reader(bytes, length));
+            CPPUNIT_ASSERT_EQUAL(ssize_t(length), oldReader(bytes, length));
+            offset += length;
+        }
+        CPPUNIT_ASSERT_EQUAL(expected.size(), received);
+        CPPUNIT_ASSERT_EQUAL(expected.size(), legacyReceived);
+    }
+}
+
+void
+ConvInfoSerializationTest::testAccountMetadataSyncMalformedStream()
+{
+    // Reserved MessagePack tag and an object of the wrong type both fail closed.
+    for (uint8_t byte : {0xc1, 0xc0}) {
+        size_t received = 0;
+        auto reader = dhtnet::buildMsgpackReader<SyncMsg>([&](SyncMsg&&) {
+            ++received;
+            return std::error_code {};
+        });
+        CPPUNIT_ASSERT(reader(&byte, 1) < 0);
+        CPPUNIT_ASSERT_EQUAL(size_t(0), received);
+    }
 }
 
 void

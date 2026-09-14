@@ -1550,6 +1550,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                                                                      conf.nameServer);
         }
 
+        accountManager_->setMetadataChangedCallback([this] { onSyncListChanged(); });
         auto id = accountManager_->loadIdentity(conf.tlsCertificateFile, conf.tlsPrivateKeyFile, conf.tlsPassword);
 
         if (const auto* info
