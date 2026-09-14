@@ -17,6 +17,33 @@
             </arg>
         </method>
 
+        <method name="getAccountMetadata" tp:name-for-bindings="getAccountMetadata">
+            <tp:docstring>Get account-private scalar registers shared only by this account's devices.
+                Unavailable accounts return an empty map. Unreadable or corrupt storage returns
+                cx.ring.Ring.Error.AccountMetadata, never an empty success response.</tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="metadata" direction="out"/>
+        </method>
+
+        <method name="setAccountMetadata" tp:name-for-bindings="setAccountMetadata">
+            <tp:docstring>Durably PATCH supplied keys, never remove omitted keys.
+                When onlyIfAbsent is true, atomically skip existing keys without changing their stamps.
+                Returns false on invalid input or failure.</tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="updates" direction="in"/>
+            <arg type="b" name="onlyIfAbsent" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
+        <signal name="accountMetadataChanged" tp:name-for-bindings="accountMetadataChanged">
+            <tp:docstring>Full scalar snapshot after a durable effective local update or remote merge.</tp:docstring>
+            <arg type="s" name="accountId"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+            <arg type="a{ss}" name="metadata"/>
+        </signal>
+
         <method name="getAccountDetails" tp:name-for-bindings="getAccountDetails">
             <tp:docstring>
                 Get all parameters of the specified account.

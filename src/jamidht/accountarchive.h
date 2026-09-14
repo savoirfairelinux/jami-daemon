@@ -17,6 +17,7 @@
 #pragma once
 
 #include "jami_contact.h"
+#include "account_metadata.h"
 #include "jamidht/jamiaccount.h"
 #include "fileutils.h"
 
@@ -52,6 +53,7 @@ struct AccountArchive
     // Conversations
     std::map<std::string, ConvInfo> conversations;
     std::map<std::string, ConversationRequest> conversationsRequests;
+    AccountMetadata metadata;
 
     /** Account configuration */
     std::map<std::string, std::string> config;

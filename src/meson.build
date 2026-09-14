@@ -17,6 +17,7 @@ libjami_sources = files(
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
     'jamidht/account_manager.cpp',
+    'jamidht/account_metadata.cpp',
     'jamidht/accountarchive.cpp',
     'jamidht/archive_account_manager.cpp',
     'jamidht/auth_channel_handler.cpp',

@@ -19,6 +19,8 @@
 #include "jamidht/conversationrepository.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/accountarchive.h"
+#include "json_utils.h"
 #include "../../test_runner.h"
 #include "archiver.h"
 #include "base64.h"
@@ -82,6 +84,8 @@ private:
     // void testExportDhtWrongPassword();
     void testChangePassword();
     void testChangeDhtPort();
+    void testAccountMetadataArchive();
+    void testAccountMetadataSync();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
@@ -92,10 +96,81 @@ private:
     // CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST(testChangeDhtPort);
+    CPPUNIT_TEST(testAccountMetadataArchive);
+    CPPUNIT_TEST(testAccountMetadataSync);
     CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountArchiveTest, AccountArchiveTest::name());
+
+void
+AccountArchiveTest::testAccountMetadataArchive()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const std::map<std::string, std::string> metadata {{"jami.channels.v1/channel/name", "Équipe"},
+                                                       {"jami.channels.v1/channel/members/uri", "0"},
+                                                       {"jami.channels.v1/removed/deleted", "1"}};
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, metadata));
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(aliceId) == metadata);
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(bobId).empty());
+    CPPUNIT_ASSERT(!libjami::setAccountMetadata("missing-account", metadata));
+    CPPUNIT_ASSERT(alice->exportArchive("metadata-export.gz"));
+    AccountArchive exported(std::filesystem::path("metadata-export.gz"), "", "");
+    CPPUNIT_ASSERT(exported.metadata == alice->accountManager()->accountMetadataState());
+    AccountArchive roundtrip(std::string_view(exported.serialize()));
+    CPPUNIT_ASSERT(roundtrip.metadata == exported.metadata);
+    Json::Value json;
+    CPPUNIT_ASSERT(json::parse(exported.serialize(), json));
+    json.removeMember("accountMetadata");
+    AccountArchive oldArchive(std::string_view(json::toString(json)));
+    CPPUNIT_ASSERT(oldArchive.metadata.entries.empty());
+    json["accountMetadata"] = "not valid packed metadata";
+    CPPUNIT_ASSERT_THROW(AccountArchive(std::string_view(json::toString(json))), std::exception);
+
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PATH] = "metadata-export.gz";
+    auto importedId = Manager::instance().addAccount(details);
+    wait_for_announcement_of(importedId);
+    auto imported = Manager::instance().getAccount<JamiAccount>(importedId);
+    CPPUNIT_ASSERT(imported->currentDeviceId() != alice->currentDeviceId());
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(importedId) == metadata);
+    CPPUNIT_ASSERT(imported->accountManager()->accountMetadataState() == exported.metadata);
+    std::remove("metadata-export.gz");
+    wait_for_removal_of(importedId);
+}
+
+void
+AccountArchiveTest::testAccountMetadataSync()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(alice->exportArchive("metadata-sync.gz"));
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PATH] = "metadata-sync.gz";
+    auto importedId = Manager::instance().addAccount(details);
+    wait_for_announcement_of(importedId);
+    std::remove("metadata-sync.gz");
+
+    const std::string key = "jami.channels.v1/channel/name";
+    auto received = std::make_shared<bool>(false);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountMetadataChanged>(
+        [this, importedId, key, received](const std::string& id, const std::map<std::string, std::string>& values) {
+            std::lock_guard guard(mtx);
+            if (id == importedId && values.count(key) && values.at(key) == "Synchronized")
+                *received = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+    // Signals are synchronous for native handlers; do not hold the fixture mutex while updating.
+    lk.unlock();
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{key, "Synchronized"}}));
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return *received; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("Synchronized"), libjami::getAccountMetadata(importedId).at(key));
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(bobId).empty());
+    libjami::unregisterSignalHandlers();
+    confHandlers.clear();
+    wait_for_removal_of(importedId);
+}
 
 void
 AccountArchiveTest::setUp()

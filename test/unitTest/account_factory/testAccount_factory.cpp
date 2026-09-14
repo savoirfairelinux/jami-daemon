@@ -20,6 +20,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <fstream>
 
 #include "account_factory.h"
 #include "../../test_runner.h"
@@ -57,6 +58,7 @@ private:
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
     void testClear();
+    void testAccountMetadataReadFailure();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
     CPPUNIT_TEST(testAddRemoveSIPAccount);
@@ -64,6 +66,7 @@ private:
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
     CPPUNIT_TEST(testClear);
+    CPPUNIT_TEST(testAccountMetadataReadFailure);
     CPPUNIT_TEST_SUITE_END();
 
     const std::string SIP_ID = "SIP_ID";
@@ -77,6 +80,63 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest, Account_factoryTest::name());
+
+void
+Account_factoryTest::testAccountMetadataReadFailure()
+{
+    class MetadataManager : public AccountManager
+    {
+    public:
+        MetadataManager(const std::string& id, const std::filesystem::path& path, bool available)
+            : AccountManager(id, path, "")
+        {
+            if (available)
+                info_ = std::make_unique<AccountInfo>();
+        }
+        void initAuthentication(std::string,
+                                std::unique_ptr<AccountCredentials>,
+                                AuthSuccessCallback,
+                                AuthFailureCallback,
+                                const OnChangeCallback&) override
+        {}
+        bool changePassword(const std::string&, const std::string&) override { return false; }
+        void syncDevices() override {}
+        void registerName(const std::string&, std::string_view, const std::string&, RegistrationCallback) override {}
+    };
+
+    const std::filesystem::path root = "account-metadata-public-read-test";
+    CPPUNIT_ASSERT(std::filesystem::create_directory(root));
+    auto& factory = Manager::instance().accountFactory;
+    std::shared_ptr<JamiAccount> account;
+    auto cleanup = std::shared_ptr<void>(nullptr, [&](void*) {
+        if (account) {
+            account->accountManager_.reset();
+            factory.removeAccount(*account);
+        }
+        std::filesystem::remove_all(root);
+    });
+    const std::string id = "metadata-read-failure";
+    account = std::dynamic_pointer_cast<JamiAccount>(factory.createAccount("RING", id));
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(id).empty()); // unavailable
+    {
+        std::ofstream file(root / "accountMetadata", std::ios::binary);
+        file << "corrupt";
+    }
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT_THROW(libjami::getAccountMetadata(id), std::exception);
+    CPPUNIT_ASSERT_THROW(libjami::getAccountMetadata(id), std::exception);
+    CPPUNIT_ASSERT_EQUAL(uintmax_t(7), std::filesystem::file_size(root / "accountMetadata"));
+
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, false);
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(id).empty()); // still initializing
+    std::filesystem::remove(root / "accountMetadata");
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(id).empty()); // healthy empty storage
+    std::filesystem::create_directory(root / "accountMetadata");
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT_THROW(libjami::getAccountMetadata(id), std::exception);
+}
 
 void
 Account_factoryTest::setUp()
