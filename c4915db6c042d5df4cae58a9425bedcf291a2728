@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49981db3_3fc6d27b",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-14T11:00:33Z",
+      "side": 1,
+      "message": "[error] Line 350: 🔴 `buildMsgpackReader\u003cSyncMsg\u003e` has already reassembled and deserialized the complete stream before this callback can call `mergeAccountMetadata`, so the store\u0027s 4 MiB limit is enforced too late. An authenticated device can send a `SyncMsg` containing an arbitrarily large metadata map/value and force unbounded allocation and parsing work, despite the documented metadata limit. Bound the metadata object during reassembly (or use a size-limited metadata envelope/reader) and reject oversized input before materializing it.",
+      "revId": "c4915db6c042d5df4cae58a9425bedcf291a2728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
