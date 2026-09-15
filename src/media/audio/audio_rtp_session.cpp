@@ -417,6 +417,7 @@ AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 void
 AudioRtpSession::initRecorder()
 {
+    std::lock_guard lock(mutex_);
     if (!recorder_)
         return;
     if (receiveThread_)
@@ -438,6 +439,7 @@ AudioRtpSession::initRecorder()
 void
 AudioRtpSession::deinitRecorder()
 {
+    std::lock_guard lock(mutex_);
     if (!recorder_)
         return;
     if (receiveThread_) {

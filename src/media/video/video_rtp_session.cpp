@@ -863,6 +863,7 @@ VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 void
 VideoRtpSession::initRecorder()
 {
+    std::lock_guard lock(mutex_);
     if (!recorder_)
         return;
     if (receiveThread_) {
@@ -886,6 +887,7 @@ VideoRtpSession::initRecorder()
 void
 VideoRtpSession::deinitRecorder()
 {
+    std::lock_guard lock(mutex_);
     if (!recorder_)
         return;
     if (receiveThread_) {
