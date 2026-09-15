@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f014065_39ccc5ed",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1312,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-15T20:18:38Z",
+      "side": 1,
+      "message": "[warning] Line 1312: 🟡 `PresenceManager::notifyDeviceListeners()` copies callbacks before invoking them, so removing this listener does not prevent an already-copied callback from running. If `stopTracking()` and a later `startTracking()` occur while an old offline callback is in flight, this callback can act on the newly initialized `trackedMembers_` and erase a currently valid device, preventing retries until another presence transition. Associate callbacks with a tracking generation/token and ignore events from older tracking sessions (or synchronize listener teardown with in-flight callbacks).",
+      "revId": "2552bd586c5c67b3ced6b0fe2a9143e00f6b4f60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
