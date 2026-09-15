@@ -3194,10 +3194,14 @@ SIPCall::createSinks(ConfInfo& infos)
     std::lock_guard lkS(sinksMtx_);
     if (!hasVideo())
         return;
+    // Conference info can be delivered from the main thread after the account was removed
+    auto account = std::dynamic_pointer_cast<JamiAccount>(account_.lock());
+    if (!account)
+        return;
 
     for (auto& participant : infos) {
-        if (string_remove_suffix(participant.uri, '@') == account_.lock()->getUsername()
-            && participant.device == std::dynamic_pointer_cast<JamiAccount>(account_.lock())->currentDeviceId()) {
+        if (string_remove_suffix(participant.uri, '@') == account->getUsername()
+            && participant.device == account->currentDeviceId()) {
             for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
                 if (!iter->mediaAttribute_ || iter->mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
                     continue;
