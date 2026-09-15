@@ -469,7 +469,7 @@ VideoRtpSession::startReceiver()
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
-        receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
+        receiveThread_->setRequestKeyFrameCallback([this]() { requestPeerKeyframe(); });
         receiveThread_->setRotation(rotation_.load());
         if (videoMixer_ and conference_) {
             // Note, this should be managed differently, this is a bit hacky
@@ -487,6 +487,7 @@ VideoRtpSession::startReceiver()
             });
         });
 
+        socketPair_->setReadBlockingMode(true);
         // Started last: setup() reads the callbacks above from the receiver's
         // own thread, so they must all be in place before it can run.
         receiveThread_->startLoop();
@@ -511,8 +512,6 @@ VideoRtpSession::startReceiver()
             }
         }
     }
-    if (socketPair_)
-        socketPair_->setReadBlockingMode(true);
 }
 
 void
