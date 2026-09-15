@@ -458,7 +458,13 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport, const s
     // Listen for transport destruction
     sipTransport_
         ->addStateListener(list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
-            if (auto this_ = wthis_.lock()) {
+            // pjsip invokes this under the transport lock, which a dialog may be
+            // waiting for while another thread holds the call mutex and waits for
+            // that dialog: never take the call mutex from here.
+            runOnMainThread([wthis_, state] {
+                auto this_ = wthis_.lock();
+                if (not this_)
+                    return;
                 JAMI_DEBUG("[call:{}] SIP transport state [{}] - connection state [{}]",
                            this_->getCallId(),
                            static_cast<int>(state),
@@ -473,7 +479,7 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport, const s
                     this_->detachAudioFromConference();
                     this_->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
                 }
-            }
+            });
         });
 }
 
