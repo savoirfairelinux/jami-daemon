@@ -41,8 +41,9 @@ namespace test {
 // DTLS fingerprint and an Opus payload. The candidate points to a port
 // nobody listens on: this test validates signaling only, media checks are
 // covered by the webrtc_interop harness.
-static const char* const kExternalOffer
-    = "v=0\r\n"
+static const std::string kExternalOffer = [] {
+    std::string offer
+        = "v=0\r\n"
       "o=- 3899017587 3899017587 IN IP4 127.0.0.1\r\n"
       "s=-\r\n"
       "t=0 0\r\n"
@@ -50,8 +51,12 @@ static const char* const kExternalOffer
       "a=msid-semantic: WMS *\r\n"
       "m=audio 10024 UDP/TLS/RTP/SAVPF 111\r\n"
       "c=IN IP4 127.0.0.1\r\n"
-      "a=rtcp:10024 IN IP4 127.0.0.1\r\n"
-      "a=candidate:1 1 UDP 2130706431 127.0.0.1 10024 typ host\r\n"
+      "a=rtcp:10024 IN IP4 127.0.0.1\r\n";
+    for (unsigned i = 0; i < 96; ++i) {
+        offer += "a=candidate:" + std::to_string(i + 1) + " 1 UDP 2130706431 127.0.0.1 "
+                 + std::to_string(10024 + i) + " typ host\r\n";
+    }
+    offer +=
       "a=ice-ufrag:extufrag\r\n"
       "a=ice-pwd:extpwd012345678901234567\r\n"
       "a=fingerprint:sha-256 "
@@ -62,6 +67,8 @@ static const char* const kExternalOffer
       "a=rtcp-mux\r\n"
       "a=rtpmap:111 opus/48000/2\r\n"
       "a=fmtp:111 minptime=10;useinbandfec=1\r\n";
+    return offer;
+}();
 
 class ExternalMediaCallTest : public CppUnit::TestFixture
 {
@@ -109,6 +116,7 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
 {
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
+    CPPUNIT_ASSERT(kExternalOffer.size() > 4096);
 
     std::mutex mtx;
     std::unique_lock lk {mtx};
