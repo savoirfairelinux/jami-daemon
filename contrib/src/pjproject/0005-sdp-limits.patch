@@ -1,14 +1,22 @@
-Raise pjmedia SDP limits to fit real browser (WebRTC) SDP.
+Raise PJSIP and pjmedia limits to fit real browser (WebRTC) SDP.
 
 Chromium/Firefox offers routed through the external media endpoint API
 carry more formats and attributes per media line than pjmedia's
 defaults (an audio+video Chromium offer has ~80 attributes on the
 video m= line, over the default PJMEDIA_MAX_SDP_ATTR of 68). The
 parser silently drops the excess, losing rtpmap lines and failing
-validation.
+validation. These offers can also exceed PJSIP's default 4 KiB
+transmit buffer, causing the INVITE to fail locally with status 503.
 
 --- a/pjlib/include/pj/config_site.h
 +++ b/pjlib/include/pj/config_site.h
+@@ -8,5 +8,5 @@
+ /*
+ * PJSIP settings.
+ */
+-#define PJSIP_MAX_PKT_LEN                       8000
++#define PJSIP_MAX_PKT_LEN                       16384
+ #define PJSIP_TRANSPORT_SERVER_IDLE_TIME        3
 @@ -24,3 +24,15 @@
  /* Set permanent permissions on the TURN
     server for all peer candidates */
