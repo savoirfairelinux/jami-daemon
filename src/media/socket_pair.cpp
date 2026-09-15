@@ -86,6 +86,7 @@ static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 static constexpr unsigned RTP_FIXED_HEADER_SIZE = 12;
 static constexpr uint16_t RTP_ONE_BYTE_EXTENSION_PROFILE = 0xBEDE;
 static constexpr uint8_t RTCP_PT_SDES = 202;
+static constexpr uint8_t RTCP_PT_BYE = 203;
 static constexpr uint8_t RTCP_SDES_END = 0;
 static constexpr uint8_t RTCP_SDES_MID_ITEM = 15;
 
@@ -192,6 +193,46 @@ getRtcpMidMappings(const uint8_t* buf, size_t len)
     }
 
     return mappings;
+}
+
+static int
+stripRtcpByePackets(uint8_t* buf, int len)
+{
+    size_t readOffset = 0;
+    size_t writeOffset = 0;
+
+    while (readOffset + 4 <= static_cast<size_t>(len)) {
+        const auto* packet = buf + readOffset;
+        const auto packetSize = 4u * (static_cast<size_t>((packet[2] << 8) | packet[3]) + 1u);
+        if ((packet[0] >> 6) != 2 || packetSize < 4 || readOffset + packetSize > static_cast<size_t>(len))
+            return len;
+
+        if (packet[1] != RTCP_PT_BYE) {
+            if (writeOffset != readOffset)
+                std::memmove(buf + writeOffset, packet, packetSize);
+            writeOffset += packetSize;
+        }
+        readOffset += packetSize;
+    }
+
+    return readOffset == static_cast<size_t>(len) ? static_cast<int>(writeOffset) : len;
+}
+
+static bool
+isCompleteRtcpCompoundPacket(const uint8_t* buf, int len)
+{
+    size_t offset = 0;
+
+    while (offset + 4 <= static_cast<size_t>(len)) {
+        const auto* packet = buf + offset;
+        const auto packetSize = 4u * (static_cast<size_t>((packet[2] << 8) | packet[3]) + 1u);
+        if ((packet[0] >> 6) != 2 || !RTP_PT_IS_RTCP(packet[1]) || packetSize < 4
+            || offset + packetSize > static_cast<size_t>(len))
+            return false;
+        offset += packetSize;
+    }
+
+    return offset == static_cast<size_t>(len);
 }
 
 static int
@@ -1371,7 +1412,7 @@ SocketPair::waitForData()
         do {
             if (packetState_->interrupted) {
                 errno = EINTR;
-                return -1;
+                return AVERROR_EXIT;
             }
 
             if (not packetState_->readBlockingMode) {
@@ -1411,7 +1452,7 @@ SocketPair::waitForData()
 
     if (packetState_->interrupted) {
         errno = EINTR;
-        return -1;
+        return AVERROR_EXIT;
     }
 
     return static_cast<int>(DataType::RTP) | static_cast<int>(DataType::RTCP);
@@ -1533,6 +1574,9 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     auto datatype = waitForData();
     if (datatype < 0)
         return datatype;
+    const auto retryOrCancel = [this] {
+        return packetState_->interrupted || !packetState_->readBlockingMode ? AVERROR_EXIT : AVERROR(EAGAIN);
+    };
 
     if (rtcpMux_ && rtpHandle_ >= 0 && packetState_->rtpDataBuff.empty() && packetState_->rtcpDataBuff.empty()) {
         auto queued = queueMuxedSocketData();
@@ -1551,7 +1595,11 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             int decryptedLen = len;
             if (ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &decryptedLen) == 0)
                 len = decryptedLen;
+            else if (!isCompleteRtcpCompoundPacket(buf, len))
+                len = 0;
         }
+        if (len > 0)
+            len = stripRtcpByePackets(buf, len);
         if (len > 0) {
             size_t offset = 0;
             while (offset + 4 <= static_cast<size_t>(len)) {
@@ -1601,8 +1649,10 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         fromRTCP = false;
     }
 
-    if (len <= 0)
+    if (len < 0)
         return len;
+    if (len == 0)
+        return retryOrCancel();
 
     if (!fromRTCP) {
         if (const auto remoteSsrc = getRtpSsrc(buf, static_cast<size_t>(len)); remoteSsrc)
@@ -1631,18 +1681,22 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (rtpDelayCallback_ and res_delay)
             rtpDelayCallback_(gradient, deltaT);
 
+        const auto sequence = static_cast<uint16_t>(buf[2] << 8 | buf[3]);
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if (packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_ + 1)
-            packetLossCallback_();
-        lastSeqNumIn_ = buf[2] << 8 | buf[3];
-        if (err < 0)
+        if (err < 0) {
             JAMI_WARNING("decrypt error {}", err);
+            return retryOrCancel();
+        }
+
+        if (packetLossCallback_ and sequence != static_cast<uint16_t>(lastSeqNumIn_ + 1))
+            packetLossCallback_();
+        lastSeqNumIn_ = sequence;
     }
 
     if (len != 0)
         return len;
-    else
-        return AVERROR_EOF;
+
+    return retryOrCancel();
 }
 
 int
