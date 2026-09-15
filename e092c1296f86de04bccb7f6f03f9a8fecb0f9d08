@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f0e80ec_60ac6411",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1291,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-15T18:16:47Z",
+      "side": 1,
+      "message": "[error] Line 1291: 🔴 This condition does not hold for the normal one-to-one repository state. `repository_-\u003emembers()` includes the local account (its certificate is scanned from `admins`), and the candidate loop above does not exclude `userId_`, so the initial rotation can track both the local URI and the peer. When the peer\u0027s devices are exhausted, erasing it leaves the local URI in `trackedMembers_`, making this `empty()` check false; the peer is never re-tracked and the reported outage remains. Exclude the local URI from rotation candidates or test for the absence of any non-local tracked member before re-adding `memberUri`, and add a regression test for this path.",
+      "revId": "e092c1296f86de04bccb7f6f03f9a8fecb0f9d08",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
