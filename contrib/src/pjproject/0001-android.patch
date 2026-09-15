@@ -2,10 +2,8 @@ diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
 index 7b8ea2561..333dfc2f2 100644
 --- a/pjlib/include/pj/config_site.h
 +++ b/pjlib/include/pj/config_site.h
-@@ -24,3 +24,14 @@
- /* Set permanent permissions on the TURN
-    server for all peer candidates */
- #define PJ_ICE_ST_USE_TURN_PERMANENT_PERM       PJ_TRUE
+@@ -1 +1,12 @@
+ #include "config_site_sample.h"
 +
 +/*
 + * ANDROID settings.
@@ -17,7 +15,5 @@ index 7b8ea2561..333dfc2f2 100644
 +#undef  PJMEDIA_HAS_G722_CODEC
 +#define PJMEDIA_HAS_G722_CODEC                  1
 +#define PJMEDIA_VID_DEV_INFO_FMT_CNT            128
-\ No newline at end of file
 -- 
 2.25.1
-
