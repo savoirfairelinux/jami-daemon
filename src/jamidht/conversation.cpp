@@ -1003,6 +1003,7 @@ public:
         std::set<DeviceId> devices;
         std::set<DeviceId> failedDevices;
         std::chrono::steady_clock::time_point trackedSince {std::chrono::steady_clock::now()};
+        bool presenceReported {false};
     };
     std::map<std::string, TrackedMember> trackedMembers_;
     mutable std::mutex trackedMembersMtx_;
@@ -1238,9 +1239,13 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
         auto it = trackedMembers_.find(memberUri);
         if (it == trackedMembers_.end())
             return;
-        JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
         auto& info = it->second;
-        info.failedDevices.insert(deviceId);
+        if (deviceId) {
+            JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
+            info.failedDevices.insert(deviceId);
+        } else {
+            JAMI_WARNING("{} Rotating tracked members, {} has no device online", toString(), memberUri);
+        }
         // std::includes() is vacuously true on an empty second range, so a
         // member whose devices are still unknown would be dropped on its very
         // first failure. That set is only filled by addKnownDevices() once
@@ -1250,7 +1255,7 @@ Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const Dev
         // time to answer; past that, an empty set means nobody is online
         // and the member is as good as fully failed.
         constexpr auto PRESENCE_GRACE = std::chrono::seconds(30);
-        auto presencePending = info.devices.empty()
+        auto presencePending = info.devices.empty() && !info.presenceReported
                                && std::chrono::steady_clock::now() - info.trackedSince < PRESENCE_GRACE;
         if (!presencePending
             && std::includes(info.failedDevices.begin(),
@@ -1320,11 +1325,21 @@ void
 Conversation::Impl::onDeviceOffline(const DeviceId& deviceId, const std::string& memberUri)
 {
     // A device that left is neither a target nor a failure to hold against its member.
-    std::lock_guard lk(trackedMembersMtx_);
-    if (auto it = trackedMembers_.find(memberUri); it != trackedMembers_.end()) {
+    bool lastDevice = false;
+    {
+        std::lock_guard lk(trackedMembersMtx_);
+        auto it = trackedMembers_.find(memberUri);
+        if (it == trackedMembers_.end())
+            return;
+        it->second.presenceReported = true;
         it->second.devices.erase(deviceId);
         it->second.failedDevices.erase(deviceId);
+        lastDevice = it->second.devices.empty();
     }
+    // Nobody left to reach: watch someone else rather than wait for the DRT
+    // to fail on ids it may never retry.
+    if (lastDevice)
+        rotateTrackedMembers(memberUri);
 }
 
 void
@@ -3369,6 +3384,7 @@ Conversation::addKnownDevices(const std::vector<DeviceId>& devices, const std::s
         std::lock_guard lk(pimpl_->trackedMembersMtx_);
         auto it = pimpl_->trackedMembers_.find(memberUri);
         if (it != pimpl_->trackedMembers_.end()) {
+            it->second.presenceReported = true;
             it->second.devices.insert(devices.begin(), devices.end());
             // Presence only reports a device once it was absent, so a failure
             // recorded before this announce says nothing about the device now.
