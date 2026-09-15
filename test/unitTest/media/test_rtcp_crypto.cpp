@@ -132,6 +132,42 @@ protectRtcp(const std::vector<uint8_t>& packet)
     return encrypted;
 }
 
+std::vector<uint8_t>
+protectRtp(const std::vector<uint8_t>& packet)
+{
+    SRTPContext context {};
+    CPPUNIT_ASSERT_EQUAL(0, ff_srtp_set_crypto(&context, SRTP_SUITE, SRTP_PARAMS));
+    std::vector<uint8_t> encrypted(packet.size() + 10);
+    const auto encryptedSize = ff_srtp_encrypt(&context,
+                                               packet.data(),
+                                               static_cast<int>(packet.size()),
+                                               encrypted.data(),
+                                               static_cast<int>(encrypted.size()));
+    ff_srtp_free(&context);
+    CPPUNIT_ASSERT_EQUAL(packet.size() + 10, static_cast<size_t>(encryptedSize));
+    encrypted.resize(static_cast<size_t>(encryptedSize));
+    return encrypted;
+}
+
+std::vector<uint8_t>
+rtpPacket(uint16_t sequence)
+{
+    std::vector<uint8_t> packet(16, 0);
+    packet[0] = 0x80;
+    packet[1] = 96;
+    packet[2] = sequence >> 8;
+    packet[3] = sequence & 0xff;
+    packet[8] = 0x11;
+    packet[9] = 0x22;
+    packet[10] = 0x33;
+    packet[11] = 0x44;
+    packet[12] = 0xde;
+    packet[13] = 0xad;
+    packet[14] = 0xbe;
+    packet[15] = 0xef;
+    return packet;
+}
+
 } // namespace
 
 class RtcpCryptoTest : public CppUnit::TestFixture
@@ -145,6 +181,10 @@ private:
     void legacyPeersStillReceivePlaintextRtcp();
     void encryptedIncomingPliTriggersKeyframeCallback();
     void plaintextIncomingPliStillTriggersKeyframeCallback();
+    void corruptedSrtcpDoesNotEndLiveStream();
+    void rtcpByeDoesNotEndLiveStream();
+    void replayedRtpDoesNotEndStream();
+    void stoppedReadIsCancelled();
 
     CPPUNIT_TEST_SUITE(RtcpCryptoTest);
     CPPUNIT_TEST(srtcpRoundTripProtectsRtcpPackets);
@@ -152,6 +192,10 @@ private:
     CPPUNIT_TEST(legacyPeersStillReceivePlaintextRtcp);
     CPPUNIT_TEST(encryptedIncomingPliTriggersKeyframeCallback);
     CPPUNIT_TEST(plaintextIncomingPliStillTriggersKeyframeCallback);
+    CPPUNIT_TEST(corruptedSrtcpDoesNotEndLiveStream);
+    CPPUNIT_TEST(rtcpByeDoesNotEndLiveStream);
+    CPPUNIT_TEST(replayedRtpDoesNotEndStream);
+    CPPUNIT_TEST(stoppedReadIsCancelled);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -296,6 +340,141 @@ RtcpCryptoTest::plaintextIncomingPliStillTriggersKeyframeCallback()
 
     CPPUNIT_ASSERT(readSize > 0);
     CPPUNIT_ASSERT(keyframeRequested.load());
+}
+
+void
+RtcpCryptoTest::corruptedSrtcpDoesNotEndLiveStream()
+{
+    UdpSocket remote;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr destination {fmt::format("127.0.0.1:{}", remote.port())};
+
+    SocketPair socketPair(destination, destination, localRtpPort, localRtcpPort);
+    socketPair.createSRTP(SRTP_SUITE, SRTP_PARAMS, SRTP_SUITE, SRTP_PARAMS);
+    socketPair.setRtcpProtection(true);
+    socketPair.setReadBlockingMode(true);
+
+    const auto pli = SocketPair::createRtcpPli(0x11223344, 0x55667788);
+    auto corrupted = protectRtcp(pli);
+    corrupted.back() ^= 0xff;
+    remote.sendTo(localRtcpPort, corrupted);
+
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+
+    remote.sendTo(localRtcpPort, protectRtcp(pli));
+    const auto readSize = avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size()));
+    CPPUNIT_ASSERT_EQUAL(pli.size(), static_cast<size_t>(readSize));
+    CPPUNIT_ASSERT(std::memcmp(buffer.data(), pli.data(), pli.size()) == 0);
+}
+
+void
+RtcpCryptoTest::rtcpByeDoesNotEndLiveStream()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr rtpDest {fmt::format("127.0.0.1:{}", remoteRtp.port())};
+    const dhtnet::IpAddr rtcpDest {fmt::format("127.0.0.1:{}", remoteRtcp.port())};
+
+    SocketPair socketPair(rtpDest, rtcpDest, localRtpPort, localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+
+    const std::vector<uint8_t> bye {
+        0x81, 203, 0x00, 0x01,
+        0x11, 0x22, 0x33, 0x44,
+    };
+    remoteRtcp.sendTo(localRtcpPort, bye);
+
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+
+    const auto packet = rtpPacket(42);
+    remoteRtp.sendTo(localRtpPort, packet);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(packet.size()),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+}
+
+void
+RtcpCryptoTest::replayedRtpDoesNotEndStream()
+{
+    UdpSocket remote;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr rtpDest {fmt::format("127.0.0.1:{}", remote.port())};
+    const dhtnet::IpAddr rtcpDest {fmt::format("127.0.0.1:{}", remote.port())};
+
+    SocketPair socketPair(rtpDest, rtcpDest, localRtpPort, localRtcpPort);
+    socketPair.createSRTP(SRTP_SUITE, SRTP_PARAMS, SRTP_SUITE, SRTP_PARAMS);
+    socketPair.setReadBlockingMode(true);
+
+    const auto packet = rtpPacket(42);
+    const auto encrypted = protectRtp(packet);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+    std::vector<uint8_t> buffer(2048);
+
+    remote.sendTo(localRtpPort, encrypted);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(packet.size()),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+
+    remote.sendTo(localRtpPort, encrypted);
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+
+    const auto nextPacket = rtpPacket(43);
+    remote.sendTo(localRtpPort, protectRtp(nextPacket));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(nextPacket.size()),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+}
+
+void
+RtcpCryptoTest::stoppedReadIsCancelled()
+{
+    UdpSocket remote;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr rtpDest {fmt::format("127.0.0.1:{}", remote.port())};
+    const dhtnet::IpAddr rtcpDest {fmt::format("127.0.0.1:{}", remote.port())};
+
+    SocketPair socketPair(rtpDest, rtcpDest, localRtpPort, localRtcpPort);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+    std::vector<uint8_t> buffer(2048);
+    socketPair.setReadBlockingMode(false);
+    CPPUNIT_ASSERT_EQUAL(AVERROR_EXIT,
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+
+    socketPair.setReadBlockingMode(true);
+    socketPair.interrupt();
+    CPPUNIT_ASSERT_EQUAL(AVERROR_EXIT,
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
 }
 
 } // namespace test
