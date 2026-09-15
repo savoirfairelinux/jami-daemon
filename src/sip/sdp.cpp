@@ -1231,7 +1231,7 @@ Sdp::getSdpDirectionStr(SdpDirection direction)
 void
 Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDirection direction)
 {
-    static constexpr size_t BUF_SZ = 4095;
+    static constexpr size_t BUF_SZ = 16*1024 - 1;
     sip_utils::PoolPtr tmpPool_(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                                "printSdp",
                                                BUF_SZ,
