@@ -1012,6 +1012,7 @@ public:
     void rotateTrackedMembers(const std::string& memberUri = "", const DeviceId& deviceId = {});
     void monitorConnection(std::weak_ptr<Conversation> w);
     void onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri = "");
+    void onDeviceOffline(const DeviceId& deviceId, const std::string& memberUri);
 
     uint64_t presenceDeviceListenerToken_ {0};
 
@@ -1171,8 +1172,11 @@ Conversation::Impl::startTracking(std::weak_ptr<Conversation> w)
         presenceDeviceListenerToken_ = acc->presenceManager()->addDeviceListener(
             [w](const std::string& uri, const DeviceId& deviceId, bool online) {
                 if (auto sthis = w.lock()) {
-                    if (online && sthis->isMember(uri)) {
-                        sthis->addKnownDevices({deviceId}, uri);
+                    if (online) {
+                        if (sthis->isMember(uri))
+                            sthis->addKnownDevices({deviceId}, uri);
+                    } else {
+                        sthis->pimpl_->onDeviceOffline(deviceId, uri);
                     }
                 }
             });
@@ -1288,6 +1292,17 @@ void
 Conversation::Impl::onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri)
 {
     rotateTrackedMembers(memberUri, deviceId);
+}
+
+void
+Conversation::Impl::onDeviceOffline(const DeviceId& deviceId, const std::string& memberUri)
+{
+    // A device that left is neither a target nor a failure to hold against its member.
+    std::lock_guard lk(trackedMembersMtx_);
+    if (auto it = trackedMembers_.find(memberUri); it != trackedMembers_.end()) {
+        it->second.devices.erase(deviceId);
+        it->second.failedDevices.erase(deviceId);
+    }
 }
 
 void
@@ -3321,6 +3336,10 @@ Conversation::addKnownDevices(const std::vector<DeviceId>& devices, const std::s
         auto it = pimpl_->trackedMembers_.find(memberUri);
         if (it != pimpl_->trackedMembers_.end()) {
             it->second.devices.insert(devices.begin(), devices.end());
+            // Presence only reports a device once it was absent, so a failure
+            // recorded before this announce says nothing about the device now.
+            for (const auto& device : devices)
+                it->second.failedDevices.erase(device);
         }
     } else {
         JAMI_ERROR("{} Adding {} known devices without member URI", pimpl_->toString(), devices.size());
