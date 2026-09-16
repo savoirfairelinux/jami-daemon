@@ -324,7 +324,7 @@ RoutingTableTest::testBucketMainFunctions()
     auto sNode2 = nodeTestChannels1_1.at(2);
     auto sNode3 = nodeTestChannels1_1.at(3);
 
-    NodeInfo InfoNode1(true, sNode2);
+    NodeInfo infoNode2(true, sNode2);
 
     std::set<std::shared_ptr<dhtnet::ChannelSocketInterface>> socketsCheck {sNode1, sNode2};
     std::set<NodeId> nodesCheck {node1, node2};
@@ -334,7 +334,7 @@ RoutingTableTest::testBucketMainFunctions()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Lower limit error", node0, bucket.getLowerLimit());
 
     bucket.addNode(sNode1);
-    bucket.addNode(std::move(InfoNode1));
+    bucket.addNode(std::move(infoNode2));
 
     // bucket.printBucket(0);
 
@@ -358,8 +358,8 @@ RoutingTableTest::testBucketMainFunctions()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node2));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasKnownNode(node1));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", false, bucket.hasKnownNode(node2));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", false, bucket.hasMobileNode(node1));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasMobileNode(node2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have mobile node", false, bucket.hasMobileNode(node1));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have mobile node", true, bucket.hasMobileNode(node2));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have connecting node", false, bucket.hasConnectingNode(node1));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have connecting node", false, bucket.hasConnectingNode(node2));
 
@@ -378,12 +378,15 @@ RoutingTableTest::testBucketMainFunctions()
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node1));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasKnownNode(node1));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have known node", false, bucket.hasKnownNode(node2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have mobile node", true, bucket.hasMobileNode(node2));
 
     bucket.addKnownNode(node3);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasKnownNode(node3));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have connecting node", false, bucket.hasConnectingNode(node3));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be 3", 3u, bucket.getKnownNodesSize());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be 2", 2u, bucket.getKnownNodesSize());
     bucket.removeKnownNode(node3);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have known node", false, bucket.hasKnownNode(node3));
@@ -603,9 +606,7 @@ RoutingTableTest::testConnectionChangedEmittedOnce()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm = std::make_shared<SwarmManager>(nodeTestIds2.at(0), false, rd, [](auto) {
-        return false;
-    });
+    auto sm = std::make_shared<SwarmManager>(nodeTestIds2.at(0), false, rd, [](auto) { return false; });
 
     unsigned connectedCount = 0;
     sm->onConnectionChanged([&](bool ok) {
@@ -620,9 +621,7 @@ RoutingTableTest::testConnectionChangedEmittedOnce()
         sm->addChannel(nodeTestChannels2.at(i));
 
     CPPUNIT_ASSERT(sm->isConnected());
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Connection must be reported once while it never dropped",
-                                 1u,
-                                 connectedCount);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Connection must be reported once while it never dropped", 1u, connectedCount);
 }
 
 void
