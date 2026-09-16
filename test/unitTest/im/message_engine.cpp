@@ -69,11 +69,7 @@ public:
     {
         return {};
     }
-    void updateProfile(const std::string&,
-                       const std::string&,
-                       const std::string&,
-                       const std::string&,
-                       int32_t) override
+    void updateProfile(const std::string&, const std::string&, const std::string&, const std::string&, int32_t) override
     {}
     bool isSrtpEnabled() const override { return false; }
     std::string getToUri(const std::string& username) const override { return username; }
@@ -116,6 +112,7 @@ private:
 class MessageEngineTest : public CppUnit::TestFixture
 {
 public:
+    ~MessageEngineTest() { libjami::fini(); }
     static std::string name() { return "message_engine"; }
 
     void setUp() override;
@@ -142,15 +139,15 @@ MessageEngineTest::setUp()
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (!Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
-    dhtnet::fileutils::remove(fileutils::get_cache_dir() / ACCOUNT_ID, true);
-    dhtnet::fileutils::remove(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
+    dhtnet::fileutils::removeAll(fileutils::get_cache_dir() / ACCOUNT_ID, true);
+    dhtnet::fileutils::removeAll(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
 }
 
 void
 MessageEngineTest::tearDown()
 {
-    dhtnet::fileutils::remove(fileutils::get_cache_dir() / ACCOUNT_ID, true);
-    dhtnet::fileutils::remove(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
+    dhtnet::fileutils::removeAll(fileutils::get_cache_dir() / ACCOUNT_ID, true);
+    dhtnet::fileutils::removeAll(fileutils::get_cache_dir() / LEGACY_ACCOUNT_ID, true);
 }
 
 void
