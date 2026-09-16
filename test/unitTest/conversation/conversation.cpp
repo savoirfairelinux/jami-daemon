@@ -631,6 +631,7 @@ ConversationTest::testRemoveInvalidConversation()
 void
 ConversationTest::testSendMessage()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -659,19 +660,30 @@ void
 ConversationTest::testSendMessageWithBadDisplayName()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
     std::map<std::string, std::string> details;
     details[ConfProperties::DISPLAYNAME] = "<o>";
     libjami::setAccountDetails(aliceId, details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.registered; }));
+    wait_for_announcement_of(aliceId);
+    add_confirmed_contact(bobId, aliceId);
+    connectSignals();
 
     auto convId = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        const auto requests = libjami::getConversationRequests(bobId);
+        return std::find_if(requests.begin(),
+                            requests.end(),
+                            [&](const auto& request) {
+                                auto id = request.find("id");
+                                return id != request.end() && id->second == convId;
+                            })
+               != requests.end();
+    }));
 
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
@@ -690,6 +702,7 @@ ConversationTest::testSendMessageWithBadDisplayName()
 void
 ConversationTest::testReplaceWithBadCertificate()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -783,6 +796,8 @@ ConversationTest::testMergeTwoDifferentHeads()
 void
 ConversationTest::testSendMessageToMultipleParticipants()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -815,7 +830,6 @@ ConversationTest::testSendMessageToMultipleParticipants()
     auto messageReceivedBob = 0;
     auto messageReceivedCarla = 0;
     auto requestReceived = 0;
-    auto conversationReady = 0;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -837,11 +851,6 @@ ConversationTest::testSendMessageToMultipleParticipants()
             cv.notify_one();
         }));
 
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady += 1;
-            cv.notify_one();
-        }));
     libjami::registerSignalHandlers(confHandlers);
 
     auto convId = libjami::startConversation(aliceId);
@@ -854,7 +863,13 @@ ConversationTest::testSendMessageToMultipleParticipants()
     libjami::acceptConversationRequest(bobId, convId);
     libjami::acceptConversationRequest(carlaId, convId);
     // >= because we can have merges cause the accept commits
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady == 3 && messageReceivedAlice >= 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        auto bobConversations = libjami::getConversations(bobId);
+        auto carlaConversations = libjami::getConversations(carlaId);
+        return std::find(bobConversations.begin(), bobConversations.end(), convId) != bobConversations.end()
+               && std::find(carlaConversations.begin(), carlaConversations.end(), convId) != carlaConversations.end()
+               && messageReceivedAlice >= 2;
+    }));
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
@@ -870,6 +885,7 @@ ConversationTest::testSendMessageToMultipleParticipants()
 void
 ConversationTest::testPingPongMessages()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -909,6 +925,7 @@ ConversationTest::testPingPongMessages()
 void
 ConversationTest::testSetMessageDisplayedTwice()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -941,6 +958,7 @@ ConversationTest::testSetMessageDisplayedTwice()
 void
 ConversationTest::testSetMessageDisplayedPreference()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -973,6 +991,7 @@ ConversationTest::testSetMessageDisplayedPreference()
 void
 ConversationTest::testSetMessageDisplayedAfterClone()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1230,6 +1249,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 void
 ConversationTest::testVoteNonEmpty()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1275,13 +1296,14 @@ void
 ConversationTest::testNoBadFileInInitialCommit()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto aliceUri = aliceAccount->getUsername();
 
     auto convId = createFakeConversation(carlaAccount);
+    add_confirmed_contact(aliceId, carlaId);
+    connectSignals();
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.deviceAnnounced; }));
     libjami::addConversationMember(carlaId, convId, aliceUri);
@@ -1295,11 +1317,9 @@ void
 ConversationTest::testNoBadCertInInitialCommit()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
-    auto carlaUri = carlaAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
     auto fakeCert = aliceAccount->certStore().getCertificate(std::string(aliceAccount->currentDeviceId()));
     auto carlaCert = carlaAccount->certStore().getCertificate(std::string(carlaAccount->currentDeviceId()));
@@ -1308,6 +1328,8 @@ ConversationTest::testNoBadCertInInitialCommit()
     // Create a conversation from Carla with Alice's device
     auto convId = createFakeConversation(carlaAccount, fakeCert->toString(false));
 
+    add_confirmed_contact(aliceId, carlaId);
+    connectSignals();
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.deviceAnnounced; }));
     libjami::addConversationMember(carlaId, convId, aliceUri);
@@ -1320,6 +1342,7 @@ ConversationTest::testNoBadCertInInitialCommit()
 void
 ConversationTest::testPlainTextNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1347,6 +1370,8 @@ ConversationTest::testPlainTextNoBadFile()
 void
 ConversationTest::testVoteNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1396,6 +1421,7 @@ ConversationTest::testVoteNoBadFile()
 void
 ConversationTest::testETooBigClone()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1423,6 +1449,7 @@ ConversationTest::testETooBigClone()
 void
 ConversationTest::testETooBigFetch()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1460,6 +1487,7 @@ ConversationTest::testETooBigFetch()
 void
 ConversationTest::testUnknownModeDetected()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1479,6 +1507,7 @@ ConversationTest::testUnknownModeDetected()
 void
 ConversationTest::testUpdateProfile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1514,6 +1543,7 @@ ConversationTest::testUpdateProfile()
 void
 ConversationTest::testGetProfileRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1537,6 +1567,7 @@ ConversationTest::testGetProfileRequest()
 void
 ConversationTest::testCheckProfileInConversationRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1577,6 +1608,7 @@ END:VCARD";
 void
 ConversationTest::testMemberCannotUpdateProfile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1599,6 +1631,7 @@ ConversationTest::testMemberCannotUpdateProfile()
 void
 ConversationTest::testUpdateProfileWithBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1632,6 +1665,7 @@ END:VCARD";
 void
 ConversationTest::testFetchProfileUnauthorized()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1863,6 +1897,7 @@ ConversationTest::testCloneFromMultipleDevice()
 void
 ConversationTest::testSendReply()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1882,10 +1917,13 @@ ConversationTest::testSendReply()
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
 
-    auto validId = bobData.messages.at(0).id;
+    auto validId = bobData.messages.at(bobMsgSize).id;
     libjami::sendMessage(aliceId, convId, "foo"s, validId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
-    CPPUNIT_ASSERT(bobData.messages.rbegin()->body.at(CommitKey::REPLY_TO) == validId);
+    const auto& reply = bobData.messages.at(bobMsgSize + 1);
+    auto replyTo = reply.body.find(CommitKey::REPLY_TO);
+    CPPUNIT_ASSERT(replyTo != reply.body.end());
+    CPPUNIT_ASSERT(replyTo->second == validId);
 
     // Check if parent doesn't exists, no message is generated
     libjami::sendMessage(aliceId, convId, "foo"s, "invalid");
@@ -2113,6 +2151,7 @@ ConversationTest::testRemoveOneToOneNotInDetails()
 void
 ConversationTest::testMessageEdition()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -2132,12 +2171,12 @@ ConversationTest::testMessageEdition()
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
-    auto editedId = bobData.messages.rbegin()->id;
+    auto editedId = bobData.messages.at(bobMsgSize).id;
     // Should trigger MessageUpdated
     bobMsgSize = bobData.messagesUpdated.size();
     libjami::sendMessage(aliceId, convId, "New body"s, editedId, 1);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messagesUpdated.size() == bobMsgSize + 1; }));
-    CPPUNIT_ASSERT(bobData.messagesUpdated.rbegin()->body.at(CommitKey::BODY) == "New body");
+    CPPUNIT_ASSERT(bobData.messagesUpdated.at(bobMsgSize).body.at(CommitKey::BODY) == "New body");
     // Not an existing message
     bobMsgSize = bobData.messagesUpdated.size();
     libjami::sendMessage(aliceId, convId, "New body"s, "invalidId", 1);

@@ -27,11 +27,132 @@
 #include "account_const.h"
 #include "jami.h"
 #include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "manager.h"
 
 /* Make GCC quiet about unused functions */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+void
+add_confirmed_contact(const std::string& accountId, const std::string& contactId)
+{
+    auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
+    auto contact = jami::Manager::instance().getAccount<jami::JamiAccount>(contactId);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(contact);
+
+    const auto accountWasEnabled = account->isEnabled();
+    const auto contactWasEnabled = contact->isEnabled();
+    std::string accountUri;
+    std::string contactUri;
+    auto isConfirmed = [](const auto& actor, const auto& uri) {
+        auto details = actor->getContactInfo(uri);
+        return details && details->isActive() && details->confirmed;
+    };
+    auto isAnnounced = [](const auto& actor) {
+        auto details = actor->getVolatileAccountDetails();
+        auto announced = details.find(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+        return announced != details.end() && announced->second == "true";
+    };
+    auto isStopped = [](const auto& actor) {
+        auto details = actor->getVolatileAccountDetails();
+        auto status = details.find(libjami::Account::ConfProperties::Registration::STATUS);
+        return status != details.end() && status->second == "UNREGISTERED";
+    };
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
+    bool requestReceived = false;
+
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& id, const std::map<std::string, std::string>&) {
+            std::lock_guard lock {mtx};
+            if (id == accountId || id == contactId)
+                cv.notify_one();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& id, const std::string&, const std::string& from, const std::vector<uint8_t>&, time_t) {
+            std::lock_guard lock {mtx};
+            if (id == contactId && from == accountUri) {
+                requestReceived = true;
+                cv.notify_one();
+            }
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& id, const std::string&, bool) {
+            std::lock_guard lock {mtx};
+            if (id == accountId || id == contactId)
+                cv.notify_one();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& id, const std::string&) {
+            std::lock_guard lock {mtx};
+            if (id == accountId || id == contactId)
+                cv.notify_one();
+        }));
+    libjami::unregisterSignalHandlers();
+    libjami::registerSignalHandlers(handlers);
+
+    lk.unlock();
+    if (!accountWasEnabled)
+        jami::Manager::instance().sendRegister(accountId, true);
+    if (!contactWasEnabled)
+        jami::Manager::instance().sendRegister(contactId, true);
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+        return isAnnounced(account) && isAnnounced(contact);
+    }));
+
+    accountUri = account->getUsername();
+    contactUri = contact->getUsername();
+    CPPUNIT_ASSERT(!accountUri.empty());
+    CPPUNIT_ASSERT(!contactUri.empty());
+    const auto contactAlreadyConfirmed = isConfirmed(account, contactUri);
+    const auto accountAlreadyConfirmed = isConfirmed(contact, accountUri);
+    const auto accountConversation = account->convModule()->getOneToOneConversation(contactUri);
+    const auto contactConversation = contact->convModule()->getOneToOneConversation(accountUri);
+    lk.unlock();
+
+    if (!(contactAlreadyConfirmed && accountAlreadyConfirmed && !accountConversation.empty()
+          && !contactConversation.empty())) {
+        account->addContact(contactUri);
+        account->sendTrustRequest(contactUri, {});
+        lk.lock();
+        CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+            return requestReceived || isConfirmed(contact, accountUri);
+        }));
+        lk.unlock();
+        if (!isConfirmed(contact, accountUri))
+            CPPUNIT_ASSERT(contact->acceptTrustRequest(accountUri));
+        lk.lock();
+        const auto isContactReady = [&] {
+            const auto accountConv = account->convModule()->getOneToOneConversation(contactUri);
+            const auto contactConv = contact->convModule()->getOneToOneConversation(accountUri);
+            return isConfirmed(account, contactUri) && isConfirmed(contact, accountUri) && !accountConv.empty()
+                   && accountConv == contactConv;
+        };
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT);
+        while (!isContactReady() && std::chrono::steady_clock::now() < deadline)
+            cv.wait_for(lk, std::chrono::milliseconds(100));
+        CPPUNIT_ASSERT(isContactReady());
+        lk.unlock();
+    }
+
+    if (!accountWasEnabled)
+        jami::Manager::instance().sendRegister(accountId, false);
+    if (!contactWasEnabled)
+        jami::Manager::instance().sendRegister(contactId, false);
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+        return (accountWasEnabled || isStopped(account)) && (contactWasEnabled || isStopped(contact));
+    }));
+
+    lk.unlock();
+    libjami::unregisterSignalHandlers();
+}
 
 void
 wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono::seconds timeout)

@@ -93,7 +93,7 @@ PresenceTest::setUp()
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
-    auto actors = load_actors("actors/alice-bob-carla.yml");
+    auto actors = load_actors("actors/alice-bob-carla-public-incoming.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
@@ -204,14 +204,13 @@ PresenceTest::testGetSetSubscriptions()
 void
 PresenceTest::testPresenceStatus()
 {
-    connectSignals();
-
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
+
+    connectSignals();
 
     // Track Presence
     aliceAccount->trackBuddyPresence(bobUri, true);
