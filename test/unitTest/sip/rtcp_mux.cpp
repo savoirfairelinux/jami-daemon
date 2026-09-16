@@ -471,7 +471,9 @@ RtcpMuxSdpTest::offerAdvertisesPliAndFirForVideoOnly()
     CPPUNIT_ASSERT_EQUAL(2u, localSession->media_count);
 
     CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack pli"));
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack"));
     CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* ccm fir"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[1], "rtcp-fb", "* nack"));
     CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[1], "rtcp-fb", "* nack pli"));
     CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[1], "rtcp-fb", "* ccm fir"));
 
@@ -715,6 +717,7 @@ RtcpMuxSdpTest::answerNegotiatesPliAndFir()
     auto* localSession = sdp.getLocalSdpSession();
     CPPUNIT_ASSERT(localSession);
     CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack"));
     CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack pli"));
     CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* ccm fir"));
 
@@ -762,6 +765,7 @@ RtcpMuxSdpTest::answerSkipsPliAndFirWhenOfferDoesNot()
     auto* localSession = sdp.getLocalSdpSession();
     CPPUNIT_ASSERT(localSession);
     CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack"));
     CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* nack pli"));
     CPPUNIT_ASSERT(!hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* ccm fir"));
 
