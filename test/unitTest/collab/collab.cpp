@@ -253,6 +253,7 @@ CollabTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void

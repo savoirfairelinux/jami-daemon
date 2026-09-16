@@ -155,9 +155,12 @@ SwarmConversationTest::testSendMessage()
     std::mutex mtx;
     std::unique_lock lk {mtx};
 
+    auto aliceId = jamiAccounts.begin()->first;
+    for (auto it = std::next(jamiAccounts.begin()); it != jamiAccounts.end(); ++it)
+        add_confirmed_contact(it->first, aliceId);
+
     connectSignals();
 
-    auto aliceId = jamiAccounts.begin()->first;
     auto convId = libjami::startConversation(aliceId);
 
     std::cout << "started conversation: " << convId << std::endl;

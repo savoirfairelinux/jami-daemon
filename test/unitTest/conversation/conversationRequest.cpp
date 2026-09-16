@@ -385,6 +385,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
 
     aliceAccount->addContact(bobUri);
@@ -395,6 +396,17 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
         bobData.requestReceived = false;
     }
 
+    bobAccount->addContact(aliceUri);
+    bobAccount->sendTrustRequest(aliceUri, {});
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+            auto aliceContact = aliceAccount->getContactInfo(bobUri);
+            auto bobContact = bobAccount->getContactInfo(aliceUri);
+            return aliceContact && aliceContact->confirmed && bobContact && bobContact->confirmed
+                   && !bobAccount->convModule()->getOneToOneConversation(aliceUri).empty();
+        }));
+    }
     auto convId2 = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId2, bobUri);
     {
@@ -414,6 +426,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
 void
 ConversationRequestTest::testGetRequests()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -435,6 +448,7 @@ ConversationRequestTest::testGetRequests()
 void
 ConversationRequestTest::testDeclineRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -554,9 +568,8 @@ ConversationRequestTest::testIncomingTrustRequestArgumentOrder()
     aliceAccount->sendTrustRequest(bobUri, {});
     {
         std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-            return bobData.requestReceived && !aliceData.conversationId.empty();
-        }));
+        CPPUNIT_ASSERT(
+            cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && !aliceData.conversationId.empty(); }));
     }
 
     // The 2nd argument is the conversation id and the 3rd is the peer URI, not the
@@ -1484,6 +1497,7 @@ ConversationRequestTest::testBothRemoveReadd()
 void
 ConversationRequestTest::doNotLooseMetadata()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 

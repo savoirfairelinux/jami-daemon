@@ -176,8 +176,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationMembersEventTest, Conversation
 void
 ConversationMembersEventTest::setUp()
 {
-    connectSignals();
-
     // Init daemon
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
@@ -470,6 +468,7 @@ ConversationMembersEventTest::testRemoveConversationNoMember()
 void
 ConversationMembersEventTest::testRemoveConversationWithMember()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -506,6 +505,7 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
 void
 ConversationMembersEventTest::testAddMember()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -533,6 +533,7 @@ ConversationMembersEventTest::testAddMember()
 void
 ConversationMembersEventTest::testMemberAddedNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -556,6 +557,7 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
 void
 ConversationMembersEventTest::testAddOfflineMemberThenConnects()
 {
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -582,6 +584,7 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
 void
 ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -608,6 +611,7 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
 void
 ConversationMembersEventTest::testGetMembers()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -647,6 +651,7 @@ ConversationMembersEventTest::testGetMembers()
 void
 ConversationMembersEventTest::testRemoveMember()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -675,6 +680,7 @@ ConversationMembersEventTest::testRemoveMember()
 void
 ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromAdmin()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -701,6 +707,8 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromAdmin()
 void
 ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromPeer()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -840,6 +848,8 @@ ConversationMembersEventTest::testSwarmMessagesWithCommonContactOffline()
 void
 ConversationMembersEventTest::testRemoveInvitedMember()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -905,6 +915,8 @@ ConversationMembersEventTest::testRemoveInvitedMember()
 void
 ConversationMembersEventTest::testMemberBanNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -940,6 +952,7 @@ ConversationMembersEventTest::testMemberBanNoBadFile()
 void
 ConversationMembersEventTest::testMemberTryToRemoveAdmin()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -962,6 +975,7 @@ ConversationMembersEventTest::testMemberTryToRemoveAdmin()
 void
 ConversationMembersEventTest::testBannedMemberCannotSendMessage()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -993,6 +1007,7 @@ ConversationMembersEventTest::testBannedMemberCannotSendMessage()
 void
 ConversationMembersEventTest::testAdminCanReAddMember()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1032,6 +1047,8 @@ ConversationMembersEventTest::testAdminCanReAddMember()
 void
 ConversationMembersEventTest::testMemberCannotBanOther()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1073,6 +1090,8 @@ ConversationMembersEventTest::testMemberCannotBanOther()
 void
 ConversationMembersEventTest::testMemberCannotUnBanOther()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1118,6 +1137,8 @@ ConversationMembersEventTest::testMemberCannotUnBanOther()
 void
 ConversationMembersEventTest::testCheckAdminFakeAVoteIsDetected()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1167,6 +1188,7 @@ ConversationMembersEventTest::testAdminCannotKickThemselves()
 void
 ConversationMembersEventTest::testCommitUnauthorizedUser()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1201,6 +1223,7 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
 void
 ConversationMembersEventTest::testForgedDeviceCertificateRejected()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1238,6 +1261,7 @@ ConversationMembersEventTest::testForgedDeviceCertificateRejected()
 void
 ConversationMembersEventTest::testForgedMemberJoinRejected()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1346,6 +1370,7 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
 void
 ConversationMembersEventTest::testMemberAddedNoCertificate()
 {
+    add_confirmed_contact(aliceId, carlaId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1359,8 +1384,8 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() / aliceId / "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() / carlaId / "conversations";
+    auto repoPathAlice = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    auto repoPathCarla = fileutils::get_data_dir() / carlaId / "conversations" / convId;
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
     auto ciPathAlice = fileutils::get_data_dir() / aliceId / "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() / carlaId / "convInfo";
@@ -1488,6 +1513,7 @@ ConversationMembersEventTest::testOneToOneFetchWithNewMemberRefused()
 void
 ConversationMembersEventTest::testConversationMemberEvent()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -1684,6 +1710,7 @@ ConversationMembersEventTest::testRemoveRequestBannedMultiDevices()
 void
 ConversationMembersEventTest::testBanUnbanMultiDevice()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -1802,6 +1829,7 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
 void
 ConversationMembersEventTest::testBanHostWhileHosting()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -1886,6 +1914,8 @@ ConversationMembersEventTest::testAddContactTwice()
 void
 ConversationMembersEventTest::testBanFromNewDevice()
 {
+    add_confirmed_contact(aliceId, bobId);
+    add_confirmed_contact(carlaId, bobId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);

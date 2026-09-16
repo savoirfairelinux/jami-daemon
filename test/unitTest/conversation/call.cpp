@@ -132,6 +132,7 @@ ConversationCallTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -273,6 +274,7 @@ ConversationCallTest::enableCarla()
 
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaConnected; }));
+    add_confirmed_contact(carlaId, aliceId);
     confHandlers.clear();
     libjami::unregisterSignalHandlers();
 }

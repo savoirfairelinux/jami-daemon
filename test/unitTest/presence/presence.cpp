@@ -204,7 +204,7 @@ PresenceTest::testGetSetSubscriptions()
 void
 PresenceTest::testPresenceStatus()
 {
-    connectSignals();
+    add_confirmed_contact(bobId, aliceId);
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -212,6 +212,10 @@ PresenceTest::testPresenceStatus()
     auto bobUri = bobAccount->getUsername();
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
+
+    aliceAccount->addContact(carlaUri);
+    aliceAccount->sendTrustRequest(carlaUri, {});
+    connectSignals();
 
     // Track Presence
     aliceAccount->trackBuddyPresence(bobUri, true);
@@ -224,9 +228,12 @@ PresenceTest::testPresenceStatus()
 
     // Carla is now online
     Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return carlaData_.requestReceived; }));
+    CPPUNIT_ASSERT(carlaAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
         return aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
     }));
+    carlaData_.requestReceived = false;
 
     // Start conversation
     libjami::startConversation(aliceId);
@@ -251,6 +258,8 @@ void
 PresenceTest::testPresenceStatusNote()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -303,6 +312,8 @@ void
 PresenceTest::testPresenceInvalidStatusNote()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -351,6 +362,8 @@ void
 PresenceTest::testPresenceStatusNoteBeforeConnection()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();

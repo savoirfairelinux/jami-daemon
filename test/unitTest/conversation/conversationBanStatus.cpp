@@ -83,6 +83,7 @@ ConversationBanStatusTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -167,6 +168,7 @@ ConversationBanStatusTest::testSplitMemberAndDeviceBanStatus()
 
     Manager::instance().sendRegister(carlaId, true);
     wait_for_announcement_of(carlaId);
+    add_confirmed_contact(carlaId, aliceId);
 
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
