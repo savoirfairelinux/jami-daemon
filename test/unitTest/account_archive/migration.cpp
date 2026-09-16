@@ -223,6 +223,7 @@ MigrationTest::testMigrationAfterRevokation()
 void
 MigrationTest::testExpiredDeviceInSwarm()
 {
+    add_confirmed_contact(bobId, aliceId);
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     std::mutex mtx;

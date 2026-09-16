@@ -27,11 +27,168 @@
 #include "account_const.h"
 #include "jami.h"
 #include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "manager.h"
 
 /* Make GCC quiet about unused functions */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+void
+add_confirmed_contact(const std::string& accountId, const std::string& contactId)
+{
+    auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
+    auto contact = jami::Manager::instance().getAccount<jami::JamiAccount>(contactId);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(contact);
+
+    const auto accountWasEnabled = account->isEnabled();
+    const auto contactWasEnabled = contact->isEnabled();
+    std::string accountUri;
+    std::string contactUri;
+    auto isConfirmed = [](const auto& actor, const auto& uri) {
+        auto details = actor->getContactInfo(uri);
+        return details && details->isActive() && details->confirmed;
+    };
+    auto hasMember = [](const auto& actor, const auto& uri) {
+        const auto conversationId = actor->convModule()->getOneToOneConversation(uri);
+        if (conversationId.empty())
+            return false;
+        const auto members = libjami::getConversationMembers(actor->getAccountID(), conversationId);
+        return std::find_if(members.begin(),
+                            members.end(),
+                            [&](const auto& member) {
+                                auto memberUri = member.find("uri");
+                                auto role = member.find("role");
+                                return memberUri != member.end() && memberUri->second == uri && role != member.end()
+                                       && (role->second == "member" || role->second == "admin");
+                            })
+               != members.end();
+    };
+    auto isAnnounced = [](const auto& actor) {
+        auto details = actor->getVolatileAccountDetails();
+        auto announced = details.find(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+        return announced != details.end() && announced->second == "true";
+    };
+    auto isStopped = [](const auto& actor) {
+        auto details = actor->getVolatileAccountDetails();
+        auto status = details.find(libjami::Account::ConfProperties::Registration::STATUS);
+        return status != details.end() && status->second == "UNREGISTERED";
+    };
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
+    bool requestReceived = false;
+    bool accountContactAdded = false;
+    bool contactContactAdded = false;
+    std::vector<std::string> accountReadyConversations;
+    std::vector<std::string> contactReadyConversations;
+
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& id, const std::map<std::string, std::string>&) {
+            std::lock_guard lock {mtx};
+            if (id == accountId || id == contactId)
+                cv.notify_one();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& id, const std::string&, const std::string& from, const std::vector<uint8_t>&, time_t) {
+            std::lock_guard lock {mtx};
+            if (id == contactId && from == accountUri) {
+                requestReceived = true;
+                cv.notify_one();
+            }
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& id, const std::string& uri, bool confirmed) {
+            std::lock_guard lock {mtx};
+            if (confirmed && id == accountId && uri == contactUri) {
+                accountContactAdded = true;
+                cv.notify_one();
+            } else if (confirmed && id == contactId && uri == accountUri) {
+                contactContactAdded = true;
+                cv.notify_one();
+            }
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& id, const std::string& conversationId) {
+            std::lock_guard lock {mtx};
+            if (id == accountId) {
+                accountReadyConversations.emplace_back(conversationId);
+                cv.notify_one();
+            } else if (id == contactId) {
+                contactReadyConversations.emplace_back(conversationId);
+                cv.notify_one();
+            }
+        }));
+    libjami::unregisterSignalHandlers();
+    libjami::registerSignalHandlers(handlers);
+
+    lk.unlock();
+    if (!accountWasEnabled)
+        jami::Manager::instance().sendRegister(accountId, true);
+    if (!contactWasEnabled)
+        jami::Manager::instance().sendRegister(contactId, true);
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+        return isAnnounced(account) && isAnnounced(contact);
+    }));
+
+    accountUri = account->getUsername();
+    contactUri = contact->getUsername();
+    CPPUNIT_ASSERT(!accountUri.empty());
+    CPPUNIT_ASSERT(!contactUri.empty());
+    const auto contactAlreadyConfirmed = isConfirmed(account, contactUri);
+    const auto accountAlreadyConfirmed = isConfirmed(contact, accountUri);
+    const auto accountConversation = account->convModule()->getOneToOneConversation(contactUri);
+    const auto contactConversation = contact->convModule()->getOneToOneConversation(accountUri);
+    accountContactAdded = contactAlreadyConfirmed;
+    contactContactAdded = accountAlreadyConfirmed;
+    if (!accountConversation.empty())
+        accountReadyConversations.emplace_back(accountConversation);
+    if (!contactConversation.empty())
+        contactReadyConversations.emplace_back(contactConversation);
+    lk.unlock();
+
+    if (!(contactAlreadyConfirmed && accountAlreadyConfirmed && !accountConversation.empty()
+          && !contactConversation.empty())) {
+        account->addContact(contactUri);
+        account->sendTrustRequest(contactUri, {});
+        lk.lock();
+        CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+            return requestReceived || isConfirmed(contact, accountUri);
+        }));
+        lk.unlock();
+        if (!isConfirmed(contact, accountUri))
+            CPPUNIT_ASSERT(contact->acceptTrustRequest(accountUri));
+        lk.lock();
+        CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+            const auto accountConv = account->convModule()->getOneToOneConversation(contactUri);
+            const auto contactConv = contact->convModule()->getOneToOneConversation(accountUri);
+            return isConfirmed(account, contactUri) && isConfirmed(contact, accountUri) && accountContactAdded
+                   && contactContactAdded && !accountConv.empty() && accountConv == contactConv
+                   && std::find(accountReadyConversations.begin(), accountReadyConversations.end(), accountConv)
+                          != accountReadyConversations.end()
+                   && std::find(contactReadyConversations.begin(), contactReadyConversations.end(), contactConv)
+                          != contactReadyConversations.end()
+                   && hasMember(account, contactUri) && hasMember(contact, accountUri);
+        }));
+        lk.unlock();
+    }
+
+    if (!accountWasEnabled)
+        jami::Manager::instance().sendRegister(accountId, false);
+    if (!contactWasEnabled)
+        jami::Manager::instance().sendRegister(contactId, false);
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT), [&] {
+        return (accountWasEnabled || isStopped(account)) && (contactWasEnabled || isStopped(contact));
+    }));
+
+    lk.unlock();
+    libjami::unregisterSignalHandlers();
+}
 
 void
 wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono::seconds timeout)
