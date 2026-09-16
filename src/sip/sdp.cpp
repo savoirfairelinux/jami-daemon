@@ -613,6 +613,32 @@ findRtcpFeedback(unsigned attrCount, pjmedia_sdp_attr* const* attrs, unsigned pa
 }
 
 bool
+findExactRtcpFeedback(unsigned attrCount,
+                      pjmedia_sdp_attr* const* attrs,
+                      unsigned payloadType,
+                      std::string_view feedbackType)
+{
+    for (unsigned attrIndex = 0; attrIndex < attrCount; ++attrIndex) {
+        auto* attr = attrs[attrIndex];
+        if (not attr || pj_stricmp2(&attr->name, "rtcp-fb") != 0)
+            continue;
+
+        const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
+        const auto separator = value.find(' ');
+        if (separator == std::string_view::npos
+            || !parsePayloadTypeToken(value.substr(0, separator), payloadType)) {
+            continue;
+        }
+
+        const auto feedbackStart = value.find_first_not_of(' ', separator + 1);
+        if (feedbackStart != std::string_view::npos && value.substr(feedbackStart) == feedbackType)
+            return true;
+    }
+
+    return false;
+}
+
+bool
 hasRtcpFeedback(const pjmedia_sdp_session* session,
                 unsigned mediaIndex,
                 unsigned payloadType,
@@ -647,6 +673,55 @@ hasAnyRtcpFeedback(const pjmedia_sdp_session* session, unsigned mediaIndex, std:
     }
 
     return false;
+}
+
+bool
+hasAnyRtcpFeedback(const pjmedia_sdp_session* session,
+                   const pjmedia_sdp_media* media,
+                   std::string_view feedbackType)
+{
+    if (not session || not media)
+        return false;
+
+    for (unsigned fmtIndex = 0; fmtIndex < media->desc.fmt_count; ++fmtIndex) {
+        const auto payloadType = pj_strtoul(&media->desc.fmt[fmtIndex]);
+        if (findRtcpFeedback(media->attr_count, media->attr, payloadType, feedbackType)
+            || findRtcpFeedback(session->attr_count, session->attr, payloadType, feedbackType)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<std::string>
+negotiatedExactRtcpFeedbackPayloads(const pjmedia_sdp_session* remoteSession,
+                                    const pjmedia_sdp_media* remoteMedia,
+                                    const pjmedia_sdp_media* localMedia,
+                                    std::string_view feedbackType)
+{
+    std::vector<std::string> payloads;
+    if (not remoteSession || not remoteMedia || not localMedia)
+        return payloads;
+
+    for (unsigned fmtIndex = 0; fmtIndex < localMedia->desc.fmt_count; ++fmtIndex) {
+        const auto payloadType = pj_strtoul(&localMedia->desc.fmt[fmtIndex]);
+        if (findExactRtcpFeedback(remoteMedia->attr_count,
+                                  remoteMedia->attr,
+                                  payloadType,
+                                  feedbackType)
+            || findExactRtcpFeedback(remoteSession->attr_count,
+                                     remoteSession->attr,
+                                     payloadType,
+                                     feedbackType)) {
+            payloads.emplace_back(localMedia->desc.fmt[fmtIndex].ptr,
+                                  static_cast<size_t>(localMedia->desc.fmt[fmtIndex].slen));
+        }
+    }
+
+    if (!payloads.empty() && payloads.size() == localMedia->desc.fmt_count)
+        return {"*"};
+    return payloads;
 }
 
 } // namespace
@@ -1017,12 +1092,23 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
             addRtcpFeedbackAttribute(med, "*", "goog-remb");
 
         if (type == MediaType::MEDIA_VIDEO) {
+            std::vector<std::string> nackPayloads;
             auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
             auto firFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
-            if (feedbackSession) {
-                pliFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "nack pli");
-                firFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "ccm fir");
+            const auto* feedbackMedia
+                = sdpDirection_ == SdpDirection::ANSWER ? remoteMedia : previousLocalMedia;
+            if (sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia) {
+                nackPayloads.emplace_back("*");
+            } else if (feedbackSession && feedbackMedia) {
+                nackPayloads = negotiatedExactRtcpFeedbackPayloads(feedbackSession,
+                                                                   feedbackMedia,
+                                                                   med,
+                                                                   "nack");
+                pliFeedback = hasAnyRtcpFeedback(feedbackSession, feedbackMedia, "nack pli");
+                firFeedback = hasAnyRtcpFeedback(feedbackSession, feedbackMedia, "ccm fir");
             }
+            for (const auto& payload : nackPayloads)
+                addRtcpFeedbackAttribute(med, payload, "nack");
             if (pliFeedback)
                 addRtcpFeedbackAttribute(med, "*", "nack pli");
             if (firFeedback)
