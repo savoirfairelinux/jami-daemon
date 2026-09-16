@@ -510,6 +510,32 @@ findRtcpFeedback(unsigned attrCount, pjmedia_sdp_attr* const* attrs, unsigned pa
 }
 
 bool
+findExactRtcpFeedback(unsigned attrCount,
+                      pjmedia_sdp_attr* const* attrs,
+                      unsigned payloadType,
+                      std::string_view feedbackType)
+{
+    for (unsigned attrIndex = 0; attrIndex < attrCount; ++attrIndex) {
+        auto* attr = attrs[attrIndex];
+        if (not attr || pj_stricmp2(&attr->name, "rtcp-fb") != 0)
+            continue;
+
+        const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
+        const auto separator = value.find(' ');
+        if (separator == std::string_view::npos
+            || !parsePayloadTypeToken(value.substr(0, separator), payloadType)) {
+            continue;
+        }
+
+        const auto feedbackStart = value.find_first_not_of(' ', separator + 1);
+        if (feedbackStart != std::string_view::npos && value.substr(feedbackStart) == feedbackType)
+            return true;
+    }
+
+    return false;
+}
+
+bool
 hasRtcpFeedback(const pjmedia_sdp_session* session,
                 unsigned mediaIndex,
                 unsigned payloadType,
@@ -541,6 +567,29 @@ hasAnyRtcpFeedback(const pjmedia_sdp_session* session, unsigned mediaIndex, std:
         const auto payloadType = pj_strtoul(&media->desc.fmt[fmtIndex]);
         if (hasRtcpFeedback(session, mediaIndex, payloadType, feedbackType))
             return true;
+    }
+
+    return false;
+}
+
+bool
+hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
+                        unsigned mediaIndex,
+                        std::string_view feedbackType)
+{
+    if (not session || mediaIndex >= session->media_count)
+        return false;
+
+    auto* media = session->media[mediaIndex];
+    for (unsigned fmtIndex = 0; fmtIndex < media->desc.fmt_count; ++fmtIndex) {
+        const auto payloadType = pj_strtoul(&media->desc.fmt[fmtIndex]);
+        if (findExactRtcpFeedback(media->attr_count, media->attr, payloadType, feedbackType)
+            || findExactRtcpFeedback(session->attr_count,
+                                     session->attr,
+                                     payloadType,
+                                     feedbackType)) {
+            return true;
+        }
     }
 
     return false;
@@ -885,15 +934,16 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             addRtcpFeedbackAttribute(med, "*", "goog-remb");
 
         if (type == MediaType::MEDIA_VIDEO) {
-            // Picture Loss Indication (RFC 4585 6.3.1) and Full Intra Request
-            // (RFC 5104 4.3.1) let a video receiver request a keyframe over
-            // RTCP, as WebRTC endpoints expect.
+            auto nackFeedback = sdpDirection_ != SdpDirection::ANSWER;
             auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER;
             auto firFeedback = sdpDirection_ != SdpDirection::ANSWER;
             if (sdpDirection_ == SdpDirection::ANSWER) {
+                nackFeedback = hasAnyExactRtcpFeedback(remoteSession_, mediaIndex, "nack");
                 pliFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "nack pli");
                 firFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "ccm fir");
             }
+            if (nackFeedback)
+                addRtcpFeedbackAttribute(med, "*", "nack");
             if (pliFeedback)
                 addRtcpFeedbackAttribute(med, "*", "nack pli");
             if (firFeedback)
