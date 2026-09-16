@@ -155,9 +155,12 @@ SwarmConversationTest::testSendMessage()
     std::mutex mtx;
     std::unique_lock lk {mtx};
 
+    auto aliceId = jamiAccounts.begin()->first;
+    for (auto it = std::next(jamiAccounts.begin()); it != jamiAccounts.end(); ++it)
+        add_confirmed_contact(it->first, aliceId);
+
     connectSignals();
 
-    auto aliceId = jamiAccounts.begin()->first;
     auto convId = libjami::startConversation(aliceId);
 
     std::cout << "started conversation: " << convId << std::endl;
@@ -177,8 +180,13 @@ SwarmConversationTest::testSendMessage()
 
     std::cout << "waiting for conversation ready" << std::endl;
     for (size_t i = 1; i < accountIds.size(); i++) {
-        CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return accountMap[accountIds.at(i)].id == convId; }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() {
+            const auto conversations = libjami::getConversations(accountIds.at(i));
+            return std::find(conversations.begin(), conversations.end(), convId) != conversations.end();
+        }));
+        accountMap[accountIds.at(i)].id = convId;
     }
+    accountMap[aliceId].id = convId;
     std::cout << "messages size " << accountMap[accountIds.at(0)].messages.size() << std::endl;
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 70s, [&]() { return accountMap[accountIds.at(0)].messages.size() >= 2; }));
