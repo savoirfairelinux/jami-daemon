@@ -482,6 +482,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
 void
 SyncHistoryTest::testReceivesInviteThenAddDevice()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
@@ -537,6 +538,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -576,7 +578,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.requestReceived; }));
 
     libjami::acceptConversationRequest(alice2Id, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !alice2Data.conversationId.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.conversationId == convId; }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(alice2Id, convId, std::string("hi"), "");
@@ -586,6 +588,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -632,6 +635,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -692,6 +696,7 @@ SyncHistoryTest::testSyncOneToOne()
 void
 SyncHistoryTest::testConversationRequestRemoved()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
