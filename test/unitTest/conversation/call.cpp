@@ -132,6 +132,7 @@ ConversationCallTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -273,6 +274,7 @@ ConversationCallTest::enableCarla()
 
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaConnected; }));
+    add_confirmed_contact(carlaId, aliceId);
     confHandlers.clear();
     libjami::unregisterSignalHandlers();
 }
@@ -1019,16 +1021,13 @@ ConversationCallTest::testBusy()
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
-
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData_.id.empty(); }));
+    aliceData_.id = aliceAccount->convModule()->getOneToOneConversation(bobUri);
+    bobData_.id = bobAccount->convModule()->getOneToOneConversation(aliceAccount->getUsername());
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
+    CPPUNIT_ASSERT(aliceData_.id == bobData_.id);
 
     // start call
     aliceData_.messages.clear();
@@ -1057,16 +1056,13 @@ ConversationCallTest::testDecline()
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
-
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData_.id.empty(); }));
+    aliceData_.id = aliceAccount->convModule()->getOneToOneConversation(bobUri);
+    bobData_.id = bobAccount->convModule()->getOneToOneConversation(aliceAccount->getUsername());
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
+    CPPUNIT_ASSERT(aliceData_.id == bobData_.id);
 
     // start call
     aliceData_.messages.clear();

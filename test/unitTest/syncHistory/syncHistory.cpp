@@ -482,6 +482,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
 void
 SyncHistoryTest::testReceivesInviteThenAddDevice()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
@@ -537,6 +538,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -580,12 +582,21 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(alice2Id, convId, std::string("hi"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return std::find_if(bobData.messages.begin() + bobMsgSize,
+                            bobData.messages.end(),
+                            [](const auto& message) {
+                                auto body = message.body.find(CommitKey::BODY);
+                                return body != message.body.end() && body->second == "hi";
+                            })
+               != bobData.messages.end();
+    }));
 }
 
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -632,6 +643,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -692,6 +704,7 @@ SyncHistoryTest::testSyncOneToOne()
 void
 SyncHistoryTest::testConversationRequestRemoved()
 {
+    add_confirmed_contact(aliceId, bobId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();

@@ -385,6 +385,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
 
     aliceAccount->addContact(bobUri);
@@ -395,6 +396,17 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
         bobData.requestReceived = false;
     }
 
+    bobAccount->addContact(aliceUri);
+    bobAccount->sendTrustRequest(aliceUri, {});
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+            auto aliceContact = aliceAccount->getContactInfo(bobUri);
+            auto bobContact = bobAccount->getContactInfo(aliceUri);
+            return aliceContact && aliceContact->confirmed && bobContact && bobContact->confirmed
+                   && !bobAccount->convModule()->getOneToOneConversation(aliceUri).empty();
+        }));
+    }
     auto convId2 = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId2, bobUri);
     {
@@ -414,6 +426,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
 void
 ConversationRequestTest::testGetRequests()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -435,6 +448,7 @@ ConversationRequestTest::testGetRequests()
 void
 ConversationRequestTest::testDeclineRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -554,9 +568,8 @@ ConversationRequestTest::testIncomingTrustRequestArgumentOrder()
     aliceAccount->sendTrustRequest(bobUri, {});
     {
         std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-            return bobData.requestReceived && !aliceData.conversationId.empty();
-        }));
+        CPPUNIT_ASSERT(
+            cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && !aliceData.conversationId.empty(); }));
     }
 
     // The 2nd argument is the conversation id and the 3rd is the peer URI, not the
@@ -642,7 +655,8 @@ ConversationRequestTest::testMalformedTrustRequest()
         requestDeclined = trustRequests.size() == 0;
         if (!requestDeclined)
             std::this_thread::sleep_for(1s);
-    } while (not requestDeclined and std::chrono::steady_clock::now() - start < 2s);
+    } while (not requestDeclined
+             and std::chrono::steady_clock::now() - start < std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
 
     CPPUNIT_ASSERT(requestDeclined);
 }
@@ -739,6 +753,9 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
             return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size();
         }));
     }
+    const auto conversationId = aliceAccount->convModule()->getOneToOneConversation(bobUri);
+    CPPUNIT_ASSERT(!conversationId.empty());
+    CPPUNIT_ASSERT(conversationId == bobAccount->convModule()->getOneToOneConversation(aliceUri));
 
     // removeContact
     aliceAccount->removeContact(bobUri, false);
@@ -751,7 +768,10 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
     // Should retrieve previous conversation
     {
         std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.conversationId == bobData.conversationId; }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+            return aliceAccount->convModule()->getOneToOneConversation(bobUri) == conversationId
+                   && bobAccount->convModule()->getOneToOneConversation(aliceUri) == conversationId;
+        }));
     }
 }
 
@@ -1456,6 +1476,9 @@ ConversationRequestTest::testBothRemoveReadd()
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     }
+    const auto conversationId = aliceAccount->convModule()->getOneToOneConversation(bobUri);
+    CPPUNIT_ASSERT(!conversationId.empty());
+    CPPUNIT_ASSERT(conversationId == bobAccount->convModule()->getOneToOneConversation(aliceUri));
 
     // removeContact
     aliceAccount->removeContact(bobUri, false);
@@ -1476,7 +1499,8 @@ ConversationRequestTest::testBothRemoveReadd()
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-            return !aliceData.conversationId.empty() && bobData.conversationId == aliceData.conversationId;
+            return aliceAccount->convModule()->getOneToOneConversation(bobUri) == conversationId
+                   && bobAccount->convModule()->getOneToOneConversation(aliceUri) == conversationId;
         }));
     }
 }
@@ -1484,6 +1508,7 @@ ConversationRequestTest::testBothRemoveReadd()
 void
 ConversationRequestTest::doNotLooseMetadata()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 

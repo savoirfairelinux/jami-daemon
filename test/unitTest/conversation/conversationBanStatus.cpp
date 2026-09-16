@@ -83,6 +83,7 @@ ConversationBanStatusTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -167,6 +168,7 @@ ConversationBanStatusTest::testSplitMemberAndDeviceBanStatus()
 
     Manager::instance().sendRegister(carlaId, true);
     wait_for_announcement_of(carlaId);
+    add_confirmed_contact(carlaId, aliceId);
 
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -179,6 +181,18 @@ ConversationBanStatusTest::testSplitMemberAndDeviceBanStatus()
     libjami::acceptConversationRequest(carlaId, memberConvId);
     const auto carlaDeviceFile = conversationPath(aliceId, memberConvId) / "devices" / (carlaDeviceId + ".crt");
     CPPUNIT_ASSERT(waitFor([&] { return std::filesystem::is_regular_file(carlaDeviceFile); }));
+    CPPUNIT_ASSERT(waitFor([&] {
+        const auto members = libjami::getConversationMembers(aliceId, memberConvId);
+        return std::find_if(members.begin(),
+                            members.end(),
+                            [&](const auto& member) {
+                                auto uri = member.find("uri");
+                                auto role = member.find("role");
+                                return uri != member.end() && uri->second == carlaUri && role != member.end()
+                                       && role->second == "member";
+                            })
+               != members.end();
+    }));
 
     auto memberConv = aliceAccount->convModule()->getConversation(memberConvId);
     CPPUNIT_ASSERT(memberConv != nullptr);
