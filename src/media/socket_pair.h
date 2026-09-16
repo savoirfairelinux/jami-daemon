@@ -42,6 +42,7 @@ using socklen_t = int;
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <deque>
 #include <list>
 #include <vector>
 #include <condition_variable>
@@ -273,6 +274,13 @@ private:
     struct TransportCcState;
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
+    struct CachedRtpPacket
+    {
+        uint16_t sequence {};
+        uint32_t ssrc {};
+        time_point sentAt {};
+        std::vector<uint8_t> payload {};
+    };
 
     int readCallback(uint8_t* buf, int buf_size);
     int writeCallback(const uint8_t* buf, int buf_size);
@@ -295,6 +303,8 @@ private:
     void saveRtcpRRPacket(uint8_t* buf, size_t len);
     void saveRtcpREMBPacket(uint8_t* buf, size_t len);
     void saveRtcpTransportCcPacket(uint8_t* buf, size_t len);
+    void cacheSentRtpPacket(const uint8_t* buf, size_t len);
+    void retransmitNackPackets(const uint8_t* buf, size_t len);
 
     dhtnet::IceSocket* getRtpSocket() const;
     dhtnet::IceSocket* getRtcpSocket() const;
@@ -310,6 +320,7 @@ private:
     std::atomic_bool noWrite_ {false};
     std::atomic_bool rtcpProtection_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
+    std::mutex srtpWriteMutex_ {};
     std::function<void(void)> packetLossCallback_;
     std::function<void(void)> keyframeRequestCallback_;
     std::function<void(int, int)> rtpDelayCallback_;
@@ -319,6 +330,9 @@ private:
     std::atomic<uint64_t> rtpPacingBitrateBps_ {0};
     RtpPacer rtpPacer_ {};
     std::mutex rtpPacerMutex_ {};
+    std::deque<CachedRtpPacket> sentRtpPackets_ {};
+    std::mutex sentRtpPacketsMutex_ {};
+    time_point lastNackKeyframeRequest_ {};
     bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
     bool parse_RTP_ext(uint8_t* buf, float* abs);
 
