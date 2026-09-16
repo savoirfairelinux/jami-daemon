@@ -631,6 +631,7 @@ ConversationTest::testRemoveInvalidConversation()
 void
 ConversationTest::testSendMessage()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -658,6 +659,7 @@ ConversationTest::testSendMessage()
 void
 ConversationTest::testSendMessageWithBadDisplayName()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -690,6 +692,7 @@ ConversationTest::testSendMessageWithBadDisplayName()
 void
 ConversationTest::testReplaceWithBadCertificate()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -783,6 +786,8 @@ ConversationTest::testMergeTwoDifferentHeads()
 void
 ConversationTest::testSendMessageToMultipleParticipants()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -870,6 +875,7 @@ ConversationTest::testSendMessageToMultipleParticipants()
 void
 ConversationTest::testPingPongMessages()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -909,6 +915,7 @@ ConversationTest::testPingPongMessages()
 void
 ConversationTest::testSetMessageDisplayedTwice()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -941,6 +948,7 @@ ConversationTest::testSetMessageDisplayedTwice()
 void
 ConversationTest::testSetMessageDisplayedPreference()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -973,6 +981,7 @@ ConversationTest::testSetMessageDisplayedPreference()
 void
 ConversationTest::testSetMessageDisplayedAfterClone()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1230,6 +1239,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 void
 ConversationTest::testVoteNonEmpty()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1284,6 +1295,7 @@ ConversationTest::testNoBadFileInInitialCommit()
     auto convId = createFakeConversation(carlaAccount);
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.deviceAnnounced; }));
+    add_confirmed_contact(aliceId, carlaId);
     libjami::addConversationMember(carlaId, convId, aliceUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.requestReceived; }));
 
@@ -1310,6 +1322,7 @@ ConversationTest::testNoBadCertInInitialCommit()
 
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.deviceAnnounced; }));
+    add_confirmed_contact(aliceId, carlaId);
     libjami::addConversationMember(carlaId, convId, aliceUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.requestReceived; }));
 
@@ -1320,6 +1333,7 @@ ConversationTest::testNoBadCertInInitialCommit()
 void
 ConversationTest::testPlainTextNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1347,6 +1361,8 @@ ConversationTest::testPlainTextNoBadFile()
 void
 ConversationTest::testVoteNoBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1396,6 +1412,7 @@ ConversationTest::testVoteNoBadFile()
 void
 ConversationTest::testETooBigClone()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1423,6 +1440,7 @@ ConversationTest::testETooBigClone()
 void
 ConversationTest::testETooBigFetch()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1460,6 +1478,7 @@ ConversationTest::testETooBigFetch()
 void
 ConversationTest::testUnknownModeDetected()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1479,6 +1498,7 @@ ConversationTest::testUnknownModeDetected()
 void
 ConversationTest::testUpdateProfile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1514,6 +1534,7 @@ ConversationTest::testUpdateProfile()
 void
 ConversationTest::testGetProfileRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1537,6 +1558,7 @@ ConversationTest::testGetProfileRequest()
 void
 ConversationTest::testCheckProfileInConversationRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1577,6 +1599,7 @@ END:VCARD";
 void
 ConversationTest::testMemberCannotUpdateProfile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1599,6 +1622,7 @@ ConversationTest::testMemberCannotUpdateProfile()
 void
 ConversationTest::testUpdateProfileWithBadFile()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1632,6 +1656,7 @@ END:VCARD";
 void
 ConversationTest::testFetchProfileUnauthorized()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -1863,6 +1888,7 @@ ConversationTest::testCloneFromMultipleDevice()
 void
 ConversationTest::testSendReply()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 
@@ -2113,6 +2139,7 @@ ConversationTest::testRemoveOneToOneNotInDetails()
 void
 ConversationTest::testMessageEdition()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 

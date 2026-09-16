@@ -307,6 +307,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     auto convId = libjami::startConversation(aliceId);
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    bobAccount->addContact(aliceAccount->getUsername());
     auto bobUri = bobAccount->getUsername();
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return requestReceived; }));

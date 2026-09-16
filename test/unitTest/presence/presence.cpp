@@ -204,6 +204,8 @@ PresenceTest::testGetSetSubscriptions()
 void
 PresenceTest::testPresenceStatus()
 {
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -251,6 +253,8 @@ void
 PresenceTest::testPresenceStatusNote()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -303,6 +307,8 @@ void
 PresenceTest::testPresenceInvalidStatusNote()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
@@ -351,6 +357,8 @@ void
 PresenceTest::testPresenceStatusNoteBeforeConnection()
 {
     enableCarla();
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
     connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();

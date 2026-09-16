@@ -395,6 +395,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
         bobData.requestReceived = false;
     }
 
+    add_confirmed_contact(bobId, aliceId);
     auto convId2 = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId2, bobUri);
     {
@@ -414,6 +415,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
 void
 ConversationRequestTest::testGetRequests()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -435,6 +437,7 @@ ConversationRequestTest::testGetRequests()
 void
 ConversationRequestTest::testDeclineRequest()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -554,9 +557,8 @@ ConversationRequestTest::testIncomingTrustRequestArgumentOrder()
     aliceAccount->sendTrustRequest(bobUri, {});
     {
         std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-            return bobData.requestReceived && !aliceData.conversationId.empty();
-        }));
+        CPPUNIT_ASSERT(
+            cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && !aliceData.conversationId.empty(); }));
     }
 
     // The 2nd argument is the conversation id and the 3rd is the peer URI, not the
@@ -746,6 +748,7 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
 
     // re-add
     CPPUNIT_ASSERT(aliceData.conversationId != "");
+    add_confirmed_contact(bobId, aliceId);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Should retrieve previous conversation
@@ -1484,6 +1487,7 @@ ConversationRequestTest::testBothRemoveReadd()
 void
 ConversationRequestTest::doNotLooseMetadata()
 {
+    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
 

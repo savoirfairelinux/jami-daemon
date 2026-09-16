@@ -409,6 +409,8 @@ CollabTest::createConversationWithBob()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
+    add_confirmed_contact(bobId, aliceId);
+
     auto convId = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId, bobUri);
     {

@@ -27,11 +27,23 @@
 #include "account_const.h"
 #include "jami.h"
 #include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "manager.h"
 
 /* Make GCC quiet about unused functions */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+void
+add_confirmed_contact(const std::string& accountId, const std::string& contactId)
+{
+    auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
+    auto contact = jami::Manager::instance().getAccount<jami::JamiAccount>(contactId);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(contact);
+    CPPUNIT_ASSERT(!contact->getUsername().empty());
+    account->addContact(contact->getUsername());
+}
 
 void
 wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono::seconds timeout)
