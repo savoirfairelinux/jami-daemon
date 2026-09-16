@@ -1044,6 +1044,8 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
 
+    bobAccount->addContact(aliceUri);
+
     auto bobRequestReceived = false;
 
     std::vector<libjami::SwarmMessage> aliceMessages = {};
@@ -1184,9 +1186,8 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     const bool savedFlag = ConversationRepository::FETCH_FROM_LOCAL_REPOS;
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
 
-    auto [clonedRepo, commits] = ConversationRepository::cloneConversation(aliceAccount,
-                                                                           "device-that-does-not-exist",
-                                                                           convId);
+    auto [clonedRepo,
+          commits] = ConversationRepository::cloneConversation(aliceAccount, "device-that-does-not-exist", convId);
 
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = savedFlag;
 

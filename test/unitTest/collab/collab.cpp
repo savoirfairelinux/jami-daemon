@@ -253,6 +253,7 @@ CollabTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -907,30 +908,16 @@ void
 CollabTest::testContactRemovalDropsDocuments()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
 
-    // A one-to-one conversation, through the contact pipeline.
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    {
-        std::unique_lock<std::mutex> lk(mtx);
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    }
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    {
-        std::unique_lock<std::mutex> lk(mtx);
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
-    }
-    std::string convId;
-    {
-        std::lock_guard<std::mutex> lk(mtx);
-        convId = bobData.conversationId;
-    }
+    // The fixture establishes this one-to-one through the contact pipeline.
+    const auto convId = aliceAccount->convModule()->getOneToOneConversation(bobUri);
+    CPPUNIT_ASSERT(!convId.empty());
+    CPPUNIT_ASSERT(convId == bobAccount->convModule()->getOneToOneConversation(aliceUri));
 
     auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
     CPPUNIT_ASSERT(!docId.empty());

@@ -207,7 +207,6 @@ PresenceTest::testPresenceStatus()
     connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);

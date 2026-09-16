@@ -169,6 +169,9 @@ FileTransferTest::setUp()
     aliceData = {};
     bobData = {};
     carlaData = {};
+
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
 }
 
 void

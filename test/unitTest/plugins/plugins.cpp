@@ -697,6 +697,8 @@ PluginsTest::testMessage()
     Manager::instance().pluginPreferences.setPluginsEnabled(true);
     Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
 
+    add_confirmed_contact(bobData.accountId_, aliceData.accountId_);
+
     // alice and bob chat
     // for handler available, toggle - check status - untoggle - checkstatus
     // end call

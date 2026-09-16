@@ -231,6 +231,7 @@ TypersTest::testTimeout()
 void
 TypersTest::testTypingRemovedOnMemberRemoved()
 {
+    add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);

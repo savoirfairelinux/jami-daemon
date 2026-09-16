@@ -108,6 +108,7 @@ BootstrapTest::setUp()
 
     Manager::instance().sendRegister(carlaData.accountId, false);
     wait_for_announcement_of({aliceData.accountId, bobData.accountId});
+    add_confirmed_contact(bobData.accountId, aliceData.accountId);
     connectSignals();
 }
 

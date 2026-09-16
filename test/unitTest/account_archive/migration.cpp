@@ -223,6 +223,7 @@ MigrationTest::testMigrationAfterRevokation()
 void
 MigrationTest::testExpiredDeviceInSwarm()
 {
+    add_confirmed_contact(bobId, aliceId);
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     std::mutex mtx;
@@ -270,7 +271,10 @@ MigrationTest::testExpiredDeviceInSwarm()
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(
         [&](const std::string& accountId, const std::string& state, int, const std::string&) {
             if (accountId == aliceId) {
+                {
+                    std::lock_guard lock(mtx);
                 aliceState = state;
+                }
                 cv.notify_one();
             }
         }));
@@ -282,6 +286,8 @@ MigrationTest::testExpiredDeviceInSwarm()
             }
         }));
     libjami::registerSignalHandlers(confHandlers);
+    auto accountDetails = aliceAccount->getVolatileAccountDetails();
+    aliceState = accountDetails[libjami::Account::ConfProperties::Registration::STATUS];
 
     // NOTE: We must update certificate before announcing, else, there will be several
     // certificates on the DHT

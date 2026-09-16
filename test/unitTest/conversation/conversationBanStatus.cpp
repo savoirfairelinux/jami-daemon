@@ -83,6 +83,7 @@ ConversationBanStatusTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
@@ -167,6 +168,7 @@ ConversationBanStatusTest::testSplitMemberAndDeviceBanStatus()
 
     Manager::instance().sendRegister(carlaId, true);
     wait_for_announcement_of(carlaId);
+    add_confirmed_contact(carlaId, aliceId);
 
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -179,6 +181,18 @@ ConversationBanStatusTest::testSplitMemberAndDeviceBanStatus()
     libjami::acceptConversationRequest(carlaId, memberConvId);
     const auto carlaDeviceFile = conversationPath(aliceId, memberConvId) / "devices" / (carlaDeviceId + ".crt");
     CPPUNIT_ASSERT(waitFor([&] { return std::filesystem::is_regular_file(carlaDeviceFile); }));
+    CPPUNIT_ASSERT(waitFor([&] {
+        const auto members = libjami::getConversationMembers(aliceId, memberConvId);
+        return std::find_if(members.begin(),
+                            members.end(),
+                            [&](const auto& member) {
+                                auto uri = member.find("uri");
+                                auto role = member.find("role");
+                                return uri != member.end() && uri->second == carlaUri && role != member.end()
+                                       && role->second == "member";
+                            })
+               != members.end();
+    }));
 
     auto memberConv = aliceAccount->convModule()->getConversation(memberConvId);
     CPPUNIT_ASSERT(memberConv != nullptr);
@@ -209,27 +223,26 @@ ConversationBanStatusTest::testPeerAuthorizationChecksMembershipAndInvites()
     auto carlaUri = carlaAccount->getUsername();
     auto carlaDeviceId = std::string(carlaAccount->currentDeviceId());
 
-    auto memberConvId = libjami::startConversation(aliceId);
-    libjami::addConversationMember(aliceId, memberConvId, bobUri);
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(waitFor([&] { return !libjami::getConversationRequests(bobId).empty(); }));
 
-    libjami::acceptConversationRequest(bobId, memberConvId);
-    const auto bobDeviceFile = conversationPath(aliceId, memberConvId) / "devices" / (bobDeviceId + ".crt");
+    libjami::acceptConversationRequest(bobId, convId);
+    const auto bobDeviceFile = conversationPath(aliceId, convId) / "devices" / (bobDeviceId + ".crt");
     CPPUNIT_ASSERT(waitFor([&] { return std::filesystem::is_regular_file(bobDeviceFile); }));
 
     auto* convModule = aliceAccount->convModule();
     CPPUNIT_ASSERT(convModule != nullptr);
-    CPPUNIT_ASSERT(convModule->isPeerAuthorized(memberConvId, bobUri, bobDeviceId, true));
-    CPPUNIT_ASSERT(!convModule->isPeerAuthorized(memberConvId, carlaUri, carlaDeviceId, true));
+    CPPUNIT_ASSERT(convModule->isPeerAuthorized(convId, bobUri, bobDeviceId, true));
+    CPPUNIT_ASSERT(!convModule->isPeerAuthorized(convId, carlaUri, carlaDeviceId, true));
 
-    auto inviteConvId = libjami::startConversation(aliceId);
-    libjami::addConversationMember(aliceId, inviteConvId, carlaUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
 
-    const auto invitedFile = conversationPath(aliceId, inviteConvId) / "invited" / carlaUri;
+    const auto invitedFile = conversationPath(aliceId, convId) / "invited" / carlaUri;
     CPPUNIT_ASSERT(waitFor([&] { return std::filesystem::is_regular_file(invitedFile); }));
 
-    CPPUNIT_ASSERT(convModule->isPeerAuthorized(inviteConvId, carlaUri, carlaDeviceId, true));
-    CPPUNIT_ASSERT(!convModule->isPeerAuthorized(inviteConvId, carlaUri, carlaDeviceId, false));
+    CPPUNIT_ASSERT(convModule->isPeerAuthorized(convId, carlaUri, carlaDeviceId, true));
+    CPPUNIT_ASSERT(!convModule->isPeerAuthorized(convId, carlaUri, carlaDeviceId, false));
 }
 
 } // namespace test
