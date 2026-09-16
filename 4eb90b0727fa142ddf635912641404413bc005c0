@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "099dad34_e1ef6284",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1253,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-16T18:15:53Z",
+      "side": 1,
+      "message": "[error] Line 1253: 🔴 The grace period is only checked when another `onConnectionFailed()` callback reaches `rotateTrackedMembers`; there is no timer or periodic re-evaluation after `trackedSince` expires. In the empty-device case this change targets, the failed node is returned to the swarm\u0027s known set but no retry is scheduled, and an offline member may produce no presence callback, so a member that fails once during the first 30 seconds can remain tracked indefinitely and consume a slot. Schedule a one-shot/periodic expiry check (with lifetime/untracking cancellation or revalidation), or invoke this check from an existing maintenance path, and cover the no-presence/no-second-failure case with a test.",
+      "revId": "4eb90b0727fa142ddf635912641404413bc005c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
