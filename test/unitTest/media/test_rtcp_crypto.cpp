@@ -21,6 +21,8 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <poll.h>
+#include <thread>
 #include <vector>
 
 #include <netinet/in.h>
@@ -30,6 +32,7 @@
 #include <fmt/format.h>
 
 extern "C" {
+#include <libavutil/error.h>
 #include <libavformat/avio.h>
 #include "media/srtp.h"
 }
@@ -84,6 +87,12 @@ public:
         CPPUNIT_ASSERT(received > 0);
         buffer.resize(static_cast<size_t>(received));
         return buffer;
+    }
+
+    bool hasData(int timeoutMs)
+    {
+        pollfd descriptor {fd_, POLLIN, 0};
+        return ::poll(&descriptor, 1, timeoutMs) > 0 && (descriptor.revents & POLLIN) != 0;
     }
 
     void sendTo(uint16_t port, const std::vector<uint8_t>& packet)
@@ -168,6 +177,20 @@ rtpPacket(uint16_t sequence)
     return packet;
 }
 
+std::vector<uint8_t>
+genericNack(uint16_t sequence, uint16_t bitmask = 0)
+{
+    return {
+        0x81, 205, 0x00, 0x03,
+        0x11, 0x22, 0x33, 0x44,
+        0x11, 0x22, 0x33, 0x44,
+        static_cast<uint8_t>(sequence >> 8),
+        static_cast<uint8_t>(sequence),
+        static_cast<uint8_t>(bitmask >> 8),
+        static_cast<uint8_t>(bitmask),
+    };
+}
+
 } // namespace
 
 class RtcpCryptoTest : public CppUnit::TestFixture
@@ -184,6 +207,14 @@ private:
     void corruptedSrtcpDoesNotEndLiveStream();
     void rtcpByeDoesNotEndLiveStream();
     void replayedRtpDoesNotEndStream();
+    void genericNackRetransmitsRtp();
+    void verifyProtectedNackMustBeAuthenticated();
+    void verifyDuplicateNackRetransmitsOnce();
+    void verifyNackRetransmissionCountIsBounded();
+    void verifyPaddedNackIgnoresPadding();
+    void verifyStaleNackPacketRequestsKeyframe();
+    void verifyNackRetransmissionsArePaced();
+    void missingNackPacketRequestsKeyframe();
     void stoppedReadIsCancelled();
 
     CPPUNIT_TEST_SUITE(RtcpCryptoTest);
@@ -195,6 +226,8 @@ private:
     CPPUNIT_TEST(corruptedSrtcpDoesNotEndLiveStream);
     CPPUNIT_TEST(rtcpByeDoesNotEndLiveStream);
     CPPUNIT_TEST(replayedRtpDoesNotEndStream);
+    CPPUNIT_TEST(genericNackRetransmitsRtp);
+    CPPUNIT_TEST(missingNackPacketRequestsKeyframe);
     CPPUNIT_TEST(stoppedReadIsCancelled);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -448,6 +481,312 @@ RtcpCryptoTest::replayedRtpDoesNotEndStream()
                          avio_read_partial(ioHandle->getContext(),
                                            buffer.data(),
                                            static_cast<int>(buffer.size())));
+}
+
+void
+RtcpCryptoTest::genericNackRetransmitsRtp()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr rtpDest {fmt::format("127.0.0.1:{}", remoteRtp.port())};
+    const dhtnet::IpAddr rtcpDest {fmt::format("127.0.0.1:{}", remoteRtcp.port())};
+
+    SocketPair socketPair(rtpDest, rtcpDest, localRtpPort, localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    const auto firstPacket = rtpPacket(42);
+    const auto fillerPacket = rtpPacket(43);
+    const auto secondPacket = rtpPacket(44);
+    avio_write(ioHandle->getContext(), firstPacket.data(), static_cast<int>(firstPacket.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == firstPacket);
+    avio_write(ioHandle->getContext(), fillerPacket.data(), static_cast<int>(fillerPacket.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == fillerPacket);
+    avio_write(ioHandle->getContext(), secondPacket.data(), static_cast<int>(secondPacket.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == secondPacket);
+
+    // PID 42 plus BLP bit 1 requests sequence 44.
+    remoteRtcp.sendTo(localRtcpPort, genericNack(42, 0x0002));
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(remoteRtp.receive() == firstPacket);
+    CPPUNIT_ASSERT(remoteRtp.receive() == secondPacket);
+
+    verifyProtectedNackMustBeAuthenticated();
+    verifyDuplicateNackRetransmitsOnce();
+    verifyNackRetransmissionCountIsBounded();
+    verifyPaddedNackIgnoresPadding();
+    verifyStaleNackPacketRequestsKeyframe();
+    verifyNackRetransmissionsArePaced();
+}
+
+void
+RtcpCryptoTest::verifyProtectedNackMustBeAuthenticated()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.createSRTP(SRTP_SUITE, SRTP_PARAMS, SRTP_SUITE, SRTP_PARAMS);
+    socketPair.setRtcpProtection(true);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    const auto packet = rtpPacket(42);
+    avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+    avio_flush(ioHandle->getContext());
+    const auto encryptedPacket = remoteRtp.receive();
+
+    const auto nack = genericNack(42);
+    std::vector<uint8_t> buffer(2048);
+    remoteRtcp.sendTo(localRtcpPort, nack);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(!remoteRtp.hasData(100));
+
+    remoteRtcp.sendTo(localRtcpPort, protectRtcp(nack));
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(remoteRtp.receive() == encryptedPacket);
+}
+
+void
+RtcpCryptoTest::verifyDuplicateNackRetransmitsOnce()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    const auto packet = rtpPacket(42);
+    avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+
+    auto nack = genericNack(42);
+    const std::vector<uint8_t> duplicateFci(nack.begin() + 12, nack.end());
+    nack[3] = 4;
+    nack.insert(nack.end(), duplicateFci.begin(), duplicateFci.end());
+    remoteRtcp.sendTo(localRtcpPort, nack);
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+    CPPUNIT_ASSERT(!remoteRtp.hasData(100));
+}
+
+void
+RtcpCryptoTest::verifyNackRetransmissionCountIsBounded()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    constexpr uint16_t firstSequence = 100;
+    constexpr uint16_t requestedPackets = 65;
+    for (uint16_t offset = 0; offset < requestedPackets; ++offset) {
+        const auto packet = rtpPacket(firstSequence + offset);
+        avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+        avio_flush(ioHandle->getContext());
+        CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+    }
+
+    std::vector<uint8_t> nack {
+        0x81, 205, 0, 0,
+        0x11, 0x22, 0x33, 0x44,
+        0x11, 0x22, 0x33, 0x44,
+    };
+    for (uint16_t offset = 0; offset < requestedPackets; ++offset) {
+        const auto sequence = static_cast<uint16_t>(firstSequence + offset);
+        nack.insert(nack.end(),
+                    {static_cast<uint8_t>(sequence >> 8),
+                     static_cast<uint8_t>(sequence),
+                     0,
+                     0});
+    }
+    const auto length = static_cast<uint16_t>(nack.size() / 4 - 1);
+    nack[2] = static_cast<uint8_t>(length >> 8);
+    nack[3] = static_cast<uint8_t>(length);
+
+    remoteRtcp.sendTo(localRtcpPort, nack);
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    for (uint16_t offset = 0; offset < 64; ++offset)
+        CPPUNIT_ASSERT(remoteRtp.receive() == rtpPacket(firstSequence + offset));
+    CPPUNIT_ASSERT(!remoteRtp.hasData(100));
+}
+
+void
+RtcpCryptoTest::verifyPaddedNackIgnoresPadding()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::atomic_uint keyframeRequests {0};
+    socketPair.setKeyframeRequestCallback([&keyframeRequests] { ++keyframeRequests; });
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    const auto packet = rtpPacket(42);
+    avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+
+    auto nack = genericNack(42);
+    nack[0] |= 0x20;
+    nack[3] = 4;
+    nack.insert(nack.end(), {0, 0, 0, 4});
+    remoteRtcp.sendTo(localRtcpPort, nack);
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+    CPPUNIT_ASSERT_EQUAL(0u, keyframeRequests.load());
+    CPPUNIT_ASSERT(!remoteRtp.hasData(100));
+}
+
+void
+RtcpCryptoTest::verifyStaleNackPacketRequestsKeyframe()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::atomic_uint keyframeRequests {0};
+    socketPair.setKeyframeRequestCallback([&keyframeRequests] { ++keyframeRequests; });
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    const auto packet = rtpPacket(42);
+    avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+    avio_flush(ioHandle->getContext());
+    CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10'050));
+
+    remoteRtcp.sendTo(localRtcpPort, genericNack(42));
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT_EQUAL(1u, keyframeRequests.load());
+    CPPUNIT_ASSERT(!remoteRtp.hasData(100));
+}
+
+void
+RtcpCryptoTest::verifyNackRetransmissionsArePaced()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    SocketPair socketPair(dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtp.port())},
+                          dhtnet::IpAddr {fmt::format("127.0.0.1:{}", remoteRtcp.port())},
+                          localRtpPort,
+                          localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    for (const auto sequence : {uint16_t(42), uint16_t(43), uint16_t(44)}) {
+        const auto packet = rtpPacket(sequence);
+        avio_write(ioHandle->getContext(), packet.data(), static_cast<int>(packet.size()));
+        avio_flush(ioHandle->getContext());
+        CPPUNIT_ASSERT(remoteRtp.receive() == packet);
+    }
+    socketPair.setRtpPacingBitrate(1'280);
+
+    const auto start = std::chrono::steady_clock::now();
+    remoteRtcp.sendTo(localRtcpPort, genericNack(42, 0x0003));
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT(std::chrono::steady_clock::now() - start < std::chrono::milliseconds(150));
+    CPPUNIT_ASSERT(remoteRtp.receive() == rtpPacket(42));
+    CPPUNIT_ASSERT(remoteRtp.receive() == rtpPacket(43));
+    CPPUNIT_ASSERT(remoteRtp.receive() == rtpPacket(44));
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    CPPUNIT_ASSERT(elapsed >= std::chrono::milliseconds(150));
+}
+
+void
+RtcpCryptoTest::missingNackPacketRequestsKeyframe()
+{
+    UdpSocket remoteRtp;
+    UdpSocket remoteRtcp;
+
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr rtpDest {fmt::format("127.0.0.1:{}", remoteRtp.port())};
+    const dhtnet::IpAddr rtcpDest {fmt::format("127.0.0.1:{}", remoteRtcp.port())};
+
+    SocketPair socketPair(rtpDest, rtcpDest, localRtpPort, localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::atomic_uint keyframeRequests {0};
+    socketPair.setKeyframeRequestCallback([&keyframeRequests] { ++keyframeRequests; });
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+    remoteRtcp.sendTo(localRtcpPort, genericNack(42));
+    std::vector<uint8_t> buffer(2048);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT_EQUAL(1u, keyframeRequests.load());
+
+    remoteRtcp.sendTo(localRtcpPort, genericNack(42));
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
+                                    buffer.data(),
+                                    static_cast<int>(buffer.size()))
+                   > 0);
+    CPPUNIT_ASSERT_EQUAL(1u, keyframeRequests.load());
 }
 
 void

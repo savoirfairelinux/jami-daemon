@@ -34,6 +34,7 @@
 #include <optional>
 #include <string_view>
 #include <thread>
+#include <unordered_set>
 
 extern "C" {
 #include "srtp.h"
@@ -87,8 +88,13 @@ static constexpr unsigned RTP_FIXED_HEADER_SIZE = 12;
 static constexpr uint16_t RTP_ONE_BYTE_EXTENSION_PROFILE = 0xBEDE;
 static constexpr uint8_t RTCP_PT_SDES = 202;
 static constexpr uint8_t RTCP_PT_BYE = 203;
+static constexpr uint8_t RTCP_PT_RTPFB = 205;
 static constexpr uint8_t RTCP_SDES_END = 0;
 static constexpr uint8_t RTCP_SDES_MID_ITEM = 15;
+static constexpr uint8_t RTCP_RTPFB_GENERIC_NACK = 1;
+static constexpr size_t MAX_CACHED_RTP_PACKETS = 8192;
+static constexpr auto MAX_CACHED_RTP_PACKET_AGE = std::chrono::seconds(10);
+static constexpr size_t MAX_NACK_RETRANSMISSIONS = 64;
 
 enum class DataType : uint8_t { RTP = 1 << 0, RTCP = 1 << 1 };
 
@@ -452,25 +458,25 @@ appendOneByteRtpExtensionString(
 static bool
 rtcpReferencesSsrc(const uint8_t* buf, size_t len, uint32_t ssrc)
 {
-    if (len < 8)
-        return false;
+    for (size_t offset = 0; offset + 4 <= len;) {
+        const auto* packet = buf + offset;
+        const auto packetSize = 4u * (static_cast<size_t>((packet[2] << 8) | packet[3]) + 1u);
+        if ((packet[0] >> 6) != 2 || packetSize < 4 || packetSize > len - offset)
+            return false;
 
-    if (readUint32(buf + 4) == ssrc)
-        return true;
-
-    const auto pt = buf[1];
-    if ((pt == 200 || pt == 201) && len >= 12)
-        return readUint32(buf + 8) == ssrc;
-
-    if (pt == 206) {
-        if (len >= 12 && readUint32(buf + 8) == ssrc)
+        const auto pt = packet[1];
+        if (packetSize >= 8 && readUint32(packet + 4) == ssrc)
             return true;
-        if (len >= 24 && readUint32(buf + 20) == ssrc)
+        if (packetSize >= 12 && (pt == 201 || pt == 206 || pt == RTCP_PT_RTPFB)
+            && readUint32(packet + 8) == ssrc)
             return true;
+        if (pt == 200 && (packet[0] & 0x1f) != 0 && packetSize >= 32
+            && readUint32(packet + 28) == ssrc)
+            return true;
+        if (pt == 206 && packetSize >= 24 && readUint32(packet + 20) == ssrc)
+            return true;
+        offset += packetSize;
     }
-
-    if (pt == TRANSPORT_CC_RTCP_PACKET_TYPE && (buf[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT && len >= 12)
-        return readUint32(buf + 8) == ssrc;
 
     return false;
 }
@@ -649,22 +655,29 @@ struct SocketPair::BundleContext
                 }
             }
 
-            std::vector<std::shared_ptr<PacketState>> matchedSubscribers;
-            matchedSubscribers.reserve(subscribers.size());
+            std::vector<std::shared_ptr<PacketState>> localMatches;
+            std::vector<std::shared_ptr<PacketState>> remoteMatches;
+            localMatches.reserve(subscribers.size());
+            remoteMatches.reserve(subscribers.size());
 
             for (const auto& subscriber : subscribers) {
+                std::optional<uint32_t> localSsrc;
                 std::optional<uint32_t> remoteSsrc;
                 {
                     std::lock_guard lk(subscriber->dataBuffMutex);
+                    localSsrc = subscriber->localSsrc;
                     remoteSsrc = subscriber->remoteSsrc;
                 }
 
-                if (!remoteSsrc || rtcpReferencesSsrc(buf, len, *remoteSsrc))
-                    matchedSubscribers.emplace_back(subscriber);
+                if (localSsrc && rtcpReferencesSsrc(buf, len, *localSsrc))
+                    localMatches.emplace_back(subscriber);
+                if (remoteSsrc && rtcpReferencesSsrc(buf, len, *remoteSsrc))
+                    remoteMatches.emplace_back(subscriber);
             }
 
-            if (matchedSubscribers.empty())
-                matchedSubscribers = subscribers;
+            const auto& matchedSubscribers = !localMatches.empty()
+                                                 ? localMatches
+                                                 : (!remoteMatches.empty() ? remoteMatches : subscribers);
 
             for (const auto& subscriber : matchedSubscribers)
                 deliverPacket(subscriber, true, std::nullopt);
@@ -886,6 +899,8 @@ SocketPair::SocketPair(const std::shared_ptr<BundleContext>& bundleContext,
 SocketPair::~SocketPair()
 {
     interrupt();
+    if (nackSender_.joinable())
+        nackSender_.join();
     closeSockets();
     JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
 }
@@ -968,6 +983,161 @@ SocketPair::saveRtcpTransportCcPacket(uint8_t* buf, size_t len)
     }
 
     cvRtcpPacketReadyToRead_.notify_one();
+}
+
+void
+SocketPair::cacheSentRtpPacket(const uint8_t* buf, size_t len)
+{
+    if (!buf || len < RTP_FIXED_HEADER_SIZE)
+        return;
+
+    const auto now = clock::now();
+    std::lock_guard lock(sentRtpPacketsMutex_);
+    while (!sentRtpPackets_.empty()
+           && (sentRtpPackets_.size() >= MAX_CACHED_RTP_PACKETS
+               || now - sentRtpPackets_.front().sentAt > MAX_CACHED_RTP_PACKET_AGE)) {
+        sentRtpPackets_.pop_front();
+    }
+    const auto sequence = static_cast<uint16_t>(buf[2] << 8 | buf[3]);
+    const auto ssrc = readUint32(buf + 8);
+    sentRtpPackets_.push_back({
+        sequence,
+        ssrc,
+        now,
+        std::vector<uint8_t>(buf, buf + len),
+    });
+}
+
+void
+SocketPair::retransmitNackPackets(const uint8_t* buf, size_t len)
+{
+    if (!buf || len < 16 || buf[1] != RTCP_PT_RTPFB || (buf[0] & 0x1f) != RTCP_RTPFB_GENERIC_NACK)
+        return;
+
+    const auto mediaSsrc = readUint32(buf + 8);
+    const auto requestedSequences = parseNackSequences(buf, len);
+    auto retransmissions = findNackPackets(mediaSsrc, requestedSequences);
+    for (auto& packet : retransmissions.packets)
+        queueNackPacket(std::move(packet));
+
+    if (retransmissions.missed != 0 && keyframeRequestCallback_) {
+        const auto now = clock::now();
+        if (now - lastNackKeyframeRequest_ >= std::chrono::seconds(5)) {
+            lastNackKeyframeRequest_ = now;
+            keyframeRequestCallback_();
+        }
+    }
+}
+
+std::vector<uint16_t>
+SocketPair::parseNackSequences(const uint8_t* buf, size_t len)
+{
+    auto feedbackEnd = len;
+    if ((buf[0] & 0x20) != 0) {
+        const auto paddingSize = static_cast<size_t>(buf[len - 1]);
+        if (paddingSize == 0 || paddingSize > len - 12)
+            return {};
+        feedbackEnd -= paddingSize;
+    }
+
+    std::vector<uint16_t> requestedSequences;
+    std::unordered_set<uint16_t> uniqueRequestedSequences;
+    const auto addRequestedSequence = [&](uint16_t sequence) {
+        if (requestedSequences.size() < MAX_NACK_RETRANSMISSIONS
+            && uniqueRequestedSequences.insert(sequence).second) {
+            requestedSequences.push_back(sequence);
+        }
+    };
+    for (size_t offset = 12; offset + 4 <= feedbackEnd; offset += 4) {
+        const auto packetId = static_cast<uint16_t>(buf[offset] << 8 | buf[offset + 1]);
+        const auto lostPacketBitmask = static_cast<uint16_t>(buf[offset + 2] << 8 | buf[offset + 3]);
+        addRequestedSequence(packetId);
+        for (unsigned bit = 0; bit < 16; ++bit) {
+            if (lostPacketBitmask & (1u << bit))
+                addRequestedSequence(static_cast<uint16_t>(packetId + bit + 1));
+        }
+    }
+    return requestedSequences;
+}
+
+SocketPair::NackPackets
+SocketPair::findNackPackets(uint32_t mediaSsrc, const std::vector<uint16_t>& requestedSequences)
+{
+    NackPackets result;
+    {
+        std::lock_guard lock(sentRtpPacketsMutex_);
+        const auto now = clock::now();
+        while (!sentRtpPackets_.empty()
+               && now - sentRtpPackets_.front().sentAt > MAX_CACHED_RTP_PACKET_AGE) {
+            sentRtpPackets_.pop_front();
+        }
+
+        for (const auto sequence : requestedSequences) {
+            const auto packet = std::find_if(
+                sentRtpPackets_.rbegin(),
+                sentRtpPackets_.rend(),
+                [mediaSsrc, sequence, now](const auto& cached) {
+                    return cached.ssrc == mediaSsrc && cached.sequence == sequence
+                           && now - cached.sentAt <= MAX_CACHED_RTP_PACKET_AGE;
+                });
+            if (packet != sentRtpPackets_.rend())
+                result.packets.push_back(packet->payload);
+            else
+                ++result.missed;
+        }
+    }
+    return result;
+}
+
+void
+SocketPair::queueNackPacket(std::vector<uint8_t> packet)
+{
+    std::lock_guard lock(nackSenderMutex_);
+    if (packetState_->interrupted)
+        return;
+    if (nackPacer_.queuedPackets() >= MAX_NACK_RETRANSMISSIONS) {
+        JAMI_WARNING("Dropping NACK retransmission: sender queue is full");
+        return;
+    }
+    if (!nackSender_.joinable())
+        nackSender_ = std::thread([this] { sendNackPackets(); });
+    const auto nowUs = std::chrono::duration_cast<std::chrono::microseconds>(clock::now().time_since_epoch()).count();
+    nackPacer_.enqueue(std::move(packet), nowUs);
+    nackSenderCv_.notify_one();
+}
+
+void
+SocketPair::sendNackPackets()
+{
+    std::unique_lock lock(nackSenderMutex_);
+    while (!packetState_->interrupted) {
+        const auto nowUs = std::chrono::duration_cast<std::chrono::microseconds>(clock::now().time_since_epoch()).count();
+        if (auto packet = nackPacer_.popReady(nowUs)) {
+            lock.unlock();
+            if (nowUs - packet->enqueueTimeUs
+                > std::chrono::duration_cast<std::chrono::microseconds>(MAX_CACHED_RTP_PACKET_AGE).count()) {
+                JAMI_WARNING("Dropping stale NACK retransmission");
+                lock.lock();
+                continue;
+            }
+            const auto size = static_cast<int>(packet->payload.size());
+            int sent;
+            do {
+                if (packetState_->interrupted)
+                    return;
+                sent = writeData(packet->payload.data(), size);
+            } while (sent < 0 && errno == EAGAIN && !packetState_->interrupted);
+            if (sent != size && !packetState_->interrupted)
+                JAMI_WARNING("Failed to retransmit cached RTP packet");
+            lock.lock();
+            continue;
+        }
+        if (const auto next = nackPacer_.nextReadyTimeUs()) {
+            nackSenderCv_.wait_until(lock, time_point(std::chrono::microseconds(*next)));
+        } else {
+            nackSenderCv_.wait(lock);
+        }
+    }
 }
 
 std::list<rtcpRRHeader>
@@ -1316,6 +1486,7 @@ SocketPair::interrupt()
     JAMI_WARNING("[{}] Interrupting RTP sockets", fmt::ptr(this));
     packetState_->interrupted = true;
     packetState_->cv.notify_all();
+    nackSenderCv_.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
 }
 
@@ -1601,6 +1772,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     int len = 0;
     bool fromRTCP = false;
+    bool authenticatedRtcp = !rtcpProtection_;
 
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
@@ -1608,10 +1780,12 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         // failure: legacy peers exchange plaintext RTCP.
         if (len > 0 and rtcpProtection_ and srtpContext_ and srtpContext_->srtp_in.aes) {
             int decryptedLen = len;
-            if (ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &decryptedLen) == 0)
+            if (ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &decryptedLen) == 0) {
                 len = decryptedLen;
-            else if (!isCompleteRtcpCompoundPacket(buf, len))
+                authenticatedRtcp = true;
+            } else if (!isCompleteRtcpCompoundPacket(buf, len)) {
                 len = 0;
+            }
         }
         if (len > 0)
             len = stripRtcpByePackets(buf, len);
@@ -1640,9 +1814,12 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
                         saveRtcpREMBPacket(packet, packetSize);
                     }
                 }
-                // 205 = RTPFB PT, FMT 15 = Transport-CC
-                else if (header->pt == TRANSPORT_CC_RTCP_PACKET_TYPE && (packet[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT) {
-                    saveRtcpTransportCcPacket(packet, packetSize);
+                // 205 = RTPFB PT: Generic NACK (FMT 1), Transport-CC (FMT 15)
+                else if (header->pt == RTCP_PT_RTPFB) {
+                    if ((packet[0] & 0x1f) == RTCP_RTPFB_GENERIC_NACK && authenticatedRtcp)
+                        retransmitNackPackets(packet, packetSize);
+                    else if ((packet[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT)
+                        saveRtcpTransportCcPacket(packet, packetSize);
                 }
                 // Sender reports and source descriptions need no local action.
                 else if (header->pt != 200 && header->pt != RTCP_PT_SDES) {
@@ -1779,6 +1956,7 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
     std::array<uint8_t, RTP_MAX_PACKET_LENGTH> firstPatchedPacket {};
     std::array<uint8_t, RTP_MAX_PACKET_LENGTH> secondPatchedPacket {};
+    std::vector<uint8_t> encryptedPacket;
     bool useFirstPatchedPacket = true;
     unsigned int ts_LSB, ts_MSB;
     double currentSRTS, currentLatency;
@@ -1863,17 +2041,21 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
     // Encrypt? RTCP is only protected when SRTCP was negotiated (DTLS-SRTP),
     // legacy SDES peers expect plaintext RTCP.
     if ((not isRTCP or rtcpProtection_) and srtpContext_ and srtpContext_->srtp_out.aes) {
-        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out,
-                                   buf,
-                                   buf_size,
-                                   srtpContext_->encryptbuf,
-                                   sizeof(srtpContext_->encryptbuf));
-        if (buf_size < 0) {
-            JAMI_WARNING("encrypt error {}", buf_size);
-            return buf_size;
+        std::lock_guard lock(srtpWriteMutex_);
+        const auto encryptedSize = ff_srtp_encrypt(&srtpContext_->srtp_out,
+                                                   buf,
+                                                   buf_size,
+                                                   srtpContext_->encryptbuf,
+                                                   sizeof(srtpContext_->encryptbuf));
+        if (encryptedSize < 0) {
+            JAMI_WARNING("encrypt error {}", encryptedSize);
+            return encryptedSize;
         }
 
-        buf = srtpContext_->encryptbuf;
+        encryptedPacket.assign(srtpContext_->encryptbuf,
+                               srtpContext_->encryptbuf + encryptedSize);
+        buf = encryptedPacket.data();
+        buf_size = encryptedSize;
     }
 
     std::optional<RtpPacerPacket> pacedPacket;
@@ -1891,8 +2073,18 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 
+    if (ret < 0 && !isRTCP) {
+        JAMI_WARNING("Failed to send RTP packet: sequence={}, size={}, error={}",
+                     buf_size >= static_cast<int>(RTP_FIXED_HEADER_SIZE)
+                         ? static_cast<uint16_t>(buf[2] << 8 | buf[3])
+                         : 0,
+                     buf_size,
+                     ret);
+    }
     if (ret > 0 && transportCcSequenceNumber)
         recordTransportCcSend(*transportCcSequenceNumber, static_cast<size_t>(buf_size));
+    if (ret > 0 && !isRTCP)
+        cacheSentRtpPacket(buf, static_cast<size_t>(buf_size));
 
     return ret < 0 ? -errno : ret;
 }
@@ -1972,8 +2164,13 @@ void
 SocketPair::setRtpPacingBitrate(uint64_t bitrateBps)
 {
     rtpPacingBitrateBps_.store(bitrateBps, std::memory_order_relaxed);
-    std::lock_guard lock(rtpPacerMutex_);
-    rtpPacer_.setConfig({bitrateBps, RTP_PACING_MAX_QUEUE_DELAY_US});
+    {
+        std::lock_guard lock(rtpPacerMutex_);
+        rtpPacer_.setConfig({bitrateBps, RTP_PACING_MAX_QUEUE_DELAY_US});
+    }
+    std::lock_guard lock(nackSenderMutex_);
+    nackPacer_.setConfig({bitrateBps, -1});
+    nackSenderCv_.notify_one();
 }
 
 bool
