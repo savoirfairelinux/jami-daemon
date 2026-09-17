@@ -70,6 +70,19 @@ static const std::string kExternalOffer = [] {
     return offer;
 }();
 
+static std::string
+makeExternalAnswer(std::string offer)
+{
+    auto replace = [&offer](std::string_view from, std::string_view to) {
+        if (auto pos = offer.find(from); pos != std::string::npos)
+            offer.replace(pos, from.size(), to);
+    };
+    replace("a=setup:actpass", "a=setup:active");
+    replace("a=ice-ufrag:", "a=ice-ufrag:web");
+    replace("a=ice-pwd:", "a=ice-pwd:web");
+    return offer;
+}
+
 class ExternalMediaCallTest : public CppUnit::TestFixture
 {
 public:
@@ -125,6 +138,7 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
     std::string bobCallId;
     std::string bobRemoteSdp;
     std::string aliceRemoteSdp;
+    std::string aliceReoffer;
     std::string aliceCallState;
     std::atomic<int> callStopped {0};
 
@@ -141,8 +155,12 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
         [&](const std::string& accountId, const std::string&, const std::string& sdp) {
             if (accountId == bobId)
                 bobRemoteSdp = sdp;
-            else if (accountId == aliceId)
-                aliceRemoteSdp = sdp;
+            else if (accountId == aliceId) {
+                if (aliceRemoteSdp.empty())
+                    aliceRemoteSdp = sdp;
+                else
+                    aliceReoffer = sdp;
+            }
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
@@ -180,6 +198,32 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
 
     // The call is established at the SIP level.
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT"; }));
+    std::this_thread::sleep_for(3s);
+
+    auto updatedMedia = answerMedia;
+    updatedMedia.emplace_back(
+        libjami::MediaMap {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                            libjami::Media::MediaAttributeValue::VIDEO},
+                           {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+                           {libjami::Media::MediaAttributeKey::MUTED, "false"},
+                           {libjami::Media::MediaAttributeKey::SOURCE, "test"},
+                           {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
+    CPPUNIT_ASSERT(libjami::requestMediaChange(bobId, bobCallId, updatedMedia));
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return not aliceReoffer.empty(); }));
+    CPPUNIT_ASSERT(aliceReoffer.find("ice-ufrag") != std::string::npos);
+    CPPUNIT_ASSERT(libjami::answerMediaChangeRequestWithExternalMedia(
+        aliceId, aliceCallId, makeExternalAnswer(aliceReoffer)));
+
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(bobCallId));
+    CPPUNIT_ASSERT(bobCall);
+    bool answerReceived = false;
+    for (unsigned i = 0; i < 100 and not answerReceived; ++i) {
+        std::this_thread::sleep_for(100ms);
+        answerReceived = Sdp::toString(bobCall->getSDP().getActiveRemoteSdpSession()).find("a=ice-ufrag:web")
+                         != std::string::npos;
+    }
+    CPPUNIT_ASSERT(answerReceived);
 
     libjami::hangUp(aliceId, aliceCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped >= 2; }));
