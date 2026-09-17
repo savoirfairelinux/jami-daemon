@@ -1629,10 +1629,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
                 else if (header->pt == TRANSPORT_CC_RTCP_PACKET_TYPE && (packet[0] & 0x1f) == TRANSPORT_CC_RTCP_FORMAT) {
                     saveRtcpTransportCcPacket(packet, packetSize);
                 }
-                // 200 = SR PT
-                else if (header->pt == 200) {
-                    // not used yet
-                } else {
+                // Sender reports and source descriptions need no local action.
+                else if (header->pt != 200 && header->pt != RTCP_PT_SDES) {
                     unsigned pt = header->pt;
                     JAMI_LOG("Unable to read RTCP: unknown packet type {}", pt);
                 }
