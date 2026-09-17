@@ -739,33 +739,13 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
 
     setRtcpMuxEnabled(acc->isRtcpMuxEnabled());
 
-    auto offerMediaAttrList = mediaAttrList;
-    const auto previousLocalMedia = sdp_->getActiveMediaDescription(false);
-    size_t previousMediaIndex = 0;
-    for (auto& media : offerMediaAttrList) {
-        if (not media.enabled_)
-            continue;
-        while (previousMediaIndex < previousLocalMedia.size()
-               and not previousLocalMedia[previousMediaIndex].enabled) {
-            ++previousMediaIndex;
-        }
-        if (previousMediaIndex < previousLocalMedia.size()
-            and media.type_ == previousLocalMedia[previousMediaIndex].type
-            and not previousLocalMedia[previousMediaIndex].mid.empty()) {
-            media.label_ = previousLocalMedia[previousMediaIndex].mid;
-        }
-        ++previousMediaIndex;
-    }
+    const auto* previousLocalSession = sdp_->getActiveLocalSdpSession();
 
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
 
-    sdp_->clearIce();
-    sdp_->setActiveRemoteSdpSession(nullptr);
-    sdp_->setActiveLocalSdpSession(nullptr);
-
-    if (not sdp_->createOffer(offerMediaAttrList))
+    if (not sdp_->createOffer(mediaAttrList, previousLocalSession))
         return !PJ_SUCCESS;
 
     if (isIceEnabled() and needNewIce) {
