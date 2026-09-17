@@ -214,13 +214,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 
         if (bundleSocketContext_) {
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
-                                                               receive_.dtls_setup,
-                                                               send_.dtls_fingerprint_type,
-                                                               send_.dtls_fingerprint,
-                                                               dtlsCertificate_,
-                                                               dtlsPrivateKey_,
-                                                               dtlsAbort_);
+                dtlsSrtp = getDtlsSrtpContext(nullptr);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(bundleSocketContext_, rtcpMux, bundleRtpPayloadType_));
@@ -236,13 +230,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             }
 
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = negotiateDtlsSrtp(*rtp_sock,
-                                             receive_.dtls_setup,
-                                             send_.dtls_fingerprint_type,
-                                             send_.dtls_fingerprint,
-                                             dtlsCertificate_,
-                                             dtlsPrivateKey_,
-                                             dtlsAbort_);
+                dtlsSrtp = getDtlsSrtpContext(rtp_sock.get());
                 hasDtlsSrtp = true;
             }
 
