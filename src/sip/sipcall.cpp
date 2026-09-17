@@ -1074,6 +1074,13 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
 
     setRtcpMuxEnabled(acc->isRtcpMuxEnabled());
 
+    auto offerMediaAttrList = mediaAttrList;
+    const auto previousLocalMedia = sdp_->getActiveMediaDescription(false);
+    for (size_t i = 0; i < std::min(offerMediaAttrList.size(), previousLocalMedia.size()); ++i) {
+        if (offerMediaAttrList[i].type_ == previousLocalMedia[i].type && not previousLocalMedia[i].mid.empty())
+            offerMediaAttrList[i].label_ = previousLocalMedia[i].mid;
+    }
+
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
@@ -1097,7 +1104,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
         sdp_->setPublishedIP(newAddress);
     }
 
-    if (not sdp_->createOffer(mediaAttrList))
+    if (not sdp_->createOffer(offerMediaAttrList))
         return !PJ_SUCCESS;
 
     if (isIceEnabled() and needNewIce) {
