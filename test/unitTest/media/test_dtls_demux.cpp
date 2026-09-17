@@ -19,10 +19,12 @@ public:
 private:
     void dtlsRecordsAreAccepted();
     void srtpAndStunPacketsAreRejected();
+    void dtlsContextIsReusableForIceRestart();
 
     CPPUNIT_TEST_SUITE(DtlsDemuxTest);
     CPPUNIT_TEST(dtlsRecordsAreAccepted);
     CPPUNIT_TEST(srtpAndStunPacketsAreRejected);
+    CPPUNIT_TEST(dtlsContextIsReusableForIceRestart);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -60,6 +62,21 @@ DtlsDemuxTest::srtpAndStunPacketsAreRejected()
     CPPUNIT_ASSERT(!isDtlsPacket(stun.data(), stun.size()));
     CPPUNIT_ASSERT(!isDtlsPacket(zrtp.data(), zrtp.size()));
     CPPUNIT_ASSERT(!isDtlsPacket(srtp.data(), 0));
+}
+
+void
+DtlsDemuxTest::dtlsContextIsReusableForIceRestart()
+{
+    DtlsSrtpSession session {
+        DtlsSetup::PASSIVE,
+        "SHA-256",
+        "AA:BB:CC",
+        {"SRTP_AES128_CM_SHA1_80", "outbound", "inbound"},
+    };
+
+    CPPUNIT_ASSERT(session.matches(DtlsSetup::PASSIVE, "sha-256", "AA:BB:CC"));
+    CPPUNIT_ASSERT(!session.matches(DtlsSetup::ACTIVE, "sha-256", "AA:BB:CC"));
+    CPPUNIT_ASSERT(!session.matches(DtlsSetup::PASSIVE, "sha-256", "DD:EE:FF"));
 }
 
 } // namespace test
