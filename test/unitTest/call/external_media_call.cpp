@@ -212,6 +212,8 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return not aliceReoffer.empty(); }));
     CPPUNIT_ASSERT(aliceReoffer.find("ice-ufrag") != std::string::npos);
+    CPPUNIT_ASSERT(aliceReoffer.find("a=mid:0\r\n") != std::string::npos);
+    CPPUNIT_ASSERT(aliceReoffer.find("a=mid:audio_0\r\n") == std::string::npos);
     CPPUNIT_ASSERT(libjami::answerMediaChangeRequestWithExternalMedia(
         aliceId, aliceCallId, makeExternalAnswer(aliceReoffer)));
 
