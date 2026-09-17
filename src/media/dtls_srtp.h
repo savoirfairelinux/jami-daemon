@@ -21,6 +21,18 @@ struct DtlsSrtpContext
     std::string inboundKeyInfo {};
 };
 
+struct DtlsSrtpSession
+{
+    DtlsSetup localSetup {};
+    std::string remoteFingerprintHash {};
+    std::string remoteFingerprint {};
+    DtlsSrtpContext context {};
+
+    bool matches(DtlsSetup setup,
+                 std::string_view fingerprintHash,
+                 std::string_view fingerprint) const;
+};
+
 dht::crypto::Identity generateDtlsSrtpIdentity();
 
 std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate,
