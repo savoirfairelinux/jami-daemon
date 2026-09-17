@@ -71,6 +71,8 @@ bool refuse(const std::string& accountId, const std::string& callId);
 bool accept(const std::string& accountId, const std::string& callId);
 bool acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool acceptWithExternalMedia(const std::string& accountId, const std::string& callId, const std::string& sdpAnswer);
+%rename(answerMediaChangeRequestWithExternalMedia) answerMediaChangeWithExternalSdp;
+bool answerMediaChangeWithExternalSdp(const std::string& accountId, const std::string& callId, const std::string& sdpAnswer);
 bool setVideoOrientation(const std::string& accountId, const std::string& callId, int streamIdx, int rotation);
 bool answerMediaChangeRequest(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool hangUp(const std::string& accountId, const std::string& callId);

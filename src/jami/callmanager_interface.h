@@ -70,6 +70,9 @@ LIBJAMI_PUBLIC std::string placeCallWithExternalMedia(const std::string& account
 LIBJAMI_PUBLIC bool acceptWithExternalMedia(const std::string& accountId,
                                             const std::string& callId,
                                             const std::string& sdpAnswer);
+LIBJAMI_PUBLIC bool answerMediaChangeWithExternalSdp(const std::string& accountId,
+                                                     const std::string& callId,
+                                                     const std::string& sdpAnswer);
 LIBJAMI_PUBLIC bool setVideoOrientation(const std::string& accountId,
                                         const std::string& callId,
                                         int streamIdx,
