@@ -680,6 +680,12 @@ public:
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
         addToHistory(loadedHistory_, commits, true, commitFromSelf);
+        // A merge may have interleaved these commits with ones already shown.
+        if (std::any_of(commits.begin(), commits.end(), [](const auto& c) {
+                auto typeIt = c.find(CommitKey::TYPE);
+                return typeIt != c.end() && typeIt->second == CommitType::MERGE;
+            }))
+            relinearizeAfterMerge(commits);
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
@@ -1050,6 +1056,12 @@ public:
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                        bool messageReceived) const;
     void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message, History& history) const;
+    /**
+     * After a non fast-forward merge, reorder the newest part of loadedHistory_ so
+     * that it matches the repository log order, and notify clients of moved messages.
+     * @param commits Commits announced by the merge, in chronological order
+     */
+    void relinearizeAfterMerge(const std::vector<std::map<std::string, std::string>>& commits);
     /**
      * {uri, {
      *          {"fetch", "commitId"},
@@ -1802,6 +1814,104 @@ Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& 
         currentMessage = parent;
         parentIt = history.quickAccess.find(parent->linearizedParent);
     }
+}
+
+void
+Conversation::Impl::relinearizeAfterMerge(const std::vector<std::map<std::string, std::string>>& commits)
+{
+    auto& history = loadedHistory_;
+
+    std::set<std::string> newIds;
+    for (const auto& c : commits) {
+        auto typeIt = c.find(CommitKey::TYPE);
+        if (typeIt == c.end() || typeIt->second != CommitType::MERGE)
+            newIds.emplace(c.at(ConversationMapKeys::ID));
+    }
+    if (newIds.empty())
+        return;
+
+    // Walk the log from HEAD, in the order loadMessages() will use, until every
+    // announced commit has been seen plus one more commit, the anchor. Everything
+    // older than the anchor is left alone, so the anchor must also be older than
+    // every message currently shown: commits sharing a timestamp are not guaranteed
+    // to keep their relative order once the graph changes.
+    auto& list = history.messageList;
+    auto oldIt = list.begin();
+    std::set<std::string> visited;
+    std::vector<std::string> order; // newest first, merges excluded
+    size_t remaining = newIds.size();
+    bool anchorFound = false;
+    repository_->log(
+        [&](const auto&, const auto&, const auto& commit) {
+            return git_commit_parentcount(commit.get()) > 1 ? CallbackResult::Skip : CallbackResult::Ok;
+        },
+        [&](auto&& cc) { order.emplace_back(std::move(cc.id)); },
+        [&](const auto& id, const auto&, const auto&) {
+            visited.emplace(id);
+            if (newIds.erase(id))
+                --remaining;
+            if (remaining != 0)
+                return false;
+            while (oldIt != list.end() && visited.count((*oldIt)->id))
+                ++oldIt;
+            anchorFound = oldIt == list.end() || (*oldIt)->id == id;
+            return anchorFound;
+        },
+        "",
+        false);
+    if (remaining != 0)
+        return; // Should not happen: announced commits are always reachable from HEAD
+    std::string anchorId;
+    if (anchorFound) {
+        anchorId = std::move(order.back());
+        order.pop_back();
+    }
+
+    // Only displayed messages are part of the linear chain; reactions and edits are not.
+    auto isChained = [](const libjami::SwarmMessage& m) {
+        auto reactIt = m.body.find(CommitKey::REACT_TO);
+        auto editIt = m.body.find(CommitKey::EDIT);
+        return (reactIt == m.body.end() || reactIt->second.empty())
+               && (editIt == m.body.end() || editIt->second.empty());
+    };
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> chain; // oldest first
+    chain.reserve(order.size());
+    for (auto it = order.rbegin(); it != order.rend(); ++it) {
+        auto q = history.quickAccess.find(*it);
+        if (q != history.quickAccess.end() && isChained(*q->second))
+            chain.emplace_back(q->second);
+    }
+    if (chain.empty())
+        return;
+
+    // These messages are the newest ones in the history: detach them from the front
+    // and put them back in log order.
+    std::set<const libjami::SwarmMessage*> detaching;
+    for (const auto& msg : chain)
+        detaching.emplace(msg.get());
+    for (auto it = list.begin(); it != list.end() && !detaching.empty();) {
+        if (detaching.erase(it->get()))
+            it = list.erase(it);
+        else
+            ++it;
+    }
+    for (const auto& msg : chain)
+        list.emplace_front(msg);
+
+    // Announce the chain from the first message whose predecessor changed, oldest
+    // first: a client that places a message right after its parent needs the whole
+    // tail replayed, since a message may keep its parent while that parent moves.
+    std::vector<libjami::SwarmMessage> moved;
+    const std::string* parentId = &anchorId;
+    for (const auto& msg : chain) {
+        if (!moved.empty() || msg->linearizedParent != *parentId) {
+            msg->linearizedParent = *parentId;
+            moved.emplace_back(*msg);
+        }
+        parentId = &msg->id;
+    }
+    for (const auto& msg : moved)
+        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), msg);
 }
 
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
