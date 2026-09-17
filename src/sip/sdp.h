@@ -122,7 +122,8 @@ public:
      * SDP negotiator instance with it.
      * @returns true if offer was created, false otherwise
      */
-    bool createOffer(const std::vector<MediaAttribute>& mediaList);
+    bool createOffer(const std::vector<MediaAttribute>& mediaList,
+                     const pjmedia_sdp_session* previousLocalSession = nullptr);
 
     /**
      * Use an SDP session provided by an external media endpoint (e.g. a
@@ -243,7 +244,8 @@ private:
      * Build the sdp media section
      * Add rtpmap field if necessary
      */
-    pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr);
+    pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr,
+                                           const pjmedia_sdp_session* previousLocalSession = nullptr);
 
     // Determine media direction
     char const* mediaDirection(const MediaAttribute& mediaAttr);
@@ -252,7 +254,7 @@ private:
     static MediaDirection getMediaDirection(pjmedia_sdp_media* media);
 
     // Get the transport type
-    static MediaTransport getMediaTransport(pjmedia_sdp_media* media);
+    static MediaTransport getMediaTransport(const pjmedia_sdp_media* media);
 
     // Get the crypto materials
     static std::vector<std::string> getCrypto(pjmedia_sdp_media* media);
