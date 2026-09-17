@@ -228,6 +228,10 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
     CPPUNIT_ASSERT(receivedAliceReoffer.find("ice-ufrag") != std::string::npos);
     CPPUNIT_ASSERT(receivedAliceReoffer.find("a=mid:0\r\n") != std::string::npos);
     CPPUNIT_ASSERT(receivedAliceReoffer.find("a=mid:audio_0\r\n") == std::string::npos);
+    CPPUNIT_ASSERT(receivedAliceReoffer.find("m=audio") != std::string::npos);
+    CPPUNIT_ASSERT(receivedAliceReoffer.find("UDP/TLS/RTP/SAVPF 111") != std::string::npos);
+    CPPUNIT_ASSERT(receivedAliceReoffer.find("a=rtpmap:111 opus/48000/2\r\n") != std::string::npos);
+    CPPUNIT_ASSERT(receivedAliceReoffer.find("a=rtpmap:104 opus/48000/2\r\n") == std::string::npos);
     CPPUNIT_ASSERT(libjami::answerMediaChangeWithExternalSdp(
         aliceId, aliceCallId, makeExternalAnswer(receivedAliceReoffer)));
 
