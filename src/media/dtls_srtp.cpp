@@ -259,6 +259,28 @@ mediaDtlsCertStore()
 
 } // namespace
 
+namespace {
+
+bool
+caseInsensitiveEqual(std::string_view lhs, std::string_view rhs)
+{
+    return lhs.size() == rhs.size()
+           && std::equal(lhs.begin(), lhs.end(), rhs.begin(), [](unsigned char a, unsigned char b) {
+                  return std::tolower(a) == std::tolower(b);
+              });
+}
+
+} // namespace
+
+bool
+DtlsSrtpSession::matches(DtlsSetup setup,
+                         std::string_view fingerprintHash,
+                         std::string_view fingerprint) const
+{
+    return localSetup == setup && caseInsensitiveEqual(remoteFingerprintHash, fingerprintHash)
+           && caseInsensitiveEqual(remoteFingerprint, fingerprint);
+}
+
 dht::crypto::Identity
 generateDtlsSrtpIdentity()
 {
