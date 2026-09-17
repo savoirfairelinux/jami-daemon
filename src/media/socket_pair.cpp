@@ -842,6 +842,21 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
     return dtlsContext;
 }
 
+void
+SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
+                                 const DtlsSrtpContext& context)
+{
+    if (!bundleContext)
+        throw std::runtime_error("No bundle context for DTLS-SRTP");
+
+    std::lock_guard lk(bundleContext->dtlsMutex_);
+    if (bundleContext->dtlsSrtpContext_)
+        return;
+
+    bundleContext->dtlsSrtpContext_ = context;
+    bundleContext->installCallbacks(bundleContext);
+}
+
 SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
                        std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
                        bool rtcpMux)

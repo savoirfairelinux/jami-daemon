@@ -163,6 +163,8 @@ public:
                                                    const std::shared_ptr<dht::crypto::Certificate>& certificate,
                                                    const std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
                                                    const std::shared_ptr<std::atomic_bool>& abort);
+    static void setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
+                                     const DtlsSrtpContext& context);
 
     SocketPair(const dhtnet::IpAddr& rtpDestAddr,
                const dhtnet::IpAddr& rtcpDestAddr,
