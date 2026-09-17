@@ -276,6 +276,7 @@ export interface JamiSwig {
   placeCallWithExternalMedia(accountId: string, to: string, sdpOffer: string): string
   acceptWithMedia(accountId: string, callId: string, mediaList: VectMap): boolean
   acceptWithExternalMedia(accountId: string, callId: string, sdpAnswer: string): boolean
+  answerMediaChangeRequestWithExternalMedia(accountId: string, callId: string, sdpAnswer: string): boolean
   setVideoOrientation(accountId: string, callId: string, streamIdx: number, rotation: number): boolean
   refuse(accountId: string, callId: string): boolean
   hangUp(accountId: string, callId: string): boolean

@@ -1724,6 +1724,17 @@ SIPCall::reportExternalRemoteAnswer(std::string sdp)
 }
 
 void
+SIPCall::emitExternalRemoteSdp(const std::string& sdp) const
+{
+    if (sdp.empty()) {
+        JAMI_WARNING("[call:{}] No external remote SDP session to report", getCallId());
+        return;
+    }
+    auto callId = isSubcall() ? parent_->getCallId() : getCallId();
+    emitSignal<libjami::CallSignal::RemoteSdpReceived>(getAccountId(), callId, sdp);
+}
+
+void
 SIPCall::emitRemoteSdp() const
 {
     std::string sdpStr;
@@ -1848,6 +1859,56 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     JAMI_DEBUG("[call:{}] Successfully answered the media change request", getCallId());
+}
+
+void
+SIPCall::answerMediaChangeRequestWithExternalSdp(const std::string& sdp)
+{
+    std::lock_guard lk {callMutex_};
+
+    if (not hasExternalMedia()) {
+        JAMI_ERROR("[call:{}] Cannot use an external SDP answer for local media", getCallId());
+        return;
+    }
+    auto account = getSIPAccount();
+    if (not account or not inviteSession_ or not sdp_) {
+        JAMI_ERROR("[call:{}] Cannot answer media change without an active SIP session", getCallId());
+        return;
+    }
+
+    if (not sdp_->setLocalAnswerFromExternalSdp(sdp)) {
+        JAMI_ERROR("[call:{}] Unable to use the external SDP media-change answer", getCallId());
+        return;
+    }
+    externalSdp_ = sdp;
+    if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
+        JAMI_ERROR("[call:{}] Unable to set the external SDP media-change answer", getCallId());
+        return;
+    }
+
+    pjsip_tx_data* tdata;
+    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, nullptr, nullptr, &tdata) != PJ_SUCCESS) {
+        JAMI_ERROR("[call:{}] Unable to create the external media-change response", getCallId());
+        return;
+    }
+
+    // pjmedia rewrites browser SDP, so send the endpoint's answer verbatim.
+    pj_str_t type = CONST_PJ_STR("application");
+    pj_str_t subtype = CONST_PJ_STR("sdp");
+    pj_str_t content {const_cast<char*>(sdp.data()), (pj_ssize_t) sdp.size()};
+    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
+
+    if (not contactHeader_.empty())
+        sip_utils::addContactHeader(contactHeader_, tdata);
+    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
+
+    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
+        JAMI_ERROR("[call:{}] Unable to send the external media-change answer", getCallId());
+        setInviteSession();
+        return;
+    }
+
+    JAMI_DEBUG("[call:{}] Successfully answered media change with external SDP", getCallId());
 }
 
 void
@@ -3639,14 +3700,8 @@ SIPCall::onMediaNegotiationComplete()
             }
 
             if (this_->hasExternalMedia()) {
-                // The media is delegated to an external endpoint: report the
-                // remote SDP to the API client instead of starting local media.
-                // For an outgoing call, the verbatim remote answer is reported
-                // from the SIP transaction callback (transaction_state_changed_cb):
-                // the pjmedia negotiator rewrites (and mangles) WebRTC codec
-                // lines, so the negotiated session must not be used here.
-                if (this_->isIncoming())
-                    this_->emitRemoteSdp();
+                // Remote SDP is reported where it arrives so the external
+                // endpoint receives each offer or answer exactly once.
                 this_->reportMediaNegotiationStatus();
                 return;
             }
@@ -4056,6 +4111,17 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
         return status;
     }
 
+    std::string externalRemoteSdp;
+    if (hasExternalMedia()) {
+        if (const auto* body = rdata->msg_info.msg->body; body and body->data and body->len > 0
+                                                          and pj_stricmp2(&body->content_type.type, "application") == 0
+                                                          and pj_stricmp2(&body->content_type.subtype, "sdp") == 0) {
+            externalRemoteSdp.assign(static_cast<const char*>(body->data), body->len);
+        } else {
+            externalRemoteSdp = Sdp::toString(offer);
+        }
+    }
+
     // A newer generation is the caller's recovery offer: the dialog moves to
     // its channel before answering, on the main thread as it takes callMutex_.
     std::shared_ptr<pjsip_transport> offerChannel;
@@ -4065,6 +4131,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     }
     runOnMainThread([callWkPtr = weak(),
                      mediaAttrList,
+                     externalRemoteSdp = std::move(externalRemoteSdp),
                      offerChannel,
                      generation = mediaNegotiationGeneration_.load(),
                      cseq] {
@@ -4092,6 +4159,10 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
             if (call->peerSupportsHandover()
                 and (call->mediaNegotiationGeneration_.load() != generation or not call->isCurrentMediaNegotiation())) {
                 call->rejectPendingReinviteLocked(cseq);
+                return;
+            }
+            if (call->hasExternalMedia()) {
+                call->emitExternalRemoteSdp(externalRemoteSdp);
                 return;
             }
         }
