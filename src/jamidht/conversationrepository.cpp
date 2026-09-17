@@ -2463,38 +2463,52 @@ ConversationRepository::Impl::diff(git_repository* repo, const std::string& idNe
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
-    git_oid oid_local, oid_head, oid_remote;
+    // Equivalent of `git log HEAD..from`: every commit reachable from `from` that is not
+    // already in our history. Walking down to a merge base and stopping there is not
+    // enough: with criss-cross merges, commits on a sibling branch can be sorted after
+    // that base and would never be seen.
+    git_oid oid_head, oid_remote;
     auto repo = repository();
     if (!repo)
         return {};
-    if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
+    if (git_reference_name_to_id(&oid_head, repo.get(), "HEAD") < 0) {
         JAMI_ERROR("Unable to get reference for HEAD");
         return {};
     }
-    oid_head = oid_local;
-    std::string head = git_oid_tostr_s(&oid_head);
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
         JAMI_ERROR("Unable to get reference for commit {}", from);
         return {};
     }
 
-    git_oidarray bases;
-    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERROR("Unable to get any merge base for commit {} and {}", from, head);
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to init revwalker", accountId_, id_);
         return {};
     }
-    for (std::size_t i = 0; i < bases.count; ++i) {
-        std::string oid = git_oid_tostr_s(&bases.ids[i]);
-        if (oid != head) {
-            oid_local = bases.ids[i];
+    GitRevWalker walker {walker_ptr};
+    if (git_revwalk_push(walker.get(), &oid_remote) < 0 || git_revwalk_hide(walker.get(), &oid_head) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to walk from {} to HEAD", accountId_, id_, from);
+        return {};
+    }
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+
+    std::vector<ConversationCommit> commits;
+    git_oid oid;
+    while (!git_revwalk_next(&oid, walker.get())) {
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+            JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}",
+                         accountId_,
+                         id_,
+                         git_oid_tostr_s(&oid));
             break;
         }
+        GitCommit commit {commit_ptr};
+        if (!commits.empty())
+            commits.back().linearized_parent = git_oid_tostr_s(&oid);
+        commits.emplace_back(parseCommit(repo.get(), commit.get()));
     }
-    git_oidarray_free(&bases);
-    std::string to = git_oid_tostr_s(&oid_local);
-    if (to == from)
-        return {};
-    return log(LogOptions {from, to});
+    return commits;
 }
 
 void
