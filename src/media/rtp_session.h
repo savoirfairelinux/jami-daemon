@@ -17,6 +17,7 @@
 #pragma once
 
 #include "socket_pair.h"
+#include "dtls_srtp.h"
 #include "media/media_codec.h"
 #include "logger.h"
 
@@ -27,6 +28,7 @@
 #include <atomic>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string_view>
 
 namespace dht {
@@ -133,11 +135,52 @@ protected:
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
+    std::optional<DtlsSrtpSession> dtlsSrtpSession_ {};
     // Set by stop() (without taking mutex_) to abort an in-progress
     // DTLS-SRTP handshake blocking start() so teardown stays responsive.
     const std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
     std::shared_ptr<SocketPair::BundleContext> bundleSocketContext_ {};
     std::optional<unsigned> bundleRtpPayloadType_ {};
+
+    DtlsSrtpContext getDtlsSrtpContext(dhtnet::IceSocket* rtpSocket)
+    {
+        if (dtlsSrtpSession_
+            && dtlsSrtpSession_->matches(receive_.dtls_setup,
+                                         send_.dtls_fingerprint_type,
+                                         send_.dtls_fingerprint)) {
+            JAMI_DEBUG("Reusing DTLS-SRTP keys after ICE restart");
+            if (bundleSocketContext_)
+                SocketPair::setBundleDtlsContext(bundleSocketContext_, dtlsSrtpSession_->context);
+            return dtlsSrtpSession_->context;
+        }
+
+        if (!bundleSocketContext_ && !rtpSocket)
+            throw std::runtime_error("No ICE socket for DTLS-SRTP");
+
+        auto context
+            = bundleSocketContext_
+                  ? SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
+                                                       receive_.dtls_setup,
+                                                       send_.dtls_fingerprint_type,
+                                                       send_.dtls_fingerprint,
+                                                       dtlsCertificate_,
+                                                       dtlsPrivateKey_,
+                                                       dtlsAbort_)
+                  : negotiateDtlsSrtp(*rtpSocket,
+                                     receive_.dtls_setup,
+                                     send_.dtls_fingerprint_type,
+                                     send_.dtls_fingerprint,
+                                     dtlsCertificate_,
+                                     dtlsPrivateKey_,
+                                     dtlsAbort_);
+        dtlsSrtpSession_ = {
+            receive_.dtls_setup,
+            send_.dtls_fingerprint_type,
+            send_.dtls_fingerprint,
+            context,
+        };
+        return context;
+    }
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 
