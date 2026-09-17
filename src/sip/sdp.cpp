@@ -758,7 +758,7 @@ Sdp::getMediaDirection(pjmedia_sdp_media* media)
 }
 
 MediaTransport
-Sdp::getMediaTransport(pjmedia_sdp_media* media)
+Sdp::getMediaTransport(const pjmedia_sdp_media* media)
 {
     if (pj_stricmp2(&media->desc.transport, "RTP/SAVP") == 0)
         return MediaTransport::RTP_SAVP;
@@ -786,7 +786,7 @@ Sdp::getCrypto(pjmedia_sdp_media* media)
 }
 
 pjmedia_sdp_media*
-Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
+Sdp::addMediaDescription(const MediaAttribute& mediaAttr, const pjmedia_sdp_session* previousLocalSession)
 {
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
@@ -794,6 +794,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     const auto mediaIndex = localSession_ ? localSession_->media_count : 0;
     const auto* remoteMedia
         = sdpDirection_ == SdpDirection::ANSWER ? findEnabledMedia(remoteSession_, mediaIndex) : nullptr;
+    const auto* previousLocalMedia = sdpDirection_ == SdpDirection::OFFER and previousLocalSession
+                                             and mediaIndex < previousLocalSession->media_count
+                                         ? previousLocalSession->media[mediaIndex]
+                                         : nullptr;
+    const auto* codecTemplate = remoteMedia ? remoteMedia : previousLocalMedia;
 
     JAMI_LOG("Add media description [{}]", mediaAttr.toString(true));
 
@@ -818,7 +823,9 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->desc.port_count = 1;
 
     // Set the transport protocol of the media
-    if (secure) {
+    if (previousLocalMedia) {
+        pj_strdup(memPool_.get(), &med->desc.transport, &previousLocalMedia->desc.transport);
+    } else if (secure) {
         med->desc.transport = secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS
                                   ? sip_utils::CONST_PJ_STR("UDP/TLS/RTP/SAVPF")
                                   : sip_utils::CONST_PJ_STR("RTP/SAVP");
@@ -876,7 +883,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 #endif
         }
 
-        if (const auto offeredPayload = findOfferedPayloadType(remoteMedia,
+        if (const auto offeredPayload = findOfferedPayloadType(codecTemplate,
                                                               enc_name,
                                                               rtpmap.clock_rate,
                                                               channelCount,
@@ -931,7 +938,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     if (useBundle && mediaAttr.enabled_) {
         auto mid = !mediaAttr.label_.empty() ? mediaAttr.label_ : std::to_string(mediaIndex);
-        if (sdpDirection_ == SdpDirection::ANSWER && remoteSession_ && mediaIndex < remoteSession_->media_count) {
+        if (previousLocalMedia) {
+            if (auto previousMid = getMidValue(previousLocalMedia); not previousMid.empty())
+                mid = std::move(previousMid);
+        } else if (sdpDirection_ == SdpDirection::ANSWER && remoteSession_
+                   && mediaIndex < remoteSession_->media_count) {
             if (auto remoteMid = getMidValue(remoteSession_->media[mediaIndex]); not remoteMid.empty())
                 mid = std::move(remoteMid);
         }
@@ -939,10 +950,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addMidAttribute(med, mid);
 
         unsigned midExtmapId = DEFAULT_MID_RTP_EXTENSION_ID;
-        if (sdpDirection_ == SdpDirection::ANSWER) {
-            midExtmapId = hasBundleGroup(remoteSession_)
-                              ? getBundleExtmapId(remoteSession_, MID_RTP_EXTENSION_URI)
-                              : getExtmapId(remoteSession_, mediaIndex, MID_RTP_EXTENSION_URI);
+        const auto* extmapSession = sdpDirection_ == SdpDirection::ANSWER ? remoteSession_ : previousLocalSession;
+        if (extmapSession) {
+            midExtmapId = hasBundleGroup(extmapSession)
+                              ? getBundleExtmapId(extmapSession, MID_RTP_EXTENSION_URI)
+                              : getExtmapId(extmapSession, mediaIndex, MID_RTP_EXTENSION_URI);
         }
 
         if (midExtmapId != 0)
@@ -951,18 +963,21 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     if (mediaAttr.enabled_ and direction != DIRECTION_STR[MediaDirection::INACTIVE]) {
         auto transportCcExtmapId = DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID;
-        auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER;
-        auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER;
+        auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
+        auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
 
-        if (sdpDirection_ == SdpDirection::ANSWER) {
-            transportCcExtmapId = hasBundleGroup(remoteSession_)
-                                      ? getBundleExtmapId(remoteSession_,
+        const auto* feedbackSession = sdpDirection_ == SdpDirection::ANSWER ? remoteSession_ : previousLocalSession;
+        if (feedbackSession) {
+            transportCcExtmapId = hasBundleGroup(feedbackSession)
+                                      ? getBundleExtmapId(feedbackSession,
                                                           TRANSPORT_CC_RTP_EXTENSION_URIS,
                                                           "transport-cc")
-                                      : getExtmapId(remoteSession_, mediaIndex, TRANSPORT_CC_RTP_EXTENSION_URIS);
+                                      : getExtmapId(feedbackSession,
+                                                    mediaIndex,
+                                                    TRANSPORT_CC_RTP_EXTENSION_URIS);
             transportCcFeedback = transportCcExtmapId != 0
-                                  && hasAnyRtcpFeedback(remoteSession_, mediaIndex, "transport-cc");
-            googRembFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "goog-remb");
+                                  && hasAnyRtcpFeedback(feedbackSession, mediaIndex, "transport-cc");
+            googRembFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "goog-remb");
         }
 
         if (transportCcFeedback && transportCcExtmapId != 0) {
@@ -973,14 +988,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             addRtcpFeedbackAttribute(med, "*", "goog-remb");
 
         if (type == MediaType::MEDIA_VIDEO) {
-            // Picture Loss Indication (RFC 4585 6.3.1) and Full Intra Request
-            // (RFC 5104 4.3.1) let a video receiver request a keyframe over
-            // RTCP, as WebRTC endpoints expect.
-            auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER;
-            auto firFeedback = sdpDirection_ != SdpDirection::ANSWER;
-            if (sdpDirection_ == SdpDirection::ANSWER) {
-                pliFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "nack pli");
-                firFeedback = hasAnyRtcpFeedback(remoteSession_, mediaIndex, "ccm fir");
+            auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
+            auto firFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
+            if (feedbackSession) {
+                pliFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "nack pli");
+                firFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "ccm fir");
             }
             if (pliFeedback)
                 addRtcpFeedbackAttribute(med, "*", "nack pli");
@@ -990,7 +1002,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     }
 
     if (secure and sdpDirection_ == SdpDirection::OFFER) {
-        if (secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
+        if ((previousLocalMedia and isDtlsTransport(getMediaTransport(previousLocalMedia)))
+            or secureMediaKeyExchange_ == KeyExchangeProtocol::DTLS) {
             addDtlsAttributes(med, DtlsSetup::ACTPASS);
         } else {
             // Offer SDES for the SDES and default key exchanges. Jami accounts
@@ -1304,7 +1317,7 @@ Sdp::validateSession() const
 }
 
 bool
-Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
+Sdp::createOffer(const std::vector<MediaAttribute>& mediaList, const pjmedia_sdp_session* previousLocalSession)
 {
     if (mediaList.size() >= PJMEDIA_MAX_SDP_MEDIA) {
         throw SdpException("Media list size exceeds SDP media maximum size");
@@ -1322,7 +1335,8 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
 
     for (auto const& media : mediaList) {
         if (media.enabled_) {
-            localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+            localSession_->media[localSession_->media_count++]
+                = addMediaDescription(media, previousLocalSession);
         }
     }
 
