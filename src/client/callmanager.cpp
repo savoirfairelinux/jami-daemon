@@ -146,6 +146,28 @@ acceptWithExternalMedia(const std::string& accountId, const std::string& callId,
 }
 
 bool
+answerMediaChangeWithExternalSdp(const std::string& accountId,
+                                 const std::string& callId,
+                                 const std::string& sdpAnswer)
+{
+    if (sdpAnswer.empty())
+        return false;
+    if (auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto call = std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId))) {
+            dht::ThreadPool::io().run([call, sdpAnswer] {
+                try {
+                    call->answerMediaChangeWithExternalSdp(sdpAnswer);
+                } catch (const std::runtime_error& e) {
+                    JAMI_ERROR("{}", e.what());
+                }
+            });
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 setVideoOrientation(const std::string& accountId,
                     const std::string& callId,
                     int streamIdx,

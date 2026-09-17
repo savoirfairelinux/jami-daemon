@@ -121,6 +121,7 @@ private:
 
 public:
     void answer(const std::vector<libjami::MediaMap>& mediaList) override;
+    void answerMediaChangeWithExternalSdp(const std::string& sdp);
 
     /**
      * True when the call media is delegated to an external endpoint
@@ -331,6 +332,8 @@ public:
     const std::vector<RtpStream>& getRtpStreams() const { return rtpStreams_; }
 
 private:
+    void rejectMediaChangeRequest(int statusCode);
+
     void generateMediaPorts();
     void refreshLocalPublishedPorts();
     bool accountSupportsBundle(const std::shared_ptr<SIPAccountBase>& account) const;
@@ -341,6 +344,7 @@ private:
     void answerWithExternalSdp(const std::string& sdp);
     // Report the negotiated remote SDP session to the API client.
     void emitRemoteSdp() const;
+    void emitExternalRemoteSdp(const std::string& sdp) const;
     bool remoteOfferSupportsRtcpMux() const;
     bool remoteOfferSupportsBundle() const;
     unsigned getIceCompCountPerStream() const;
