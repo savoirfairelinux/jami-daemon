@@ -1007,6 +1007,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
 
     const std::map<std::string, SharedCallback> conversationHandlers
         = {exportable_callback<ConversationSignal::SwarmLoaded>(bind(&swarmLoaded, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::MessagesFound>(bind(&messagesFound, _1, _2, _3, _4)),
            exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&swarmMessageReceived, _1, _2, _3)),
            exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&swarmMessageUpdated, _1, _2, _3)),
            exportable_callback<ConversationSignal::ReactionAdded>(bind(&reactionAdded, _1, _2, _3, _4)),
