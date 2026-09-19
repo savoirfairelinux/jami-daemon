@@ -2949,16 +2949,18 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->conversation->setRemovingFlag();
             }
             auto update = false;
-            if (conv->info.removed == TimePoint {}) {
+            if (convInfo.removed > conv->info.removed) {
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+                // Keep the originating event's timestamp: replacing it with
+                // receipt time would reject the later erasure as outdated.
+                conv->info.removed = convInfo.removed;
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
-            if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+            if (convInfo.erased > conv->info.erased) {
                 update = true;
                 listChanged = true;
-                conv->info.erased = nowMs();
+                conv->info.erased = convInfo.erased;
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {
