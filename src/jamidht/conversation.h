@@ -59,6 +59,7 @@ static constexpr const char* FROM {"from"};
 static constexpr const char* CONVERSATIONID {"conversationId"};
 static constexpr const char* METADATAS {"metadatas"};
 static constexpr const char* MODE {"mode"};
+static constexpr const char* PARENT {"parent"};
 // Millisecond-resolution variants. Legacy keys above keep carrying seconds
 // so that older devices (which ignore unknown keys) remain compatible.
 static constexpr const char* CREATED_MS {"createdMs"};
@@ -180,6 +181,7 @@ struct ConvInfo
     std::set<std::string> members;
     std::string lastDisplayed {};
     ConversationMode mode {0};
+    std::string parent {};
     // Last time we explicitly (re-)invited a given peer (via addConversationMember()/
     // sendTrustRequest()), keyed by peer URI.
     std::map<std::string, TimePoint> invited {};
@@ -228,6 +230,8 @@ struct ConvInfo
                                        lastDisplayed,
                                        ConversationMapKeys::MODE,
                                        mode,
+                                       ConversationMapKeys::PARENT,
+                                       parent,
                                        ConversationMapKeys::CREATED_MS,
                                        createdMs,
                                        ConversationMapKeys::REMOVED_MS,
