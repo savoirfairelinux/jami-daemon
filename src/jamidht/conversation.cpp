@@ -95,6 +95,7 @@ ConvInfo::ConvInfo(const Json::Value& json)
         members.emplace(v["uri"].asString());
     }
     lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
+    parent = json[ConversationMapKeys::PARENT].asString();
     if (json.isMember(ConversationMapKeys::MODE))
         mode = static_cast<ConversationMode>(json[ConversationMapKeys::MODE].asInt());
     if (json.isMember(ConversationMapKeys::INVITED)) {
@@ -126,6 +127,8 @@ ConvInfo::toJson() const
     }
     json[ConversationMapKeys::LAST_DISPLAYED] = lastDisplayed;
     json[ConversationMapKeys::MODE] = static_cast<int>(mode);
+    if (!parent.empty())
+        json[ConversationMapKeys::PARENT] = parent;
     if (!invited.empty()) {
         Json::Value invitedJson;
         for (const auto& [uri, t] : invited)
@@ -168,6 +171,8 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
             kv.val.convert(lastDisplayed);
         else if (key == ConversationMapKeys::MODE)
             kv.val.convert(mode);
+        else if (key == ConversationMapKeys::PARENT)
+            kv.val.convert(parent);
         else if (key == ConversationMapKeys::INVITED)
             kv.val.convert(invitedMs);
     }
@@ -205,6 +210,8 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
                                    lastDisplayed,
                                    ConversationMapKeys::MODE,
                                    mode,
+                                   ConversationMapKeys::PARENT,
+                                   parent,
                                    ConversationMapKeys::CREATED_MS,
                                    createdMs,
                                    ConversationMapKeys::REMOVED_MS,
@@ -661,8 +668,11 @@ public:
             // live CRDT session instead. Member events still feed the internal
             // callback so the swarm's view of who to sync with stays fresh.
             bool memberEvent = false;
-            for (const auto& c : commits)
+            bool contentChanged = false;
+            for (const auto& c : commits) {
                 memberEvent |= c.at(CommitKey::TYPE) == CommitType::MEMBER;
+                contentChanged |= c.at(CommitKey::TYPE) == CommitType::CHECKPOINT;
+            }
             if (memberEvent && onMembersChanged_)
                 onMembersChanged_(repository_->memberUris("", {}));
             // Nothing to replay for our own commits: what this device wrote came
@@ -670,11 +680,12 @@ public:
             // announce() can run under writeMtx_ (a pull holds it) and the replay
             // asks the module for the conversation, which takes locks of its own.
             if (!commits.empty() && !commitFromSelf)
-                dht::ThreadPool::io().run([w = account_, parentId = repository_->parentConversationId(), convId] {
-                    if (auto acc = w.lock())
-                        if (auto collab = acc->collaborativeEditing())
-                            collab->onRepositoryUpdated(parentId, convId);
-                });
+                dht::ThreadPool::io().run(
+                    [w = account_, parentId = repository_->parentConversationId(), convId, contentChanged] {
+                        if (auto acc = w.lock())
+                            if (auto collab = acc->collaborativeEditing())
+                                collab->onRepositoryUpdated(parentId, convId, contentChanged);
+                    });
             return;
         }
         auto ok = !commits.empty();

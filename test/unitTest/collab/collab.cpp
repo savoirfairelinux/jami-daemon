@@ -26,6 +26,10 @@
 #include "account_const.h"
 #include "fileutils.h"
 #include "manager.h"
+#include "jamidht/collaborative_editing.h"
+#include "jamidht/conversation_module.h"
+#include "jamidht/conversationrepository.h"
+#include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
 
 extern "C" {
@@ -33,6 +37,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <cstdio>
 #include <filesystem>
@@ -195,11 +200,23 @@ public:
                            size_t atLeast = 1);
 
 private:
+    void testUnopenedReplicaStaysOnDisk();
+    void testRemovalBeforeCloneIsRemembered();
+    void testRetryAfterInactiveParent();
+    void testPendingCloneCancelledOnLeave();
+    void testLeaveDuringCloneCompletion();
+    void testLocalRemovalDuringCloneCompletion();
+    void checkRemovalDuringClone(bool leaveParent);
+    void testOpenDuringCloneCompletion();
+    void testInvalidDocumentIdsLeaveNoMetadata();
+    void testRetiredAnnouncementRejectsClone();
+    void testRemoveDuringCheckpointFetch();
     void testCreateDocument();
-    void testNoAutoCloneOnAnnouncement();
+    void testAutoCloneOnAnnouncement();
+    void testAutoCloneAfterOfflineAnnouncement();
     void testOpenClonesAndJoins();
     void testClosedHolderConvergesViaCheckpoints();
-    void testPerDeviceOptIn();
+    void testAutoCloneOnNewDevice();
     void testRenameAdminOnly();
     void testAttachmentReplication();
     void testRemoveDocumentEverywhere();
@@ -213,11 +230,22 @@ private:
     void testAwareness();
 
     CPPUNIT_TEST_SUITE(CollabTest);
+    CPPUNIT_TEST(testInvalidDocumentIdsLeaveNoMetadata);
+    CPPUNIT_TEST(testRetiredAnnouncementRejectsClone);
+    CPPUNIT_TEST(testUnopenedReplicaStaysOnDisk);
+    CPPUNIT_TEST(testRemovalBeforeCloneIsRemembered);
+    CPPUNIT_TEST(testRetryAfterInactiveParent);
+    CPPUNIT_TEST(testPendingCloneCancelledOnLeave);
+    CPPUNIT_TEST(testLeaveDuringCloneCompletion);
+    CPPUNIT_TEST(testLocalRemovalDuringCloneCompletion);
+    CPPUNIT_TEST(testOpenDuringCloneCompletion);
+    CPPUNIT_TEST(testRemoveDuringCheckpointFetch);
     CPPUNIT_TEST(testCreateDocument);
-    CPPUNIT_TEST(testNoAutoCloneOnAnnouncement);
+    CPPUNIT_TEST(testAutoCloneOnAnnouncement);
+    CPPUNIT_TEST(testAutoCloneAfterOfflineAnnouncement);
     CPPUNIT_TEST(testOpenClonesAndJoins);
     CPPUNIT_TEST(testClosedHolderConvergesViaCheckpoints);
-    CPPUNIT_TEST(testPerDeviceOptIn);
+    CPPUNIT_TEST(testAutoCloneOnNewDevice);
     CPPUNIT_TEST(testRenameAdminOnly);
     CPPUNIT_TEST(testAttachmentReplication);
     CPPUNIT_TEST(testRemoveDocumentEverywhere);
@@ -467,6 +495,234 @@ CollabTest::waitForCheckpoint(const std::string& accountId,
 }
 
 void
+CollabTest::testInvalidDocumentIdsLeaveNoMetadata()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const auto before = ConversationModule::convInfos(bobId).size();
+    for (const auto& id :
+         {std::string {}, "../document"s, std::string(39, 'a'), std::string(41, 'a'), std::string(40, 'g')}) {
+        CPPUNIT_ASSERT(!bob->convModule()->cloneDocumentFrom(convId, id, {alice->getUsername()}, false));
+        bob->convModule()->removeDocumentReplica(id);
+        const auto infos = ConversationModule::convInfos(bobId);
+        CPPUNIT_ASSERT_EQUAL(before, infos.size());
+        CPPUNIT_ASSERT(!infos.count(id));
+    }
+}
+
+void
+CollabTest::testRetiredAnnouncementRejectsClone()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto retired = std::make_shared<std::atomic_bool>(false);
+    bob->convModule()->onCloneReady([bobId = bobId, aliceId = aliceId, convId, retired](const std::string& id) {
+        if (id == convId)
+            return;
+        auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+        auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+        if (!bob || !alice)
+            return;
+        const auto docs = alice->convModule()->getConversation(convId)->collaborativeDocuments();
+        const auto entry = std::find_if(docs.begin(), docs.end(), [&](const auto& doc) { return doc.at("id") == id; });
+        if (entry == docs.end())
+            return;
+        // Merge a valid author-signed retirement without dispatching its
+        // callbacks, reproducing the window before asynchronous cleanup.
+        ConversationRepository source(alice, convId);
+        const auto removal = source.commitMessage(CommitMessage::collabDocRemoved(entry->at("announcement")).toString());
+        if (removal.empty())
+            return;
+        ConversationRepository destination(bob, convId);
+        const auto device = std::string(alice->currentDeviceId());
+        if (!destination.fetch(device))
+            return;
+        const auto merged = destination.mergeHistory(device);
+        *retired = std::any_of(merged.begin(), merged.end(), [&](const auto& commit) {
+            return commit.at("id") == removal;
+        });
+    });
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Retired during clone", "text/plain");
+    CPPUNIT_ASSERT(poll([&] { return retired->load(); }));
+    CPPUNIT_ASSERT(documentEntry(bobId, convId, docId).empty());
+    CPPUNIT_ASSERT(poll([&] {
+        return !bob->convModule()->getConversation(docId) && !std::filesystem::exists(docRepoPath(bobId, docId));
+    }));
+    CPPUNIT_ASSERT(ConversationModule::convInfos(bobId).at(docId).isRemoved());
+}
+
+void
+CollabTest::testUnopenedReplicaStaysOnDisk()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Disk only", "text/plain");
+    ClientReplica author;
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, author.insert(0, "stored without an editor"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+    CPPUNIT_ASSERT(poll([&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        return !bobData.docUpdates[docId].empty();
+    }));
+    CPPUNIT_ASSERT(libjami::collaborativeDocumentState(bobId, convId, docId).empty());
+    ClientReplica reader;
+    CPPUNIT_ASSERT(reader.apply(libjami::openCollaborativeDocument(bobId, convId, docId)));
+    CPPUNIT_ASSERT_EQUAL("stored without an editor"s, reader.text());
+}
+
+void
+CollabTest::testRemovalBeforeCloneIsRemembered()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    const std::string docId(40, 'a');
+    bob->convModule()->removeDocumentReplica(docId);
+    const auto infos = ConversationModule::convInfos(bobId);
+    CPPUNIT_ASSERT(infos.count(docId));
+    CPPUNIT_ASSERT(infos.at(docId).isRemoved());
+    CPPUNIT_ASSERT(infos.at(docId).mode == ConversationMode::DOCUMENT);
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(!bob->convModule()->cloneDocumentFrom(convId, docId, {alice->getUsername()}, false));
+    bob->convModule()->loadConversations();
+    CPPUNIT_ASSERT(!bob->convModule()->cloneDocumentFrom(convId, docId, {alice->getUsername()}, false));
+}
+
+void
+CollabTest::testRetryAfterInactiveParent()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto parent = bob->convModule()->getConversation(convId);
+    parent->setRemovingFlag();
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Retry", "text/plain");
+    // Register the announcement while its parent cannot be used.
+    bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
+    std::this_thread::sleep_for(1s);
+    // Reload a live parent without recreating the collaborative manager.
+    bob->convModule()->loadConversations();
+    bob->convModule()->bootstrap(convId);
+    CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
+    bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
+    CPPUNIT_ASSERT(poll([&] { return documentEntry(bobId, convId, docId).at("storedLocally") == "true"; }));
+}
+
+void
+CollabTest::testPendingCloneCancelledOnLeave()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const std::string docId(40, 'b');
+    CPPUNIT_ASSERT(bob->convModule()->cloneDocumentFrom(convId, docId, {alice->getUsername()}, false));
+    auto infos = ConversationModule::convInfos(bobId);
+    CPPUNIT_ASSERT_EQUAL(convId, infos.at(docId).parent);
+    CPPUNIT_ASSERT(!infos.at(docId).isRemoved());
+    bob->convModule()->loadConversations();
+    CPPUNIT_ASSERT_EQUAL(convId, ConversationModule::convInfos(bobId).at(docId).parent);
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, convId));
+    infos = ConversationModule::convInfos(bobId);
+    CPPUNIT_ASSERT(infos.at(docId).isRemoved());
+    CPPUNIT_ASSERT(!bob->convModule()->cloneDocumentFrom(convId, docId, {alice->getUsername()}, false));
+    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, docId)));
+}
+
+void
+CollabTest::testLeaveDuringCloneCompletion()
+{
+    checkRemovalDuringClone(true);
+}
+
+void
+CollabTest::testLocalRemovalDuringCloneCompletion()
+{
+    checkRemovalDuringClone(false);
+}
+
+void
+CollabTest::checkRemovalDuringClone(bool leaveParent)
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto removed = std::make_shared<std::atomic_bool>(false);
+    bob->convModule()->onCloneReady([accountId = bobId, convId, removed, leaveParent](const std::string& id) {
+        if (id != convId && !removed->load())
+            *removed = leaveParent ? libjami::removeConversation(accountId, convId)
+                                   : libjami::removeCollaborativeDocumentLocally(accountId, convId, id);
+    });
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Leave during clone", "text/plain");
+    CPPUNIT_ASSERT(poll([&] { return removed->load(); }));
+    CPPUNIT_ASSERT(poll([&] {
+        return !std::filesystem::exists(docRepoPath(bobId, docId)) && !bob->convModule()->getConversation(docId);
+    }));
+    const auto infos = ConversationModule::convInfos(bobId);
+    CPPUNIT_ASSERT(infos.at(docId).isRemoved());
+    if (!leaveParent)
+        CPPUNIT_ASSERT(bob->convModule()->getConversation(convId));
+}
+
+void
+CollabTest::testOpenDuringCloneCompletion()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto opened = std::make_shared<std::atomic_bool>(false);
+    bob->convModule()->onCloneReady([accountId = bobId, convId, opened](const std::string& id) {
+        if (id != convId) {
+            libjami::openCollaborativeDocument(accountId, convId, id);
+            *opened = true;
+        }
+    });
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Open during clone", "text/plain");
+    ClientReplica author;
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, author.insert(0, "concurrent open"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(poll([&] { return opened->load(); }));
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+    ClientReplica reader;
+    CPPUNIT_ASSERT(poll([&] {
+        reader.apply(libjami::collaborativeDocumentState(bobId, convId, docId));
+        return reader.text() == "concurrent open";
+    }));
+}
+
+void
+CollabTest::testRemoveDuringCheckpointFetch()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
+    ClientReplica aliceReplica;
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(0, "first"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto attempted = std::make_shared<std::atomic_bool>(false);
+    auto removed = std::make_shared<std::atomic_bool>(false);
+    bob->convModule()->onFetchCompleted([accountId = bobId, convId, docId, attempted, removed](const std::string& id,
+                                                                                               const std::string& commit,
+                                                                                               bool ok) {
+        if (id == docId && ok && !commit.empty() && !attempted->exchange(true))
+            *removed = libjami::removeCollaborativeDocumentLocally(accountId, convId, docId);
+    });
+    libjami::openCollaborativeDocument(aliceId, convId, docId);
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(5, " second"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(poll([&] { return removed->load(); }));
+    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, docId)));
+}
+
+void
 CollabTest::testCreateDocument()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
@@ -498,7 +754,7 @@ CollabTest::testCreateDocument()
 }
 
 void
-CollabTest::testNoAutoCloneOnAnnouncement()
+CollabTest::testAutoCloneOnAnnouncement()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
@@ -507,12 +763,69 @@ CollabTest::testNoAutoCloneOnAnnouncement()
     auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
     CPPUNIT_ASSERT(!docId.empty());
 
-    // Bob learns about the document...
+    ClientReplica aliceReplica;
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(0, "received while closed"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+
     CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
-    // ...but announcement is not replication: nothing is cloned until he opens.
-    std::this_thread::sleep_for(5s);
-    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, docId)));
-    CPPUNIT_ASSERT_EQUAL("false"s, documentEntry(bobId, convId, docId).at("storedLocally"));
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+    CPPUNIT_ASSERT_EQUAL("true"s, documentEntry(bobId, convId, docId).at("storedLocally"));
+
+    // Reading a persisted checkpoint must not open an editor or initiate a clone.
+    ClientReplica bobReplica;
+    auto history = libjami::getCollaborativeDocumentHistory(bobId, convId, docId, 1);
+    CPPUNIT_ASSERT(bobReplica.apply(libjami::collaborativeDocumentStateAt(bobId, convId, docId, history[0].at("id"))));
+    CPPUNIT_ASSERT_EQUAL("received while closed"s, bobReplica.text());
+
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    CPPUNIT_ASSERT(!bob->collaborativeEditing()->acceptsRealtimeChannel(docId,
+                                                                        alice->getUsername(),
+                                                                        std::string(alice->currentDeviceId())));
+    CPPUNIT_ASSERT(poll([&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        return !bobData.docUpdates[docId].empty();
+    }));
+    {
+        std::lock_guard<std::mutex> lk(mtx);
+        for (const auto& update : bobData.docUpdates[docId])
+            CPPUNIT_ASSERT(update.empty());
+    }
+
+    libjami::openCollaborativeDocument(aliceId, convId, docId);
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(21, " again"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId, 2));
+    history = libjami::getCollaborativeDocumentHistory(bobId, convId, docId, 1);
+    CPPUNIT_ASSERT(bobReplica.apply(libjami::collaborativeDocumentStateAt(bobId, convId, docId, history[0].at("id"))));
+    CPPUNIT_ASSERT_EQUAL("received while closed again"s, bobReplica.text());
+}
+
+void
+CollabTest::testAutoCloneAfterOfflineAnnouncement()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+    auto convId = createConversationWithBob();
+    Manager::instance().sendRegister(bobId, false);
+    CPPUNIT_ASSERT(poll([&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        return bobData.stopped;
+    }));
+
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "While away", "text/plain");
+    CPPUNIT_ASSERT(!docId.empty());
+    ClientReplica aliceReplica;
+    libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(0, "saved before wakeup"));
+    libjami::closeCollaborativeDocument(aliceId, convId, docId);
+    CPPUNIT_ASSERT(waitForCheckpoint(aliceId, convId, docId));
+
+    Manager::instance().sendRegister(bobId, true);
+    CPPUNIT_ASSERT(waitForCheckpoint(bobId, convId, docId));
+    auto history = libjami::getCollaborativeDocumentHistory(bobId, convId, docId, 1);
+    ClientReplica bobReplica;
+    CPPUNIT_ASSERT(bobReplica.apply(libjami::collaborativeDocumentStateAt(bobId, convId, docId, history[0].at("id"))));
+    CPPUNIT_ASSERT_EQUAL("saved before wakeup"s, bobReplica.text());
 }
 
 void
@@ -605,7 +918,7 @@ CollabTest::testClosedHolderConvergesViaCheckpoints()
 }
 
 void
-CollabTest::testPerDeviceOptIn()
+CollabTest::testAutoCloneOnNewDevice()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
     connectSignals();
@@ -647,12 +960,9 @@ CollabTest::testPerDeviceOptIn()
         },
         60s));
 
-    // The document is listed but not cloned: each device joins by opening,
-    // and the first device's opt-in is its own.
+    // The new device receives the document without opening an editor.
     CPPUNIT_ASSERT(poll([&] { return !documentEntry(newDeviceId, convId, docId).empty(); }));
-    std::this_thread::sleep_for(5s);
-    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bob2Id, docId)));
-    CPPUNIT_ASSERT_EQUAL("false"s, documentEntry(bob2Id, convId, docId).at("storedLocally"));
+    CPPUNIT_ASSERT(poll([&] { return documentEntry(newDeviceId, convId, docId).at("storedLocally") == "true"; }));
 }
 
 void
@@ -757,6 +1067,11 @@ CollabTest::testRemoveDocumentLocallyAndReopen()
     auto entry = documentEntry(bobId, convId, docId);
     CPPUNIT_ASSERT(!entry.empty());
     CPPUNIT_ASSERT_EQUAL("false"s, entry.at("storedLocally"));
+
+    // Replaying the parent history must not undo an explicit local removal.
+    Manager::instance().getAccount<JamiAccount>(bobId)->collaborativeEditing()->onDocumentAnnounced(convId, docId);
+    auto freshManager = std::make_shared<CollaborativeEditing>(Manager::instance().getAccount<JamiAccount>(bobId));
+    freshManager->syncDocuments(convId);
 
     // Nothing replicates it back while removed.
     libjami::applyCollaborativeUpdate(aliceId, convId, docId, aliceReplica.insert(4, " away"));
@@ -1078,4 +1393,10 @@ CollabTest::testAwareness()
 } // namespace test
 } // namespace jami
 
-CORE_TEST_RUNNER(jami::test::CollabTest::name())
+int
+main(int argc, char** argv)
+{
+    CppUnit::TextUi::TestRunner runner;
+    runner.addTest(CppUnit::TestFactoryRegistry::getRegistry(jami::test::CollabTest::name()).makeTest());
+    return runner.run(argc > 1 ? argv[1] : "") ? 0 : 1;
+}

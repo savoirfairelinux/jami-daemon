@@ -126,6 +126,14 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
  * replica, produces updates from it and merges the ones it receives through
  * ConversationSignal::CollaborativeDocumentUpdate.
  *
+ * Receiving a document announcement automatically downloads its repository and
+ * subscribes this device to subsequent checkpoints, without opening an editor.
+ * This includes announcements received while the device was offline. Explicitly
+ * removing a local copy stops replication until the document is opened again.
+ * A reachable holder is required to download the content.
+ * Unopened documents are replicated on disk without allocating a CRDT session.
+ * Leaving the parent conversation also cancels its pending document downloads.
+ *
  * Because nothing here is tied to a document type, a client is free to implement
  * an editor for any type yrs supports -- text, rich text, maps, arrays, XML
  * fragments -- without a change to this API. A document carries the media type
@@ -206,7 +214,8 @@ LIBJAMI_PUBLIC void applyCollaborativeUpdate(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& documentId,
                                              const std::vector<uint8_t>& update);
-/// The document's whole current state as a Y-CRDT update.
+/// The in-memory document state as a Y-CRDT update. Empty until an editor opens
+/// the document; use collaborativeDocumentStateAt() to read a stored checkpoint.
 LIBJAMI_PUBLIC std::vector<uint8_t> collaborativeDocumentState(const std::string& accountId,
                                                                const std::string& conversationId,
                                                                const std::string& documentId);

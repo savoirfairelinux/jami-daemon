@@ -104,6 +104,23 @@ struct SyncedConversation
     std::map<std::string, DeferredFetch> deferredFetches;
     std::shared_ptr<Conversation> conversation;
 
+    // Requires mtx. Shared by clone registration and clone installation.
+    bool canReplicateDocuments(const std::string& username) const
+    {
+        return !info.isRemoved() && conversation && conversation->mode() != ConversationMode::DOCUMENT
+               && !conversation->isRemoving() && conversation->isMember(username);
+    }
+
+    bool announcesDocument(const std::string& documentId) const
+    {
+        if (!conversation)
+            return false;
+        const auto documents = conversation->collaborativeDocuments();
+        return std::any_of(documents.begin(), documents.end(), [&](const auto& doc) {
+            return doc.at("id") == documentId;
+        });
+    }
+
     bool isUnrecoverable() const { return validationFailures >= MAX_VALIDATION_FAILURES; }
 
     bool cloneThrottled(const std::string& deviceId) const
@@ -315,6 +332,7 @@ public:
     bool removeConversation(const std::string& conversationId, bool forceRemove = false);
     bool removeConversationImpl(SyncedConversation& conv, bool forceRemove = false);
     void removeDocumentReplica(const std::string& documentId);
+    std::vector<std::string> childDocuments(const std::vector<std::string>& parents) const;
 
     /**
      * Send a message notification to all members
@@ -538,6 +556,7 @@ public:
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
     std::function<void(const std::string&, const std::string&, bool)> fetchCompletedCbTest_;
+    std::function<void(const std::string&)> cloneReadyCbTest_;
 #endif
 
     uint64_t presenceListenerToken_ {0};
@@ -648,6 +667,8 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::shared_ptr<SyncedConversation>& conv)
 {
     // conv->mtx must be locked
+    if (conv->info.mode == ConversationMode::DOCUMENT && conv->info.isRemoved())
+        return;
     if (conv->isUnrecoverable()) {
         JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Conversation is marked unrecoverable, "
                      "ignoring clone request",
@@ -791,9 +812,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     if (!conv) {
         if (oldReq == std::nullopt && shouldRequestInvite) {
             // A commit for a repository nothing is known about. If it names a
-            // document announced in some conversation, this device simply chose
-            // not to hold a replica: replication is per-device opt-in, and a
-            // notification is not an invitation to clone.
+            // document announced in some conversation, its announcement drives
+            // replication; it must not become a separate conversation invite.
             if (auto acc = account_.lock()) {
                 if (acc->collaborativeEditing()->knowsDocument(conversationId))
                     return;
@@ -894,7 +914,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             std::lock_guard lk(conv->mtx);
                             deferred = conv->finishFetch(deviceId);
                             // Notify peers that a new commit is there (DRT)
-                            if (not commitId.empty() && ok) {
+                            if (not commitId.empty() && ok && conv->conversation && !conv->info.isRemoved()) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
@@ -970,6 +990,10 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     };
     try {
         auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
+#ifdef LIBJAMI_TEST
+        if (cloneReadyCbTest_)
+            cloneReadyCbTest_(conversationId);
+#endif
         conversation->onMembersChanged([w = weak_from_this(), conversationId](const auto& members) {
             // Delay in another thread to avoid deadlocks
             dht::ThreadPool::io().run([w, conversationId, members = std::move(members)] {
@@ -998,7 +1022,34 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         // (https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1026)
         setConversationMembers(conversationId, conversation->memberUris("", {}));
 
+        // Map lookups must precede locking the parent. A leave locks that parent
+        // too, so checking and installing the child are atomic with respect to it.
+        const bool isDocument = conversation->mode() == ConversationMode::DOCUMENT;
+        auto parent = isDocument ? getConversation(conversation->parentConversationId()) : nullptr;
+        std::unique_lock<std::mutex> parentLock;
+        if (parent && parent != conv)
+            parentLock = std::unique_lock(parent->mtx);
         lk.lock();
+        // Pending downloads saved by older versions have no parent field.
+        if (isDocument && conv->info.parent.empty() && parent && parent != conv
+            && parent->canReplicateDocuments(username_) && parent->announcesDocument(conversationId)) {
+            conv->info.parent = conversation->parentConversationId();
+            addConvInfo(conv->info);
+        }
+        if (isDocument
+            && (!parent || parent == conv || !parent->canReplicateDocuments(username_)
+                || conv->info.parent != conversation->parentConversationId()
+                || !parent->announcesDocument(conversationId))) {
+            JAMI_WARNING("[Account {}] Discarding document {}: parent is inactive or no longer announces it",
+                         accountId_,
+                         conversationId);
+            conversation->erase();
+            conv->info.removed = std::max(nowMs(), conv->info.created);
+            conv->info.erased = conv->info.removed;
+            addConvInfo(conv->info);
+            erasePending();
+            return;
+        }
         if (conv->info.mode != conversation->mode()) {
             JAMI_ERROR(
                 "[Account {}] [Conversation {}] Cloned conversation mode is {}, but {} was expected from invite.",
@@ -1028,6 +1079,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             status = std::move(conv->pending->status);
         }
         conv->conversation = conversation;
+        if (parentLock.owns_lock())
+            parentLock.unlock();
         conv->resetCloneRetry();
         if (removeRepo) {
             removeRepositoryImpl(*conv, false, true);
@@ -1066,10 +1119,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             // A document is not a conversation to the clients and is never
             // synced to this account's other devices; what has a stake in the
             // clone's completion is the CRDT session that asked for it.
-            acc->collaborativeEditing()->onRepositoryUpdated(conversation->parentConversationId(), conversationId);
+            acc->collaborativeEditing()->onRepositoryUpdated(conversation->parentConversationId(),
+                                                             conversationId,
+                                                             !conversation->documentHistory(1).empty());
             return;
         }
 
+        acc->collaborativeEditing()->syncDocuments(conversationId);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -1252,27 +1308,12 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
 bool
 ConversationModule::Impl::removeConversation(const std::string& conversationId, bool forceRemove)
 {
-    // Leaving a conversation forfeits its documents: membership in one is
-    // derived from membership in the other, so a replica kept past the leave
-    // could neither be served nor synchronized. Collected before the removal:
-    // the conversation map lock and a conversation's own lock nest the other
-    // way around.
-    std::vector<std::string> documentIds;
-    {
-        std::lock_guard lk(conversationsMtx_);
-        for (const auto& [id, conv] : conversations_) {
-            if (id == conversationId || !conv)
-                continue;
-            std::lock_guard clk(conv->mtx);
-            if (conv->conversation && conv->conversation->mode() == ConversationMode::DOCUMENT
-                && conv->conversation->parentConversationId() == conversationId)
-                documentIds.emplace_back(id);
-        }
-    }
     auto removed = withConv(conversationId,
                             [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
     if (removed)
-        for (const auto& documentId : documentIds)
+        // Collect after marking the parent removed: no new child can register
+        // past that point, including a clone without a repository yet.
+        for (const auto& documentId : childDocuments({conversationId}))
             // Each held document is left the way the conversation just was: a
             // leave commit the other holders fetch, then the repository goes.
             // A silent erasure instead would leave this device forever listed
@@ -1281,17 +1322,36 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId, 
     return removed;
 }
 
+std::vector<std::string>
+ConversationModule::Impl::childDocuments(const std::vector<std::string>& parents) const
+{
+    std::vector<std::string> ids;
+    if (parents.empty())
+        return ids;
+    for (const auto& conv : getSyncedConversations()) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->info.mode == ConversationMode::DOCUMENT
+            && std::find(parents.begin(), parents.end(), conv->info.parent) != parents.end())
+            ids.push_back(conv->info.id);
+    }
+    return ids;
+}
+
 void
 ConversationModule::Impl::removeDocumentReplica(const std::string& documentId)
 {
-    auto conv = getConversation(documentId);
-    if (!conv)
+    if (!ConversationRepository::isValidConversationId(documentId)) {
+        JAMI_WARNING("[Account {}] Refusing to remove replica with invalid document id '{}'", accountId_, documentId);
         return;
+    }
+    auto conv = startConversation(documentId);
     std::lock_guard lk(conv->mtx);
     if (conv->conversation && conv->conversation->mode() != ConversationMode::DOCUMENT)
         return;
 
-    conv->info.removed = nowMs();
+    conv->info.mode = ConversationMode::DOCUMENT;
+    conv->info.members.emplace(username_);
+    conv->info.removed = std::max(nowMs(), conv->info.created);
     conv->info.erased = nowMs();
     if (conv->fallbackClone)
         conv->fallbackClone->cancel();
@@ -1320,6 +1380,8 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
         conv.info.erased = nowMs();
     if (conv.fallbackClone)
         conv.fallbackClone->cancel();
+    if (isSyncing)
+        conv.clearFetches();
     conv.resetCloneRetry();
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
@@ -1626,6 +1688,8 @@ ConversationModule::Impl::fixStructures(
         JAMI_ERROR("[Account {}] Remove conversation ({})", accountId_, conv);
         removeConversation(conv, true);
     }
+    for (const auto& conversation : getConversations())
+        acc->collaborativeEditing()->syncDocuments(conversation->id());
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
 
@@ -1635,6 +1699,8 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
 {
     std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
+    if (conv->info.mode == ConversationMode::DOCUMENT && conv->info.isRemoved())
+        return;
     if (conv->isUnrecoverable()) {
         JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Conversation is marked unrecoverable, "
                      "ignoring clone request",
@@ -1742,6 +1808,8 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
     }
 
     for (const auto& conversation : conversations) {
+        if (auto acc = account_.lock())
+            acc->collaborativeEditing()->syncDocuments(conversation->id());
 #ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif
@@ -1903,6 +1971,12 @@ ConversationModule::onFetchCompleted(const std::function<void(const std::string&
 {
     pimpl_->fetchCompletedCbTest_ = cb;
 }
+
+void
+ConversationModule::onCloneReady(const std::function<void(const std::string&)>& cb)
+{
+    pimpl_->cloneReadyCbTest_ = cb;
+}
 #endif
 
 void
@@ -2032,6 +2106,9 @@ ConversationModule::loadConversations()
                         // the value of `sconv->info.members`.
                         members.emplace(acc->getUsername());
                         sconv->info.members = std::move(members);
+                        sconv->info.mode = conv->mode();
+                        if (conv->mode() == ConversationMode::DOCUMENT)
+                            sconv->info.parent = conv->parentConversationId();
                         // convInfosMtx_ is already locked
                         pimpl_->convInfos_[repository] = sconv->info;
                     }
@@ -2565,28 +2642,63 @@ ConversationModule::startDocument(const std::string& parentConversationId, const
     std::lock_guard lk(conv->mtx);
     conv->info.created = nowMs();
     conv->info.mode = ConversationMode::DOCUMENT;
+    conv->info.parent = parentConversationId;
     conv->info.members.emplace(pimpl_->username_);
     conv->conversation = conversation;
     // Saved so the document is reloaded as held on restart, but never handed to
     // the clients as a conversation nor synced to this account's other devices:
-    // replication is a per-device choice, made by opening.
+    // each device discovers documents through the parent conversation.
     pimpl_->addConvInfo(conv->info);
     return docId;
 }
 
-void
-ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::vector<std::string>& candidates)
+bool
+ConversationModule::cloneDocumentFrom(const std::string& parentConversationId,
+                                      const std::string& documentId,
+                                      const std::vector<std::string>& candidates,
+                                      bool reopen)
 {
+    if (!ConversationRepository::isValidConversationId(documentId)) {
+        JAMI_WARNING("[Account {}] Refusing to clone invalid document id '{}'", pimpl_->accountId_, documentId);
+        return false;
+    }
     if (candidates.empty())
-        return;
+        return false;
+    auto parent = pimpl_->getConversation(parentConversationId);
+    if (!parent || parentConversationId == documentId)
+        return false;
     auto conv = pimpl_->startConversation(documentId);
     {
+        std::lock_guard parentLock(parent->mtx);
+        if (!parent->canReplicateDocuments(pimpl_->username_)) {
+            JAMI_DEBUG("[Account {}] Deferring document {}: parent is inactive", pimpl_->accountId_, documentId);
+            return false;
+        }
         std::lock_guard lk(conv->mtx);
+        if (!conv->info.parent.empty() && conv->info.parent != parentConversationId) {
+            JAMI_WARNING("[Account {}] Refusing document {} with conflicting parent", pimpl_->accountId_, documentId);
+            return false;
+        }
+        if (!reopen && conv->info.removed != TimePoint {} && conv->info.isRemoved()) {
+            JAMI_DEBUG("[Account {}] [Document {}] Keeping explicitly removed replica offline",
+                       pimpl_->accountId_,
+                       documentId);
+            return false;
+        }
+        if (conv->info.parent.empty()) {
+            conv->info.parent = parentConversationId;
+            if (conv->pending)
+                pimpl_->addConvInfo(conv->info);
+        }
+        if (conv->conversation || conv->pending)
+            return true;
         // Setting the mode up front spares the mode-mismatch complaint when the
         // clone lands; a document reopened after a local removal is un-removed
         // the same way a re-added conversation is.
         conv->info.mode = ConversationMode::DOCUMENT;
+        conv->info.parent = parentConversationId;
         conv->info.created = nowMs();
+        conv->info.removed = TimePoint {};
         conv->info.erased = TimePoint {};
         conv->info.members.emplace(pimpl_->username_);
         // Each candidate plays the part an inviter plays for a conversation:
@@ -2594,6 +2706,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
         // what isPeerAuthorized() falls back to before the repo exists.
         for (const auto& uri : candidates)
             conv->info.members.emplace(uri);
+        pimpl_->addConvInfo(conv->info);
     }
     // The fetch starts from the preferred candidates only: should they fail,
     // the fallback rounds walk everybody recorded above, with backoff, and
@@ -2603,6 +2716,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
     auto initiated = std::min(candidates.size(), initialSources);
     for (size_t i = 0; i < initiated; ++i)
         pimpl_->cloneConversationFrom(documentId, candidates[i]);
+    return true;
 }
 
 void
@@ -2974,25 +3088,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
     // to the other holders, so each local replica is dropped silently.
     // Collected outside the loop above: the conversation map lock and a
     // conversation's own lock nest the other way around.
-    if (!removedConversations.empty()) {
-        std::vector<std::string> documentIds;
-        {
-            std::lock_guard lk(pimpl_->conversationsMtx_);
-            for (const auto& [id, conv] : pimpl_->conversations_) {
-                if (!conv)
-                    continue;
-                std::lock_guard clk(conv->mtx);
-                if (conv->conversation && conv->conversation->mode() == ConversationMode::DOCUMENT
-                    && std::find(removedConversations.begin(),
-                                 removedConversations.end(),
-                                 conv->conversation->parentConversationId())
-                           != removedConversations.end())
-                    documentIds.emplace_back(id);
-            }
-        }
-        for (const auto& documentId : documentIds)
-            pimpl_->removeDocumentReplica(documentId);
-    }
+    for (const auto& documentId : pimpl_->childDocuments(removedConversations))
+        pimpl_->removeDocumentReplica(documentId);
 
     for (const auto& cid : toClone) {
         auto members = getConversationMembers(cid);
@@ -3559,22 +3656,9 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             }
         }
     }
-    // Remove all documents in the removed conversations
-    std::vector<std::string> documentIds;
-    {
-        std::lock_guard lk(pimpl_->conversationsMtx_);
-        for (const auto& [id, conv] : pimpl_->conversations_) {
-            if (!conv)
-                continue;
-            std::lock_guard clk(conv->mtx);
-            if (conv->conversation && conv->conversation->mode() == ConversationMode::DOCUMENT
-                && std::find(toRm.begin(), toRm.end(), conv->conversation->parentConversationId()) != toRm.end())
-                documentIds.emplace_back(id);
-        }
-    }
     for (const auto& id : toRm)
         pimpl_->removeRepository(id, true, true);
-    for (const auto& documentId : documentIds)
+    for (const auto& documentId : pimpl_->childDocuments(toRm))
         pimpl_->removeDocumentReplica(documentId);
 }
 

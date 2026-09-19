@@ -106,6 +106,7 @@ public:
 #ifdef LIBJAMI_TEST
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
     void onFetchCompleted(const std::function<void(const std::string&, const std::string&, bool)>& cb);
+    void onCloneReady(const std::function<void(const std::string&)>& cb);
 #endif
 
     void monitor();
@@ -220,7 +221,7 @@ public:
      * Create a collaborative document: a swarm repository of its own (mode
      * DOCUMENT), announced in @p parentConversationId, holding CRDT
      * checkpoints instead of messages. The creator is its only member and
-     * admin; other members join by opening it (see cloneDocumentFrom()).
+     * admin; other members join when they receive its announcement.
      * @param parentConversationId  the conversation that announces it
      * @param mimeType              media type of what the document will hold
      * @return the document's repository id, empty on failure
@@ -228,8 +229,8 @@ public:
     std::string startDocument(const std::string& parentConversationId, const std::string& mimeType);
 
     /**
-     * Clone a collaborative document from a member's devices — how a device
-     * opts into holding a replica. The serving holder writes the `add` commit
+     * Clone a collaborative document from a member's devices.
+     * The serving holder writes the `add` commit
      * at serve time, so the clone this device receives already contains its
      * invitation; the standard pending-conversation path then writes `join`.
      * Completion is reported through CollaborativeEditing::onRepositoryUpdated
@@ -238,9 +239,15 @@ public:
      * fetch is only initiated from the first few: the fallback rounds walk
      * the rest, with backoff, if those fail.
      * @param documentId  the document's repository id
+     * @param parentConversationId  active conversation that announced the document
      * @param candidates  members to clone from, in order of preference
+     * @param reopen      allow an explicit open to restore a locally removed replica
+     * @return false if automatic replication was declined or there is no source
      */
-    void cloneDocumentFrom(const std::string& documentId, const std::vector<std::string>& candidates);
+    bool cloneDocumentFrom(const std::string& parentConversationId,
+                           const std::string& documentId,
+                           const std::vector<std::string>& candidates,
+                           bool reopen = true);
 
     /**
      * Drop this device's replica of a collaborative document.The repository and
