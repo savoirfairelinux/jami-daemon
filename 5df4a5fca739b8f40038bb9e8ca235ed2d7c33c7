@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "422bdadf_66400e83",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2918,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-19T14:28:43Z",
+      "side": 1,
+      "message": "[error] Line 2918: 🔴 The strict raw `created` comparison rejects valid same-generation snapshots relayed by an older daemon. Legacy `ConvInfo` messages contain only second-resolution `created`, which `msgpack_unpack` reconstructs as `...000ms`; a newer daemon may have the same generation persisted with `createdMs` at `...123ms`. The legacy removal/erasure then hits this `continue` before `newerErasure` is evaluated, so the originating erasure is never applied and the repository remains. Preserve timestamp precision/provenance (or use an explicit generation identity) and compare legacy snapshots in a way that still distinguishes genuinely older generations; add a serialized old-peer regression test.",
+      "revId": "5df4a5fca739b8f40038bb9e8ca235ed2d7c33c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
