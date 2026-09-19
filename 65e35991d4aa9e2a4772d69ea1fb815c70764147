@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b6cbf42_b8ce0d47",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2960,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-19T13:26:08Z",
+      "side": 1,
+      "message": "[error] Line 2960: 🔴 The stale-snapshot guard at line 2919 still compares only `created` and `removed` before this erasure update. Devices upgraded from the previous implementation may already have `conv-\u003einfo.removed` persisted as the local receipt time; when they later receive the originating snapshot (`removed\u003dR`, `erased\u003dE`), `R \u003c local receipt` causes the entire snapshot to be skipped, so this newer `erased` timestamp is never applied and the repository remains on disk. Compare lifecycle/erasure timestamps independently while still rejecting snapshots from older `created` generations, or migrate the legacy receipt-time value.",
+      "revId": "65e35991d4aa9e2a4772d69ea1fb815c70764147",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
