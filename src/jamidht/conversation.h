@@ -175,6 +175,8 @@ struct ConvInfo
 {
     std::string id {};
     TimePoint created {};
+    // False when only the legacy seconds key was supplied; preserved on relay.
+    bool createdMsKnown {true};
     TimePoint removed {};
     TimePoint erased {};
     std::set<std::string> members;
@@ -201,7 +203,7 @@ struct ConvInfo
     // Hand-written msgpack serialization (replaces MSGPACK_DEFINE_MAP) to emit
     // dual keys: legacy seconds (created/removed/erased) + milliseconds
     // (createdMs/removedMs/erasedMs). Readers prefer the ms keys and fall back
-    // to seconds * 1000.
+    // to seconds * 1000. Do not invent createdMs when relaying a legacy value.
     template<typename Packer>
     void msgpack_pack(Packer& pk) const
     {
@@ -214,29 +216,31 @@ struct ConvInfo
         std::map<std::string, int64_t> invitedMs;
         for (const auto& [uri, t] : invited)
             invitedMs[uri] = toMillisecondsSinceEpoch(t);
-        msgpack::type::make_define_map(ConversationMapKeys::ID,
-                                       id,
-                                       ConversationMapKeys::CREATED,
-                                       createdSec,
-                                       ConversationMapKeys::REMOVED,
-                                       removedSec,
-                                       ConversationMapKeys::ERASED,
-                                       erasedSec,
-                                       ConversationMapKeys::MEMBERS,
-                                       members,
-                                       ConversationMapKeys::LAST_DISPLAYED,
-                                       lastDisplayed,
-                                       ConversationMapKeys::MODE,
-                                       mode,
-                                       ConversationMapKeys::CREATED_MS,
-                                       createdMs,
-                                       ConversationMapKeys::REMOVED_MS,
-                                       removedMs,
-                                       ConversationMapKeys::ERASED_MS,
-                                       erasedMs,
-                                       ConversationMapKeys::INVITED,
-                                       invitedMs)
-            .msgpack_pack(pk);
+        pk.pack_map(10 + (createdMsKnown ? 1 : 0));
+        pk.pack(ConversationMapKeys::ID);
+        pk.pack(id);
+        pk.pack(ConversationMapKeys::CREATED);
+        pk.pack(createdSec);
+        pk.pack(ConversationMapKeys::REMOVED);
+        pk.pack(removedSec);
+        pk.pack(ConversationMapKeys::ERASED);
+        pk.pack(erasedSec);
+        pk.pack(ConversationMapKeys::MEMBERS);
+        pk.pack(members);
+        pk.pack(ConversationMapKeys::LAST_DISPLAYED);
+        pk.pack(lastDisplayed);
+        pk.pack(ConversationMapKeys::MODE);
+        pk.pack(mode);
+        if (createdMsKnown) {
+            pk.pack(ConversationMapKeys::CREATED_MS);
+            pk.pack(createdMs);
+        }
+        pk.pack(ConversationMapKeys::REMOVED_MS);
+        pk.pack(removedMs);
+        pk.pack(ConversationMapKeys::ERASED_MS);
+        pk.pack(erasedMs);
+        pk.pack(ConversationMapKeys::INVITED);
+        pk.pack(invitedMs);
     }
     void msgpack_unpack(const msgpack::object& o);
     void msgpack_object(msgpack::object* o, msgpack::zone& z) const;

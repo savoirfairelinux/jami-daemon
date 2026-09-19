@@ -71,6 +71,7 @@ private:
     void testConvInfoMsgpackRoundtrip();
     // JSON: ms keys preferred, legacy seconds-only JSON still readable
     void testConvInfoJson();
+    void testLegacyCreationPrecisionSurvivesRelay();
     // Same checks for ConversationRequest
     void testRequestLegacyToNew();
     void testRequestNewToLegacy();
@@ -85,6 +86,7 @@ private:
     CPPUNIT_TEST(testConvInfoNewToLegacy);
     CPPUNIT_TEST(testConvInfoMsgpackRoundtrip);
     CPPUNIT_TEST(testConvInfoJson);
+    CPPUNIT_TEST(testLegacyCreationPrecisionSurvivesRelay);
     CPPUNIT_TEST(testRequestLegacyToNew);
     CPPUNIT_TEST(testRequestNewToLegacy);
     CPPUNIT_TEST(testRequestMsgpackRoundtrip);
@@ -105,6 +107,24 @@ repack(const In& in)
     Out out;
     oh.get().convert(out);
     return out;
+}
+
+void
+ConvInfoSerializationTest::testLegacyCreationPrecisionSurvivesRelay()
+{
+    LegacyConvInfo legacy;
+    legacy.id = "legacy";
+    legacy.created = 1700000001;
+    auto decoded = repack<ConvInfo>(legacy);
+    CPPUNIT_ASSERT(!decoded.toJson().isMember(ConversationMapKeys::CREATED_MS));
+    auto forwarded = repack<ConvInfo>(decoded);
+    CPPUNIT_ASSERT(!forwarded.toJson().isMember(ConversationMapKeys::CREATED_MS));
+    msgpack::zone zone;
+    msgpack::object object(decoded, zone);
+    CPPUNIT_ASSERT(!object.as<ConvInfo>().toJson().isMember(ConversationMapKeys::CREATED_MS));
+    ConvInfo restored(decoded.toJson());
+    CPPUNIT_ASSERT(!restored.toJson().isMember(ConversationMapKeys::CREATED_MS));
+    CPPUNIT_ASSERT(restored.created == decoded.created);
 }
 
 void

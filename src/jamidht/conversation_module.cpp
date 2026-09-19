@@ -745,6 +745,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
                     if (!conv->conversation) {
                         conv->info.created = nowMs();
+                        conv->info.createdMsKnown = true;
                         conv->info.erased = TimePoint {};
                         convInfos_[conversationId] = conv->info;
                         saveConvInfos();
@@ -1782,6 +1783,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     if (conv->info.created == TimePoint {}) {
         conv->info = {request.conversationId};
         conv->info.created = request.received;
+        conv->info.createdMsKnown = true;
         conv->info.members.emplace(username_);
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
@@ -1789,6 +1791,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     } else if (conv->info.mode != ConversationMode::ONE_TO_ONE && conv->info.isRemoved()) {
         // Re-invited to a group conversation we previously left.
         conv->info.created = nowMs();
+        conv->info.createdMsKnown = true;
         conv->info.erased = TimePoint {};
         addConvInfo(conv->info);
     }
@@ -2015,6 +2018,7 @@ ConversationModule::loadConversations()
                         if (convInfo == pimpl_->convInfos_.end()) {
                             JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
                             sconv->info.created = nowMs();
+                            sconv->info.createdMsKnown = true;
                             sconv->info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                         } else {
                             sconv->info = convInfo->second;
@@ -2103,6 +2107,7 @@ ConversationModule::loadConversations()
         ConvInfo newInfo;
         newInfo.id = contact.conversationId;
         newInfo.created = nowMs();
+        newInfo.createdMsKnown = true;
         newInfo.members.emplace(pimpl_->username_);
         newInfo.members.emplace(contactId.toString());
         pimpl_->conversations_.emplace(contact.conversationId, std::make_shared<SyncedConversation>(newInfo));
@@ -2510,6 +2515,7 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     auto conv = pimpl_->startConversation(convId);
     std::unique_lock lk(conv->mtx);
     conv->info.created = nowMs();
+    conv->info.createdMsKnown = true;
     conv->info.mode = mode;
     conv->info.members.emplace(pimpl_->username_);
     if (otherMember)
@@ -2564,6 +2570,7 @@ ConversationModule::startDocument(const std::string& parentConversationId, const
     auto conv = pimpl_->startConversation(docId);
     std::lock_guard lk(conv->mtx);
     conv->info.created = nowMs();
+    conv->info.createdMsKnown = true;
     conv->info.mode = ConversationMode::DOCUMENT;
     conv->info.members.emplace(pimpl_->username_);
     conv->conversation = conversation;
@@ -2587,6 +2594,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
         // the same way a re-added conversation is.
         conv->info.mode = ConversationMode::DOCUMENT;
         conv->info.created = nowMs();
+        conv->info.createdMsKnown = true;
         conv->info.erased = TimePoint {};
         conv->info.members.emplace(pimpl_->username_);
         // Each candidate plays the part an inviter plays for a conversation:
@@ -2915,21 +2923,42 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         bool isNewConv = not pimpl_->isConversation(convId);
         auto conv = pimpl_->startConversation(convInfo);
         std::unique_lock lk(conv->mtx);
-        // Skip outdated info
-        if (std::max(convInfo.created, convInfo.removed) < std::max(conv->info.created, conv->info.removed))
+        auto incomingCreated = convInfo.created;
+        auto localCreated = conv->info.created;
+        if (!convInfo.createdMsKnown || !conv->info.createdMsKnown) {
+            incomingCreated = timePointFromSeconds(toSecondsSinceEpoch(incomingCreated));
+            localCreated = timePointFromSeconds(toSecondsSinceEpoch(localCreated));
+        }
+        if (incomingCreated < localCreated)
+            continue;
+        // Older daemons persisted receipt time as removed. An erasure of the
+        // same generation must still advance, even if its removal looks older.
+        const bool newerErasure = convInfo.isRemoved() && incomingCreated == localCreated
+                                  && convInfo.erased > conv->info.erased;
+        if (!newerErasure && std::max(incomingCreated, convInfo.removed) < std::max(localCreated, conv->info.removed))
             continue;
         if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             if (conv->info.removed != TimePoint {}) {
-                if (conv->info.removed >= convInfo.created) {
+                if (conv->info.removed >= incomingCreated) {
                     // Only reclone if re-added, else the peer is not synced yet (could be
                     // offline before)
                     continue;
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
+            const bool keepPreciseCreation = incomingCreated == localCreated && conv->info.createdMsKnown
+                                             && !convInfo.createdMsKnown;
+            const auto preciseCreated = conv->info.created;
+            const bool gainedPrecision = !conv->info.createdMsKnown && convInfo.createdMsKnown;
             conv->info = convInfo;
+            if (keepPreciseCreation) {
+                conv->info.created = preciseCreated;
+                conv->info.createdMsKnown = true;
+            }
+            if (gainedPrecision)
+                pimpl_->addConvInfo(conv->info);
             if (!conv->conversation) {
                 if (isNewConv)
                     listChanged = true;
@@ -2939,26 +2968,43 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                     // In this case, information is from JAMS
                     // JAMS does not store the conversation itself, so we
                     // must use information to clone the conversation
-                    addConvInfo(convInfo);
+                    addConvInfo(conv->info);
                     toClone.emplace_back(convId);
                 }
             }
         } else {
+            // A seconds-only removal in the same second as a precise local
+            // creation cannot distinguish an old leave from the current join.
+            if (!convInfo.createdMsKnown && conv->info.createdMsKnown && !conv->info.isRemoved()
+                && convInfo.removed < conv->info.created) {
+                JAMI_DEBUG("[Account {}] [Conversation {}] Ignoring ambiguous legacy removal",
+                           pimpl_->accountId_,
+                           convId);
+                continue;
+            }
             if (conv->conversation && !conv->conversation->isRemoving()) {
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
                 conv->conversation->setRemovingFlag();
             }
             auto update = false;
-            if (conv->info.removed == TimePoint {}) {
+            if (incomingCreated == localCreated && convInfo.createdMsKnown && !conv->info.createdMsKnown) {
+                conv->info.created = convInfo.created;
+                conv->info.createdMsKnown = true;
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+            }
+            if (convInfo.removed > conv->info.removed) {
+                update = true;
+                listChanged = true;
+                // Keep the originating event's timestamp: replacing it with
+                // receipt time would reject the later erasure as outdated.
+                conv->info.removed = convInfo.removed;
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
-            if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+            if (convInfo.erased > conv->info.erased) {
                 update = true;
                 listChanged = true;
-                conv->info.erased = nowMs();
+                conv->info.erased = convInfo.erased;
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {

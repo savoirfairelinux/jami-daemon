@@ -18,6 +18,8 @@
 #include "fileutils.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation_module.h"
+#include "jamidht/sync_module.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
@@ -33,12 +35,53 @@
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
+#include <thread>
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
 
 namespace jami {
 namespace test {
+
+struct LegacySyncConvInfo
+{
+    std::string id;
+    time_t created {};
+    time_t removed {};
+    time_t erased {};
+    std::set<std::string> members;
+    std::string lastDisplayed;
+    ConversationMode mode {};
+    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed, mode)
+};
+
+struct LegacySyncMessage
+{
+    DeviceSync ds;
+    std::map<std::string, LegacySyncConvInfo> c;
+    decltype(SyncMsg::cr) cr;
+    decltype(SyncMsg::p) p;
+    decltype(SyncMsg::ld) ld;
+    decltype(SyncMsg::ms) ms;
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+};
+
+static SyncMsg
+legacySnapshot(const ConvInfo& info)
+{
+    LegacySyncMessage message;
+    message.c.emplace(info.id,
+                      LegacySyncConvInfo {info.id,
+                                          toSecondsSinceEpoch(info.created),
+                                          toSecondsSinceEpoch(info.removed),
+                                          toSecondsSinceEpoch(info.erased),
+                                          info.members,
+                                          info.lastDisplayed,
+                                          info.mode});
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, message);
+    return msgpack::unpack(buffer.data(), buffer.size()).get().as<SyncMsg>();
+}
 
 struct UserData
 {
@@ -94,6 +137,18 @@ private:
     void testCreateMultipleConversationThenAddDevice();
     void testReceivesInviteThenAddDevice();
     void testRemoveConversationOnAllDevices();
+    void testSyncedRemovalPreservesTimestamp();
+    void testSyncedErasureAfterRemoval();
+    void testSyncedRemovalOrdering();
+    void testLegacyRemovalAcceptsLaterErasure();
+    void testLegacyRemovalAcceptsEarlierErasure();
+    void checkLegacyRemovalErasure(std::chrono::milliseconds erasureDelay);
+    void testOlderGenerationErasureIsIgnored();
+    ConvInfo createPreciseConversation();
+    void testLegacySecondsRemoval();
+    void testLegacySecondsErasureAfterReceipt();
+    void testLegacyRelayKeepsPreciseCreation();
+    void testLegacySecondsCannotEraseRejoin();
     void testSyncCreateAccountExportDeleteReimportOldBackup();
     void testSyncCreateAccountExportDeleteReimportWithConvId();
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
@@ -110,6 +165,16 @@ private:
     CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
     CPPUNIT_TEST(testReceivesInviteThenAddDevice);
     CPPUNIT_TEST(testRemoveConversationOnAllDevices);
+    CPPUNIT_TEST(testSyncedRemovalPreservesTimestamp);
+    CPPUNIT_TEST(testSyncedErasureAfterRemoval);
+    CPPUNIT_TEST(testSyncedRemovalOrdering);
+    CPPUNIT_TEST(testLegacyRemovalAcceptsLaterErasure);
+    CPPUNIT_TEST(testLegacyRemovalAcceptsEarlierErasure);
+    CPPUNIT_TEST(testOlderGenerationErasureIsIgnored);
+    CPPUNIT_TEST(testLegacySecondsRemoval);
+    CPPUNIT_TEST(testLegacySecondsErasureAfterReceipt);
+    CPPUNIT_TEST(testLegacyRelayKeepsPreciseCreation);
+    CPPUNIT_TEST(testLegacySecondsCannotEraseRejoin);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
@@ -122,6 +187,246 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SyncHistoryTest, SyncHistoryTest::name());
+
+void
+SyncHistoryTest::testSyncedRemovalPreservesTimestamp()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    auto removed = ConversationModule::convInfos(aliceId).at(convId);
+    removed.removed = removed.created + 1ms;
+    std::this_thread::sleep_until(removed.removed + 5ms);
+    SyncMsg msg;
+    msg.c[convId] = removed;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    auto stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT_EQUAL(toMillisecondsSinceEpoch(removed.removed), toMillisecondsSinceEpoch(stored.removed));
+
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT_EQUAL(toMillisecondsSinceEpoch(removed.removed), toMillisecondsSinceEpoch(stored.removed));
+}
+
+void
+SyncHistoryTest::testSyncedErasureAfterRemoval()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    auto removed = ConversationModule::convInfos(aliceId).at(convId);
+    removed.removed = removed.created + 1ms;
+    std::this_thread::sleep_until(removed.removed + 5ms);
+    SyncMsg msg;
+    msg.c[convId] = removed;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    const auto repo = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repo));
+
+    // The originating device confirms erasure after a peer fetched its leave.
+    msg.c[convId].erased = removed.removed + 2ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(!std::filesystem::exists(repo));
+    auto stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT_EQUAL(toMillisecondsSinceEpoch(removed.removed), toMillisecondsSinceEpoch(stored.removed));
+    CPPUNIT_ASSERT_EQUAL(toMillisecondsSinceEpoch(msg.c.at(convId).erased), toMillisecondsSinceEpoch(stored.erased));
+
+    // A delayed removal-only snapshot must not undo the erasure.
+    msg.c[convId].erased = {};
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(ConversationModule::convInfos(aliceId).at(convId).erased == stored.erased);
+}
+
+void
+SyncHistoryTest::testSyncedRemovalOrdering()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    auto original = ConversationModule::convInfos(aliceId).at(convId);
+    SyncMsg msg;
+    msg.c[convId] = original;
+    msg.c[convId].removed = original.created + 2ms;
+    std::this_thread::sleep_until(original.created + 10ms);
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    msg.c[convId].removed += 1ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    auto stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(stored.removed == msg.c.at(convId).removed);
+
+    msg.c[convId].removed -= 1ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(ConversationModule::convInfos(aliceId).at(convId).removed == stored.removed);
+    msg.c[convId] = original;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(ConversationModule::convInfos(aliceId).at(convId).removed == stored.removed);
+
+    msg.c[convId].removed = stored.removed;
+    msg.c[convId].erased = stored.removed + 1ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    const auto staleRemoval = msg.c.at(convId);
+
+    auto rejoined = original;
+    rejoined.created = staleRemoval.erased + 1ms;
+    msg.c[convId] = rejoined;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(!ConversationModule::convInfos(aliceId).at(convId).isRemoved());
+
+    msg.c[convId] = staleRemoval;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(stored.created == rejoined.created);
+    CPPUNIT_ASSERT(!stored.isRemoved());
+}
+
+void
+SyncHistoryTest::testLegacyRemovalAcceptsLaterErasure()
+{
+    checkLegacyRemovalErasure(40ms);
+}
+
+void
+SyncHistoryTest::testLegacyRemovalAcceptsEarlierErasure()
+{
+    checkLegacyRemovalErasure(20ms);
+}
+
+void
+SyncHistoryTest::checkLegacyRemovalErasure(std::chrono::milliseconds erasureDelay)
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    auto original = ConversationModule::convInfos(aliceId).at(convId);
+    SyncMsg msg;
+    msg.c[convId] = original;
+    // Seed the receipt-time removal stored by an older daemon.
+    msg.c[convId].removed = original.created + 30ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    auto legacy = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(legacy.removed == msg.c.at(convId).removed);
+    const auto repo = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repo));
+
+    // The original removal predates local receipt. Erasure may do so too.
+    msg.c[convId].removed = original.created + 10ms;
+    msg.c[convId].erased = original.created + erasureDelay;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(!std::filesystem::exists(repo));
+    auto stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(stored.erased == msg.c.at(convId).erased);
+    CPPUNIT_ASSERT(stored.removed == legacy.removed);
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(ConversationModule::convInfos(aliceId).at(convId).erased == stored.erased);
+}
+
+void
+SyncHistoryTest::testOlderGenerationErasureIsIgnored()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+    const auto current = ConversationModule::convInfos(aliceId).at(convId);
+    SyncMsg msg;
+    msg.c[convId] = current;
+    msg.c[convId].created -= 20ms;
+    msg.c[convId].removed = current.created - 10ms;
+    msg.c[convId].erased = current.created + 100ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    auto stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(!stored.isRemoved());
+    CPPUNIT_ASSERT(stored.created == current.created);
+    CPPUNIT_ASSERT(stored.erased == TimePoint {});
+    CPPUNIT_ASSERT(std::filesystem::is_directory(fileutils::get_data_dir() / aliceId / "conversations" / convId));
+
+    // A legacy receipt timestamp can even be later than the current rejoin.
+    // The older creation generation must still prevent deleting this replica.
+    msg.c[convId].removed = current.created + 50ms;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    stored = ConversationModule::convInfos(aliceId).at(convId);
+    CPPUNIT_ASSERT(!stored.isRemoved());
+    CPPUNIT_ASSERT(stored.created == current.created);
+    CPPUNIT_ASSERT(std::filesystem::is_directory(fileutils::get_data_dir() / aliceId / "conversations" / convId));
+}
+
+void
+SyncHistoryTest::testLegacySecondsRemoval()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto info = createPreciseConversation();
+    info.removed = timePointFromMilliseconds(1700000002345);
+    account->convModule()->onSyncData(legacySnapshot(info), account->getUsername(), "");
+    auto stored = ConversationModule::convInfos(aliceId).at(info.id);
+    CPPUNIT_ASSERT(stored.isRemoved());
+    CPPUNIT_ASSERT(stored.created == info.created);
+    info.erased = timePointFromMilliseconds(1700000003456);
+    account->convModule()->onSyncData(legacySnapshot(info), account->getUsername(), "");
+    CPPUNIT_ASSERT(!std::filesystem::exists(fileutils::get_data_dir() / aliceId / "conversations" / info.id));
+}
+
+void
+SyncHistoryTest::testLegacySecondsErasureAfterReceipt()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto info = createPreciseConversation();
+    auto receipt = info;
+    receipt.removed = timePointFromMilliseconds(1700000005789);
+    SyncMsg msg;
+    msg.c[info.id] = receipt;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(ConversationModule::convInfos(aliceId).at(info.id).removed == receipt.removed);
+    info.removed = timePointFromMilliseconds(1700000002345);
+    info.erased = timePointFromMilliseconds(1700000003456);
+    auto legacy = legacySnapshot(info);
+    // Also exercise a modern daemon forwarding an older peer's payload.
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, legacy);
+    auto forwarded = msgpack::unpack(buffer.data(), buffer.size()).get().as<SyncMsg>();
+    account->convModule()->onSyncData(forwarded, account->getUsername(), "");
+    CPPUNIT_ASSERT(!std::filesystem::exists(fileutils::get_data_dir() / aliceId / "conversations" / info.id));
+}
+
+void
+SyncHistoryTest::testLegacyRelayKeepsPreciseCreation()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const auto info = createPreciseConversation();
+    account->convModule()->onSyncData(legacySnapshot(info), account->getUsername(), "");
+    auto older = info;
+    older.created -= 50ms;
+    older.removed = timePointFromMilliseconds(1700000003000);
+    older.erased = older.removed + 1s;
+    SyncMsg msg;
+    msg.c[info.id] = older;
+    account->convModule()->onSyncData(msg, account->getUsername(), "");
+    CPPUNIT_ASSERT(!ConversationModule::convInfos(aliceId).at(info.id).isRemoved());
+    CPPUNIT_ASSERT(std::filesystem::is_directory(fileutils::get_data_dir() / aliceId / "conversations" / info.id));
+}
+
+void
+SyncHistoryTest::testLegacySecondsCannotEraseRejoin()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const auto info = createPreciseConversation();
+    auto older = info;
+    older.created -= 50ms;
+    older.removed = info.created - 1ms;
+    older.erased = info.created + 1s;
+    account->convModule()->onSyncData(legacySnapshot(older), account->getUsername(), "");
+    CPPUNIT_ASSERT(!ConversationModule::convInfos(aliceId).at(info.id).isRemoved());
+    CPPUNIT_ASSERT(std::filesystem::is_directory(fileutils::get_data_dir() / aliceId / "conversations" / info.id));
+    older.created -= 1s;
+    older.removed = info.created + 2s;
+    older.erased = info.created + 3s;
+    account->convModule()->onSyncData(legacySnapshot(older), account->getUsername(), "");
+    CPPUNIT_ASSERT(!ConversationModule::convInfos(aliceId).at(info.id).isRemoved());
+}
+
+ConvInfo
+SyncHistoryTest::createPreciseConversation()
+{
+    auto convId = libjami::startConversation(aliceId);
+    auto infos = ConversationModule::convInfos(aliceId);
+    infos.at(convId).created = timePointFromMilliseconds(1700000001123);
+    ConversationModule::saveConvInfos(aliceId, infos);
+    Manager::instance().getAccount<JamiAccount>(aliceId)->convModule()->loadConversations();
+    return infos.at(convId);
+}
 
 void
 SyncHistoryTest::setUp()
@@ -917,4 +1222,10 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
 } // namespace test
 } // namespace jami
 
-CORE_TEST_RUNNER(jami::test::SyncHistoryTest::name())
+int
+main(int argc, char** argv)
+{
+    CppUnit::TextUi::TestRunner runner;
+    runner.addTest(CppUnit::TestFactoryRegistry::getRegistry(jami::test::SyncHistoryTest::name()).makeTest());
+    return runner.run(argc > 1 ? argv[1] : "") ? 0 : 1;
+}
