@@ -2915,8 +2915,14 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         bool isNewConv = not pimpl_->isConversation(convId);
         auto conv = pimpl_->startConversation(convInfo);
         std::unique_lock lk(conv->mtx);
-        // Skip outdated info
-        if (std::max(convInfo.created, convInfo.removed) < std::max(conv->info.created, conv->info.removed))
+        if (convInfo.created < conv->info.created)
+            continue;
+        // Older daemons persisted receipt time as removed. An erasure of the
+        // same generation must still advance, even if its removal looks older.
+        const bool newerErasure = convInfo.isRemoved() && convInfo.created == conv->info.created
+                                  && convInfo.erased > conv->info.erased;
+        if (!newerErasure
+            && std::max(convInfo.created, convInfo.removed) < std::max(conv->info.created, conv->info.removed))
             continue;
         if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
@@ -2949,16 +2955,18 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->conversation->setRemovingFlag();
             }
             auto update = false;
-            if (conv->info.removed == TimePoint {}) {
+            if (convInfo.removed > conv->info.removed) {
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+                // Keep the originating event's timestamp: replacing it with
+                // receipt time would reject the later erasure as outdated.
+                conv->info.removed = convInfo.removed;
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
-            if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
+            if (convInfo.erased > conv->info.erased) {
                 update = true;
                 listChanged = true;
-                conv->info.erased = nowMs();
+                conv->info.erased = convInfo.erased;
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {
