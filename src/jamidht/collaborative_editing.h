@@ -61,7 +61,9 @@ class Conversation;
  * appended as checkpoint commits. It replicates through the very pipeline the
  * conversations use -- same membership, same validation, same git transport --
  * so offline peers and late joiners converge and the history stays browsable,
- * without adding anything to the conversation history itself.
+ * without adding anything to the conversation history itself. Receiving an
+ * announcement starts replication without opening an editor. An explicit local
+ * removal disables it on that device until the document is opened again.
  */
 class CollaborativeEditing : public std::enable_shared_from_this<CollaborativeEditing>
 {
@@ -189,10 +191,10 @@ public:
                                                             const std::string& documentId,
                                                             size_t max = 0);
 
-    /// A peer announced a document in @c conversationId: record it, so its id
-    /// is recognized when a client asks to open it. Nothing is replicated:
-    /// holding a replica is a per-device choice, made by opening the document.
+    /// Record a document announcement and asynchronously fetch its replica.
     void onDocumentAnnounced(const std::string& conversationId, const std::string& documentId);
+    /// Discover documents after loading or cloning their parent conversation.
+    void syncDocuments(const std::string& conversationId);
     /// Whether @p documentId names a document some conversation announced, in
     /// whichever conversation. Lets the sync pipeline tell a document this
     /// device chose not to hold from a conversation it was never invited to.
@@ -212,13 +214,14 @@ private:
     static std::string key(const std::string& conversationId, const std::string& documentId);
     uint64_t replicaId();
     /// The swarm holding a document's replica on this device, or nullptr when
-    /// the device does not hold it (never opened, or removed from here).
+    /// the device does not hold it (not yet downloaded, or removed from here).
     std::shared_ptr<Conversation> documentConversation(const std::string& documentId);
     std::shared_ptr<Session> ensureSession(const std::string& conversationId, const std::string& documentId);
     std::shared_ptr<Session> findSession(const std::string& conversationId, const std::string& documentId);
     /// The session holding @p documentId, whichever conversation announced it.
     /// A channel request names only the document: its repository is its own.
     std::shared_ptr<Session> findSessionByDocument(const std::string& documentId);
+    YrsDocument::Bytes loadDocument(const std::string& conversationId, const std::string& documentId, bool open);
 
     /// Broadcast an update to the members and queue it for the next checkpoint.
     void onLocalUpdate(const std::shared_ptr<Session>& session, const YrsDocument::Bytes& update);

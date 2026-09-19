@@ -668,6 +668,12 @@ CollaborativeEditing::dropLocalReplica(const std::string& conversationId, const 
 YrsDocument::Bytes
 CollaborativeEditing::openDocument(const std::string& conversationId, const std::string& documentId)
 {
+    return loadDocument(conversationId, documentId, true);
+}
+
+YrsDocument::Bytes
+CollaborativeEditing::loadDocument(const std::string& conversationId, const std::string& documentId, bool open)
+{
     // A document only exists once the conversation announced it. Opening one
     // that was never announced would clone from any id a caller cares to name,
     // and bypass the very gate that decides which documents exist here.
@@ -684,14 +690,15 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
     auto* cm = account->convModule();
     if (!cm)
         return {};
+    auto parent = cm->getConversation(conversationId);
+    if (!parent || parent->isRemoving() || !parent->isMember(account->getUsername())) {
+        JAMI_WARNING("[Account {}] Refusing document {}: parent conversation is not active", accountId_, documentId);
+        return {};
+    }
     auto conversation = documentConversation(documentId);
     if (!conversation) {
-        // Opening is what opts this device into holding a replica: clone the
-        // document's swarm from its announcer. The clone lands asynchronously
-        // -- through the very pipeline a conversation invite uses -- and
-        // reports through onRepositoryUpdated(), which replays it into this
-        // session and hands the client the difference. Until then the document
-        // is open and empty, exactly like a conversation still syncing.
+        // The clone lands asynchronously through the conversation pipeline.
+        // Only an explicit open may restore a locally removed replica.
         std::string announcer;
         std::string announcedName;
         for (const auto& doc : documents(conversationId)) {
@@ -708,18 +715,6 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             JAMI_WARNING("[Account {}] Unable to open document {}: its announcer is unknown", accountId_, documentId);
             return {};
         }
-        auto session = ensureSession(conversationId, documentId);
-        {
-            // Nothing on disk yet, so nothing to replay; flagging it now is
-            // what lets the clone's completion replay into this session.
-            std::lock_guard<std::mutex> lk(mutex_);
-            session->persistedLoaded = true;
-            session->open = true;
-            // The client saw the announcement's name; recording it is what lets
-            // a rename that lands with (or after) the clone be seen as one.
-            if (!session->announcedName)
-                session->announcedName = announcedName;
-        }
         // The announcer is the likeliest holder, but no peer is a reliable
         // one: it may be offline, or be this very account -- its creator
         // reopening after a leave took the replica away, and only the
@@ -732,8 +727,7 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
             auto uriIt = member.find("uri");
             if (uriIt == member.end() || uriIt->second == announcer)
                 continue;
-            // Invited, banned and left members cannot hold a replica:
-            // holding one starts with an open, which they are refused.
+            // Only joined members may supply a replica.
             auto roleIt = member.find("role");
             if (roleIt == member.end() || (roleIt->second != "admin" && roleIt->second != "member"))
                 continue;
@@ -743,7 +737,7 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
         // with a connected device come first, so the initial fetches go to
         // peers that can actually answer. Ties keep the announcer in front
         // as the likeliest holder.
-        if (auto parent = cm->getConversation(conversationId)) {
+        {
             std::set<std::string> online;
             for (const auto& device : parent->peersToSyncWith()) {
                 auto uri = parent->uriFromDevice(device.toString());
@@ -754,12 +748,22 @@ CollaborativeEditing::openDocument(const std::string& conversationId, const std:
                 return online.count(uri) != 0;
             });
         }
-        cm->cloneDocumentFrom(documentId, candidates);
-        // No channels yet: they need the members recorded in the repository, so
-        // the clone's completion is what opens them. Until then the document is
-        // open and empty, exactly like a conversation still syncing.
-        return session->doc->encodeStateAsUpdate();
+        if (!cm->cloneDocumentFrom(documentId, candidates, open))
+            return {};
+        auto session = ensureSession(conversationId, documentId);
+        {
+            std::lock_guard<std::mutex> lk(mutex_);
+            session->persistedLoaded = true;
+            session->open |= open;
+            if (!session->announcedName)
+                session->announcedName = announcedName;
+        }
+        // Catch a clone that completed before the session was ready to replay it.
+        onRepositoryUpdated(conversationId, documentId);
+        return open ? session->doc->encodeStateAsUpdate() : YrsDocument::Bytes {};
     }
+    if (!open)
+        return {};
     auto session = ensureSession(conversationId, documentId);
     // Rebuild the CRDT state from persisted commits if this session was just created,
     // so a document opens with its full content even when the daemon restarted or the
@@ -1497,19 +1501,34 @@ CollaborativeEditing::documentStateAt(const std::string& /*conversationId*/,
 void
 CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, const std::string& documentId)
 {
-    // The author may have retired this announcement. Answered from the cache
-    // alone, never by walking the conversation again: this runs while
-    // addToHistory() holds the conversation lock, and asking the conversation
-    // anything from here is what deadlocks the caller. addToHistory() applies the
-    // removals of a batch before its announcements, and a removal is always newer
-    // than the announcement it retires, so the cache is already right by now.
-    //
-    // Nothing is replicated here: holding a replica is a per-device choice, made
-    // by opening the document. The announcement only records that it exists.
-    std::lock_guard<std::mutex> lk(announcedMtx_);
-    if (auto it = removed_.find(conversationId); it != removed_.end() && it->second.count(documentId) != 0)
+    {
+        std::lock_guard<std::mutex> lk(announcedMtx_);
+        if (auto it = removed_.find(conversationId); it != removed_.end() && it->second.count(documentId) != 0)
+            return;
+        if (!announced_[conversationId].emplace(documentId).second)
+            return;
+    }
+    // The caller can hold the parent conversation's locks. Fetch only after
+    // leaving that path, without pretending a client has opened the document.
+    dht::ThreadPool::io().run([w = weak_from_this(), conversationId, documentId] {
+        if (auto sthis = w.lock())
+            sthis->loadDocument(conversationId, documentId, false);
+    });
+}
+
+void
+CollaborativeEditing::syncDocuments(const std::string& conversationId)
+{
+    auto account = account_.lock();
+    if (!account)
         return;
-    announced_[conversationId].emplace(documentId);
+    auto* cm = account->convModule();
+    auto parent = cm ? cm->getConversation(conversationId) : nullptr;
+    if (!parent || parent->mode() == ConversationMode::DOCUMENT || parent->isRemoving()
+        || !parent->isMember(account->getUsername()))
+        return;
+    for (const auto& document : parent->collaborativeDocuments())
+        onDocumentAnnounced(conversationId, document.at("id"));
 }
 
 void

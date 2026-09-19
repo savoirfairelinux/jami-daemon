@@ -791,9 +791,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     if (!conv) {
         if (oldReq == std::nullopt && shouldRequestInvite) {
             // A commit for a repository nothing is known about. If it names a
-            // document announced in some conversation, this device simply chose
-            // not to hold a replica: replication is per-device opt-in, and a
-            // notification is not an invitation to clone.
+            // document announced in some conversation, its announcement drives
+            // replication; it must not become a separate conversation invite.
             if (auto acc = account_.lock()) {
                 if (acc->collaborativeEditing()->knowsDocument(conversationId))
                     return;
@@ -894,7 +893,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             std::lock_guard lk(conv->mtx);
                             deferred = conv->finishFetch(deviceId);
                             // Notify peers that a new commit is there (DRT)
-                            if (not commitId.empty() && ok) {
+                            if (not commitId.empty() && ok && conv->conversation && !conv->info.isRemoved()) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
@@ -1070,6 +1069,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
 
+        acc->collaborativeEditing()->syncDocuments(conversationId);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -1626,6 +1626,8 @@ ConversationModule::Impl::fixStructures(
         JAMI_ERROR("[Account {}] Remove conversation ({})", accountId_, conv);
         removeConversation(conv, true);
     }
+    for (const auto& conversation : getConversations())
+        acc->collaborativeEditing()->syncDocuments(conversation->id());
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
 
@@ -2569,19 +2571,29 @@ ConversationModule::startDocument(const std::string& parentConversationId, const
     conv->conversation = conversation;
     // Saved so the document is reloaded as held on restart, but never handed to
     // the clients as a conversation nor synced to this account's other devices:
-    // replication is a per-device choice, made by opening.
+    // each device discovers documents through the parent conversation.
     pimpl_->addConvInfo(conv->info);
     return docId;
 }
 
-void
-ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::vector<std::string>& candidates)
+bool
+ConversationModule::cloneDocumentFrom(const std::string& documentId,
+                                      const std::vector<std::string>& candidates,
+                                      bool reopen)
 {
     if (candidates.empty())
-        return;
+        return false;
     auto conv = pimpl_->startConversation(documentId);
     {
         std::lock_guard lk(conv->mtx);
+        if (!reopen && conv->info.removed != TimePoint {} && conv->info.isRemoved()) {
+            JAMI_DEBUG("[Account {}] [Document {}] Keeping explicitly removed replica offline",
+                       pimpl_->accountId_,
+                       documentId);
+            return false;
+        }
+        if (conv->conversation || conv->pending)
+            return true;
         // Setting the mode up front spares the mode-mismatch complaint when the
         // clone lands; a document reopened after a local removal is un-removed
         // the same way a re-added conversation is.
@@ -2594,6 +2606,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
         // what isPeerAuthorized() falls back to before the repo exists.
         for (const auto& uri : candidates)
             conv->info.members.emplace(uri);
+        pimpl_->addConvInfo(conv->info);
     }
     // The fetch starts from the preferred candidates only: should they fail,
     // the fallback rounds walk everybody recorded above, with backoff, and
@@ -2603,6 +2616,7 @@ ConversationModule::cloneDocumentFrom(const std::string& documentId, const std::
     auto initiated = std::min(candidates.size(), initialSources);
     for (size_t i = 0; i < initiated; ++i)
         pimpl_->cloneConversationFrom(documentId, candidates[i]);
+    return true;
 }
 
 void
