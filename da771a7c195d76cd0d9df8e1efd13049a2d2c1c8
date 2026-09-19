@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e80023b_dc50298b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1040,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-19T13:08:27Z",
+      "side": 1,
+      "message": "[warning] Line 1040: 🟡 The final document-clone gate rechecks parent membership and the stored parent ID, but not that the parent still announces this document. If a retirement has already been merged into the parent while `onDocumentRemoved()`\u0027s asynchronous cleanup is pending, this clone can still be installed and joined; a shutdown in that window can leave a persisted child repository after its announcement was retired. Recheck `parent-\u003eannouncesDocument(conversationId)` for every document clone before assigning `conv-\u003econversation`, or synchronously tombstone/remove the pending child first.",
+      "revId": "da771a7c195d76cd0d9df8e1efd13049a2d2c1c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "789f6455_5de7c612",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2658,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-19T13:08:27Z",
+      "side": 1,
+      "message": "[warning] Line 2658: 🟡 `documentId` comes directly from a remote `COLLAB_DOC` URI, but this path calls `startConversation()` and later persists the resulting `ConvInfo` before `cloneConversationFrom()` performs its repository-ID validation. A malformed announcement can therefore accumulate invalid DOCUMENT metadata (and a pending entry can interfere with conversation bookkeeping) even though the clone is rejected later. Validate with `ConversationRepository::isValidConversationId()` before mutating `conversations_`/`convInfos_`.",
+      "revId": "da771a7c195d76cd0d9df8e1efd13049a2d2c1c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
