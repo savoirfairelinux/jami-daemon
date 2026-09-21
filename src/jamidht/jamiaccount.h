@@ -85,6 +85,7 @@ namespace test {
 class Account_factoryTest;
 }
 class CollaborativeEditing;
+class FeedModule;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -500,6 +501,7 @@ public:
      * real-time shared text documents inside this account's conversations.
      */
     std::shared_ptr<CollaborativeEditing> collaborativeEditing();
+    std::shared_ptr<FeedModule> feeds();
 
     /**
      * Check (via the cache) if we need to send our profile to a specific device
@@ -1019,6 +1021,7 @@ private:
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
     std::shared_ptr<CollaborativeEditing> collaborativeEditing_;
+    std::shared_ptr<FeedModule> feeds_;
 
     std::mutex rdvMtx_;
 

@@ -68,6 +68,7 @@ constexpr const char* const COLLAB_DOC {"application/collab-doc+json"};
 // attachment: the file enters the tree and the "body" is empty. Only valid
 // in document repositories.
 constexpr const char* const CHECKPOINT {"application/checkpoint"};
+constexpr const char* const FEED_DEVICE {"application/feed-device"};
 // Jami no longer creates messages of type "application/edited-message", but we
 // still need to be able to parse them for backward compatibility.
 constexpr const char* const EDITED_MESSAGE {"application/edited-message"};
@@ -81,7 +82,7 @@ constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT };
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT, FEED };
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -112,6 +113,7 @@ struct CommitMessage
     std::string invited {};
     std::string mimeType {};
     std::string parent {};
+    std::string nonce {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:

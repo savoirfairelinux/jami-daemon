@@ -16,6 +16,8 @@
  */
 
 #include "conversation.h"
+#include "feed_policy.h"
+#include "feed_module.h"
 
 #include "account_const.h"
 #include "jamiaccount.h"
@@ -1812,6 +1814,9 @@ Conversation::Impl::addToHistory(History& history,
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        if (repository_->mode() == ConversationMode::FEED && typeIt != commit.end()
+            && typeIt->second == CommitType::FEED_DEVICE)
+            continue;
         // A collaborative document is announced here, but its content lives in a
         // separate repository: make sure that repository exists locally so it can
         // be replicated. The commit itself falls through and is displayed like a
@@ -2294,6 +2299,12 @@ Conversation::isDeviceBanned(const std::string& deviceId) const
 bool
 Conversation::isPeerAuthorized(const std::string& uri, const std::string& deviceId, bool includeInvited) const
 {
+    if (mode() == ConversationMode::FEED) {
+        const auto owner = FeedPolicy::owner(getInitialMembers());
+        const auto policy = FeedPolicy::fromInfos(infos());
+        if (!owner || !policy || (uri != *owner && (policy->closed || !policy->authorized.count(uri))))
+            return false;
+    }
     return !isMemberBanned(uri) && !isDeviceBanned(deviceId) && isMember(uri, includeInvited);
 }
 
@@ -2584,6 +2595,10 @@ Conversation::clearCache()
 std::string
 Conversation::lastCommitId() const
 {
+    // The leave commit is not part of the loaded message window. A peer must
+    // acknowledge that exact head before the removed repository can be erased.
+    if (pimpl_->isRemoving_)
+        return pimpl_->repository_->getHead();
     {
         std::lock_guard lk(pimpl_->loadedHistory_.mutex);
         if (!pimpl_->loadedHistory_.messageList.empty())
@@ -2711,6 +2726,11 @@ Conversation::Impl::pull(const std::string& deviceId)
                 emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId_,
                                                                                     repo->id(),
                                                                                     repo->infos());
+                if (repo->mode() == ConversationMode::FEED)
+                    dht::ThreadPool::io().run([w = account_, id = repo->id()] {
+                        if (auto account = w.lock())
+                            account->feeds()->onProfileChanged(id);
+                    });
             }
         }
     }

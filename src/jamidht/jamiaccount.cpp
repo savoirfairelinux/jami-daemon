@@ -33,6 +33,8 @@
 #include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
 #include "jamidht/collaborative_editing.h"
+#include "jamidht/feed_module.h"
+#include "jamidht/feed_policy.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "ydoc_channel_handler.h"
@@ -581,6 +583,11 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 
     if (getUsername() != accountUri || currentDeviceId() != deviceId)
         return;
+
+    if (!convModule()->isCallAllowed(conversationId)) {
+        Manager::instance().hangupCall(getAccountID(), callId);
+        return;
+    }
 
     // Avoid concurrent checks in this part
     std::lock_guard lk(rdvMtx_);
@@ -1217,28 +1224,19 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    TimePoint received,
-                                                    TimePoint invited) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               TimePoint received,
+               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -2278,8 +2276,10 @@ JamiAccount::onAccountDeviceAnnounced()
 
         // Bootstrap at the end to avoid to be long to load.
         dht::ThreadPool::io().run([w = weak()] {
-            if (auto shared = w.lock())
+            if (auto shared = w.lock()) {
                 shared->convModule()->bootstrap();
+                shared->feeds()->resumeSubscriptions();
+            }
         });
         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
     }
@@ -2815,6 +2815,15 @@ JamiAccount::collaborativeEditing()
     if (!collaborativeEditing_)
         collaborativeEditing_ = std::make_shared<CollaborativeEditing>(shared());
     return collaborativeEditing_;
+}
+
+std::shared_ptr<FeedModule>
+JamiAccount::feeds()
+{
+    std::lock_guard lk(moduleMtx_);
+    if (!feeds_)
+        feeds_ = std::make_shared<FeedModule>(shared());
+    return feeds_;
 }
 
 void
@@ -4156,7 +4165,18 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
                      from);
         return true;
     }
-    if (m.first == MIME_TYPE_GIT) {
+    if (m.first == MIME_TYPE_FEED) {
+        Json::Value data;
+        if (m.second.size() > 1024 * 1024 || !json::parse(m.second, data)) {
+            JAMI_WARNING("[Account {}] Invalid Feed discovery payload", getAccountID());
+            return true;
+        }
+        dht::ThreadPool::io().run([w = weak(), from, data = std::move(data)] {
+            if (auto account = w.lock())
+                account->feeds()->onMessage(from, data);
+        });
+        return true;
+    } else if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
         if (!json::parse(m.second, json)) {
             return true;
