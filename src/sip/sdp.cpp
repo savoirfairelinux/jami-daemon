@@ -786,7 +786,9 @@ Sdp::getCrypto(pjmedia_sdp_media* media)
 }
 
 pjmedia_sdp_media*
-Sdp::addMediaDescription(const MediaAttribute& mediaAttr, const pjmedia_sdp_session* previousLocalSession)
+Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
+                         const pjmedia_sdp_session* previousLocalSession,
+                         bool legacySdesOffer)
 {
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
@@ -1010,9 +1012,17 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr, const pjmedia_sdp_sess
             // enable SRTP without reporting an explicit key exchange, so the
             // default must still advertise SDES crypto for backward
             // compatibility with existing Jami and SIP peers.
-            for (auto* attr : generateSdesOfferAttributes()) {
-                if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
-                    throw SdpException("Unable to add sdes attribute to media");
+            if (legacySdesOffer) {
+                if (pjmedia_sdp_media_add_attr(
+                        med, generateSdesAttribute("1", "AES_CM_128_HMAC_SHA1_80"))
+                    != PJ_SUCCESS) {
+                    throw SdpException("Unable to add legacy sdes attribute to media");
+                }
+            } else {
+                for (auto* attr : generateSdesOfferAttributes()) {
+                    if (pjmedia_sdp_media_add_attr(med, attr) != PJ_SUCCESS)
+                        throw SdpException("Unable to add sdes attribute to media");
+                }
             }
             // Hybrid SDES+DTLS offer (RFC 5764 4.1): keep the SDES-compatible
             // transport but also advertise our DTLS identity so the answerer
@@ -1317,7 +1327,9 @@ Sdp::validateSession() const
 }
 
 bool
-Sdp::createOffer(const std::vector<MediaAttribute>& mediaList, const pjmedia_sdp_session* previousLocalSession)
+Sdp::createOffer(const std::vector<MediaAttribute>& mediaList,
+                 const pjmedia_sdp_session* previousLocalSession,
+                 bool legacySdesOffer)
 {
     if (mediaList.size() >= PJMEDIA_MAX_SDP_MEDIA) {
         throw SdpException("Media list size exceeds SDP media maximum size");
@@ -1336,7 +1348,7 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList, const pjmedia_sdp
     for (auto const& media : mediaList) {
         if (media.enabled_) {
             localSession_->media[localSession_->media_count++]
-                = addMediaDescription(media, previousLocalSession);
+                = addMediaDescription(media, previousLocalSession, legacySdesOffer);
         }
     }
 
