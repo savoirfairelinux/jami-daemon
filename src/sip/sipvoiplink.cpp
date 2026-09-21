@@ -1313,6 +1313,11 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         }
     }
 
+    if (tsx->role == PJSIP_ROLE_UAC && tsx->method.id == PJSIP_INVITE_METHOD
+        && tsx->state == PJSIP_TSX_STATE_TERMINATED) {
+        call->onInviteTransactionTerminated();
+    }
+
     // We process here only incoming request message
     if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING
         or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
