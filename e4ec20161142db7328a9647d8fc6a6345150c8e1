@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "436f7e38_6c36836a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1251,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-21T01:43:34Z",
+      "side": 1,
+      "message": "[error] Line 1251: 🔴 The new recovery still relies on `trackedMembers_`/`devices` being current, but the device-listener callback has no tracking-generation check. `stopTracking()` removes the listener only after clearing state, so a callback already copied by `PresenceManager` can run after a later `startTracking()` and `onDeviceOffline()` can erase a freshly re-announced device from the new record. With an empty `devices` set, `std::includes` is immediately true and the peer can be treated as exhausted again, defeating this recovery path. Capture a generation/token when starting tracking and ignore online/offline callbacks from older generations.",
+      "revId": "e4ec20161142db7328a9647d8fc6a6345150c8e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de955b0b_e7caae31",
+        "filename": "test/unitTest/swarm/bootstrap.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-21T01:43:34Z",
+      "side": 1,
+      "message": "[warning] Line 427: 🟡 This callback updates `aliceData.bootstrap` and `aliceFailures` without holding `mtx`, while the `wait_for` predicates read them under `mtx`; that is a data race and can make this recovery test flaky. Lock `mtx` around the updates (and filter on the `convId` argument so failures from another conversation cannot satisfy the waits).",
+      "revId": "e4ec20161142db7328a9647d8fc6a6345150c8e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
