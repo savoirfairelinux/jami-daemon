@@ -27,6 +27,8 @@
 #include <fstream>
 #include <set>
 
+#include <unistd.h>
+
 #include "../../test_runner.h"
 
 namespace jami {

@@ -26,6 +26,8 @@
 #include <filesystem>
 #include <random>
 
+#include <unistd.h>
+
 #include "../../test_runner.h"
 
 namespace jami {
