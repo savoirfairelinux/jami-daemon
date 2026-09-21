@@ -56,8 +56,9 @@ struct SyncMsg
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
     AccountMetadata am;
+    std::map<std::string, std::map<std::string, std::string>> feeds;
 
-    MSGPACK_DEFINE(ds, c, cr, p, ld, ms, am)
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms, am, feeds)
 
     /**
      * Whether this message carries contact/conversation *list* state, i.e.
@@ -70,7 +71,7 @@ struct SyncMsg
     bool affectsList() const
     {
         return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty()
-               || !am.entries.empty();
+               || !am.entries.empty() || !feeds.empty();
     }
 };
 
@@ -113,6 +114,9 @@ public:
 #endif
 
     void monitor();
+    void notifyFeedUpdate(const std::string& id, const std::string& commit);
+    void notifyFeedStateChanged();
+    void withdrawFeed(const std::string& id);
 
     /**
      * Bootstrap swarm managers to other peers
@@ -557,6 +561,7 @@ public:
      * @return {{"id":id}, {"uri":uri}, {"device":device}}
      */
     std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string& conversationId) const;
+    bool isCallAllowed(const std::string& conversationId) const;
     /**
      * Call the conversation
      * @param url       Url to call (swarm:conversation or swarm:conv/account/device/conf to join)

@@ -17,6 +17,7 @@
 
 #include "sync_module.h"
 #include "sync_msg_reader.h"
+#include "feed_module.h"
 
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
@@ -251,6 +252,17 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
+        SyncMsg feedState;
+        feedState.feeds = acc->feeds()->syncData();
+        if (!feedState.feeds.empty()) {
+            msgpack::pack(buffer, feedState);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("[Account {}] Feed device sync failed: {}", accountId_, ec.message());
+                return false;
+            }
+            buffer.clear();
+        }
         // Sync requests
         auto cr = ConversationModule::convRequests(acc->getAccountID());
         if (!cr.empty()) {
@@ -351,6 +363,8 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                     manager->mergeAccountMetadata(msg.am);
                 manager->onSyncData(std::move(msg.ds), false);
             }
+            if (!msg.feeds.empty())
+                account->feeds()->onSyncData(msg.feeds);
 
             if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                 if (auto cm = account->convModule(true))

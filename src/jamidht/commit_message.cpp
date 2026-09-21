@@ -83,6 +83,8 @@ CommitMessage::toJson() const
     if (!parent.empty()) {
         value[CommitKey::PARENT] = parent;
     }
+    if (!nonce.empty())
+        value["nonce"] = nonce;
     return value;
 }
 
@@ -131,6 +133,7 @@ CommitMessage::fromString(const std::string& str)
         msg.invited = value.get(CommitKey::INVITED, "").asString();
         msg.mimeType = value.get(CommitKey::MIME_TYPE, "").asString();
         msg.parent = value.get(CommitKey::PARENT, "").asString();
+        msg.nonce = value.get("nonce", "").asString();
     } catch (const std::exception& e) {
         JAMI_ERROR("Exception while parsing commit message '{}': {}", str, e.what());
         return std::nullopt;

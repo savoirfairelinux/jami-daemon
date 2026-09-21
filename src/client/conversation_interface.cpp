@@ -29,8 +29,64 @@
 #include "jamidht/jamiaccount.h"
 #include "jamidht/collaborative_editing.h"
 #include "jamidht/conversation_module.h"
+#include "jamidht/feed_module.h"
 
 namespace libjami {
+
+std::string
+createFeed(const std::string& accountId, const std::string& title, const std::string& avatar, bool replies)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return account->feeds()->create(title, avatar, replies);
+    JAMI_ERROR("Unable to create Feed: account {} not found", accountId);
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+getFeeds(const std::string& accountId)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return account->feeds()->list();
+    JAMI_WARNING("Unable to list Feeds: account {} not found", accountId);
+    return {};
+}
+
+void
+refreshFeeds(const std::string& accountId)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        account->feeds()->refresh();
+        return;
+    }
+    JAMI_WARNING("Unable to refresh Feeds: account {} not found", accountId);
+}
+
+bool
+updateFeed(const std::string& accountId, const std::string& id, const std::map<std::string, std::string>& settings)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return account->feeds()->update(id, settings);
+    JAMI_ERROR("Unable to update Feed: account {} not found", accountId);
+    return false;
+}
+
+bool
+setFeedAccess(const std::string& accountId, const std::string& id, const std::string& uri, bool allowed)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return account->feeds()->setAccess(id, uri, allowed);
+    JAMI_ERROR("Unable to change Feed access: account {} not found", accountId);
+    return false;
+}
+
+bool
+subscribeFeed(const std::string& accountId, const std::string& id, bool subscribed)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return account->feeds()->subscribe(id, subscribed);
+    JAMI_ERROR("Unable to subscribe to Feed: account {} not found", accountId);
+    return false;
+}
 
 std::string
 startConversation(const std::string& accountId)
@@ -60,8 +116,12 @@ bool
 removeConversation(const std::string& accountId, const std::string& conversationId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto* convModule = acc->convModule(true))
+        if (auto* convModule = acc->convModule(true)) {
+            if (auto conversation = convModule->getConversation(conversationId);
+                conversation && conversation->mode() == jami::ConversationMode::FEED)
+                return acc->feeds()->subscribe(conversationId, false);
             return convModule->removeConversation(conversationId);
+        }
     return false;
 }
 
