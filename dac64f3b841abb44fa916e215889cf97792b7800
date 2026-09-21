@@ -1,0 +1,148 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce734829_ef44a57a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3851,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: isCallAllowed() rejects Feeds on call(), hostConference() and handleIncomingConversationCall(), before any conference is created. Tests: testFeedCallIsRejected, testFeedDirectHostingIsRejected.",
+      "parentUuid": "2aef0f22_154f0bc9",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2e2697c_f41e9033",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1799,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: feedAllows() split into feedAllowsMember() and feedAllowsContent().",
+      "parentUuid": "9946578e_c05993fd",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5948be0_2265e22f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1983,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: mergedFeedProfile() merges profile.vcf field by field against the unique merge base and FeedPolicy::merge() keeps revocations. checkValidMergeCommit() now compares the merge against the recomputed profile. Tests: testFeedMergePreservesRevocationsAndNewGrants, testFeedRejectsMergeRestoringRevokedAccess.",
+      "parentUuid": "2f7662df_00c06c64",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ac54d15_a8ef1062",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: catalogue, synchronization and subscription logic moved to feed_state.cpp. File complexity drops from 409 to 200 (lizard).",
+      "parentUuid": "016ceb9c_9ee720c2",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d4afa71_9c4f696a",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: update() delegates settings validation to validSettings().",
+      "parentUuid": "9eafd854_9df2c386",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "400ff52a_95219c9b",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: FeedPolicy::owner() validates the member list and the URI, and is the single ownership helper used everywhere. Invalid Feeds are reported instead of indexing an empty vector.",
+      "parentUuid": "1f1b5c83_0869bc54",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e743f15_439e0bab",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: split into mergeSyncedDescriptor(), onSyncData() and applyCatalogue() in feed_state.cpp.",
+      "parentUuid": "d38dbb81_f3c015a8",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bfe722c9_76890ef8",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 506,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-21T13:33:26Z",
+      "side": 1,
+      "message": "Fixed: onMessage() delegates to onSubscribeRequest() and onSubscriptionDenied().",
+      "parentUuid": "9fbac618_b5323cca",
+      "revId": "dac64f3b841abb44fa916e215889cf97792b7800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
