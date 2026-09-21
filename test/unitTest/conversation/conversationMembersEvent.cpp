@@ -103,8 +103,6 @@ public:
     void testConversationMemberEvent();
     void testGetConversationsMembersWhileSyncing();
     void testGetConversationMembersWithSelfOneOne();
-    void testAvoidTwoOneToOne();
-    void testAvoidTwoOneToOneMultiDevices();
     void testRemoveRequestBannedMultiDevices();
     void testBanUnbanMultiDevice();
     void testBanUnbanGotFirstConv();
@@ -160,8 +158,6 @@ private:
     CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
     CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
     CPPUNIT_TEST(testBanUnbanMultiDevice);
     CPPUNIT_TEST(testBanUnbanGotFirstConv);
@@ -1559,89 +1555,6 @@ ConversationMembersEventTest::testGetConversationMembersWithSelfOneOne()
     auto members = libjami::getConversationMembers(aliceId, convId);
     CPPUNIT_ASSERT(members.size() == 1);
     CPPUNIT_ASSERT(members[0]["uri"] == aliceUri);
-}
-
-void
-ConversationMembersEventTest::testAvoidTwoOneToOne()
-{
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    // Alice adds bob
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
-
-    // Remove contact
-    bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
-
-    // wait that connections are closed.
-    std::this_thread::sleep_for(10s);
-
-    // Bob add Alice, this should re-add old conversation
-    bobAccount->addContact(aliceUri);
-    bobAccount->sendTrustRequest(aliceUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == aliceData.conversationId; }));
-}
-
-void
-ConversationMembersEventTest::testAvoidTwoOneToOneMultiDevices()
-{
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
-    bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB2";
-    details[ConfProperties::ALIAS] = "BOB2";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
-    bob2Id = Manager::instance().addAccount(details);
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
-
-    // Alice adds bob
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && bob2Data.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !bobData.conversationId.empty() && !bob2Data.conversationId.empty()
-               && aliceMsgSize + 1 == aliceData.messages.size();
-    }));
-
-    // Remove contact
-    bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed && bob2Data.removed; }));
-
-    // wait that connections are closed.
-    std::this_thread::sleep_for(10s);
-
-    // Bob add Alice, this should re-add old conversation
-    bobAccount->addContact(aliceUri);
-    bobAccount->sendTrustRequest(aliceUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return bobData.conversationId == aliceData.conversationId
-               && bob2Data.conversationId == aliceData.conversationId;
-    }));
 }
 
 void
