@@ -250,6 +250,7 @@ public:
      * completed.
      */
     void onMediaNegotiationComplete();
+    void onInviteTransactionTerminated();
     // End fo SiPVoipLink events
 
     const std::string& getContactHeader() const;
@@ -391,8 +392,8 @@ private:
     // Report the negotiated remote SDP session to the API client.
     void emitRemoteSdp() const;
     void emitExternalRemoteSdp(const std::string& sdp) const;
-    bool remoteOfferSupportsRtcpMux() const;
-    bool remoteOfferSupportsBundle() const;
+    bool remoteOfferSupportsRtcpMux(const pjmedia_sdp_session* session = nullptr) const;
+    bool remoteOfferSupportsBundle(const pjmedia_sdp_session* session = nullptr) const;
     unsigned getIceCompCountPerStream() const;
     unsigned getIceStreamsCount() const;
     unsigned getRtpCompId(unsigned streamIdx) const;
@@ -490,6 +491,7 @@ private:
     // Check if a new ICE media session is needed when performing a re-invite
     bool isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList);
     void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
+    void startPendingTransportFallback();
     int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
                            bool needNewIce,
                            std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt,
@@ -592,6 +594,8 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
+    bool transportFallbackPending_ {false};
+    bool legacySdesFallback_ {false};
 
     // SDP session provided by an external media endpoint. When set, the
     // call media is delegated: no local ICE/RTP is created.
