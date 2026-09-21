@@ -134,6 +134,7 @@ private:
     void answerPrefersDtlsForHybridOffer();
     void answerFallsBackToSdesWhenOfferHasNoFingerprint();
     void offererMatchesReleaseSelectedSdesSuite();
+    void legacyFallbackOfferUsesReleaseCryptoTag();
     void offerAdvertisesSdesWithDefaultKeyExchange();
 
     CPPUNIT_TEST_SUITE(SrtpHybridSdpTest);
@@ -142,6 +143,7 @@ private:
     CPPUNIT_TEST(answerPrefersDtlsForHybridOffer);
     CPPUNIT_TEST(answerFallsBackToSdesWhenOfferHasNoFingerprint);
     CPPUNIT_TEST(offererMatchesReleaseSelectedSdesSuite);
+    CPPUNIT_TEST(legacyFallbackOfferUsesReleaseCryptoTag);
     CPPUNIT_TEST(offerAdvertisesSdesWithDefaultKeyExchange);
     CPPUNIT_TEST_SUITE_END();
 
@@ -359,6 +361,21 @@ SrtpHybridSdpTest::offererMatchesReleaseSelectedSdesSuite()
                          slots[0].first.crypto.getCryptoSuite());
 }
 
+void
+SrtpHybridSdpTest::legacyFallbackOfferUsesReleaseCryptoTag()
+{
+    Sdp sdp("legacy-fallback-offer");
+    configureSdp(sdp, true);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.createOffer({audio}, nullptr, true));
+    const auto crypto = getMediaAttributes(sdp.getLocalSdpSession(), "crypto");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), crypto.size());
+    CPPUNIT_ASSERT(crypto[0].rfind("1 AES_CM_128_HMAC_SHA1_80 inline:", 0) == 0);
+}
 
 void
 SrtpHybridSdpTest::offerAdvertisesSdesWithDefaultKeyExchange()

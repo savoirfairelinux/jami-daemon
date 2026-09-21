@@ -123,7 +123,8 @@ public:
      * @returns true if offer was created, false otherwise
      */
     bool createOffer(const std::vector<MediaAttribute>& mediaList,
-                     const pjmedia_sdp_session* previousLocalSession = nullptr);
+                     const pjmedia_sdp_session* previousLocalSession = nullptr,
+                     bool legacySdesOffer = false);
 
     /**
      * Use an SDP session provided by an external media endpoint (e.g. a
@@ -245,7 +246,8 @@ private:
      * Add rtpmap field if necessary
      */
     pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr,
-                                           const pjmedia_sdp_session* previousLocalSession = nullptr);
+                                           const pjmedia_sdp_session* previousLocalSession = nullptr,
+                                           bool legacySdesOffer = false);
 
     // Determine media direction
     char const* mediaDirection(const MediaAttribute& mediaAttr);
