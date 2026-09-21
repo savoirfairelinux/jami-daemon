@@ -16,6 +16,8 @@
  */
 
 #include "conversation_module.h"
+#include "feed_module.h"
+#include "feed_policy.h"
 
 #include "account_const.h"
 #include "call.h"
@@ -894,7 +896,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             std::lock_guard lk(conv->mtx);
                             deferred = conv->finishFetch(deviceId);
                             // Notify peers that a new commit is there (DRT)
-                            if (not commitId.empty() && ok) {
+                            if (not commitId.empty() && ok && conv->conversation) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
@@ -992,6 +994,22 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             erasePending();
             return;
         }
+        if (conversation->mode() == ConversationMode::FEED) {
+            std::string expected;
+            {
+                std::lock_guard requestsLock(conversationsRequestsMtx_);
+                if (auto it = syncingMetadatas_.find(conversationId); it != syncingMetadatas_.end())
+                    if (auto owner = it->second.find("feedOwner"); owner != it->second.end())
+                        expected = owner->second;
+            }
+            if (!expected.empty() && conversation->infos()["feedOwner"] != expected) {
+                JAMI_ERROR("[Account {}] Feed {} owner differs from its invitation", accountId_, conversationId);
+                conversation->erase();
+                lk.lock();
+                erasePending();
+                return;
+            }
+        }
 
         // Make sure that the list of members stored in convInfos_ matches the
         // one from the conversation's repository.
@@ -1000,6 +1018,12 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 
         lk.lock();
         if (conv->info.mode != conversation->mode()) {
+            if (conv->info.mode == ConversationMode::FEED || conversation->mode() == ConversationMode::FEED) {
+                JAMI_ERROR("[Account {}] Feed invitation does not match repository mode", accountId_);
+                conversation->erase();
+                erasePending();
+                return;
+            }
             JAMI_ERROR(
                 "[Account {}] [Conversation {}] Cloned conversation mode is {}, but {} was expected from invite.",
                 accountId_,
@@ -1020,6 +1044,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         // Note: a removeContact while cloning. In this case, the conversation
         // must not be announced and removed.
         if (conv->info.isRemoved())
+            removeRepo = true;
+        if (conversation->mode() == ConversationMode::FEED && acc->feeds()->subscriptionCancelled(conversationId))
             removeRepo = true;
         std::map<std::string, std::string> preferences;
         std::map<std::string, std::map<std::string, std::string>> status;
@@ -1070,6 +1096,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
 
+        if (conversation->mode() == ConversationMode::FEED)
+            acc->feeds()->onConversationReady(conversationId);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -1320,6 +1348,8 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
         conv.info.erased = nowMs();
     if (conv.fallbackClone)
         conv.fallbackClone->cancel();
+    if (isSyncing && conv.info.mode == ConversationMode::FEED)
+        conv.clearFetches();
     conv.resetCloneRetry();
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
@@ -2198,6 +2228,46 @@ ConversationModule::monitor()
 }
 
 void
+ConversationModule::notifyFeedUpdate(const std::string& id, const std::string& commit)
+{
+    pimpl_->sendMessageNotification(id, true, commit);
+}
+
+void
+ConversationModule::notifyFeedStateChanged()
+{
+    pimpl_->needsSyncingCb_({});
+}
+
+void
+ConversationModule::withdrawFeed(const std::string& id)
+{
+    auto conv = pimpl_->getConversation(id);
+    if (!conv)
+        return;
+    {
+        std::lock_guard lk(conv->mtx);
+        if (conv->info.mode != ConversationMode::FEED)
+            return;
+        if (conv->conversation && conv->conversation->infos()["feedOwner"] == pimpl_->username_) {
+            JAMI_WARNING("[Account {}] Refusing to withdraw the owner's Feed {}", pimpl_->accountId_, id);
+            return;
+        }
+        // A revoked subscriber cannot deliver a leave through an access gate
+        // that is already closed. Cancel locally instead of waiting forever.
+        conv->info.removed = std::max(nowMs(), conv->info.created);
+        conv->info.erased = conv->info.removed;
+        conv->clearFetches();
+        if (conv->fallbackClone)
+            conv->fallbackClone->cancel();
+        pimpl_->addConvInfo(conv->info);
+        pimpl_->removeRepositoryImpl(*conv, false, true);
+    }
+    emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, id);
+    pimpl_->needsSyncingCb_({});
+}
+
+void
 ConversationModule::clearPendingFetch()
 {
     // Note: This is a workaround. convModule() is kept if account is disabled/re-enabled.
@@ -2328,6 +2398,15 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
         return;
     }
     auto isOneToOne = req.isOneToOne();
+    const bool isFeed = req.mode() == ConversationMode::FEED;
+    if (isFeed) {
+        auto account = pimpl_->account_.lock();
+        if (!account || req.metadatas["feedOwner"] != from
+            || !account->feeds()->wantsSubscription(req.conversationId, from)) {
+            JAMI_DEBUG("[Account {}] Ignoring Feed invitation without subscription intent", pimpl_->accountId_);
+            return;
+        }
+    }
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
                pimpl_->accountId_,
@@ -2366,6 +2445,10 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     auto reqMap = req.toMap();
     if (pimpl_->addConversationRequest(convId, std::move(req))) {
         lk.unlock();
+        if (isFeed) {
+            acceptConversationRequest(convId);
+            return;
+        }
         // Note: no need to sync here because other connected devices should receive
         // the same conversation request. Will sync when the conversation will be added
         if (isOneToOne)
@@ -2949,16 +3032,17 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->conversation->setRemovingFlag();
             }
             auto update = false;
-            if (conv->info.removed == TimePoint {}) {
+            if (conv->info.removed == TimePoint {}
+                || (conv->info.mode == ConversationMode::FEED && convInfo.removed > conv->info.removed)) {
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+                conv->info.removed = conv->info.mode == ConversationMode::FEED ? convInfo.removed : nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
                 update = true;
                 listChanged = true;
-                conv->info.erased = nowMs();
+                conv->info.erased = conv->info.mode == ConversationMode::FEED ? convInfo.erased : nowMs();
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {
@@ -3042,6 +3126,11 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         }
         lk.unlock();
 
+        if (req.mode() == ConversationMode::FEED) {
+            if (auto account = pimpl_->account_.lock(); account && account->feeds()->wantsSubscription(convId, req.from))
+                acceptConversationRequest(convId);
+            continue;
+        }
         JAMI_LOG("[Account {:s}] New request detected for conversation {:s} (device {:s})",
                  pimpl_->accountId_,
                  convId,
@@ -3115,7 +3204,7 @@ ConversationModule::setFetched(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            bool remove = conv->conversation->isRemoving();
+            bool remove = conv->conversation->isRemoving() && commitId == conv->conversation->lastCommitId();
             conv->conversation->hasFetched(deviceId, commitId);
             if (remove)
                 pimpl_->removeRepositoryImpl(*conv, true);
@@ -3152,6 +3241,15 @@ ConversationModule::addConversationMember(const std::string& conversationId,
     std::unique_lock lk(conv->mtx);
 
     auto contactUriStr = contactUri.toString();
+    if (conv->conversation->mode() == ConversationMode::FEED) {
+        auto info = conv->conversation->infos();
+        const auto policy = FeedPolicy::fromInfos(info);
+        if (info["feedOwner"] != pimpl_->username_ || !policy || policy->closed
+            || !policy->authorized.count(contactUriStr)) {
+            JAMI_WARNING("[Account {}] Unauthorized Feed invitation", pimpl_->accountId_);
+            return;
+        }
+    }
     if (conv->conversation->isMember(contactUriStr, true)) {
         JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUriStr, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't
@@ -3581,6 +3679,13 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
 bool
 ConversationModule::removeConversation(const std::string& conversationId)
 {
+    if (auto feed = getConversation(conversationId); feed && feed->mode() == ConversationMode::FEED) {
+        const auto owners = feed->getInitialMembers();
+        if (!owners.empty() && owners.front() == pimpl_->username_) {
+            JAMI_WARNING("[Account {}] Close the Feed instead of removing its owner", pimpl_->accountId_);
+            return false;
+        }
+    }
     auto conversation = pimpl_->getConversation(conversationId);
     std::string existingConvId;
 

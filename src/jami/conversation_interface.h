@@ -118,6 +118,28 @@ LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
 LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId);
 
 /**
+ * Private owner-published Feeds reuse swarm repositories. Authorization does
+ * not subscribe a contact; subscriptions are explicit and may be cancelled
+ * without removing the owner's authorization. Only direct replies to an
+ * owner's publication are allowed when feedReplies is true.
+ */
+LIBJAMI_PUBLIC std::string createFeed(const std::string& accountId,
+                                      const std::string& title,
+                                      const std::string& avatar,
+                                      bool replies);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getFeeds(const std::string& accountId);
+LIBJAMI_PUBLIC void refreshFeeds(const std::string& accountId);
+/// feedClosed=true permanently closes a Feed. Only the owner can change its settings.
+LIBJAMI_PUBLIC bool updateFeed(const std::string& accountId,
+                               const std::string& feedId,
+                               const std::map<std::string, std::string>& settings);
+LIBJAMI_PUBLIC bool setFeedAccess(const std::string& accountId,
+                                  const std::string& feedId,
+                                  const std::string& contactUri,
+                                  bool authorized);
+LIBJAMI_PUBLIC bool subscribeFeed(const std::string& accountId, const std::string& feedId, bool subscribed);
+
+/**
  * Real-time collaborative editing of a shared document inside a conversation.
  *
  * The daemon is a transport for Y-CRDT updates, not an editor: it moves opaque
@@ -302,6 +324,11 @@ LIBJAMI_PUBLIC std::vector<uint8_t> collaborativeAttachment(const std::string& a
 
 struct LIBJAMI_PUBLIC ConversationSignal
 {
+    struct LIBJAMI_PUBLIC FeedsChanged
+    {
+        constexpr static const char* name = "FeedsChanged";
+        using cb_type = void(const std::string& /*accountId*/);
+    };
     /**
      * A Y-CRDT update to merge into the client's own replica of the document.
      *

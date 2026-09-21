@@ -59,6 +59,7 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/ydoc_channel_handler.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/collaborative_editing.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/collaborative_editing.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/feed_module.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/auth_channel_handler.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/auth_channel_handler.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/service_manager.h"

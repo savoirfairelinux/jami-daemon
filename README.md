@@ -38,6 +38,42 @@ For more information, please visit the following website:
 For build instructions, required dependencies, and platform-specific notes, see
 [BUILD.md](BUILD.md).
 
+# Feed API
+
+Feeds are private swarm repositories in `ConversationMode::FEED` (mode 5), with
+an immutable owner derived from the initial signed commit. They reuse normal
+messages, `reply-to`, transfers, invitations, membership validation and Git
+replication. A random initial nonce keeps separately created Feeds distinct.
+
+The public conversation API exposes `createFeed`, `getFeeds`, `refreshFeeds`,
+`updateFeed`, `setFeedAccess` and `subscribeFeed`, and the `FeedsChanged` signal.
+The same API is exposed through D-Bus and the Qt libwrap backend. Configuration
+requests can complete asynchronously; failures use `OnConversationError`.
+Descriptors distinguish `owned`, `available`, `subscribed` and `requested`.
+Only the owner receives the `feedAccess` list in discovery/API descriptors.
+
+Feed policy is stored in owner-signed profile commits: `feedReplies`,
+`feedClosed` and `feedAccess`. Authorization does not subscribe a contact.
+The private `application/jami-feed+json` exchange uses existing authenticated
+message connections for catalogue queries and subscription requests. Correlated
+full catalogue responses are accepted only from confirmed contacts; permission
+is checked again before invitation, transport access and commit validation.
+The catalogue and subscription choices are persisted locally and synchronized
+between the account's own devices using an appended `SyncMsg` field.
+
+Subscribers cannot create top-level posts, invite peers, rename/close a Feed,
+change access, react, or start calls in it. If replies are enabled they may reply
+to an existing owner publication and edit their own messages. Feed closure is
+permanent, including across history merges. A device-only control commit registers
+read-only linked devices before they can publish a signed leave; it is not shown
+in the timeline. Revocation cannot erase previously obtained data, and offline
+concurrent operations follow the swarm's signed-history rules. This is not an
+anonymous-follower protocol.
+
+Tests: `ut_feed` exercises discovery, permissions, subscription, revocation,
+multi-device choices, cancellation and persistence. Feed repository tests also
+reject signed unauthorized commits that bypass the sending API.
+
 # Contributing
 
 Of course we love patches. And contributions. And spring rolls.

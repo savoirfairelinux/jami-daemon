@@ -818,6 +818,45 @@
             </arg>
         </signal>
 
+        <method name="createFeed">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="title" direction="in"/>
+            <arg type="s" name="avatar" direction="in"/>
+            <arg type="b" name="replies" direction="in"/>
+            <arg type="s" name="feedId" direction="out"/>
+        </method>
+        <method name="getFeeds">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="aa{ss}" name="feeds" direction="out"/>
+        </method>
+        <method name="refreshFeeds">
+            <arg type="s" name="accountId" direction="in"/>
+        </method>
+        <method name="updateFeed">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="feedId" direction="in"/>
+            <arg type="a{ss}" name="settings" direction="in"/>
+            <arg type="b" name="accepted" direction="out"/>
+        </method>
+        <method name="setFeedAccess">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="feedId" direction="in"/>
+            <arg type="s" name="uri" direction="in"/>
+            <arg type="b" name="authorized" direction="in"/>
+            <arg type="b" name="accepted" direction="out"/>
+        </method>
+        <method name="subscribeFeed">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="feedId" direction="in"/>
+            <arg type="b" name="subscribed" direction="in"/>
+            <arg type="b" name="accepted" direction="out"/>
+        </method>
+        <signal name="feedsChanged">
+            <arg type="s" name="accountId"/>
+        </signal>
+
         <method name="createCollaborativeDocument" tp:name-for-bindings="createCollaborativeDocument">
             <tp:docstring>
                Create a collaborative document in a conversation

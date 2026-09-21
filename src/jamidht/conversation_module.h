@@ -54,8 +54,9 @@ struct SyncMsg
      * }}
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+    std::map<std::string, std::map<std::string, std::string>> feeds;
 
-    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms, feeds)
 
     /**
      * Whether this message carries contact/conversation *list* state, i.e.
@@ -67,7 +68,8 @@ struct SyncMsg
      */
     bool affectsList() const
     {
-        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty();
+        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty()
+               || !feeds.empty();
     }
 };
 
@@ -109,6 +111,9 @@ public:
 #endif
 
     void monitor();
+    void notifyFeedUpdate(const std::string& id, const std::string& commit);
+    void notifyFeedStateChanged();
+    void withdrawFeed(const std::string& id);
 
     /**
      * Bootstrap swarm managers to other peers

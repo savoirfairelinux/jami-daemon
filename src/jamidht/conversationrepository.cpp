@@ -16,6 +16,7 @@
  */
 
 #include "conversationrepository.h"
+#include "feed_policy.h"
 
 #include "account_const.h"
 #include "base64.h"
@@ -302,6 +303,8 @@ public:
     bool validateDevice();
     std::string commit(const std::string& msg, bool verifyDevice = true);
     std::string commitMessage(const std::string& msg, bool verifyDevice = true);
+    std::optional<FeedPolicy> feedPolicy(const std::string& at) const;
+    bool feedAllows(const std::string& author, const CommitMessage& message, const std::string& at) const;
     ConversationMode mode() const;
 
     // NOTE! GitDiff needs to be deleted before repo
@@ -1790,6 +1793,80 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
 }
 
 bool
+ConversationRepository::Impl::feedAllows(const std::string& author,
+                                         const CommitMessage& message,
+                                         const std::string& at) const
+{
+    const auto owners = getInitialMembers();
+    if (owners.empty() || author.empty())
+        return false;
+    const auto& owner = owners.front();
+    const auto policy = feedPolicy(at);
+    if (!policy)
+        return false;
+    if (message.type == CommitType::MEMBER && message.action == CommitAction::REMOVE && message.uri == author
+        && author != owner)
+        return true;
+    if (policy->closed)
+        return false;
+    if (message.type == CommitType::FEED_DEVICE)
+        return author == owner || policy->authorized.count(author);
+    if (message.type == CommitType::UPDATE_PROFILE || message.type == CommitType::VOTE)
+        return author == owner;
+    if (message.type == CommitType::MEMBER) {
+        if (message.action == CommitAction::JOIN)
+            return message.uri == author && (author == owner || policy->authorized.count(author));
+        if (author != owner)
+            return false;
+        if (message.action == CommitAction::ADD)
+            return policy->authorized.count(message.uri) != 0;
+        return message.action == CommitAction::BAN || message.action == CommitAction::UNBAN;
+    }
+    if (author != owner && (!policy->replies || !policy->authorized.count(author)))
+        return false;
+    if (message.type != CommitType::TEXT && message.type != CommitType::DATA_TRANSFER
+        && message.type != CommitType::EDITED_MESSAGE)
+        return false;
+    if (!message.reactTo.empty())
+        return false;
+    const CommitMessage* content = &message;
+    std::optional<ConversationCommit> original;
+    if (!message.editedId.empty()) {
+        original = getCommit(message.editedId);
+        if (!original || original->authorId != author || !original->commitMsg.editedId.empty())
+            return false;
+        content = &original->commitMsg;
+    }
+    if (content->replyTo.empty())
+        return author == owner;
+    auto publication = getCommit(content->replyTo);
+    if (!publication || publication->authorId != owner || !publication->commitMsg.replyTo.empty()
+        || !publication->commitMsg.editedId.empty() || !publication->commitMsg.reactTo.empty()
+        || (publication->commitMsg.type != CommitType::TEXT && publication->commitMsg.type != CommitType::DATA_TRANSFER))
+        return false;
+    auto repo = repository();
+    git_oid head, target;
+    return repo && git_oid_fromstr(&head, at.c_str()) == 0 && git_oid_fromstr(&target, content->replyTo.c_str()) == 0
+           && (at == content->replyTo || git_graph_descendant_of(repo.get(), &head, &target) == 1);
+}
+
+std::optional<FeedPolicy>
+ConversationRepository::Impl::feedPolicy(const std::string& at) const
+{
+    auto repo = repository();
+    auto tree = repo ? treeAtCommit(repo.get(), at) : GitTree {};
+    if (!tree)
+        return {};
+    auto profile = fileAtTree("profile.vcf", tree);
+    if (!profile)
+        return FeedPolicy {};
+    const auto bytes = as_view(profile);
+    if (bytes.size() > 512 * 1024)
+        return {};
+    return FeedPolicy::fromInfos(ConversationRepository::infosFromVCard(vCard::utils::toMap(bytes)));
+}
+
+bool
 ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDevice,
                                                       const std::string& commitId,
                                                       const std::string& parentId) const
@@ -1806,6 +1883,13 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
     auto userUri = uriFromDevice(userDevice, commitId);
     if (userUri.empty())
         return false;
+    if (mode() == ConversationMode::FEED) {
+        const auto owners = getInitialMembers();
+        const auto before = feedPolicy(parentId);
+        const auto after = feedPolicy(commitId);
+        if (owners.empty() || userUri != owners.front() || !before || !after || (before->closed && !after->closed))
+            return false;
+    }
 
     // Check if profile is changed by an user with correct privilege
     auto valid = false;
@@ -1890,6 +1974,18 @@ ConversationRepository::Impl::checkValidMergeCommit(const std::string& mergeId,
     // Check for exactly two parents
     if (static_cast<int>(parents.size()) != 2)
         return false;
+    if (mode() == ConversationMode::FEED) {
+        const auto merged = feedPolicy(mergeId);
+        if (!merged)
+            return false;
+        for (const auto& parent : parents) {
+            const auto policy = feedPolicy(parent);
+            if (!policy || (policy->closed && !merged->closed)) {
+                JAMI_WARNING("[Feed {}] Merge would reopen a closed Feed", id_);
+                return false;
+            }
+        }
+    }
 
     // Get the tree of the merge commit
     GitTree merge_commit_tree = treeAtCommit(repo.get(), mergeId);
@@ -2241,6 +2337,18 @@ ConversationRepository::Impl::validateDevice()
 std::string
 ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 {
+    if (mode() == ConversationMode::FEED) {
+        auto parsed = CommitMessage::fromString(msg);
+        auto repo = repository();
+        git_oid head;
+        if (!repo || git_reference_name_to_id(&head, repo.get(), "HEAD") < 0 || !parsed
+            || !feedAllows(userId_, *parsed, git_oid_tostr_s(&head))) {
+            JAMI_WARNING("[Account {}] [Feed {}] Refusing unauthorized operation", accountId_, id_);
+            emitSignal<libjami::ConversationSignal::OnConversationError>(
+                accountId_, id_, EUNAUTHORIZED, "This operation is not permitted in this Feed");
+            return {};
+        }
+    }
     if (verifyDevice && !validateDevice()) {
         JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Invalid device", accountId_, id_);
         return {};
@@ -2370,6 +2478,9 @@ ConversationRepository::Impl::mode() const
         break;
     case 4:
         mode_ = ConversationMode::DOCUMENT;
+        break;
+    case 5:
+        mode_ = ConversationMode::FEED;
         break;
     default:
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
@@ -2694,6 +2805,14 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
     if (!commit_str)
         return false;
     auto useRemote = (other_id > commit_str); // Choose by commit version
+    if (mode() == ConversationMode::FEED) {
+        const auto local = feedPolicy(commit_str);
+        const auto remote = feedPolicy(other_id);
+        if (!local || !remote)
+            return false;
+        if (local->closed != remote->closed)
+            useRemote = remote->closed;
+    }
 
     // NOTE: for now, only authorize conflicts on "profile.vcf"
     std::vector<git_index_entry> new_entries;
@@ -2937,7 +3056,12 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
                                            ConversationMode mode,
                                            const std::string& otherMember)
 {
-    return createRepository(account, mode, otherMember, CommitMessage::initial(mode, otherMember));
+    auto initial = CommitMessage::initial(mode, otherMember);
+    if (mode == ConversationMode::FEED) {
+        std::random_device random;
+        initial.nonce = fmt::format("{:08x}{:08x}{:08x}{:08x}", random(), random(), random(), random());
+    }
+    return createRepository(account, mode, otherMember, initial);
 }
 
 std::unique_ptr<ConversationRepository>
@@ -3244,6 +3368,15 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
         } else if (commit.parents.size() == 1) {
             std::string type = commit.commitMsg.type;
             std::string editedId = commit.commitMsg.editedId;
+            if (mode() == ConversationMode::FEED
+                && !feedAllows(uriFromDevice(userDevice, commit.id), commit.commitMsg, commit.parents[0])) {
+                JAMI_WARNING("[Account {}] [Feed {}] Rejecting unauthorized commit {}", accountId_, id_, commit.id);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Unauthorized Feed operation");
+                return false;
+            }
             if (type.empty()) {
                 emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                              id_,
@@ -4084,6 +4217,14 @@ ConversationRepository::join()
     auto memberFile = membersPath / (uri + ".crt");
     auto adminsPath = repoPath / MemberPath::ADMINS / (uri + ".crt");
     if (std::filesystem::is_regular_file(memberFile) or std::filesystem::is_regular_file(adminsPath)) {
+        // A read-only Feed device may leave before ever writing content. The
+        // leave signature is checked against its parent, which must know it.
+        if (mode() == ConversationMode::FEED
+            && !std::filesystem::is_regular_file(repoPath / "devices" / (pimpl_->deviceId_ + ".crt"))) {
+            CommitMessage registration;
+            registration.type = CommitType::FEED_DEVICE;
+            return pimpl_->commitMessage(registration.toString());
+        }
         // Already member, nothing to commit
         return {};
     }
@@ -4706,8 +4847,38 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     }
 
     auto infosMap = infos();
+    if (mode() == ConversationMode::FEED) {
+        auto policy = FeedPolicy::fromInfos(infosMap);
+        if (!policy || policy->closed) {
+            JAMI_WARNING("[Account {}] [Feed {}] Refusing update of closed or invalid Feed", pimpl_->accountId_, id());
+            return {};
+        }
+        for (const auto* operation : {"feedAdd", "feedRemove"}) {
+            auto it = profile.find(operation);
+            if (it == profile.end())
+                continue;
+            if (!FeedPolicy::validUri(it->second)) {
+                JAMI_WARNING("Invalid Feed contact id");
+                return {};
+            }
+            if (std::string_view(operation) == "feedAdd")
+                policy->authorized.insert(it->second);
+            else
+                policy->authorized.erase(it->second);
+        }
+        infosMap["feedAccess"] = policy->accessList();
+    }
     for (const auto& [k, v] : profile) {
         infosMap[k] = v;
+    }
+    if (mode() == ConversationMode::FEED) {
+        if (!FeedPolicy::fromInfos(infosMap) || infosMap["title"].empty() || infosMap["title"].size() > 256
+            || infosMap["title"].find_first_of("\r\n") != std::string::npos
+            || infosMap["description"].find_first_of("\r\n") != std::string::npos
+            || infosMap["avatar"].size() > 64 * 1024 || infosMap["avatar"].find_first_of("\r\n") != std::string::npos) {
+            JAMI_WARNING("Invalid Feed configuration");
+            return {};
+        }
     }
     auto repo = pimpl_->repository();
     if (!repo)
@@ -4750,6 +4921,12 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     addKey(vCard::Property::RDV_ACCOUNT, vCard::Value::RDV_ACCOUNT);
     file << vCard::Delimiter::END_LINE_TOKEN;
     addKey(vCard::Property::RDV_DEVICE, vCard::Value::RDV_DEVICE);
+    if (mode() == ConversationMode::FEED) {
+        file << vCard::Delimiter::END_LINE_TOKEN;
+        addKey("X-JAMI-FEED-REPLIES", "feedReplies");
+        addKey("X-JAMI-FEED-CLOSED", "feedClosed");
+        addKey("X-JAMI-FEED-ACCESS", "feedAccess");
+    }
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Delimiter::END_TOKEN;
     file.close();
@@ -4775,6 +4952,16 @@ ConversationRepository::infos() const
                     vCard::utils::toMap(std::string_view {(const char*) content.data(), content.size()}));
             }
             result["mode"] = std::to_string(static_cast<int>(mode()));
+            if (mode() == ConversationMode::FEED) {
+                const auto owners = getInitialMembers();
+                result["feedOwner"] = owners.empty() ? "" : owners.front();
+                if (!result.count("feedReplies"))
+                    result["feedReplies"] = "false";
+                if (!result.count("feedClosed"))
+                    result["feedClosed"] = "false";
+                if (!result.count("feedAccess"))
+                    result["feedAccess"] = "";
+            }
             return result;
         } catch (...) {
         }
@@ -4797,6 +4984,12 @@ ConversationRepository::infosFromVCard(vCard::utils::VCardData&& details)
             result["rdvAccount"] = std::move(v);
         } else if (k.find(vCard::Property::RDV_DEVICE) == 0) {
             result["rdvDevice"] = std::move(v);
+        } else if (k == "X-JAMI-FEED-REPLIES") {
+            result["feedReplies"] = std::move(v);
+        } else if (k == "X-JAMI-FEED-CLOSED") {
+            result["feedClosed"] = std::move(v);
+        } else if (k == "X-JAMI-FEED-ACCESS") {
+            result["feedAccess"] = std::move(v);
         }
     }
     return result;

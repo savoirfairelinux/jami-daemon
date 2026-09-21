@@ -75,6 +75,9 @@ public:
 
 private:
     void testCreateRepository();
+    void testFeedRepositoryPolicy();
+    void testFeedRejectsForgedSubscriberPublication();
+    void testFeedClosureCannotBeRevertedByMerge();
     void testAddSomeMessages();
     void testLogMessages();
     void testMerge();
@@ -108,6 +111,9 @@ private:
     void addAll(git_repository* repo);
     bool merge_in_main(const std::shared_ptr<JamiAccount> account, git_repository* repo, const std::string& commit_ref);
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
+    CPPUNIT_TEST(testFeedRepositoryPolicy);
+    CPPUNIT_TEST(testFeedRejectsForgedSubscriberPublication);
+    CPPUNIT_TEST(testFeedClosureCannotBeRevertedByMerge);
     CPPUNIT_TEST(testCreateRepository);          // Passes
     CPPUNIT_TEST(testAddSomeMessages);           // Passes
     CPPUNIT_TEST(testLogMessages);               // Passes
@@ -149,6 +155,83 @@ void
 ConversationRepositoryTest::tearDown()
 {
     wait_for_removal_of({aliceId, bobId});
+}
+
+void
+ConversationRepositoryTest::testFeedRepositoryPolicy()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto repo = ConversationRepository::createConversation(alice, static_cast<ConversationMode>(5));
+    CPPUNIT_ASSERT(repo);
+    CPPUNIT_ASSERT_EQUAL(5, static_cast<int>(repo->mode()));
+    auto configured = repo->updateInfos(
+        {{"title", "News"}, {"feedReplies", "true"}, {"feedAccess", bob->getUsername()}});
+    CPPUNIT_ASSERT(!configured.empty());
+    CPPUNIT_ASSERT_EQUAL(alice->getUsername(), repo->infos().at("feedOwner"));
+    CPPUNIT_ASSERT_EQUAL("true"s, repo->infos().at("feedReplies"));
+    CPPUNIT_ASSERT(!repo->commitMessage(CommitMessage::text("A publication").toString()).empty());
+    CPPUNIT_ASSERT(!repo->updateInfos({{"feedClosed", "true"}}).empty());
+    CPPUNIT_ASSERT(repo->commitMessage(CommitMessage::text("After closure").toString()).empty());
+    CPPUNIT_ASSERT(repo->updateInfos({{"feedClosed", "false"}}).empty());
+}
+
+void
+ConversationRepositoryTest::testFeedRejectsForgedSubscriberPublication()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto owner = ConversationRepository::createConversation(alice, ConversationMode::FEED);
+    CPPUNIT_ASSERT(owner);
+    CPPUNIT_ASSERT(
+        !owner->updateInfos({{"title", "Owner only"}, {"feedReplies", "true"}, {"feedAccess", bob->getUsername()}})
+             .empty());
+    CPPUNIT_ASSERT(!owner->addMember(bob->getUsername()).empty());
+    const auto publication = owner->commitMessage(CommitMessage::text("Root publication").toString());
+    CPPUNIT_ASSERT(!publication.empty());
+    const auto path = fileutils::get_data_dir() / bobId / "conversations" / owner->id();
+    std::filesystem::create_directories(path.parent_path());
+    std::filesystem::copy(fileutils::get_data_dir() / aliceId / "conversations" / owner->id(),
+                          path,
+                          std::filesystem::copy_options::recursive);
+    ConversationRepository subscriber(bob, owner->id());
+    CPPUNIT_ASSERT(!subscriber.join().empty());
+    const auto reply = subscriber.commitMessage(CommitMessage::text("An allowed reply", publication).toString());
+    CPPUNIT_ASSERT(!reply.empty());
+    CPPUNIT_ASSERT(subscriber.validCommits(subscriber.log()));
+
+    git_repository* raw = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&raw, path.string().c_str()));
+    GitRepository handle(raw);
+    // Bypass the API to prove that a signed peer commit cannot bypass Feed rights.
+    const auto forged = addCommit(handle.get(), bob, "main", CommitMessage::text("Unauthorized root").toString());
+    CPPUNIT_ASSERT(!forged.empty());
+    const auto commit = subscriber.getCommit(forged);
+    CPPUNIT_ASSERT(commit);
+    CPPUNIT_ASSERT(!subscriber.validCommits({*commit}));
+}
+
+void
+ConversationRepositoryTest::testFeedClosureCannotBeRevertedByMerge()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto feed = ConversationRepository::createConversation(alice, ConversationMode::FEED);
+    CPPUNIT_ASSERT(feed);
+    const auto openCommit = feed->updateInfos({{"title", "Permanent closure"}, {"feedReplies", "true"}});
+    CPPUNIT_ASSERT(!openCommit.empty());
+    const auto path = fileutils::get_data_dir() / aliceId / "conversations" / feed->id();
+    const auto profile = fileutils::loadFile(path / "profile.vcf");
+    CPPUNIT_ASSERT(!feed->updateInfos({{"feedClosed", "true"}}).empty());
+
+    // A merge must not select an old open profile over an already closed one.
+    fileutils::saveFile(path / "profile.vcf", profile);
+    git_repository* raw = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&raw, path.string().c_str()));
+    GitRepository handle(raw);
+    addAll(handle.get());
+    const auto merged = addMergeCommit(handle.get(), alice, openCommit);
+    CPPUNIT_ASSERT(!merged.empty());
+    CPPUNIT_ASSERT(!feed->validCommits({*feed->getCommit(merged)}));
 }
 
 void
@@ -1540,4 +1623,10 @@ ConversationRepositoryTest::testMessageInDocumentRejected()
 } // namespace test
 } // namespace jami
 
-CORE_TEST_RUNNER(jami::test::ConversationRepositoryTest::name())
+int
+main(int argc, char** argv)
+{
+    CppUnit::TextUi::TestRunner runner;
+    runner.addTest(CppUnit::TestFactoryRegistry::getRegistry(jami::test::ConversationRepositoryTest::name()).makeTest());
+    return runner.run(argc > 1 ? argv[1] : "") ? 0 : 1;
+}
