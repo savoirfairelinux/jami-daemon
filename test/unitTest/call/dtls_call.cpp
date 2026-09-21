@@ -38,6 +38,23 @@ using namespace std::literals::chrono_literals;
 namespace jami {
 namespace test {
 
+namespace {
+
+bool
+hasSdpAttribute(const pjmedia_sdp_attr* const* attributes,
+                unsigned attributeCount,
+                std::string_view name)
+{
+    for (unsigned i = 0; i < attributeCount; ++i) {
+        const auto* attribute = attributes[i];
+        if (name == std::string_view(attribute->name.ptr, attribute->name.slen))
+            return true;
+    }
+    return false;
+}
+
+} // namespace
+
 class DtlsCallTest : public CppUnit::TestFixture
 {
 public:
@@ -58,11 +75,13 @@ public:
 private:
     void testAudioCallNegotiatesDtlsSrtp();
     void testAudioVideoCallNegotiatesDtlsSrtp();
-    void testCallNegotiatesDtlsSrtp(bool withVideo);
+    void testAudioVideoCallFallsBackWithoutRtcpMux();
+    void testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled = true);
 
     CPPUNIT_TEST_SUITE(DtlsCallTest);
     CPPUNIT_TEST(testAudioCallNegotiatesDtlsSrtp);
     CPPUNIT_TEST(testAudioVideoCallNegotiatesDtlsSrtp);
+    CPPUNIT_TEST(testAudioVideoCallFallsBackWithoutRtcpMux);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -95,10 +114,17 @@ DtlsCallTest::testAudioVideoCallNegotiatesDtlsSrtp()
 }
 
 void
-DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo)
+DtlsCallTest::testAudioVideoCallFallsBackWithoutRtcpMux()
+{
+    testCallNegotiatesDtlsSrtp(true, false);
+}
+
+void
+DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled)
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    bobAccount->enableRtcpMux(bobRtcpMuxEnabled);
     auto bobUri = bobAccount->getUsername();
 
     std::mutex mtx;
@@ -167,6 +193,17 @@ DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo)
     CPPUNIT_ASSERT(aliceCall);
     CPPUNIT_ASSERT(bobCall);
 
+    const auto* activeOffer = bobCall->getSDP().getRemoteSdpSession();
+    CPPUNIT_ASSERT(activeOffer);
+    if (!bobRtcpMuxEnabled)
+        CPPUNIT_ASSERT(!hasSdpAttribute(activeOffer->attr, activeOffer->attr_count, "group"));
+    for (unsigned i = 0; i < activeOffer->media_count; ++i) {
+        const auto* media = activeOffer->media[i];
+        CPPUNIT_ASSERT_EQUAL(
+            bobRtcpMuxEnabled,
+            hasSdpAttribute(media->attr, media->attr_count, "rtcp-mux"));
+    }
+
     const auto aliceSlots = aliceCall->getSDP().getMediaSlots();
     const auto bobSlots = bobCall->getSDP().getMediaSlots();
     CPPUNIT_ASSERT_EQUAL(media.size(), aliceSlots.size());
@@ -194,8 +231,7 @@ DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo)
         CPPUNIT_ASSERT_EQUAL(aliceFingerprint, remote.dtls_fingerprint);
     }
 
-    // Media only starts once the DTLS-SRTP handshake on the bundle
-    // transport succeeded; recording readiness proves the media path is up.
+    // Recording readiness proves the negotiated media path is up.
     libjami::toggleRecording(aliceId, aliceCallId);
     bool recording = false;
     for (int i = 0; i < 120 && !(recording = libjami::getIsRecording(aliceId, aliceCallId)); i++)

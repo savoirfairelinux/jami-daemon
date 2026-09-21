@@ -574,12 +574,12 @@ SIPCall::setBundleEnabled(bool enabled)
 }
 
 bool
-SIPCall::remoteOfferSupportsRtcpMux() const
+SIPCall::remoteOfferSupportsRtcpMux(const pjmedia_sdp_session* session) const
 {
     if (not sdp_)
         return false;
 
-    auto* remoteSession = sdp_->getRemoteSdpSession();
+    const auto* remoteSession = session ? session : sdp_->getRemoteSdpSession();
     if (not remoteSession)
         return false;
 
@@ -593,12 +593,12 @@ SIPCall::remoteOfferSupportsRtcpMux() const
 }
 
 bool
-SIPCall::remoteOfferSupportsBundle() const
+SIPCall::remoteOfferSupportsBundle(const pjmedia_sdp_session* session) const
 {
     if (not sdp_)
         return false;
 
-    auto* remoteSession = sdp_->getRemoteSdpSession();
+    const auto* remoteSession = session ? session : sdp_->getRemoteSdpSession();
     // Note: a BUNDLE group with a single media is valid (RFC 9143), e.g. an
     // audio-only WebRTC offer.
     if (not remoteSession)
@@ -1072,8 +1072,6 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
         return !PJ_SUCCESS;
     }
 
-    setRtcpMuxEnabled(acc->isRtcpMuxEnabled());
-
     const auto* previousLocalSession = sdp_->getActiveLocalSdpSession();
 
     // Generate new ports to receive the new media stream
@@ -1099,7 +1097,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
         sdp_->setPublishedIP(newAddress);
     }
 
-    if (not sdp_->createOffer(mediaAttrList, previousLocalSession))
+    if (not sdp_->createOffer(mediaAttrList, previousLocalSession, legacySdesFallback_))
         return !PJ_SUCCESS;
 
     if (isIceEnabled() and needNewIce) {
@@ -3520,6 +3518,15 @@ SIPCall::onMediaNegotiationComplete()
 }
 
 void
+SIPCall::onInviteTransactionTerminated()
+{
+    runOnMainThread([w = weak()] {
+        if (auto call = w.lock())
+            call->startPendingTransportFallback();
+    });
+}
+
+void
 SIPCall::reportMediaNegotiationStatus()
 {
     // Notify using the parent Id if it's a subcall.
@@ -4438,6 +4445,13 @@ SIPCall::merge(Call& call)
     std::lock(callMutex_, subcall.callMutex_);
     std::lock_guard lk1 {callMutex_, std::adopt_lock};
     std::lock_guard lk2 {subcall.callMutex_, std::adopt_lock};
+    const auto* activeRemoteSession = subcall.sdp_->getActiveRemoteSdpSession();
+    const auto acceptedRtcpMux = subcall.remoteOfferSupportsRtcpMux(activeRemoteSession);
+    const auto acceptedBundle = acceptedRtcpMux
+                                && subcall.remoteOfferSupportsBundle(activeRemoteSession);
+    const auto needsTransportFallback = !subcall.hasExternalMedia()
+                                        && ((subcall.rtcpMuxEnabled_ && !acceptedRtcpMux)
+                                            || (subcall.bundleEnabled_ && !acceptedBundle));
     inviteSession_ = std::move(subcall.inviteSession_);
     if (inviteSession_)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
@@ -4449,6 +4463,8 @@ SIPCall::merge(Call& call)
     upnp_ = std::move(subcall.upnp_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
+    rtcpMuxEnabled_ = subcall.rtcpMuxEnabled_;
+    bundleEnabled_ = subcall.bundleEnabled_;
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
     peerSupportMultiAudioStream_ = subcall.peerSupportMultiAudioStream_;
@@ -4458,8 +4474,39 @@ SIPCall::merge(Call& call)
     peerSupportsHandover_ = subcall.peerSupportsHandover_.load();
 
     Call::merge(subcall);
-    if (isIceEnabled())
+    if (needsTransportFallback) {
+        JAMI_WARNING("[call:{}] Peer rejected the offered media transport; retrying with its negotiated topology",
+                     getCallId());
+        setRtcpMuxEnabled(acceptedRtcpMux);
+        setBundleEnabled(acceptedBundle);
+        legacySdesFallback_ = !acceptedRtcpMux;
+        transportFallbackPending_ = true;
+        runOnMainThread([w = weak()] {
+            if (auto call = w.lock())
+                call->startPendingTransportFallback();
+        });
+    } else if (isIceEnabled()) {
         startIceMedia();
+    }
+}
+
+void
+SIPCall::startPendingTransportFallback()
+{
+    std::vector<MediaAttribute> mediaList;
+    {
+        std::lock_guard lk {callMutex_};
+        if (!transportFallbackPending_ || !inviteSession_
+            || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED || inviteSession_->invite_tsx) {
+            return;
+        }
+        transportFallbackPending_ = false;
+        mediaList.reserve(rtpStreams_.size());
+        for (const auto& stream : rtpStreams_)
+            mediaList.emplace_back(*stream.mediaAttribute_);
+    }
+
+    requestReinvite(mediaList, true);
 }
 
 bool
