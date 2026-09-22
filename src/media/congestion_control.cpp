@@ -82,7 +82,7 @@ read4Byte(const uint8_t* v)
     return (uint32_t(v[0]) << 24) | (uint32_t(v[1]) << 16) | (uint32_t(v[2]) << 8) | uint32_t(v[3]);
 }
 
-uint64_t
+RembFeedback
 CongestionControl::parseREMB(const rtcpREMBHeader& packet)
 {
     const auto* bytes = reinterpret_cast<const uint8_t*>(&packet);
@@ -94,16 +94,29 @@ CongestionControl::parseREMB(const rtcpREMBHeader& packet)
     if (version != packetVersion || fmt != packetFMT || bytes[1] != packetType
         || read4Byte(bytes + 12) != uniqueIdentifier) {
         JAMI_ERROR("Unable to parse REMB packet.");
-        return 0;
+        return {};
     }
 
     uint64_t bitrate_bps = (uint64_t(brMantissa) << brExp);
     bool shift_overflow = (bitrate_bps >> brExp) != brMantissa;
     if (shift_overflow) {
         JAMI_ERROR("Invalid remb bitrate value : {}*2^{}", brMantissa, brExp);
-        return 0;
+        return {};
     }
-    return bitrate_bps;
+
+    LegacyRembCommand legacyCommand = LegacyRembCommand::NONE;
+    const auto legacyPacket = read4Byte(bytes + 4) == 0x12345678
+                              && read4Byte(bytes + 8) == 0
+                              && bytes[16] == 1
+                              && read4Byte(bytes + 20) == 0x2345678b;
+    if (legacyPacket) {
+        if (bitrate_bps == 0x6803)
+            legacyCommand = LegacyRembCommand::DECREASE;
+        else if (bitrate_bps == 0x7378)
+            legacyCommand = LegacyRembCommand::INCREASE;
+    }
+
+    return {bitrate_bps, legacyCommand};
 }
 
 std::vector<uint8_t>
