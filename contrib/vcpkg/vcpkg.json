@@ -1,7 +1,7 @@
 {
   "name": "jami-daemon-deps",
   "version-string": "poc",
-  "description": "Windows/MSVC dependencies of libjami built with vcpkg (proof of concept: ffmpeg only)",
+  "description": "Windows/MSVC dependencies of libjami built with vcpkg (proof of concept: ffmpeg, opendht stack)",
   "dependencies": [
     {
       "name": "ffmpeg",
@@ -21,6 +21,12 @@
         "qsv"
       ]
     },
-    "webrtc-audio-processing"
+    "webrtc-audio-processing",
+    {
+      "name": "opendht",
+      "features": [
+        "proxy"
+      ]
+    }
   ]
 }
