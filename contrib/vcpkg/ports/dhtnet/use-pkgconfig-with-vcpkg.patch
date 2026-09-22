@@ -1,0 +1,38 @@
+--- a/CMakeLists.txt	2026-09-22 18:48:21.906747198 -0400
++++ b/CMakeLists.txt	2026-09-22 18:48:21.960179192 -0400
+@@ -44,7 +44,7 @@
+   endif()
+ endif()
+ 
+-if (NOT MSVC)
++if (NOT MSVC OR VCPKG_TOOLCHAIN)
+     # Check if there's a recent enough version of msgpack installed on the system
+     find_package(msgpack 5.0.0 QUIET CONFIG NAMES msgpack msgpackc-cxx)
+     if (msgpack_FOUND)
+@@ -221,7 +221,7 @@
+ )
+ 
+ # Port mapping dependencies - add sources and libraries
+-if (DHTNET_PUPNP AND NOT MSVC)
++if (DHTNET_PUPNP AND (NOT MSVC OR VCPKG_TOOLCHAIN))
+     pkg_search_module (upnp IMPORTED_TARGET upnp libupnp)
+     if (NOT upnp_FOUND)
+         message("libupnp not found: disabling")
+@@ -232,7 +232,7 @@
+         set (requiresprivate "${requiresprivate} libupnp")
+     endif()
+ endif()
+-if (DHTNET_NATPMP AND NOT MSVC)
++if (DHTNET_NATPMP AND (NOT MSVC OR VCPKG_TOOLCHAIN))
+     pkg_search_module (natpmp IMPORTED_TARGET natpmp)
+     if (NOT natpmp_FOUND)
+         find_library(natpmp_LIBRARIES natpmp)
+@@ -268,7 +268,7 @@
+ endif()
+ 
+ add_library(dhtnet ${dhtnet_SOURCES})
+-if (NOT MSVC)
++if (NOT MSVC OR VCPKG_TOOLCHAIN)
+     target_link_libraries(dhtnet PUBLIC PkgConfig::opendht PkgConfig::pjproject fmt::fmt ${MSGPACK_LIB})
+ else()
+     target_link_libraries(dhtnet PUBLIC
