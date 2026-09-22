@@ -147,6 +147,7 @@ compile_commands.json
 
 # Cmake
 *.cmake
+!contrib/vcpkg/**/*.cmake
 CMakeCache.txt
 Testing
 CMakeFiles
