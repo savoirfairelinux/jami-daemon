@@ -31,12 +31,14 @@ public:
 private:
     void createRembUsesStandardBitrateAndSsrcs();
     void createRembRejectsMissingFeedbackSsrc();
+    void recognizesLegacyRembCommands();
     void transportCcEstimateReducesOnDelayAndLoss();
     void transportCcEstimateIncreasesOnCleanFeedback();
 
     CPPUNIT_TEST_SUITE(CongestionControlTest);
     CPPUNIT_TEST(createRembUsesStandardBitrateAndSsrcs);
     CPPUNIT_TEST(createRembRejectsMissingFeedbackSsrc);
+    CPPUNIT_TEST(recognizesLegacyRembCommands);
     CPPUNIT_TEST(transportCcEstimateReducesOnDelayAndLoss);
     CPPUNIT_TEST(transportCcEstimateIncreasesOnCleanFeedback);
     CPPUNIT_TEST_SUITE_END();
@@ -77,6 +79,14 @@ CongestionControlTest::createRembRejectsMissingFeedbackSsrc()
     const std::vector<uint32_t> feedbackSsrcs;
 
     CPPUNIT_ASSERT(cc.createREMB(500'000, 0x12345678, feedbackSsrcs).empty());
+}
+
+void
+CongestionControlTest::recognizesLegacyRembCommands()
+{
+    CPPUNIT_ASSERT(legacyRembCommand(0x6803) == LegacyRembCommand::DECREASE);
+    CPPUNIT_ASSERT(legacyRembCommand(0x7378) == LegacyRembCommand::INCREASE);
+    CPPUNIT_ASSERT(legacyRembCommand(2'500'000) == LegacyRembCommand::NONE);
 }
 
 void
