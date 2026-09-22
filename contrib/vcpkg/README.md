@@ -13,3 +13,7 @@ what the current MSVC build produces.
 6.1.x revision (microsoft/vcpkg@f00e89ae19) pinned to 6.1.3 with Jami's patches and
 component list (`jami-options.cmake`). Jami's `windows-configure*.patch` files are
 not needed: they only bypassed pkg-config, which vcpkg provides.
+
+`ports/shiftmedia-libgnutls` is copied verbatim from savoirfairelinux/opendht
+`ports/` (the future shared registry home). `ports/opendht` pins opendht master:
+the gnutls-fork overlay and OCSP type fixes post-date v4.4.0.
