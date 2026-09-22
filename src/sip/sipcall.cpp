@@ -1219,10 +1219,13 @@ SIPCall::requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool 
         pendingMediaChange_ = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
         return;
     }
-    auto status = SIPSessionReinvite(mediaAttrList, needNewIce);
-    if (status == PJ_EBUSY)
+    auto result = trySIPSessionReinvite(mediaAttrList, needNewIce);
+    if (result == ReinviteResult::Deferred)
         pendingMediaChange_ = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-    else if (status == PJ_SUCCESS and reinvIceMedia_)
+    else if (result == ReinviteResult::Failed) {
+        JAMI_WARNING("[call:{}] Re-invite failed", getCallId());
+        return;
+    } else if (reinvIceMedia_)
         isWaitingForIceAndMedia_ = true;
 }
 
@@ -1230,21 +1233,22 @@ SIPCall::requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool 
  * Send a reINVITE inside an active dialog to modify its state
  * Local SDP session should be modified before calling this method
  */
-int
-SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
-                            bool needNewIce,
-                            std::optional<dhtnet::IceTransportOptions> iceOptions,
-                            bool recoveryOffer)
+SIPCall::ReinviteResult
+SIPCall::trySIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
+                               bool needNewIce,
+                               std::optional<dhtnet::IceTransportOptions> iceOptions,
+                               bool recoveryOffer)
 {
     assert(not mediaAttrList.empty());
 
     std::lock_guard lk {callMutex_};
 
     if (not inviteSession_)
-        return PJ_EINVALIDOP;
+        return ReinviteResult::Deferred;
     sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
-    if (inviteSession_->invite_tsx)
-        return PJ_EBUSY;
+    if (inviteSession_->invite_tsx or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED) {
+        return ReinviteResult::Deferred;
+    }
 
     JAMI_DEBUG("[call:{}] Preparing and sending a re-invite (state={})",
                getCallId(),
@@ -1254,7 +1258,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
     auto acc = getSIPAccount();
     if (not acc) {
         JAMI_ERROR("[call:{}] No account detected", getCallId());
-        return !PJ_SUCCESS;
+        return ReinviteResult::Failed;
     }
 
     const auto* previousLocalSession = sdp_->getActiveLocalSdpSession();
@@ -1277,18 +1281,18 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
             newAddress = dhtnet::ip_utils::getInterfaceAddr(acc->getLocalInterface(), AF_INET6);
         if (not newAddress) {
             JAMI_ERROR("[call:{}] No new local address for ICE recovery", getCallId());
-            return !PJ_SUCCESS;
+            return ReinviteResult::Failed;
         }
         sdp_->setPublishedIP(newAddress);
     }
 
     mediaNegotiationGeneration_ = recoveryGeneration_.load();
     if (not sdp_->createOffer(mediaAttrList, previousLocalSession, legacySdesFallback_))
-        return !PJ_SUCCESS;
+        return ReinviteResult::Failed;
 
     if (isIceEnabled() and needNewIce) {
         if (not createIceMediaTransport(true) or not initIceMediaTransport(true, std::move(iceOptions))) {
-            return !PJ_SUCCESS;
+            return ReinviteResult::Failed;
         }
         addLocalIceAttributes();
         // Media transport changed, must restart the media.
@@ -1301,7 +1305,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
     auto result = pjsip_inv_reinvite(inviteSession_.get(), recovering_ ? &contact : nullptr, local_sdp, &tdata);
     if (result == PJ_SUCCESS) {
         if (!tdata)
-            return PJ_SUCCESS;
+            return ReinviteResult::Sent;
 
         // Add user-agent header
         sip_utils::addUserAgentHeader(acc->getUserAgentName(), tdata);
@@ -1313,7 +1317,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
             if (recoveryOffer and recovering_ and needNewIce and not waitingForRecoveryChannel_) {
                 recoveryNegotiation_ = RecoveryNegotiation {recoveryGeneration_, sipTransport_, getIceMedia()};
             }
-            return PJ_SUCCESS;
+            return ReinviteResult::Sent;
         }
         JAMI_ERROR("[call:{}] Failed to send REINVITE msg (pjsip: {})", getCallId(), sip_utils::sip_strerror(result));
         // Canceling internals without sending (anyways the send has just failed!)
@@ -1321,6 +1325,23 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
     } else
         JAMI_ERROR("[call:{}] Failed to create REINVITE msg (pjsip: {})", getCallId(), sip_utils::sip_strerror(result));
 
+    return ReinviteResult::Failed;
+}
+
+int
+SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
+                            bool needNewIce,
+                            std::optional<dhtnet::IceTransportOptions> iceOptions,
+                            bool recoveryOffer)
+{
+    switch (trySIPSessionReinvite(mediaAttrList, needNewIce, std::move(iceOptions), recoveryOffer)) {
+    case ReinviteResult::Sent:
+        return PJ_SUCCESS;
+    case ReinviteResult::Deferred:
+        return PJ_EBUSY;
+    case ReinviteResult::Failed:
+        return !PJ_SUCCESS;
+    }
     return !PJ_SUCCESS;
 }
 
@@ -3089,8 +3110,10 @@ SIPCall::startAllMedia()
     isWaitingForIceAndMedia_ = false;
     mediaRestartRequired_ = false;
     runOnMainThread([w = weak()] {
-        if (auto call = w.lock())
+        if (auto call = w.lock()) {
             call->drainPendingRequests();
+            call->startPendingTransportFallback();
+        }
     });
 }
 
@@ -4821,17 +4844,40 @@ SIPCall::startPendingTransportFallback()
     std::vector<MediaAttribute> mediaList;
     {
         std::lock_guard lk {callMutex_};
-        if (!transportFallbackPending_ || !inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-            || inviteSession_->invite_tsx) {
+        if (!transportFallbackPending_ || isWaitingForIceAndMedia_) {
             return;
         }
-        transportFallbackPending_ = false;
         mediaList.reserve(rtpStreams_.size());
         for (const auto& stream : rtpStreams_)
             mediaList.emplace_back(*stream.mediaAttribute_);
     }
 
-    requestReinvite(mediaList, true);
+    switch (trySIPSessionReinvite(mediaList, true)) {
+    case ReinviteResult::Sent: {
+        std::lock_guard lk {callMutex_};
+        transportFallbackPending_ = false;
+        return;
+    }
+    case ReinviteResult::Deferred:
+        return;
+    case ReinviteResult::Failed:
+        failPendingTransportFallback();
+        return;
+    }
+}
+
+void
+SIPCall::failPendingTransportFallback()
+{
+    JAMI_ERROR("[call:{}] Unable to send the media transport fallback re-invite", getCallId());
+    terminateSipSession(PJSIP_SC_INTERNAL_SERVER_ERROR);
+    {
+        std::lock_guard lk {callMutex_};
+        transportFallbackPending_ = false;
+        stopAllMedia();
+        detachAudioFromConference();
+    }
+    onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR);
 }
 
 bool
