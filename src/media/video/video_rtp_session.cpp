@@ -869,15 +869,15 @@ VideoRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
 }
 
 bool
-VideoRtpSession::check_RCTP_Info_REMB(uint64_t* br)
+VideoRtpSession::check_RCTP_Info_REMB(RembFeedback* feedback)
 {
     auto rtcpInfoVect = socketPair_->getRtcpREMB();
 
     if (!rtcpInfoVect.empty()) {
         auto pkt = rtcpInfoVect.back();
-        auto bitrateBps = cc->parseREMB(pkt);
-        if (bitrateBps) {
-            *br = bitrateBps;
+        auto parsed = cc->parseREMB(pkt);
+        if (parsed.bitrateBps) {
+            *feedback = parsed;
             return true;
         }
     }
@@ -992,8 +992,12 @@ VideoRtpSession::adaptQualityAndBitrate()
         return;
     }
 
-    if (check_RCTP_Info_REMB(&br)) {
-        delayProcessing(br);
+    RembFeedback remb;
+    if (check_RCTP_Info_REMB(&remb)) {
+        if (remb.legacyCommand == LegacyRembCommand::NONE)
+            delayProcessing(remb.bitrateBps);
+        else
+            processLegacyRembCommand(remb.legacyCommand);
     }
 
     if (check_RCTP_Info_RR(rtcpi)) {
@@ -1053,6 +1057,23 @@ VideoRtpSession::delayProcessing(uint64_t bitrateBps)
     const auto bitrateKbps = (bitrateBps + BITS_PER_KILOBIT - 1) / BITS_PER_KILOBIT;
     const auto newBitrate = static_cast<unsigned>(std::min<uint64_t>(bitrateKbps, std::numeric_limits<unsigned>::max()));
 
+    setNewBitrate(newBitrate);
+}
+
+void
+VideoRtpSession::processLegacyRembCommand(LegacyRembCommand command)
+{
+    auto newBitrate = videoBitrateInfo_.videoBitrateCurrent;
+    if (command == LegacyRembCommand::DECREASE) {
+        newBitrate = static_cast<unsigned>(std::lround(newBitrate * 0.85f));
+    } else if (command == LegacyRembCommand::INCREASE) {
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                   - lastBitrateDecrease);
+        const auto increase = std::min(static_cast<float>(elapsed.count()) / 600000.0f + 1.0f, 1.05f);
+        newBitrate = static_cast<unsigned>(std::lround(newBitrate * increase));
+    } else {
+        return;
+    }
     setNewBitrate(newBitrate);
 }
 
