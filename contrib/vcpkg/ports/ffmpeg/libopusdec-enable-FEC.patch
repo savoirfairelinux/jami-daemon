@@ -1,0 +1,127 @@
+diff --git a/libavcodec/libopusdec.c b/libavcodec/libopusdec.c
+index 9b9a610343..8ec5bfc1ad 100644
+--- a/libavcodec/libopusdec.c
++++ b/libavcodec/libopusdec.c
+@@ -45,6 +45,8 @@ struct libopus_context {
+ #ifdef OPUS_SET_PHASE_INVERSION_DISABLED_REQUEST
+     int apply_phase_inv;
+ #endif
++    int decode_fec;
++    int64_t expected_next_pts;
+ };
+ 
+ #define OPUS_HEAD_SIZE 19
+@@ -141,6 +143,8 @@ static av_cold int libopus_decode_init(AVCodecContext *avc)
+     /* Decoder delay (in samples) at 48kHz */
+     avc->delay = avc->internal->skip_samples = opus->pre_skip;
+ 
++    opus->expected_next_pts = AV_NOPTS_VALUE;
++
+     return 0;
+ }
+ 
+@@ -161,27 +165,82 @@ static int libopus_decode(AVCodecContext *avc, AVFrame *frame,
+                           int *got_frame_ptr, AVPacket *pkt)
+ {
+     struct libopus_context *opus = avc->priv_data;
+-    int ret, nb_samples;
++    uint8_t *outptr;
++    int ret, nb_samples = 0, nb_lost_samples = 0, nb_samples_left;
++
++    // If FEC is enabled, calculate number of lost samples
++    if (opus->decode_fec &&
++        opus->expected_next_pts != AV_NOPTS_VALUE &&
++        pkt->pts != AV_NOPTS_VALUE &&
++        pkt->pts != opus->expected_next_pts) {
++        // Cap at recovering 120 ms of lost audio.
++        nb_lost_samples = pkt->pts - opus->expected_next_pts;
++        nb_lost_samples = FFMIN(nb_lost_samples, MAX_FRAME_SIZE);
++    }
+ 
+-    frame->nb_samples = MAX_FRAME_SIZE;
++    frame->nb_samples = MAX_FRAME_SIZE + nb_lost_samples;
+     if ((ret = ff_get_buffer(avc, frame, 0)) < 0)
+         return ret;
+ 
++    outptr = frame->data[0];
++    nb_samples_left = frame->nb_samples;
++
++    if (opus->decode_fec && nb_lost_samples) {
++        // Try to recover the lost samples with FEC data from this one.
++        // If there's no FEC data, the decoder will do loss concealment instead.
++        if (avc->sample_fmt == AV_SAMPLE_FMT_S16)
++             nb_samples = opus_multistream_decode(opus->dec, pkt->data, pkt->size,
++                                                  (opus_int16 *)outptr,
++                                                  nb_lost_samples, 1);
++        else
++            nb_samples = opus_multistream_decode_float(opus->dec, pkt->data, pkt->size,
++                                                       (float *)outptr,
++                                                       nb_lost_samples, 1);
++
++        if (nb_samples < 0) {
++            av_log(avc, AV_LOG_ERROR, "Decoding error: %s\n",
++                   opus_strerror(nb_samples));
++            return ff_opus_error_to_averror(nb_samples);
++        }
++
++        av_log(avc, AV_LOG_WARNING, "Recovered %d samples with FEC/PLC\n",
++                   nb_samples);
++
++        outptr += nb_samples * avc->channels * av_get_bytes_per_sample(avc->sample_fmt);
++        nb_samples_left -= nb_samples;
++        if (pkt->pts != AV_NOPTS_VALUE) {
++            pkt->pts -= nb_samples;
++            frame->pts = pkt->pts;
++        }
++    }
++
++    // Decode the actual, non-lost data.
+     if (avc->sample_fmt == AV_SAMPLE_FMT_S16)
+-        nb_samples = opus_multistream_decode(opus->dec, pkt->data, pkt->size,
+-                                             (opus_int16 *)frame->data[0],
+-                                             frame->nb_samples, 0);
++        ret = opus_multistream_decode(opus->dec, pkt->data, pkt->size,
++                                      (opus_int16 *)outptr,
++                                      nb_samples_left, 0);
+     else
+-        nb_samples = opus_multistream_decode_float(opus->dec, pkt->data, pkt->size,
+-                                                   (float *)frame->data[0],
+-                                                   frame->nb_samples, 0);
++        ret = opus_multistream_decode_float(opus->dec, pkt->data, pkt->size,
++                                            (float *)outptr,
++                                            nb_samples_left, 0);
+ 
+-    if (nb_samples < 0) {
++    if (ret < 0) {
+         av_log(avc, AV_LOG_ERROR, "Decoding error: %s\n",
+-               opus_strerror(nb_samples));
+-        return ff_opus_error_to_averror(nb_samples);
++               opus_strerror(ret));
++        return ff_opus_error_to_averror(ret);
+     }
+ 
++    nb_samples += ret;
++
++    if (opus->decode_fec)
++    {
++        // Calculate the next expected pts
++        if (pkt->pts == AV_NOPTS_VALUE) {
++            opus->expected_next_pts = AV_NOPTS_VALUE;
++        } else {
++            opus->expected_next_pts = pkt->pts + nb_samples;
++        }
++    }
+ #ifndef OPUS_SET_GAIN
+     {
+         int i = avc->ch_layout.nb_channels * nb_samples;
+@@ -220,6 +279,7 @@ static const AVOption libopusdec_options[] = {
+ #ifdef OPUS_SET_PHASE_INVERSION_DISABLED_REQUEST
+     { "apply_phase_inv", "Apply intensity stereo phase inversion", OFFSET(apply_phase_inv), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, FLAGS },
+ #endif
++    { "decode_fec", "Decode FEC data or use PLC", OFFSET(decode_fec), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, FLAGS },
+     { NULL },
+ };
+ 
+-- 
+2.34.1
+
