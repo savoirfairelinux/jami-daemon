@@ -1050,6 +1050,21 @@ VideoRtpSession::delayProcessing(uint64_t bitrateBps)
     if (bitrateBps == 0)
         return;
 
+    const auto legacyCommand = legacyRembCommand(bitrateBps);
+    if (legacyCommand != LegacyRembCommand::NONE) {
+        auto newBitrate = videoBitrateInfo_.videoBitrateCurrent;
+        if (legacyCommand == LegacyRembCommand::DECREASE) {
+            newBitrate = static_cast<unsigned>(std::lround(newBitrate * 0.85f));
+        } else {
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                       - lastBitrateDecrease);
+            const auto increase = std::min(static_cast<float>(elapsed.count()) / 600000.0f + 1.0f, 1.05f);
+            newBitrate = static_cast<unsigned>(std::lround(newBitrate * increase));
+        }
+        setNewBitrate(newBitrate);
+        return;
+    }
+
     const auto bitrateKbps = (bitrateBps + BITS_PER_KILOBIT - 1) / BITS_PER_KILOBIT;
     const auto newBitrate = static_cast<unsigned>(std::min<uint64_t>(bitrateKbps, std::numeric_limits<unsigned>::max()));
 
