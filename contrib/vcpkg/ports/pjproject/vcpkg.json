@@ -1,0 +1,11 @@
+{
+  "name": "pjproject",
+  "version-date": "2026-09-08",
+  "description": "PJSIP fork maintained by Savoir-faire Linux (TCP-ICE/RFC 6544, GnuTLS TLS). Jami overlay: MSVC build of the 10 library projects.",
+  "homepage": "https://github.com/savoirfairelinux/pjproject",
+  "license": "GPL-2.0-or-later",
+  "supports": "windows & !uwp & !mingw & !arm",
+  "dependencies": [
+    "shiftmedia-libgnutls"
+  ]
+}
