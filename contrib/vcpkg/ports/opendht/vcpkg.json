@@ -1,0 +1,45 @@
+{
+  "name": "opendht",
+  "version-date": "2026-09-22",
+  "description": "OpenDHT: A lightweight C++17 Distributed Hash Table library. Jami overlay pinned to savoirfairelinux/opendht master.",
+  "homepage": "https://opendht.net",
+  "license": "MIT",
+  "dependencies": [
+    "argon2",
+    "asio",
+    "fmt",
+    "jsoncpp",
+    {
+      "name": "libgnutls",
+      "platform": "!windows | mingw"
+    },
+    "msgpack",
+    "nettle",
+    {
+      "name": "shiftmedia-libgnutls",
+      "platform": "windows & !mingw"
+    },
+    "simdutf",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ],
+  "default-features": [
+    "proxy"
+  ],
+  "features": {
+    "proxy": {
+      "description": "DHT proxy client and server, push notifications",
+      "dependencies": [
+        "llhttp",
+        "openssl",
+        "restinio"
+      ]
+    }
+  }
+}
