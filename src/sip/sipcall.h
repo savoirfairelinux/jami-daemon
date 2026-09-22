@@ -65,6 +65,10 @@ struct PrivateKey;
 
 namespace jami {
 
+namespace test {
+class DtlsCallTest;
+}
+
 class Sdp;
 class SIPAccountBase;
 class SipTransport;
@@ -79,6 +83,8 @@ using IceCandidate = pj_ice_sess_cand;
 class SIPCall : public Call
 {
 private:
+    friend class test::DtlsCallTest;
+
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
@@ -442,6 +448,10 @@ private:
     bool isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList);
     void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
     void startPendingTransportFallback();
+    void failPendingTransportFallback();
+    enum class ReinviteResult { Sent, Deferred, Failed };
+    ReinviteResult trySIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
+                                         bool needNewIce);
     int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
     int SIPSessionReinvite();
     // Add a media stream to the call.
