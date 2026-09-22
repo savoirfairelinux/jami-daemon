@@ -37,6 +37,16 @@ static constexpr float kd = 0.002f;
 
 constexpr auto OVERUSE_THRESH = std::chrono::milliseconds(100);
 
+LegacyRembCommand
+legacyRembCommand(uint64_t bitrateBps)
+{
+    if (bitrateBps == 0x6803)
+        return LegacyRembCommand::DECREASE;
+    if (bitrateBps == 0x7378)
+        return LegacyRembCommand::INCREASE;
+    return LegacyRembCommand::NONE;
+}
+
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
 //
 //     0                   1                   2                   3
