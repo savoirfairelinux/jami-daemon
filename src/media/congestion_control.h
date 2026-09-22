@@ -29,6 +29,14 @@ namespace jami {
 
 enum BandwidthUsage : uint8_t { bwNormal = 0, bwUnderusing = 1, bwOverusing = 2 };
 
+enum class LegacyRembCommand : uint8_t { NONE, DECREASE, INCREASE };
+
+struct RembFeedback
+{
+    uint64_t bitrateBps {};
+    LegacyRembCommand legacyCommand {LegacyRembCommand::NONE};
+};
+
 struct TransportCcBitrateEstimate
 {
     uint64_t bitrateBps {};
@@ -45,7 +53,7 @@ public:
     CongestionControl();
     ~CongestionControl();
 
-    uint64_t parseREMB(const rtcpREMBHeader& packet);
+    RembFeedback parseREMB(const rtcpREMBHeader& packet);
     std::vector<uint8_t> createREMB(uint64_t bitrate_bps,
                                     uint32_t senderSsrc,
                                     const std::vector<uint32_t>& feedbackSsrcs);

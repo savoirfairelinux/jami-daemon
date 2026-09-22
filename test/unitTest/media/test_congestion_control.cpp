@@ -31,12 +31,14 @@ public:
 private:
     void createRembUsesStandardBitrateAndSsrcs();
     void createRembRejectsMissingFeedbackSsrc();
+    void recognizesLegacyRembCommands();
     void transportCcEstimateReducesOnDelayAndLoss();
     void transportCcEstimateIncreasesOnCleanFeedback();
 
     CPPUNIT_TEST_SUITE(CongestionControlTest);
     CPPUNIT_TEST(createRembUsesStandardBitrateAndSsrcs);
     CPPUNIT_TEST(createRembRejectsMissingFeedbackSsrc);
+    CPPUNIT_TEST(recognizesLegacyRembCommands);
     CPPUNIT_TEST(transportCcEstimateReducesOnDelayAndLoss);
     CPPUNIT_TEST(transportCcEstimateIncreasesOnCleanFeedback);
     CPPUNIT_TEST_SUITE_END();
@@ -67,7 +69,9 @@ CongestionControlTest::createRembUsesStandardBitrateAndSsrcs()
 
     rtcpREMBHeader header {};
     std::memcpy(&header, packet.data(), sizeof(header));
-    CPPUNIT_ASSERT_EQUAL(bitrateBps, cc.parseREMB(header));
+    const auto feedback = cc.parseREMB(header);
+    CPPUNIT_ASSERT_EQUAL(bitrateBps, feedback.bitrateBps);
+    CPPUNIT_ASSERT(feedback.legacyCommand == LegacyRembCommand::NONE);
 }
 
 void
@@ -77,6 +81,30 @@ CongestionControlTest::createRembRejectsMissingFeedbackSsrc()
     const std::vector<uint32_t> feedbackSsrcs;
 
     CPPUNIT_ASSERT(cc.createREMB(500'000, 0x12345678, feedbackSsrcs).empty());
+}
+
+void
+CongestionControlTest::recognizesLegacyRembCommands()
+{
+    CongestionControl cc;
+    for (const auto& [bitrate, expected] : {
+             std::pair {uint64_t(0x6803), LegacyRembCommand::DECREASE},
+             std::pair {uint64_t(0x7378), LegacyRembCommand::INCREASE},
+         }) {
+        auto packet = cc.createREMB(bitrate, 0x12345678, {0x2345678b});
+        rtcpREMBHeader header {};
+        std::memcpy(&header, packet.data(), sizeof(header));
+        const auto feedback = cc.parseREMB(header);
+        CPPUNIT_ASSERT_EQUAL(bitrate, feedback.bitrateBps);
+        CPPUNIT_ASSERT(feedback.legacyCommand == expected);
+
+        auto standardPacket = cc.createREMB(bitrate, 0x87654321, {0x11223344});
+        rtcpREMBHeader standardHeader {};
+        std::memcpy(&standardHeader, standardPacket.data(), sizeof(standardHeader));
+        const auto absoluteFeedback = cc.parseREMB(standardHeader);
+        CPPUNIT_ASSERT_EQUAL(bitrate, absoluteFeedback.bitrateBps);
+        CPPUNIT_ASSERT(absoluteFeedback.legacyCommand == LegacyRembCommand::NONE);
+    }
 }
 
 void

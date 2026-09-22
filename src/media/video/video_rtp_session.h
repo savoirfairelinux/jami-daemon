@@ -30,6 +30,8 @@ class CongestionControl;
 class Conference;
 class MediaRecorder;
 class TransportCcController;
+enum class LegacyRembCommand : uint8_t;
+struct RembFeedback;
 struct TransportCcControllerEstimate;
 } // namespace jami
 
@@ -158,7 +160,7 @@ private:
     std::function<void(void)> requestKeyFrameCallback_;
 
     bool check_RCTP_Info_RR(RTCPInfo&);
-    bool check_RCTP_Info_REMB(uint64_t*);
+    bool check_RCTP_Info_REMB(RembFeedback*);
     bool check_RTCP_Info_TCC(uint64_t*, RTCPInfo&);
     void adaptQualityAndBitrate();
     void setupVideoBitrateInfo();
@@ -169,6 +171,7 @@ private:
     void delayMonitor(int gradient, int deltaT);
     void dropProcessing(RTCPInfo* rtcpi);
     void delayProcessing(uint64_t bitrateBps);
+    void processLegacyRembCommand(LegacyRembCommand command);
     void setNewBitrate(unsigned int newBR);
     uint64_t clampVideoBitrateBps(uint64_t bitrateBps) const;
     void sendReceiverEstimatedMaxBitrate(uint64_t bitrateBps);
