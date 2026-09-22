@@ -33,6 +33,10 @@
 #include <thread>
 #include <string>
 
+extern "C" {
+#include <pjsip-ua/sip_inv.h>
+}
+
 using namespace std::literals::chrono_literals;
 
 namespace jami {
@@ -76,12 +80,21 @@ private:
     void testAudioCallNegotiatesDtlsSrtp();
     void testAudioVideoCallNegotiatesDtlsSrtp();
     void testAudioVideoCallFallsBackWithoutRtcpMux();
-    void testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled = true);
+    void testAudioVideoCallFallsBackToLegacySdes();
+    void testTransportFallbackWaitsForConfirmedDialog();
+    void testTransportFallbackFailureEndsCall();
+    void testCallNegotiatesDtlsSrtp(bool withVideo,
+                                    bool bobRtcpMuxEnabled = true,
+                                    bool failTransportFallback = false,
+                                    bool bobSupportsDtls = true);
 
     CPPUNIT_TEST_SUITE(DtlsCallTest);
     CPPUNIT_TEST(testAudioCallNegotiatesDtlsSrtp);
     CPPUNIT_TEST(testAudioVideoCallNegotiatesDtlsSrtp);
     CPPUNIT_TEST(testAudioVideoCallFallsBackWithoutRtcpMux);
+    CPPUNIT_TEST(testAudioVideoCallFallsBackToLegacySdes);
+    CPPUNIT_TEST(testTransportFallbackWaitsForConfirmedDialog);
+    CPPUNIT_TEST(testTransportFallbackFailureEndsCall);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -120,7 +133,83 @@ DtlsCallTest::testAudioVideoCallFallsBackWithoutRtcpMux()
 }
 
 void
-DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled)
+DtlsCallTest::testAudioVideoCallFallsBackToLegacySdes()
+{
+    testCallNegotiatesDtlsSrtp(true, false, false, false);
+}
+
+void
+DtlsCallTest::testTransportFallbackWaitsForConfirmedDialog()
+{
+    testCallNegotiatesDtlsSrtp(false, true, true);
+}
+
+void
+DtlsCallTest::testTransportFallbackFailureEndsCall()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::string bobCallId;
+    std::string aliceCallState;
+
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard lock {mtx};
+            if (accountId == bobId)
+                bobCallId = callId;
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
+            std::lock_guard lock {mtx};
+            if (accountId == aliceId)
+                aliceCallState = state;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    const auto mediaList = MediaAttribute::mediaAttributesToMediaMaps({audio});
+    const auto aliceCallId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    {
+        std::unique_lock lock {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lock, 30s, [&] { return !bobCallId.empty(); }));
+    }
+    libjami::acceptWithMedia(bobId, bobCallId, mediaList);
+    {
+        std::unique_lock lock {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lock, 30s, [&] { return aliceCallState == "CURRENT"; }));
+    }
+
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(aliceCallId));
+    CPPUNIT_ASSERT(aliceCall);
+    aliceCall->failPendingTransportFallback();
+    {
+        std::unique_lock lock {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lock, 10s, [&] { return aliceCallState == "FAILURE"; }));
+    }
+    CPPUNIT_ASSERT(!aliceCall->inviteSession_);
+
+    if (bobAccount->getCall(bobCallId))
+        Manager::instance().hangupCall(bobId, bobCallId);
+    libjami::unregisterSignalHandlers();
+}
+
+void
+DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo,
+                                         bool bobRtcpMuxEnabled,
+                                         bool failTransportFallback,
+                                         bool bobSupportsDtls)
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -182,6 +271,11 @@ DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled)
         CPPUNIT_ASSERT(cv.wait_for(lock, 30s, [&] { return !bobCallId.empty(); }));
     }
 
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(bobAccount->getCall(bobCallId));
+    CPPUNIT_ASSERT(bobCall);
+    if (!bobSupportsDtls)
+        bobCall->getSDP().setLocalDtlsFingerprint({}, {});
+
     libjami::acceptWithMedia(bobId, bobCallId, mediaList);
     {
         std::unique_lock lock {mtx};
@@ -189,9 +283,23 @@ DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled)
     }
 
     auto aliceCall = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(aliceCallId));
-    auto bobCall = std::dynamic_pointer_cast<SIPCall>(bobAccount->getCall(bobCallId));
     CPPUNIT_ASSERT(aliceCall);
-    CPPUNIT_ASSERT(bobCall);
+
+    if (failTransportFallback) {
+        {
+            std::lock_guard lock {aliceCall->callMutex_};
+            aliceCall->transportFallbackPending_ = true;
+            aliceCall->inviteSession_->state = PJSIP_INV_STATE_EARLY;
+        }
+        aliceCall->startPendingTransportFallback();
+
+        {
+            std::lock_guard lock {aliceCall->callMutex_};
+            CPPUNIT_ASSERT(aliceCall->transportFallbackPending_);
+            aliceCall->inviteSession_->state = PJSIP_INV_STATE_CONFIRMED;
+            aliceCall->transportFallbackPending_ = false;
+        }
+    }
 
     const auto* activeOffer = bobCall->getSDP().getRemoteSdpSession();
     CPPUNIT_ASSERT(activeOffer);
@@ -208,27 +316,44 @@ DtlsCallTest::testCallNegotiatesDtlsSrtp(bool withVideo, bool bobRtcpMuxEnabled)
     const auto bobSlots = bobCall->getSDP().getMediaSlots();
     CPPUNIT_ASSERT_EQUAL(media.size(), aliceSlots.size());
     CPPUNIT_ASSERT_EQUAL(media.size(), bobSlots.size());
-    const auto aliceFingerprint = aliceSlots.front().first.dtls_fingerprint;
-    const auto bobFingerprint = bobSlots.front().first.dtls_fingerprint;
-    CPPUNIT_ASSERT(!aliceFingerprint.empty());
-    CPPUNIT_ASSERT(!bobFingerprint.empty());
-    CPPUNIT_ASSERT(aliceFingerprint != bobFingerprint);
-    CPPUNIT_ASSERT(aliceFingerprint != getDtlsFingerprint(*aliceAccount->identity().second));
-    CPPUNIT_ASSERT(bobFingerprint != getDtlsFingerprint(*bobAccount->identity().second));
-    for (const auto& [local, remote] : aliceSlots) {
-        CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, local.key_exchange);
-        CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, remote.key_exchange);
-        CPPUNIT_ASSERT_EQUAL(aliceFingerprint, local.dtls_fingerprint);
-        CPPUNIT_ASSERT_EQUAL(bobFingerprint, remote.dtls_fingerprint);
-        CPPUNIT_ASSERT(!static_cast<bool>(local.crypto));
-        CPPUNIT_ASSERT(!static_cast<bool>(remote.crypto));
-    }
+    if (bobSupportsDtls) {
+        const auto aliceFingerprint = aliceSlots.front().first.dtls_fingerprint;
+        const auto bobFingerprint = bobSlots.front().first.dtls_fingerprint;
+        CPPUNIT_ASSERT(!aliceFingerprint.empty());
+        CPPUNIT_ASSERT(!bobFingerprint.empty());
+        CPPUNIT_ASSERT(aliceFingerprint != bobFingerprint);
+        CPPUNIT_ASSERT(aliceFingerprint != getDtlsFingerprint(*aliceAccount->identity().second));
+        CPPUNIT_ASSERT(bobFingerprint != getDtlsFingerprint(*bobAccount->identity().second));
+        for (const auto& [local, remote] : aliceSlots) {
+            CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, local.key_exchange);
+            CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, remote.key_exchange);
+            CPPUNIT_ASSERT_EQUAL(aliceFingerprint, local.dtls_fingerprint);
+            CPPUNIT_ASSERT_EQUAL(bobFingerprint, remote.dtls_fingerprint);
+            CPPUNIT_ASSERT(!static_cast<bool>(local.crypto));
+            CPPUNIT_ASSERT(!static_cast<bool>(remote.crypto));
+        }
 
-    for (const auto& [local, remote] : bobSlots) {
-        CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, local.key_exchange);
-        CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, remote.key_exchange);
-        CPPUNIT_ASSERT_EQUAL(bobFingerprint, local.dtls_fingerprint);
-        CPPUNIT_ASSERT_EQUAL(aliceFingerprint, remote.dtls_fingerprint);
+        for (const auto& [local, remote] : bobSlots) {
+            CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, local.key_exchange);
+            CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::DTLS, remote.key_exchange);
+            CPPUNIT_ASSERT_EQUAL(bobFingerprint, local.dtls_fingerprint);
+            CPPUNIT_ASSERT_EQUAL(aliceFingerprint, remote.dtls_fingerprint);
+        }
+    } else {
+        for (const auto& slots : {aliceSlots, bobSlots}) {
+            for (const auto& [local, remote] : slots) {
+                CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, local.key_exchange);
+                CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, remote.key_exchange);
+                CPPUNIT_ASSERT(static_cast<bool>(local.crypto));
+                CPPUNIT_ASSERT(static_cast<bool>(remote.crypto));
+                CPPUNIT_ASSERT_EQUAL(std::string("1"), local.crypto.getTag());
+                CPPUNIT_ASSERT_EQUAL(std::string("1"), remote.crypto.getTag());
+                CPPUNIT_ASSERT_EQUAL(std::string("AES_CM_128_HMAC_SHA1_80"),
+                                     local.crypto.getCryptoSuite());
+                CPPUNIT_ASSERT_EQUAL(std::string("AES_CM_128_HMAC_SHA1_80"),
+                                     remote.crypto.getCryptoSuite());
+            }
+        }
     }
 
     // Recording readiness proves the negotiated media path is up.
