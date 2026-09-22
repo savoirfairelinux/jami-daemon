@@ -8,7 +8,9 @@ vcpkg_download_distfile(ARCHIVE
 )
 vcpkg_extract_source_archive(SOURCE_PATH
     ARCHIVE "${ARCHIVE}"
-    PATCHES use-pkgconfig-with-vcpkg.patch
+    PATCHES
+        use-pkgconfig-with-vcpkg.patch
+        msvc-no-unistd.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
