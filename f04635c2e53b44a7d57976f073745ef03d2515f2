@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee04da33_472667ba",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 4104,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:49:03Z",
+      "side": 1,
+      "message": "[error] Line 4104: 🔴 `trySIPSessionReinvite(..., true)` creates `reinvIceMedia_`, but this path bypasses `requestReinvite()` and never sets `isWaitingForIceAndMedia_`. While the fallback ICE/re-INVITE is in progress, a hold, source switch, or media change can start another re-INVITE, overwrite the pending SDP/ICE state, or lose the requested update. Set the wait flag when the fallback is sent (and clear it only from the existing media-restart path), or route this through one shared helper.",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fcfe42c7_a48a3dbb",
+        "filename": "test/unitTest/call/dtls_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:49:03Z",
+      "side": 1,
+      "message": "[warning] Line 196: 🟡 This test calls `failPendingTransportFallback()` directly while `transportFallbackPending_` is false, so it does not exercise the `ReinviteResult::Failed` branch in `startPendingTransportFallback()`. Arrange a pending fallback and induce a real re-INVITE failure, then assert the call is failed through that production path.",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2b6d0b9_b4a770e8",
+        "filename": "test/unitTest/call/dtls_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:49:03Z",
+      "side": 1,
+      "message": "[warning] Line 300: 🟡 The confirmed-dialog test clears `transportFallbackPending_` instead of retrying `startPendingTransportFallback()` after restoring `PJSIP_INV_STATE_CONFIRMED`; it therefore cannot detect a missing retry or a fallback that never sends. Keep the flag set, invoke the retry, and assert that the pending flag is cleared only after a sent re-INVITE.",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
