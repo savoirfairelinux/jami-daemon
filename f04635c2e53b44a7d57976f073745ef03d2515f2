@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "755c6781_8df2d6cc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 4104,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T20:43:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee04da33_472667ba",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fcfe42c7_a48a3dbb",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4348d9ac_7ced9c67",
+        "filename": "test/unitTest/call/dtls_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T20:43:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fcfe42c7_a48a3dbb",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c2b6d0b9_b4a770e8",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-09-23T19:49:03Z",
       "side": 1,
       "message": "[warning] Line 300: 🟡 The confirmed-dialog test clears `transportFallbackPending_` instead of retrying `startPendingTransportFallback()` after restoring `PJSIP_INV_STATE_CONFIRMED`; it therefore cannot detect a missing retry or a fallback that never sends. Keep the flag set, invoke the retry, and assert that the pending flag is cleared only after a sent re-INVITE.",
+      "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a861b27_510b2dec",
+        "filename": "test/unitTest/call/dtls_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T20:43:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c2b6d0b9_b4a770e8",
       "revId": "f04635c2e53b44a7d57976f073745ef03d2515f2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
