@@ -3,6 +3,8 @@
 ################################################################################
 list (APPEND Source_Files__media__audio__audio_processing
       "${CMAKE_CURRENT_SOURCE_DIR}/audio_processor.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/drift_compensator.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/drift_compensator.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/null_audio_processor.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/null_audio_processor.cpp"
 )
