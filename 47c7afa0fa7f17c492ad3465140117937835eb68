@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8518992_563ad8c3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 748,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:31:00Z",
+      "side": 1,
+      "message": "[High] Line 748: `clearIce()` (which also clears both active SDP pointers) and the explicit null assignments at lines 749-750 happen before `createOffer`, ICE transport setup, and `pjsip_inv_reinvite`/send have succeeded. Every failure return on lines 753, 757, 769, and 783 therefore leaves an established call with its previously negotiated local/remote SDP snapshots discarded, so later media/re-INVITE logic operates without the active session (and a `tdata \u003d\u003d nullptr` success path has the same outcome). Keep the old pointers until the new negotiation is committed, or restore them on every failure path.",
+      "revId": "47c7afa0fa7f17c492ad3465140117937835eb68",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
