@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93081e91_5ce1f13f",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:35:07Z",
+      "side": 1,
+      "message": "[warning] Line 207: 🟡 If a compound datagram has a BYE followed by a truncated or otherwise malformed packet, earlier non-BYE packets may already have been `memmove`d before this branch returns `len`. The caller then parses and forwards the original length from a partially compacted buffer, which can duplicate packets or expose stale/mixed bytes to the demuxer. Validate the complete compound packet before modifying `buf`, or stage the compacted output and leave/drop the packet unchanged when validation fails.",
+      "revId": "8596087b2b082a1c81ff6895a3a281be8b19dcc1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
