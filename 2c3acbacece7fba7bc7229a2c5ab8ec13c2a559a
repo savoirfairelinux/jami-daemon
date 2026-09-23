@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5314742_43c6b2b7",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1053,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:51:17Z",
+      "side": 1,
+      "message": "[error] Line 1053: 🔴 `delayProcessing` is used for both TCC estimates and parsed REMB values, but this classifier sees only the numeric bitrate. A valid absolute REMB of `0x6803` or `0x7378` bps is therefore treated as a relative command (for example, 26,627 bps can become a 15% decrease of the current bitrate instead of the requested absolute target), violating the stated compatibility requirement; TCC targets can be misclassified as well. Preserve the feedback kind/packet metadata through this path, or recognize the sentinels only in a legacy-specific packet format/parser, and add regression tests covering absolute REMB packets at both sentinel values.",
+      "revId": "2c3acbacece7fba7bc7229a2c5ab8ec13c2a559a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
