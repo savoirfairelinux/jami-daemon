@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f73f7b9a_12af1b2a",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:12:16Z",
+      "side": 1,
+      "message": "[warning] Line 119: 🟡 This assertion only proves the offer exceeds 4 KiB, while this project already sets `PJSIP_MAX_PKT_LEN` to 8000—the value this patch raises. The generated offer is still only about 6 KiB, so the test would pass with the old packet limit and cannot catch the regression addressed here. Generate/assert an offer larger than 8000 bytes (and ideally exercise the resulting INVITE) so the test fails without the 16 KiB setting.",
+      "revId": "96caec356ec6d07257ef4fa7e807bb80ac6b2ead",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
