@@ -1,0 +1,60 @@
+diff -ru a/src/fileutils.cpp b/src/fileutils.cpp
+--- a/src/fileutils.cpp	2026-09-04 14:59:11.000000000 -0400
++++ b/src/fileutils.cpp	2026-09-22 18:51:42.636183178 -0400
+@@ -38,7 +38,11 @@
+ #endif
+ #include <fcntl.h>
+ #include <signal.h>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ 
+ #include <sstream>
+ #include <fstream>
+diff -ru a/src/ip_utils.cpp b/src/ip_utils.cpp
+--- a/src/ip_utils.cpp	2026-09-04 14:59:11.000000000 -0400
++++ b/src/ip_utils.cpp	2026-09-22 18:51:42.636063481 -0400
+@@ -22,7 +22,11 @@
+ 
+ extern "C" {
+ #include <sys/types.h>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ #include <limits.h>
+ 
+ #ifdef _WIN32
+diff -ru a/src/peer_connection.cpp b/src/peer_connection.cpp
+--- a/src/peer_connection.cpp	2026-09-04 14:59:11.000000000 -0400
++++ b/src/peer_connection.cpp	2026-09-22 18:51:42.636261796 -0400
+@@ -30,7 +30,11 @@
+ #include <stdexcept>
+ #include <istream>
+ #include <ostream>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ #include <cstdio>
+ 
+ #ifdef _WIN32
+diff -ru a/src/security/tls_session.cpp b/src/security/tls_session.cpp
+--- a/src/security/tls_session.cpp	2026-09-04 14:59:11.000000000 -0400
++++ b/src/security/tls_session.cpp	2026-09-22 18:51:42.636542317 -0400
+@@ -39,7 +39,11 @@
+ #include <cstring> // std::memset
+ 
+ #include <cstdlib>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ 
+ namespace dhtnet {
+ namespace tls {
