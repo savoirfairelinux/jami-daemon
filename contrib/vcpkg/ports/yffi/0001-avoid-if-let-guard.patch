@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jami packaging <jami@gnu.org>
+Date: Thu, 25 Jun 2026 11:20:00 -0400
+Subject: [PATCH] yrs: avoid unstable if-let guard
+
+---
+ yrs/src/block.rs | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/yrs/src/block.rs b/yrs/src/block.rs
+--- a/yrs/src/block.rs
++++ b/yrs/src/block.rs
+@@ -1016,13 +1016,16 @@ impl<'doc> ClientTransactionMut<'doc> {
+                 item.parent = TypePtr::Branch(branch);
+                 branch
+             }
+-            TypePtr::ID(id)
+-                if let Some(branch) = store.blocks.get_item(id).and_then(|i| i.as_branch()) =>
+-            {
+-                item.parent = TypePtr::Branch(branch);
+-                branch
+-            }
+-            _ => {
++            TypePtr::ID(id) => {
++                if let Some(branch) = store.blocks.get_item(id).and_then(|i| i.as_branch()) {
++                    item.parent = TypePtr::Branch(branch);
++                    branch
++                } else {
++                    self.integrate_gc(item.range(), offset);
++                    return None;
++                }
++            },
++            _ => {
+                 self.integrate_gc(item.range(), offset);
+                 return None;
+             }
+--
+2.43.0

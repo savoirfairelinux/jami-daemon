@@ -60,6 +60,10 @@
     "simdutf",
     "speexdsp",
     "yaml-cpp",
-    "webrtc-audio-processing"
+    "webrtc-audio-processing",
+    {
+      "name": "yffi",
+      "platform": "windows"
+    }
   ]
 }

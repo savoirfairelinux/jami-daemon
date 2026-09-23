@@ -1,0 +1,9 @@
+{
+  "name": "yffi",
+  "version": "0.27.2",
+  "port-version": 0,
+  "description": "Y-CRDT (yrs) C FFI: CRDT engine for collaborative editing",
+  "homepage": "https://github.com/y-crdt/y-crdt",
+  "license": "MIT",
+  "supports": "static"
+}
