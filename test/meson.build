@@ -56,6 +56,21 @@ test(
     timeout: 1800,
 )
 
+ut_drift_compensator = executable(
+    'ut_drift_compensator',
+    sources: files('unitTest/media/audio/test_drift_compensator.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'drift_compensator',
+    ut_drift_compensator,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_auto_answer = executable(
     'ut_auto_answer',
     sources: files('unitTest/media_negotiation/auto_answer.cpp'),
