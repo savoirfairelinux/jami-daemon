@@ -20,6 +20,10 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <future>
+#include <thread>
+
+#include <opendht/thread_pool.h>
 
 #include "account_factory.h"
 #include "../../test_runner.h"
@@ -56,6 +60,7 @@ private:
     void testAddRemoveRINGAccount();
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
+    void testPushNotificationStoppedDht();
     void testClear();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
@@ -63,6 +68,7 @@ private:
     CPPUNIT_TEST(testAddRemoveRINGAccount);
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
+    CPPUNIT_TEST(testPushNotificationStoppedDht);
     CPPUNIT_TEST(testClear);
     CPPUNIT_TEST_SUITE_END();
 
@@ -216,6 +222,42 @@ Account_factoryTest::testDisableReenableUpnp()
     Manager::instance().setAccountDetails(JAMI_ID, accDetails);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
     CPPUNIT_ASSERT_EQUAL(dhtPort, account->dhtUpnpMapping_.getInternalPort());
+
+    Manager::instance().removeAccount(JAMI_ID, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
+}
+
+void
+Account_factoryTest::testPushNotificationStoppedDht()
+{
+    auto accDetails = libjami::getAccountTemplate("RING");
+    Manager::instance().addAccount(accDetails, JAMI_ID);
+    CPPUNIT_ASSERT(Manager::instance().getAccount<JamiAccount>(JAMI_ID));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
+
+    // A stopped DHT does not handle pushes (the proxy keeps sending them):
+    // they must not hold the computation pool, used by connection requests.
+    const auto pushes = 2 * std::max(std::thread::hardware_concurrency(), 4u);
+    auto receivePushes = [&] {
+        for (unsigned i = 0; i < pushes; ++i)
+            libjami::pushNotificationReceived("", {{"to", JAMI_ID}});
+    };
+    auto computationPoolAvailable = [] {
+        auto ran = std::make_shared<std::promise<void>>();
+        auto future = ran->get_future();
+        dht::ThreadPool::computation().run([ran] { ran->set_value(); });
+        return future.wait_for(5s) == std::future_status::ready;
+    };
+
+    // Inactive account, as done by mobile clients in background
+    Manager::instance().setAccountActive(JAMI_ID, false, true);
+    receivePushes();
+    CPPUNIT_ASSERT(computationPoolAvailable());
+
+    // Disabled account
+    Manager::instance().sendRegister(JAMI_ID, false);
+    receivePushes();
+    CPPUNIT_ASSERT(computationPoolAvailable());
 
     Manager::instance().removeAccount(JAMI_ID, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));

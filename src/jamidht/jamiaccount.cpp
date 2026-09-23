@@ -264,6 +264,7 @@ static const constexpr std::string_view JAMI_URI_PREFIX = "jami:";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const constexpr std::string_view PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
+constexpr auto PUSH_RESULT_TIMEOUT = std::chrono::seconds(10);
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
@@ -3932,9 +3933,26 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
 void
 JamiAccount::pushNotificationReceived(const std::string& /*from*/, const std::map<std::string, std::string>& data)
 {
+    // The proxy keeps pushing for a disabled account (its subscriptions are not
+    // cancelled), but its DHT will not run to handle them.
+    if (not isEnabled()) {
+        JAMI_LOG("[Account {:s}] pushNotificationReceived: account disabled, ignoring", getAccountID());
+        return;
+    }
     auto ret_future = dht_->pushNotificationReceived(data);
-    dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
-        JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) ret_future.get());
+    // The result is only set once the DHT runner handles the push, which does not
+    // happen while the account is inactive: wait on the I/O pool with a timeout,
+    // as blocked computation threads would stall connection requests.
+    dht::ThreadPool::io().run([id = getAccountID(), ret_future = ret_future.share()] {
+        if (ret_future.wait_for(PUSH_RESULT_TIMEOUT) != std::future_status::ready) {
+            JAMI_WARNING("[Account {:s}] pushNotificationReceived: timed out", id);
+            return;
+        }
+        try {
+            JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) ret_future.get());
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, e.what());
+        }
     });
 }
 
