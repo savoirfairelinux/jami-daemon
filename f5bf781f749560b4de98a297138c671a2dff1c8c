@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6731a642_27475b71",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3946,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T14:07:37Z",
+      "side": 1,
+      "message": "[warning] Line 3946: 🟡 This still blocks one I/O-pool worker per push for up to 10 seconds. A burst or continuous stream from the proxy can occupy every I/O worker, delaying `dhtnet::connectDevice()` and other I/O work; the timeout only bounds each dequeued task and does not bound the queued backlog. Avoid a blocking wait per notification by coalescing pushes, using a non-blocking continuation/timer, or moving the wait to a dedicated pool.",
+      "revId": "f5bf781f749560b4de98a297138c671a2dff1c8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8572067a_94d5288e",
+        "filename": "test/unitTest/account_factory/testAccount_factory.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T14:07:37Z",
+      "side": 1,
+      "message": "[warning] Line 258: 🟡 The disabled-account case is not independently validated: the inactive-account phase has already established that the computation pool is available, so this second assertion would still pass if disabled pushes regressed to the old behavior. Run the disabled case in a separate fixture/account (or before the inactive case) so it can detect computation-pool exhaustion on its own.",
+      "revId": "f5bf781f749560b4de98a297138c671a2dff1c8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
