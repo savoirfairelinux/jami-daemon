@@ -885,6 +885,9 @@ if (VCPKG_TARGET_IS_WINDOWS)
                 string(REPLACE "${LIBS_ENTRY}: " "" LIBS_VALUE "${LIBS_VALUE}")
                 if(LIBS_VALUE)
                     set(LIBS_VALUE_OLD "${LIBS_VALUE}")
+                    # Backport from later upstream: CMake's pkg_check_modules reads
+                    # MSVC's -libpath:foo as -l"ibpath:foo".
+                    string(REPLACE "-libpath:" "-L" LIBS_VALUE "${LIBS_VALUE}")
                     string(REGEX REPLACE "([^ ]+)[.]lib" "-l\\1" LIBS_VALUE "${LIBS_VALUE}")
                     set(LIBS_VALUE_NEW "${LIBS_VALUE}")
                     vcpkg_replace_string("${PKGCONFIG_FILE}" "${LIBS_ENTRY}: ${LIBS_VALUE_OLD}" "${LIBS_ENTRY}: ${LIBS_VALUE_NEW}" IGNORE_UNCHANGED)
