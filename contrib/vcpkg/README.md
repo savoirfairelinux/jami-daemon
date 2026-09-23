@@ -35,3 +35,22 @@ runs cargo on Jami's y-crdt pin and installs `yrs.lib`, `libyrs.h` and a `yrs.pc
 matching the Unix contrib. Rust is a host requirement vcpkg cannot fetch; since
 vcpkg scrubs the environment for port builds, `CARGO_HOME`/`RUSTUP_HOME` are read
 from the registry when not passed through with `VCPKG_KEEP_ENV_VARS`.
+
+`ports/libupnp` is the stock port plus a `.pc` fix for MSVC static (`libupnps`,
+`ixmls`, pthreads, `UPNP_STATIC_LIB`). `ports/ffmpeg` also backports upstream's
+`-libpath:` → `-L` rewrite of its `.pc` files and declares `runtimeobject` for the
+C++/WinRT dxgigrab device.
+
+## Building the daemon
+
+The daemon CMake uses this manifest automatically when configured with the vcpkg
+toolchain (it sets `VCPKG_MANIFEST_DIR` and the triplet when top-level), resolves
+dependencies through pkg-config like other platforms, and skips pywinmake:
+
+    cmake -B build -G "Visual Studio 17 2022" -A x64 ^
+        -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
+    cmake --build build --config Release --target jami-core
+
+`jami-core.lib` is no longer a fat library: consumers get dependencies through
+its `PkgConfig::` link interface. When used via `add_subdirectory`, the parent
+must pass `VCPKG_MANIFEST_DIR=<daemon>/contrib/vcpkg` and the triplets itself.
