@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8fdec8ae_a48fb3f8",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1021,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:09:39Z",
+      "side": 1,
+      "message": "[warning] Line 1021: 🟡 The 10-second cache age is only enforced when a later RTP packet is cached. If the sender is idle, a NACK received after 10 seconds still finds and retransmits stale packets. Purge or reject entries older than `MAX_CACHED_RTP_PACKET_AGE` during lookup as well; capture the lookup time while holding the cache lock.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e850a9a_39044a5d",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1033,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:09:39Z",
+      "side": 1,
+      "message": "[warning] Line 1033: 🟡 The loop treats every 4-byte word through `len` as an FCI entry, but RTCP length includes optional padding. A valid padded Generic NACK will interpret its padding bytes as another PID/BLP and may retransmit an unintended sequence (or request a keyframe). Account for the RTCP padding bit and exclude the declared padding bytes before iterating the FCI.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d52b287_b979f92c",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1045,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:09:39Z",
+      "side": 1,
+      "message": "[warning] Line 1045: 🟡 Retransmissions bypass `writeCallback` and `paceRtpPacket`, so a large NACK can create an unpaced burst and `writeData` errors such as `EAGAIN` are dropped without the retry path used for normal RTP. Send retransmissions through a bounded queue/pacing path, or apply equivalent rate limiting and retry handling here.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0205fbfc_c7412ded",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1729,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:09:39Z",
+      "side": 1,
+      "message": "[error] Line 1729: 🔴 Generic NACKs are now acted upon even when SRTCP protection was negotiated but decryption failed: `readCallback` intentionally falls back to plaintext before reaching this branch. An unauthenticated/forged RTCP datagram can therefore trigger retransmission of cached media, and the code below has no retransmission budget or deduplication for repeated PID/BLP entries. Do not dispatch NACKs from the plaintext fallback when protection is required, and bound/deduplicate the requested retransmissions before sending them.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
