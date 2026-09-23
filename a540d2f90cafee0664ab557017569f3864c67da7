@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5d68599_4c873d6e",
+        "filename": "src/media/congestion_control.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T21:15:10Z",
+      "side": 1,
+      "message": "[error] Line 108: 🔴 This SSRC tuple is not a legacy-only packet marker: SSRCs are opaque 32-bit values, so a standards-compliant one-SSRC REMB can legitimately contain sender `0x12345678` and feedback `0x2345678b`. If its absolute bitrate is `0x6803` or `0x7378`, this check still labels it as a relative command and `VideoRtpSession` applies a 15%/increase adjustment instead of the requested target. The new test only uses different SSRCs for the standard case. Gate legacy interpretation on peer/session capability or another unambiguous legacy context, and add a regression test for a standard packet with this exact tuple.",
+      "revId": "a540d2f90cafee0664ab557017569f3864c67da7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
