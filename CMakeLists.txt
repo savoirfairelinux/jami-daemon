@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
 
+# Windows: with vcpkg's toolchain, dependencies come from contrib/vcpkg instead
+# of pywinmake. Must be set before project(), which runs the manifest install.
+if(CMAKE_HOST_WIN32 AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg\\.cmake$"
+   AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/contrib/vcpkg" CACHE PATH "")
+    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-release" CACHE STRING "")
+    set(VCPKG_HOST_TRIPLET "${VCPKG_TARGET_TRIPLET}" CACHE STRING "")
+endif()
+
 project(jami-core
     VERSION 16.0.0
     LANGUAGES C CXX)
@@ -254,7 +263,7 @@ if (BUILD_CONTRIB)
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
-    else()
+    elseif (NOT VCPKG_TOOLCHAIN)
         set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
         execute_process(
             COMMAND python ${SCRIPTS_DIR}/winmake.py
@@ -402,9 +411,13 @@ elseif (APPLE)
 elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
-         "${Source_Files__media__audio__webrtc_legacy}"
-         "${Source_Files__media__audio__speexdsp}"
    )
+   if(NOT VCPKG_TOOLCHAIN)
+    list (APPEND ALL_FILES
+            "${Source_Files__media__audio__webrtc_legacy}"
+            "${Source_Files__media__audio__speexdsp}"
+    )
+   endif()
    if(JAMI_VIDEO)
     list (APPEND ALL_FILES ${ALL_FILES}
             "${Source_Files__media__video__uwpvideo}"
@@ -510,6 +523,10 @@ if(MSVC)
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_include_directories(${PROJECT_NAME} PUBLIC
            "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
+       )
+   endif()
+   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64" AND NOT VCPKG_TOOLCHAIN)
+       target_include_directories(${PROJECT_NAME} PUBLIC
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
@@ -561,6 +578,10 @@ if(MSVC)
            "NOMINMAX;"
            "HAVE_CONFIG_H;"
            "WIN32_LEAN_AND_MEAN;"
+       )
+   endif()
+   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64" AND NOT VCPKG_TOOLCHAIN)
+       target_compile_definitions(${PROJECT_NAME} PRIVATE
            "WEBRTC_WIN;"
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
            "WEBRTC_NS_FLOAT;"
@@ -660,8 +681,12 @@ if(MSVC)
         /ignore:4006"
    )
 
-   set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
-else()
+   if(NOT VCPKG_TOOLCHAIN)
+       set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+   endif()
+endif()
+
+if(NOT MSVC)
     include (GNUInstallDirs)
     message("Contrib path: ${CONTRIB_PATH}")
     list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
@@ -671,7 +696,13 @@ else()
         set(JAMI_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/jami")
     endif()
     message("Data directory: ${JAMI_DATADIR}")
+endif()
 
+if(NOT MSVC OR VCPKG_TOOLCHAIN)
+    if(VCPKG_TOOLCHAIN)
+        find_program(PKG_CONFIG_EXECUTABLE NAMES pkgconf pkg-config REQUIRED)
+        include(FindPkgConfig)
+    endif()
     find_package (yaml-cpp CONFIG REQUIRED)
     pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
@@ -723,6 +754,39 @@ else()
         PkgConfig::avutil
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
+    if (JAMI_PLUGIN)
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
+        if (APPLE)
+            # minizip's pkg-config metadata can miss zstd when built statically.
+            # Link it explicitly to avoid unresolved ZSTD_* symbols at final app link.
+            if (EXISTS "${CONTRIB_PATH}/lib/libzstd.a")
+                target_link_libraries(${PROJECT_NAME} PUBLIC "${CONTRIB_PATH}/lib/libzstd.a")
+            endif()
+        endif()
+    endif()
+    if (webrtcap_FOUND)
+        if (webrtcap_MODULE_NAME STREQUAL "webrtc-audio-processing-2")
+            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
+        else()
+            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc_legacy} )
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP_LEGACY=1)
+        endif()
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
+    endif()
+    if (speexdsp_FOUND)
+        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__speexdsp} )
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::speexdsp)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_SPEEXDSP)
+    endif()
+
+    if (VCPKG_TOOLCHAIN)
+        pkg_search_module (portaudio REQUIRED IMPORTED_TARGET portaudio-2.0)
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::portaudio)
+    endif()
+endif()
+
+if(NOT MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
@@ -756,31 +820,6 @@ else()
         endif()
     elseif (APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE resolv)
-    endif()
-    if (JAMI_PLUGIN)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
-        if (APPLE)
-            # minizip's pkg-config metadata can miss zstd when built statically.
-            # Link it explicitly to avoid unresolved ZSTD_* symbols at final app link.
-            if (EXISTS "${CONTRIB_PATH}/lib/libzstd.a")
-                target_link_libraries(${PROJECT_NAME} PUBLIC "${CONTRIB_PATH}/lib/libzstd.a")
-            endif()
-        endif()
-    endif()
-    if (webrtcap_FOUND)
-        if (webrtcap_MODULE_NAME STREQUAL "webrtc-audio-processing-2")
-            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
-        else()
-            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc_legacy} )
-            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP_LEGACY=1)
-        endif()
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
-    endif()
-    if (speexdsp_FOUND)
-        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__speexdsp} )
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::speexdsp)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_SPEEXDSP)
     endif()
 
     install (TARGETS ${PROJECT_NAME})
