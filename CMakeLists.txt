@@ -402,7 +402,7 @@ elseif (APPLE)
 elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
-         "${Source_Files__media__audio__webrtc}"
+         "${Source_Files__media__audio__webrtc_legacy}"
          "${Source_Files__media__audio__speexdsp}"
    )
    if(JAMI_VIDEO)
@@ -564,6 +564,7 @@ if(MSVC)
            "WEBRTC_WIN;"
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
            "WEBRTC_NS_FLOAT;"
+           "HAVE_WEBRTC_AP_LEGACY=1;"
        )
    endif()
 
@@ -674,7 +675,7 @@ else()
     find_package (yaml-cpp CONFIG REQUIRED)
     pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
-    pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
+    pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing-2 webrtc-audio-processing)
     pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
     pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
@@ -767,7 +768,12 @@ else()
         endif()
     endif()
     if (webrtcap_FOUND)
-        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
+        if (webrtcap_MODULE_NAME STREQUAL "webrtc-audio-processing-2")
+            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
+        else()
+            target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc_legacy} )
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP_LEGACY=1)
+        endif()
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()

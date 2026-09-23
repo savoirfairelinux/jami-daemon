@@ -82,8 +82,13 @@ conf.set10('HAVE_PORTAUDIO', depportaudio.found())
 
 depopenssl = dependency('openssl')
 
-depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc_ap'))
+depwebrtcap = dependency('webrtc-audio-processing-2', required: false)
+webrtcap_legacy = not depwebrtcap.found()
+if webrtcap_legacy
+    depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc_ap'))
+endif
 conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
+conf.set10('HAVE_WEBRTC_AP_LEGACY', depwebrtcap.found() and webrtcap_legacy)
 
 depspeexdsp = dependency('speexdsp', required: get_option('speex_ap'))
 conf.set10('HAVE_SPEEXDSP', depspeexdsp.found())

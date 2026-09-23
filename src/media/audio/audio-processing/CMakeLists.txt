@@ -17,6 +17,13 @@ list (APPEND Source_Files__media__audio__webrtc
       "${CMAKE_CURRENT_SOURCE_DIR}/webrtc.cpp"
 )
 
+# webrtc-audio-processing 0.3.x API
+list (APPEND Source_Files__media__audio__webrtc_legacy
+      "${CMAKE_CURRENT_SOURCE_DIR}/webrtc.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/webrtc_legacy.cpp"
+)
+
 set (Source_Files__media__audio__audio_processing ${Source_Files__media__audio__audio_processing} PARENT_SCOPE)
 set (Source_Files__media__audio__webrtc ${Source_Files__media__audio__webrtc} PARENT_SCOPE)
+set (Source_Files__media__audio__webrtc_legacy ${Source_Files__media__audio__webrtc_legacy} PARENT_SCOPE)
 set (Source_Files__media__audio__speexdsp ${Source_Files__media__audio__speexdsp} PARENT_SCOPE)

@@ -189,7 +189,11 @@ if conf.get('HAVE_COREAUDIO') == 1
 endif
 
 if conf.get('HAVE_WEBRTC_AP') == 1
-    libjami_sources += files('media/audio/audio-processing/webrtc.cpp')
+    if conf.get('HAVE_WEBRTC_AP_LEGACY') == 1
+        libjami_sources += files('media/audio/audio-processing/webrtc_legacy.cpp')
+    else
+        libjami_sources += files('media/audio/audio-processing/webrtc.cpp')
+    endif
     libjami_dependencies += depwebrtcap
 endif
 
