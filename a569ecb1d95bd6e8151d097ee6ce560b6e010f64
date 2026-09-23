@@ -16,6 +16,24 @@
       "message": "[error] Line 1633: 🔴 `RTCP_PT_SDES` is not declared anywhere in the daemon sources or in pjmedia\u0027s public RTCP header included by this component, and this patch does not add a definition. The native C++ builds will therefore fail with an undeclared identifier rather than accepting SDES. Define/use a project-owned RTCP type constant (202), or include the header that actually provides it, before merging.",
       "revId": "a569ecb1d95bd6e8151d097ee6ce560b6e010f64",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "daa6c062_32dbfa91",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1633,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T21:44:04Z",
+      "side": 1,
+      "message": "RTCP_PT_SDES already defined in this file",
+      "parentUuid": "4355bf61_b6295f70",
+      "revId": "a569ecb1d95bd6e8151d097ee6ce560b6e010f64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
