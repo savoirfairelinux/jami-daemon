@@ -158,8 +158,16 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         }
     }
 
+    if (compensate_) {
+        // Set before init so enabling compensation later does not reinitialize the context
+        av_opt_set_int(swrCtx, "swr_flags", SWR_FLAG_RESAMPLE, 0);
+    }
+
     ret = swr_init(swrCtx);
     if (ret >= 0) {
+        if (compensate_ && compensationDistance_ > 0) {
+            swr_set_compensation(swrCtx, compensationDelta_, compensationDistance_);
+        }
         std::swap(swrCtx_, swrCtx);
         swr_free(&swrCtx);
         JAMI_DEBUG("[{}] Succesfully (re)initialized resampler context from {} to {}",
@@ -278,6 +286,19 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
     // Resampling worked, reset count to 1 so reinit isn't called again
     initCount_ = 1;
     return 0;
+}
+
+void
+Resampler::setCompensation(int sampleDelta, int distance)
+{
+    compensate_ = true;
+    compensationDelta_ = sampleDelta;
+    compensationDistance_ = distance;
+    if (initCount_ > 0) {
+        if (int ret = swr_set_compensation(swrCtx_, sampleDelta, distance); ret < 0) {
+            JAMI_ERROR("[{}] Failed to set resampler compensation: {}", fmt::ptr(this), libav_utils::getError(ret));
+        }
+    }
 }
 
 std::unique_ptr<AudioFrame>
