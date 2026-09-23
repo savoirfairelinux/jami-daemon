@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7dd78a7_4e768fad",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:34:30Z",
+      "side": 1,
+      "message": "[warning] Line 138: 🟡 This cached `DtlsSrtpSession` is never invalidated or bound to the local DTLS identity/credential generation. Any later `start()` on the same `RtpSession` with the same remote setup and fingerprint will reuse the old SRTP key material, even if the previous association was fully stopped or the local certificate changed. Restrict reuse to an explicitly identified ICE restart (and include the local identity/generation in the match), or clear the cache on full teardown/new negotiation to avoid key and replay-state reuse across logical calls.",
+      "revId": "756813dfac8058b7dd3e56e951df2bc9c3010f47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a752692d_68309ae2",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 855,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:34:30Z",
+      "side": 1,
+      "message": "[warning] Line 855: 🟡 The early return accepts any existing bundle context without checking that it is the same context being supplied. `getDtlsSrtpContext()` then returns the per-session cached keys, while the bundle callbacks may continue using a different already-installed context after a renegotiation or bundle-context reuse. Make the bundle context authoritative (return/use its value) or validate equality and fail/re-negotiate on a mismatch.",
+      "revId": "756813dfac8058b7dd3e56e951df2bc9c3010f47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
