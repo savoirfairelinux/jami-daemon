@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4613c5db_afffb5e0",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 716,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T16:58:24Z",
+      "side": 1,
+      "message": "[error] Line 716: 🔴 `mediaIndex` is the index among the local media descriptions that are actually added, while `remoteSession_-\u003emedia` still contains disabled/rejected m-lines. The re-INVITE path explicitly calls `getMediaAttributeListFromSdp(offer, true)`, which removes port-0 sections; for an offer with a disabled audio m-line followed by active video, the video answer looks at the disabled audio section and does not preserve the offered video payload type. Track the original remote m-line or select the corresponding enabled remote media before doing this lookup.",
+      "revId": "be29124190226ca01d2a6c8039dce71dc9d935e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bf21368_d999e26d",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T16:58:24Z",
+      "side": 1,
+      "message": "[error] Line 787: 🔴 Matching only encoding name and clock rate, then taking the first result, is not sufficient for negotiated RTP formats. An offer may contain multiple H264/90000 payloads with different profile/packetization fmtp values (or multiple audio formats with differing channels/parameters). This can put the locally generated fmtp under an incompatible offered payload number; select the payload from the full codec/format negotiation or validate the format parameters before remapping.",
+      "revId": "be29124190226ca01d2a6c8039dce71dc9d935e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
