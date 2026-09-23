@@ -15,6 +15,9 @@ vcpkg_from_gitlab(
         # MSVC on Windows. Avoid some clang-specific assembly code in that
         # scenario, with the same fallback used for x86.
         fix-asm-windows-arm.patch
+
+        # Jami: APM 2.x has no voice detection; expose the standalone WebRTC VAD.
+        install-vad-header.patch
 )
 
 set(MESON_OPTIONS "")
