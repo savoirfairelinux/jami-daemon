@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Windows: with vcpkg's toolchain, dependencies come from contrib/vcpkg instead
-# of pywinmake. Must be set before project(), which runs the manifest install.
-if(CMAKE_HOST_WIN32 AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg\\.cmake$"
-   AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/contrib/vcpkg" CACHE PATH "")
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-release" CACHE STRING "")
-    set(VCPKG_HOST_TRIPLET "${VCPKG_TARGET_TRIPLET}" CACHE STRING "")
-endif()
+include(contrib/vcpkg/settings.cmake)
 
 project(jami-core
     VERSION 16.0.0
