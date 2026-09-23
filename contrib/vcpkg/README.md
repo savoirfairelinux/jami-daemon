@@ -29,3 +29,9 @@ not apply to. `ports/webrtc-audio-processing` is the closed upstream PR
 microsoft/vcpkg#52402 (2.1, meson, abseil) plus `install-vad-header.patch`: APM 2.x
 has no voice detection, so the daemon uses the standalone WebRTC VAD whose header
 upstream does not install.
+
+`ports/yffi` (Windows only in the manifest; other platforms keep `contrib/src/yffi`)
+runs cargo on Jami's y-crdt pin and installs `yrs.lib`, `libyrs.h` and a `yrs.pc`
+matching the Unix contrib. Rust is a host requirement vcpkg cannot fetch; since
+vcpkg scrubs the environment for port builds, `CARGO_HOME`/`RUSTUP_HOME` are read
+from the registry when not passed through with `VCPKG_KEEP_ENV_VARS`.
