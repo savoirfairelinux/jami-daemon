@@ -1,0 +1,29 @@
+diff --git a/webrtc/system_wrappers/source/denormal_disabler.cc b/webrtc/system_wrappers/source/denormal_disabler.cc
+index bb9c056..dd22439 100644
+--- a/webrtc/system_wrappers/source/denormal_disabler.cc
++++ b/webrtc/system_wrappers/source/denormal_disabler.cc
+@@ -43,9 +43,10 @@ int ReadStatusWord() {
+   int result = kUnspecifiedStatusWord;
+ #if defined(WEBRTC_DENORMAL_DISABLER_X86_SUPPORTED)
+   asm volatile("stmxcsr %0" : "=m"(result));
+-#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_32_BITS)
++// Vcpkg uses MSVC on Windows, which doesn't support asm; manually disable it on Windows builds to match x86 behavior.
++#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_32_BITS) && (defined(__GNUC__) || defined(__clang__))
+   asm volatile("vmrs %[result], FPSCR" : [result] "=r"(result));
+-#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_64_BITS)
++#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_64_BITS) && (defined(__GNUC__) || defined(__clang__))
+   asm volatile("mrs %x[result], FPCR" : [result] "=r"(result));
+ #endif
+   return result;
+@@ -56,9 +57,9 @@ int ReadStatusWord() {
+ void SetStatusWord(int status_word) {
+ #if defined(WEBRTC_DENORMAL_DISABLER_X86_SUPPORTED)
+   asm volatile("ldmxcsr %0" : : "m"(status_word));
+-#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_32_BITS)
++#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_32_BITS) && (defined(__GNUC__) || defined(__clang__))
+   asm volatile("vmsr FPSCR, %[src]" : : [src] "r"(status_word));
+-#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_64_BITS)
++#elif defined(WEBRTC_ARCH_ARM_FAMILY) && defined(WEBRTC_ARCH_64_BITS) && (defined(__GNUC__) || defined(__clang__))
+   asm volatile("msr FPCR, %x[src]" : : [src] "r"(status_word));
+ #endif
+ }
