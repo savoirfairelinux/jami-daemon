@@ -1,7 +1,7 @@
 {
   "name": "jami-daemon-deps",
   "version-string": "poc",
-  "description": "Windows/MSVC dependencies of libjami built with vcpkg (proof of concept: ffmpeg, opendht, pjproject, dhtnet)",
+  "description": "Windows/MSVC dependencies of libjami built with vcpkg (proof of concept: ffmpeg, opendht, pjproject, dhtnet, portaudio)",
   "dependencies": [
     {
       "name": "ffmpeg",
@@ -27,6 +27,10 @@
         "proxy"
       ]
     },
-    "dhtnet"
+    "dhtnet",
+    {
+      "name": "portaudio",
+      "platform": "windows"
+    }
   ]
 }
