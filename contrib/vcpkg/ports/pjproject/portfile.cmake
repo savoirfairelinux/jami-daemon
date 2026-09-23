@@ -21,6 +21,11 @@ file(APPEND "${SOURCE_PATH}/pjlib/include/pj/config_site.h" [[
 #define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
 ]])
 
+# The autolink pragma names pywinmake's libgnutls.lib; vcpkg's is gnutls.lib and
+# consumers get it from pkg-config (libpjproject.pc Requires.private: gnutls).
+vcpkg_replace_string("${SOURCE_PATH}/pjlib/src/pj/ssl_sock_gtls.c"
+    [[#  pragma comment( lib, "libgnutls")]] "")
+
 set(PJ_PROJECTS pjlib pjlib_util pjnath pjmedia pjmedia_codec pjsip_core pjsip_simple pjsip_ua pjsua_lib pjsua2_lib)
 list(JOIN PJ_PROJECTS "," PJ_TARGETS)
 
