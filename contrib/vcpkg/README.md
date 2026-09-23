@@ -22,3 +22,10 @@ the gnutls-fork overlay and OCSP type fixes post-date v4.4.0.
 Windows patches reduce to `config_site.h` defines. `ports/natpmp` is Jami's contrib
 pin and patches (no upstream port). `ports/dhtnet` patches the MSVC CMake branch to
 use pkg-config under vcpkg and guards `unistd.h`; both patches are upstream material.
+
+`ports/portaudio` is Jami's contrib pin (2025, WASAPI only) plus the
+`Pa_GetDefaultComm*Device` patch; vcpkg's port is a 2021 snapshot the patch does
+not apply to. `ports/webrtc-audio-processing` is the closed upstream PR
+microsoft/vcpkg#52402 (2.1, meson, abseil) plus `install-vad-header.patch`: APM 2.x
+has no voice detection, so the daemon uses the standalone WebRTC VAD whose header
+upstream does not install.
