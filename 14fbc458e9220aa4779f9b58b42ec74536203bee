@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c01deb4_81d8430f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1329,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:21:15Z",
+      "side": 1,
+      "message": "[error] Line 1329: 🔴 Once `onReceiveReinvite` has handed the transaction to the external endpoint, these failure returns do not send a SIP error response or otherwise clear the pending re-INVITE. A malformed/incompatible API SDP (or a failure from `pjsip_inv_set_sdp_answer`/`pjsip_inv_answer`) therefore leaves the peer waiting until timeout and can block subsequent dialog requests. On every failure, generate an appropriate non-2xx response or reset the pending transaction; only leave it pending while a valid answer can still be supplied.",
+      "revId": "14fbc458e9220aa4779f9b58b42ec74536203bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "603c0a7f_9881a226",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3411,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:21:15Z",
+      "side": 1,
+      "message": "[error] Line 3411: 🔴 This external-media branch is unreachable for a valid re-INVITE whose media sections are all disabled (for example, a hold offer): `getMediaAttributeListFromSdp(offer, true)` returns an empty list at the preceding check, so the method returns before emitting the raw SDP or giving the API a chance to answer. The peer then receives no final response and the dialog is left blocked. Handle external media before the `mediaAttrList.empty()` early return, or retain disabled media for this path so every valid in-dialog SDP offer is forwarded.",
+      "revId": "14fbc458e9220aa4779f9b58b42ec74536203bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6735fe56_00af3c6c",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:21:15Z",
+      "side": 1,
+      "message": "[warning] Line 158: 🟡 `aliceReoffer` is written by the signal callback thread while the wait predicate reads it from the test thread without holding `mtx`, which is a C++ data race and can make this regression test miss the offer nondeterministically. Protect the shared SDP/state variables consistently (or use a synchronized queue) before waiting on them.",
+      "revId": "14fbc458e9220aa4779f9b58b42ec74536203bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
