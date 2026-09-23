@@ -33,7 +33,7 @@ index 7d258c5..fa64981 100755
  gdigrab_indev_deps="CreateDIBSection"
  gdigrab_indev_extralibs="-lgdi32"
  gdigrab_indev_select="bmp_decoder"
-+dxgigrab_indev_extralibs="-ldxgi -ld3d11"
++dxgigrab_indev_extralibs="-ldxgi -ld3d11 -lruntimeobject"
  iec61883_indev_deps="libiec61883"
  iec61883_indev_select="dv_demuxer"
  jack_indev_deps="libjack"
