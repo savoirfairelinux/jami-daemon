@@ -40,10 +40,12 @@ public:
 private:
     void testAudioFrame();
     void testRematrix();
+    void testCompensation();
 
     CPPUNIT_TEST_SUITE(ResamplerTest);
     CPPUNIT_TEST(testAudioFrame);
     CPPUNIT_TEST(testRematrix);
+    CPPUNIT_TEST(testCompensation);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<Resampler> resampler_;
@@ -109,6 +111,39 @@ ResamplerTest::testRematrix()
     ret = resampler_->resample(input->pointer(), output2->pointer());
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
     CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data[0]);
+}
+
+void
+ResamplerTest::testCompensation()
+{
+    const AudioFormat format(48000, 1, AV_SAMPLE_FMT_FLTP);
+    const int frameSize = 480;
+    const int frames = 100;
+    const int distance = 48000;
+
+    auto run = [&](int delta) {
+        Resampler resampler;
+        resampler.setCompensation(delta, distance);
+        int total = 0;
+        for (int i = 0; i < frames; ++i) {
+            libjami::AudioFrame input(format, frameSize);
+            libav_utils::fillWithSilence(input.pointer());
+            libjami::AudioFrame output(format);
+            resampler.setCompensation(delta, distance);
+            int ret = resampler.resample(input.pointer(), output.pointer());
+            CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
+            total += output.pointer()->nb_samples;
+        }
+        return total;
+    };
+
+    auto nominal = run(0);
+    CPPUNIT_ASSERT(std::abs(nominal - frames * frameSize) <= frameSize);
+    // 99 frames after the first one are resampled at 1 +/- 1000 ppm
+    auto stretched = run(48) - nominal;
+    CPPUNIT_ASSERT_MESSAGE(std::to_string(stretched), stretched >= 44 && stretched <= 50);
+    auto squeezed = run(-48) - nominal;
+    CPPUNIT_ASSERT_MESSAGE(std::to_string(squeezed), squeezed >= -50 && squeezed <= -44);
 }
 
 } // namespace test

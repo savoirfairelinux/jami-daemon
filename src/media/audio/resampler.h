@@ -57,6 +57,15 @@ public:
      */
     std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
 
+    /**
+     * @brief Stretch (positive) or squeeze the output by @sampleDelta samples over the next
+     * @distance output samples, then return to the nominal ratio.
+     *
+     * Must be called periodically (more often than @distance) to sustain a ratio. Resampling is
+     * forced even between identical formats once this has been called.
+     */
+    void setCompensation(int sampleDelta, int distance);
+
 private:
     NON_COPYABLE(Resampler);
 
@@ -83,6 +92,10 @@ private:
      * >1: Invalid frames or formats, reinit is going to be called in an infinite loop
      */
     unsigned initCount_;
+
+    bool compensate_ {false};
+    int compensationDelta_ {0};
+    int compensationDistance_ {0};
 };
 
 } // namespace jami
