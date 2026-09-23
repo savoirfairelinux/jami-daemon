@@ -59,6 +59,7 @@
     },
     "simdutf",
     "speexdsp",
-    "yaml-cpp"
+    "yaml-cpp",
+    "webrtc-audio-processing"
   ]
 }
