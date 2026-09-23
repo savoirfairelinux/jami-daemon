@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df0a05f8_c0721e30",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1046,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:04:54Z",
+      "side": 1,
+      "message": "[warning] Line 1046: 🟡 On an answer, `mediaIndex` is the compressed index of enabled local media, but `hasAnyExactRtcpFeedback` indexes the original remote SDP array directly. A rejected/inactive remote m-line before the video m-line makes this lookup inspect the wrong media (although `remoteMedia` above correctly uses `findEnabledMedia`), so generic NACK can be omitted or taken from another m-line. Resolve the same enabled remote media before checking feedback and add a disabled-m-line regression test.",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5794d9eb_f674ddaf",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:04:54Z",
+      "side": 1,
+      "message": "[warning] Line 1051: 🟡 `hasAnyExactRtcpFeedback` returns one boolean for all payloads, then this emits `* nack` in an answer. If the offer permits generic NACK for only one of several video payload types, the answer overstates support for every payload in the m-line. Preserve the matching payload type(s), using `*` only when the feedback is valid for all negotiated formats, and cover a mixed-codec offer.",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e576cb72_ab18c915",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T20:04:54Z",
+      "side": 1,
+      "message": "[error] Line 1051: 🔴 This advertises generic NACK, but the media stack has no implementation for it: `MediaDescription` only records `rtcp_fb_nack_pli`, while `SocketPair::readCallback` handles PLI/FIR, REMB, and transport-cc but treats RTPFB FMT\u003d1 (generic NACK) as an unknown RTCP packet, with no retransmission path. A peer can therefore send NACKs believing they were negotiated while Jami ignores them. Implement and wire generic-NACK handling, or do not advertise this capability.",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
