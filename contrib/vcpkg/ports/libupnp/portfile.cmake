@@ -45,6 +45,24 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_fixup_pkgconfig()
+
+# Jami: upstream libupnp.pc.in hard-codes -lupnp -lixml and has no static
+# define or pthreads. With MSVC static libs are named libupnps/ixmls and headers
+# default to dllimport, so pkg-config consumers (dhtnet, libjami) cannot link.
+if(VCPKG_TARGET_IS_WINDOWS AND LIBUPNP_BUILD_STATIC)
+    foreach(cfg IN ITEMS "" "debug/")
+        set(pc "${CURRENT_PACKAGES_DIR}/${cfg}lib/pkgconfig/libupnp.pc")
+        if(EXISTS "${pc}")
+            if(cfg)
+                set(pthread_lib pthreadVC3d)
+            else()
+                set(pthread_lib pthreadVC3)
+            endif()
+            vcpkg_replace_string("${pc}" "-lupnp -lixml" "-llibupnps -lixmls -l${pthread_lib} -lws2_32 -liphlpapi")
+            vcpkg_replace_string("${pc}" "Cflags: " "Cflags: -DUPNP_STATIC_LIB ")
+        endif()
+    endforeach()
+endif()
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/UPNP DO_NOT_DELETE_PARENT_CONFIG_PATH)
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/IXML)
 
