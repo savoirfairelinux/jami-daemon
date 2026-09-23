@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdbcb109_fbcdd763",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:32:00Z",
+      "side": 1,
+      "message": "[warning] Line 719: 🟡 The previous m-line is selected solely by `mediaIndex`, with no check that its media type or MID still identifies the requested stream. If a re-offer removes or reorders media, a video section can inherit an audio section\u0027s MID, payload/feedback template, and transport. Match the prior section by stable MID/label (or at least require the media types to match) before reusing it.",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ef7cef0_8a7b2c4b",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 794,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:32:00Z",
+      "side": 1,
+      "message": "[warning] Line 794: 🟡 Reusing a browser payload type based only on encoding name and clock rate is insufficient for formats such as H264 (profile-level-id/packetization-mode) and multi-channel audio. The generated SDP can reuse the old PT while advertising incompatible fmtp parameters from the local codec list. Compare the format parameters or preserve the negotiated fmtp when reusing a payload type.",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa2d49e9_88bbf7f5",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 903,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:32:00Z",
+      "side": 1,
+      "message": "[error] Line 903: 🔴 When `previousLocalSession` exists but this is a newly added m-line (`previousLocalMedia \u003d\u003d nullptr`), these defaults are disabled and the subsequent `feedbackSession` lookup cannot find feedback at `mediaIndex`. An audio-only established browser call therefore gets a new video m-line without `nack pli`/`ccm fir` (and can lose Transport-CC), unlike a fresh offer. Use prior-session feedback only for a matching previous media section; retain the default feedback behavior for new media.",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
