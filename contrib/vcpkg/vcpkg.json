@@ -4,6 +4,10 @@
   "description": "Windows/MSVC dependencies of libjami built with vcpkg (proof of concept)",
   "dependencies": [
     {
+      "name": "pkgconf",
+      "host": true
+    },
+    {
       "name": "ffmpeg",
       "default-features": false,
       "features": [
