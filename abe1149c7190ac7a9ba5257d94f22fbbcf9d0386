@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c40266b_ca7861a6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 744,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T19:26:26Z",
+      "side": 1,
+      "message": "[error] Line 744: 🔴 This positional mapping does not account for media entries that `Sdp::createOffer()` later drops when `enabled_` is false. After a rejected/disabled middle m-line, the old active SDP can have MIDs `[0,1,2]`, while the new offer list still has the disabled entry; this code assigns the later stream MID `2`, then `createOffer()` omits the middle entry and emits only MIDs `0` and `2`. The resulting BUNDLE group references a missing m-line (and changes the negotiated m-line layout), which a WebRTC peer can reject. Preserve/re-emit rejected m-lines with their original MIDs, or map MIDs using the post-filtered emitted indices; add a regression test for a disabled middle m-line.",
+      "revId": "abe1149c7190ac7a9ba5257d94f22fbbcf9d0386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
