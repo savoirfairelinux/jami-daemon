@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "671037ad_6ab938c4",
+        "filename": "test/unitTest/account_factory/testAccount_factory.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-23T14:27:42Z",
+      "side": 1,
+      "message": "[warning] Line 244: 🟡 This no longer reliably saturates the computation pool: it queues only `max(std::thread::hardware_concurrency(), 4u)` pushes, while the pool\u0027s configured worker count is not guaranteed to equal that value (the previous test used twice this count). If the pool has more workers, the old blocking implementation can still run the probe and this regression test passes falsely. Use the pool\u0027s actual worker count if exposed, or enqueue enough pushes (at least retain the 2x count) to guarantee saturation before checking the probe.",
+      "revId": "c83e30fc3e2446f98a08cad6760c322b638a83e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
