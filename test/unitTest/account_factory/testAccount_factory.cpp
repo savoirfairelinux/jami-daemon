@@ -19,7 +19,12 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
 #include <condition_variable>
+#include <future>
+#include <thread>
+
+#include <opendht/thread_pool.h>
 
 #include "account_factory.h"
 #include "../../test_runner.h"
@@ -56,6 +61,7 @@ private:
     void testAddRemoveRINGAccount();
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
+    void testPushDoesNotBlockComputationPool();
     void testClear();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
@@ -63,6 +69,7 @@ private:
     CPPUNIT_TEST(testAddRemoveRINGAccount);
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
+    CPPUNIT_TEST(testPushDoesNotBlockComputationPool);
     CPPUNIT_TEST(testClear);
     CPPUNIT_TEST_SUITE_END();
 
@@ -219,6 +226,34 @@ Account_factoryTest::testDisableReenableUpnp()
 
     Manager::instance().removeAccount(JAMI_ID, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
+}
+
+void
+Account_factoryTest::testPushDoesNotBlockComputationPool()
+{
+    AccountFactory factory;
+    factory.createAccount(libjami::Account::ProtocolNames::RING, "PUSH_TEST_ID");
+    auto account = factory.getAccount<JamiAccount>("PUSH_TEST_ID");
+    CPPUNIT_ASSERT(account);
+    account->dht_ = std::make_shared<dht::DhtRunner>();
+    dht::DhtRunner::Config config;
+    config.threaded = false;
+    account->dht_->run(0, config);
+
+    // Leave the push operations queued to emulate a slow or suspended DHT.
+    const auto workers = std::max(std::thread::hardware_concurrency(), 4u);
+    for (unsigned i = 0; i < workers; ++i)
+        account->pushNotificationReceived("", {});
+
+    auto completed = std::make_shared<std::promise<void>>();
+    auto future = completed->get_future();
+    dht::ThreadPool::computation().run([completed] { completed->set_value(); });
+    const auto status = future.wait_for(1s);
+
+    // Release the queued promises even when testing the blocking implementation.
+    account->dht_->join();
+    CPPUNIT_ASSERT(future.wait_for(5s) == std::future_status::ready);
+    CPPUNIT_ASSERT(status == std::future_status::ready);
 }
 
 void

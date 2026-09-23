@@ -3932,10 +3932,16 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
 void
 JamiAccount::pushNotificationReceived(const std::string& /*from*/, const std::map<std::string, std::string>& data)
 {
-    auto ret_future = dht_->pushNotificationReceived(data);
-    dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
-        JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t) ret_future.get());
-    });
+    // Stopped for a disabled or inactive account; the proxy may keep pushing
+    // for it, as its subscriptions are not cancelled.
+    if (!dht_ || !dht_->isRunning()) {
+        JAMI_DEBUG("[Account {}] Ignoring push notification: DHT is stopped", getAccountID());
+        return;
+    }
+    JAMI_DEBUG("[Account {}] Queueing push notification", getAccountID());
+    // Don't wait for the result, only informative: pending results would hold
+    // the computation workers needed to open connections.
+    dht_->pushNotificationReceived(data);
 }
 
 std::string
