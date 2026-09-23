@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f193bbf_9f370958",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 716,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T20:36:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4613c5db_afffb5e0",
+      "revId": "be29124190226ca01d2a6c8039dce71dc9d935e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9bf21368_d999e26d",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-09-23T16:58:24Z",
       "side": 1,
       "message": "[error] Line 787: 🔴 Matching only encoding name and clock rate, then taking the first result, is not sufficient for negotiated RTP formats. An offer may contain multiple H264/90000 payloads with different profile/packetization fmtp values (or multiple audio formats with differing channels/parameters). This can put the locally generated fmtp under an incompatible offered payload number; select the payload from the full codec/format negotiation or validate the format parameters before remapping.",
+      "revId": "be29124190226ca01d2a6c8039dce71dc9d935e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7d7f6eb_ea067ec2",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-23T20:36:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9bf21368_d999e26d",
       "revId": "be29124190226ca01d2a6c8039dce71dc9d935e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
