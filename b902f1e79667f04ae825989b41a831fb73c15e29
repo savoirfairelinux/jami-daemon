@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d217bfd7_d6ff36cc",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:33:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9a9bd823_15bbc887",
+      "revId": "b902f1e79667f04ae825989b41a831fb73c15e29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "720f9739_259ed038",
@@ -36,6 +54,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "80ef20ea_244fcd9e",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1011,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:33:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "720f9739_259ed038",
+      "revId": "b902f1e79667f04ae825989b41a831fb73c15e29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a5d79e8b_a5944bce",
@@ -49,6 +85,24 @@
       "writtenOn": "2026-09-23T21:22:15Z",
       "side": 1,
       "message": "[warning] Line 1074: 🟡 Retransmission pacing sleeps synchronously inside `readCallback`. At the 64-packet cap and a low configured bitrate, handling one NACK can occupy the receive loop for seconds, preventing RTP/RTCP from being drained and causing further socket-buffer loss. Queue retransmissions to a sender/pacer worker or make this scheduling nonblocking instead of sleeping in the read path.",
+      "revId": "b902f1e79667f04ae825989b41a831fb73c15e29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "591364d1_930ad63a",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1074,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:33:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a5d79e8b_a5944bce",
       "revId": "b902f1e79667f04ae825989b41a831fb73c15e29",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
