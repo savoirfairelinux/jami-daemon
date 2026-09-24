@@ -293,7 +293,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
 }
 
 std::shared_ptr<AudioFrame>
-AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
+AudioLayer::getToPlay(AudioFormat format, size_t writableSamples, const std::shared_ptr<AudioFrame>& referenceOverride)
 {
     notifyIncomingCall();
     auto& bufferPool = Manager::instance().getRingBufferPool();
@@ -314,24 +314,24 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             resampled = resampler_->resample(toneToPlay->getNext(), format);
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
             resampled = resampler_->resample(std::move(buf), format);
-        } else {
-            std::lock_guard lock(audioProcessorMutex);
-            if (audioProcessor) {
-                auto silence = std::make_shared<AudioFrame>(format, writableSamples);
-                libav_utils::fillWithSilence(silence->pointer());
-                audioProcessor->putPlayback(silence);
-            }
+        } else
             break;
-        }
 
         if (resampled) {
-            std::lock_guard lock(audioProcessorMutex);
-            if (audioProcessor) {
-                audioProcessor->putPlayback(resampled);
-            }
             playbackQueue_->enqueue(std::move(resampled));
         } else
             break;
+    }
+
+    if (!playbackBuf || (isPlaybackMuted_ && !referenceOverride)) {
+        playbackBuf = std::make_shared<AudioFrame>(format, writableSamples);
+        libav_utils::fillWithSilence(playbackBuf->pointer());
+    }
+
+    {
+        std::lock_guard lock(audioProcessorMutex);
+        if (audioProcessor)
+            audioProcessor->putPlayback(referenceOverride ? referenceOverride : playbackBuf);
     }
 
     jami_tracepoint(audio_layer_get_to_play_end);
