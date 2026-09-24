@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a7b118c9_f72f55dd",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 675,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:33:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aea2cfad_22dc03c8",
+      "revId": "70f67c647c36a13eb8dc08bb05593b4f41ba8569",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d69bcd75_e16a0241",
@@ -32,6 +50,24 @@
       "writtenOn": "2026-09-23T21:27:51Z",
       "side": 1,
       "message": "[warning] Line 1072: 🟡 When creating an offer with `previousLocalSession`, `remoteMedia` is always null, so this branch is skipped. `nackPayloads` remains empty and `pliFeedback`/`firFeedback` remain false, causing re-INVITEs to drop previously advertised `nack`, `nack pli`, and `ccm fir` feedback. Preserve the previous offer\u0027s feedback (with the appropriate media/payload mapping) and add a renegotiation regression test.",
+      "revId": "70f67c647c36a13eb8dc08bb05593b4f41ba8569",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b34552ef_edf4d192",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1072,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:33:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d69bcd75_e16a0241",
       "revId": "70f67c647c36a13eb8dc08bb05593b4f41ba8569",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
