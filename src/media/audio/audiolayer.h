@@ -215,12 +215,14 @@ protected:
     void setHasNativeAEC(bool hasEAC);
     void setHasNativeNS(bool hasNS);
 
-    std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
+    std::shared_ptr<AudioFrame> getToPlay(AudioFormat format,
+                                          size_t writableSamples,
+                                          const std::shared_ptr<AudioFrame>& referenceOverride = {});
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
     std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples)
     {
         const auto& ringBuff = getToRing(format, samples);
-        const auto& playBuff = getToPlay(format, samples);
+        const auto& playBuff = getToPlay(format, samples, ringBuff);
         return ringBuff ? ringBuff : playBuff;
     }
 
