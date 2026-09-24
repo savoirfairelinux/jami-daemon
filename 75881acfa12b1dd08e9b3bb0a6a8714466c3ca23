@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa7ce53d_72228161",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1046,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:35:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "df0a05f8_c0721e30",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5794d9eb_f674ddaf",
@@ -48,6 +66,42 @@
       "writtenOn": "2026-09-23T20:04:54Z",
       "side": 1,
       "message": "[error] Line 1051: 🔴 This advertises generic NACK, but the media stack has no implementation for it: `MediaDescription` only records `rtcp_fb_nack_pli`, while `SocketPair::readCallback` handles PLI/FIR, REMB, and transport-cc but treats RTPFB FMT\u003d1 (generic NACK) as an unknown RTCP packet, with no retransmission path. A peer can therefore send NACKs believing they were negotiated while Jami ignores them. Implement and wire generic-NACK handling, or do not advertise this capability.",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "baebb246_19e488b7",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:35:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e576cb72_ab18c915",
+      "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3298253_d427f033",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:35:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5794d9eb_f674ddaf",
       "revId": "75881acfa12b1dd08e9b3bb0a6a8714466c3ca23",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
