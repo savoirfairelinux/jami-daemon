@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f10530ff_69f250b2",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:16:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fdbcb109_fbcdd763",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5ef7cef0_8a7b2c4b",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e5e18741_061eef17",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 794,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:16:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5ef7cef0_8a7b2c4b",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fa2d49e9_88bbf7f5",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-09-23T19:32:00Z",
       "side": 1,
       "message": "[error] Line 903: 🔴 When `previousLocalSession` exists but this is a newly added m-line (`previousLocalMedia \u003d\u003d nullptr`), these defaults are disabled and the subsequent `feedbackSession` lookup cannot find feedback at `mediaIndex`. An audio-only established browser call therefore gets a new video m-line without `nack pli`/`ccm fir` (and can lose Transport-CC), unlike a fresh offer. Use prior-session feedback only for a matching previous media section; retain the default feedback behavior for new media.",
+      "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35d80cb9_1acc8564",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 903,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T16:16:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa2d49e9_88bbf7f5",
       "revId": "5a0223ef638b1b9d521cb3e5ab47e9602b6ee651",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
