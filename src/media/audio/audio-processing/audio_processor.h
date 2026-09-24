@@ -20,10 +20,12 @@
 #include "media/audio/audio_frame_resizer.h"
 #include "media/audio/resampler.h"
 #include "media/audio/audio_format.h"
+#include "media/audio/audio-processing/drift_compensator.h"
 #include "media/libav_deps.h"
 #include "logger.h"
 
 #include <atomic>
+#include <cmath>
 #include <memory>
 
 namespace jami {
@@ -42,7 +44,10 @@ public:
         , format_(format)
         , frameSize_(frameSize)
         , frameDurationMs_((unsigned int) (frameSize_ * (1.0 / format_.sample_rate) * 1000))
-    {}
+        , driftCompensator_(format.sample_rate)
+    {
+        driftResampler_.setCompensation(0, compensationDistance());
+    }
     virtual ~AudioProcessor() = default;
 
     virtual void putRecorded(std::shared_ptr<AudioFrame>&& buf)
@@ -50,7 +55,12 @@ public:
         recordStarted_ = true;
         if (!playbackStarted_)
             return;
-        enqueue(recordQueue_, std::move(buf));
+        auto frame = inputResampler_->resample(std::move(buf), format_);
+        if (!frame || !frame->pointer())
+            return;
+        auto samples = frame->pointer()->nb_samples;
+        recordQueue_.enqueue(std::move(frame));
+        driftCompensator_.recorded(DriftCompensator::clock::now(), samples);
     };
     virtual void putPlayback(const std::shared_ptr<AudioFrame>& buf)
     {
@@ -58,7 +68,19 @@ public:
         if (!recordStarted_)
             return;
         auto copy = buf;
-        enqueue(playbackQueue_, std::move(copy));
+        auto frame = outputResampler_->resample(std::move(copy), format_);
+        if (!frame || !frame->pointer())
+            return;
+        // Resample the echo reference to follow the capture clock
+        auto distance = compensationDistance();
+        driftResampler_.setCompensation((int) std::lround(driftCompensator_.correction() * distance), distance);
+        auto compensated = std::make_shared<AudioFrame>(format_);
+        if (driftResampler_.resample(frame->pointer(), compensated->pointer()) < 0)
+            compensated = frame;
+        auto in = frame->pointer()->nb_samples;
+        auto out = compensated->pointer()->nb_samples;
+        playbackQueue_.enqueue(std::move(compensated));
+        driftCompensator_.played(DriftCompensator::clock::now(), in, out);
     };
 
     /**
@@ -198,16 +220,11 @@ protected:
     }
 
 private:
-    void enqueue(AudioFrameResizer& frameResizer, std::shared_ptr<AudioFrame>&& buf)
-    {
-        if (buf->getFormat() != format_) {
-            auto resampled = &frameResizer == &recordQueue_ ? inputResampler_->resample(std::move(buf), format_)
-                                                            : outputResampler_->resample(std::move(buf), format_);
-            frameResizer.enqueue(std::move(resampled));
-        } else {
-            frameResizer.enqueue(std::move(buf));
-        }
-    };
+    // Output samples over which a compensation ratio is spread (10 s, i.e. 2 ppm steps at 48 kHz)
+    int compensationDistance() const { return (int) format_.sample_rate * 10; }
+
+    DriftCompensator driftCompensator_;
+    Resampler driftResampler_;
 };
 
 } // namespace jami
