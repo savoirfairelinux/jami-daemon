@@ -68,6 +68,13 @@ CongestionControlTest::createRembUsesStandardBitrateAndSsrcs()
     rtcpREMBHeader header {};
     std::memcpy(&header, packet.data(), sizeof(header));
     CPPUNIT_ASSERT_EQUAL(bitrateBps, cc.parseREMB(header));
+
+    for (const auto absoluteBitrate : {uint64_t(0x6803), uint64_t(0x7378)}) {
+        const auto standardPacket = cc.createREMB(absoluteBitrate, senderSsrc, {0x2345678b});
+        CPPUNIT_ASSERT_EQUAL(size_t(24), standardPacket.size());
+        std::memcpy(&header, standardPacket.data(), sizeof(header));
+        CPPUNIT_ASSERT_EQUAL(absoluteBitrate, cc.parseREMB(header));
+    }
 }
 
 void
