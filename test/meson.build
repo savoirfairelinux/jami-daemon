@@ -71,6 +71,21 @@ test(
     timeout: 1800,
 )
 
+ut_audio_processor = executable(
+    'ut_audio_processor',
+    sources: files('unitTest/media/audio/test_audio_processor.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'audio_processor',
+    ut_audio_processor,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_auto_answer = executable(
     'ut_auto_answer',
     sources: files('unitTest/media_negotiation/auto_answer.cpp'),
