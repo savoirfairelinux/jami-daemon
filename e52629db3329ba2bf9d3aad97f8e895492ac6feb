@@ -16,6 +16,24 @@
       "message": "[error] Line 71: 🔴 `findEnabledMedia` treats every nonzero-port m-line as enabled, including unsupported `application` (or other) sections. `getMediaAttributeListFromSdp` marks non-audio/video sections disabled and `processIncomingOffer` omits them, so an offer such as active audio, active application, active video makes the video answer resolve `remoteMedia` to the application m-line; payload preservation and RTCP-mux negotiation then use the wrong section. Filter to the same supported media types as the media-list construction, or retain the original remote m-line mapping.",
       "revId": "e52629db3329ba2bf9d3aad97f8e895492ac6feb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "394a2c72_355e6e5b",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:32:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "395f3e46_c5315752",
+      "revId": "e52629db3329ba2bf9d3aad97f8e895492ac6feb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

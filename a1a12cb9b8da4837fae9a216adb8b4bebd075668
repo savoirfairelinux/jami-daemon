@@ -16,6 +16,24 @@
       "message": "[error] Line 789: 🔴 `remoteAllowsRtcpMux` below still indexes `remoteSession_-\u003emedia[mediaIndex]` directly, while `remoteMedia` now resolves `mediaIndex` against only enabled remote m-lines. With a rejected m-line before an active one, this checks `rtcp-mux` on the wrong media (for example, omitting mux when the active video offer has it, or advertising mux when it does not), which can make the RTP/RTCP component setup disagree with the offer. Reuse `remoteMedia` or the same enabled-media lookup for this check as well.",
       "revId": "a1a12cb9b8da4837fae9a216adb8b4bebd075668",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ca9307c_16bb89bd",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 789,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:32:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e7d84e6c_00971f44",
+      "revId": "a1a12cb9b8da4837fae9a216adb8b4bebd075668",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
