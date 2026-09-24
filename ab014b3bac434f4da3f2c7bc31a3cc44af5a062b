@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b196973_0b843346",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1021,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:34:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8fdec8ae_a48fb3f8",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e850a9a_39044a5d",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-09-23T20:09:39Z",
       "side": 1,
       "message": "[warning] Line 1033: 🟡 The loop treats every 4-byte word through `len` as an FCI entry, but RTCP length includes optional padding. A valid padded Generic NACK will interpret its padding bytes as another PID/BLP and may retransmit an unintended sequence (or request a keyframe). Account for the RTCP padding bit and exclude the declared padding bytes before iterating the FCI.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dba18aae_90951527",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1033,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:34:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e850a9a_39044a5d",
       "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2df69bbf_a2772829",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1045,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:34:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8d52b287_b979f92c",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0205fbfc_c7412ded",
@@ -65,6 +119,24 @@
       "writtenOn": "2026-09-23T20:09:39Z",
       "side": 1,
       "message": "[error] Line 1729: 🔴 Generic NACKs are now acted upon even when SRTCP protection was negotiated but decryption failed: `readCallback` intentionally falls back to plaintext before reaching this branch. An unauthenticated/forged RTCP datagram can therefore trigger retransmission of cached media, and the code below has no retransmission budget or deduplication for repeated PID/BLP entries. Do not dispatch NACKs from the plaintext fallback when protection is required, and bound/deduplicate the requested retransmissions before sending them.",
+      "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d00383fb_568b1d4a",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1729,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-24T14:34:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0205fbfc_c7412ded",
       "revId": "ab014b3bac434f4da3f2c7bc31a3cc44af5a062b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
