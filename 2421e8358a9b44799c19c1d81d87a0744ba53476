@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9660b57_57832a3d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1054,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:46:18Z",
+      "side": 1,
+      "message": "[error] Line 1054: 🔴 The discriminator still infers legacy commands from the numeric REMB bitrate value alone (`legacyRembCommand(bitrateBps)`), so valid absolute REMB feedback values `0x6803` and `0x7378` are unavoidably reinterpreted as relative commands. This breaks protocol compatibility and can drive incorrect bitrate adaptation. Preserve command-vs-absolute intent explicitly from parsing/transport metadata (e.g., a dedicated flag/type) instead of sentinel bitrate values.",
+      "revId": "2421e8358a9b44799c19c1d81d87a0744ba53476",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "742e31d2_ecc7a1cd",
+        "filename": "test/unitTest/media/test_congestion_control.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:46:18Z",
+      "side": 1,
+      "message": "[warning] Line 83: 🟡 The added unit test validates only direct sentinel classification, but it does not cover the collision scenario in the adaptation path (absolute REMB carrying `0x6803`/`0x7378`). Add an end-to-end regression around `delayProcessing` (or equivalent entry path) that proves absolute REMB remains absolute for those values.",
+      "revId": "2421e8358a9b44799c19c1d81d87a0744ba53476",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
