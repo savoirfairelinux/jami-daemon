@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ccd8db5_6450aa48",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 746,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:43:45Z",
+      "side": 1,
+      "message": "[error] Line 746: 🔴 MID reuse is still position-based (`i` index) and only guarded by media type. This can assign the wrong MID when m-lines are reordered, when one of multiple same-type m-lines is removed, or when previously negotiated slots are skipped. In those cases browsers can remap transceivers incorrectly and reject/apply the re-offer unpredictably. Build a mapping from previous negotiated m-lines using a stable identity (existing MID/semantic track id) and apply it by identity, not by vector index.",
+      "revId": "afc6d405ea76584420cf6e813220495d05f810b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bbfd51c_f13f8c69",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:43:45Z",
+      "side": 1,
+      "message": "[warning] Line 216: 🟡 The new assertion validates one happy path (`a\u003dmid:0`) but does not cover the regression scenario discussed earlier (non-contiguous/filtered m-lines or same-type reordering). Add a targeted case where a prior offer has multiple media sections and one is removed/disabled before re-offer, then assert preserved MID identity (and BUNDLE mids) rather than only fixed string presence.",
+      "revId": "afc6d405ea76584420cf6e813220495d05f810b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
