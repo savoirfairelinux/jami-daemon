@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9dfceb7c_5560491d",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 926,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:46:59Z",
+      "side": 1,
+      "message": "[warning] Line 926: 🟡 The default RTCP feedback behavior is disabled whenever `previousLocalSession` is non-null, even for newly added media sections that have no prior local m-line (`mediaIndex \u003e\u003d previousLocalSession-\u003emedia_count`). In that case, feedback/extmap capabilities (transport-cc/goog-remb/nack/pli/fir) can be dropped unexpectedly on re-INVITE. Base this branch on `previousLocalMedia` (per-m-line availability), and fall back to first-offer defaults when no prior m-line exists.",
+      "revId": "1c20d61b89329a97f3c4ada4ee6ab3760bfe630b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e83be376_1b020afa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 751,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:46:59Z",
+      "side": 1,
+      "message": "[error] Line 751: 🔴 `previousLocalSession` is captured, then `setActiveLocalSdpSession(nullptr)` is called before `createOffer(..., previousLocalSession)`. If clearing the active SDP releases that session storage, `createOffer` dereferences a dangling pointer (use-after-free risk) while reading previous media/transport parameters. Keep the previous SDP alive through offer generation (e.g., deep-copy it before clearing, or postpone clearing active local SDP until after `createOffer` succeeds).",
+      "revId": "1c20d61b89329a97f3c4ada4ee6ab3760bfe630b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
