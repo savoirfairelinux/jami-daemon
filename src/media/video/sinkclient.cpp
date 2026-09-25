@@ -49,6 +49,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <cmath>
+#include <cstdint>
 
 namespace jami {
 namespace video {
@@ -340,13 +341,57 @@ SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_
             av_frame_ref(outFrame.get(), frame->pointer());
         }
 #endif
-        outFrame->crop_top = crop_.y;
-        outFrame->crop_bottom = (size_t) outFrame->height - crop_.y - crop_.h;
-        outFrame->crop_left = crop_.x;
-        outFrame->crop_right = (size_t) outFrame->width - crop_.x - crop_.w;
-        av_frame_apply_cropping(outFrame.get(), AV_FRAME_CROP_UNALIGNED);
+        if (!applyCrop(outFrame.get()))
+            return {};
     }
     return outFrame;
+}
+
+bool
+SinkClient::applyCrop(AVFrame* frame)
+{
+    const int referenceWidth = crop_.referenceWidth > 0 ? crop_.referenceWidth : frame->width;
+    const int referenceHeight = crop_.referenceHeight > 0 ? crop_.referenceHeight : frame->height;
+    const auto right = int64_t(crop_.x) + crop_.w;
+    const auto bottom = int64_t(crop_.y) + crop_.h;
+    if (crop_.x < 0 || crop_.y < 0 || crop_.w <= 0 || crop_.h <= 0 || right > referenceWidth || bottom > referenceHeight
+        || frame->width <= 0 || frame->height <= 0) {
+        if (!cropErrorLogged_)
+            JAMI_ERROR("[Sink:{}] Invalid video crop for frame {}x{}", fmt::ptr(this), frame->width, frame->height);
+        cropErrorLogged_ = true;
+        return false;
+    }
+
+    const auto scale = [](int64_t coordinate, int from, int to) {
+        return static_cast<int>(std::lround(static_cast<double>(coordinate) * to / from));
+    };
+    const int left = scale(crop_.x, referenceWidth, frame->width);
+    const int top = scale(crop_.y, referenceHeight, frame->height);
+    const int scaledRight = scale(right, referenceWidth, frame->width);
+    const int scaledBottom = scale(bottom, referenceHeight, frame->height);
+    if (left >= scaledRight || top >= scaledBottom || scaledRight > frame->width || scaledBottom > frame->height) {
+        if (!cropErrorLogged_)
+            JAMI_ERROR("[Sink:{}] Video crop is empty after scaling to {}x{}",
+                       fmt::ptr(this),
+                       frame->width,
+                       frame->height);
+        cropErrorLogged_ = true;
+        return false;
+    }
+
+    frame->crop_left = left;
+    frame->crop_top = top;
+    frame->crop_right = frame->width - scaledRight;
+    frame->crop_bottom = frame->height - scaledBottom;
+    const int error = av_frame_apply_cropping(frame, AV_FRAME_CROP_UNALIGNED);
+    if (error < 0) {
+        if (!cropErrorLogged_)
+            JAMI_ERROR("[Sink:{}] Applying video crop failed: {}", fmt::ptr(this), error);
+        cropErrorLogged_ = true;
+        return false;
+    }
+    cropErrorLogged_ = false;
+    return true;
 }
 
 void
@@ -387,11 +432,8 @@ SinkClient::applyTransform(VideoFrame& frame_p)
         frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
     }
     if (crop_.w || crop_.h) {
-        frame->pointer()->crop_top = crop_.y;
-        frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
-        frame->pointer()->crop_left = crop_.x;
-        frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-        av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+        if (!applyCrop(frame->pointer()))
+            return {};
     }
     return frame;
 }
@@ -474,15 +516,15 @@ SinkClient::setFrameSize(int width, int height)
 }
 
 void
-SinkClient::setCrop(int x, int y, int w, int h)
+SinkClient::setCrop(int x, int y, int w, int h, int referenceWidth, int referenceHeight)
 {
-    if (x != crop_.x || y != crop_.y || w != crop_.w || h != crop_.h) {
+    std::lock_guard lock(mtx_);
+    if (x != crop_.x || y != crop_.y || w != crop_.w || h != crop_.h || referenceWidth != crop_.referenceWidth
+        || referenceHeight != crop_.referenceHeight) {
         JAMI_LOG("[Sink:{}] Change crop to [{}x{} at ({}, {})]", fmt::ptr(this), w, h, x, y);
     }
-    crop_.x = x;
-    crop_.y = y;
-    crop_.w = w;
-    crop_.h = h;
+    crop_ = {x, y, w, h, referenceWidth, referenceHeight};
+    cropErrorLogged_ = false;
 }
 
 } // namespace video
