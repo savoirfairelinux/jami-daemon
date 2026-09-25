@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ead1aa2f_eb2bdfb4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1326,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:49:26Z",
+      "side": 1,
+      "message": "[error] Line 1326: 🔴 If the external SDP answer is invalid (`setLocalAnswerFromExternalSdp` fails) or later SIP answer/send steps fail, this function only logs and returns, leaving the re-INVITE transaction without a definitive SIP response. That can strand renegotiation until timeout and leave peers in inconsistent offer/answer state. Send an explicit failure response (e.g., 488/500 via `pjsip_inv_answer` + `pjsip_inv_send_msg`, or terminate with a clear status) on every failure path after receiving the re-INVITE.",
+      "revId": "60912d3d634b3f55e55678118a383aa37699d035",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d57fb0f4_96e5a43f",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:49:26Z",
+      "side": 1,
+      "message": "[warning] Line 159: 🟡 The callback writes `aliceRemoteSdp`/`aliceReoffer` without holding `mtx`, while test thread reads them under `cv.wait_for` predicates guarded by `mtx`. This is an unsynchronized cross-thread access and can make the test flaky/UB. Guard both writes and reads with the same mutex (or use atomics + lock-free protocol for all accessed fields).",
+      "revId": "60912d3d634b3f55e55678118a383aa37699d035",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
