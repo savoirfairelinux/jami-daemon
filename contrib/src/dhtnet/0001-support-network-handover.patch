@@ -1,0 +1,236 @@
+diff --git a/include/connectionmanager.h b/include/connectionmanager.h
+index 7a40cc4..08f8934 100644
+--- a/include/connectionmanager.h
++++ b/include/connectionmanager.h
+@@ -29,6 +29,7 @@
+ #include <opendht/logger.h>
+ 
+ #include <memory>
++#include <optional>
+ #include <vector>
+ #include <string>
+ 
+@@ -79,6 +80,12 @@ struct ConnectDeviceOptions
+     bool uniqueName {false};
+     std::string connType {};
+     std::chrono::milliseconds channelTimeout {0};
++    // Negotiate a new socket even when one is connected, for instance when
++    // the local network changed and connected sockets may be stale.
++    bool ignoreConnectedSockets {false};
++    // Wait for new UPnP port mappings at most this long when negotiating a
++    // new socket (see IceTransportOptions::upnpMappingTimeout).
++    std::optional<std::chrono::milliseconds> upnpMappingTimeout {};
+ };
+ 
+ /**
+@@ -228,7 +235,9 @@ public:
+     IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+ 
+     /**
+-     * Set published IP address according to given family
++     * Set published IP address according to given family.
++     * An unspecified address clears both cached families.
++     * Throws std::invalid_argument for other families.
+      */
+     void setPublishedAddress(const IpAddr& ip_addr);
+ 
+diff --git a/include/ice_options.h b/include/ice_options.h
+index bf520bc..bbdbca3 100644
+--- a/include/ice_options.h
++++ b/include/ice_options.h
+@@ -18,6 +18,7 @@
+ 
+ #include "ip_utils.h"
+ 
++#include <chrono>
+ #include <functional>
+ #include <vector>
+ #include <string>
+@@ -105,6 +106,9 @@ struct IceTransportOptions
+     std::shared_ptr<upnp::UPnPContext> upnpContext {};
+     /** Per component QoS Type. */
+     std::vector<QosType> qosType {};
++    // How long to wait for new UPnP port mappings while gathering candidates.
++    // Zero only uses the mappings that are already open.
++    std::chrono::milliseconds upnpMappingTimeout {std::chrono::seconds(4)};
+ };
+ 
+ } // namespace dhtnet
+diff --git a/src/connectionmanager.cpp b/src/connectionmanager.cpp
+index 617f5bc..75dabab 100644
+--- a/src/connectionmanager.cpp
++++ b/src/connectionmanager.cpp
+@@ -33,6 +33,7 @@
+ #include <map>
+ #include <random>
+ #include <set>
++#include <stdexcept>
+ 
+ namespace dhtnet {
+ static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
+@@ -567,7 +568,8 @@ public:
+                          const std::string& name,
+                          dht::Value::Id vid,
+                          const std::shared_ptr<dht::crypto::Certificate>& cert,
+-                         const std::string& connType);
++                         const std::string& connType,
++                         std::optional<std::chrono::milliseconds> upnpMappingTimeout = {});
+ 
+     /**
+      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
+@@ -642,10 +644,8 @@ public:
+ 
+     const std::shared_ptr<dht::log::Logger>& logger() const { return config_->logger; }
+ 
+-    /*
+-     * Published IPv4/IPv6 addresses, used only if defined by the user in account
+-     * configuration
+-     */
++    /* Published IPv4/IPv6 addresses used to gather ICE candidates. */
++    mutable std::mutex publishedIpMutex_ {};
+     IpAddr publishedIp_[2] {};
+ 
+     /*
+@@ -985,7 +985,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
+                          .noNewSocket = options.noNewSocket};
+ 
+         // Check if already negotiated
+-        if (auto info = di->getConnectedInfo()) {
++        if (auto info = di->getConnectedInfo(); info && !options.ignoreConnectedSockets) {
+             std::unique_lock lkc(info->mutex_);
+             if (auto sock = info->socket_) {
+                 // If uniqueName, check if a channel with that name already exists
+@@ -1026,7 +1026,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
+             di->executePendingOperations(lk, vid, nullptr);
+             return;
+         }
+-        sthis->startConnection(di, name, vid, cert, options.connType);
++        sthis->startConnection(di, name, vid, cert, options.connType, options.upnpMappingTimeout);
+     });
+ }
+ 
+@@ -1035,7 +1035,8 @@ ConnectionManager::Impl::startConnection(const std::shared_ptr<DeviceInfo>& di,
+                                          const std::string& name,
+                                          dht::Value::Id vid,
+                                          const std::shared_ptr<dht::crypto::Certificate>& cert,
+-                                         const std::string& connType)
++                                         const std::string& connType,
++                                         std::optional<std::chrono::milliseconds> upnpMappingTimeout)
+ {
+     // NOTE: Used when the ICE negotiation fails to erase
+     // all stored structures.
+@@ -1067,6 +1068,7 @@ ConnectionManager::Impl::startConnection(const std::shared_ptr<DeviceInfo>& di,
+                    cert = std::move(cert),
+                    vid,
+                    connType,
++                   upnpMappingTimeout,
+                    eraseInfo](auto&& ice_config) {
+         auto sthis = w.lock();
+         if (!sthis) {
+@@ -1076,6 +1078,8 @@ ConnectionManager::Impl::startConnection(const std::shared_ptr<DeviceInfo>& di,
+         auto info = std::make_shared<ConnectionInfo>();
+         auto winfo = std::weak_ptr(info);
+         ice_config.tcpEnable = true;
++        if (upnpMappingTimeout)
++            ice_config.upnpMappingTimeout = *upnpMappingTimeout;
+         ice_config.onInitDone = [w,
+                                  devicePk = std::move(devicePk),
+                                  name = std::move(name),
+@@ -1813,6 +1817,7 @@ ConnectionManager::Impl::isMessageTreated(dht::Value::Id id)
+ IpAddr
+ ConnectionManager::Impl::getPublishedIpAddress(uint16_t family) const
+ {
++    std::lock_guard lk(publishedIpMutex_);
+     if (family == AF_INET)
+         return publishedIp_[0];
+     if (family == AF_INET6)
+@@ -1832,10 +1837,16 @@ ConnectionManager::Impl::getPublishedIpAddress(uint16_t family) const
+ void
+ ConnectionManager::Impl::setPublishedAddress(const IpAddr& ip_addr)
+ {
++    std::lock_guard lk(publishedIpMutex_);
+     if (ip_addr.getFamily() == AF_INET) {
+         publishedIp_[0] = ip_addr;
+-    } else {
++    } else if (ip_addr.getFamily() == AF_INET6) {
+         publishedIp_[1] = ip_addr;
++    } else if (ip_addr.getFamily() == AF_UNSPEC) {
++        publishedIp_[0] = {};
++        publishedIp_[1] = {};
++    } else {
++        throw std::invalid_argument("Unsupported published address family");
+     }
+ }
+ 
+diff --git a/src/ice_transport.cpp b/src/ice_transport.cpp
+index 5559bb5..a1941ab 100644
+--- a/src/ice_transport.cpp
++++ b/src/ice_transport.cpp
+@@ -71,7 +71,6 @@ static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPv4 pack
+ static constexpr int MAX_CANDIDATES {32};
+ static constexpr int MAX_DESTRUCTION_TIMEOUT {3000};
+ static constexpr int HANDLE_EVENT_DURATION {500};
+-static constexpr std::chrono::seconds PORT_MAPPING_TIMEOUT {4};
+ //==============================================================================
+ 
+ using namespace upnp;
+@@ -172,6 +171,7 @@ public:
+     std::unique_ptr<pj_pool_t, decltype(&pj_pool_release)> pool_ {nullptr, pj_pool_release};
+     bool isTcp_ {false};
+     bool upnpEnabled_ {false};
++    std::chrono::milliseconds upnpMappingTimeout_ {};
+     IceTransportCompleteCb on_initdone_cb_ {};
+     IceTransportCompleteCb on_negodone_cb_ {};
+     pj_ice_strans* icest_ {nullptr};
+@@ -421,6 +421,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
+     factory = options.factory;
+     isTcp_ = options.tcpEnable;
+     upnpEnabled_ = options.upnpEnable;
++    upnpMappingTimeout_ = options.upnpMappingTimeout;
+     on_initdone_cb_ = options.onInitDone;
+     on_negodone_cb_ = options.onNegoDone;
+     streamsCount_ = options.streamsCount;
+@@ -970,6 +971,8 @@ IceTransport::Impl::requestUpnpMappings()
+     }
+ 
+     // Request UPnP mapping for each component.
++    std::vector<Mapping::sharedPtr_t> reserved;
++    reserved.reserve(compCount_);
+     for (unsigned id = 1; id <= compCount_; id++) {
+         // Set port number to 0 to get any available port.
+         Mapping requestedMap(portType);
+@@ -994,16 +997,17 @@ IceTransport::Impl::requestUpnpMappings()
+             state->cv.notify_all();
+         });
+         // Request the mapping
+-        upnp_->reserveMapping(requestedMap);
++        if (auto map = upnp_->reserveMapping(requestedMap))
++            reserved.emplace_back(std::move(map));
+     }
+ 
+     std::unique_lock lock(state->mutex);
+-    state->cv.wait_for(lock, PORT_MAPPING_TIMEOUT, [&] {
++    state->cv.wait_for(lock, upnpMappingTimeout_, [&] {
+         return state->failed || state->mappings.size() == compCount_;
+     });
+     // Remove the notify callback
+-    for (auto& map : state->mappings) {
+-        map.second->setNotifyCallback(nullptr);
++    for (auto& map : reserved) {
++        map->setNotifyCallback(nullptr);
+     }
+     std::lock_guard lockMapping(upnpMappingsMutex_);
+     pendingState_.reset();
+@@ -1015,9 +1019,9 @@ IceTransport::Impl::requestUpnpMappings()
+                            fmt::ptr(this),
+                            compCount_,
+                            state->mappings.size());
+-        // Release all mappings
+-        for (auto& map : state->mappings) {
+-            upnp_->releaseMapping(*map.second);
++        // Release all mappings, including the ones still being requested
++        for (auto& map : reserved) {
++            upnp_->releaseMapping(*map);
+         }
+     } else {
+         for (auto& map : state->mappings) {
