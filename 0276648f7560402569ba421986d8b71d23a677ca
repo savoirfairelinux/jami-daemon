@@ -16,6 +16,24 @@
       "message": "[warning] 🟡 In `requestUpnpMappings`, a null return from `upnp_-\u003ereserveMapping(requestedMap)` is silently ignored, so the function still waits the full `upnpMappingTimeout_` even when success has already become impossible for this cycle. Mark the state as failed (or short-circuit) when a reservation cannot be created to avoid unnecessary negotiation delay and to make timeout behavior deterministic.",
       "revId": "0276648f7560402569ba421986d8b71d23a677ca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e6ed6b7_06cb72ca",
+        "filename": "contrib/src/dhtnet/0001-support-network-handover.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-25T15:59:35Z",
+      "side": 1,
+      "message": "Done in patch set 3: waiting stops as soon as a mapping cannot be reserved (same change as https://review.jami.net/c/dhtnet/+/36286).",
+      "parentUuid": "876aac91_2a120122",
+      "revId": "0276648f7560402569ba421986d8b71d23a677ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
