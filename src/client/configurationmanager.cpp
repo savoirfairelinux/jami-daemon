@@ -1251,6 +1251,15 @@ connectivityChanged()
     }
 }
 
+void
+networkInterfaceChanged()
+{
+    for (const auto& account : jami::Manager::instance().getAllAccounts()) {
+        if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
+            jamiAccount->networkInterfaceChanged();
+    }
+}
+
 bool
 lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {

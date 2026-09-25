@@ -343,6 +343,9 @@ public:
     bool changeArchivePassword(const std::string& password_old, const std::string& password_new);
 
     void connectivityChanged() override;
+    void networkInterfaceChanged();
+    bool requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newNetwork = false);
+    void followPeerTransport(const std::shared_ptr<SIPCall>& call, pjsip_transport* transport, bool probe);
 
     // overloaded methods
     void flush() override;
@@ -661,6 +664,7 @@ private:
 
     void onContactAdded(const std::string& uri, bool confirmed);
     void onContactRemoved(const std::string& uri, bool banned);
+    void hangupCallsWith(const std::string& uri);
     void onIncomingTrustRequest(const std::string& uri,
                                 const std::string& conversationId,
                                 const std::vector<uint8_t>& payload,
@@ -962,6 +966,14 @@ private:
                               const std::string& connectionType,
                               bool forceNewConnection = false,
                               const std::shared_ptr<SIPCall>& pc = {});
+    /**
+     * Ask a device for a SIP channel on a new socket, as the connected
+     * sockets may be stale after a network change.
+     * @note triggers cacheSIPConnection on success
+     */
+    void requestRecoverySIPConnection(const DeviceId& deviceId,
+                                      const std::string& connectionType,
+                                      std::function<void()>&& onFailure);
     /**
      * Store a new SIP connection into sipConnections_
      * @param channel   The new sip channel

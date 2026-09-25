@@ -227,6 +227,7 @@ std::vector<std::map<std::string, std::string>> getContacts(const std::string& a
 std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
 
 void connectivityChanged();
+void networkInterfaceChanged();
 
 bool isAudioMeterActive(const std::string& id);
 void setAudioMeterState(const std::string& id, bool state);
