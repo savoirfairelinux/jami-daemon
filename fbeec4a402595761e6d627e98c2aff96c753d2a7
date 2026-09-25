@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a17e48ce_fd35f836",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 994,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:48:01Z",
+      "side": 1,
+      "message": "[error] Line 994: 🔴 Generic NACK parsing ignores RTCP padding semantics. When the RTPFB packet has the padding bit set, trailing padding bytes are currently parsed as additional FCI entries, which can trigger bogus retransmits/keyframe requests. Read and validate the RTCP padding count, then parse FCI only up to `len - padding_bytes`.",
+      "revId": "fbeec4a402595761e6d627e98c2aff96c753d2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d25dd86_457cbba0",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:48:01Z",
+      "side": 1,
+      "message": "[error] Line 997: 🔴 `retransmitNackPackets` processes every requested PID/BLP bit with no per-packet cap or deduplication. A single small Generic NACK can request a very large retransmission burst, creating amplification/self-DoS risk. Collect requested sequence numbers into a deduplicated set and enforce a strict maximum retransmits-per-RTCP-packet (drop/log excess).",
+      "revId": "fbeec4a402595761e6d627e98c2aff96c753d2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e4c51d5_eb57fe6d",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1011,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:48:01Z",
+      "side": 1,
+      "message": "[warning] Line 1011: 🟡 Retransmissions are sent synchronously via `writeData` from the RTCP read path, bypassing RTP pacing. Under loss this can create bursty traffic and stall receive-side processing. Route retransmits through the pacer (or another bounded async queue) so congestion control and IO scheduling remain consistent.",
+      "revId": "fbeec4a402595761e6d627e98c2aff96c753d2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6e0c8f9_a5e5972c",
+        "filename": "test/unitTest/media/test_rtcp_crypto.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 467,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:48:01Z",
+      "side": 1,
+      "message": "[warning] Line 467: 🟡 New tests cover happy-path NACK retransmit and keyframe fallback, but miss edge cases introduced by the parser: padded Generic NACK packets and large/duplicate FCI lists. Add focused tests for padding handling and retransmit-cap/dedupe behavior to prevent regressions.",
+      "revId": "fbeec4a402595761e6d627e98c2aff96c753d2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
