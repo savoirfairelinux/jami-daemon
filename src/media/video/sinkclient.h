@@ -63,7 +63,7 @@ public:
     bool stop() noexcept;
 
     void setFrameSize(int width, int height);
-    void setCrop(int x, int y, int w, int h);
+    void setCrop(int x, int y, int w, int h, int referenceWidth = 0, int referenceHeight = 0);
 
     void registerTarget(libjami::SinkTarget target) noexcept
     {
@@ -85,8 +85,10 @@ private:
     struct Rect
     {
         int x {0}, y {0}, w {0}, h {0};
+        int referenceWidth {0}, referenceHeight {0};
     };
     Rect crop_ {};
+    bool cropErrorLogged_ {false};
 
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
@@ -96,6 +98,7 @@ private:
     std::mutex mtx_;
 
     libjami::FrameBuffer configureFrameDirect(const std::shared_ptr<jami::MediaFrame>&);
+    bool applyCrop(AVFrame* frame);
     void sendFrameTransformed(AVFrame* frame);
 
     /**
