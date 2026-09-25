@@ -27,6 +27,7 @@ extern "C" {
 #include "jami.h"
 #include "videomanager_interface.h"
 #include "media/audio/audio_format.h"
+#include "media/video/sinkclient.h"
 
 #include "../../test_runner.h"
 
@@ -44,10 +45,12 @@ public:
 private:
     void testCopy();
     void testMix();
+    void testConferenceCropAfterResize();
 
     CPPUNIT_TEST_SUITE(MediaFrameTest);
     CPPUNIT_TEST(testCopy);
     CPPUNIT_TEST(testMix);
+    CPPUNIT_TEST(testConferenceCropAfterResize);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -116,6 +119,53 @@ MediaFrameTest::testMix()
     CPPUNIT_ASSERT(d2[4] == -1);
     CPPUNIT_ASSERT(d2[5] == std::numeric_limits<int16_t>::min());
     CPPUNIT_ASSERT(d2[6] == std::numeric_limits<int16_t>::max());
+}
+
+void
+MediaFrameTest::testConferenceCropAfterResize()
+{
+    auto frame = std::make_shared<libjami::VideoFrame>();
+    frame->reserve(AV_PIX_FMT_YUV420P, 640, 360);
+    for (int y = 0; y < frame->height(); ++y) {
+        for (int x = 0; x < frame->width(); ++x)
+            frame->pointer()->data[0][y * frame->pointer()->linesize[0] + x] = x < 360 ? 16 : 235;
+    }
+
+    video::SinkClient sink("conference_crop");
+    sink.setCrop(720, 0, 480, 360, 1280, 720);
+    sink.setFrameSize(240, 180);
+    bool received = false;
+    sink.registerTarget(libjami::SinkTarget {
+        {},
+        [&received](libjami::FrameBuffer cropped) {
+            CPPUNIT_ASSERT_EQUAL(240, cropped->width);
+            CPPUNIT_ASSERT_EQUAL(180, cropped->height);
+            CPPUNIT_ASSERT_EQUAL(static_cast<uint8_t>(235), cropped->data[0][0]);
+            received = true;
+        },
+    });
+    sink.update(nullptr, frame);
+    CPPUNIT_ASSERT(received);
+
+    received = false;
+    auto fullSizeFrame = std::make_shared<libjami::VideoFrame>();
+    fullSizeFrame->reserve(AV_PIX_FMT_YUV420P, 1280, 720);
+    for (int y = 0; y < fullSizeFrame->height(); ++y) {
+        for (int x = 0; x < fullSizeFrame->width(); ++x)
+            fullSizeFrame->pointer()->data[0][y * fullSizeFrame->pointer()->linesize[0] + x] = x < 720 ? 16 : 235;
+    }
+    sink.setFrameSize(480, 360);
+    sink.registerTarget(libjami::SinkTarget {
+        {},
+        [&received](libjami::FrameBuffer cropped) {
+            CPPUNIT_ASSERT_EQUAL(480, cropped->width);
+            CPPUNIT_ASSERT_EQUAL(360, cropped->height);
+            CPPUNIT_ASSERT_EQUAL(static_cast<uint8_t>(235), cropped->data[0][0]);
+            received = true;
+        },
+    });
+    sink.update(nullptr, fullSizeFrame);
+    CPPUNIT_ASSERT(received);
 }
 
 } // namespace test
