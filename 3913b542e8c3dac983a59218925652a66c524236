@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6016f092_9391bfda",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2026-09-25T16:40:28Z",
+      "side": 1,
+      "message": "Thank you very much for the detailed answers.\n\nIn my latest tests, the call is automatically terminated when you block a contact during an ongoing call (I’m not sure whether the same happens if you remove the contact during an ongoing call—if that is possible?). And in this case, it doesn’t matter whether you are communicating between samecontact \u003c-\u003e samecontact or between contact 1 \u003c-\u003e contact 2, and regardless of whether the communication is over the Internet or locally without an Internet connection.\n\nThat’s what I meant here as well—and this is also taken into account here—i.e., blocking or removing a contact during an ongoing call (all types of call 1:1, conerence, group swarm calls etc.)?\n\nAnd one more thing: would a crash or freeze of Jami also not change anything in this implementation, or would/could any security mechanisms need to be implemented here?\n\nOtherwise, should everything be taken care of?",
+      "parentUuid": "050041d9_9795c07a",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7b1f74f8_403d077c",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
