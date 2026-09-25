@@ -9,7 +9,7 @@ ifeq ($(call need_pkg,"libarchive >= 3.4.0"),)
 PKGS_FOUND += libarchive
 endif
 endif
-DEPS_libarchive += nettle gmp zlib
+DEPS_libarchive += zlib
 
 LIBARCHIVE_CONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
@@ -17,7 +17,9 @@ LIBARCHIVE_CONF := \
 		-DENABLE_TAR=OFF \
 		-DENABLE_CPIO=OFF \
 		-DENABLE_CAT=OFF \
-		-DENABLE_LIBXML2=OFF
+		-DENABLE_LIBXML2=OFF \
+		-DENABLE_OPENSSL=OFF \
+		-DENABLE_NETTLE=OFF
 
 $(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.xz:
 	$(call download,$(LIBARCHIVE_URL))
