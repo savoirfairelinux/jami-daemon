@@ -2322,6 +2322,12 @@
             </tp:docstring>
         </method>
 
+        <method name="networkInterfaceChanged" tp:name-for-bindings="networkInterfaceChanged">
+            <tp:docstring>
+               Notify that the default IP network has changed so active Jami calls can reconnect.
+            </tp:docstring>
+        </method>
+
         <signal name="migrationEnded" tp:name-for-bindings="migrationEnded">
             <tp:added version="3.0.0"/>
             <tp:docstring>
