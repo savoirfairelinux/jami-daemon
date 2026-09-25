@@ -226,6 +226,7 @@ std::vector<std::map<std::string, std::string>> getContacts(const std::string& a
 std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
 
 void connectivityChanged();
+void networkInterfaceChanged();
 
 void setPushNotificationConfig(const std::map<std::string, std::string>& pushConfig);
 
