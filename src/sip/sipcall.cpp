@@ -1549,17 +1549,22 @@ void
 SIPCall::sendKeyframe(int streamIdx)
 {
 #ifdef ENABLE_VIDEO
-    dht::ThreadPool::computation().run([w = weak(), streamIdx] {
+    dht::ThreadPool::io().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
             JAMI_DEBUG("[call:{}] Handling picture fast update request", sthis->getCallId());
-            if (streamIdx == -1) {
-                for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
-                    std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
-            } else if (streamIdx > -1 && streamIdx < static_cast<int>(sthis->rtpStreams_.size())) {
-                // Apply request for requested stream
-                auto& stream = sthis->rtpStreams_[streamIdx];
-                if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
-                    std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->forceKeyFrame();
+            std::vector<std::shared_ptr<RtpSession>> sessions;
+            {
+                std::lock_guard lk {sthis->callMutex_};
+                if (streamIdx == -1)
+                    sessions = sthis->getRtpSessionList(MediaType::MEDIA_VIDEO);
+                else if (streamIdx > -1 && streamIdx < static_cast<int>(sthis->rtpStreams_.size()))
+                    sessions.emplace_back(sthis->rtpStreams_[streamIdx].rtpSession_);
+            }
+            // Without the call mutex: a video session starting its sender holds
+            // its own mutex while the client may call back into the call.
+            for (const auto& session : sessions) {
+                if (session && session->getMediaType() == MediaType::MEDIA_VIDEO)
+                    std::static_pointer_cast<video::VideoRtpSession>(session)->forceKeyFrame();
             }
         }
     });
