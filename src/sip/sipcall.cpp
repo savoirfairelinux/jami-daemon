@@ -1552,6 +1552,7 @@ SIPCall::sendKeyframe(int streamIdx)
     dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
             JAMI_DEBUG("[call:{}] Handling picture fast update request", sthis->getCallId());
+            std::lock_guard lk {sthis->callMutex_};
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
