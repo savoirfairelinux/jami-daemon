@@ -3165,6 +3165,12 @@ Manager::createSinkClients(const std::string& callId,
 
     std::set<std::string> sinkIdsList {};
     std::vector<std::pair<std::shared_ptr<video::SinkClient>, std::pair<int, int>>> newSinks;
+    struct CropUpdate
+    {
+        std::shared_ptr<video::SinkClient> sink;
+        int x, y, w, h;
+    };
+    std::vector<CropUpdate> cropUpdates;
 
     // create video sinks
     std::unique_lock lk(pimpl_->sinksMutex_);
@@ -3182,14 +3188,14 @@ Manager::createSinkClients(const std::string& callId,
                 continue;
             }
             if (auto existingIt = sinksMap.find(sinkId); existingIt != sinksMap.end()) {
-                existingIt->second->setCrop(participant.x, participant.y, participant.w, participant.h);
+                cropUpdates.push_back({existingIt->second, participant.x, participant.y, participant.w, participant.h});
                 currentSinkW = existingIt->second;
                 sinkIdsList.emplace(sinkId);
                 continue;
             }
             if (auto currentSink = currentSinkW.lock()) {
                 // If sink exists, update it and ensure it is tracked in sinksMap
-                currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
+                cropUpdates.push_back({currentSink, participant.x, participant.y, participant.w, participant.h});
                 newSinks.emplace_back(currentSink, std::make_pair(participant.w, participant.h));
                 sinksMap.insert_or_assign(sinkId, std::move(currentSink));
                 sinkIdsList.emplace(sinkId);
@@ -3197,13 +3203,16 @@ Manager::createSinkClients(const std::string& callId,
             }
             auto newSink = std::make_shared<video::SinkClient>(sinkId, false);
             currentSinkW = newSink;
-            newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
+            cropUpdates.push_back({newSink, participant.x, participant.y, participant.w, participant.h});
             newSinks.emplace_back(newSink, std::make_pair(participant.w, participant.h));
             sinksMap.insert_or_assign(sinkId, std::move(newSink));
             sinkIdsList.emplace(sinkId);
         }
     }
     lk.unlock();
+
+    for (const auto& crop : cropUpdates)
+        crop.sink->setCrop(crop.x, crop.y, crop.w, crop.h, infos.w, infos.h);
 
     // remove unused video sinks
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
