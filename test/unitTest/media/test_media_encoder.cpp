@@ -47,21 +47,21 @@ public:
 private:
     void testMultiStream();
     void testH264DynamicBitrate();
-    void testH264BitrateAdaptsLargeResolution();
+    void testH264BitrateKeepsResolution();
     void testPassthroughPacketRtpTimestamps();
     void testPassthroughBitrateChangeKeepsStream();
     void testVP8DynamicBitrate();
-    void testVP8BitrateAdaptsLargeResolution();
+    void testVP8BitrateKeepsResolution();
     void testVideoToolboxLiveBitrateAndResizeRequiresRestart();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
     CPPUNIT_TEST(testH264DynamicBitrate);
-    CPPUNIT_TEST(testH264BitrateAdaptsLargeResolution);
+    CPPUNIT_TEST(testH264BitrateKeepsResolution);
     CPPUNIT_TEST(testPassthroughPacketRtpTimestamps);
     CPPUNIT_TEST(testPassthroughBitrateChangeKeepsStream);
     CPPUNIT_TEST(testVP8DynamicBitrate);
-    CPPUNIT_TEST(testVP8BitrateAdaptsLargeResolution);
+    CPPUNIT_TEST(testVP8BitrateKeepsResolution);
     CPPUNIT_TEST(testVideoToolboxLiveBitrateAndResizeRequiresRestart);
     CPPUNIT_TEST_SUITE_END();
 
@@ -277,7 +277,7 @@ MediaEncoderTest::testH264DynamicBitrate()
 }
 
 void
-MediaEncoderTest::testH264BitrateAdaptsLargeResolution()
+MediaEncoderTest::testH264BitrateKeepsResolution()
 {
     const constexpr int width = 1280;
     const constexpr int height = 720;
@@ -303,8 +303,8 @@ MediaEncoderTest::testH264BitrateAdaptsLargeResolution()
         CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
 
         CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(constrainedBitrate));
-        CPPUNIT_ASSERT_EQUAL(480, encoder_->getWidth());
-        CPPUNIT_ASSERT_EQUAL(270, encoder_->getHeight());
+        CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
         encodeVideoFrame(*encoder_, videoIdx, width, height, 1);
         CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(restoredBitrate));
         CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
@@ -444,7 +444,7 @@ MediaEncoderTest::testVP8DynamicBitrate()
 }
 
 void
-MediaEncoderTest::testVP8BitrateAdaptsLargeResolution()
+MediaEncoderTest::testVP8BitrateKeepsResolution()
 {
     const constexpr int width = 1280;
     const constexpr int height = 720;
@@ -470,8 +470,8 @@ MediaEncoderTest::testVP8BitrateAdaptsLargeResolution()
         CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
 
         CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(constrainedBitrate));
-        CPPUNIT_ASSERT_EQUAL(480, encoder_->getWidth());
-        CPPUNIT_ASSERT_EQUAL(270, encoder_->getHeight());
+        CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
         encodeVideoFrame(*encoder_, videoIdx, width, height, 1);
         CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(restoredBitrate));
         CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());

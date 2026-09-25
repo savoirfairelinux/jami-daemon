@@ -943,15 +943,14 @@ MediaEncoder::setBitrate(uint64_t br)
     if (not isDynBitrateSupported(codecId))
         return 0; // Restart needed
 
-    if (videoOpts_.isValid()) {
+    if (videoOpts_.isValid())
         videoOpts_.bitrate = br;
-        if (applyVideoBitrateTarget(br))
-            encoderCtx = getCurrentVideoAVCtx();
-    }
 
     if (not encoderCtx)
         return 1;
 
+    // Keep active RTP dimensions stable when congestion feedback changes the bitrate;
+    // resetting the encoder here can leave remote decoders with stale codec parameters.
     // No need to restart encoder for h264, h263 and MPEG4
     // Change parameters on the fly
     if (codecId == AV_CODEC_ID_H264)
