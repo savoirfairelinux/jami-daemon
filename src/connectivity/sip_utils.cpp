@@ -44,6 +44,8 @@ namespace jami {
 namespace sip_utils {
 
 constexpr pj_str_t USER_AGENT_STR = CONST_PJ_STR("User-Agent");
+constexpr pj_str_t CALL_HANDOVER_STR = CONST_PJ_STR("X-Jami-Call-Handover");
+constexpr pj_str_t CALL_HANDOVER_VALUE = CONST_PJ_STR("1");
 
 std::string
 PjsipErrorCategory::message(int condition) const
@@ -211,6 +213,23 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
     if (hdr != nullptr) {
         pjsip_msg_add_hdr(tdata->msg, hdr);
     }
+}
+
+void
+addCallHandoverHeader(pjsip_tx_data* tdata)
+{
+    auto* header = pjsip_generic_string_hdr_create(tdata->pool, &CALL_HANDOVER_STR, &CALL_HANDOVER_VALUE);
+    pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr*>(header));
+}
+
+bool
+supportsCallHandover(const pjsip_rx_data* rdata)
+{
+    if (not rdata or not rdata->msg_info.msg)
+        return false;
+    auto* header = static_cast<const pjsip_generic_string_hdr*>(
+        pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &CALL_HANDOVER_STR, nullptr));
+    return header and as_view(header->hvalue) == "1";
 }
 
 std::string_view

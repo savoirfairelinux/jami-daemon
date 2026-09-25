@@ -110,6 +110,8 @@ public:
 
     inline void setDeviceId(const std::string& deviceId) { deviceId_ = deviceId; }
     inline std::string_view deviceId() const { return deviceId_; }
+    inline void setPeerAccountId(const std::string& peerId) { peerAccountId_ = peerId; }
+    inline std::string_view peerAccountId() const { return peerAccountId_; }
     inline void setAccount(const std::shared_ptr<SIPAccountBase>& account) { account_ = account; }
     inline const std::weak_ptr<SIPAccountBase>& getAccount() const { return account_; }
 
@@ -132,6 +134,7 @@ private:
 
     bool connected_ {false};
     std::string deviceId_ {};
+    std::string peerAccountId_ {};
     TlsInfos tlsInfos_;
 };
 
