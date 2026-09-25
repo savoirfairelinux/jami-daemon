@@ -16,6 +16,40 @@
       "message": "Could a similar mechanism also be implemented for desktop apps—for example, when switching from LAN to Wi-Fi or from Wi-Fi 1 to Wi-Fi 2? For Android, this would also apply to switching from Wi-Fi 1 to Wi-Fi 2, or when changing SIM cards, switching LTE from SIM 1 to SIM 2 and vice versa. On some laptops, switching between Wi-Fi, LTE, and LAN would also be possible.\n\nAlso: if a peer becomes blocked during such a transition, the operation normally aborts immediately. Does this patch change that behavior?\n\nDoes the patch also take spontaneous network changes during local calls into account? In particular, a network interface may change while the device keeps the same local IP address. Such a change should still be detected as a network change, even though the IP address itself has not changed. Is this covered by the patch?\n\nDoes the patch also handle changes to the ICE configuration or network connectivity during an ongoing call, particularly if ICE needs to be restarted after a network change?\nCould the same recovery mechanism also be useful for SIP calls when the SIP connection is unexpectedly terminated by the SIP provider or otherwise lost on the provider side, even though the local network connection has not changed? If so, should this case also be handled by this patch?\n\nCould there also be issues when different participants are using different Jami versions—for example, when only some participants support the new network handover mechanism? How is this handled when a call involves peers with different capabilities?\n\nDoes the patch also cover different call states and transitions during an ongoing call—for example, switching from a video call to an audio call or to a conference call and vice versa? What happens if the audio and/or video devices are changed at the same time?\nAre conference calls and regular audio/video calls expected to use the same network handover and recovery mechanism?\nThere are still video artifacts (see this issue – link: https://git.jami.net/savoirfairelinux/jami-client-android/-/work_items/1355#note_49723 ). These probably aren\u0027t directly related to the connection, but could this patch indirectly cause the behavior to deteriorate further?\n\nPlease review these cases and take them into account where they are relevant to the scope of this patch.",
       "revId": "3913b542e8c3dac983a59218925652a66c524236",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b1f74f8_403d077c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:06:08Z",
+      "side": 1,
+      "message": "[error] Line 145: 🔴 `SIPCall::~SIPCall()` acquires `callMutex_` and then calls `stopCallRecovery()`, which tries to lock `callMutex_` again. This is a self-deadlock on teardown and can stall call cleanup threads. Fix by introducing a `stopCallRecoveryLocked()` helper that assumes the mutex is already held (or call `stopCallRecovery()` before taking the mutex).",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e99341a_652a45ad",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1682,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T14:06:08Z",
+      "side": 1,
+      "message": "[error] Line 1682: 🔴 `SIPCall::removeCall()` holds `callMutex_` and then calls `stopCallRecovery()`, which re-locks the same mutex. This deadlocks call termination paths and can leave calls stuck in disconnect/failure handling. Fix with the same lock discipline as above: either call a `_Locked` variant under the existing lock, or move the call outside the locked region.",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
