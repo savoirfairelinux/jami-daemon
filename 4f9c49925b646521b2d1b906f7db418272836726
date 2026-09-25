@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09948ced_a50253d0",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1298,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T16:00:56Z",
+      "side": 1,
+      "message": "[warning] Line 1298: 🟡 `hangupCallsWith()` matches peers with `peer.substr(0, peer.find(\u0027@\u0027)) \u003d\u003d uri` without URI normalization. If peer numbers include scheme/prefix variants (e.g. `ring:`) or other formatting differences, contact removal/block can miss active calls and still trigger recovery instead of immediate termination. Reuse the same URI canonicalization helper used elsewhere for contact identity comparisons before matching.",
+      "revId": "4f9c49925b646521b2d1b906f7db418272836726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b7e4ecc_4eab4990",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-25T16:00:56Z",
+      "side": 1,
+      "message": "[error] Line 714: 🔴 `applyRequestsDeferredByRecovery()` calls `processRemainingRequest()` while holding `callMutex_`. `processRemainingRequest()` can execute `holdCb_`/`resumeCb_`, so external callbacks may run under the call mutex and re-enter call methods, creating deadlock/re-entrancy risk on recovery completion. Move `processRemainingRequest()` out of the locked region (capture needed state under lock, release lock, then process callbacks).",
+      "revId": "4f9c49925b646521b2d1b906f7db418272836726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
