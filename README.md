@@ -21,6 +21,19 @@ This source tree contains only the daemon, which handles the business logic of J
 User interfaces are located in different repositories.
 See the [Contributing](#contributing) section for more information.
 
+# Network handover
+
+When both peers support it, an established one-to-one Jami call can reconnect
+after its SIP channel closes or its default IP network changes. The daemon
+opens a new authenticated channel and restarts ICE while retaining the call.
+Recovery has a 20-second limit; audio or video may pause during that time.
+Calls with older clients, conferences, and regular SIP accounts retain their
+previous behavior.
+
+Clients should call `libjami::connectivityChanged()` to refresh account
+connectivity and `libjami::networkInterfaceChanged()` only when the default
+network or its local IP addresses actually change.
+
 # Short description of the contents of the source tree
 
 - `src/` is the core of libjami.

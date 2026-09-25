@@ -125,6 +125,15 @@ ut_call = executable(
 )
 test('call', ut_call, workdir: ut_workdir, is_parallel: false, timeout: 1800)
 
+ut_call_handover = executable(
+    'ut_call_handover',
+    sources: files('unitTest/call/handover.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('call_handover', ut_call_handover, workdir: ut_workdir, is_parallel: false, timeout: 1800)
+
 ut_conference = executable(
     'ut_conference',
     sources: files('unitTest/call/conference.cpp'),

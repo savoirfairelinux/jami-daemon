@@ -1120,6 +1120,7 @@ else()
 
         add_test_executable(account_factory test/unitTest/account_factory/testAccount_factory.cpp)
         add_test_executable(call test/unitTest/call/call.cpp)
+        add_test_executable(call_handover test/unitTest/call/handover.cpp)
         add_test_executable(recorder test/unitTest/call/recorder.cpp)
         add_test_executable(migration test/unitTest/account_archive/migration.cpp)
         add_test_executable(account_archive test/unitTest/account_archive/account_archive.cpp)

@@ -246,6 +246,8 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getContacts(const
  * Network connectivity
  */
 LIBJAMI_PUBLIC void connectivityChanged();
+/** Notify that the default IP network has changed so active Jami calls can reconnect. */
+LIBJAMI_PUBLIC void networkInterfaceChanged();
 
 /* Dht proxy */
 

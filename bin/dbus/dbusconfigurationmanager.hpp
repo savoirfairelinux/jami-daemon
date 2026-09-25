@@ -556,6 +556,7 @@ public:
     }
 
     void connectivityChanged() { libjami::connectivityChanged(); }
+    void networkInterfaceChanged() { libjami::networkInterfaceChanged(); }
 
     void sendFile(const std::string& accountId,
                   const std::string& conversationId,
