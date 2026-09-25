@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "050041d9_9795c07a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-25T15:59:35Z",
+      "side": 1,
+      "message": "Thanks for the thorough review! Answers for the current patch sets:\n\n1. Platforms and kinds of switches. The recovery lives in the daemon, so it is platform independent; clients only have to tell the daemon that the network changed (new libjami::networkInterfaceChanged()).\n- Android (36292) reports every change of the default network (Wi-Fi 1 -\u003e Wi-Fi 2, Wi-Fi \u003c-\u003e LTE, SIM 1 \u003c-\u003e SIM 2, Ethernet, VPN) and every address change on it.\n- Desktop (36290) reports what its connectivity monitor already sees: on Linux, every change of NetworkManager\u0027s active connections (LAN \u003c-\u003e Wi-Fi, Wi-Fi 1 -\u003e Wi-Fi 2, LTE modem); on Windows, NLM connectivity changes only; macOS has no monitor yet.\n- Without a notification, the daemon still starts the recovery as soon as the SIP channel breaks, just later.\n\n2. Same local IP address. On Android, a new default network always triggers the recovery, even if the address is the same; on Linux, a new active connection does too. If nobody reports the change and the old path keeps working, there is nothing to recover; if it stops working, losing the SIP channel triggers the recovery. Moving between IPv4 and IPv6 networks is handled as well (a bug there is fixed in patch set 3).\n\n3. ICE. Yes: once a new authenticated SIP channel to the same device is open, the caller sends a re-INVITE with a new ICE session (ICE restart). The callee sends an in-dialog OPTIONS on the new channel instead, so only the caller offers and re-INVITEs never cross. The new ICE session uses the current account settings (TURN, UPnP...); changing them during a call does not trigger a recovery by itself.\n\n4. SIP accounts are not covered, only Jami accounts. A session lost on the provider side needs other mechanisms (re-registration, SIP Outbound) and is out of scope.\n\n5. Mixed versions. The capability is negotiated per call (header X-Jami-Call-Handover in the INVITE and the 200 OK). If either side lacks it, the call keeps the previous behavior: it ends when the SIP channel is lost.\n\n6. Conferences. Calls attached to a conference, and subcalls, keep the previous behavior for now; 1:1 audio and video calls are covered.\n\n7. Media changes. Changing local audio/video devices does not involve SIP and is not affected. A renegotiation (audio \u003c-\u003e video) started while the call is recovering was not handled: it could prevent the ICE restart and the call then failed after the 20 s window. Fixed in patch set 3: such requests (and hold/resume) are sent once the recovery completes.\n\n8. Blocked peer. Good catch: blocking or removing a contact closes the connections, which this patch treated as a lost channel. A blocked peer could not reconnect, but the call lingered up to 20 s (media still flowing) instead of ending, and with a removed contact it was restored. Fixed in patch set 3: both cases end the call immediately again, and the blocked peer is sent a BYE.\n\n9. Video artifacts (#1355). The patch does not touch the media pipeline; outside of a network change, the code paths are unchanged, so it should not make them worse.",
+      "parentUuid": "11fcae24_100b6de9",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7b1f74f8_403d077c",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3096525e_7cd03f3b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-25T15:59:35Z",
+      "side": 1,
+      "message": "callMutex_ is a std::recursive_mutex (src/call.h), so stopCallRecovery() locking it again from ~SIPCall() on the same thread does not deadlock.",
+      "parentUuid": "7b1f74f8_403d077c",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1e99341a_652a45ad",
@@ -48,6 +84,24 @@
       "writtenOn": "2026-09-25T14:06:08Z",
       "side": 1,
       "message": "[error] Line 1682: 🔴 `SIPCall::removeCall()` holds `callMutex_` and then calls `stopCallRecovery()`, which re-locks the same mutex. This deadlocks call termination paths and can leave calls stuck in disconnect/failure handling. Fix with the same lock discipline as above: either call a `_Locked` variant under the existing lock, or move the call outside the locked region.",
+      "revId": "3913b542e8c3dac983a59218925652a66c524236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4cb6add_31718610",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1682,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-25T15:59:35Z",
+      "side": 1,
+      "message": "Same as above: callMutex_ is recursive, so calling stopCallRecovery() from removeCall() while holding it is safe.",
+      "parentUuid": "1e99341a_652a45ad",
       "revId": "3913b542e8c3dac983a59218925652a66c524236",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
