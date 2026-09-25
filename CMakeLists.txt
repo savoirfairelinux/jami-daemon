@@ -966,6 +966,11 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+        if (EXISTS "${CONTRIB_PATH}/lib/libssl.a" AND EXISTS "${CONTRIB_PATH}/lib/libcrypto.a")
+            add_library(jamid_static_crypto INTERFACE)
+            target_link_libraries(jamid_static_crypto INTERFACE "${CONTRIB_PATH}/lib/libcrypto.a")
+            target_link_libraries(jamid jamid_static_crypto)
+        endif()
         if (JAMI_VIDEO)
             target_compile_definitions(jamid PRIVATE ENABLE_VIDEO ENABLE_SHM)
         endif()
@@ -999,6 +1004,9 @@ else()
             PkgConfig::jsoncpp
             PkgConfig::fmt
         )
+        if (EXISTS "${CONTRIB_PATH}/lib/libssl.a" AND EXISTS "${CONTRIB_PATH}/lib/libcrypto.a")
+            target_link_libraries(dst_library PUBLIC "${CONTRIB_PATH}/lib/libcrypto.a")
+        endif()
         target_link_directories(dst_library PUBLIC ${CONTRIB_PATH}/lib)
         target_include_directories(dst_library PUBLIC
             "${CMAKE_CURRENT_SOURCE_DIR}/test/;"
@@ -1050,6 +1058,9 @@ else()
             PkgConfig::secp256k1
         )
         target_link_libraries(ut_library PRIVATE yaml-cpp::yaml-cpp)
+        if (EXISTS "${CONTRIB_PATH}/lib/libssl.a" AND EXISTS "${CONTRIB_PATH}/lib/libcrypto.a")
+            target_link_libraries(ut_library PUBLIC "${CONTRIB_PATH}/lib/libcrypto.a")
+        endif()
         target_link_directories(ut_library PUBLIC ${CONTRIB_PATH}/lib)
         target_include_directories(ut_library PUBLIC
             "${CMAKE_CURRENT_SOURCE_DIR}/test;"
