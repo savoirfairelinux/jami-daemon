@@ -36,6 +36,8 @@
 #endif
 #include "noncopyable.h"
 
+#include <asio/steady_timer.hpp>
+#include <atomic>
 #include <memory>
 #include <optional>
 
@@ -225,6 +227,26 @@ public:
 
     SipTransport* getTransport() { return sipTransport_.get(); }
 
+    void setPeerHandoverSupported(bool supported) { peerSupportsHandover_.store(supported); }
+    bool peerSupportsHandover() const { return peerSupportsHandover_.load(); }
+
+    bool beginCallRecovery(bool newNetwork = false);
+    bool isRecovering() const
+    {
+        std::lock_guard lk {callMutex_};
+        return recovering_;
+    }
+    bool needsNewSipChannel() const
+    {
+        std::lock_guard lk {callMutex_};
+        return recovering_ and waitingForRecoveryChannel_;
+    }
+    bool startRecoveryAttempt(bool force = false);
+    void finishRecoveryAttempt();
+    bool useRecoveredTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
+    // Move the dialog to the channel on which the peer sent an in-dialog request.
+    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe);
+
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
     void requestKeyframe(int streamIdx = -1);
@@ -252,7 +274,7 @@ public:
      * Setup ICE locally to answer to an ICE offer. The ICE session has
      * the controlled role (slave)
      */
-    void setupIceResponse(bool isReinvite = false);
+    void setupIceResponse(bool isReinvite = false, bool withoutUpnpWait = false);
 
     void terminateSipSession(int status);
 
@@ -306,6 +328,13 @@ public:
     const std::vector<RtpStream>& getRtpStreams() const { return rtpStreams_; }
 
 private:
+    void stopCallRecovery();
+    void startRecoveryLocked();
+    bool rebindSipDialogLocked(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
+    void requestIceRestart(const std::shared_ptr<SipTransport>& transport);
+    void sendRecoveryProbeLocked();
+    void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options);
+
     void generateMediaPorts();
 
     void openPortsUPnP();
@@ -394,7 +423,9 @@ private:
     // Check if a new ICE media session is needed when performing a re-invite
     bool isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList);
     void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
-    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
+    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
+                           bool needNewIce,
+                           std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt);
     int SIPSessionReinvite();
     // Add a media stream to the call.
     void addMediaStream(const MediaAttribute& mediaAttr);
@@ -430,6 +461,14 @@ private:
     // Flag to indicate if the peer's Daemon version supports re-invite
     // without ICE renegotiation.
     bool peerSupportReuseIceInReinv_ {false};
+    std::atomic_bool peerSupportsHandover_ {false};
+    // Set when the peer sent its re-INVITE on a new channel after a network change.
+    std::atomic_bool peerMovedInReinvite_ {false};
+    bool recovering_ {false};
+    bool waitingForRecoveryChannel_ {false};
+    bool recoveryAttemptPending_ {false};
+    std::unique_ptr<asio::steady_timer> recoveryTimer_;
+    std::shared_ptr<dhtnet::IceTransport> iceBeforeRecovery_;
 
     // Peer's allowed methods.
     std::vector<std::string> peerAllowedMethods_;

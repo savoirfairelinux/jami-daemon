@@ -395,6 +395,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+    if (std::dynamic_pointer_cast<JamiAccount>(account))
+        call->setPeerHandoverSupported(sip_utils::supportsCallHandover(rdata));
     // The username can be used to join specific calls in conversations
     call->toUsername(std::string(toUsername));
 
@@ -852,6 +854,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     }
     if (rdata != nullptr) {
         call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+        if (sip_utils::supportsCallHandover(rdata) && std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock()))
+            call->setPeerHandoverSupported(true);
         auto methods = sip_utils::getPeerAllowMethods(rdata);
         if (not methods.empty()) {
             call->setPeerAllowMethods(std::move(methods));
@@ -1313,6 +1317,25 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
     JAMI_LOG("[INVITE:{:p}] RX SIP method {:d} ({:s})", fmt::ptr(inv), (int) msg->line.req.method.id, methodName);
+
+    // A peer that recovered from a network change sends its in-dialog
+    // requests on a new channel: move the dialog there as well.
+    auto* const dialog = inv->dlg;
+    auto* const transport = rdata->tp_info.transport;
+    if (call->peerSupportsHandover() and dialog and transport and dialog->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT
+        and dialog->tp_sel.u.transport != transport) {
+        if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock())) {
+            pjsip_transport_add_ref(transport);
+            const bool probe = msg->line.req.method.id == PJSIP_OPTIONS_METHOD;
+            runOnMainThread([wcall = std::weak_ptr(call), waccount = std::weak_ptr(account), transport, probe] {
+                auto call = wcall.lock();
+                auto account = waccount.lock();
+                if (call and account)
+                    account->followPeerTransport(call, transport, probe);
+                pjsip_transport_dec_ref(transport);
+            });
+        }
+    }
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];

@@ -978,6 +978,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
 
     // Add user-agent header
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
+    sip_utils::addCallHandoverHeader(tdata);
 
     if (pjsip_inv_send_msg(call.inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERROR("[call:{}] Unable to send invite message", call.getCallId());
@@ -2976,6 +2977,81 @@ JamiAccount::connectivityChanged()
     }
 }
 
+void
+JamiAccount::networkInterfaceChanged()
+{
+    if (not isUsable())
+        return;
+    runOnMainThread([w = weak()] {
+        if (auto account = w.lock()) {
+            for (const auto& callId : account->getCallList()) {
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(account->getCall(callId)))
+                    call->beginCallRecovery(true);
+            }
+        }
+    });
+}
+
+bool
+JamiAccount::requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newNetwork)
+{
+    // Channels already requested on a previous network may never complete:
+    // a network change always starts a new attempt.
+    if (not call->startRecoveryAttempt(newNetwork))
+        return call->isRecovering();
+
+    auto* transport = call->getTransport();
+    if (not transport or transport->deviceId().empty() or transport->peerAccountId().empty()) {
+        JAMI_ERROR("[call:{}] No authenticated peer device for SIP reconnection", call->getCallId());
+        call->finishRecoveryAttempt();
+        return false;
+    }
+
+    auto deviceId = DeviceId(std::string(transport->deviceId()));
+    requestRecoverySIPConnection(deviceId,
+                                 call->hasVideo() ? "videoCall" : "audioCall",
+                                 [w = weak(), wcall = std::weak_ptr(call)] {
+                                     auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(),
+                                                                                       1s);
+                                     timer->async_wait([w, wcall, timer](const asio::error_code& ec) {
+                                         if (ec)
+                                             return;
+                                         runOnMainThread([w, wcall] {
+                                             auto account = w.lock();
+                                             auto call = wcall.lock();
+                                             if (not account or not call or not call->needsNewSipChannel())
+                                                 return;
+                                             call->finishRecoveryAttempt();
+                                             account->requestCallRecovery(call);
+                                         });
+                                     });
+                                 });
+    return true;
+}
+
+void
+JamiAccount::followPeerTransport(const std::shared_ptr<SIPCall>& call, pjsip_transport* transport, bool probe)
+{
+    std::shared_ptr<SipTransport> sipTransport;
+    {
+        std::lock_guard lk(sipConnsMtx_);
+        for (const auto& [key, connections] : sipConns_) {
+            auto it = std::find_if(connections.begin(), connections.end(), [&](const auto& connection) {
+                return connection.transport and connection.transport->get() == transport;
+            });
+            if (it != connections.end()) {
+                sipTransport = it->transport;
+                break;
+            }
+        }
+    }
+    if (not sipTransport) {
+        JAMI_WARNING("[call:{}] Ignoring a request received on an unknown SIP channel", call->getCallId());
+        return;
+    }
+    call->followPeerTransport(sipTransport, getContactHeader(sipTransport), probe);
+}
+
 bool
 JamiAccount::findCertificate(const dht::InfoHash& h,
                              std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
@@ -4400,6 +4476,34 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         options);
 }
 
+void
+JamiAccount::requestRecoverySIPConnection(const DeviceId& deviceId,
+                                          const std::string& connectionType,
+                                          std::function<void()>&& onFailure)
+{
+    std::shared_lock lkCM(connManagerMtx_);
+    if (!connectionManager_) {
+        JAMI_WARNING("[Account {}] No connection manager to recover the SIP channel", getAccountID());
+        onFailure();
+        return;
+    }
+    JAMI_LOG("[Account {}] Ask {} for a SIP channel on a new connection", getAccountID(), deviceId);
+    dhtnet::ConnectDeviceOptions options;
+    options.forceNewSocket = true;
+    options.ignoreConnectedSockets = true;
+    options.upnpMappingTimeout = std::chrono::milliseconds::zero();
+    options.connType = connectionType;
+    options.channelTimeout = 3s;
+    connectionManager_->connectDevice(
+        deviceId,
+        "sip",
+        [onFailure = std::move(onFailure)](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId&) {
+            if (not socket)
+                onFailure();
+        },
+        options);
+}
+
 bool
 JamiAccount::isConnectedWith(const DeviceId& deviceId) const
 {
@@ -4547,6 +4651,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         JAMI_ERROR("No channeled transport found");
         return;
     }
+    sip_tr->setPeerAccountId(peerId);
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARNING("[Account {:s}] [device {}] New SIP channel opened", getAccountID(), deviceId);
@@ -4573,6 +4678,23 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 // Here, we don't need to do anything, the TLS will fail and will delete
                 // the cached transport
             }
+        }
+    });
+
+    runOnMainThread([w = weak(), sip_tr, peerId, deviceId] {
+        auto account = w.lock();
+        if (not account)
+            return;
+        for (const auto& callId : account->getCallList()) {
+            auto call = std::dynamic_pointer_cast<SIPCall>(account->getCall(callId));
+            if (not call or not call->needsNewSipChannel())
+                continue;
+            auto* oldTransport = call->getTransport();
+            if (not oldTransport or oldTransport->deviceId() != deviceId.toString())
+                continue;
+            if (oldTransport->peerAccountId() != peerId)
+                continue;
+            call->useRecoveredTransport(sip_tr, account->getContactHeader(sip_tr));
         }
     });
 }
