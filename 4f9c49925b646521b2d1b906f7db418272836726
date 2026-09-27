@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f41f96b8_59637e51",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1298,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-27T18:06:33Z",
+      "side": 1,
+      "message": "Done in patch set 4: hangupCallsWith() now compares the peer account authenticated by the call\u0027s SIP channel (SipTransport::peerAccountId()), and only falls back to the peer number, with its scheme and sip: parts stripped, for calls without a channel yet. testCalleeBlockingCallerEndsCall covers the incoming side.",
+      "parentUuid": "09948ced_a50253d0",
+      "revId": "4f9c49925b646521b2d1b906f7db418272836726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6b7e4ecc_4eab4990",
@@ -48,6 +66,24 @@
       "writtenOn": "2026-09-25T16:00:56Z",
       "side": 1,
       "message": "[error] Line 714: 🔴 `applyRequestsDeferredByRecovery()` calls `processRemainingRequest()` while holding `callMutex_`. `processRemainingRequest()` can execute `holdCb_`/`resumeCb_`, so external callbacks may run under the call mutex and re-enter call methods, creating deadlock/re-entrancy risk on recovery completion. Move `processRemainingRequest()` out of the locked region (capture needed state under lock, release lock, then process callbacks).",
+      "revId": "4f9c49925b646521b2d1b906f7db418272836726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ec07cbc_35820732",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-27T18:06:33Z",
+      "side": 1,
+      "message": "Done in patch set 4: processRemainingRequest() now returns the hold/resume callback, which applyRequestsDeferredByRecovery() runs once callMutex_ is released. The new testHoldDuringRecovery covers a hold requested while recovering.",
+      "parentUuid": "6b7e4ecc_4eab4990",
       "revId": "4f9c49925b646521b2d1b906f7db418272836726",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
