@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9e970d3c_92f6fbf4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2026-09-27T16:32:58Z",
+      "side": 1,
+      "message": "Are these scenarios also already taken into account here? Specifically, does it matter whether a peer is blocked in a 1:1 swarm versus a group swarm, etc.?\n\nAlso: as mentioned, should you implement additional mechanisms or safeguards here if Jami crashes, hangs/freezes, or the device experiences a power failure—whether this affects only one, multiple, or all participating peers?",
+      "revId": "4f9c49925b646521b2d1b906f7db418272836726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "09948ced_a50253d0",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 3
