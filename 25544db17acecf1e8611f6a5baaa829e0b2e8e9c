@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "797cf82d_3e8be9d3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3012,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-27T18:08:11Z",
+      "side": 1,
+      "message": "[warning] Line 3012: 🟡 `requestCallRecovery()` reads `call-\u003egetTransport()` as a raw pointer and then dereferences it across multiple statements (`deviceId()`, `peerAccountId()`, and later `deviceId` construction). If `SIPCall` swaps transports concurrently during recovery, this can race into stale-pointer access or inconsistent peer/device snapshots. Capture transport identity atomically under `SIPCall` synchronization (e.g., return a copied `{deviceId, peerAccountId}` snapshot or a retained `shared_ptr\u003cSipTransport\u003e`) before using it here.",
+      "revId": "25544db17acecf1e8611f6a5baaa829e0b2e8e9c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
