@@ -190,12 +190,14 @@ VideoRtpSession::seedVideoBitrate(unsigned pixels)
     if (not codecVideo)
         return;
 
-    videoBitrateInfo_.videoBitrateCurrent = std::max((unsigned int) (pixels * 0.001),
+    videoBitrateInfo_.videoBitrateCurrent = std::max(static_cast<unsigned>(pixels * 0.001),
                                                      SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-    videoBitrateInfo_.videoBitrateMax = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+    uncappedVideoBitrateMax_ = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+    videoBitrateInfo_.videoBitrateMax = uncappedVideoBitrateMax_;
     bitrateSeeded_ = true;
     seededPixels_ = pixels;
     seededCodecId_ = codecVideo->id;
+    applyConferenceBitrateLimit();
     JAMI_LOG("[{}] Initial video bitrate: {} Kbps for {} pixels",
              fmt::ptr(this),
              videoBitrateInfo_.videoBitrateCurrent,
@@ -213,6 +215,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
         bitrateSeeded_ = false;
         seededPixels_ = 0;
         seededCodecId_ = 0;
+        uncappedVideoBitrateMax_ = 0;
         setupVideoBitrateInfo();
     }
     const auto pixels = videoMixer_ ? static_cast<unsigned>(videoMixer_->getWidth())
@@ -669,6 +672,7 @@ VideoRtpSession::stop()
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    uncappedVideoBitrateMax_ = 0;
 
     socketPair_.reset();
     videoLocal_.reset();
@@ -797,6 +801,7 @@ VideoRtpSession::enterConference(Conference& conference)
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    uncappedVideoBitrateMax_ = 0;
     JAMI_DEBUG("[conf:{}] Entering conference", conference.getConfId());
 
     if (send_.enabled or receiveThread_) {
@@ -838,6 +843,7 @@ VideoRtpSession::exitConference()
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    uncappedVideoBitrateMax_ = 0;
 }
 
 bool
@@ -1142,7 +1148,6 @@ VideoRtpSession::setupVideoBitrateInfo()
         // maximum to the output resolution; only the bounds coming from the
         // codec configuration are refreshed here.
         const auto current = videoBitrateInfo_.videoBitrateCurrent;
-        const auto max = videoBitrateInfo_.videoBitrateMax;
         videoBitrateInfo_ = {
             codecVideo->bitrate,
             codecVideo->minBitrate,
@@ -1156,7 +1161,7 @@ VideoRtpSession::setupVideoBitrateInfo()
         };
         if (bitrateSeeded_) {
             videoBitrateInfo_.videoBitrateCurrent = current;
-            videoBitrateInfo_.videoBitrateMax = max;
+            videoBitrateInfo_.videoBitrateMax = uncappedVideoBitrateMax_;
         }
     } else {
         videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};

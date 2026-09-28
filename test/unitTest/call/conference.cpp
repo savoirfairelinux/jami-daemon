@@ -19,6 +19,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
 #include <condition_variable>
 #include <string>
 
@@ -29,8 +30,11 @@
 #include "jami.h"
 #include "account_const.h"
 #include "common.h"
+#include "conference.h"
 #include "media_const.h"
 #include "media/video/sinkclient.h"
+#include "media/video/video_mixer.h"
+#include "media/video/video_rtp_session.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
@@ -390,6 +394,31 @@ ConferenceTest::testGetConference()
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 1);
         CPPUNIT_ASSERT(libjami::getConferenceList(aliceId)[0] == confId);
+    }
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conference = aliceAccount->getConference(confId);
+    CPPUNIT_ASSERT(conference);
+    auto mixer = conference->getVideoMixer();
+    CPPUNIT_ASSERT(mixer);
+    mixer->setParameters(1280, 720, AV_PIX_FMT_YUV420P);
+    const auto stream = mixer->getStream("Video Sender");
+    const auto pixels = static_cast<unsigned>(stream.width) * static_cast<unsigned>(stream.height);
+    const auto uncappedMax = std::max(static_cast<unsigned>(pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+    const auto subCalls = conference->getSubCalls();
+    CPPUNIT_ASSERT_EQUAL(size_t {2}, subCalls.size());
+    for (const auto& callId : subCalls) {
+        auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
+        CPPUNIT_ASSERT(call);
+        auto sessions = call->getRtpSessionList(MediaType::MEDIA_VIDEO);
+        CPPUNIT_ASSERT_EQUAL(size_t {1}, sessions.size());
+        auto video = std::dynamic_pointer_cast<video::VideoRtpSession>(sessions.front());
+        CPPUNIT_ASSERT(video);
+        const auto expectedMax = uncappedMax / subCalls.size();
+        video->restartSender();
+        CPPUNIT_ASSERT_EQUAL(static_cast<unsigned>(expectedMax), video->getVideoBitrateInfo().videoBitrateMax);
+        video->restartSender();
+        CPPUNIT_ASSERT_EQUAL(static_cast<unsigned>(expectedMax), video->getVideoBitrateInfo().videoBitrateMax);
     }
 
     hangupConference();
