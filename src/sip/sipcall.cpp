@@ -2612,8 +2612,17 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                     rtpSession->start(nullptr, nullptr);
                 }
                 if (isVideo) {
-                    if (auto call = w.lock())
+                    if (auto call = w.lock()) {
+#ifdef ENABLE_VIDEO
+                        auto& receive = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)->getVideoReceive();
+                        if (receive) {
+                            std::lock_guard lk(call->sinksMtx_);
+                            for (const auto& sink : call->callSinksMap_)
+                                receive->getSink()->attach(sink.second.get());
+                        }
+#endif
                         call->requestKeyframe(static_cast<int>(idx));
+                    }
                 }
 #ifdef ENABLE_PLUGIN
                 if (auto call = w.lock()) {

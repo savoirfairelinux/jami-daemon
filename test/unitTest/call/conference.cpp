@@ -98,6 +98,7 @@ private:
     void testAudioVideoMutedStates();
     void testMuteStatusAfterAdd();
     void testCreateParticipantsSinks();
+    void testAttachParticipantSinkAfterReceiverStarts();
     void testMuteStatusAfterRemove();
     void testActiveStatusAfterRemove();
     void testHandsUp();
@@ -124,6 +125,7 @@ private:
     CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST(testMuteStatusAfterAdd);
     CPPUNIT_TEST(testCreateParticipantsSinks);
+    CPPUNIT_TEST(testAttachParticipantSinkAfterReceiverStarts);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
     CPPUNIT_TEST(testActiveStatusAfterRemove);
     CPPUNIT_TEST(testHandsUp);
@@ -721,6 +723,41 @@ ConferenceTest::testCreateParticipantsSinks()
     hangupConference();
 
     libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testAttachParticipantSinkAfterReceiverStarts()
+{
+    ConfInfo infos;
+    infos.w = 2560;
+    infos.h = 1440;
+    ParticipantInfo participant;
+    participant.sinkId = "late-video-receiver";
+    participant.w = 960;
+    participant.h = 720;
+    infos.emplace_back(participant);
+
+    std::map<std::string, std::shared_ptr<video::SinkClient>> sinks;
+    auto receiver = std::make_shared<video::VideoFrameActiveWriter>();
+    auto& manager = Manager::instance();
+
+    manager.createSinkClients("late-receiver-call", infos, {}, sinks, "");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), sinks.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(0), receiver->getObserversCount());
+
+    manager.createSinkClients("late-receiver-call", infos, {receiver}, sinks, "");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), receiver->getObserversCount());
+
+    manager.createSinkClients("late-receiver-call", infos, {receiver}, sinks, "");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), receiver->getObserversCount());
+
+    auto restartedReceiver = std::make_shared<video::VideoFrameActiveWriter>();
+    manager.createSinkClients("late-receiver-call", infos, {restartedReceiver}, sinks, "");
+    CPPUNIT_ASSERT_EQUAL(size_t(1), restartedReceiver->getObserversCount());
+
+    manager.createSinkClients("late-receiver-call", ConfInfo {}, {receiver, restartedReceiver}, sinks, "");
+    CPPUNIT_ASSERT_EQUAL(size_t(0), receiver->getObserversCount());
+    CPPUNIT_ASSERT_EQUAL(size_t(0), restartedReceiver->getObserversCount());
 }
 
 void
