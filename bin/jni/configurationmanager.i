@@ -166,6 +166,8 @@ bool getRecordPreview();
 void setRecordPreview(bool rec);
 int32_t getRecordQuality();
 void setRecordQuality(int32_t rec);
+std::string getConferenceResolution();
+void setConferenceResolution(const std::string& resolution);
 
 void setHistoryLimit(int32_t days);
 int32_t getHistoryLimit();
