@@ -281,7 +281,7 @@ MediaEncoderTest::testH264BitrateKeepsResolution()
 {
     const constexpr int width = 1280;
     const constexpr int height = 720;
-    const constexpr int initialBitrate = 2500;
+    const constexpr int initialBitrate = 2211;
     const constexpr int constrainedBitrate = 300;
     const constexpr int restoredBitrate = 2200;
     auto codecs = std::make_shared<SystemCodecContainer>();
