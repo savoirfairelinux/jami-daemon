@@ -50,6 +50,7 @@ using std::string;
 
 static constexpr unsigned MAX_REMB_DEC {1};
 static constexpr uint64_t BITS_PER_KILOBIT {1000};
+static constexpr double CONFERENCE_START_BITS_PER_PIXEL {0.08};
 static constexpr float REMB_DECREASE_RATIO {0.85f};
 static constexpr float REMB_INCREASE_RATIO {1.05f};
 // Pace RTP output above the encoder target so transient overshoots
@@ -190,8 +191,12 @@ VideoRtpSession::seedVideoBitrate(unsigned pixels)
     if (not codecVideo)
         return;
 
-    videoBitrateInfo_.videoBitrateCurrent = std::max(static_cast<unsigned>(pixels * 0.001),
-                                                     SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+    const auto frameRate = videoMixer_ ? videoMixer_->getStream("Video Sender").frameRate.real() : 0;
+    const auto initialBitrate = videoMixer_
+                                    ? static_cast<unsigned>(pixels * frameRate * CONFERENCE_START_BITS_PER_PIXEL
+                                                            / BITS_PER_KILOBIT)
+                                    : static_cast<unsigned>(pixels * 0.001);
+    videoBitrateInfo_.videoBitrateCurrent = std::max(initialBitrate, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
     uncappedVideoBitrateMax_ = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     videoBitrateInfo_.videoBitrateMax = uncappedVideoBitrateMax_;
     bitrateSeeded_ = true;
@@ -1184,11 +1189,9 @@ VideoRtpSession::applyConferenceBitrateLimit()
         return;
 
     const auto senderCount = conferenceSenderCount();
-    if (senderCount <= 1)
-        return;
-
-    const auto maxPerSender = std::max<unsigned>(videoBitrateInfo_.videoBitrateMin,
-                                                 videoBitrateInfo_.videoBitrateMax / senderCount);
+    // The encoder clamps at this limit, so initial sizing must use the same budget.
+    const auto availableMax = std::min(videoBitrateInfo_.videoBitrateMax, SystemCodecInfo::DEFAULT_MAX_BITRATE);
+    const auto maxPerSender = std::max<unsigned>(videoBitrateInfo_.videoBitrateMin, availableMax / senderCount);
     videoBitrateInfo_.videoBitrateMax = maxPerSender;
     videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, maxPerSender);
 }

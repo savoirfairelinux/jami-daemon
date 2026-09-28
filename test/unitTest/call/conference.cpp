@@ -20,6 +20,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <algorithm>
+#include <array>
 #include <condition_variable>
 #include <string>
 
@@ -32,6 +33,8 @@
 #include "common.h"
 #include "conference.h"
 #include "media_const.h"
+#include "media/media_encoder.h"
+#include "media/media_recorder.h"
 #include "media/video/sinkclient.h"
 #include "media/video/video_mixer.h"
 #include "media/video/video_rtp_session.h"
@@ -89,6 +92,7 @@ public:
 
 private:
     void testGetConference();
+    void testOneSenderConferenceBudget();
     void testModeratorMuteUpdateParticipantsInfos();
     void testUnauthorizedMute();
     void testAudioVideoMutedStates();
@@ -114,6 +118,7 @@ private:
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
+    CPPUNIT_TEST(testOneSenderConferenceBudget);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
     CPPUNIT_TEST(testUnauthorizedMute);
     CPPUNIT_TEST(testAudioVideoMutedStates);
@@ -161,6 +166,49 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
+
+void
+ConferenceTest::testOneSenderConferenceBudget()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conference = std::make_shared<Conference>(account);
+    auto mixer = conference->getVideoMixer();
+    CPPUNIT_ASSERT(mixer);
+
+    auto session = std::make_shared<video::VideoRtpSession>("bitrate-test",
+                                                            "video_0",
+                                                            DeviceParams {},
+                                                            std::make_shared<MediaRecorder>());
+    session->enterConference(*conference);
+    MediaDescription media;
+    media.codec = std::make_shared<SystemVideoCodecInfo>(96, AV_CODEC_ID_H264, "H264", "H264", "libx264");
+
+    struct Expected
+    {
+        int width, height;
+        unsigned bitrate;
+        int encodedWidth, encodedHeight;
+    };
+    const std::array<Expected, 3> cases {{
+        {1280, 720, 2211, 1280, 720},
+        {1920, 1080, 4976, 1920, 1080},
+        {2560, 1440, 6000, 1920, 1080},
+    }};
+    for (const auto& expected : cases) {
+        mixer->setParameters(expected.width, expected.height, AV_PIX_FMT_YUV420P);
+        session->updateMedia(media, media);
+        const auto& bitrate = session->getVideoBitrateInfo();
+        CPPUNIT_ASSERT_EQUAL(expected.bitrate, bitrate.videoBitrateCurrent);
+        CPPUNIT_ASSERT_EQUAL(SystemCodecInfo::DEFAULT_MAX_BITRATE, bitrate.videoBitrateMax);
+
+        auto stream = mixer->getStream("Video Sender");
+        stream.bitrate = static_cast<int>(bitrate.videoBitrateCurrent);
+        MediaEncoder encoder;
+        encoder.setOptions(stream);
+        CPPUNIT_ASSERT_EQUAL(expected.encodedWidth, encoder.getWidth());
+        CPPUNIT_ASSERT_EQUAL(expected.encodedHeight, encoder.getHeight());
+    }
+}
 
 void
 ConferenceTest::setUp()
@@ -404,6 +452,7 @@ ConferenceTest::testGetConference()
     mixer->setParameters(1280, 720, AV_PIX_FMT_YUV420P);
     const auto stream = mixer->getStream("Video Sender");
     const auto pixels = static_cast<unsigned>(stream.width) * static_cast<unsigned>(stream.height);
+    const auto fullSizeBitrate = static_cast<unsigned>(pixels * stream.frameRate.real() * 0.06 / 1000) + 1;
     const auto uncappedMax = std::max(static_cast<unsigned>(pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     const auto subCalls = conference->getSubCalls();
     CPPUNIT_ASSERT_EQUAL(size_t {2}, subCalls.size());
@@ -416,6 +465,7 @@ ConferenceTest::testGetConference()
         CPPUNIT_ASSERT(video);
         const auto expectedMax = uncappedMax / subCalls.size();
         video->restartSender();
+        CPPUNIT_ASSERT(video->getVideoBitrateInfo().videoBitrateCurrent >= fullSizeBitrate);
         CPPUNIT_ASSERT_EQUAL(static_cast<unsigned>(expectedMax), video->getVideoBitrateInfo().videoBitrateMax);
         video->restartSender();
         CPPUNIT_ASSERT_EQUAL(static_cast<unsigned>(expectedMax), video->getVideoBitrateInfo().videoBitrateMax);
