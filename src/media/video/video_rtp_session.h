@@ -154,6 +154,7 @@ private:
     bool bitrateSeeded_ {false};
     unsigned seededPixels_ {0};
     unsigned seededCodecId_ {0};
+    unsigned uncappedVideoBitrateMax_ {0};
 
     std::function<void(void)> requestKeyFrameCallback_;
 
