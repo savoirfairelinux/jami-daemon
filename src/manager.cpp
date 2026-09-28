@@ -3165,6 +3165,7 @@ Manager::createSinkClients(const std::string& callId,
 
     std::set<std::string> sinkIdsList {};
     std::vector<std::pair<std::shared_ptr<video::SinkClient>, std::pair<int, int>>> newSinks;
+    std::vector<std::shared_ptr<video::SinkClient>> existingSinks;
     struct CropUpdate
     {
         std::shared_ptr<video::SinkClient> sink;
@@ -3188,6 +3189,7 @@ Manager::createSinkClients(const std::string& callId,
                 continue;
             }
             if (auto existingIt = sinksMap.find(sinkId); existingIt != sinksMap.end()) {
+                existingSinks.emplace_back(existingIt->second);
                 cropUpdates.push_back({existingIt->second, participant.x, participant.y, participant.w, participant.h});
                 currentSinkW = existingIt->second;
                 sinkIdsList.emplace(sinkId);
@@ -3213,6 +3215,10 @@ Manager::createSinkClients(const std::string& callId,
 
     for (const auto& crop : cropUpdates)
         crop.sink->setCrop(crop.x, crop.y, crop.w, crop.h, infos.w, infos.h);
+
+    for (const auto& sink : existingSinks)
+        for (const auto& videoStream : videoStreams)
+            videoStream->attach(sink.get());
 
     // remove unused video sinks
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
