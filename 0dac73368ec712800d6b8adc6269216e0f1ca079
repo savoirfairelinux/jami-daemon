@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da562f76_6deb667d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-29T22:14:47Z",
+      "side": 1,
+      "message": "This change causes a deadlock",
+      "revId": "0dac73368ec712800d6b8adc6269216e0f1ca079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
