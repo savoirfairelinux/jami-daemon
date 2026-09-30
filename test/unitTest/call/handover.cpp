@@ -78,6 +78,7 @@ private:
     void testLegacyPeerDisconnectsWithoutRetry();
     void testResetsPublishedAddresses();
     void testRecoveryOpensNewSocket();
+    void testStaleRecoveryAttemptDoesNotTakeOver();
     void testBlockedPeerEndsCall();
     void testRemovedPeerEndsCall();
     void testCalleeBlockingCallerEndsCall();
@@ -95,6 +96,7 @@ private:
     CPPUNIT_TEST(testLegacyPeerDisconnectsWithoutRetry);
     CPPUNIT_TEST(testResetsPublishedAddresses);
     CPPUNIT_TEST(testRecoveryOpensNewSocket);
+    CPPUNIT_TEST(testStaleRecoveryAttemptDoesNotTakeOver);
     CPPUNIT_TEST(testBlockedPeerEndsCall);
     CPPUNIT_TEST(testRemovedPeerEndsCall);
     CPPUNIT_TEST(testCalleeBlockingCallerEndsCall);
@@ -392,6 +394,26 @@ HandoverTest::testRecoveryOpensNewSocket()
     // A recovery must not trust it, as it may predate a network change.
     connect({.forceNewSocket = true, .ignoreConnectedSockets = true});
     CPPUNIT_ASSERT_EQUAL(sockets + 1, manager.activeSockets());
+}
+
+void
+HandoverTest::testStaleRecoveryAttemptDoesNotTakeOver()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.alice->getTransport());
+    CPPUNIT_ASSERT(before.alice->beginCallRecovery());
+
+    const auto stale = before.alice->startRecoveryAttempt(true);
+    const auto latest = before.alice->startRecoveryAttempt(true);
+    CPPUNIT_ASSERT(stale and latest and *stale != *latest);
+
+    before.alice->finishRecoveryAttempt(*stale);
+    auto transport = std::shared_ptr<SipTransport>(before.alice, before.alice->getTransport());
+    CPPUNIT_ASSERT(not before.alice->useRecoveredTransport(transport, "Contact: <sip:stale@localhost>", *stale));
+    CPPUNIT_ASSERT(before.alice->needsNewSipChannel());
+    before.alice->finishRecoveryAttempt(*latest);
+    hangUp();
 }
 
 void
