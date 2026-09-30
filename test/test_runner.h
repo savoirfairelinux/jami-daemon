@@ -1,11 +1,13 @@
 #include <iostream>
+#include <string_view>
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/TestPath.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/CompilerOutputter.h>
 
 #define CORE_TEST_RUNNER(suite_name) \
-    int main() \
+    int main(int argc, char** argv) \
     { \
         CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry(suite_name); \
         CppUnit::Test* suite = registry.makeTest(); \
@@ -15,6 +17,27 @@
         } \
         CppUnit::TextUi::TestRunner runner; \
         runner.addTest(suite); \
+        if (argc > 1) { \
+            const std::string_view selected {argv[1]}; \
+            auto findCase = [&](auto&& self, CppUnit::Test* test) -> CppUnit::Test* { \
+                const auto name = test->getName(); \
+                if (name == selected or (name.size() > selected.size() \
+                                         and std::string_view(name).ends_with(selected))) \
+                    return test; \
+                for (int i = 0; i < test->getChildTestCount(); ++i) { \
+                    if (auto* found = self(self, test->getChildTestAt(i))) \
+                        return found; \
+                } \
+                return nullptr; \
+            }; \
+            if (auto* test = findCase(findCase, suite)) { \
+                CppUnit::TestPath path; \
+                suite->findTestPath(test, path); \
+                return runner.run(path.toString()) ? 0 : 1; \
+            } \
+            std::cerr << "No test case matching " << selected << '\n'; \
+            return 2; \
+        } \
         return runner.run() ? 0 : 1; \
     }
 
