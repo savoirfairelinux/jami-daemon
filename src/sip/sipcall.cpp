@@ -503,7 +503,7 @@ SIPCall::beginCallRecovery(bool newNetwork)
     {
         std::lock_guard lk {callMutex_};
         if (not recovering_) {
-            if (not peerSupportsHandover() or not isIceEnabled() or isSubcall() or isConferenceParticipant()
+            if (not peerSupportsHandover() or not isIceEnabled() or isSubcall()
                 or getConnectionState() != ConnectionState::CONNECTED or not inviteSession_
                 or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_)
                 return false;
@@ -583,7 +583,7 @@ SIPCall::followPeerTransport(const std::shared_ptr<SipTransport>& transport, con
 {
     {
         std::lock_guard lk {callMutex_};
-        if (not peerSupportsHandover() or isSubcall() or isConferenceParticipant() or not inviteSession_
+        if (not peerSupportsHandover() or isSubcall() or not inviteSession_
             or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_ or sipTransport_ == transport
             or isAbandonedTransportLocked(transport) or not rebindSipDialogLocked(transport, contact))
             return;
