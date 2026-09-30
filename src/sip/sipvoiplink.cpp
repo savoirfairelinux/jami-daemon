@@ -1292,6 +1292,14 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     if (not call)
         return;
 
+    if (tsx->method.id == PJSIP_INVITE_METHOD
+        and (tsx->state == PJSIP_TSX_STATE_TERMINATED or tsx->state == PJSIP_TSX_STATE_CONFIRMED)) {
+        runOnMainThread([wcall = std::weak_ptr(call)] {
+            if (auto call = wcall.lock())
+                call->onInviteTransactionEnded();
+        });
+    }
+
 #ifdef DEBUG_SIP_REQUEST_MSG
     processInviteResponseHelper(inv, event);
 #endif
@@ -1323,7 +1331,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     auto* const dialog = inv->dlg;
     auto* const transport = rdata->tp_info.transport;
     if (call->peerSupportsHandover() and dialog and transport and dialog->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT
-        and dialog->tp_sel.u.transport != transport) {
+        and (dialog->tp_sel.u.transport != transport or msg->line.req.method.id == PJSIP_OPTIONS_METHOD)) {
         if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock())) {
             pjsip_transport_add_ref(transport);
             const bool probe = msg->line.req.method.id == PJSIP_OPTIONS_METHOD;
