@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "51f7fe8b_63357ff8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 763,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-30T22:52:55Z",
+      "side": 1,
+      "message": " callMutex_  is a  std::recursive_mutex  in  src/call.h:467 .  completeRecoveryIfReadyLocked()  already holds it, and  stopCallRecovery()  reacquires it on the same thread, which a recursive mutex permits. It releases the inner acquisition on return; the outer lock is released by the caller. Splitting out a  _Locked  variant is not needed",
+      "parentUuid": "e07a44b0_50bbf43d",
+      "revId": "c4cc24c04a72ab379edb574a25ec103d1ced9cee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d2478e41_51651c95",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
@@ -31,6 +49,24 @@
       "writtenOn": "2026-09-30T22:47:17Z",
       "side": 1,
       "message": "[warning] Line 3816: 🟡 In `onNegoDone`, the subcall branch passes `call-\u003egetIceMedia()` to `onIceNegoSucceed` instead of the actual negotiated ICE (`ice.lock()`). With the new recovery-completion gating, this can mark recovery as negotiated from an unrelated subcall ICE callback and end recovery too early. Consider passing the real negotiated ICE and handling subcall/media-start behavior separately so recovery completion only tracks the intended ICE transport.",
+      "revId": "c4cc24c04a72ab379edb574a25ec103d1ced9cee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "64fc36cf_0aa0aa3f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3816,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-09-30T22:52:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d2478e41_51651c95",
       "revId": "c4cc24c04a72ab379edb574a25ec103d1ced9cee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
