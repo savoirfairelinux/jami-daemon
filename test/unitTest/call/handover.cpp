@@ -75,6 +75,9 @@ private:
     void testCallerNetworkChange();
     void testCalleeNetworkChange();
     void testBothPeersChangeNetwork();
+    void testRepeatedNetworkChange();
+    void testNetworkChangeDuringMediaReinvite();
+    void testProbeAfterPeerRequest();
     void testLegacyPeerDisconnectsWithoutRetry();
     void testResetsPublishedAddresses();
     void testRecoveryOpensNewSocket();
@@ -93,6 +96,9 @@ private:
     CPPUNIT_TEST(testCallerNetworkChange);
     CPPUNIT_TEST(testCalleeNetworkChange);
     CPPUNIT_TEST(testBothPeersChangeNetwork);
+    CPPUNIT_TEST(testRepeatedNetworkChange);
+    CPPUNIT_TEST(testNetworkChangeDuringMediaReinvite);
+    CPPUNIT_TEST(testProbeAfterPeerRequest);
     CPPUNIT_TEST(testLegacyPeerDisconnectsWithoutRetry);
     CPPUNIT_TEST(testResetsPublishedAddresses);
     CPPUNIT_TEST(testRecoveryOpensNewSocket);
@@ -314,6 +320,66 @@ HandoverTest::testBothPeersChangeNetwork()
     auto before = currentState();
     libjami::networkInterfaceChanged();
     checkRecovered(before);
+    hangUp();
+}
+
+void
+HandoverTest::testRepeatedNetworkChange()
+{
+    startCall();
+    auto before = currentState();
+    alice_->networkInterfaceChanged();
+    alice_->networkInterfaceChanged();
+    checkRecovered(before);
+    hangUp();
+}
+
+void
+HandoverTest::testNetworkChangeDuringMediaReinvite()
+{
+    startCall();
+    auto before = currentState();
+    auto media = before.alice->currentMediaList();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), media.size());
+    std::erase_if(media, [](const auto& stream) {
+        return stream.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) != libjami::Media::MediaAttributeValue::AUDIO;
+    });
+    CPPUNIT_ASSERT_EQUAL(size_t(1), media.size());
+    CPPUNIT_ASSERT(libjami::requestMediaChange(aliceId_, aliceCallId_, media));
+    CPPUNIT_ASSERT(before.alice->inviteSession_ and before.alice->inviteSession_->invite_tsx);
+    alice_->networkInterfaceChanged();
+    checkRecovered(before);
+    hangUp();
+}
+
+void
+HandoverTest::testProbeAfterPeerRequest()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.alice->getTransport());
+    // Wrap the live channel separately to exercise the dialog-follow path
+    // without racing an automatic probe from a second network connection.
+    auto transport = std::make_shared<SipTransport>(before.aliceTransport,
+                                                    before.alice->getTransport()->getTlsInfos().peerCert);
+    transport->setDeviceId(std::string(before.alice->getTransport()->deviceId()));
+    transport->setPeerAccountId(bob_->getUsername());
+    auto contact = alice_->getContactHeader(transport);
+
+    // An in-dialog request can be queued before the peer's OPTIONS probe.
+    before.alice->followPeerTransport(transport, contact, false);
+    CPPUNIT_ASSERT(before.alice->getTransport() == transport.get());
+    before.alice->followPeerTransport(transport, contact, true);
+    before.alice->followPeerTransport(transport, contact, true);
+    {
+        std::unique_lock lock(mutex_);
+        CPPUNIT_ASSERT(cv_.wait_for(lock, 15s, [&] { return negotiations_[aliceCallId_] > before.aliceNegotiations; }));
+    }
+    std::this_thread::sleep_for(500ms);
+    {
+        std::lock_guard lock(mutex_);
+        CPPUNIT_ASSERT_EQUAL(before.aliceNegotiations + 1, negotiations_[aliceCallId_]);
+    }
     hangUp();
 }
 
