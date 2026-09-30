@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e07a44b0_50bbf43d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 763,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T22:47:17Z",
+      "side": 1,
+      "message": "[error] Line 763: 🔴 `completeRecoveryIfReadyLocked()` is called with `callMutex_` already held, but it calls `stopCallRecovery()`, which locks `callMutex_` again. This can self-deadlock as soon as recovery completion conditions are met (e.g., from `onIceNegoSucceed`, `useRecoveredTransport`, or `followPeerTransport`). Fix by splitting `stopCallRecovery()` into a `_Locked` variant (no locking) for internal locked call paths, or by releasing the lock before calling it.",
+      "revId": "c4cc24c04a72ab379edb574a25ec103d1ced9cee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2478e41_51651c95",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3816,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T22:47:17Z",
+      "side": 1,
+      "message": "[warning] Line 3816: 🟡 In `onNegoDone`, the subcall branch passes `call-\u003egetIceMedia()` to `onIceNegoSucceed` instead of the actual negotiated ICE (`ice.lock()`). With the new recovery-completion gating, this can mark recovery as negotiated from an unrelated subcall ICE callback and end recovery too early. Consider passing the real negotiated ICE and handling subcall/media-start behavior separately so recovery completion only tracks the intended ICE transport.",
+      "revId": "c4cc24c04a72ab379edb574a25ec103d1ced9cee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
