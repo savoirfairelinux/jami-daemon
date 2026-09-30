@@ -21,6 +21,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b66e3658_14b1de9d",
+        "filename": "src/jamidht/sync_msg_reader.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T15:45:47Z",
+      "side": 1,
+      "message": "[warning] Line 113: 🟡 Metadata-role detection for array-encoded `SyncMsg` is hard-coded to `frame.index \u003d\u003d 6`. If `SyncMsg` field order changes (or a field is inserted before `am`), this guard silently goes stale and metadata-specific bounds may no longer apply in array layout. Please bind this to an explicit shared constant with a compile-time/test guard, or force map-key-based decoding for this path to make schema evolution safe.",
+      "revId": "e9b31e32373e979b40568cee1c53aeb37f497535",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cc02f5c9_52a4667e",
         "filename": "src/jamidht/sync_msg_reader.h",
         "patchSetId": 3
