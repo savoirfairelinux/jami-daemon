@@ -252,6 +252,7 @@ public:
                                std::optional<std::uint64_t> attempt);
     // Move the dialog to the channel on which the peer sent an in-dialog request.
     void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe);
+    void onInviteTransactionEnded();
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
@@ -341,6 +342,7 @@ private:
     void requestIceRestart(const std::shared_ptr<SipTransport>& transport);
     void sendRecoveryProbeLocked();
     void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options);
+    void completeRecoveryIfReadyLocked();
     void applyRequestsDeferredByRecovery();
     // Returns the client callback to run with the result, if any, so that
     // callers holding callMutex_ can run it once released.
@@ -410,7 +412,7 @@ private:
 
     void setCallMediaLocal();
     void startIceMedia();
-    void onIceNegoSucceed();
+    void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce);
     void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
@@ -436,7 +438,8 @@ private:
     void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
     int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
                            bool needNewIce,
-                           std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt);
+                           std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt,
+                           bool recoveryOffer = false);
     int SIPSessionReinvite();
     // Add a media stream to the call.
     void addMediaStream(const MediaAttribute& mediaAttr);
@@ -475,12 +478,20 @@ private:
     std::atomic_bool peerSupportsHandover_ {false};
     // Set when the peer sent its re-INVITE on a new channel after a network change.
     std::atomic_bool peerMovedInReinvite_ {false};
-    bool recovering_ {false};
+    std::atomic_bool recovering_ {false};
     bool waitingForRecoveryChannel_ {false};
     bool recoveryAttemptPending_ {false};
     std::uint64_t recoveryAttempt_ {0};
+    bool awaitingRecoveryProbe_ {false};
+    std::optional<dhtnet::IceTransportOptions> deferredRecoveryIceOptions_;
     std::unique_ptr<asio::steady_timer> recoveryTimer_;
-    std::shared_ptr<dhtnet::IceTransport> iceBeforeRecovery_;
+    std::shared_ptr<dhtnet::IceTransport> recoveryIce_;
+    std::weak_ptr<SipTransport> recoveryIceTransport_;
+    std::shared_ptr<dhtnet::IceTransport> negotiatedRecoveryIce_;
+    std::shared_ptr<dhtnet::IceTransport> pendingRecoveryAnswerIce_;
+    std::atomic<pjsip_transport*> incomingReinviteTransport_ {nullptr};
+    std::atomic_bool incomingReinviteDuringRecovery_ {false};
+    pjsip_transport* pendingRecoveryAnswerTransport_ {nullptr};
     // Channels left for a newer one, which the dialog must not follow back.
     std::vector<std::weak_ptr<SipTransport>> abandonedTransports_;
     // Media change requested during a recovery, sent once it is over.
