@@ -16,6 +16,24 @@
       "message": "This change causes a deadlock",
       "revId": "0dac73368ec712800d6b8adc6269216e0f1ca079",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5691b18_7ff678e4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-09-30T01:34:36Z",
+      "side": 1,
+      "message": "Thanks Pavan, I found the cycle. On Android, VideoRtpSession::startSender() holds the session mutex while getVideoInput() creates the VideoInput, which emits StartCapture synchronously; HardwareServiceImpl.startCapture() then calls JamiService.getCallDetails(), which takes the call mutex (Call::getState()). Patch set 1 took the call mutex and then the session mutex in forceKeyFrame(), so a picture_fast_update from the peer arriving while startAllMedia() starts our video sender deadlocked both threads. Patch set 2 copies the video sessions under the call mutex and forces the keyframes once it is released, and runs on the I/O pool like setRotation(). If your trace showed another cycle, could you share it?",
+      "parentUuid": "da562f76_6deb667d",
+      "revId": "0dac73368ec712800d6b8adc6269216e0f1ca079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
