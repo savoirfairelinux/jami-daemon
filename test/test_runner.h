@@ -1,7 +1,9 @@
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/TestPath.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/CompilerOutputter.h>
 
@@ -17,7 +19,28 @@
         CppUnit::TextUi::TestRunner runner; \
         runner.addTest(suite); \
         try { \
-            return runner.run(argc > 1 ? argv[1] : "") ? 0 : 1; \
+            if (argc > 1) { \
+                const std::string_view selected {argv[1]}; \
+                auto findCase = [&](auto&& self, CppUnit::Test* test) -> CppUnit::Test* { \
+                    const auto name = test->getName(); \
+                    if (name == selected or (name.size() > selected.size() \
+                                             and std::string_view(name).ends_with(selected))) \
+                        return test; \
+                    for (int i = 0; i < test->getChildTestCount(); ++i) { \
+                        if (auto* found = self(self, test->getChildTestAt(i))) \
+                            return found; \
+                    } \
+                    return nullptr; \
+                }; \
+                if (auto* test = findCase(findCase, suite)) { \
+                    CppUnit::TestPath path; \
+                    suite->findTestPath(test, path); \
+                    return runner.run(path.toString()) ? 0 : 1; \
+                } \
+                std::cerr << "No test case matching " << selected << '\n'; \
+                return 2; \
+            } \
+            return runner.run() ? 0 : 1; \
         } catch (const std::invalid_argument& e) { \
             std::cerr << e.what() << std::endl; \
             return 1; \
