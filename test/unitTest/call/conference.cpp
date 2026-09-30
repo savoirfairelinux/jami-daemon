@@ -19,8 +19,13 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
+#include <chrono>
 #include <condition_variable>
+#include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include "manager.h"
 #include "client/videomanager.h"
@@ -33,6 +38,9 @@
 #include "media/video/sinkclient.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+#ifdef ENABLE_VIDEO
+#include "media/video/video_rtp_session.h"
+#endif
 
 #include <dhtnet/connectionmanager.h>
 
@@ -107,6 +115,9 @@ private:
     void testBrokenParticipantAudioOnly();
     void testAudioOnlyLeaveLayout();
     void testRemoveConferenceInOneOne();
+    void testHostNetworkSwitch();
+    void testGuestNetworkSwitch();
+    void testConferenceSipChannelCloses();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -132,6 +143,9 @@ private:
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
     CPPUNIT_TEST(testAudioOnlyLeaveLayout);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
+    CPPUNIT_TEST(testHostNetworkSwitch);
+    CPPUNIT_TEST(testGuestNetworkSwitch);
+    CPPUNIT_TEST(testConferenceSipChannelCloses);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -154,6 +168,7 @@ private:
     void registerSignalHandlers();
     void startConference(bool audioOnly = false, bool addDavi = false);
     void hangupConference();
+    void recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel = false);
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
@@ -372,6 +387,114 @@ ConferenceTest::hangupConference()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&] { return bobCall.state == "OVER" && carlaCall.state == "OVER" && confId.empty(); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return daviCall.callId.empty() ? true : daviCall.state == "OVER"; }));
+}
+
+void
+ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel)
+{
+    registerSignalHandlers();
+    startConference();
+
+    auto host = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carla = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto conf = host->getConference(confId);
+    CPPUNIT_ASSERT(conf);
+    auto subcalls = conf->getSubCalls();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), subcalls.size());
+
+    std::vector<std::shared_ptr<SIPCall>> calls;
+    for (const auto& id : subcalls)
+        calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(host->getCall(id)));
+    calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(bob->getCall(bobCall.callId)));
+    calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(carla->getCall(carlaCall.callId)));
+
+    auto ready = [&] {
+        return std::all_of(calls.begin(), calls.end(), [](const auto& call) {
+            return call and call->getTransport() and call->getIceMedia() and call->getIceMedia()->isRunning();
+        });
+    };
+    auto deadline = std::chrono::steady_clock::now() + 15s;
+    while (not ready() and std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(50ms);
+    CPPUNIT_ASSERT(ready());
+
+    struct TransportState
+    {
+        std::shared_ptr<SIPCall> call;
+        pjsip_transport* sip;
+        std::shared_ptr<dhtnet::IceTransport> ice;
+        bool shouldRecover;
+    };
+    std::vector<TransportState> before;
+    for (const auto& call : calls) {
+        before.push_back({call,
+                          call->getTransport()->get(),
+                          call->getIceMedia(),
+                          hostSwitch or call == calls[2] or call->getPeerAccountId() == bob->getUsername()});
+    }
+
+    if (closeChannel) {
+        auto hostBobCall = std::find_if(calls.begin(), calls.begin() + subcalls.size(), [&](const auto& call) {
+            return call->getPeerAccountId() == bob->getUsername();
+        });
+        CPPUNIT_ASSERT(hostBobCall != calls.begin() + subcalls.size());
+        CPPUNIT_ASSERT(pjsip_transport_shutdown((*hostBobCall)->getTransport()->get()) == PJ_SUCCESS);
+    } else if (hostSwitch) {
+        host->networkInterfaceChanged();
+    } else {
+        bob->networkInterfaceChanged();
+    }
+
+    auto recovered = [&] {
+        return std::all_of(before.begin(), before.end(), [](const auto& state) {
+            if (state.call->getConnectionState() != Call::ConnectionState::CONNECTED or not state.call->getTransport()
+                or not state.call->getIceMedia())
+                return false;
+            return not state.shouldRecover
+                   or (not state.call->isRecovering() and state.call->getTransport()->get() != state.sip
+                       and state.call->getIceMedia() != state.ice and state.call->getIceMedia()->isRunning());
+        });
+    };
+    deadline = std::chrono::steady_clock::now() + 18s;
+    while (not recovered() and std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(50ms);
+    CPPUNIT_ASSERT(recovered());
+    CPPUNIT_ASSERT(host->getConference(confId) == conf);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), conf->getSubCalls().size());
+    for (const auto& call : calls)
+        CPPUNIT_ASSERT(call->getConnectionState() == Call::ConnectionState::CONNECTED);
+    for (size_t i = 0; i < subcalls.size(); ++i) {
+        CPPUNIT_ASSERT(calls[i]->isConferenceParticipant());
+#ifdef ENABLE_VIDEO
+        for (const auto& session : calls[i]->getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+            auto video = std::static_pointer_cast<video::VideoRtpSession>(session);
+            CPPUNIT_ASSERT(video->hasConference());
+            CPPUNIT_ASSERT(video->getVideoMixer() == conf->getVideoMixer());
+        }
+#endif
+    }
+
+    hangupConference();
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testHostNetworkSwitch()
+{
+    recoverConferenceAfterNetworkChange(true);
+}
+
+void
+ConferenceTest::testGuestNetworkSwitch()
+{
+    recoverConferenceAfterNetworkChange(false);
+}
+
+void
+ConferenceTest::testConferenceSipChannelCloses()
+{
+    recoverConferenceAfterNetworkChange(false, true);
 }
 
 void
