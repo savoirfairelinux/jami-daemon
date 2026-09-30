@@ -38,6 +38,7 @@
 
 #include <asio/steady_timer.hpp>
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -244,9 +245,11 @@ public:
         std::lock_guard lk {callMutex_};
         return recovering_ and waitingForRecoveryChannel_;
     }
-    bool startRecoveryAttempt(bool force = false);
-    void finishRecoveryAttempt();
-    bool useRecoveredTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
+    std::optional<std::uint64_t> startRecoveryAttempt(bool force = false);
+    bool finishRecoveryAttempt(std::uint64_t attempt);
+    bool useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
+                               const std::string& contact,
+                               std::optional<std::uint64_t> attempt);
     // Move the dialog to the channel on which the peer sent an in-dialog request.
     void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe);
 
@@ -475,6 +478,7 @@ private:
     bool recovering_ {false};
     bool waitingForRecoveryChannel_ {false};
     bool recoveryAttemptPending_ {false};
+    std::uint64_t recoveryAttempt_ {0};
     std::unique_ptr<asio::steady_timer> recoveryTimer_;
     std::shared_ptr<dhtnet::IceTransport> iceBeforeRecovery_;
     // Channels left for a newer one, which the dialog must not follow back.

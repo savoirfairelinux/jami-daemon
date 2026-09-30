@@ -973,7 +973,7 @@ private:
      */
     void requestRecoverySIPConnection(const DeviceId& deviceId,
                                       const std::string& connectionType,
-                                      std::function<void()>&& onFailure);
+                                      std::function<void(const std::shared_ptr<dhtnet::ChannelSocket>&)>&& onResult);
     /**
      * Store a new SIP connection into sipConnections_
      * @param channel   The new sip channel

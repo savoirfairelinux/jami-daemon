@@ -540,29 +540,35 @@ SIPCall::startRecoveryLocked()
     });
 }
 
-bool
+std::optional<std::uint64_t>
 SIPCall::startRecoveryAttempt(bool force)
 {
     std::lock_guard lk {callMutex_};
     if (not recovering_ or not waitingForRecoveryChannel_ or (recoveryAttemptPending_ and not force))
-        return false;
+        return std::nullopt;
     recoveryAttemptPending_ = true;
-    return true;
-}
-
-void
-SIPCall::finishRecoveryAttempt()
-{
-    std::lock_guard lk {callMutex_};
-    recoveryAttemptPending_ = false;
+    return ++recoveryAttempt_;
 }
 
 bool
-SIPCall::useRecoveredTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact)
+SIPCall::finishRecoveryAttempt(std::uint64_t attempt)
+{
+    std::lock_guard lk {callMutex_};
+    if (not recovering_ or not waitingForRecoveryChannel_ or recoveryAttempt_ != attempt)
+        return false;
+    recoveryAttemptPending_ = false;
+    return true;
+}
+
+bool
+SIPCall::useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
+                               const std::string& contact,
+                               std::optional<std::uint64_t> attempt)
 {
     {
         std::lock_guard lk {callMutex_};
-        if (not recovering_ or not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
+        if (not recovering_ or not waitingForRecoveryChannel_ or (attempt and recoveryAttempt_ != *attempt)
+            or not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
             or not sipTransport_ or not rebindSipDialogLocked(transport, contact))
             return false;
         waitingForRecoveryChannel_ = false;
