@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3aae9550_463a7301",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T19:51:17Z",
+      "side": 1,
+      "message": "[warning] Line 428: 🟡 The test snapshots `pjsip_transport*` and later asserts the recovered transport pointer is different. Raw pointer-address inequality can be flaky because allocator reuse may produce the same address after recreation. Capture and compare higher-level transport identity (e.g., shared_ptr instance or transport key) to make this deterministic.",
+      "revId": "204af71492940f7a089c03eb2bedc006e57eb47e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ec4e363_0b4efb41",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T19:51:17Z",
+      "side": 1,
+      "message": "[warning] Line 433: 🟡 `shouldRecover` depends on `call \u003d\u003d calls[2]`, which is a positional assumption about vector construction order. This makes the test fragile if call collection order changes. Prefer deriving recovery expectation from explicit identities (e.g., account ID / call ID role mapping) instead of hard-coded index positions.",
+      "revId": "204af71492940f7a089c03eb2bedc006e57eb47e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
