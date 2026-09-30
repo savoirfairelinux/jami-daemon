@@ -33,6 +33,23 @@
       "message": "[warning] Line 433: 🟡 `shouldRecover` depends on `call \u003d\u003d calls[2]`, which is a positional assumption about vector construction order. This makes the test fragile if call collection order changes. Prefer deriving recovery expectation from explicit identities (e.g., account ID / call ID role mapping) instead of hard-coded index positions.",
       "revId": "204af71492940f7a089c03eb2bedc006e57eb47e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f88c289_4e3d2a1f",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-09-30T19:52:15Z",
+      "side": 1,
+      "message": "[warning] Line 451: 🟡 The recovery predicate only enforces `isRunning()` for calls marked `shouldRecover`; unaffected calls can lose ICE/media and still pass this test. Make `isRunning()` a required condition for all calls in `recovered()`, then add the recovery-specific identity checks only for `shouldRecover` calls.",
+      "revId": "204af71492940f7a089c03eb2bedc006e57eb47e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
