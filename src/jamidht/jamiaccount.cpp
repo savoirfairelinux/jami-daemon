@@ -3017,33 +3017,70 @@ JamiAccount::requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newN
 {
     // Channels already requested on a previous network may never complete:
     // a network change always starts a new attempt.
-    if (not call->startRecoveryAttempt(newNetwork))
+    auto attempt = call->startRecoveryAttempt(newNetwork);
+    if (not attempt)
         return call->isRecovering();
 
     auto* transport = call->getTransport();
     if (not transport or transport->deviceId().empty() or transport->peerAccountId().empty()) {
         JAMI_ERROR("[call:{}] No authenticated peer device for SIP reconnection", call->getCallId());
-        call->finishRecoveryAttempt();
+        call->finishRecoveryAttempt(*attempt);
         return false;
     }
 
     auto deviceId = DeviceId(std::string(transport->deviceId()));
+    auto peerId = std::string(transport->peerAccountId());
+    auto retry = [w = weak(), wcall = std::weak_ptr(call), attempt = *attempt] {
+        auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), 1s);
+        timer->async_wait([w, wcall, timer, attempt](const asio::error_code& ec) {
+            if (ec)
+                return;
+            runOnMainThread([w, wcall, attempt] {
+                auto account = w.lock();
+                auto call = wcall.lock();
+                if (account and call and call->finishRecoveryAttempt(attempt) and call->needsNewSipChannel())
+                    account->requestCallRecovery(call);
+            });
+        });
+    };
     requestRecoverySIPConnection(deviceId,
                                  call->hasVideo() ? "videoCall" : "audioCall",
-                                 [w = weak(), wcall = std::weak_ptr(call)] {
-                                     auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(),
-                                                                                       1s);
-                                     timer->async_wait([w, wcall, timer](const asio::error_code& ec) {
-                                         if (ec)
-                                             return;
-                                         runOnMainThread([w, wcall] {
-                                             auto account = w.lock();
-                                             auto call = wcall.lock();
-                                             if (not account or not call or not call->needsNewSipChannel())
-                                                 return;
-                                             call->finishRecoveryAttempt();
-                                             account->requestCallRecovery(call);
-                                         });
+                                 [w = weak(), wcall = std::weak_ptr(call), peerId, deviceId, attempt = *attempt,
+                                  retry](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+                                     if (not socket) {
+                                         retry();
+                                         return;
+                                     }
+                                     auto account = w.lock();
+                                     if (not account)
+                                         return;
+                                     std::shared_ptr<SipTransport> sipTransport;
+                                     {
+                                         std::lock_guard lk(account->sipConnsMtx_);
+                                         auto it = account->sipConns_.find({peerId, deviceId});
+                                         if (it != account->sipConns_.end()) {
+                                             auto connection = std::find_if(it->second.begin(),
+                                                                            it->second.end(),
+                                                                            [&](const auto& entry) {
+                                                                                return entry.channel == socket;
+                                                                            });
+                                             if (connection != it->second.end())
+                                                 sipTransport = connection->transport;
+                                         }
+                                     }
+                                     if (not sipTransport) {
+                                         JAMI_ERROR("[Account {}] Recovered SIP channel was not cached",
+                                                    account->getAccountID());
+                                         retry();
+                                         return;
+                                     }
+                                     runOnMainThread([w, wcall, sipTransport, attempt] {
+                                         auto account = w.lock();
+                                         auto call = wcall.lock();
+                                         if (account and call)
+                                             call->useRecoveredTransport(sipTransport,
+                                                                         account->getContactHeader(sipTransport),
+                                                                         attempt);
                                      });
                                  });
     return true;
@@ -4499,12 +4536,12 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 void
 JamiAccount::requestRecoverySIPConnection(const DeviceId& deviceId,
                                           const std::string& connectionType,
-                                          std::function<void()>&& onFailure)
+                                          std::function<void(const std::shared_ptr<dhtnet::ChannelSocket>&)>&& onResult)
 {
     std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_) {
         JAMI_WARNING("[Account {}] No connection manager to recover the SIP channel", getAccountID());
-        onFailure();
+        onResult(nullptr);
         return;
     }
     JAMI_LOG("[Account {}] Ask {} for a SIP channel on a new connection", getAccountID(), deviceId);
@@ -4517,9 +4554,8 @@ JamiAccount::requestRecoverySIPConnection(const DeviceId& deviceId,
     connectionManager_->connectDevice(
         deviceId,
         "sip",
-        [onFailure = std::move(onFailure)](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId&) {
-            if (not socket)
-                onFailure();
+        [onResult = std::move(onResult)](const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId&) {
+            onResult(socket);
         },
         options);
 }
@@ -4701,6 +4737,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         }
     });
 
+    // Locally opened channels are adopted only by the matching recovery request.
+    if (socket->isInitiator())
+        return;
     runOnMainThread([w = weak(), sip_tr, peerId, deviceId] {
         auto account = w.lock();
         if (not account)
@@ -4714,7 +4753,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 continue;
             if (oldTransport->peerAccountId() != peerId)
                 continue;
-            call->useRecoveredTransport(sip_tr, account->getContactHeader(sip_tr));
+            call->useRecoveredTransport(sip_tr, account->getContactHeader(sip_tr), std::nullopt);
         }
     });
 }
