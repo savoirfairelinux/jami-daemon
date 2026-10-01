@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d3aabe89_0524846d",
+        "filename": "doc/rfd/RFD-001-swarm-roles-and-permissions.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-01T21:54:32Z",
+      "side": 1,
+      "message": "[warning] Line 19: 🟡 Typo: \"additonal\" should be \"additional\". Please fix to avoid ambiguity in a normative design document.",
+      "revId": "dacc7bf1ef3a0d65ed28c7924a6e1fdef060235e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a52579f_a89d2952",
+        "filename": "doc/rfd/RFD-001-swarm-roles-and-permissions.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-01T21:54:32Z",
+      "side": 1,
+      "message": "[warning] Line 85: 🟡 The \"Future Work\" section is currently empty. Either add concrete follow-up items or remove the heading in this patch to keep the RFD focused and complete.",
+      "revId": "dacc7bf1ef3a0d65ed28c7924a6e1fdef060235e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
