@@ -20,3 +20,4 @@ Open only the records relevant to your task. Authoring rules:
 | [ADR-009](ADR-009-p2p-link-device-protocol.md) | Link New Devices over an Authenticated Peer-to-Peer Channel | Accepted | Retrospective | 2024-12 |
 | [ADR-010](ADR-010-y-crdt-collaborative-documents.md) | Collaborative Documents as Y-CRDT over Swarm Repositories | Accepted | Retrospective | 2026-07 |
 | [ADR-011](ADR-011-sip-call-handover.md) | Keep Jami Calls Alive across Network Changes | Accepted | Retrospective | 2026-09 |
+| [ADR-012](ADR-012-explicit-swarm-permissions.md) | Make Swarm Permissions Explicit | Accepted | Contemporary | 2026-10 |
