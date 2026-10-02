@@ -157,6 +157,8 @@ struct UserData
     std::map<std::string, int> removedEverywhere;
     std::map<std::string, int> removedLocally;
     std::map<std::string, std::vector<std::string>> attachmentsAdded;
+    // Each (conversation, stored) reported for a document.
+    std::map<std::string, std::vector<std::pair<std::string, bool>>> replicated;
 };
 
 class CollabTest : public CppUnit::TestFixture
@@ -213,6 +215,7 @@ private:
     void testRemoveDuringCheckpointFetch();
     void testCreateDocument();
     void testAutoCloneOnAnnouncement();
+    void testReplicatedSignal();
     void testAutoCloneAfterOfflineAnnouncement();
     void testOpenClonesAndJoins();
     void testClosedHolderConvergesViaCheckpoints();
@@ -242,6 +245,7 @@ private:
     CPPUNIT_TEST(testRemoveDuringCheckpointFetch);
     CPPUNIT_TEST(testCreateDocument);
     CPPUNIT_TEST(testAutoCloneOnAnnouncement);
+    CPPUNIT_TEST(testReplicatedSignal);
     CPPUNIT_TEST(testAutoCloneAfterOfflineAnnouncement);
     CPPUNIT_TEST(testOpenClonesAndJoins);
     CPPUNIT_TEST(testClosedHolderConvergesViaCheckpoints);
@@ -427,6 +431,13 @@ CollabTest::connectSignals()
             std::lock_guard<std::mutex> lock(mtx);
             if (auto* data = dataFor(accountId))
                 data->attachmentsAdded[documentId].emplace_back(attachmentId);
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::CollaborativeDocumentReplicated>(
+        [=, this](const std::string& accountId, const std::string& convId, const std::string& documentId, bool stored) {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (auto* data = dataFor(accountId))
+                data->replicated[documentId].emplace_back(convId, stored);
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
@@ -799,6 +810,66 @@ CollabTest::testAutoCloneOnAnnouncement()
     history = libjami::getCollaborativeDocumentHistory(bobId, convId, docId, 1);
     CPPUNIT_ASSERT(bobReplica.apply(libjami::collaborativeDocumentStateAt(bobId, convId, docId, history[0].at("id"))));
     CPPUNIT_ASSERT_EQUAL("received while closed again"s, bobReplica.text());
+}
+
+void
+CollabTest::testReplicatedSignal()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto convId = createConversationWithBob();
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    // Left empty: a download is worth reporting even with no version to read.
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Empty", "text/plain");
+    CPPUNIT_ASSERT(!docId.empty());
+
+    // Reports since the last reset; the same one may come more than once.
+    auto reports = [&] {
+        std::vector<std::pair<std::string, bool>> received;
+        CPPUNIT_ASSERT(poll([&] {
+            std::lock_guard<std::mutex> lk(mtx);
+            received = bobData.replicated[docId];
+            return !received.empty();
+        }));
+        return received;
+    };
+    auto reset = [&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        bobData.replicated[docId].clear();
+    };
+    auto allAre = [&](const std::vector<std::pair<std::string, bool>>& received, bool stored) {
+        return std::all_of(received.begin(), received.end(), [&](const auto& report) {
+            return report == std::make_pair(convId, stored);
+        });
+    };
+
+    // The announcement downloads the document to Bob.
+    CPPUNIT_ASSERT(allAre(reports(), true));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(docRepoPath(bobId, docId)));
+
+    // Already here: no download, still reported.
+    reset();
+    bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
+    CPPUNIT_ASSERT(allAre(reports(), true));
+
+    // Removed from this device: no download, reported as not stored.
+    CPPUNIT_ASSERT(libjami::removeCollaborativeDocumentLocally(bobId, convId, docId));
+    CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(docRepoPath(bobId, docId)); }));
+    reset();
+    bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
+    CPPUNIT_ASSERT(allAre(reports(), false));
+    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, docId)));
+
+    // Fetching back a document removed from this device is a download too.
+    reset();
+    libjami::openCollaborativeDocument(bobId, convId, docId);
+    CPPUNIT_ASSERT(poll([&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        const auto& received = bobData.replicated[docId];
+        return std::find(received.begin(), received.end(), std::make_pair(convId, true)) != received.end();
+    }));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(docRepoPath(bobId, docId)));
 }
 
 void

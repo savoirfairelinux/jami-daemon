@@ -130,7 +130,8 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
  * subscribes this device to subsequent checkpoints, without opening an editor.
  * This includes announcements received while the device was offline. Explicitly
  * removing a local copy stops replication until the document is opened again.
- * A reachable holder is required to download the content.
+ * A reachable holder is required to download the content;
+ * ConversationSignal::CollaborativeDocumentReplicated reports when it is done.
  * Unopened documents are replicated on disk without allocating a CRDT session.
  * Leaving the parent conversation also cancels its pending document downloads.
  *
@@ -391,6 +392,17 @@ struct LIBJAMI_PUBLIC ConversationSignal
                              const std::string& /*convId*/,
                              const std::string& /*documentId*/,
                              const std::string& /*attachmentId*/);
+    };
+    /// No download of the document is in progress: one completed, or an
+    /// announcement started none. @c stored tells whether the document is on
+    /// this device (possibly still empty). A failed download reports nothing.
+    struct LIBJAMI_PUBLIC CollaborativeDocumentReplicated
+    {
+        constexpr static const char* name = "CollaborativeDocumentReplicated";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
+                             const std::string& /*documentId*/,
+                             bool /*stored*/);
     };
     struct LIBJAMI_PUBLIC SwarmLoaded
     {

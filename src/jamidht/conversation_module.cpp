@@ -1118,10 +1118,15 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (conversation->mode() == ConversationMode::DOCUMENT) {
             // A document is not a conversation to the clients and is never
             // synced to this account's other devices; what has a stake in the
-            // clone's completion is the CRDT session that asked for it.
+            // clone's completion is the CRDT session that asked for it, and a
+            // client waiting for the content to be on this device.
             acc->collaborativeEditing()->onRepositoryUpdated(conversation->parentConversationId(),
                                                              conversationId,
                                                              !conversation->documentHistory(1).empty());
+            emitSignal<libjami::ConversationSignal::CollaborativeDocumentReplicated>(accountId_,
+                                                                                     conversation->parentConversationId(),
+                                                                                     conversationId,
+                                                                                     true);
             return;
         }
 
@@ -2717,6 +2722,16 @@ ConversationModule::cloneDocumentFrom(const std::string& parentConversationId,
     for (size_t i = 0; i < initiated; ++i)
         pimpl_->cloneConversationFrom(documentId, candidates[i]);
     return true;
+}
+
+bool
+ConversationModule::isCloningDocument(const std::string& documentId)
+{
+    auto conv = pimpl_->getConversation(documentId);
+    if (!conv)
+        return false;
+    std::lock_guard lk(conv->mtx);
+    return !conv->conversation && conv->pending;
 }
 
 void

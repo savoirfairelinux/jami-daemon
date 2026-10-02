@@ -928,6 +928,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitCollaborativeDocumentRemoved, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::CollaborativeAttachmentAdded>(
                 std::bind(&DBusConfigurationManager::emitCollaborativeAttachmentAdded, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::CollaborativeDocumentReplicated>(
+                std::bind(&DBusConfigurationManager::emitCollaborativeDocumentReplicated, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
                 std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ContactAdded>(

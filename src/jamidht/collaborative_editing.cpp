@@ -1457,8 +1457,20 @@ CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, con
     dht::ThreadPool::io().run([w = weak_from_this(), conversationId, documentId] {
         if (auto sthis = w.lock()) {
             sthis->ensureDocumentReplica(conversationId, documentId, false);
-            std::lock_guard<std::mutex> lk(sthis->announcedMtx_);
-            sthis->replicating_.erase(key(conversationId, documentId));
+            {
+                std::lock_guard<std::mutex> lk(sthis->announcedMtx_);
+                sthis->replicating_.erase(key(conversationId, documentId));
+            }
+            // A clone in progress reports when it lands; otherwise report now.
+            auto account = sthis->account_.lock();
+            auto* cm = account ? account->convModule() : nullptr;
+            if (cm && !cm->isCloningDocument(documentId)) {
+                auto stored = sthis->documentConversation(documentId) != nullptr;
+                emitSignal<libjami::ConversationSignal::CollaborativeDocumentReplicated>(sthis->accountId_,
+                                                                                         conversationId,
+                                                                                         documentId,
+                                                                                         stored);
+            }
         }
     });
 }

@@ -152,6 +152,7 @@ getSignalHandlers()
         exported_callback<libjami::ConversationSignal::CollaborativeDocumentRenamed>(),
         exported_callback<libjami::ConversationSignal::CollaborativeDocumentRemoved>(),
         exported_callback<libjami::ConversationSignal::CollaborativeAttachmentAdded>(),
+        exported_callback<libjami::ConversationSignal::CollaborativeDocumentReplicated>(),
 
 #ifdef ENABLE_PLUGIN
         exported_callback<libjami::PluginSignal::WebViewMessageReceived>(),
