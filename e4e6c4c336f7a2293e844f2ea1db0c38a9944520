@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56866373_11569e06",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2317,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-02T21:10:02Z",
+      "side": 1,
+      "message": "[warning] Line 2317: 🟡 `isAuthorizedLocalCommit` ends with `return mode() !\u003d ConversationMode::DOCUMENT \u0026\u0026 hasLocalPermission(Permission::Text);`, which authorizes any unhandled/unknown commit type in non-document conversations as long as the sender can post text. That breaks the explicit deny-by-default model and can silently grant permission to newly introduced `CommitType` values if this function is not updated. Replace this fallback with `return false` and handle every allowed commit type explicitly (including any intentional legacy type) so new types fail closed.",
+      "revId": "e4e6c4c336f7a2293e844f2ea1db0c38a9944520",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
