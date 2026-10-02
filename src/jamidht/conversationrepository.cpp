@@ -264,7 +264,6 @@ public:
                               const std::string& commitId,
                               const std::string& parentId) const;
     bool checkVote(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const;
-    bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
     bool isValidUserAtCommit(const std::string& userDevice,
                              const std::string& commitId,
                              const git_buf& sig,
@@ -294,6 +293,13 @@ public:
                                  const std::string& parentId) const;
     bool checkValidMergeCommit(const std::string& mergeId, const std::vector<std::string>& parents) const;
     std::optional<std::set<std::string_view>> getDeltaPathsFromDiff(const GitDiff& diff) const;
+    bool hasPermissionAtTree(const std::string& uri, const GitTree& tree, Permission permission) const;
+    // Whether member `uri` may create a commit with `message` that changes `parentTree` into `tree`
+    bool isAuthorizedCommit(const std::string& uri,
+                            const GitTree& parentTree,
+                            const GitTree& tree,
+                            const CommitMessage& message) const;
+    bool isAuthorizedRemoteCommit(const std::string& userDevice, const ConversationCommit& commit) const;
 
     bool add(const std::string& path);
     void addUserDevice();
@@ -302,6 +308,7 @@ public:
     bool validateDevice();
     std::string commit(const std::string& msg, bool verifyDevice = true);
     std::string commitMessage(const std::string& msg, bool verifyDevice = true);
+    bool hasLocalPermission(Permission permission) const;
     ConversationMode mode() const;
 
     // NOTE! GitDiff needs to be deleted before repo
@@ -477,9 +484,6 @@ public:
     void initMembers();
 
     std::optional<std::map<std::string, std::string>> convCommitToMap(const ConversationCommit& commit) const;
-
-    // Permissions
-    MemberRole updateProfilePermLvl_ {MemberRole::ADMIN};
 
     /**
      * Retrieve the user related to a device using the account's certificate store.
@@ -1226,10 +1230,6 @@ ConversationRepository::Impl::checkValidCheckpoint(const std::string& userDevice
     // attachments, so a checkpoint can never alter certificates or metadata.
     // The one exception is the author's own device certificate, which is added
     // alongside a device's first commit exactly as for any other commit type.
-    if (mode() != ConversationMode::DOCUMENT) {
-        JAMI_ERROR("Checkpoint commit {} in a non-document repository", commitId);
-        return false;
-    }
     auto repo = repository();
     if (!repo)
         return false;
@@ -1284,43 +1284,6 @@ ConversationRepository::Impl::checkValidCheckpoint(const std::string& userDevice
 }
 
 bool
-ConversationRepository::Impl::checkEdit(const std::string& userDevice, const ConversationCommit& commit) const
-{
-    auto repo = repository();
-    if (!repo)
-        return false;
-    auto userUri = uriFromDevice(userDevice, commit.id);
-    if (userUri.empty())
-        return false;
-    // Check that edited commit is found, for the same author, and editable (plain/text)
-    auto editedId = commit.commitMsg.editedId;
-    auto editedCommit = getCommit(editedId);
-    if (editedCommit == std::nullopt) {
-        JAMI_ERROR("Commit {:s} not found", editedId);
-        return false;
-    }
-    if (editedCommit->authorId != commit.authorId or commit.authorId != userUri) {
-        JAMI_ERROR("Edited commit {:s} got a different author ({:s})", editedId, commit.id);
-        return false;
-    }
-    if (editedCommit->commitMsg.type == CommitType::TEXT) {
-        return true;
-    }
-    if (editedCommit->commitMsg.type == CommitType::DATA_TRANSFER) {
-        if (!editedCommit->commitMsg.tid.empty())
-            return true;
-    }
-    // Removing a collaborative document is an edition of the commit that
-    // announced it, so the author check above is what says that only the member
-    // who created a document may remove it for everyone.
-    if (editedCommit->commitMsg.type == CommitType::COLLAB_DOC) {
-        return true;
-    }
-    JAMI_ERROR("Edited commit {:s} is not valid!", editedId);
-    return false;
-}
-
-bool
 ConversationRepository::Impl::checkVote(const std::string& userDevice,
                                         const std::string& commitId,
                                         const std::string& parentId) const
@@ -1365,14 +1328,6 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     auto userUri = uriFromDevice(userDevice, commitId);
     if (userUri.empty())
         return false;
-    // Check that voter is admin
-    auto adminFile = fmt::format("admins/{}.crt", userUri);
-
-    if (!fileAtTree(adminFile, treeOld)) {
-        JAMI_ERROR("Vote from non admin: {}", userUri);
-        return false;
-    }
-
     // Check votedFile path
     static const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
     std::svmatch base_match;
@@ -1753,17 +1708,6 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
         }
     }
 
-    auto userUri = uriFromDevice(userDevice, commitId);
-    if (userUri.empty())
-        return false;
-
-    // Check that voters are admins
-    adminFile = fmt::format("admins/{}.crt", userUri);
-    if (!fileAtTree(adminFile, treeOld)) {
-        JAMI_ERROR("admin file ({}) not found", adminFile);
-        return false;
-    }
-
     // If not for self check that vote is valid and not added
     auto nbAdmins = 0;
     auto nbVotes = 0;
@@ -1806,24 +1750,6 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
     auto userUri = uriFromDevice(userDevice, commitId);
     if (userUri.empty())
         return false;
-
-    // Check if profile is changed by an user with correct privilege
-    auto valid = false;
-    if (updateProfilePermLvl_ == MemberRole::ADMIN) {
-        std::string adminFile = fmt::format("admins/{}.crt", userUri);
-        auto adminCert = fileAtTree(adminFile, treeNew);
-        valid |= adminCert != nullptr;
-    }
-    if (updateProfilePermLvl_ >= MemberRole::MEMBER) {
-        std::string memberFile = fmt::format("members/{}.crt", userUri);
-        auto memberCert = fileAtTree(memberFile, treeNew);
-        valid |= memberCert != nullptr;
-    }
-
-    if (!valid) {
-        JAMI_ERROR("Profile changed from unauthorized user: {} ({})", userDevice, userUri);
-        return false;
-    }
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // Check that no weird file is added nor removed
@@ -2238,9 +2164,27 @@ ConversationRepository::Impl::validateDevice()
     return true;
 }
 
+bool
+ConversationRepository::Impl::hasLocalPermission(Permission permission) const
+{
+    auto repo = repository();
+    if (!repo)
+        return false;
+    git_oid head;
+    if (git_reference_name_to_id(&head, repo.get(), "HEAD") < 0)
+        return false;
+    auto tree = treeAtCommit(repo.get(), git_oid_tostr_s(&head));
+    return tree && hasPermissionAtTree(userId_, tree, permission);
+}
+
 std::string
 ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 {
+    auto message = CommitMessage::fromString(msg);
+    if (!message) {
+        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Invalid commit message", accountId_, id_);
+        return {};
+    }
     if (verifyDevice && !validateDevice()) {
         JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Invalid device", accountId_, id_);
         return {};
@@ -2290,6 +2234,17 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
         return {};
     }
     GitCommit head_commit {head_ptr};
+
+    git_tree* parent_tree_ptr = nullptr;
+    if (git_commit_tree(&parent_tree_ptr, head_commit.get()) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD tree", accountId_, id_);
+        return {};
+    }
+    GitTree parentTree {parent_tree_ptr};
+    if (!isAuthorizedCommit(userId_, parentTree, tree, *message)) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Refusing unauthorized local commit", accountId_, id_);
+        return {};
+    }
 
     git_buf to_sign = {};
     // The last argument of git_commit_create_buffer is of type
@@ -2629,6 +2584,96 @@ ConversationRepository::Impl::memberCertificate(std::string_view memberUri, cons
     if (not blob)
         blob = fileAtTree(fmt::format("admins/{}.crt", memberUri), tree);
     return blob;
+}
+
+bool
+ConversationRepository::Impl::hasPermissionAtTree(const std::string& uri,
+                                                  const GitTree& tree,
+                                                  Permission permission) const
+{
+    if (fileAtTree(fmt::format("admins/{}.crt", uri), tree))
+        return hasPermission(mode(), MemberRole::ADMIN, permission);
+    if (fileAtTree(fmt::format("members/{}.crt", uri), tree))
+        return hasPermission(mode(), MemberRole::MEMBER, permission);
+    return false;
+}
+
+bool
+ConversationRepository::Impl::isAuthorizedCommit(const std::string& uri,
+                                                 const GitTree& parentTree,
+                                                 const GitTree& tree,
+                                                 const CommitMessage& message) const
+{
+    if (uri.empty())
+        return false;
+    auto allowed = [&](Permission permission) {
+        return hasPermissionAtTree(uri, parentTree, permission);
+    };
+
+    if (message.type == CommitType::MEMBER) {
+        // Joining and leaving require no permission, but are only possible for oneself
+        if (message.action == CommitAction::JOIN || message.action == CommitAction::REMOVE)
+            return message.uri == uri;
+        if (message.action == CommitAction::ADD)
+            return allowed(Permission::AddMember);
+        if (message.action == CommitAction::BAN || message.action == CommitAction::UNBAN)
+            return allowed(Permission::BanUnbanMember);
+        return false;
+    }
+    if (message.type == CommitType::VOTE)
+        return allowed(Permission::BanUnbanMember);
+    if (message.type == CommitType::UPDATE_PROFILE)
+        return allowed(Permission::UpdateProfile);
+    if (message.type == CommitType::CHECKPOINT) {
+        auto attachmentsId = [](const GitTree& t) {
+            auto* entry = git_tree_entry_byname(t.get(), "attachments");
+            return entry ? std::string(git_oid_tostr_s(git_tree_entry_id(entry))) : std::string();
+        };
+        return allowed(attachmentsId(parentTree) != attachmentsId(tree) ? Permission::AddDocumentAttachment
+                                                                        : Permission::UpdateDocument);
+    }
+    if (message.type == CommitType::EDITED_MESSAGE || !message.editedId.empty()) {
+        // Only the author of a commit may edit or delete it
+        auto edited = getCommit(message.editedId);
+        if (!edited || edited->authorId != uri)
+            return false;
+        if (edited->commitMsg.type == CommitType::TEXT)
+            return allowed(message.body.empty() ? Permission::Delete : Permission::Edit);
+        if (edited->commitMsg.type == CommitType::DATA_TRANSFER && !edited->commitMsg.tid.empty())
+            return allowed(Permission::DeleteFile);
+        if (edited->commitMsg.type == CommitType::COLLAB_DOC)
+            return allowed(Permission::DeleteDocument);
+        return false;
+    }
+    if (message.type == CommitType::TEXT)
+        return allowed(!message.reactTo.empty()   ? Permission::Reaction
+                       : !message.replyTo.empty() ? Permission::TextReply
+                                                  : Permission::Text);
+    if (message.type == CommitType::DATA_TRANSFER)
+        return allowed(message.replyTo.empty() ? Permission::File : Permission::FileReply);
+    if (message.type == CommitType::CALL_HISTORY)
+        return allowed(message.confId.empty() ? Permission::Call : Permission::HostConference);
+    if (message.type == CommitType::COLLAB_DOC)
+        return allowed(Permission::CreateDocument);
+    // Other mimetypes are accepted as free-form messages for forward compatibility
+    return allowed(Permission::Text);
+}
+
+bool
+ConversationRepository::Impl::isAuthorizedRemoteCommit(const std::string& userDevice,
+                                                       const ConversationCommit& commit) const
+{
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto parentTree = treeAtCommit(repo.get(), commit.parents[0]);
+    auto tree = treeAtCommit(repo.get(), commit.id);
+    if (!parentTree || !tree)
+        return false;
+    // Leaving removes the author's certificates, so they can only be resolved before the commit
+    auto leaving = commit.commitMsg.type == CommitType::MEMBER && commit.commitMsg.action == CommitAction::REMOVE;
+    auto uri = uriFromDeviceAtCommit(userDevice, leaving ? commit.parents[0] : commit.id);
+    return isAuthorizedCommit(uri, parentTree, tree, commit.commitMsg);
 }
 
 GitTree
@@ -3243,12 +3288,26 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
             }
         } else if (commit.parents.size() == 1) {
             std::string type = commit.commitMsg.type;
-            std::string editedId = commit.commitMsg.editedId;
             if (type.empty()) {
                 emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                              id_,
                                                                              EVALIDFETCH,
                                                                              "Malformed commit (empty type)");
+                return false;
+            }
+
+            if (!isAuthorizedRemoteCommit(userDevice, commit)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Unauthorized {} commit {}. Please ensure that you "
+                             "are using the latest version of Jami, or that one of your contacts is not "
+                             "performing any unwanted actions.",
+                             accountId_,
+                             id_,
+                             type,
+                             commit.id);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Unauthorized commit");
                 return false;
             }
 
@@ -3404,35 +3463,7 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                                                                                  "Malformed checkpoint commit");
                     return false;
                 }
-            } else if (type == CommitType::EDITED_MESSAGE || !editedId.empty()) {
-                if (!checkEdit(userDevice, commit)) {
-                    JAMI_ERROR("Commit {:s} malformed", commit.id);
-
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                                 id_,
-                                                                                 EVALIDFETCH,
-                                                                                 "Malformed edit commit");
-                    return false;
-                }
             } else {
-                // Free-form message commits (texts, call history, data
-                // transfers…) only belong to conversations: every commit a
-                // document repository can legitimately contain is handled by
-                // one of the branches above.
-                if (mode() == ConversationMode::DOCUMENT) {
-                    JAMI_WARNING("[Account {}] [Conversation {}] Rejecting {} commit {} in a "
-                                 "document repository. Please ensure that you are using the "
-                                 "latest version of Jami, or that one of your contacts is not "
-                                 "performing any unwanted actions.",
-                                 accountId_,
-                                 id_,
-                                 type,
-                                 commit.id);
-
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(
-                        accountId_, id_, EVALIDFETCH, "Message commit in document repository");
-                    return false;
-                }
                 // Note: accept all mimetype here, as we can have new mimetypes
                 // Just avoid to add weird files
                 // Check that no weird file is added outside device cert nor removed
@@ -3531,6 +3562,8 @@ ConversationRepository::addMember(const std::string& uri)
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::AddMember))
+        return {};
     auto repo = pimpl_->repository();
     if (not repo)
         return {};
@@ -4240,6 +4273,8 @@ ConversationRepository::addAttachment(const std::vector<uint8_t>& data)
     }
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::AddDocumentAttachment))
+        return {};
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
@@ -4327,6 +4362,8 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::BanUnbanMember))
+        return {};
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -4374,6 +4411,8 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::BanUnbanMember))
+        return {};
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -4513,6 +4552,8 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::BanUnbanMember))
+        return {};
     // Count ratio admin/votes
     auto nbAdmins = 0, nbVotes = 0;
     // For each admin, check if voted
@@ -4686,17 +4727,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
-    auto valid = false;
-    {
-        std::lock_guard lk(pimpl_->membersMtx_);
-        for (const auto& member : pimpl_->members_) {
-            if (member.uri == pimpl_->userId_) {
-                valid = member.role <= pimpl_->updateProfilePermLvl_;
-                break;
-            }
-        }
-    }
-    if (!valid) {
+    if (!pimpl_->hasLocalPermission(Permission::UpdateProfile)) {
         JAMI_ERROR("Insufficient permission to update information.");
         emitSignal<libjami::ConversationSignal::OnConversationError>(pimpl_->accountId_,
                                                                      pimpl_->id_,
