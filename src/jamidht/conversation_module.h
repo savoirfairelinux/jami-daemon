@@ -250,6 +250,12 @@ public:
                            bool reopen = true);
 
     /**
+     * Whether a clone of this document is in progress (not waiting for a retry).
+     * @param documentId  the document's repository id
+     */
+    bool isCloningDocument(const std::string& documentId);
+
+    /**
      * Drop this device's replica of a collaborative document.The repository and
      * its swarm connections are torn down and the document is recorded as
      * removed so it is not recloned on restart.

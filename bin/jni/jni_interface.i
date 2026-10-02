@@ -343,6 +343,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::CollaborativeDocumentRenamed>(bind(&ConversationCallback::collaborativeDocumentRenamed, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::CollaborativeDocumentRemoved>(bind(&ConversationCallback::collaborativeDocumentRemoved, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::CollaborativeAttachmentAdded>(bind(&ConversationCallback::collaborativeAttachmentAdded, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::CollaborativeDocumentReplicated>(bind(&ConversationCallback::collaborativeDocumentReplicated, convM, _1, _2, _3, _4)),
     };
 
     const std::map<std::string, SharedCallback> networkServiceEvHandlers = {

@@ -1045,6 +1045,17 @@
             <arg type="s" name="attachmentId"/>
         </signal>
 
+        <signal name="collaborativeDocumentReplicated" tp:name-for-bindings="collaborativeDocumentReplicated">
+            <tp:docstring>
+               No download of a collaborative document is in progress anymore.
+               "stored" tells whether the document is on this device
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+            <arg type="b" name="stored"/>
+        </signal>
+
         <method name="setVolume" tp:name-for-bindings="setVolume">
             <tp:docstring>
                 <p>Sets the volume using a linear scale [0,100].</p>
