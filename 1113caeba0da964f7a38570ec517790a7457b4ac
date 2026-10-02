@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bc9d4f1_5a80bbbf",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 547,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-02T17:00:11Z",
+      "side": 1,
+      "message": "[warning] Line 547: 🟡 Please add/extend a test that covers the Android `videoMixer_` split (`!videoMixer_` → `RequestKeyFrame(videoLocal_)`, `videoMixer_` → `sender_-\u003eforceKeyFrame()`). This behavior is platform-gated and easy to regress silently in non-Android CI; a focused test will lock in the intended routing for direct vs conference calls.",
+      "revId": "1113caeba0da964f7a38570ec517790a7457b4ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
