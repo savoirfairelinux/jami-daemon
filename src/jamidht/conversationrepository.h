@@ -114,6 +114,104 @@ struct ConversationCommit
 
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
+enum class Permission {
+    Text,
+    TextReply,
+    File,
+    FileReply,
+    Reaction,
+    Call,
+    HostConference,
+    Edit,
+    Delete,
+    DeleteFile,
+    CreateDocument,
+    DeleteDocument,
+    UpdateDocument,
+    AddDocumentAttachment,
+    Join,
+    Leave,
+    AddMember,
+    BanUnbanMember,
+    UpdateProfile,
+};
+
+constexpr bool
+hasPermission(ConversationMode mode, MemberRole role, Permission permission) noexcept
+{
+    if (role == MemberRole::INVITED) {
+        switch (mode) {
+        case ConversationMode::ONE_TO_ONE:
+        case ConversationMode::INVITES_ONLY:
+        case ConversationMode::DOCUMENT:
+            return permission == Permission::Join;
+        default:
+            return false;
+        }
+    }
+    if (role != MemberRole::ADMIN && role != MemberRole::MEMBER)
+        return false;
+
+    switch (mode) {
+    case ConversationMode::ONE_TO_ONE:
+        switch (permission) {
+        case Permission::Text:
+        case Permission::TextReply:
+        case Permission::File:
+        case Permission::FileReply:
+        case Permission::Reaction:
+        case Permission::Call:
+        case Permission::Edit:
+        case Permission::Delete:
+        case Permission::DeleteFile:
+        case Permission::CreateDocument:
+        case Permission::DeleteDocument:
+        case Permission::Leave:
+        case Permission::AddMember:
+            return true;
+        default:
+            return false;
+        }
+    case ConversationMode::INVITES_ONLY:
+        switch (permission) {
+        case Permission::Text:
+        case Permission::TextReply:
+        case Permission::File:
+        case Permission::FileReply:
+        case Permission::Reaction:
+        case Permission::HostConference:
+        case Permission::Edit:
+        case Permission::Delete:
+        case Permission::DeleteFile:
+        case Permission::CreateDocument:
+        case Permission::DeleteDocument:
+        case Permission::Leave:
+        case Permission::AddMember:
+            return true;
+        case Permission::BanUnbanMember:
+        case Permission::UpdateProfile:
+            return role == MemberRole::ADMIN;
+        default:
+            return false;
+        }
+    case ConversationMode::DOCUMENT:
+        switch (permission) {
+        case Permission::UpdateDocument:
+        case Permission::AddDocumentAttachment:
+        case Permission::Leave:
+        case Permission::AddMember:
+            return true;
+        case Permission::BanUnbanMember:
+        case Permission::UpdateProfile:
+            return role == MemberRole::ADMIN;
+        default:
+            return false;
+        }
+    default:
+        return false;
+    }
+}
+
 namespace MemberPath {
 
 static const std::filesystem::path ADMINS {"admins"};
