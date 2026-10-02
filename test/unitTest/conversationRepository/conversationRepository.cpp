@@ -39,6 +39,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <array>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -98,6 +99,8 @@ private:
     void testCheckpointDeletingDeviceCertRejected();
     void testAttachmentInConversationRejected();
     void testMessageInDocumentRejected();
+    void testModePermissionsRejected();
+    void testLocalPermissionDenied();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -132,6 +135,8 @@ private:
     CPPUNIT_TEST(testCheckpointDeletingDeviceCertRejected);
     CPPUNIT_TEST(testAttachmentInConversationRejected);
     CPPUNIT_TEST(testMessageInDocumentRejected);
+    CPPUNIT_TEST(testModePermissionsRejected);
+    CPPUNIT_TEST(testLocalPermissionDenied);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -556,9 +561,9 @@ ConversationRepositoryTest::testDiff()
     auto uri = aliceAccount->getUsername();
     auto repository = ConversationRepository::createConversation(aliceAccount);
 
-    auto id1 = repository->commitMessage("Commit 1");
-    auto id2 = repository->commitMessage("Commit 2");
-    auto id3 = repository->commitMessage("Commit 3");
+    auto id1 = repository->commitMessage(CommitMessage::text("Commit 1").toString());
+    auto id2 = repository->commitMessage(CommitMessage::text("Commit 2").toString());
+    auto id3 = repository->commitMessage(CommitMessage::text("Commit 3").toString());
 
     auto diff = repository->diffStats(id2, id1);
     CPPUNIT_ASSERT(ConversationRepository::changedFiles(diff).empty());
@@ -1376,7 +1381,11 @@ ConversationRepositoryTest::testCheckpointInConversationRejected()
     auto repository = ConversationRepository::createConversation(aliceAccount);
     CPPUNIT_ASSERT(repository != nullptr);
 
-    auto checkpointId = repository->commitMessage(CommitMessage::checkpoint({"dXBkYXRlMQ=="}).toString());
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    auto checkpointId = addCommit(repo, aliceAccount, "main", CommitMessage::checkpoint({"dXBkYXRlMQ=="}).toString());
+    git_repository_free(repo);
     CPPUNIT_ASSERT(!checkpointId.empty());
 
     CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
@@ -1531,11 +1540,74 @@ ConversationRepositoryTest::testMessageInDocumentRejected()
     auto repository = ConversationRepository::createDocument(aliceAccount, "some-conversation-id", "text/html");
     CPPUNIT_ASSERT(repository != nullptr);
 
-    auto messageId = repository->commitMessage(R"({"body":"hello","type":"text/plain"})");
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    auto messageId = addCommit(repo, aliceAccount, "main", R"({"body":"hello","type":"text/plain"})");
+    git_repository_free(repo);
     CPPUNIT_ASSERT(!messageId.empty());
 
     CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+}
+
+void
+ConversationRepositoryTest::testModePermissionsRejected()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    struct Scenario
+    {
+        ConversationMode mode;
+        std::string peer;
+        std::string message;
+    };
+    const std::array<Scenario, 3> cases {{
+        {ConversationMode::ONE_TO_ONE, bobAccount->getUsername(), R"({"type":"application/update-profile"})"},
+        {ConversationMode::ONE_TO_ONE, std::string(40, 'a'), R"({"type":"application/call-history+json","confId":"1"})"},
+        {ConversationMode::INVITES_ONLY, "", R"({"type":"application/call-history+json","to":"peer"})"},
+    }};
+    for (const auto& [mode, peer, message] : cases) {
+        auto repository = ConversationRepository::createConversation(aliceAccount, mode, peer);
+        CPPUNIT_ASSERT(repository != nullptr);
+        auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+        git_repository* repo;
+        CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+        auto commitId = addCommit(repo, aliceAccount, "main", message);
+        git_repository_free(repo);
+        CPPUNIT_ASSERT(!commitId.empty());
+        CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
+    }
+}
+
+void
+ConversationRepositoryTest::testLocalPermissionDenied()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createDocument(aliceAccount, "local-permission-test", "text/html");
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    auto head = repository->getHead();
+    CPPUNIT_ASSERT(repository->commitMessage(CommitMessage::text("hello").toString()).empty());
+    CPPUNIT_ASSERT(repository->commitMessage(R"({"type":"application/call-history+json"})").empty());
+    CPPUNIT_ASSERT_EQUAL(head, repository->getHead());
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto conversation = ConversationRepository::createConversation(aliceAccount,
+                                                                   ConversationMode::ONE_TO_ONE,
+                                                                   bobAccount->getUsername());
+    CPPUNIT_ASSERT(conversation != nullptr);
+    head = conversation->getHead();
+    CPPUNIT_ASSERT(conversation->commitMessage(CommitMessage::checkpoint({}).toString()).empty());
+    CPPUNIT_ASSERT(conversation->commitMessage(R"({"type":"application/update-profile"})").empty());
+    CPPUNIT_ASSERT(conversation->commitMessage(R"({"type":"application/call-history+json","confId":"1"})").empty());
+    CPPUNIT_ASSERT(
+        conversation->commitMessage(CommitMessage::member(CommitAction::JOIN, bobAccount->getUsername()).toString())
+            .empty());
+    CPPUNIT_ASSERT(
+        conversation->commitMessage(CommitMessage::member(CommitAction::REMOVE, bobAccount->getUsername()).toString())
+            .empty());
+    CPPUNIT_ASSERT_EQUAL(head, conversation->getHead());
 }
 
 } // namespace test
