@@ -42,6 +42,7 @@ public:
     virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
     virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
+    virtual void collaborativeDocumentDownloaded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/){}
 };
 %}
 
@@ -137,4 +138,5 @@ public:
     virtual void collaborativeDocumentRenamed(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*name*/){}
     virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
+    virtual void collaborativeDocumentDownloaded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/){}
 };

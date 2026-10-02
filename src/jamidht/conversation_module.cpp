@@ -1118,10 +1118,14 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (conversation->mode() == ConversationMode::DOCUMENT) {
             // A document is not a conversation to the clients and is never
             // synced to this account's other devices; what has a stake in the
-            // clone's completion is the CRDT session that asked for it.
+            // clone's completion is the CRDT session that asked for it, and a
+            // client waiting for the content to be on this device.
             acc->collaborativeEditing()->onRepositoryUpdated(conversation->parentConversationId(),
                                                              conversationId,
                                                              !conversation->documentHistory(1).empty());
+            emitSignal<libjami::ConversationSignal::CollaborativeDocumentDownloaded>(accountId_,
+                                                                                     conversation->parentConversationId(),
+                                                                                     conversationId);
             return;
         }
 

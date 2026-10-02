@@ -1045,6 +1045,16 @@
             <arg type="s" name="attachmentId"/>
         </signal>
 
+        <signal name="collaborativeDocumentDownloaded" tp:name-for-bindings="collaborativeDocumentDownloaded">
+            <tp:docstring>
+               Notify clients that this device finished downloading a collaborative
+               document, whose stored versions can now be read without a peer
+            </tp:docstring>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="conversationId"/>
+            <arg type="s" name="documentId"/>
+        </signal>
+
         <method name="setVolume" tp:name-for-bindings="setVolume">
             <tp:docstring>
                 <p>Sets the volume using a linear scale [0,100].</p>
