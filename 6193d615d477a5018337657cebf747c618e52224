@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9358a399_3bfb5154",
+        "filename": "doc/rfd/RFD-001-swarm-roles-and-permissions.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-02T18:49:21Z",
+      "side": 1,
+      "message": "[warning] Line 82: 🟡 The document states this RFD captures the \"currently supported permissions,\" but this note says `HostConference` and `UpdateProfile` restrictions in `ONE_TO_ONE` are not actually enforced. That creates an accuracy gap between the matrix and runtime behavior. Please either (a) mark those permissions as effectively allowed today with a caveat, or (b) reword the section to clearly distinguish intended policy vs current enforcement.",
+      "revId": "6193d615d477a5018337657cebf747c618e52224",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
