@@ -545,12 +545,14 @@ VideoRtpSession::forceKeyFrame()
 {
     std::lock_guard lock(mutex_);
 #if __ANDROID__
-    if (videoLocal_)
-        emitSignal<libjami::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
-#else
+    if (!videoMixer_) {
+        if (videoLocal_)
+            emitSignal<libjami::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
+        return;
+    }
+#endif
     if (sender_)
         sender_->forceKeyFrame();
-#endif
 }
 
 void
