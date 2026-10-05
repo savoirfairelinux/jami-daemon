@@ -1364,6 +1364,16 @@ parseExternalSdp(pj_pool_t* pool, const std::string& sdp)
 }
 
 bool
+Sdp::setReceivedOfferFromExternalSdp(const std::string& sdp)
+{
+    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    if (not session)
+        return false;
+    remoteSession_ = session;
+    return true;
+}
+
+bool
 Sdp::createOfferFromExternalSdp(const std::string& sdp)
 {
     auto* session = parseExternalSdp(memPool_.get(), sdp);
