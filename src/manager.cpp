@@ -812,6 +812,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     // manager can restart without being recreated (Unit tests)
     pimpl_->finished_ = false;
+    libjami::allowBrowserConferences();
 
     // Create video manager
     if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
@@ -893,6 +894,8 @@ Manager::finish() noexcept
         return;
 
     try {
+        libjami::cancelAllBrowserConferences();
+
         // Terminate UPNP context
         upnpContext()->shutdown();
 
@@ -2847,6 +2850,7 @@ Manager::markAccountReady(const std::string& accountId)
 void
 Manager::removeAccount(const std::string& accountID, bool flush)
 {
+    libjami::cancelBrowserConferencesForAccount(accountID);
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount)) {
