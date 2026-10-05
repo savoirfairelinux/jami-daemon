@@ -136,6 +136,7 @@ AudioRtpSession::startSender()
     } catch (const MediaEncoderException& e) {
         JAMI_ERROR("{}", e.what());
         send_.enabled = false;
+        return;
     }
 
     if (voiceCallback_)
