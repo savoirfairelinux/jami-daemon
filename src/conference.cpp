@@ -683,6 +683,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<libjami::MediaMap>& remoteMediaList)
 {
     JAMI_DEBUG("[conf:{}] Answering media change request from call {}", getConfId(), call->getCallId());
+    auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
     // Check if the participant previously had video
@@ -716,7 +717,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
-    call->answerMediaChangeRequest(conference_detail::mediaAnswerForOffer(hostSources_, remoteMediaList));
+    call->answerMediaChangeRequest(conference_detail::mediaAnswerForOffer(currentMediaList, remoteMediaList));
     call->enterConference(shared_from_this());
 
     // Rebind audio after media renegotiation so that any newly added
