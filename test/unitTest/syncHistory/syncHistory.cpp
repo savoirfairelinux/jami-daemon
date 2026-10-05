@@ -322,7 +322,8 @@ SyncHistoryTest::connectSignals()
         [&](uint32_t,
             const std::string& accountId,
             const std::string& /* conversationId */,
-            std::vector<libjami::SwarmMessage> messages) {
+            std::vector<libjami::SwarmMessage> messages,
+            const std::vector<std::string>& /* permissions */) {
             if (accountId == aliceId) {
                 aliceData.messagesLoaded.insert(aliceData.messagesLoaded.end(), messages.begin(), messages.end());
             } else if (accountId == alice2Id) {

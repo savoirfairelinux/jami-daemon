@@ -103,6 +103,7 @@ private:
     void testModePermissionsRejected();
     void testLocalPermissionDenied();
     void testRemoveOtherMemberRejected();
+    void testMemberPermissions();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -141,6 +142,7 @@ private:
     CPPUNIT_TEST(testModePermissionsRejected);
     CPPUNIT_TEST(testLocalPermissionDenied);
     CPPUNIT_TEST(testRemoveOtherMemberRejected);
+    CPPUNIT_TEST(testMemberPermissions);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1733,6 +1735,48 @@ ConversationRepositoryTest::testRepackKeepsHistory()
     CPPUNIT_ASSERT(git_odb_exists(odb, &peerCommit));
     git_odb_free(odb);
     git_repository_free(repo);
+}
+
+void
+ConversationRepositoryTest::testMemberPermissions()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto contains = [](const std::vector<std::string>& names, std::string_view name) {
+        return std::find(names.begin(), names.end(), name) != names.end();
+    };
+
+    for (const auto& [permission, name] : PERMISSION_NAME_TABLE) {
+        CPPUNIT_ASSERT(!name.empty());
+        CPPUNIT_ASSERT(permissionName(permission) == name);
+    }
+
+    auto group = ConversationRepository::createConversation(aliceAccount, ConversationMode::INVITES_ONLY);
+    CPPUNIT_ASSERT(group != nullptr);
+    auto adminPermissions = group->permissions(aliceUri);
+    CPPUNIT_ASSERT(adminPermissions == permissionNames(ConversationMode::INVITES_ONLY, MemberRole::ADMIN));
+    CPPUNIT_ASSERT(contains(adminPermissions, "updateProfile"));
+    CPPUNIT_ASSERT(contains(adminPermissions, "hostConference"));
+    CPPUNIT_ASSERT(!contains(adminPermissions, "call"));
+    CPPUNIT_ASSERT(group->permissions(bobUri).empty());
+
+    auto memberPermissions = permissionNames(ConversationMode::INVITES_ONLY, MemberRole::MEMBER);
+    CPPUNIT_ASSERT(contains(memberPermissions, "text"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "updateProfile"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "banUnbanMember"));
+    CPPUNIT_ASSERT(permissionNames(ConversationMode::INVITES_ONLY, MemberRole::INVITED).empty());
+    CPPUNIT_ASSERT(permissionNames(ConversationMode::INVITES_ONLY, MemberRole::BANNED).empty());
+
+    auto oneToOne = ConversationRepository::createConversation(aliceAccount, ConversationMode::ONE_TO_ONE, bobUri);
+    CPPUNIT_ASSERT(oneToOne != nullptr);
+    auto oneToOnePermissions = oneToOne->permissions(aliceUri);
+    CPPUNIT_ASSERT(contains(oneToOnePermissions, "call"));
+    CPPUNIT_ASSERT(!contains(oneToOnePermissions, "hostConference"));
+    CPPUNIT_ASSERT(!contains(oneToOnePermissions, "updateProfile"));
+    // Bob is only invited until he joins
+    CPPUNIT_ASSERT(oneToOne->permissions(bobUri).empty());
 }
 
 } // namespace test

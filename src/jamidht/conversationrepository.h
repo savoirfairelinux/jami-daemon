@@ -23,12 +23,14 @@
 #include <opendht/default_types.h>
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <optional>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace jami {
@@ -197,6 +199,53 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
     default:
         return false;
     }
+}
+
+constexpr std::array<std::pair<Permission, std::string_view>, 17> PERMISSION_NAME_TABLE {{
+    {Permission::Text, "text"},
+    {Permission::TextReply, "textReply"},
+    {Permission::File, "file"},
+    {Permission::FileReply, "fileReply"},
+    {Permission::Reaction, "reaction"},
+    {Permission::Call, "call"},
+    {Permission::HostConference, "hostConference"},
+    {Permission::Edit, "edit"},
+    {Permission::Delete, "delete"},
+    {Permission::DeleteFile, "deleteFile"},
+    {Permission::CreateDocument, "createDocument"},
+    {Permission::DeleteDocument, "deleteDocument"},
+    {Permission::UpdateDocument, "updateDocument"},
+    {Permission::AddDocumentAttachment, "addDocumentAttachment"},
+    {Permission::AddMember, "addMember"},
+    {Permission::BanUnbanMember, "banUnbanMember"},
+    {Permission::UpdateProfile, "updateProfile"},
+}};
+
+/**
+ * Name of a permission, as exposed to clients
+ */
+constexpr std::string_view
+permissionName(Permission permission) noexcept
+{
+    for (const auto& [knownPermission, name] : PERMISSION_NAME_TABLE) {
+        if (knownPermission == permission)
+            return name;
+    }
+    return {};
+}
+
+/**
+ * Names of every permission granted to a role in a conversation mode
+ */
+inline std::vector<std::string>
+permissionNames(ConversationMode mode, MemberRole role)
+{
+    std::vector<std::string> names;
+    for (const auto& [permission, name] : PERMISSION_NAME_TABLE) {
+        if (hasPermission(mode, role, permission))
+            names.emplace_back(name);
+    }
+    return names;
 }
 
 namespace MemberPath {
@@ -562,6 +611,13 @@ public:
      * @return members
      */
     std::vector<ConversationMember> members() const;
+
+    /**
+     * Get the permissions granted to a member
+     * @param uri   Member to check
+     * @return permission names, empty if uri is not a member
+     */
+    std::vector<std::string> permissions(const std::string& uri) const;
 
     /**
      * Get conversation's devices

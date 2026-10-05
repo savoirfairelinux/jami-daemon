@@ -4908,6 +4908,16 @@ ConversationRepository::members() const
     return pimpl_->members();
 }
 
+std::vector<std::string>
+ConversationRepository::permissions(const std::string& uri) const
+{
+    for (const auto& member : pimpl_->members()) {
+        if (member.uri == uri)
+            return permissionNames(pimpl_->mode(), member.role);
+    }
+    return {};
+}
+
 std::set<std::string>
 ConversationRepository::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
 {

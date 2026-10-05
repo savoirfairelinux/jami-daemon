@@ -2867,8 +2867,16 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             options.nbOfCommits = n;
             auto convWeak = std::weak_ptr<Conversation>(conv->conversation);
             conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id, convWeak](auto&& messages) {
-                    emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
+                [accountId = pimpl_->accountId_,
+                 conversationId,
+                 id,
+                 convWeak,
+                 permissions = conv->conversation->permissions(pimpl_->username_)](auto&& messages) {
+                    emitSignal<libjami::ConversationSignal::SwarmLoaded>(id,
+                                                                         accountId,
+                                                                         conversationId,
+                                                                         messages,
+                                                                         permissions);
 #ifdef ENABLE_PLUGIN
                     if (const auto convPtr = convWeak.lock()) {
                         convPtr->loadMissingBodyOverwrites();
@@ -2898,8 +2906,16 @@ ConversationModule::loadSwarmUntil(const std::string& conversationId,
             options.includeTo = true;
             auto convWeak = std::weak_ptr<Conversation>(conv->conversation);
             conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id, convWeak](auto&& messages) {
-                    emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
+                [accountId = pimpl_->accountId_,
+                 conversationId,
+                 id,
+                 convWeak,
+                 permissions = conv->conversation->permissions(pimpl_->username_)](auto&& messages) {
+                    emitSignal<libjami::ConversationSignal::SwarmLoaded>(id,
+                                                                         accountId,
+                                                                         conversationId,
+                                                                         messages,
+                                                                         permissions);
 #ifdef ENABLE_PLUGIN
                     if (const auto convPtr = convWeak.lock()) {
                         convPtr->loadMissingBodyOverwrites();
@@ -3335,6 +3351,13 @@ std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationMembers(const std::string& conversationId, bool includeBanned) const
 {
     return pimpl_->getConversationMembers(conversationId, includeBanned);
+}
+
+std::vector<std::string>
+ConversationModule::getConversationPermissions(const std::string& conversationId) const
+{
+    return pimpl_->withConversation(conversationId,
+                                    [&](const auto& conv) { return conv.permissions(pimpl_->username_); });
 }
 
 uint32_t

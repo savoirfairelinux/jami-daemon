@@ -323,7 +323,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     };
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
-        exportable_callback<ConversationSignal::SwarmLoaded>(bind(&ConversationCallback::swarmLoaded, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::SwarmLoaded>(bind(&ConversationCallback::swarmLoaded, convM, _1, _2, _3, _4, _5)),
         exportable_callback<ConversationSignal::MessagesFound>(bind(&ConversationCallback::messagesFound, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&ConversationCallback::swarmMessageReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&ConversationCallback::swarmMessageUpdated, convM, _1, _2, _3)),

@@ -2223,6 +2223,16 @@
             <arg type="s" name="conversationId" direction="in"/>
         </method>
 
+        <method name="getConversationPermissions" tp:name-for-bindings="getConversationPermissions">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the permissions granted to the account in a conversation
+            </tp:docstring>
+            <arg type="as" name="permissions" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
         <method name="getConversationConnectivity" tp:name-for-bindings="getConversationConnectivity">
             <tp:added version="16.0.0"/>
             <tp:docstring>
@@ -2426,6 +2436,11 @@
            <arg type="a(sssa{ss}aa{ss}aa{ss}a{si})" name="messages">
                <tp:docstring>
                     Messages of the conversation
+               </tp:docstring>
+           </arg>
+           <arg type="as" name="permissions">
+               <tp:docstring>
+                    Permissions granted to the account in the conversation
                </tp:docstring>
            </arg>
        </signal>
