@@ -92,6 +92,7 @@ public:
 
 private:
     void testGetConference();
+    void testConferenceMediaAnswerPreservesSlots();
     void testOneSenderConferenceBudget();
     void testModeratorMuteUpdateParticipantsInfos();
     void testUnauthorizedMute();
@@ -119,6 +120,7 @@ private:
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
+    CPPUNIT_TEST(testConferenceMediaAnswerPreservesSlots);
     CPPUNIT_TEST(testOneSenderConferenceBudget);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
     CPPUNIT_TEST(testUnauthorizedMute);
@@ -168,6 +170,53 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
+
+void
+ConferenceTest::testConferenceMediaAnswerPreservesSlots()
+{
+    MediaAttribute audio {MediaType::MEDIA_AUDIO, false, false, true, "host-mic", "audio_0"};
+    MediaAttribute video {MediaType::MEDIA_VIDEO, false, false, true, "host-camera", "video_0"};
+    const auto hostAudio = MediaAttribute::toMediaMap(audio);
+    const auto hostVideo = MediaAttribute::toMediaMap(video);
+    auto remoteAudio = hostAudio;
+    remoteAudio[libjami::Media::MediaAttributeKey::SOURCE] = "guest-mic";
+    auto remoteVideo = hostVideo;
+    remoteVideo[libjami::Media::MediaAttributeKey::SOURCE] = "guest-camera";
+
+    auto answer = [&](const std::vector<libjami::MediaMap>& offer) {
+        return conference_detail::mediaAnswerForOffer({audio, video}, offer);
+    };
+
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
+                   == (std::vector<libjami::MediaMap> {hostAudio, hostVideo}));
+
+    audio.muted_ = true;
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
+                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+
+    video.muted_ = true;
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
+                   == (std::vector<libjami::MediaMap> {remoteAudio, remoteVideo}));
+
+    audio.muted_ = false;
+    video.muted_ = false;
+    auto extraVideo = remoteVideo;
+    extraVideo[libjami::Media::MediaAttributeKey::LABEL] = "video_1";
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo, extraVideo})
+                   == (std::vector<libjami::MediaMap> {hostAudio, hostVideo, extraVideo}));
+
+    auto disabledVideo = remoteVideo;
+    disabledVideo[libjami::Media::MediaAttributeKey::ENABLED] = FALSE_STR;
+    CPPUNIT_ASSERT(answer({remoteAudio, disabledVideo})
+                   == (std::vector<libjami::MediaMap> {hostAudio, disabledVideo}));
+    audio.enabled_ = false;
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
+                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+    audio.enabled_ = true;
+    CPPUNIT_ASSERT(answer({remoteVideo, remoteAudio})
+                   == (std::vector<libjami::MediaMap> {remoteVideo, remoteAudio}));
+    CPPUNIT_ASSERT(answer({remoteAudio}) == (std::vector<libjami::MediaMap> {hostAudio}));
+}
 
 void
 ConferenceTest::testOneSenderConferenceBudget()
