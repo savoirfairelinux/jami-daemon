@@ -495,12 +495,17 @@ BrowserConferenceMedia::startMedia()
                     std::lock_guard lock(self->mutex_);
                     if (self->state_ != State::STARTING || self->stopRequested_.load())
                         return;
-                    self->state_ = State::RUNNING;
-                    self->timeout_.cancel();
-                    onReady = std::move(self->onReady_);
+                    if (self->onReady_) {
+                        self->state_ = State::RUNNING;
+                        self->timeout_.cancel();
+                        onReady = std::move(self->onReady_);
+                    }
                 }
-                if (onReady)
-                    onReady();
+                if (!onReady) {
+                    self->fail("Browser RTP started without a readiness callback");
+                    return;
+                }
+                onReady();
             }
         });
     } catch (const std::exception& e) {
