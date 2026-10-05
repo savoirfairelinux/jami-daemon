@@ -55,6 +55,7 @@ class VideoGenerator;
 class RingBufferPool;
 struct VideoManager;
 class Conference;
+class AudioInput;
 class AudioLoop;
 class JamiAccount;
 class SIPVoIPLink;
@@ -145,6 +146,11 @@ public:
      * @return AudioLayer*  The audio layer object
      */
     std::shared_ptr<AudioLayer> getAudioDriver();
+
+    // Audio inputs share the ring-buffer pool and do not require local devices.
+    std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
+    void startAudioPreview();
+    void stopAudioPreview();
 
     inline std::unique_ptr<AudioDeviceGuard> startAudioStream(AudioDeviceType stream)
     {

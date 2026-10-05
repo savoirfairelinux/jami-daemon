@@ -18,6 +18,7 @@
 #include "media_player.h"
 #include "client/videomanager.h"
 #include "client/jami_signal.h"
+#include "manager.h"
 #include "jami/media_const.h"
 #include <string>
 namespace jami {
@@ -36,7 +37,7 @@ MediaPlayer::MediaPlayer(const std::string& resource)
 
     path_ = suffix;
 
-    audioInput_ = jami::getAudioInput(path_);
+    audioInput_ = Manager::instance().getAudioInput(path_);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO
     videoInput_ = jami::getVideoInput(path_, video::VideoInputMode::ManagedByDaemon, resource);

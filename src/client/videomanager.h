@@ -27,7 +27,6 @@
 #include <cstdint>
 #include <string>
 
-#include "media/audio/audio_input.h"
 #ifdef ENABLE_VIDEO
 #include "media/video/video_device_monitor.h"
 #include "media/video/video_input.h"
@@ -39,18 +38,21 @@ namespace jami {
 struct VideoManager
 {
 public:
+    explicit VideoManager([[maybe_unused]] bool enableLocalVideo)
+#ifdef ENABLE_VIDEO
+        : videoDeviceMonitor(enableLocalVideo ? std::make_unique<video::VideoDeviceMonitor>() : nullptr)
+#endif
+    {}
+
     // Client-managed video inputs and players
     std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     std::mutex mediaPlayersMutex;
-
-    // Client-managed audio preview
-    std::shared_ptr<AudioInput> audioPreview;
 
 #ifdef ENABLE_VIDEO
     std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
     void setDeviceOrientation(const std::string& deviceId, int angle);
     // device monitor
-    video::VideoDeviceMonitor videoDeviceMonitor;
+    std::unique_ptr<video::VideoDeviceMonitor> videoDeviceMonitor;
     // A registered VideoInput. The generation uniquely identifies the instance
     // that registered the entry, so that the deleter of an instance which
     // outlived its registration cannot unregister a later one.
@@ -72,11 +74,6 @@ public:
     std::condition_variable videoInputsCv;
 #endif
 
-    /**
-     * Cache of the active Audio/Video input(s).
-     */
-    std::map<std::string, std::weak_ptr<AudioInput>, std::less<>> audioInputs;
-    std::mutex audioMutex;
     bool hasRunningPlayers();
 };
 
@@ -86,7 +83,6 @@ std::shared_ptr<video::VideoInput> getVideoInput(const std::string& resource,
                                                  video::VideoInputMode inputMode = video::VideoInputMode::Undefined,
                                                  const std::string& sink = "");
 #endif
-std::shared_ptr<AudioInput> getAudioInput(const std::string& device);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);

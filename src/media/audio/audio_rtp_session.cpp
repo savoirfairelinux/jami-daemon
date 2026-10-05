@@ -32,7 +32,6 @@
 
 #include "audio/audio_input.h"
 #include "audio/ringbufferpool.h"
-#include "client/videomanager.h"
 #include "manager.h"
 
 #include <asio/io_context.hpp>
@@ -141,11 +140,7 @@ AudioRtpSession::prepareAudioInput()
     }
 
     // The sender retains this input for subsequent restarts.
-    audioInput_ = jami::getAudioInput(audioInputId);
-    if (!audioInput_) {
-        reportStartupFailure("Audio sender input unavailable");
-        return {};
-    }
+    audioInput_ = Manager::instance().getAudioInput(audioInputId);
     audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
         asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
             if (auto shared = w.lock())
@@ -334,8 +329,7 @@ AudioRtpSession::isRtpReady(bool expectSender, bool expectReceiver)
 {
     std::lock_guard lock(mutex_);
     return !startupFailed_.load() && socketPair_ && srtpInstalled_ && dtlsSrtpSession_
-           && (expectSender || expectReceiver)
-           && (!expectSender || sender_) && (!expectReceiver || receiveThread_);
+           && (expectSender || expectReceiver) && (!expectSender || sender_) && (!expectReceiver || receiveThread_);
 }
 
 void

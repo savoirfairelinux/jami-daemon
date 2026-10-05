@@ -276,8 +276,8 @@ Conference::~Conference()
     }
 
 #ifdef ENABLE_VIDEO
-    auto* videoManager = Manager::instance().getVideoManager();
-    auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() : std::string {};
+    auto* monitor = getVideoDeviceMonitor();
+    auto defaultDevice = monitor ? monitor->getMRLForDefaultDevice() : std::string {};
     foreachCall([&](const auto& call) {
         call->exitConference();
         // Reset distant callInfo
@@ -355,11 +355,12 @@ Conference::initSourcesForHost()
         MediaAttribute videoAttr;
         // Setup local video source
         if (confState_ == State::ACTIVE_ATTACHED) {
+            auto* monitor = getVideoDeviceMonitor();
             videoAttr = {MediaType::MEDIA_VIDEO,
                          false,
                          false,
                          true,
-                         Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
+                         monitor ? monitor->getMRLForDefaultDevice() : std::string {},
                          sip_utils::DEFAULT_VIDEO_STREAMID};
         }
         JAMI_DEBUG("[conf:{}] Setting local host video source: {}", id_, videoAttr.toString());
@@ -394,13 +395,12 @@ Conference::createConfAVStreams()
     };
 
     // Preview and Received
-    if ((audioMixer_ = jami::getAudioInput(getConfId()))) {
-        auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData previewStreamData {getConfId(), false, StreamType::audio, getConfId(), accountId};
-        createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
-        StreamData receivedStreamData {getConfId(), true, StreamType::audio, getConfId(), accountId};
-        createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
-    }
+    audioMixer_ = Manager::instance().getAudioInput(getConfId());
+    auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
+    StreamData previewStreamData {getConfId(), false, StreamType::audio, getConfId(), accountId};
+    createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
+    StreamData receivedStreamData {getConfId(), true, StreamType::audio, getConfId(), accountId};
+    createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
 
 #ifdef ENABLE_VIDEO
 
@@ -626,8 +626,8 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             auto srcUri = mediaAttr.sourceUri_;
             // If no sourceUri, use the default video device
             if (srcUri.empty()) {
-                if (auto* vm = Manager::instance().getVideoManager())
-                    srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
+                if (auto* monitor = getVideoDeviceMonitor())
+                    srcUri = monitor->getMRLForDefaultDevice();
                 else
                     continue;
             }
@@ -635,7 +635,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
                 newVideoInputs.emplace_back(std::move(srcUri));
         } else {
 #endif
-            hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
+            hostAudioInputs_[mediaAttr.label_] = Manager::instance().getAudioInput(mediaAttr.label_);
 #ifdef ENABLE_VIDEO
         }
 #endif
@@ -1121,12 +1121,7 @@ Conference::attachExternalHostAudio(const std::string& audioStreamId, bool video
     externalHostAudioWasAttached_ = true;
     hostSources_ = {{MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID}};
     if (videoEnabled)
-        hostSources_.emplace_back(MediaType::MEDIA_VIDEO,
-                                  false,
-                                  false,
-                                  true,
-                                  "",
-                                  sip_utils::DEFAULT_VIDEO_STREAMID);
+        hostSources_.emplace_back(MediaType::MEDIA_VIDEO, false, false, true, "", sip_utils::DEFAULT_VIDEO_STREAMID);
     setState(State::ACTIVE_ATTACHED);
     if (!isMuted("host"sv))
         bindHostAudio();
@@ -1281,7 +1276,7 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
     bindSubCallAudio(getConfId());
 
     // Add stream to recorder
-    audioMixer_ = jami::getAudioInput(getConfId());
+    audioMixer_ = Manager::instance().getAudioInput(getConfId());
     if (auto* ob = rec->addStream(audioMixer_->getInfo("a:mixer"))) {
         audioMixer_->attach(ob);
     }
