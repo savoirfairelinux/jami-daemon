@@ -296,6 +296,11 @@ VideoRtpSession::startSender()
     }
 
     if (send_.enabled and not send_.hold) {
+        if (!send_.codec) {
+            JAMI_ERROR("Video sender has no negotiated codec");
+            reportStartupFailure("Video sender has no negotiated codec");
+            return;
+        }
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -319,14 +324,17 @@ VideoRtpSession::startSender()
                         localVideoParams_ = newParams.get();
                     } else {
                         JAMI_ERROR("[{}] No valid new video parameters", fmt::ptr(this));
+                        reportStartupFailure("Video sender parameters unavailable");
                         return;
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Exception during retrieving video parameters: {}", e.what());
+                    reportStartupFailure(fmt::format("Video sender parameters failed: {}", e.what()));
                     return;
                 }
             } else {
                 JAMI_WARNING("Unable to lock video input");
+                reportStartupFailure("Video sender input unavailable");
                 return;
             }
 
@@ -399,6 +407,8 @@ VideoRtpSession::startSender()
         } catch (const MediaEncoderException& e) {
             JAMI_ERROR("{}", e.what());
             send_.enabled = false;
+            reportStartupFailure(fmt::format("Video encoder setup failed: {}", e.what()));
+            return;
         }
         lastMediaRestart_ = clock::now();
         last_REMB_inc_ = clock::now();
@@ -477,6 +487,10 @@ VideoRtpSession::startReceiver()
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+        receiveThread_->setSetupFailureCb([w = weak_from_this()](const std::string& reason) {
+            if (auto session = w.lock())
+                session->reportStartupFailure(reason);
+        });
         receiveThread_->setRequestKeyFrameCallback([this]() { requestPeerKeyframe(); });
         receiveThread_->setRotation(rotation_.load());
         if (videoMixer_ and conference_) {
@@ -553,10 +567,12 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
         }
     }
 
-    auto ms = receiveThread_->getInfo();
-    if (auto* ob = recorder_->getStream(ms.name)) {
-        receiveThread_->detach(ob);
-        recorder_->removeStream(ms);
+    if (recorder_) {
+        auto ms = receiveThread_->getInfo();
+        if (auto* ob = recorder_->getStream(ms.name)) {
+            receiveThread_->detach(ob);
+            recorder_->removeStream(ms);
+        }
     }
 
     if (forceStopSocket || !isSendingVideo)
@@ -633,23 +649,29 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         }
     } catch (const std::runtime_error& e) {
         JAMI_ERROR("[{}] Socket creation failed: {}", fmt::ptr(this), e.what());
+        reportStartupFailure(fmt::format("Video transport setup failed: {}", e.what()));
         return;
     }
 
     transportCcController_->reset();
 
-    startReceiver();
-    startSender();
+    try {
+        startReceiver();
+        startSender();
 
-    if (conference_) {
-        if (send_.enabled and not send_.hold) {
-            setupConferenceVideoPipeline(*conference_, Direction::SEND);
+        if (conference_) {
+            if (send_.enabled and not send_.hold) {
+                setupConferenceVideoPipeline(*conference_, Direction::SEND);
+            }
+            if (receive_.enabled and not receive_.hold) {
+                setupConferenceVideoPipeline(*conference_, Direction::RECV);
+            }
+        } else {
+            setupVideoPipeline();
         }
-        if (receive_.enabled and not receive_.hold) {
-            setupConferenceVideoPipeline(*conference_, Direction::RECV);
-        }
-    } else {
-        setupVideoPipeline();
+    } catch (const std::exception& e) {
+        reportStartupFailure(fmt::format("Video RTP startup failed: {}", e.what()));
+        throw;
     }
 }
 
