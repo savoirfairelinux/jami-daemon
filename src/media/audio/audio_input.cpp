@@ -326,7 +326,7 @@ AudioInput::initFile(const std::string& path)
 }
 
 std::shared_future<DeviceParams>
-AudioInput::switchInput(const std::string& resource)
+AudioInput::switchInput(const std::string& resource, SourceMode mode)
 {
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
     std::unique_lock lk(resourceMutex_);
@@ -340,6 +340,12 @@ AudioInput::switchInput(const std::string& resource)
         decodingFile_ = false;
         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     }
+    if (mode == SourceMode::RING_BUFFER_ONLY && playingFile_) {
+        playingFile_ = false;
+        auto& pool = Manager::instance().getRingBufferPool();
+        pool.unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        pool.unBindHalfDuplexOut(id_, id_);
+    }
 
     playingDevice_ = false;
     resource_ = resource;
@@ -349,7 +355,17 @@ AudioInput::switchInput(const std::string& resource)
     std::promise<DeviceParams> p;
     foundDevOpts_.swap(p);
 
-    if (resource_.empty()) {
+    if (mode == SourceMode::RING_BUFFER_ONLY) {
+        // The conference endpoint reads only sources bound to this input's
+        // ringbuffer ID; starting the default device here would capture the
+        // daemon host's microphone instead of the browser.
+        resource_.clear();
+        const auto format = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+        devOpts_ = {};
+        devOpts_.channel = format.nb_channels;
+        devOpts_.framerate = format.sample_rate;
+        foundDevOpts(devOpts_);
+    } else if (resource_.empty()) {
         if (initDevice(""))
             foundDevOpts(devOpts_);
     } else {

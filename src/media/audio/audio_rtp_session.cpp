@@ -42,8 +42,10 @@ namespace jami {
 
 AudioRtpSession::AudioRtpSession(const std::string& callId,
                                  const std::string& streamId,
-                                 const std::shared_ptr<MediaRecorder>& rec)
+                                 const std::shared_ptr<MediaRecorder>& rec,
+                                 Mode mode)
     : RtpSession(callId, streamId, MediaType::MEDIA_AUDIO)
+    , mode_(mode)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 
 {
@@ -84,44 +86,9 @@ AudioRtpSession::startSender()
     if (audioInput_)
         audioInput_->detach(sender_.get());
 
-    bool fileAudio = !input_.empty() && input_.find("file://") != std::string::npos;
-    auto audioInputId = streamId_;
-    if (fileAudio) {
-        auto suffix = input_;
-        static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-        const auto pos = input_.find(sep);
-        if (pos != std::string::npos) {
-            suffix = input_.substr(pos + sep.size());
-        }
-        audioInputId = suffix;
-    }
-
-    // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = jami::getAudioInput(audioInputId);
-    audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
-        asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
-            if (auto shared = w.lock())
-                shared->attachLocalRecorder(ms);
-        });
-    });
-    audioInput_->setMuted(muteState_);
-    audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
-    if (!fileAudio) {
-        auto newParams = audioInput_->switchInput(input_);
-        try {
-            if (newParams.valid() && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
-                localAudioParams_ = newParams.get();
-            } else {
-                JAMI_ERROR("No valid new audio parameters");
-                return;
-            }
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Exception while retrieving audio parameters: {}", e.what());
-            return;
-        }
-    }
-    if (streamId_ != audioInput_->getId())
-        Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, audioInput_->getId());
+    audioInput_ = prepareAudioInput();
+    if (!audioInput_)
+        return;
 
     send_.fecEnabled = true;
 
@@ -148,6 +115,56 @@ AudioRtpSession::startSender()
 
     if (not rtcpCheckerThread_.isRunning())
         rtcpCheckerThread_.start();
+}
+
+std::shared_ptr<AudioInput>
+AudioRtpSession::prepareAudioInput()
+{
+    const bool fileAudio = mode_ == Mode::DEVICE && !input_.empty() && input_.find("file://") != std::string::npos;
+    auto audioInputId = streamId_;
+    if (fileAudio) {
+        auto suffix = input_;
+        static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+        const auto pos = input_.find(sep);
+        if (pos != std::string::npos) {
+            suffix = input_.substr(pos + sep.size());
+        }
+        audioInputId = suffix;
+    }
+
+    // The sender retains this input for subsequent restarts.
+    audioInput_ = jami::getAudioInput(audioInputId);
+    if (!audioInput_)
+        return {};
+    audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+        asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
+            if (auto shared = w.lock())
+                shared->attachLocalRecorder(ms);
+        });
+    });
+    audioInput_->setMuted(muteState_);
+    audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
+    if (!fileAudio) {
+        auto newParams = audioInput_->switchInput(input_,
+                                                  mode_ == Mode::CONFERENCE_HOST
+                                                      ? AudioInput::SourceMode::RING_BUFFER_ONLY
+                                                      : AudioInput::SourceMode::DEVICE);
+        try {
+            if (newParams.valid() && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                localAudioParams_ = newParams.get();
+            } else {
+                JAMI_ERROR("No valid new audio parameters");
+                return {};
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Exception while retrieving audio parameters: {}", e.what());
+            return {};
+        }
+    }
+    if (streamId_ != audioInput_->getId())
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, audioInput_->getId());
+
+    return audioInput_;
 }
 
 void
@@ -191,8 +208,21 @@ AudioRtpSession::startReceiver()
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
 
-    // Make the default ring buffer read the audio from the stream
-    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
+    bindReceivedAudio();
+}
+
+void
+AudioRtpSession::bindReceivedAudio()
+{
+    if (mode_ == Mode::DEVICE)
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
+}
+
+void
+AudioRtpSession::unbindReceivedAudio()
+{
+    if (mode_ == Mode::DEVICE)
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 }
 
 void
@@ -278,16 +308,17 @@ AudioRtpSession::stop()
 
     JAMI_DEBUG("[{}] Stopping receiver", fmt::ptr(this));
 
-    if (not receiveThread_)
+    if (not receiveThread_ && mode_ == Mode::DEVICE)
         return;
 
     if (socketPair_)
         socketPair_->setReadBlockingMode(false);
 
-    receiveThread_->stopReceiver();
+    if (receiveThread_)
+        receiveThread_->stopReceiver();
 
     // Unbind the default ring buffer from this audio stream
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
+    unbindReceivedAudio();
 
     if (audioInput_)
         audioInput_->detach(sender_.get());
