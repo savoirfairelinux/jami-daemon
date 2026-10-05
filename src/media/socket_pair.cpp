@@ -481,80 +481,81 @@ SocketPair::readRtcpData(void* buf, int buf_size)
 int
 SocketPair::readCallback(uint8_t* buf, int buf_size)
 {
-    auto datatype = waitForData();
-    if (datatype < 0)
-        return datatype;
+    for (;;) {
+        auto datatype = waitForData();
+        if (datatype < 0)
+            return datatype;
 
-    int len = 0;
-    bool fromRTCP = false;
+        int len = 0;
+        bool fromRTCP = false;
 
-    if (datatype & static_cast<int>(DataType::RTCP)) {
-        len = readRtcpData(buf, buf_size);
-        if (len > 0) {
-            auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
-            // 201 = RR PT
-            if (header->pt == 201) {
-                lastDLSR_ = Swap4Bytes(header->dlsr);
-                // JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
-                lastRR_time = std::chrono::steady_clock::now();
-                saveRtcpRRPacket(buf, len);
+        if (datatype & static_cast<int>(DataType::RTCP)) {
+            len = readRtcpData(buf, buf_size);
+            if (len > 0) {
+                auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
+                // 201 = RR PT
+                if (header->pt == 201) {
+                    lastDLSR_ = Swap4Bytes(header->dlsr);
+                    // JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+                    lastRR_time = std::chrono::steady_clock::now();
+                    saveRtcpRRPacket(buf, len);
+                }
+                // 206 = REMB PT
+                else if (header->pt == 206)
+                    saveRtcpREMBPacket(buf, len);
+                // 200 = SR PT
+                else if (header->pt == 200) {
+                    // not used yet
+                } else {
+                    unsigned pt = header->pt;
+                    JAMI_LOG("Unable to read RTCP: unknown packet type {}", pt);
+                }
+                fromRTCP = true;
             }
-            // 206 = REMB PT
-            else if (header->pt == 206)
-                saveRtcpREMBPacket(buf, len);
-            // 200 = SR PT
-            else if (header->pt == 200) {
-                // not used yet
-            } else {
-                unsigned pt = header->pt;
-                JAMI_LOG("Unable to read RTCP: unknown packet type {}", pt);
-            }
-            fromRTCP = true;
         }
+
+        // No RTCP… attempt RTP
+        if (!len and (datatype & static_cast<int>(DataType::RTP))) {
+            len = readRtpData(buf, buf_size);
+            fromRTCP = false;
+        }
+
+        if (len <= 0)
+            return len;
+
+        if (not fromRTCP && (buf_size < static_cast<int>(MINIMUM_RTP_HEADER_SIZE)))
+            return len;
+
+        // SRTP decrypt
+        if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
+            auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+            if (err < 0) {
+                JAMI_WARNING("decrypt error {}", err);
+                continue;
+            }
+
+            int32_t gradient = 0;
+            int32_t deltaT = 0;
+            float abs = 0.0f;
+            bool res_parse = parse_RTP_ext(buf, &abs);
+            bool marker = (buf[1] & 0x80) >> 7;
+            bool res_delay = res_parse
+                                 and getOneWayDelayGradient(abs, marker, &gradient, &deltaT);
+
+            // rtpDelayCallback_ is not set for audio
+            if (rtpDelayCallback_ and res_delay)
+                rtpDelayCallback_(gradient, deltaT);
+
+            if (packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_ + 1)
+                packetLossCallback_();
+            lastSeqNumIn_ = buf[2] << 8 | buf[3];
+        }
+
+        if (len != 0)
+            return len;
+        else
+            return AVERROR_EOF;
     }
-
-    // No RTCP… attempt RTP
-    if (!len and (datatype & static_cast<int>(DataType::RTP))) {
-        len = readRtpData(buf, buf_size);
-        fromRTCP = false;
-    }
-
-    if (len <= 0)
-        return len;
-
-    if (not fromRTCP && (buf_size < static_cast<int>(MINIMUM_RTP_HEADER_SIZE)))
-        return len;
-
-    // SRTP decrypt
-    if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
-        int32_t gradient = 0;
-        int32_t deltaT = 0;
-        float abs = 0.0f;
-        bool res_parse = false;
-        bool res_delay = false;
-
-        res_parse = parse_RTP_ext(buf, &abs);
-        bool marker = (buf[1] & 0x80) >> 7;
-
-        if (res_parse)
-            res_delay = getOneWayDelayGradient(abs, marker, &gradient, &deltaT);
-
-        // rtpDelayCallback_ is not set for audio
-        if (rtpDelayCallback_ and res_delay)
-            rtpDelayCallback_(gradient, deltaT);
-
-        auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if (packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_ + 1)
-            packetLossCallback_();
-        lastSeqNumIn_ = buf[2] << 8 | buf[3];
-        if (err < 0)
-            JAMI_WARNING("decrypt error {}", err);
-    }
-
-    if (len != 0)
-        return len;
-    else
-        return AVERROR_EOF;
 }
 
 int

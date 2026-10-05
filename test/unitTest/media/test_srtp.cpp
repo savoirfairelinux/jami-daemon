@@ -4,9 +4,20 @@
 
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <vector>
 
+#ifdef __linux__
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include "media/media_io_handle.h"
+#include "media/socket_pair.h"
+#endif
+
 extern "C" {
+#include <libavformat/avio.h>
 #include <libavutil/aes.h>
 #include <libavutil/hmac.h>
 #include "media/srtp.h"
@@ -50,6 +61,18 @@ struct Contexts
         ff_srtp_free(&receiver);
     }
 };
+
+#ifdef __linux__
+struct UdpSocket
+{
+    int fd {::socket(AF_INET, SOCK_DGRAM, 0)};
+    ~UdpSocket()
+    {
+        if (fd >= 0)
+            ::close(fd);
+    }
+};
+#endif
 
 std::vector<uint8_t>
 rtpPacket(uint16_t seq, const std::string& payload, uint32_t ssrc = 0x11223344)
@@ -119,6 +142,9 @@ private:
     void aes256ShortAuthTagSuiteIsAccepted();
     void rtpRoundTrip();
     void tamperedRtpYieldsNoData();
+#ifdef __linux__
+    void rejectedSrtpDoesNotCloseSocket();
+#endif
     void shortPacketsAreRejected();
     void replayedRtpIsRejected();
     void reorderedRtpWithinWindowIsAccepted();
@@ -130,6 +156,9 @@ private:
     CPPUNIT_TEST(aes256ShortAuthTagSuiteIsAccepted);
     CPPUNIT_TEST(rtpRoundTrip);
     CPPUNIT_TEST(tamperedRtpYieldsNoData);
+#ifdef __linux__
+    CPPUNIT_TEST(rejectedSrtpDoesNotCloseSocket);
+#endif
     CPPUNIT_TEST(shortPacketsAreRejected);
     CPPUNIT_TEST(replayedRtpIsRejected);
     CPPUNIT_TEST(reorderedRtpWithinWindowIsAccepted);
@@ -276,6 +305,78 @@ SrtpTest::tamperedRtpYieldsNoData()
     // A rejected packet must not have moved the receiver state: the genuine one still decrypts
     CPPUNIT_ASSERT_EQUAL(static_cast<int>(wire.size() - TAG_SIZE), unprotect(ctx.receiver, wire));
 }
+
+#ifdef __linux__
+void
+SrtpTest::rejectedSrtpDoesNotCloseSocket()
+{
+    uint16_t port = 0;
+    for (int attempt = 0; attempt < 32 && !port; ++attempt) {
+        UdpSocket rtp;
+        UdpSocket rtcp;
+        CPPUNIT_ASSERT(rtp.fd >= 0 && rtcp.fd >= 0);
+        sockaddr_in address {};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        CPPUNIT_ASSERT(::bind(rtp.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0);
+        socklen_t addressLength = sizeof(address);
+        CPPUNIT_ASSERT(::getsockname(rtp.fd, reinterpret_cast<sockaddr*>(&address), &addressLength) == 0);
+        auto candidate = ntohs(address.sin_port);
+        if (candidate == UINT16_MAX)
+            continue;
+        address.sin_port = htons(candidate + 1);
+        if (::bind(rtcp.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0)
+            port = candidate;
+    }
+    CPPUNIT_ASSERT(port != 0);
+
+    SocketPair receiver("rtp://127.0.0.1:9", port);
+    receiver.createSRTP(TEST_SUITE, TEST_PARAMS, TEST_SUITE, TEST_PARAMS);
+    receiver.setReadBlockingMode(true);
+    int losses = 0;
+    receiver.setPacketLossCallback([&] { ++losses; });
+    std::unique_ptr<MediaIOHandle> io(receiver.createIOContext(1500));
+    UdpSocket sender;
+    CPPUNIT_ASSERT(sender.fd >= 0);
+    sockaddr_in destination {};
+    destination.sin_family = AF_INET;
+    destination.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    destination.sin_port = htons(port);
+
+    Contexts ctx;
+    auto plain = rtpPacket(1, "hello");
+    auto encrypted = protect(ctx.sender, plain);
+    auto tampered = encrypted;
+    tampered[13] ^= 1;
+    auto send = [&](const auto& packet) {
+        CPPUNIT_ASSERT_EQUAL(static_cast<ssize_t>(packet.size()),
+                             ::sendto(sender.fd,
+                                      packet.data(),
+                                      packet.size(),
+                                      0,
+                                      reinterpret_cast<sockaddr*>(&destination),
+                                      sizeof(destination)));
+    };
+    std::array<uint8_t, 1500> received {};
+    auto* avio = io->getContext();
+    send(tampered);
+    send(encrypted);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()),
+                         avio->read_packet(avio->opaque, received.data(), received.size()));
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+
+    plain = rtpPacket(2, "again");
+    encrypted = protect(ctx.sender, plain);
+    tampered = encrypted;
+    tampered[13] ^= 1;
+    send(tampered);
+    send(encrypted);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()),
+                         avio_read_partial(avio, received.data(), received.size()));
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+    CPPUNIT_ASSERT_EQUAL(0, losses);
+}
+#endif
 
 void
 SrtpTest::shortPacketsAreRejected()
