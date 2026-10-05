@@ -89,8 +89,8 @@ serializeBrowserAnswer(Sdp& sdp)
 } // namespace
 
 ExternalMediaConference::ExternalMediaConference(std::shared_ptr<JamiAccount> account,
-                                               std::shared_ptr<Conference> conference,
-                                               std::optional<dhtnet::IceTransportOptions> iceOptions)
+                                                 std::shared_ptr<Conference> conference,
+                                                 std::optional<dhtnet::IceTransportOptions> iceOptions)
     : account_(std::move(account))
     , conference_(std::move(conference))
     , iceOptions_(std::move(iceOptions))

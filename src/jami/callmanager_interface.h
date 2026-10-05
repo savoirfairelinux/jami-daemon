@@ -116,6 +116,18 @@ LIBJAMI_PUBLIC bool joinConference(const std::string& accountId,
                                    const std::string& account2Id,
                                    const std::string& drag_confId);
 LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::string& confId);
+/* Returns false for an invalid/duplicate request or a conversation not held by this account.
+ * An accepted request reports its SDP answer and media readiness asynchronously. */
+LIBJAMI_PUBLIC bool startExternalMediaConference(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& requestId,
+                                                 const std::string& sdpOffer);
+LIBJAMI_PUBLIC bool cancelExternalMediaConference(const std::string& accountId, const std::string& requestId);
+/* Called when the account drops an external media conference, even without Node listeners. */
+LIBJAMI_PUBLIC void externalMediaConferenceRemoved(const std::string& accountId, const std::string& confId);
+LIBJAMI_PUBLIC void cancelExternalMediaConferencesForAccount(const std::string& accountId);
+LIBJAMI_PUBLIC void cancelAllExternalMediaConferences();
+LIBJAMI_PUBLIC void allowExternalMediaConferences();
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool resumeConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
@@ -283,6 +295,21 @@ struct LIBJAMI_PUBLIC CallSignal
     {
         constexpr static const char* name = "ConferenceRemoved";
         using cb_type = void(const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaConferenceHostAnswer
+    {
+        constexpr static const char* name = "ExternalMediaConferenceHostAnswer";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaConferenceHostReady
+    {
+        constexpr static const char* name = "ExternalMediaConferenceHostReady";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaConferenceHostFailure
+    {
+        constexpr static const char* name = "ExternalMediaConferenceHostFailure";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC RecordingStateChanged
     {

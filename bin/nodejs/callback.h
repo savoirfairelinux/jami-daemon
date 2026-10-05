@@ -901,8 +901,44 @@ conferenceRemoved(const std::string& accountId, const std::string& confId)
 }
 
 void
+externalMediaConferenceHostAnswer(const std::string& accountId,
+                                  const std::string& requestId,
+                                  const std::string& confId,
+                                  const std::string& answer)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, confId, answer]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(confId), napiString(answer)};
+        callCallback("ExternalMediaConferenceHostAnswer", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, confId]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(confId)};
+        callCallback("ExternalMediaConferenceHostReady", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, reason]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(reason)};
+        callCallback("ExternalMediaConferenceHostFailure", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 conferenceInfosUpdated(const std::string& confId,
-                         const std::vector<std::map<std::string, std::string>>& infos)
+                       const std::vector<std::map<std::string, std::string>>& infos)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([confId, infos]() {
