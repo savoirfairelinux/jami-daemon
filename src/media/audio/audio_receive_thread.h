@@ -51,6 +51,9 @@ public:
     void stopReceiver();
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
+    // Set before startReceiver(); invoked on the I/O executor, never by the
+    // receiver thread, so teardown may safely join the receiver.
+    void setSetupFailureCb(std::function<void(const std::string&)> cb) { onSetupFailure_ = std::move(cb); }
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
@@ -84,8 +87,10 @@ private:
     bool setup();
     void process();
     void cleanup();
+    void reportSetupFailure(std::string reason);
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const std::string&)> onSetupFailure_;
     std::function<void(const MediaStream& ms)> recorderCallback_;
 };
 

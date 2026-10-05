@@ -23,6 +23,8 @@
 #include "media_io_handle.h"
 #include "ringbufferpool.h"
 
+#include <opendht/thread_pool.h>
+
 #include <memory>
 
 namespace jami {
@@ -36,10 +38,27 @@ AudioReceiveThread::AudioReceiveThread(const std::string& streamId,
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , mtu_(mtu)
-    , loop_(std::bind(&AudioReceiveThread::setup, this),
-            std::bind(&AudioReceiveThread::process, this),
-            std::bind(&AudioReceiveThread::cleanup, this))
+    , loop_(
+          [this] {
+              try {
+                  return setup();
+              } catch (const std::exception& e) {
+                  reportSetupFailure(e.what());
+                  throw;
+              }
+          },
+          std::bind(&AudioReceiveThread::process, this),
+          std::bind(&AudioReceiveThread::cleanup, this))
 {}
+
+void
+AudioReceiveThread::reportSetupFailure(std::string reason)
+{
+    if (onSetupFailure_) {
+        auto cb = onSetupFailure_;
+        dht::ThreadPool::io().run([cb = std::move(cb), reason = std::move(reason)] { cb(reason); });
+    }
+}
 
 AudioReceiveThread::~AudioReceiveThread()
 {
@@ -67,6 +86,12 @@ AudioReceiveThread::setup()
 
     if (stream_.str().empty()) {
         JAMI_ERROR("No SDP loaded");
+        reportSetupFailure("No audio SDP loaded");
+        return false;
+    }
+    if (!demuxContext_) {
+        JAMI_ERROR("Audio RTP input is not configured");
+        reportSetupFailure("Audio RTP input is not configured");
         return false;
     }
 
@@ -74,6 +99,7 @@ AudioReceiveThread::setup()
     audioDecoder_->setFEC(true);
     if (audioDecoder_->openInput(args_)) {
         JAMI_ERROR("Unable to open input \"{}\"", SDP_FILENAME);
+        reportSetupFailure("Unable to open audio SDP");
         return false;
     }
 
@@ -81,6 +107,7 @@ AudioReceiveThread::setup()
     audioDecoder_->setIOContext(demuxContext_.get());
     if (audioDecoder_->setupAudio()) {
         JAMI_ERROR("decoder IO startup failed");
+        reportSetupFailure("Audio decoder setup failed");
         return false;
     }
 
