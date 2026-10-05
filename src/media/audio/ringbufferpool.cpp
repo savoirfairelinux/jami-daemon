@@ -249,7 +249,7 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
         return;
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
-        removeReaderFromRingBuffer(rb, rbuf->getId());
+        removeReaderFromRingBuffer(rbuf, ringbufferId);
     }
 }
 
