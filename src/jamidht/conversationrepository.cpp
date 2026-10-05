@@ -2346,6 +2346,9 @@ ConversationRepository::Impl::mode() const
     case 4:
         mode_ = ConversationMode::DOCUMENT;
         break;
+    case 5:
+        mode_ = ConversationMode::FEED;
+        break;
     default:
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                      id_,
@@ -2693,6 +2696,8 @@ ConversationRepository::Impl::isAuthorizedCommit(const std::string& uri,
         return allowed(message.confId.empty() ? Permission::Call : Permission::HostConference);
     if (message.type == CommitType::COLLAB_DOC)
         return allowed(Permission::CreateDocument);
+    if (mode() == ConversationMode::FEED)
+        return allowed(Permission::Text);
     // We currently don't have a good solution in place to handle forward compatibility issues
     // in swarms. Returning false here means that old versions of Jami can reject valid commits
     // made by newer versions. Returning true avoids this problem, but allows invalid commits to
