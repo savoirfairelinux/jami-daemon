@@ -30,10 +30,165 @@
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation_module.h"
+#include "media/browser_conference_media.h"
 
 #include <opendht/thread_pool.h>
+#include <mutex>
+#include <map>
+#include <optional>
+#include <future>
 
 namespace libjami {
+
+namespace {
+struct BrowserHost
+{
+    std::string confId;
+    std::shared_ptr<jami::BrowserConferenceMedia> media;
+    std::string conversationId;
+    std::string requestId;
+};
+
+class BrowserHostRegistry
+{
+public:
+    using Key = std::pair<std::string, std::string>;
+
+    bool reserve(const Key& key, const std::string& confId, const std::string& conversationId)
+    {
+        std::lock_guard lock(mutex_);
+        if (shuttingDown_)
+            return false;
+        for (const auto& [existingKey, host] : hosts_)
+            if (existingKey.first == key.first && host.conversationId == conversationId)
+                return false;
+        return hosts_.emplace(key, BrowserHost {confId, {}, conversationId, key.second}).second;
+    }
+
+    bool install(const Key& key, const std::string& confId, std::shared_ptr<jami::BrowserConferenceMedia> media)
+    {
+        std::lock_guard lock(mutex_);
+        auto it = hosts_.find(key);
+        if (it == hosts_.end() || it->second.confId != confId || it->second.media)
+            return false;
+        it->second.media = std::move(media);
+        return true;
+    }
+
+    bool contains(const Key& key, const std::string& confId)
+    {
+        std::lock_guard lock(mutex_);
+        auto it = hosts_.find(key);
+        return it != hosts_.end() && it->second.confId == confId;
+    }
+
+    std::optional<BrowserHost> take(const Key& key, const std::string& confId = {})
+    {
+        std::lock_guard lock(mutex_);
+        auto it = hosts_.find(key);
+        if (it == hosts_.end() || (!confId.empty() && it->second.confId != confId))
+            return std::nullopt;
+        auto host = std::move(it->second);
+        hosts_.erase(it);
+        return host;
+    }
+
+    BrowserHost takeConference(const std::string& accountId, const std::string& confId)
+    {
+        std::lock_guard lock(mutex_);
+        for (auto it = hosts_.begin(); it != hosts_.end(); ++it) {
+            if (it->first.first == accountId && it->second.confId == confId) {
+                auto host = std::move(it->second);
+                hosts_.erase(it);
+                return host;
+            }
+        }
+        return {};
+    }
+
+    std::vector<BrowserHost> takeAccount(const std::string& accountId)
+    {
+        std::vector<BrowserHost> result;
+        std::lock_guard lock(mutex_);
+        for (auto it = hosts_.begin(); it != hosts_.end();) {
+            if (it->first.first == accountId) {
+                result.emplace_back(std::move(it->second));
+                it = hosts_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        return result;
+    }
+
+    std::vector<std::pair<std::string, BrowserHost>> takeAll()
+    {
+        std::vector<std::pair<std::string, BrowserHost>> result;
+        std::lock_guard lock(mutex_);
+        shuttingDown_ = true;
+        for (auto& [key, host] : hosts_)
+            result.emplace_back(key.first, std::move(host));
+        hosts_.clear();
+        return result;
+    }
+
+    void allow()
+    {
+        std::lock_guard lock(mutex_);
+        shuttingDown_ = false;
+    }
+
+private:
+    std::mutex mutex_;
+    std::map<Key, BrowserHost> hosts_;
+    bool shuttingDown_ {false};
+};
+
+std::shared_ptr<BrowserHostRegistry>
+browserHosts()
+{
+    static auto registry = std::make_shared<BrowserHostRegistry>();
+    return registry;
+}
+
+void
+stopBrowserOwner(const std::shared_ptr<jami::BrowserConferenceMedia>& media)
+{
+    if (!media)
+        return;
+    auto context = jami::Manager::instance().ioContext();
+    if (context->get_executor().running_in_this_thread()) {
+        media->stop();
+        return;
+    }
+    auto completion = std::make_shared<std::promise<void>>();
+    auto finished = completion->get_future();
+    asio::post(*context, [media, completion] {
+        try {
+            media->stop();
+            completion->set_value();
+        } catch (...) {
+            completion->set_exception(std::current_exception());
+        }
+    });
+    finished.get();
+}
+
+void
+stopAndHangupBrowserHosts(const std::string& accountId, std::vector<BrowserHost> hosts)
+{
+    for (auto& host : hosts) {
+        try {
+            stopBrowserOwner(host.media);
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Cannot stop browser conference {}: {}", host.confId, e.what());
+        }
+        if (!host.confId.empty())
+            jami::Manager::instance().hangupConference(accountId, host.confId);
+    }
+}
+} // namespace
 
 void
 registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
@@ -213,7 +368,128 @@ hangUp(const std::string& accountId, const std::string& callId)
 bool
 hangUpConference(const std::string& accountId, const std::string& confId)
 {
+    auto host = browserHosts()->takeConference(accountId, confId);
+    if (host.media)
+        host.media->stop();
     return jami::Manager::instance().hangupConference(accountId, confId);
+}
+
+void
+browserConferenceRemoved(const std::string& accountId, const std::string& confId)
+{
+    auto host = browserHosts()->takeConference(accountId, confId);
+    if (host.media) {
+        host.media->stop();
+        jami::emitSignal<CallSignal::BrowserConferenceHostFailure>(accountId,
+                                                                  host.requestId,
+                                                                  "Conference closed");
+    }
+}
+
+void
+cancelBrowserConferencesForAccount(const std::string& accountId)
+{
+    stopAndHangupBrowserHosts(accountId, browserHosts()->takeAccount(accountId));
+}
+
+void
+cancelAllBrowserConferences()
+{
+    auto hosts = browserHosts()->takeAll();
+    for (auto& [accountId, host] : hosts) {
+        try {
+            stopBrowserOwner(host.media);
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Cannot stop browser conference {}: {}", host.confId, e.what());
+        }
+        if (!host.confId.empty())
+            jami::Manager::instance().hangupConference(accountId, host.confId);
+    }
+}
+
+void
+allowBrowserConferences()
+{
+    browserHosts()->allow();
+}
+
+bool
+startBrowserConference(const std::string& accountId,
+                       const std::string& conversationId,
+                       const std::string& requestId,
+                       const std::string& sdpOffer)
+{
+    if (accountId.empty() || conversationId.empty() || requestId.empty() || sdpOffer.empty())
+        return false;
+    auto account = std::dynamic_pointer_cast<jami::JamiAccount>(jami::Manager::instance().getAccount(accountId));
+    if (!account)
+        return false;
+    auto* module = account->convModule(true);
+    if (!module || !module->getConversation(conversationId))
+        return false;
+    const BrowserHostRegistry::Key key {accountId, requestId};
+    auto registry = browserHosts();
+    const auto confId = jami::Manager::instance().callFactory.getNewCallID();
+    if (!registry->reserve(key, confId, conversationId))
+        return false;
+    std::weak_ptr<BrowserHostRegistry> weakRegistry = registry;
+    auto conf = module->hostBrowserConference(conversationId, confId, [weakRegistry, key, confId] {
+        if (auto registry = weakRegistry.lock()) {
+            auto host = registry->take(key, confId);
+            if (host && host->media)
+                host->media->stop();
+        }
+    });
+    if (!conf) {
+        registry->take(key, confId);
+        return false;
+    }
+
+    if (!registry->contains(key, confId) || account->getConference(confId) != conf) {
+        registry->take(key, confId);
+        jami::Manager::instance().hangupConference(accountId, confId);
+        return false;
+    }
+    auto media = std::make_shared<jami::BrowserConferenceMedia>(account, conf);
+    if (!registry->install(key, confId, media)) {
+        media.reset();
+        jami::Manager::instance().hangupConference(accountId, confId);
+        return false;
+    }
+    media->start(sdpOffer,
+                 [weakRegistry, key, confId](const std::string& answer) {
+                     if (auto registry = weakRegistry.lock(); registry && registry->contains(key, confId))
+                         jami::emitSignal<CallSignal::BrowserConferenceHostAnswer>(key.first, key.second, confId, answer);
+                 },
+                 [weakRegistry, key, confId](const std::string& reason) {
+                     if (auto registry = weakRegistry.lock()) {
+                         auto host = registry->take(key, confId);
+                         if (!host || !host->media)
+                             return;
+                         jami::emitSignal<CallSignal::BrowserConferenceHostFailure>(key.first, key.second, reason);
+                         jami::Manager::instance().hangupConference(key.first, confId);
+                     }
+                 },
+                 [weakRegistry, key, confId] {
+                     if (auto registry = weakRegistry.lock(); registry && registry->contains(key, confId))
+                         jami::emitSignal<CallSignal::BrowserConferenceHostReady>(key.first, key.second, confId);
+                 });
+    return true;
+}
+
+bool
+cancelBrowserConference(const std::string& accountId, const std::string& requestId)
+{
+    if (accountId.empty() || requestId.empty())
+        return false;
+    auto host = browserHosts()->take({accountId, requestId});
+    if (!host)
+        return false;
+    if (host->media)
+        host->media->stop();
+    if (!host->confId.empty())
+        jami::Manager::instance().hangupConference(accountId, host->confId);
+    return true;
 }
 
 bool

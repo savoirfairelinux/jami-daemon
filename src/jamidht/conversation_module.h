@@ -31,6 +31,7 @@ static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
 static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 
 class SIPCall;
+class Conference;
 
 struct SyncMsg
 {
@@ -556,6 +557,13 @@ public:
                         const std::string& confId,
                         const std::string& callId,
                         const std::vector<libjami::MediaMap>& mediaList = {});
+    std::shared_ptr<Conference> hostBrowserConference(const std::string& conversationId,
+                                                      const std::string& confId,
+                                                      std::function<void()> onShutdown);
+    bool announceHostedConference(const std::string& conversationId,
+                                  const std::shared_ptr<Conference>& conf,
+                                  std::function<void()> onShutdown = {},
+                                  bool announceCreated = false);
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId, const std::map<std::string, ConvInfo>& conversations);

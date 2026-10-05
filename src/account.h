@@ -416,8 +416,10 @@ public:
     bool removeConference(const std::string& confId)
     {
         auto result = callSet_.removeConference(confId);
-        if (result)
+        if (result) {
+            libjami::browserConferenceRemoved(getAccountID(), confId);
             emitSignal<libjami::CallSignal::ConferenceRemoved>(getAccountID(), confId);
+        }
         return result;
     }
 
