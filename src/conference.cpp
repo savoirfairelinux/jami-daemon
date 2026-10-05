@@ -38,6 +38,7 @@
 #include "logger.h"
 #include "jami/media_const.h"
 #include "audio/ringbufferpool.h"
+#include "audio/ringbuffer.h"
 #include "sip/sipcall.h"
 #include "json_utils.h"
 
@@ -268,6 +269,11 @@ Conference::registerProtocolHandlers()
 Conference::~Conference()
 {
     JAMI_LOG("[conf:{}] Destroying conference", id_);
+
+    if (externalHostAudioBuffer_) {
+        unbindAllExternalHostAudioLinks(false);
+        externalHostAudioBuffer_.reset();
+    }
 
 #ifdef ENABLE_VIDEO
     auto* videoManager = Manager::instance().getVideoManager();
@@ -511,7 +517,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             continue;
         }
 
-        if (getState() == State::ACTIVE_ATTACHED) {
+        if (getState() == State::ACTIVE_ATTACHED && !externalHostAudioBuffer_) {
             // To mute the local source, all the sources of the participating
             // calls must be muted. If it's the first participant, just use
             // its mute state.
@@ -549,6 +555,10 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
 bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    if (externalHostAudioWasAttached_) {
+        JAMI_WARNING("[conf:{}] External host audio cannot be changed through local media sources", id_);
+        return false;
+    }
     if (getState() != State::ACTIVE_ATTACHED) {
         JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode", getConfId());
         return false;
@@ -824,6 +834,8 @@ Conference::removeSubCall(const std::string& callId)
     }
 
     clearParticipantData(callId);
+    if (externalHostAudioBuffer_)
+        unbindExternalHostAudioLinks(callId, false);
 
     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
 #ifdef ENABLE_VIDEO
@@ -1040,6 +1052,10 @@ Conference::createSinks(const ConfInfo& infos)
 void
 Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
 {
+    if (externalHostAudioWasAttached_) {
+        JAMI_WARNING("[conf:{}] External host requires attachExternalHostAudio to resume", id_);
+        return;
+    }
     JAMI_DEBUG("[conf:{}] Attaching host", id_);
 
     if (getState() == State::ACTIVE_DETACHED) {
@@ -1073,6 +1089,40 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
     }
 }
 
+bool
+Conference::attachExternalHostAudio(const std::string& audioStreamId, bool videoEnabled)
+{
+    if (getState() != State::ACTIVE_DETACHED || !hostAudioInputs_.empty() || audioStreamId.empty()
+        || audioStreamId == RingBufferPool::DEFAULT_ID || audioStreamId == id_)
+        return false;
+
+    auto buffer = Manager::instance().getRingBufferPool().getRingBuffer(audioStreamId);
+    if (!buffer)
+        return false;
+
+    for (const auto& callId : getSubCalls()) {
+        if (auto call = getCall(callId)) {
+            if (call->getRemoteAudioStreams().count(audioStreamId) || call->getAudioStreams().count(audioStreamId))
+                return false;
+        }
+    }
+
+    externalHostAudioBuffer_ = std::move(buffer);
+    externalHostAudioWasAttached_ = true;
+    hostSources_ = {{MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID}};
+    if (videoEnabled)
+        hostSources_.emplace_back(MediaType::MEDIA_VIDEO,
+                                  false,
+                                  false,
+                                  true,
+                                  "",
+                                  sip_utils::DEFAULT_VIDEO_STREAMID);
+    setState(State::ACTIVE_ATTACHED);
+    if (!isMuted("host"sv))
+        bindHostAudio();
+    return true;
+}
+
 void
 Conference::detachHost()
 {
@@ -1082,6 +1132,10 @@ Conference::detachHost()
 
     if (getState() == State::ACTIVE_ATTACHED) {
         unbindHostAudio();
+        if (externalHostAudioBuffer_) {
+            unbindAllExternalHostAudioLinks(false);
+            externalHostAudioBuffer_.reset();
+        }
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_)
@@ -1681,11 +1735,11 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
             return;
         }
         setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
-        if (is_muted) {
+        if (!externalHostAudioBuffer_ && is_muted) {
             if (auto mixer = videoMixer_) {
                 mixer->stopInputs();
             }
-        } else {
+        } else if (!externalHostAudioBuffer_) {
             if (auto mixer = videoMixer_) {
                 std::vector<std::string> videoInputs;
                 for (const auto& source : hostSources_) {
@@ -1869,45 +1923,49 @@ Conference::bindHostAudio()
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     // Collect and start host audio sources, separating primary from secondary.
-    // The primary host buffer (DEFAULT_ID) forms the bidirectional link with
-    // each subcall's primary stream. Secondary host buffers are added as
+    // The native host uses DEFAULT_ID; an external host uses its RTP stream
+    // buffer instead. Secondary host buffers are added as
     // half-duplex sources so that participants hear the mix of all host streams.
     std::string hostPrimaryBuffer;
     std::vector<std::string> hostSecondaryBuffers;
 
-    for (const auto& source : hostSources_) {
-        if (source.type_ != MediaType::MEDIA_AUDIO)
-            continue;
+    if (externalHostAudioBuffer_) {
+        hostPrimaryBuffer = externalHostAudioBuffer_->getId();
+    } else {
+        for (const auto& source : hostSources_) {
+            if (source.type_ != MediaType::MEDIA_AUDIO)
+                continue;
 
-        // Start audio input
-        auto& hostAudioInput = hostAudioInputs_[source.label_];
-        if (!hostAudioInput)
-            hostAudioInput = std::make_shared<AudioInput>(source.label_);
-        hostAudioInput->switchInput(source.sourceUri_);
+            // Start audio input
+            auto& hostAudioInput = hostAudioInputs_[source.label_];
+            if (!hostAudioInput)
+                hostAudioInput = std::make_shared<AudioInput>(source.label_);
+            hostAudioInput->switchInput(source.sourceUri_);
 
-        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-            hostPrimaryBuffer = std::string(RingBufferPool::DEFAULT_ID);
-            JAMI_DEBUG("[conf:{}] Primary host buffer: {}", id_, hostPrimaryBuffer);
-        } else {
-            // Use the ring buffer ID that initCapture/initFile actually
-            // created, not the raw sourceUri which may differ (e.g.
-            // "display://:0+0,0 1920x1080" vs the normalized "desktop").
-            auto bufferId = hostAudioInput->getSourceRingBufferId();
-            if (!bufferId.empty()) {
-                if (source.muted_) {
-                    // Muted secondary source: silence the AudioInput and
-                    // remove its buffer from the mix so participants no
-                    // longer receive data from it.
-                    JAMI_DEBUG("[conf:{}] Secondary host buffer {} is muted – unbinding", id_, bufferId);
-                    hostAudioInput->setMuted(true);
-                    rbPool.unBindAllHalfDuplexIn(bufferId);
-                } else {
-                    JAMI_DEBUG("[conf:{}] Secondary host buffer: {}", id_, bufferId);
-                    hostAudioInput->setMuted(false);
-                    hostSecondaryBuffers.push_back(std::move(bufferId));
-                }
+            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+                hostPrimaryBuffer = std::string(RingBufferPool::DEFAULT_ID);
+                JAMI_DEBUG("[conf:{}] Primary host buffer: {}", id_, hostPrimaryBuffer);
             } else {
-                JAMI_WARNING("[conf:{}] No source ring buffer for host audio {}", id_, source.label_);
+                // Use the ring buffer ID that initCapture/initFile actually
+                // created, not the raw sourceUri which may differ (e.g.
+                // "display://:0+0,0 1920x1080" vs the normalized "desktop").
+                auto bufferId = hostAudioInput->getSourceRingBufferId();
+                if (!bufferId.empty()) {
+                    if (source.muted_) {
+                        // Muted secondary source: silence the AudioInput and
+                        // remove its buffer from the mix so participants no
+                        // longer receive data from it.
+                        JAMI_DEBUG("[conf:{}] Secondary host buffer {} is muted – unbinding", id_, bufferId);
+                        hostAudioInput->setMuted(true);
+                        rbPool.unBindAllHalfDuplexIn(bufferId);
+                    } else {
+                        JAMI_DEBUG("[conf:{}] Secondary host buffer: {}", id_, bufferId);
+                        hostAudioInput->setMuted(false);
+                        hostSecondaryBuffers.push_back(std::move(bufferId));
+                    }
+                } else {
+                    JAMI_WARNING("[conf:{}] No source ring buffer for host audio {}", id_, source.label_);
+                }
             }
         }
     }
@@ -1942,10 +2000,15 @@ Conference::bindHostAudio()
         const bool participantCanSend = !(participantMuted || primaryMuted);
 
         // Host primary <-> participant primary (bidirectional with mute logic)
-        if (participantCanSend)
+        if (participantCanSend) {
             rbPool.bindRingBuffers(participantPrimary, hostPrimaryBuffer);
-        else
+            if (externalHostAudioBuffer_)
+                externalHostAudioLinks_[item].sources.insert(participantPrimary);
+        } else {
             rbPool.bindHalfDuplexOut(participantPrimary, hostPrimaryBuffer);
+        }
+        if (externalHostAudioBuffer_)
+            externalHostAudioLinks_[item].readers.insert(participantPrimary);
 
         // Host secondary sources -> participant primary
         // (participant hears all host audio streams mixed together)
@@ -1956,8 +2019,11 @@ Conference::bindHostAudio()
         // (host hears all participant audio streams mixed together)
         for (const auto& secId : participantSecondaries) {
             const bool secMuted = medias.at(secId);
-            if (!(participantMuted || secMuted))
+            if (!(participantMuted || secMuted)) {
                 rbPool.bindHalfDuplexOut(hostPrimaryBuffer, secId);
+                if (externalHostAudioBuffer_)
+                    externalHostAudioLinks_[item].sources.insert(secId);
+            }
         }
 
         rbPool.flush(participantPrimary);
@@ -1971,10 +2037,46 @@ Conference::bindHostAudio()
 }
 
 void
+Conference::unbindExternalHostAudioLinks(const std::string& callId, bool outgoingOnly)
+{
+    const auto it = externalHostAudioLinks_.find(callId);
+    if (!externalHostAudioBuffer_ || it == externalHostAudioLinks_.end())
+        return;
+
+    auto& pool = Manager::instance().getRingBufferPool();
+    const auto& hostId = externalHostAudioBuffer_->getId();
+    for (const auto& reader : it->second.readers)
+        pool.unBindHalfDuplexOut(reader, hostId);
+    it->second.readers.clear();
+
+    if (!outgoingOnly) {
+        for (const auto& source : it->second.sources)
+            pool.unBindHalfDuplexOut(hostId, source);
+        externalHostAudioLinks_.erase(it);
+    }
+}
+
+void
+Conference::unbindAllExternalHostAudioLinks(bool outgoingOnly)
+{
+    std::vector<std::string> callIds;
+    callIds.reserve(externalHostAudioLinks_.size());
+    for (const auto& [callId, links] : externalHostAudioLinks_)
+        callIds.push_back(callId);
+    for (const auto& callId : callIds)
+        unbindExternalHostAudioLinks(callId, outgoingOnly);
+}
+
+void
 Conference::unbindHostAudio()
 {
     JAMI_DEBUG("[conf:{}] Unbinding host audio", id_);
     auto& rbPool = Manager::instance().getRingBufferPool();
+
+    if (externalHostAudioBuffer_) {
+        unbindAllExternalHostAudioLinks(true);
+        return;
+    }
 
     for (const auto& source : hostSources_) {
         if (source.type_ != MediaType::MEDIA_AUDIO)
@@ -2093,23 +2195,35 @@ Conference::bindSubCallAudio(const std::string& callId)
     // --- Bind with host (if attached) ---
     if (getState() == State::ACTIVE_ATTACHED) {
         const bool hostCanSend = !(isMuted("host"sv) || isMediaSourceMuted(MediaType::MEDIA_AUDIO));
+        const std::string hostPrimaryBuffer = externalHostAudioBuffer_ ? externalHostAudioBuffer_->getId()
+                                                                       : RingBufferPool::DEFAULT_ID;
 
-        // Primary <-> host default buffer (bidirectional with mute logic)
+        // Primary <-> host primary buffer (bidirectional with mute logic)
         if (participantPrimaryCanSend && hostCanSend) {
-            rbPool.bindRingBuffers(primaryStreamId, RingBufferPool::DEFAULT_ID);
+            rbPool.bindRingBuffers(primaryStreamId, hostPrimaryBuffer);
         } else {
             if (participantPrimaryCanSend)
-                rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, primaryStreamId);
+                rbPool.bindHalfDuplexOut(hostPrimaryBuffer, primaryStreamId);
             if (hostCanSend)
-                rbPool.bindHalfDuplexOut(primaryStreamId, RingBufferPool::DEFAULT_ID);
+                rbPool.bindHalfDuplexOut(primaryStreamId, hostPrimaryBuffer);
+        }
+        if (externalHostAudioBuffer_) {
+            auto& links = externalHostAudioLinks_[callId];
+            if (participantPrimaryCanSend)
+                links.sources.insert(primaryStreamId);
+            if (hostCanSend)
+                links.readers.insert(primaryStreamId);
         }
 
         // Participant's secondaries -> host
         // (host hears all of this participant's streams mixed)
         for (const auto& secId : secondaryStreamIds) {
             const bool secMuted = participantStreams.at(secId);
-            if (!(participantMuted || secMuted))
-                rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, secId);
+            if (!(participantMuted || secMuted)) {
+                rbPool.bindHalfDuplexOut(hostPrimaryBuffer, secId);
+                if (externalHostAudioBuffer_)
+                    externalHostAudioLinks_[callId].sources.insert(secId);
+            }
         }
 
         // Host's secondary sources -> participant primary
@@ -2126,7 +2240,7 @@ Conference::bindSubCallAudio(const std::string& callId)
         }
 
         rbPool.flush(primaryStreamId);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        rbPool.flush(hostPrimaryBuffer);
     }
 
     // Flush secondary streams
@@ -2138,6 +2252,8 @@ void
 Conference::unbindSubCallAudio(const std::string& callId)
 {
     JAMI_DEBUG("[conf:{}] Unbinding participant audio: {}", id_, callId);
+    if (externalHostAudioBuffer_)
+        unbindExternalHostAudioLinks(callId, false);
     if (auto call = getCall(callId)) {
         auto medias = call->getAudioStreams();
         auto& rbPool = Manager::instance().getRingBufferPool();
