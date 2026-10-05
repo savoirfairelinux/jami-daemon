@@ -75,6 +75,9 @@ export enum JamiSignal {
   MediaChangeRequested = 'MediaChangeRequested',
   RemoteSdpReceived = 'RemoteSdpReceived',
   VideoOrientationChanged = 'VideoOrientationChanged',
+  ConferenceCreated = 'ConferenceCreated',
+  ConferenceChanged = 'ConferenceChanged',
+  ConferenceRemoved = 'ConferenceRemoved',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
