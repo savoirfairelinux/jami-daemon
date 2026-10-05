@@ -27,6 +27,7 @@
 #include "jamidht/collaborative_editing.h"
 #include "jamidht/presence_manager.h"
 #include "manager.h"
+#include "jami/media_const.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
 #endif
