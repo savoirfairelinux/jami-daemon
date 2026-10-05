@@ -78,6 +78,9 @@ export enum JamiSignal {
   ConferenceCreated = 'ConferenceCreated',
   ConferenceChanged = 'ConferenceChanged',
   ConferenceRemoved = 'ConferenceRemoved',
+  BrowserConferenceHostAnswer = 'BrowserConferenceHostAnswer',
+  BrowserConferenceHostReady = 'BrowserConferenceHostReady',
+  BrowserConferenceHostFailure = 'BrowserConferenceHostFailure',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
@@ -105,6 +108,12 @@ export enum JamiSignal {
   NewBuddyNotification = 'NewBuddyNotification',
   NewServerSubscriptionRequest = 'NewServerSubscriptionRequest',
   ServerError = 'ServerError',
+}
+
+export interface BrowserConferenceSignals {
+  [JamiSignal.BrowserConferenceHostAnswer]: [accountId: string, requestId: string, conferenceId: string, sdp: string]
+  [JamiSignal.BrowserConferenceHostReady]: [accountId: string, requestId: string, conferenceId: string]
+  [JamiSignal.BrowserConferenceHostFailure]: [accountId: string, requestId: string, error: string]
 }
 
 // ── Generic SWIG collection types ───────────────────────────
@@ -283,6 +292,9 @@ export interface JamiSwig {
   setVideoOrientation(accountId: string, callId: string, streamIdx: number, rotation: number): boolean
   refuse(accountId: string, callId: string): boolean
   hangUp(accountId: string, callId: string): boolean
+  startBrowserConference(accountId: string, conversationId: string, requestId: string, sdp: string): boolean
+  cancelBrowserConference(accountId: string, requestId: string): boolean
+  hangUpConference(accountId: string, confId: string): boolean
 
   // File transfer
   sendFile(accountId: string, conversationId: string, path: string, displayName: string, replyTo: string): void
