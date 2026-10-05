@@ -63,6 +63,9 @@ public:
     void stop() override;
     void setMuted(bool muted, Direction dir = Direction::SEND) override;
 
+    // Later asynchronous decoder failures are reported by setStartupFailureCb.
+    bool isRtpReady(bool expectSender, bool expectReceiver);
+
     void initRecorder() override;
     void deinitRecorder() override;
 
