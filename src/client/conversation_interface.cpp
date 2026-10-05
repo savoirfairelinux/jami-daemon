@@ -26,6 +26,7 @@
 
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/collaborative_editing.h"
 #include "jamidht/conversation_module.h"
@@ -38,6 +39,15 @@ startConversation(const std::string& accountId)
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto* convModule = acc->convModule(true))
             return convModule->startConversation();
+    return {};
+}
+
+std::string
+startFeedConversation(const std::string& accountId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true))
+            return convModule->startConversation(jami::ConversationMode::FEED);
     return {};
 }
 

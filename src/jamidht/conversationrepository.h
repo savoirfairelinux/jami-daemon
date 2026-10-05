@@ -147,6 +147,7 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
         case ConversationMode::ONE_TO_ONE:
         case ConversationMode::INVITES_ONLY:
         case ConversationMode::DOCUMENT:
+        case ConversationMode::FEED:
             return permission == Permission::Join;
         default:
             return false;
@@ -194,6 +195,24 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
         case Permission::BanUnbanMember:
         case Permission::UpdateProfile:
             return role == MemberRole::ADMIN;
+        default:
+            return false;
+        }
+    case ConversationMode::FEED:
+        switch (permission) {
+        case Permission::Text:
+        case Permission::File:
+        case Permission::AddMember:
+        case Permission::BanUnbanMember:
+        case Permission::UpdateProfile:
+            return role == MemberRole::ADMIN;
+        case Permission::TextReply:
+        case Permission::FileReply:
+        case Permission::Reaction:
+        case Permission::Edit:
+        case Permission::Delete:
+        case Permission::DeleteFile:
+            return true;
         default:
             return false;
         }
