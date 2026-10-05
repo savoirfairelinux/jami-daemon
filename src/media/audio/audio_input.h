@@ -41,11 +41,13 @@ class RingBuffer;
 class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
+    enum class SourceMode { DEVICE, RING_BUFFER_ONLY };
+
     AudioInput(const std::string& id);
     AudioInput(const std::string& id, const std::string& resource);
     ~AudioInput();
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    std::shared_future<DeviceParams> switchInput(const std::string& resource, SourceMode mode = SourceMode::DEVICE);
     void start() { loop_.start(); };
 
     bool isCapturing() const { return loop_.isRunning(); }
