@@ -250,7 +250,8 @@ ConversationDST::setUp(int numAccountsToSimulate)
         [&](uint32_t requestId,
             const std::string& accountId,
             const std::string& conversationId,
-            const std::vector<libjami::SwarmMessage>& messages) {
+            const std::vector<libjami::SwarmMessage>& messages,
+            const std::vector<std::string>& /* permissions */) {
             for (auto& repoAcc : repositoryAccounts) {
                 if (repoAcc.account->getAccountID() == accountId) {
                     repoAcc.client.onSwarmLoaded(requestId, accountId, conversationId, messages);
@@ -1278,7 +1279,11 @@ ConversationDST::verifyLoadConversationFromScratch()
                                                                                         conversationId);
             auto accountId = repositoryAccount.account->getAccountID();
             auto messages = conversation->loadMessagesSync(options);
-            emitSignal<libjami::ConversationSignal::SwarmLoaded>(0, accountId, conversationId, messages);
+            emitSignal<libjami::ConversationSignal::SwarmLoaded>(0,
+                                                                 accountId,
+                                                                 conversationId,
+                                                                 messages,
+                                                                 std::vector<std::string> {});
 
             // Compare the messages the client received via the SwarmLoaded signal against the ones
             // we expect based on the repository history.

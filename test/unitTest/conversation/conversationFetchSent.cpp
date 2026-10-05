@@ -57,6 +57,7 @@ struct UserData
     bool stopped {false};
     bool deviceAnnounced {false};
     std::vector<libjami::SwarmMessage> messages;
+    std::vector<std::string> permissions;
 };
 
 class ConversationFetchSentTest : public CppUnit::TestFixture
@@ -95,6 +96,7 @@ private:
     void testSyncFetch();
     void testSyncAfterDisconnection();
     void testDisplayedOnLoad();
+    void testSwarmLoadedPermissions();
     void testCallHistoryQueuedDuringFetch();
 
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
@@ -102,6 +104,7 @@ private:
     CPPUNIT_TEST(testSyncAfterDisconnection);
     CPPUNIT_TEST(testDisplayedOnLoad);
     CPPUNIT_TEST(testCallHistoryQueuedDuringFetch);
+    CPPUNIT_TEST(testSwarmLoadedPermissions);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -188,10 +191,12 @@ ConversationFetchSentTest::connectSignals()
         [&](uint32_t,
             const std::string& accountId,
             const std::string& /* conversationId */,
-            std::vector<libjami::SwarmMessage> messages) {
+            std::vector<libjami::SwarmMessage> messages,
+            const std::vector<std::string>& permissions) {
             std::lock_guard guard {mtx};
             if (accountId == aliceId) {
                 aliceData.messages.insert(aliceData.messages.end(), messages.begin(), messages.end());
+                aliceData.permissions = permissions;
             } else if (accountId == bobId) {
                 bobData.messages.insert(bobData.messages.end(), messages.begin(), messages.end());
             } else if (accountId == bob2Id) {
@@ -719,6 +724,27 @@ ConversationFetchSentTest::testCallHistoryQueuedDuringFetch()
     CPPUNIT_ASSERT(waitFor(10s, [&]() {
         return getMsgStatus(bobData, secondCommitId, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
+}
+
+void
+ConversationFetchSentTest::testSwarmLoadedPermissions()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return aliceData.conversationId == convId; }));
+
+    libjami::loadConversation(aliceId, convId, "", 0);
+    CPPUNIT_ASSERT(waitFor(30s, [&]() { return !aliceData.permissions.empty(); }));
+
+    // Alice created the group, so she is its admin
+    const auto& permissions = aliceData.permissions;
+    CPPUNIT_ASSERT(std::find(permissions.begin(), permissions.end(), "text") != permissions.end());
+    CPPUNIT_ASSERT(std::find(permissions.begin(), permissions.end(), "updateProfile") != permissions.end());
+    CPPUNIT_ASSERT(std::find(permissions.begin(), permissions.end(), "call") == permissions.end());
+    CPPUNIT_ASSERT(permissions == libjami::getConversationPermissions(aliceId, convId));
+    CPPUNIT_ASSERT(libjami::getConversationPermissions(aliceId, "unknown").empty());
 }
 
 } // namespace test
