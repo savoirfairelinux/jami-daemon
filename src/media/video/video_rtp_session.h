@@ -95,6 +95,9 @@ public:
     void stop() override;
     void setMuted(bool mute, Direction dir = Direction::SEND) override;
 
+    // Later asynchronous decoder failures are reported by setStartupFailureCb.
+    bool isRtpReady(bool expectSender, bool expectReceiver);
+
     /**
      * Set video orientation
      *
