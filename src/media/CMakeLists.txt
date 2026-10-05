@@ -5,6 +5,8 @@
 # audio|video
 
 list (APPEND Source_Files__media
+      "${CMAKE_CURRENT_SOURCE_DIR}/browser_conference_media.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/browser_conference_media.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/congestion_control.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/decoder_finder.h"
