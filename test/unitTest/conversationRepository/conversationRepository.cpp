@@ -1834,6 +1834,24 @@ ConversationRepositoryTest::testMemberPermissions()
     CPPUNIT_ASSERT(!contains(oneToOnePermissions, "updateProfile"));
     // Bob is only invited until he joins
     CPPUNIT_ASSERT(oneToOne->permissions(bobUri).empty());
+
+    const auto feedMode = ConversationMode::FEED;
+    auto feed = ConversationRepository::createConversation(aliceAccount, feedMode);
+    CPPUNIT_ASSERT(feed != nullptr);
+    CPPUNIT_ASSERT(feed->mode() == feedMode);
+    const auto feedAdminPermissions = feed->permissions(aliceUri);
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "text"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "file"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "fileReply"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "updateProfile"));
+
+    const auto feedMemberPermissions = permissionNames(feedMode, MemberRole::MEMBER);
+    CPPUNIT_ASSERT(!contains(feedMemberPermissions, "text"));
+    CPPUNIT_ASSERT(!contains(feedMemberPermissions, "file"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "fileReply"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "reaction"));
 }
 
 } // namespace test

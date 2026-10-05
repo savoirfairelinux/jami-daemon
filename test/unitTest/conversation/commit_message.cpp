@@ -19,13 +19,17 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include "jamidht/conversationrepository.h"
 #include "../../test_runner.h"
 
 #include "jamidht/commit_message.h"
 
+#include <algorithm>
 #include <optional>
 #include <random>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace jami {
 namespace test {
@@ -44,6 +48,7 @@ private:
     void testFromStringInvalidJson();
     // Example messages are parsed with the correct field values
     void testExampleMessages();
+    void testFeedPermissions();
     // A default-constructed CommitMessage has the expected initial values
     void testDefaultValues();
 
@@ -52,6 +57,7 @@ private:
     CPPUNIT_TEST(testFromStringToStringRoundtrip);
     CPPUNIT_TEST(testFromStringInvalidJson);
     CPPUNIT_TEST(testExampleMessages);
+    CPPUNIT_TEST(testFeedPermissions);
     CPPUNIT_TEST(testDefaultValues);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -92,6 +98,30 @@ CommitMessageTest::testDefaultValues()
     CPPUNIT_ASSERT(msg.invited.empty());
     CPPUNIT_ASSERT(msg.mimeType.empty());
     CPPUNIT_ASSERT(msg.parent.empty());
+}
+
+void
+CommitMessageTest::testFeedPermissions()
+{
+    const auto contains = [](const std::vector<std::string>& names, std::string_view name) {
+        return std::find(names.begin(), names.end(), name) != names.end();
+    };
+    const auto adminPermissions = permissionNames(ConversationMode::FEED, MemberRole::ADMIN);
+    const auto memberPermissions = permissionNames(ConversationMode::FEED, MemberRole::MEMBER);
+
+    CPPUNIT_ASSERT_EQUAL(5, static_cast<int>(ConversationMode::FEED));
+    CPPUNIT_ASSERT(contains(adminPermissions, "text"));
+    CPPUNIT_ASSERT(contains(adminPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(adminPermissions, "file"));
+    CPPUNIT_ASSERT(contains(adminPermissions, "addMember"));
+    CPPUNIT_ASSERT(contains(adminPermissions, "updateProfile"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "text"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "file"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "addMember"));
+    CPPUNIT_ASSERT(!contains(memberPermissions, "updateProfile"));
+    CPPUNIT_ASSERT(contains(memberPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(memberPermissions, "fileReply"));
+    CPPUNIT_ASSERT(contains(memberPermissions, "reaction"));
 }
 
 void
@@ -231,6 +261,7 @@ CommitMessageTest::testToStringFromStringRoundtrip()
     assertRoundtrip(CommitMessage::initial(ConversationMode::ADMIN_INVITES_ONLY));
     assertRoundtrip(CommitMessage::initial(ConversationMode::INVITES_ONLY));
     assertRoundtrip(CommitMessage::initial(ConversationMode::PUBLIC));
+    assertRoundtrip(CommitMessage::initial(ConversationMode::FEED));
     assertRoundtrip(CommitMessage::updateProfile());
     // A checkpoint adding an attachment carries no update (the file enters the tree instead)
     assertRoundtrip(CommitMessage::checkpoint({}));

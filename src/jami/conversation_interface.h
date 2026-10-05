@@ -55,6 +55,8 @@ enum class MemberEvent : int { INVALID = -1, ADD = 0, JOIN = 1, REMOVE = 2, BAN 
 
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
+/** Starts a new FEED conversation for the account. */
+LIBJAMI_PUBLIC std::string startFeedConversation(const std::string& accountId);
 LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId, const std::string& conversationId);
