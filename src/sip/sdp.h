@@ -148,6 +148,12 @@ public:
     void setReceivedOffer(const pjmedia_sdp_session* remote);
 
     /**
+     * Parse an offer received outside SIP signaling (e.g. a browser
+     * conference host), retaining it in this SDP session.
+     */
+    bool setReceivedOfferFromExternalSdp(const std::string& sdp);
+
+    /**
      * Build a new SDP answer using mediaList.
      *
      * @param mediaList The list of media attributes to build the answer
