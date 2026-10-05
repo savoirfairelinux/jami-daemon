@@ -3873,22 +3873,56 @@ ConversationModule::hostConference(const std::string& conversationId,
     if (callId.empty())
         conf->attachHost(mediaList);
 
-    if (createConf) {
-        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());
-    } else {
+    if (!createConf) {
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(), conf->getConfId(), conf->getStateStr());
         return;
     }
 
+    emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());
+    announceHostedConference(conversationId, conf);
+}
+
+std::shared_ptr<Conference>
+ConversationModule::hostBrowserConference(const std::string& conversationId,
+                                          const std::string& confId,
+                                          std::function<void()> onShutdown)
+{
+    auto acc = pimpl_->account_.lock();
+    auto conv = pimpl_->getConversation(conversationId);
+    if (!acc || !conv || confId.empty() || acc->getConference(confId))
+        return {};
+    {
+        std::lock_guard lk(conv->mtx);
+        if (!conv->conversation)
+            return {};
+    }
+    auto conf = std::make_shared<Conference>(acc, confId);
+    acc->attach(conf);
+    if (!announceHostedConference(conversationId, conf, std::move(onShutdown), true)) {
+        acc->removeConference(confId);
+        return {};
+    }
+    return conf;
+}
+
+bool
+ConversationModule::announceHostedConference(const std::string& conversationId,
+                                             const std::shared_ptr<Conference>& conf,
+                                             std::function<void()> onShutdown,
+                                             bool announceCreated)
+{
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
-        return;
+        return false;
     std::unique_lock lk(conv->mtx);
     if (!conv->conversation) {
         JAMI_ERROR("Conversation {} not found", conversationId);
-        return;
+        return false;
     }
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return false;
     // Add commit to conversation
     auto message = CommitMessage::conferenceHostingStart(conf->getConfId(), pimpl_->deviceId_, pimpl_->username_);
     conv->conversation->hostConference(std::move(message),
@@ -3908,7 +3942,10 @@ ConversationModule::hostConference(const std::string& conversationId,
                       accountUri = pimpl_->username_,
                       confId = conf->getConfId(),
                       conversationId,
-                      conv](int duration) {
+                      conv,
+                      onShutdown = std::move(onShutdown)](int duration) {
+        if (onShutdown)
+            onShutdown();
         auto shared = w.lock();
         if (shared) {
             auto message = CommitMessage::conferenceHostingEnd(confId, shared->deviceId_, accountUri, duration);
@@ -3930,6 +3967,10 @@ ConversationModule::hostConference(const std::string& conversationId,
                 });
         }
     });
+    lk.unlock();
+    if (announceCreated)
+        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());
+    return true;
 }
 
 std::map<std::string, ConvInfo>

@@ -841,6 +841,40 @@ conferenceRemoved(const std::string& accountId, const std::string& confId)
 }
 
 void
+browserConferenceHostAnswer(const std::string& accountId, const std::string& requestId,
+                            const std::string& confId, const std::string& answer)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, confId, answer]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(confId), napiString(answer)};
+        callCallback("BrowserConferenceHostAnswer", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+browserConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, confId]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(confId)};
+        callCallback("BrowserConferenceHostReady", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+browserConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, reason]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(reason)};
+        callCallback("BrowserConferenceHostFailure", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 onConferenceInfosUpdated(const std::string& accountId,
                          const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
@@ -1004,7 +1038,12 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&videoOrientationChanged, _1, _2, _3, _4)),
            exportable_callback<CallSignal::ConferenceCreated>(bind(&conferenceCreated, _1, _2, _3)),
            exportable_callback<CallSignal::ConferenceChanged>(bind(&conferenceChanged, _1, _2, _3)),
-           exportable_callback<CallSignal::ConferenceRemoved>(bind(&conferenceRemoved, _1, _2))};
+           exportable_callback<CallSignal::ConferenceRemoved>(bind(&conferenceRemoved, _1, _2)),
+           exportable_callback<CallSignal::BrowserConferenceHostAnswer>(
+               bind(&browserConferenceHostAnswer, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::BrowserConferenceHostReady>(bind(&browserConferenceHostReady, _1, _2, _3)),
+           exportable_callback<CallSignal::BrowserConferenceHostFailure>(
+               bind(&browserConferenceHostFailure, _1, _2, _3))};
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
