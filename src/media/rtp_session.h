@@ -137,6 +137,7 @@ public:
 protected:
     void reportStartupFailure(std::string reason)
     {
+        startupFailed_.store(true);
         StartupFailureCb cb;
         {
             std::lock_guard lk(startupFailureMtx_);
@@ -160,6 +161,8 @@ protected:
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::mutex startupFailureMtx_;
     StartupFailureCb startupFailureCb_;
+    std::atomic_bool startupFailed_ {false};
+    bool srtpInstalled_ {false};
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
     std::optional<DtlsSrtpSession> dtlsSrtpSession_ {};
