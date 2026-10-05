@@ -81,7 +81,15 @@ constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC, DOCUMENT };
+// Values are persisted in initial commits; keep them stable.
+enum class ConversationMode : int {
+    ONE_TO_ONE = 0,
+    ADMIN_INVITES_ONLY = 1,
+    INVITES_ONLY = 2,
+    PUBLIC = 3,
+    DOCUMENT = 4,
+    FEED = 5
+};
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -327,9 +335,8 @@ struct CommitMessage
     }
 
     // Every Jami conversation starts with a commit of type "initial" containing a "mode" field indicating the
-    // kind of conversation. There are currently two supported values for the mode: 0 (ConversationMode::ONE_TO_ONE)
-    // and 2 (ConversationMode::INVITES_ONLY). In the case of one-to-one conversations (mode 0), there is an
-    // additional "invited" field containing the Jami ID of the other participant. For example:
+    // kind of conversation. In the case of one-to-one conversations (mode 0), there is an additional "invited"
+    // field containing the Jami ID of the other participant. For example:
     //
     //     {"invited":"f32701048c59f9ad6a095c6d14650294b4cf30a4","mode":0,"type":"initial"}
     //     {"mode":2,"type":"initial"}

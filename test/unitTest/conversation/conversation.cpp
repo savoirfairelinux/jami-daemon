@@ -516,6 +516,11 @@ ConversationTest::testCreateConversation()
     crt = std::ifstream(deviceCrt);
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+
+    auto feedConvId = libjami::startFeedConversation(aliceId);
+    CPPUNIT_ASSERT(!feedConvId.empty());
+    ConversationRepository feedRepo(aliceAccount, feedConvId);
+    CPPUNIT_ASSERT(feedRepo.mode() == ConversationMode::FEED);
 }
 
 void

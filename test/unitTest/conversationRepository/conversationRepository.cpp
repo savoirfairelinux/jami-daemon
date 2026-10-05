@@ -106,6 +106,7 @@ private:
     void testUnknownCommitTypeInDocumentRejected();
     void testJoinLeavePermissions();
     void testMemberPermissions();
+    void testFeedMemberActions();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -147,6 +148,7 @@ private:
     CPPUNIT_TEST(testUnknownCommitTypeInDocumentRejected);
     CPPUNIT_TEST(testJoinLeavePermissions);
     CPPUNIT_TEST(testMemberPermissions);
+    CPPUNIT_TEST(testFeedMemberActions);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1837,6 +1839,82 @@ ConversationRepositoryTest::testMemberPermissions()
     CPPUNIT_ASSERT(!contains(oneToOnePermissions, "updateProfile"));
     // Bob is only invited until he joins
     CPPUNIT_ASSERT(oneToOne->permissions(bobUri) == std::vector<std::string> {"join"});
+
+    const auto feedMode = ConversationMode::FEED;
+    auto feed = ConversationRepository::createConversation(aliceAccount, feedMode);
+    CPPUNIT_ASSERT(feed != nullptr);
+    CPPUNIT_ASSERT(feed->mode() == feedMode);
+    const auto feedAdminPermissions = feed->permissions(aliceUri);
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "text"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "file"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "fileReply"));
+    CPPUNIT_ASSERT(contains(feedAdminPermissions, "updateProfile"));
+
+    const auto feedMemberPermissions = permissionNames(feedMode, MemberRole::MEMBER);
+    CPPUNIT_ASSERT(!contains(feedMemberPermissions, "text"));
+    CPPUNIT_ASSERT(!contains(feedMemberPermissions, "file"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "textReply"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "fileReply"));
+    CPPUNIT_ASSERT(contains(feedMemberPermissions, "reaction"));
+}
+
+void
+ConversationRepositoryTest::testFeedMemberActions()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceRepository = ConversationRepository::createConversation(aliceAccount, ConversationMode::FEED);
+    CPPUNIT_ASSERT(aliceRepository != nullptr);
+    CPPUNIT_ASSERT(!aliceRepository->addMember(bobAccount->getUsername()).empty());
+
+    const auto postId = aliceRepository->commitMessage(CommitMessage::text("Admin post").toString());
+    const auto fileId = aliceRepository->commitMessage(
+        CommitMessage::fileSent("admin.txt", std::string(128, 'a'), 1, 10).toString());
+    CPPUNIT_ASSERT(!postId.empty());
+    CPPUNIT_ASSERT(!fileId.empty());
+    CPPUNIT_ASSERT(aliceRepository->validCommits(aliceRepository->log()));
+
+    const auto alicePath = fileutils::get_data_dir() / aliceId / "conversations" / aliceRepository->id();
+    const auto bobPath = fileutils::get_data_dir() / bobId / "conversations" / aliceRepository->id();
+    std::filesystem::create_directories(bobPath.parent_path());
+    std::filesystem::copy(alicePath, bobPath, std::filesystem::copy_options::recursive);
+    ConversationRepository bobRepository(bobAccount, aliceRepository->id());
+    CPPUNIT_ASSERT(!bobRepository.join().empty());
+    CPPUNIT_ASSERT(bobRepository.validCommits(bobRepository.log()));
+
+    const auto replyId = bobRepository.commitMessage(CommitMessage::text("Member reply", postId).toString());
+    const auto fileReplyId = bobRepository.commitMessage(
+        CommitMessage::fileSent("reply.txt", std::string(128, 'b'), 2, 10, postId).toString());
+    CPPUNIT_ASSERT(!replyId.empty());
+    CPPUNIT_ASSERT(!fileReplyId.empty());
+    CPPUNIT_ASSERT(!bobRepository.commitMessage(CommitMessage::edit("Edited reply", replyId).toString()).empty());
+    CPPUNIT_ASSERT(!bobRepository.commitMessage(CommitMessage::edit("", replyId).toString()).empty());
+    CPPUNIT_ASSERT(!bobRepository.commitMessage(CommitMessage::fileDeleted(fileReplyId).toString()).empty());
+    CPPUNIT_ASSERT(bobRepository.validCommits(bobRepository.log()));
+
+    git_repository* repoPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repoPtr, bobPath.c_str()));
+    GitRepository repo {repoPtr};
+    const auto head = bobRepository.getHead();
+    const std::array<CommitMessage, 5> forbidden {{
+        CommitMessage::text("Member post"),
+        CommitMessage::fileSent("member.txt", std::string(128, 'c'), 3, 10),
+        CommitMessage::edit("Changed admin post", postId),
+        CommitMessage::edit("", postId),
+        CommitMessage::fileDeleted(fileId),
+    }};
+    for (const auto& message : forbidden) {
+        CPPUNIT_ASSERT(bobRepository.commitMessage(message.toString()).empty());
+        CPPUNIT_ASSERT_EQUAL(head, bobRepository.getHead());
+
+        const auto commitId = addCommit(repo.get(), bobAccount, "rejected", message.toString());
+        CPPUNIT_ASSERT(!commitId.empty());
+        const auto commit = bobRepository.getCommit(commitId);
+        CPPUNIT_ASSERT(commit.has_value());
+        CPPUNIT_ASSERT(!bobRepository.validCommits({*commit}));
+        CPPUNIT_ASSERT_EQUAL(head, bobRepository.getHead());
+    }
 }
 
 } // namespace test
