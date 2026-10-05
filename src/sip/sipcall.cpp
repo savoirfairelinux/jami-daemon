@@ -333,8 +333,8 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                 std::string streamId = "";
 
 #ifdef ENABLE_VIDEO
-                if (auto* videoManager = Manager::instance().getVideoManager()) {
-                    if (not videoManager->videoDeviceMonitor.getDeviceList().empty()) {
+                if (auto* monitor = getVideoDeviceMonitor()) {
+                    if (not monitor->getDeviceList().empty()) {
                         // if we have a video device
                         streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
                     }
@@ -2285,9 +2285,8 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO && stream.mediaAttribute_->sourceUri_.empty()) {
-        if (auto* videoManager = Manager::instance().getVideoManager()) {
-            stream.mediaAttribute_->sourceUri_ = videoManager->videoDeviceMonitor.getMRLForDefaultDevice();
-        }
+        if (auto* monitor = getVideoDeviceMonitor())
+            stream.mediaAttribute_->sourceUri_ = monitor->getMRLForDefaultDevice();
     }
 #endif
 

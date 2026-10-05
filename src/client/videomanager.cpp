@@ -362,24 +362,24 @@ registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrappe
 std::vector<std::string>
 getDeviceList()
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getDeviceList();
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getDeviceList();
     return {};
 }
 
 VideoCapabilities
 getCapabilities(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getCapabilities(deviceId);
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getCapabilities(deviceId);
     return {};
 }
 
 std::string
 getDefaultDevice()
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getDefaultDevice();
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getDefaultDevice();
     return {};
 }
 
@@ -387,8 +387,8 @@ void
 setDefaultDevice(const std::string& deviceId)
 {
     JAMI_LOG("Setting default device to {}", deviceId);
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        if (vm->videoDeviceMonitor.setDefaultDevice(deviceId))
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        if (monitor->setDefaultDevice(deviceId))
             jami::Manager::instance().saveConfig();
     }
 }
@@ -403,8 +403,8 @@ setDeviceOrientation(const std::string& deviceId, int angle)
 std::map<std::string, std::string>
 getDeviceParams(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        auto params = monitor->getDeviceParams(deviceId);
         return {{"format", params.format},
                 {"width", std::to_string(params.width)},
                 {"height", std::to_string(params.height)},
@@ -416,17 +416,16 @@ getDeviceParams(const std::string& deviceId)
 std::map<std::string, std::string>
 getSettings(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        return vm->videoDeviceMonitor.getSettings(deviceId).to_map();
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getSettings(deviceId).to_map();
     return {};
 }
 
 void
 applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        vm->videoDeviceMonitor.applySettings(deviceId, settings);
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        monitor->applySettings(deviceId, settings);
         jami::Manager::instance().saveConfig();
     }
 }
@@ -435,7 +434,9 @@ std::string
 openVideoInput(const std::string& path)
 {
     if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        auto id = path.empty() ? vm->videoDeviceMonitor.getMRLForDefaultDevice() : path;
+        if (!vm->videoDeviceMonitor)
+            return {};
+        auto id = path.empty() ? vm->videoDeviceMonitor->getMRLForDefaultDevice() : path;
         auto& input = vm->clientVideoInputs[id];
         if (not input) {
             input = jami::getVideoInput(id);
@@ -660,17 +661,15 @@ setEncodingAccelerated(bool state)
 void
 addVideoDevice(const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo)
 {
-    if (auto videoManager = jami::Manager::instance().getVideoManager()) {
-        videoManager->videoDeviceMonitor.addDevice(node, devInfo);
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        monitor->addDevice(node, devInfo);
 }
 
 void
 removeVideoDevice(const std::string& node)
 {
-    if (auto videoManager = jami::Manager::instance().getVideoManager()) {
-        videoManager->videoDeviceMonitor.removeDevice(node);
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        monitor->removeDevice(node);
 }
 #endif
 
@@ -687,7 +686,7 @@ video::VideoDeviceMonitor*
 getVideoDeviceMonitor()
 {
     if (auto* vm = jami::Manager::instance().getVideoManager())
-        return &vm->videoDeviceMonitor;
+        return vm->videoDeviceMonitor.get();
     return {};
 }
 
@@ -696,7 +695,7 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
 {
     auto sinkId = sink.empty() ? resource : sink;
     auto* vmgr = Manager::instance().getVideoManager();
-    if (!vmgr)
+    if (!vmgr || !vmgr->videoDeviceMonitor)
         return {};
     std::unique_lock<std::mutex> lk(vmgr->videoMutex);
 
@@ -750,7 +749,8 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
 void
 VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 {
-    videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+    if (videoDeviceMonitor)
+        videoDeviceMonitor->setDeviceOrientation(deviceId, angle);
 }
 #endif
 
