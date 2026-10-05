@@ -22,6 +22,8 @@
 #include "manager.h"
 #include "logger.h"
 
+#include <opendht/thread_pool.h>
+
 extern "C" {
 #include <libavutil/display.h>
 }
@@ -42,9 +44,17 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id, bool useSink, cons
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
-    , loop_(std::bind(&VideoReceiveThread::setup, this),
-            std::bind(&VideoReceiveThread::decodeFrame, this),
-            std::bind(&VideoReceiveThread::cleanup, this))
+    , loop_(
+          [this] {
+              try {
+                  return setup();
+              } catch (const std::exception& e) {
+                  reportSetupFailure(e.what());
+                  throw;
+              }
+          },
+          std::bind(&VideoReceiveThread::decodeFrame, this),
+          std::bind(&VideoReceiveThread::cleanup, this))
 {
     JAMI_LOG("[{}] Instance created", fmt::ptr(this));
 }
@@ -53,6 +63,15 @@ VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
     JAMI_LOG("[{}] Instance destroyed", fmt::ptr(this));
+}
+
+void
+VideoReceiveThread::reportSetupFailure(std::string reason)
+{
+    if (onSetupFailure_) {
+        auto cb = onSetupFailure_;
+        dht::ThreadPool::io().run([cb = std::move(cb), reason = std::move(reason)] { cb(reason); });
+    }
 }
 
 void
@@ -65,8 +84,6 @@ VideoReceiveThread::startLoop()
 void
 VideoReceiveThread::stopLoop()
 {
-    if (loop_.isStopping())
-        return;
     JAMI_LOG("[{}] Stopping receiver’s loop and waiting for the thread to exit…", fmt::ptr(this));
     loop_.stop();
     loop_.join();
@@ -124,6 +141,12 @@ VideoReceiveThread::setup()
 
         if (stream_.str().empty()) {
             JAMI_ERROR("No SDP loaded");
+            reportSetupFailure("No video SDP loaded");
+            return false;
+        }
+        if (!demuxContext_) {
+            JAMI_ERROR("Video RTP input is not configured");
+            reportSetupFailure("Video RTP input is not configured");
             return false;
         }
 
@@ -134,6 +157,7 @@ VideoReceiveThread::setup()
 
     if (videoDecoder_->openInput(args_)) {
         JAMI_ERROR("Unable to open input \"{}\"", args_.input);
+        reportSetupFailure("Unable to open video SDP");
         return false;
     }
 
@@ -235,7 +259,8 @@ VideoReceiveThread::configureVideoOutput()
 
     if (videoDecoder_->setupVideo() < 0) {
         JAMI_ERROR("Decoder IO startup failed");
-        stopLoop();
+        reportSetupFailure("Video decoder setup failed");
+        loop_.stop();
         return false;
     }
 
@@ -247,7 +272,8 @@ VideoReceiveThread::configureVideoOutput()
 
     if (not sink_->start()) {
         JAMI_ERROR("RX: sink startup failed");
-        stopLoop();
+        reportSetupFailure("Video receiver sink startup failed");
+        loop_.stop();
         return false;
     }
 
