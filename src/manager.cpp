@@ -814,10 +814,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     pimpl_->finished_ = false;
     libjami::allowBrowserConferences();
 
-    // Create video manager
-    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
-        pimpl_->videoManager_.reset(new VideoManager);
-    }
+    // Headless conference RTP still needs the audio input registry, not device monitoring.
+    pimpl_->videoManager_ = std::make_unique<VideoManager>(!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO));
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         autoLoad = false;
