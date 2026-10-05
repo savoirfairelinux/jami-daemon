@@ -46,6 +46,11 @@
 
 namespace jami {
 
+namespace conference_detail {
+std::vector<libjami::MediaMap> mediaAnswerForOffer(const std::vector<MediaAttribute>& hostSources,
+                                                   const std::vector<libjami::MediaMap>& remoteMediaList);
+}
+
 class Call;
 class Account;
 class JamiAccount;
