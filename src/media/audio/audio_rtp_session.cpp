@@ -249,8 +249,10 @@ AudioRtpSession::unbindReceivedAudio()
 void
 AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
 {
+    startupFailed_.store(false);
     dtlsAbort_->store(false);
     std::lock_guard lock(mutex_);
+    srtpInstalled_ = false;
     dtlsAbort_->store(false);
 
     if (not send_.enabled and not receive_.enabled) {
@@ -301,6 +303,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                     dtlsSrtp.outboundKeyInfo.c_str(),
                                     dtlsSrtp.suite.c_str(),
                                     dtlsSrtp.inboundKeyInfo.c_str());
+            srtpInstalled_ = true;
             // WebRTC endpoints require SRTCP (RFC 5764); legacy SDES peers
             // exchange plaintext RTCP.
             socketPair_->setRtcpProtection(true);
@@ -309,6 +312,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                     receive_.crypto.getSrtpKeyInfo().c_str(),
                                     send_.crypto.getCryptoSuite().c_str(),
                                     send_.crypto.getSrtpKeyInfo().c_str());
+            srtpInstalled_ = true;
         }
     } catch (const std::runtime_error& e) {
         JAMI_ERROR("Socket creation failed: {}", e.what());
@@ -325,6 +329,15 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     }
 }
 
+bool
+AudioRtpSession::isRtpReady(bool expectSender, bool expectReceiver)
+{
+    std::lock_guard lock(mutex_);
+    return !startupFailed_.load() && socketPair_ && srtpInstalled_ && dtlsSrtpSession_
+           && (expectSender || expectReceiver)
+           && (!expectSender || sender_) && (!expectReceiver || receiveThread_);
+}
+
 void
 AudioRtpSession::stop()
 {
@@ -332,6 +345,7 @@ AudioRtpSession::stop()
     // the mutex it holds, otherwise stopping waits out the handshake timeout.
     dtlsAbort_->store(true);
     std::lock_guard lock(mutex_);
+    srtpInstalled_ = false;
 
     JAMI_DEBUG("[{}] Stopping receiver", fmt::ptr(this));
 

@@ -221,6 +221,7 @@ BrowserHostAudioTest::testAudioTransportFailureIsReported()
     }
     CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, failedType);
     CPPUNIT_ASSERT(reason.find("DTLS-SRTP") != std::string::npos);
+    CPPUNIT_ASSERT(!session->isRtpReady(true, true));
     session->stop();
 }
 
@@ -242,6 +243,7 @@ BrowserHostAudioTest::testDisabledAudioDoesNotReportFailure()
         cv.notify_one();
     });
     session->start(nullptr, nullptr);
+    CPPUNIT_ASSERT(!session->isRtpReady(false, false));
     std::unique_lock lk(mutex);
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::milliseconds(100), [&] { return failed; }));
     lk.unlock();
@@ -307,6 +309,7 @@ BrowserHostAudioTest::testVideoTransportFailureIsReported()
     }
     CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, failedType);
     CPPUNIT_ASSERT(reason.find("DTLS-SRTP") != std::string::npos);
+    CPPUNIT_ASSERT(!session->isRtpReady(true, true));
 }
 
 void
