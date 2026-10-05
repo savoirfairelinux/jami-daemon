@@ -434,7 +434,8 @@ install_signal_primitives(void*)
                 uint32_t,
                 const std::string&,
                 const std::string&,
-                std::vector<std::map<std::string, std::string>>>(handlers, "conversation-loaded");
+                std::vector<std::map<std::string, std::string>>,
+                const std::vector<std::string>&>(handlers, "conversation-loaded");
 
     add_handler<libjami::ConversationSignal::MessagesFound,
                 uint32_t,

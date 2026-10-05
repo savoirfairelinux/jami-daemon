@@ -22,7 +22,7 @@
 class ConversationCallback {
 public:
     virtual ~ConversationCallback(){}
-    virtual void swarmLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<libjami::SwarmMessage> /*messages*/){}
+    virtual void swarmLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<libjami::SwarmMessage> /*messages*/, std::vector<std::string> /*permissions*/){}
     virtual void messagesFound(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void swarmMessageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, const libjami::SwarmMessage& /*message*/){}
     virtual void swarmMessageUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, const libjami::SwarmMessage& /*message*/){}
@@ -79,6 +79,7 @@ struct SwarmMessage
   void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
+  std::vector<std::string> getConversationPermissions(const std::string& accountId, const std::string& conversationId);
 
   // Collaborative editing
   std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);
@@ -118,7 +119,7 @@ struct SwarmMessage
 class ConversationCallback {
 public:
     virtual ~ConversationCallback(){}
-    virtual void swarmLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<libjami::SwarmMessage> /*messages*/){}
+    virtual void swarmLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<libjami::SwarmMessage> /*messages*/, std::vector<std::string> /*permissions*/){}
     virtual void messagesFound(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void swarmMessageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, const libjami::SwarmMessage& /*message*/){}
     virtual void swarmMessageUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, const libjami::SwarmMessage& /*message*/){}

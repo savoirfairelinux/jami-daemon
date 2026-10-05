@@ -86,6 +86,8 @@ LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                              const std::string& contactUri);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
                                                                                       const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,
+                                                                   const std::string& conversationId);
 
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
@@ -412,7 +414,8 @@ struct LIBJAMI_PUBLIC ConversationSignal
         using cb_type = void(uint32_t /* id */,
                              const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
-                             std::vector<SwarmMessage> /*messages*/);
+                             std::vector<SwarmMessage> /*messages*/,
+                             const std::vector<std::string>& /*permissions*/);
     };
     struct LIBJAMI_PUBLIC MessagesFound
     {

@@ -434,6 +434,12 @@ public:
     std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& conversationId,
                                                                            bool includeBanned = false) const;
     /**
+     * Get the permissions granted to the account in a conversation
+     * @param conversationId
+     * @return permission names, empty if the conversation is unknown
+     */
+    std::vector<std::string> getConversationPermissions(const std::string& conversationId) const;
+    /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId
      * @param interactionId     "" for getting the whole history
