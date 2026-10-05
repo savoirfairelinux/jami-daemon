@@ -50,8 +50,10 @@
 #include "audio/alsa/alsalayer.h"
 #endif
 
+#include "audio/audio_input.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
+#include "media/media_player.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -382,6 +384,13 @@ struct Manager::ManagerPimpl
      *
      */
     std::unique_ptr<RingBufferPool> ringbufferpool_;
+
+    std::mutex audioInputsMutex_;
+    std::map<std::string, std::weak_ptr<AudioInput>> audioInputs_;
+    std::shared_ptr<AudioInput> audioPreview_;
+
+    std::mutex mediaPlayersMutex_;
+    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers_;
 
     std::atomic_bool finished_ {false};
 
@@ -807,10 +816,20 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     pimpl_->finished_ = false;
     libjami::allowExternalMediaConferences();
 
-    // Create video manager
-    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
-        pimpl_->videoManager_.reset(new VideoManager);
+    {
+        std::map<std::string, std::shared_ptr<MediaPlayer>> oldPlayers;
+        {
+            std::lock_guard lock(pimpl_->mediaPlayersMutex_);
+            oldPlayers.swap(pimpl_->mediaPlayers_);
+        }
     }
+
+#ifdef ENABLE_VIDEO
+    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO))
+        pimpl_->videoManager_ = std::make_unique<VideoManager>();
+    else
+        pimpl_->videoManager_.reset();
+#endif
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         autoLoad = false;
@@ -910,6 +929,7 @@ Manager::finish() noexcept
         unregisterAccounts();
         accountFactory.clear();
 
+        stopAudioPreview();
         {
             std::lock_guard lock(pimpl_->audioLayerMutex_);
             pimpl_->audiodriver_.reset();
@@ -3095,6 +3115,84 @@ std::shared_ptr<AudioLayer>
 Manager::getAudioDriver()
 {
     return pimpl_->audiodriver_;
+}
+
+std::shared_ptr<AudioInput>
+Manager::getAudioInput(const std::string& id)
+{
+    std::lock_guard lock(pimpl_->audioInputsMutex_);
+    auto& inputs = pimpl_->audioInputs_;
+    std::erase_if(inputs, [](const auto& entry) { return entry.second.expired(); });
+    auto& entry = inputs[id];
+    auto input = entry.lock();
+    if (!input) {
+        input = std::make_shared<AudioInput>(id);
+        entry = input;
+    }
+    return input;
+}
+
+void
+Manager::startAudioPreview()
+{
+    {
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
+        if (!pimpl_->audiodriver_)
+            return;
+    }
+
+    auto input = getAudioInput(RingBufferPool::DEFAULT_ID);
+    {
+        std::lock_guard lock(pimpl_->audioInputsMutex_);
+        if (pimpl_->finished_)
+            return;
+        pimpl_->audioPreview_ = input;
+    }
+    input->switchInput("");
+}
+
+void
+Manager::stopAudioPreview()
+{
+    // Release the input outside the registry lock; its destructor joins the capture thread.
+    std::shared_ptr<AudioInput> input;
+    {
+        std::lock_guard lock(pimpl_->audioInputsMutex_);
+        input.swap(pimpl_->audioPreview_);
+    }
+}
+
+std::shared_ptr<MediaPlayer>
+Manager::getMediaPlayer(const std::string& id)
+{
+    std::lock_guard lock(pimpl_->mediaPlayersMutex_);
+    auto it = pimpl_->mediaPlayers_.find(id);
+    return it == pimpl_->mediaPlayers_.end() ? nullptr : it->second;
+}
+
+std::string
+Manager::createMediaPlayer(const std::string& path)
+{
+    std::lock_guard lock(pimpl_->mediaPlayersMutex_);
+    auto& player = pimpl_->mediaPlayers_[path];
+    if (!player)
+        player = std::make_shared<MediaPlayer>(path);
+    return path;
+}
+
+bool
+Manager::closeMediaPlayer(const std::string& id)
+{
+    std::shared_ptr<MediaPlayer> player;
+    {
+        std::lock_guard lock(pimpl_->mediaPlayersMutex_);
+        auto it = pimpl_->mediaPlayers_.find(id);
+        if (it == pimpl_->mediaPlayers_.end())
+            return false;
+        player = std::move(it->second);
+        pimpl_->mediaPlayers_.erase(it);
+    }
+    return true;
 }
 
 std::shared_ptr<Call>

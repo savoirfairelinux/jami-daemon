@@ -30,6 +30,7 @@ extern "C" {
 #include "manager.h"
 #include "../../test_runner.h"
 #include "client/videomanager.h"
+#include "media/media_player.h"
 
 namespace jami {
 namespace test {

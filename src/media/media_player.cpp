@@ -18,6 +18,7 @@
 #include "media_player.h"
 #include "client/videomanager.h"
 #include "client/jami_signal.h"
+#include "manager.h"
 #include "jami/media_const.h"
 #include <string>
 namespace jami {
@@ -36,11 +37,12 @@ MediaPlayer::MediaPlayer(const std::string& resource)
 
     path_ = suffix;
 
-    audioInput_ = jami::getAudioInput(path_);
+    audioInput_ = Manager::instance().getAudioInput(path_);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO
     videoInput_ = jami::getVideoInput(path_, video::VideoInputMode::ManagedByDaemon, resource);
-    videoInput_->setPaused(paused_);
+    if (videoInput_)
+        videoInput_->setPaused(paused_);
 #endif
 
     demuxer_ = std::make_shared<MediaDemuxer>();
@@ -100,10 +102,12 @@ MediaPlayer::configureMediaInputs()
     }
 #ifdef ENABLE_VIDEO
     try {
-        videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
-        if (hasVideo()) {
-            videoInput_->configureFilePlayback(path_, demuxer_, videoStream_);
-            videoInput_->updateStartTime(startTime_);
+        if (videoInput_) {
+            videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
+            if (hasVideo()) {
+                videoInput_->configureFilePlayback(path_, demuxer_, videoStream_);
+                videoInput_->updateStartTime(startTime_);
+            }
         }
     } catch (const std::exception& e) {
         // Keep videoInput_ alive: pause() may read it concurrently from another thread.

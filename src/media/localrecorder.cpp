@@ -21,7 +21,6 @@
 #include "media_stream.h"
 #include "manager.h"
 #include "logger.h"
-#include "client/videomanager.h"
 
 namespace jami {
 
@@ -72,7 +71,7 @@ LocalRecorder::start()
     // create read offset in RingBuffer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
 
-    audioInput_ = getAudioInput(path_);
+    audioInput_ = Manager::instance().getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
     audioInput_->switchInput("");

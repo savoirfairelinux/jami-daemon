@@ -17,6 +17,7 @@
 
 #include "videomanager_interface.h"
 #include "videomanager.h"
+#include "media/media_player.h"
 #include "localrecorder.h"
 #include "localrecordermanager.h"
 #include "libav_utils.h"
@@ -26,7 +27,6 @@
 #include "manager.h"
 #ifdef ENABLE_VIDEO
 #endif
-#include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
 #include "libav_utils.h"
 
@@ -362,24 +362,24 @@ registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrappe
 std::vector<std::string>
 getDeviceList()
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getDeviceList();
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getDeviceList();
     return {};
 }
 
 VideoCapabilities
 getCapabilities(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getCapabilities(deviceId);
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getCapabilities(deviceId);
     return {};
 }
 
 std::string
 getDefaultDevice()
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        return vm->videoDeviceMonitor.getDefaultDevice();
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getDefaultDevice();
     return {};
 }
 
@@ -387,8 +387,8 @@ void
 setDefaultDevice(const std::string& deviceId)
 {
     JAMI_LOG("Setting default device to {}", deviceId);
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        if (vm->videoDeviceMonitor.setDefaultDevice(deviceId))
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        if (monitor->setDefaultDevice(deviceId))
             jami::Manager::instance().saveConfig();
     }
 }
@@ -403,8 +403,8 @@ setDeviceOrientation(const std::string& deviceId, int angle)
 std::map<std::string, std::string>
 getDeviceParams(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        auto params = monitor->getDeviceParams(deviceId);
         return {{"format", params.format},
                 {"width", std::to_string(params.width)},
                 {"height", std::to_string(params.height)},
@@ -416,17 +416,16 @@ getDeviceParams(const std::string& deviceId)
 std::map<std::string, std::string>
 getSettings(const std::string& deviceId)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        return vm->videoDeviceMonitor.getSettings(deviceId).to_map();
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        return monitor->getSettings(deviceId).to_map();
     return {};
 }
 
 void
 applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        vm->videoDeviceMonitor.applySettings(deviceId, settings);
+    if (auto* monitor = jami::getVideoDeviceMonitor()) {
+        monitor->applySettings(deviceId, settings);
         jami::Manager::instance().saveConfig();
     }
 }
@@ -435,7 +434,9 @@ std::string
 openVideoInput(const std::string& path)
 {
     if (auto* vm = jami::Manager::instance().getVideoManager()) {
-        auto id = path.empty() ? vm->videoDeviceMonitor.getMRLForDefaultDevice() : path;
+        if (!vm->videoDeviceMonitor)
+            return {};
+        auto id = path.empty() ? vm->videoDeviceMonitor->getMRLForDefaultDevice() : path;
         auto& input = vm->clientVideoInputs[id];
         if (not input) {
             input = jami::getVideoInput(id);
@@ -457,18 +458,13 @@ closeVideoInput(const std::string& id)
 void
 startAudioDevice()
 {
-    if (auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID)) {
-        if (auto* vm = jami::Manager::instance().getVideoManager())
-            vm->audioPreview = newPreview;
-        newPreview->switchInput("");
-    }
+    jami::Manager::instance().startAudioPreview();
 }
 
 void
 stopAudioDevice()
 {
-    if (auto* vm = jami::Manager::instance().getVideoManager())
-        vm->audioPreview.reset();
+    jami::Manager::instance().stopAudioPreview();
 }
 
 std::string
@@ -666,17 +662,15 @@ setEncodingAccelerated(bool state)
 void
 addVideoDevice(const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo)
 {
-    if (auto videoManager = jami::Manager::instance().getVideoManager()) {
-        videoManager->videoDeviceMonitor.addDevice(node, devInfo);
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        monitor->addDevice(node, devInfo);
 }
 
 void
 removeVideoDevice(const std::string& node)
 {
-    if (auto videoManager = jami::Manager::instance().getVideoManager()) {
-        videoManager->videoDeviceMonitor.removeDevice(node);
-    }
+    if (auto* monitor = jami::getVideoDeviceMonitor())
+        monitor->removeDevice(node);
 }
 #endif
 
@@ -693,7 +687,7 @@ video::VideoDeviceMonitor*
 getVideoDeviceMonitor()
 {
     if (auto* vm = jami::Manager::instance().getVideoManager())
-        return &vm->videoDeviceMonitor;
+        return vm->videoDeviceMonitor.get();
     return {};
 }
 
@@ -702,7 +696,7 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
 {
     auto sinkId = sink.empty() ? resource : sink;
     auto* vmgr = Manager::instance().getVideoManager();
-    if (!vmgr)
+    if (!vmgr || !vmgr->videoDeviceMonitor)
         return {};
     std::unique_lock<std::mutex> lk(vmgr->videoMutex);
 
@@ -756,73 +750,21 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
 void
 VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 {
-    videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+    if (videoDeviceMonitor)
+        videoDeviceMonitor->setDeviceOrientation(deviceId, angle);
 }
 #endif
-
-std::shared_ptr<AudioInput>
-getAudioInput(const std::string& device)
-{
-    auto* vmgr = Manager::instance().getVideoManager();
-    if (!vmgr)
-        return {};
-    std::lock_guard<std::mutex> lk(vmgr->audioMutex);
-
-    // erase expired audio inputs
-    for (auto it = vmgr->audioInputs.cbegin(); it != vmgr->audioInputs.cend();) {
-        if (it->second.expired())
-            it = vmgr->audioInputs.erase(it);
-        else
-            ++it;
-    }
-
-    auto it = vmgr->audioInputs.find(device);
-    if (it != vmgr->audioInputs.end()) {
-        if (auto input = it->second.lock()) {
-            return input;
-        }
-    }
-
-    auto input = std::make_shared<AudioInput>(device);
-    vmgr->audioInputs[device] = input;
-    return input;
-}
-
-bool
-VideoManager::hasRunningPlayers()
-{
-    if (auto* vmgr = Manager::instance().getVideoManager()) {
-        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
-        return !vmgr->mediaPlayers.empty();
-    }
-    return false;
-}
 
 std::shared_ptr<MediaPlayer>
 getMediaPlayer(const std::string& id)
 {
-    if (auto* vmgr = Manager::instance().getVideoManager()) {
-        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
-        auto it = vmgr->mediaPlayers.find(id);
-        if (it != vmgr->mediaPlayers.end()) {
-            return it->second;
-        }
-    }
-    return {};
+    return Manager::instance().getMediaPlayer(id);
 }
 
 std::string
 createMediaPlayer(const std::string& path)
 {
-    if (auto* vmgr = Manager::instance().getVideoManager()) {
-        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
-        auto& player = vmgr->mediaPlayers[path];
-        if (!player) {
-            player = std::make_shared<MediaPlayer>(path);
-        }
-        return path;
-    }
-    return {};
+    return Manager::instance().createMediaPlayer(path);
 }
 
 bool
@@ -838,11 +780,7 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closeMediaPlayer(const std::string& id)
 {
-    if (auto* vm = Manager::instance().getVideoManager()) {
-        std::scoped_lock<std::mutex> lk(vm->mediaPlayersMutex);
-        return vm->mediaPlayers.erase(id) > 0;
-    }
-    return false;
+    return Manager::instance().closeMediaPlayer(id);
 }
 
 bool

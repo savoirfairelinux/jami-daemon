@@ -519,6 +519,7 @@ ExternalMediaConference::startMedia()
 void
 ExternalMediaConference::fail(std::string reason)
 {
+    JAMI_ERROR("External media conference failed: {}", reason);
     close(!stopRequested_.load(), std::move(reason));
 }
 
