@@ -2346,6 +2346,9 @@ ConversationRepository::Impl::mode() const
     case 4:
         mode_ = ConversationMode::DOCUMENT;
         break;
+    case 5:
+        mode_ = ConversationMode::FEED;
+        break;
     default:
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                      id_,
