@@ -33,6 +33,9 @@ class AudioSender;
 class IceSocket;
 class MediaRecorder;
 class RingBuffer;
+namespace test {
+class BrowserHostAudioTest;
+}
 
 struct RTCPInfo
 {
@@ -45,7 +48,14 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession, public std::enable_shared_from_this<AudioRtpSession>
 {
 public:
-    AudioRtpSession(const std::string& callId, const std::string& streamId, const std::shared_ptr<MediaRecorder>& rec);
+    // A conference host receives into its stream buffer and sends only the
+    // other sources bound to that buffer, without using local audio hardware.
+    enum class Mode { DEVICE, CONFERENCE_HOST };
+
+    AudioRtpSession(const std::string& callId,
+                    const std::string& streamId,
+                    const std::shared_ptr<MediaRecorder>& rec,
+                    Mode mode = Mode::DEVICE);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
@@ -62,6 +72,11 @@ public:
     void setVoiceCallback(std::function<void(bool)> cb);
 
 private:
+    friend class test::BrowserHostAudioTest;
+
+    std::shared_ptr<AudioInput> prepareAudioInput();
+    void bindReceivedAudio();
+    void unbindReceivedAudio();
     void startSender();
     void startReceiver();
     bool check_RCTP_Info_RR(RTCPInfo& rtcpi);
@@ -74,6 +89,7 @@ private:
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
     std::shared_ptr<RingBuffer> ringbuffer_;
+    const Mode mode_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
     unsigned packetLoss_ {10};
