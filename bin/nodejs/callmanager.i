@@ -37,6 +37,9 @@ public:
     virtual void conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId){}
     virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
     virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
+    virtual void browserConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
+    virtual void browserConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
+    virtual void browserConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
@@ -94,6 +97,9 @@ bool addMainParticipant(const std::string& accountId, const std::string& confId)
 bool detachParticipant(const std::string& accountId, const std::string& callId);
 bool joinConference(const std::string& accountId, const std::string& sel_confId, const std::string& account2Id, const std::string& drag_confId);
 bool hangUpConference(const std::string& accountId, const std::string& confId);
+bool startBrowserConference(const std::string& accountId, const std::string& conversationId,
+                           const std::string& requestId, const std::string& sdpOffer);
+bool cancelBrowserConference(const std::string& accountId, const std::string& requestId);
 bool holdConference(const std::string& accountId, const std::string& confId);
 bool resumeConference(const std::string& accountId, const std::string& confId);
 std::vector<std::string> getConferenceList(const std::string& accountId);
@@ -166,6 +172,9 @@ public:
     virtual void conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId){}
     virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
     virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
+    virtual void browserConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
+    virtual void browserConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
+    virtual void browserConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
