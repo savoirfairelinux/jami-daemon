@@ -4,10 +4,25 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <future>
+#include <memory>
+#include <stdexcept>
 #include <vector>
 
+#ifdef __linux__
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include "media/media_io_handle.h"
+#include "media/socket_pair.h"
+#endif
+
 extern "C" {
+#include <libavformat/avio.h>
 #include <libavutil/aes.h>
+#include <libavutil/error.h>
 #include <libavutil/hmac.h>
 #include "media/srtp.h"
 }
@@ -19,7 +34,7 @@ namespace jami {
 namespace test {
 namespace {
 
-template <size_t N, size_t M>
+template<size_t N, size_t M>
 std::vector<uint8_t>
 concat(const std::array<uint8_t, N>& first, const std::array<uint8_t, M>& second)
 {
@@ -50,6 +65,18 @@ struct Contexts
         ff_srtp_free(&receiver);
     }
 };
+
+#ifdef __linux__
+struct UdpSocket
+{
+    int fd {::socket(AF_INET, SOCK_DGRAM, 0)};
+    ~UdpSocket()
+    {
+        if (fd >= 0)
+            ::close(fd);
+    }
+};
+#endif
 
 std::vector<uint8_t>
 rtpPacket(uint16_t seq, const std::string& payload, uint32_t ssrc = 0x11223344)
@@ -87,7 +114,11 @@ std::vector<uint8_t>
 protect(SRTPContext& ctx, const std::vector<uint8_t>& plain)
 {
     std::vector<uint8_t> out(plain.size() + TAG_SIZE + 4);
-    auto len = ff_srtp_encrypt(&ctx, plain.data(), static_cast<int>(plain.size()), out.data(), static_cast<int>(out.size()));
+    auto len = ff_srtp_encrypt(&ctx,
+                               plain.data(),
+                               static_cast<int>(plain.size()),
+                               out.data(),
+                               static_cast<int>(out.size()));
     CPPUNIT_ASSERT(len > static_cast<int>(plain.size()));
     out.resize(len);
     return out;
@@ -119,6 +150,9 @@ private:
     void aes256ShortAuthTagSuiteIsAccepted();
     void rtpRoundTrip();
     void tamperedRtpYieldsNoData();
+#ifdef __linux__
+    void rejectedSrtpDoesNotCloseSocket();
+#endif
     void shortPacketsAreRejected();
     void replayedRtpIsRejected();
     void reorderedRtpWithinWindowIsAccepted();
@@ -130,6 +164,9 @@ private:
     CPPUNIT_TEST(aes256ShortAuthTagSuiteIsAccepted);
     CPPUNIT_TEST(rtpRoundTrip);
     CPPUNIT_TEST(tamperedRtpYieldsNoData);
+#ifdef __linux__
+    CPPUNIT_TEST(rejectedSrtpDoesNotCloseSocket);
+#endif
     CPPUNIT_TEST(shortPacketsAreRejected);
     CPPUNIT_TEST(replayedRtpIsRejected);
     CPPUNIT_TEST(reorderedRtpWithinWindowIsAccepted);
@@ -142,21 +179,19 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SrtpTest, SrtpTest::name());
 void
 SrtpTest::aes256KeyDerivationMatchesRfc6188()
 {
-    constexpr std::array<uint8_t, 32> masterKey = {0xf0, 0xf0, 0x49, 0x14, 0xb5, 0x13, 0xf2, 0x76,
-                                                    0x3a, 0x1b, 0x1f, 0xa1, 0x30, 0xf1, 0x0e, 0x29,
-                                                    0x98, 0xf6, 0xf6, 0xe4, 0x3e, 0x43, 0x09, 0xd1,
-                                                    0xe6, 0x22, 0xa0, 0xe3, 0x32, 0xb9, 0xf1, 0xb6};
-    constexpr std::array<uint8_t, 14> masterSalt = {0x3b, 0x04, 0x80, 0x3d, 0xe5, 0x1e, 0xe7,
-                                                     0xc9, 0x64, 0x23, 0xab, 0x5b, 0x78, 0xd2};
+    constexpr std::array<uint8_t, 32> masterKey = {0xf0, 0xf0, 0x49, 0x14, 0xb5, 0x13, 0xf2, 0x76, 0x3a, 0x1b, 0x1f,
+                                                   0xa1, 0x30, 0xf1, 0x0e, 0x29, 0x98, 0xf6, 0xf6, 0xe4, 0x3e, 0x43,
+                                                   0x09, 0xd1, 0xe6, 0x22, 0xa0, 0xe3, 0x32, 0xb9, 0xf1, 0xb6};
+    constexpr std::array<uint8_t, 14> masterSalt
+        = {0x3b, 0x04, 0x80, 0x3d, 0xe5, 0x1e, 0xe7, 0xc9, 0x64, 0x23, 0xab, 0x5b, 0x78, 0xd2};
     constexpr std::array<uint8_t, 32> expectedRtpKey = {0x5b, 0xa1, 0x06, 0x4e, 0x30, 0xec, 0x51, 0x61,
-                                                         0x3c, 0xad, 0x92, 0x6c, 0x5a, 0x28, 0xef, 0x73,
-                                                         0x1e, 0xc7, 0xfb, 0x39, 0x7f, 0x70, 0xa9, 0x60,
-                                                         0x65, 0x3c, 0xaf, 0x06, 0x55, 0x4c, 0xd8, 0xc4};
-    constexpr std::array<uint8_t, 14> expectedRtpSalt = {0xfa, 0x31, 0x79, 0x16, 0x85, 0xca, 0x44,
-                                                          0x4a, 0x9e, 0x07, 0xc6, 0xc6, 0x4e, 0x93};
-    constexpr std::array<uint8_t, 20> expectedRtpAuth = {0xfd, 0x9c, 0x32, 0xd3, 0x9e, 0xd5, 0xfb,
-                                                          0xb5, 0xa9, 0xdc, 0x96, 0xb3, 0x08, 0x18,
-                                                          0x45, 0x4d, 0x13, 0x13, 0xdc, 0x05};
+                                                        0x3c, 0xad, 0x92, 0x6c, 0x5a, 0x28, 0xef, 0x73,
+                                                        0x1e, 0xc7, 0xfb, 0x39, 0x7f, 0x70, 0xa9, 0x60,
+                                                        0x65, 0x3c, 0xaf, 0x06, 0x55, 0x4c, 0xd8, 0xc4};
+    constexpr std::array<uint8_t, 14> expectedRtpSalt
+        = {0xfa, 0x31, 0x79, 0x16, 0x85, 0xca, 0x44, 0x4a, 0x9e, 0x07, 0xc6, 0xc6, 0x4e, 0x93};
+    constexpr std::array<uint8_t, 20> expectedRtpAuth = {0xfd, 0x9c, 0x32, 0xd3, 0x9e, 0xd5, 0xfb, 0xb5, 0xa9, 0xdc,
+                                                         0x96, 0xb3, 0x08, 0x18, 0x45, 0x4d, 0x13, 0x13, 0xdc, 0x05};
 
     const auto params = jami::base64::encode(concat(masterKey, masterSalt));
 
@@ -177,18 +212,16 @@ SrtpTest::aes256KeyDerivationMatchesRfc6188()
 void
 SrtpTest::aes256CounterModeMatchesRfc6188()
 {
-    constexpr std::array<uint8_t, 32> sessionKey = {0x57, 0xf8, 0x2f, 0xe3, 0x61, 0x3f, 0xd1, 0x70,
-                                                     0xa8, 0x5e, 0xc9, 0x3c, 0x40, 0xb1, 0xf0, 0x92,
-                                                     0x2e, 0xc4, 0xcb, 0x0d, 0xc0, 0x25, 0xb5, 0x82,
-                                                     0x72, 0x14, 0x7c, 0xc4, 0x38, 0x94, 0x4a, 0x98};
-    constexpr std::array<uint8_t, 14> sessionSalt = {0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
-                                                      0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd};
-    constexpr std::array<uint8_t, 48> expectedKeystream = {0x92, 0xbd, 0xd2, 0x8a, 0x93, 0xc3, 0xf5, 0x25,
-                                                            0x11, 0xc6, 0x77, 0xd0, 0x8b, 0x55, 0x15, 0xa4,
-                                                            0x9d, 0xa7, 0x1b, 0x23, 0x78, 0xa8, 0x54, 0xf6,
-                                                            0x70, 0x50, 0x75, 0x6d, 0xed, 0x16, 0x5b, 0xac,
-                                                            0x63, 0xc4, 0x86, 0x8b, 0x70, 0x96, 0xd8, 0x84,
-                                                            0x21, 0xb5, 0x63, 0xb8, 0xc9, 0x4c, 0x9a, 0x31};
+    constexpr std::array<uint8_t, 32> sessionKey = {0x57, 0xf8, 0x2f, 0xe3, 0x61, 0x3f, 0xd1, 0x70, 0xa8, 0x5e, 0xc9,
+                                                    0x3c, 0x40, 0xb1, 0xf0, 0x92, 0x2e, 0xc4, 0xcb, 0x0d, 0xc0, 0x25,
+                                                    0xb5, 0x82, 0x72, 0x14, 0x7c, 0xc4, 0x38, 0x94, 0x4a, 0x98};
+    constexpr std::array<uint8_t, 14> sessionSalt
+        = {0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd};
+    constexpr std::array<uint8_t, 48> expectedKeystream = {0x92, 0xbd, 0xd2, 0x8a, 0x93, 0xc3, 0xf5, 0x25, 0x11, 0xc6,
+                                                           0x77, 0xd0, 0x8b, 0x55, 0x15, 0xa4, 0x9d, 0xa7, 0x1b, 0x23,
+                                                           0x78, 0xa8, 0x54, 0xf6, 0x70, 0x50, 0x75, 0x6d, 0xed, 0x16,
+                                                           0x5b, 0xac, 0x63, 0xc4, 0x86, 0x8b, 0x70, 0x96, 0xd8, 0x84,
+                                                           0x21, 0xb5, 0x63, 0xb8, 0xc9, 0x4c, 0x9a, 0x31};
 
     SRTPContext context {};
     context.aes = av_aes_alloc();
@@ -223,12 +256,11 @@ SrtpTest::aes256CounterModeMatchesRfc6188()
 void
 SrtpTest::aes256ShortAuthTagSuiteIsAccepted()
 {
-    constexpr std::array<uint8_t, 32> masterKey = {0xf0, 0xf0, 0x49, 0x14, 0xb5, 0x13, 0xf2, 0x76,
-                                                    0x3a, 0x1b, 0x1f, 0xa1, 0x30, 0xf1, 0x0e, 0x29,
-                                                    0x98, 0xf6, 0xf6, 0xe4, 0x3e, 0x43, 0x09, 0xd1,
-                                                    0xe6, 0x22, 0xa0, 0xe3, 0x32, 0xb9, 0xf1, 0xb6};
-    constexpr std::array<uint8_t, 14> masterSalt = {0x3b, 0x04, 0x80, 0x3d, 0xe5, 0x1e, 0xe7,
-                                                     0xc9, 0x64, 0x23, 0xab, 0x5b, 0x78, 0xd2};
+    constexpr std::array<uint8_t, 32> masterKey = {0xf0, 0xf0, 0x49, 0x14, 0xb5, 0x13, 0xf2, 0x76, 0x3a, 0x1b, 0x1f,
+                                                   0xa1, 0x30, 0xf1, 0x0e, 0x29, 0x98, 0xf6, 0xf6, 0xe4, 0x3e, 0x43,
+                                                   0x09, 0xd1, 0xe6, 0x22, 0xa0, 0xe3, 0x32, 0xb9, 0xf1, 0xb6};
+    constexpr std::array<uint8_t, 14> masterSalt
+        = {0x3b, 0x04, 0x80, 0x3d, 0xe5, 0x1e, 0xe7, 0xc9, 0x64, 0x23, 0xab, 0x5b, 0x78, 0xd2};
 
     const auto params = jami::base64::encode(concat(masterKey, masterSalt));
 
@@ -276,6 +308,97 @@ SrtpTest::tamperedRtpYieldsNoData()
     // A rejected packet must not have moved the receiver state: the genuine one still decrypts
     CPPUNIT_ASSERT_EQUAL(static_cast<int>(wire.size() - TAG_SIZE), unprotect(ctx.receiver, wire));
 }
+
+#ifdef __linux__
+void
+SrtpTest::rejectedSrtpDoesNotCloseSocket()
+{
+    std::unique_ptr<SocketPair> receiver;
+    std::string bindError;
+    uint16_t port = 0;
+    for (unsigned attempt = 0; attempt < 32 && !receiver; ++attempt) {
+        port = 49152 + 2 * attempt;
+        try {
+            receiver = std::make_unique<SocketPair>("rtp://127.0.0.1:9", port);
+        } catch (const std::runtime_error& e) {
+            bindError = e.what();
+        }
+    }
+    CPPUNIT_ASSERT_MESSAGE("Could not bind an RTP/RTCP pair: " + bindError, receiver != nullptr);
+
+    receiver->createSRTP(TEST_SUITE, TEST_PARAMS, TEST_SUITE, TEST_PARAMS);
+    receiver->setReadBlockingMode(true);
+    int losses = 0;
+    receiver->setPacketLossCallback([&] { ++losses; });
+    std::unique_ptr<MediaIOHandle> io(receiver->createIOContext(1500));
+    UdpSocket sender;
+    CPPUNIT_ASSERT(sender.fd >= 0);
+    sockaddr_in destination {};
+    destination.sin_family = AF_INET;
+    destination.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    destination.sin_port = htons(port);
+
+    Contexts ctx;
+    auto plain = rtpPacket(1, "hello");
+    auto encrypted = protect(ctx.sender, plain);
+    auto tampered = encrypted;
+    tampered[13] ^= 1;
+    auto send = [&](const auto& packet) {
+        CPPUNIT_ASSERT_EQUAL(static_cast<ssize_t>(packet.size()),
+                             ::sendto(sender.fd,
+                                      packet.data(),
+                                      packet.size(),
+                                      0,
+                                      reinterpret_cast<sockaddr*>(&destination),
+                                      sizeof(destination)));
+    };
+    std::array<uint8_t, 1500> received {};
+    auto* avio = io->getContext();
+    auto read = [&](auto callback) {
+        auto result = std::async(std::launch::async, std::move(callback));
+        const auto status = result.wait_for(std::chrono::seconds(5));
+        if (status != std::future_status::ready)
+            receiver->interrupt();
+        const auto len = result.get();
+        CPPUNIT_ASSERT_MESSAGE("Timed out reading an RTP packet", status == std::future_status::ready);
+        return len;
+    };
+    auto readPartial = [&] {
+        return avio_read_partial(avio, received.data(), received.size());
+    };
+
+    send(tampered);
+    send(encrypted);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()),
+                         read([&] { return avio->read_packet(avio->opaque, received.data(), received.size()); }));
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+
+    send(encrypted);
+    plain = rtpPacket(2, "again");
+    encrypted = protect(ctx.sender, plain);
+    tampered = encrypted;
+    tampered[13] ^= 1;
+    send(tampered);
+    send(encrypted);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()), read(readPartial));
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+    CPPUNIT_ASSERT_EQUAL(0, losses);
+
+    for (unsigned i = 0; i < 64; ++i)
+        send(encrypted);
+    plain = rtpPacket(3, "after-burst");
+    encrypted = protect(ctx.sender, plain);
+    send(encrypted);
+
+    int len = read(readPartial);
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN), len);
+    for (unsigned retry = 0; retry < 64 && len == AVERROR(EAGAIN); ++retry)
+        len = read(readPartial);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(plain.size()), len);
+    CPPUNIT_ASSERT(std::equal(plain.begin(), plain.end(), received.begin()));
+    CPPUNIT_ASSERT_EQUAL(0, losses);
+}
+#endif
 
 void
 SrtpTest::shortPacketsAreRejected()
