@@ -39,6 +39,12 @@ namespace jami {
 struct VideoManager
 {
 public:
+    explicit VideoManager([[maybe_unused]] bool enableLocalVideo)
+#ifdef ENABLE_VIDEO
+        : videoDeviceMonitor(enableLocalVideo ? std::make_unique<video::VideoDeviceMonitor>() : nullptr)
+#endif
+    {}
+
     // Client-managed video inputs and players
     std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     std::mutex mediaPlayersMutex;
@@ -50,7 +56,7 @@ public:
     std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
     void setDeviceOrientation(const std::string& deviceId, int angle);
     // device monitor
-    video::VideoDeviceMonitor videoDeviceMonitor;
+    std::unique_ptr<video::VideoDeviceMonitor> videoDeviceMonitor;
     // A registered VideoInput. The generation uniquely identifies the instance
     // that registered the entry, so that the deleter of an instance which
     // outlived its registration cannot unregister a later one.
