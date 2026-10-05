@@ -276,8 +276,8 @@ Conference::~Conference()
     }
 
 #ifdef ENABLE_VIDEO
-    auto* videoManager = Manager::instance().getVideoManager();
-    auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() : std::string {};
+    auto* monitor = getVideoDeviceMonitor();
+    auto defaultDevice = monitor ? monitor->getMRLForDefaultDevice() : std::string {};
     foreachCall([&](const auto& call) {
         call->exitConference();
         // Reset distant callInfo
@@ -355,11 +355,12 @@ Conference::initSourcesForHost()
         MediaAttribute videoAttr;
         // Setup local video source
         if (confState_ == State::ACTIVE_ATTACHED) {
+            auto* monitor = getVideoDeviceMonitor();
             videoAttr = {MediaType::MEDIA_VIDEO,
                          false,
                          false,
                          true,
-                         Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
+                         monitor ? monitor->getMRLForDefaultDevice() : std::string {},
                          sip_utils::DEFAULT_VIDEO_STREAMID};
         }
         JAMI_DEBUG("[conf:{}] Setting local host video source: {}", id_, videoAttr.toString());
@@ -626,8 +627,8 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             auto srcUri = mediaAttr.sourceUri_;
             // If no sourceUri, use the default video device
             if (srcUri.empty()) {
-                if (auto* vm = Manager::instance().getVideoManager())
-                    srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
+                if (auto* monitor = getVideoDeviceMonitor())
+                    srcUri = monitor->getMRLForDefaultDevice();
                 else
                     continue;
             }
