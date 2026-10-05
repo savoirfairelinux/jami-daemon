@@ -519,6 +519,7 @@ BrowserConferenceMedia::startMedia()
 void
 BrowserConferenceMedia::fail(std::string reason)
 {
+    JAMI_ERROR("Browser conference media failed: {}", reason);
     close(!stopRequested_.load(), std::move(reason));
 }
 
