@@ -100,7 +100,11 @@ struct RepositoryAccount
         client.setMemberRoles(members);
 
         auto messages = conversation->loadMessagesSync({});
-        emitSignal<libjami::ConversationSignal::SwarmLoaded>(0, accountId, conversationId, messages);
+        emitSignal<libjami::ConversationSignal::SwarmLoaded>(0,
+                                                             accountId,
+                                                             conversationId,
+                                                             messages,
+                                                             std::vector<std::string> {});
 
         emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId,
                                                                             conversationId,

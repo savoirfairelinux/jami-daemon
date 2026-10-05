@@ -2485,6 +2485,12 @@ Conversation::isDeviceBanned(const std::string& deviceId) const
     return pimpl_->isDeviceBanned(deviceId);
 }
 
+std::vector<std::string>
+Conversation::permissions(const std::string& uri) const
+{
+    return pimpl_->repository_->permissions(uri);
+}
+
 bool
 Conversation::isPeerAuthorized(const std::string& uri, const std::string& deviceId, bool includeInvited) const
 {

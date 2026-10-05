@@ -429,6 +429,13 @@ public:
     bool isDeviceBanned(const std::string& deviceId) const;
 
     /**
+     * Get the permissions granted to a member
+     * @param uri   Member to check
+     * @return permission names, empty if uri is not a member
+     */
+    std::vector<std::string> permissions(const std::string& uri) const;
+
+    /**
      * Check if a device is authorized to clone or interact with the conversation.
      * Assumption: the deviceId must already be a confirmed device of the user.
      * @param uri               URI of the user
