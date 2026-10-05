@@ -21,6 +21,8 @@
 #include "media/media_codec.h"
 #include "logger.h"
 
+#include <opendht/thread_pool.h>
+
 #include <atomic>
 #include <functional>
 #include <string>
@@ -73,6 +75,17 @@ public:
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
+    using StartupFailureCb = std::function<void(MediaType, const std::string&)>;
+
+    // Register before start(). Fatal setup failures are delivered asynchronously
+    // so an owner may stop the session without joining its receiver thread.
+    // An already queued notification may arrive after stop(); the owner should
+    // capture only weak references. Absence of a failure is not media readiness.
+    void setStartupFailureCb(StartupFailureCb cb)
+    {
+        std::lock_guard lk(startupFailureMtx_);
+        startupFailureCb_ = std::move(cb);
+    }
     void setDtlsSrtpIdentity(const std::shared_ptr<dht::crypto::Certificate>& cert,
                              const std::shared_ptr<dht::crypto::PrivateKey>& key)
     {
@@ -122,6 +135,18 @@ public:
     inline std::string streamId() const { return streamId_; }
 
 protected:
+    void reportStartupFailure(std::string reason)
+    {
+        StartupFailureCb cb;
+        {
+            std::lock_guard lk(startupFailureMtx_);
+            cb = startupFailureCb_;
+        }
+        if (cb)
+            dht::ThreadPool::io().run(
+                [cb = std::move(cb), type = mediaType_, reason = std::move(reason)] { cb(type, reason); });
+    }
+
     std::recursive_mutex mutex_;
     const std::string callId_;
     const std::string streamId_;
@@ -133,6 +158,8 @@ protected:
     uint16_t mtu_;
     std::shared_ptr<MediaRecorder> recorder_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::mutex startupFailureMtx_;
+    StartupFailureCb startupFailureCb_;
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
     std::optional<DtlsSrtpSession> dtlsSrtpSession_ {};
