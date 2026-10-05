@@ -1,11 +1,12 @@
 #include <iostream>
+#include <stdexcept>
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/CompilerOutputter.h>
 
 #define CORE_TEST_RUNNER(suite_name) \
-    int main() \
+    int main(int argc, char** argv) \
     { \
         CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry(suite_name); \
         CppUnit::Test* suite = registry.makeTest(); \
@@ -15,7 +16,12 @@
         } \
         CppUnit::TextUi::TestRunner runner; \
         runner.addTest(suite); \
-        return runner.run() ? 0 : 1; \
+        try { \
+            return runner.run(argc > 1 ? argv[1] : "") ? 0 : 1; \
+        } catch (const std::invalid_argument& e) { \
+            std::cerr << e.what() << std::endl; \
+            return 1; \
+        } \
     }
 
 // This version of the test runner is similar to CORE_TEST_RUNNER but
