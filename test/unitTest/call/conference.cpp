@@ -115,8 +115,12 @@ private:
     void testBrokenParticipantAudioOnly();
     void testAudioOnlyLeaveLayout();
     void testRemoveConferenceInOneOne();
+    void testConferenceMediaAnswer();
     void testHostNetworkSwitch();
     void testGuestNetworkSwitch();
+#ifdef ENABLE_VIDEO
+    void testGuestNetworkSwitchWithMutedHostAudio();
+#endif
     void testConferenceSipChannelCloses();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
@@ -143,8 +147,12 @@ private:
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
     CPPUNIT_TEST(testAudioOnlyLeaveLayout);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
+    CPPUNIT_TEST(testConferenceMediaAnswer);
     CPPUNIT_TEST(testHostNetworkSwitch);
     CPPUNIT_TEST(testGuestNetworkSwitch);
+#ifdef ENABLE_VIDEO
+    CPPUNIT_TEST(testGuestNetworkSwitchWithMutedHostAudio);
+#endif
     CPPUNIT_TEST(testConferenceSipChannelCloses);
     CPPUNIT_TEST_SUITE_END();
 
@@ -168,7 +176,7 @@ private:
     void registerSignalHandlers();
     void startConference(bool audioOnly = false, bool addDavi = false);
     void hangupConference();
-    void recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel = false);
+    void recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel = false, bool muteHostAudio = false);
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
@@ -390,7 +398,7 @@ ConferenceTest::hangupConference()
 }
 
 void
-ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel)
+ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel, bool muteHostAudio)
 {
     registerSignalHandlers();
     startConference();
@@ -400,6 +408,16 @@ ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeC
     auto carla = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto conf = host->getConference(confId);
     CPPUNIT_ASSERT(conf);
+    if (muteHostAudio) {
+        CPPUNIT_ASSERT(libjami::muteLocalMedia(
+            aliceId, confId, libjami::Media::Details::MEDIA_TYPE_AUDIO, true));
+        CPPUNIT_ASSERT(libjami::muteLocalMedia(
+            bobId, bobCall.callId, libjami::Media::Details::MEDIA_TYPE_AUDIO, true));
+        CPPUNIT_ASSERT(libjami::muteLocalMedia(
+            carlaId, carlaCall.callId, libjami::Media::Details::MEDIA_TYPE_AUDIO, true));
+        const auto hostMedia = conf->currentMediaList();
+        CPPUNIT_ASSERT_EQUAL(std::string(TRUE_STR), hostMedia.at(0).at(libjami::Media::MediaAttributeKey::MUTED));
+    }
     auto subcalls = conf->getSubCalls();
     CPPUNIT_ASSERT_EQUAL(size_t(2), subcalls.size());
 
@@ -460,6 +478,22 @@ ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeC
     while (not recovered() and std::chrono::steady_clock::now() < deadline)
         std::this_thread::sleep_for(50ms);
     CPPUNIT_ASSERT(recovered());
+    if (muteHostAudio) {
+        bool inspectedAnswer = false;
+        for (size_t i = 0; i < subcalls.size(); ++i) {
+            if (calls[i]->getPeerAccountId() != bob->getUsername())
+                continue;
+            inspectedAnswer = true;
+            auto* answer = calls[i]->getSDP().getActiveLocalSdpSession();
+            CPPUNIT_ASSERT(answer);
+            CPPUNIT_ASSERT(answer->media_count >= 2);
+            CPPUNIT_ASSERT(pj_strcmp2(&answer->media[0]->desc.media, "audio") == 0);
+            CPPUNIT_ASSERT(answer->media[0]->desc.port != 0);
+            CPPUNIT_ASSERT(pj_strcmp2(&answer->media[1]->desc.media, "video") == 0);
+            CPPUNIT_ASSERT(answer->media[1]->desc.port != 0);
+        }
+        CPPUNIT_ASSERT(inspectedAnswer);
+    }
     CPPUNIT_ASSERT(host->getConference(confId) == conf);
     CPPUNIT_ASSERT_EQUAL(size_t(2), conf->getSubCalls().size());
     for (const auto& call : calls)
@@ -480,6 +514,50 @@ ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeC
 }
 
 void
+ConferenceTest::testConferenceMediaAnswer()
+{
+    MediaAttribute audio {MediaType::MEDIA_AUDIO, false, false, true, "host-mic", "audio_0"};
+    MediaAttribute video {MediaType::MEDIA_VIDEO, false, false, true, "host-camera", "video_0"};
+    const auto hostAudio = MediaAttribute::toMediaMap(audio);
+    const auto hostVideo = MediaAttribute::toMediaMap(video);
+    auto remoteAudio = hostAudio;
+    remoteAudio[libjami::Media::MediaAttributeKey::SOURCE] = "guest-mic";
+    auto remoteVideo = hostVideo;
+    remoteVideo[libjami::Media::MediaAttributeKey::SOURCE] = "guest-camera";
+    const std::vector<libjami::MediaMap> offer {remoteAudio, remoteVideo};
+
+    auto verify = [](const std::vector<MediaAttribute>& host,
+                     const std::vector<libjami::MediaMap>& offered,
+                     const std::vector<libjami::MediaMap>& expected) {
+        CPPUNIT_ASSERT(conference_detail::mediaAnswerForOffer(host, offered) == expected);
+    };
+
+    verify({audio, video}, offer, {hostAudio, hostVideo});
+    audio.muted_ = true;
+    verify({audio, video}, offer, {remoteAudio, hostVideo});
+    video.muted_ = true;
+    verify({audio, video}, offer, offer);
+    audio.muted_ = false;
+    verify({audio, video}, offer, {hostAudio, remoteVideo});
+
+    video.muted_ = false;
+    auto extraVideo = remoteVideo;
+    extraVideo[libjami::Media::MediaAttributeKey::LABEL] = "video_1";
+    verify({audio, video}, {remoteAudio, remoteVideo, extraVideo}, {hostAudio, hostVideo, extraVideo});
+    auto disabledVideo = remoteVideo;
+    disabledVideo[libjami::Media::MediaAttributeKey::ENABLED] = FALSE_STR;
+    verify({audio, video}, {remoteAudio, disabledVideo}, {hostAudio, disabledVideo});
+    audio.muted_ = true;
+    verify({audio, video}, {remoteAudio, disabledVideo}, {remoteAudio, disabledVideo});
+    audio.muted_ = false;
+    verify({audio, video}, {remoteVideo, remoteAudio}, {remoteVideo, remoteAudio});
+    verify({audio, video}, {remoteVideo}, {remoteVideo});
+    verify({audio, video}, {remoteAudio}, {hostAudio});
+    audio.enabled_ = false;
+    verify({audio, video}, offer, {remoteAudio, hostVideo});
+}
+
+void
 ConferenceTest::testHostNetworkSwitch()
 {
     recoverConferenceAfterNetworkChange(true);
@@ -490,6 +568,14 @@ ConferenceTest::testGuestNetworkSwitch()
 {
     recoverConferenceAfterNetworkChange(false);
 }
+
+#ifdef ENABLE_VIDEO
+void
+ConferenceTest::testGuestNetworkSwitchWithMutedHostAudio()
+{
+    recoverConferenceAfterNetworkChange(false, false, true);
+}
+#endif
 
 void
 ConferenceTest::testConferenceSipChannelCloses()

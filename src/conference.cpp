@@ -656,12 +656,33 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     return true;
 }
 
+std::vector<libjami::MediaMap>
+conference_detail::mediaAnswerForOffer(const std::vector<MediaAttribute>& hostSources,
+                                       const std::vector<libjami::MediaMap>& remoteMediaList)
+{
+    // Preserve the offered media types and order. A muted host source must
+    // not shift video into the audio slot and reject audio in the answer.
+    std::vector<libjami::MediaMap> answer;
+    answer.reserve(remoteMediaList.size());
+    for (size_t idx = 0; idx < remoteMediaList.size(); ++idx) {
+        const auto& remote = remoteMediaList[idx];
+        if (idx < hostSources.size() and hostSources[idx].enabled_
+            and not hostSources[idx].muted_
+            and remote.at(libjami::Media::MediaAttributeKey::ENABLED) == TRUE_STR
+            and hostSources[idx].type_ == MediaAttribute::getMediaType(remote).second) {
+            answer.emplace_back(MediaAttribute::toMediaMap(hostSources[idx]));
+        } else {
+            answer.emplace_back(remote);
+        }
+    }
+    return answer;
+}
+
 void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<libjami::MediaMap>& remoteMediaList)
 {
     JAMI_DEBUG("[conf:{}] Answering media change request from call {}", getConfId(), call->getCallId());
-    auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
     // Check if the participant previously had video
@@ -689,32 +710,13 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     }
 #endif
 
-    auto remoteList = remoteMediaList;
-    for (auto it = remoteList.begin(); it != remoteList.end();) {
-        if (it->at(libjami::Media::MediaAttributeKey::MUTED) == TRUE_STR
-            or it->at(libjami::Media::MediaAttributeKey::ENABLED) == FALSE_STR) {
-            it = remoteList.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    // Create minimum media list (ignore muted and disabled medias)
-    std::vector<libjami::MediaMap> newMediaList;
-    newMediaList.reserve(remoteMediaList.size());
-    for (auto const& media : currentMediaList) {
-        if (media.enabled_ and not media.muted_)
-            newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
-    }
-    for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++)
-        newMediaList.emplace_back(remoteMediaList[idx]);
-
     // NOTE:
     // Since this is a conference, newly added media will be also
     // accepted.
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
-    call->answerMediaChangeRequest(newMediaList);
+    call->answerMediaChangeRequest(conference_detail::mediaAnswerForOffer(hostSources_, remoteMediaList));
     call->enterConference(shared_from_this());
 
     // Rebind audio after media renegotiation so that any newly added
