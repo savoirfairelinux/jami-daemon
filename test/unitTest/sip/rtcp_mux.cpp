@@ -194,6 +194,7 @@ private:
     void remoteSdpFallsBackToRtcpNextPort();
     void remoteSdpKeepsMuxOnRtpPort();
     void remoteSdpParsesTransportCcFeedback();
+    void parsesBrowserOfferWithoutSipSession();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxByDefault);
@@ -218,6 +219,7 @@ private:
     CPPUNIT_TEST(remoteSdpFallsBackToRtcpNextPort);
     CPPUNIT_TEST(remoteSdpKeepsMuxOnRtpPort);
     CPPUNIT_TEST(remoteSdpParsesTransportCcFeedback);
+    CPPUNIT_TEST(parsesBrowserOfferWithoutSipSession);
     CPPUNIT_TEST_SUITE_END();
 
     std::string accountId_ {};
@@ -1263,6 +1265,35 @@ RtcpMuxSdpTest::remoteSdpParsesTransportCcFeedback()
     CPPUNIT_ASSERT_EQUAL(3u, descriptions[0].transport_cc_rtp_ext_id);
     CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
     CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+}
+
+void
+RtcpMuxSdpTest::parsesBrowserOfferWithoutSipSession()
+{
+    Sdp sdp("browser-conference-offer");
+    const std::string offer = "v=0\r\n"
+                              "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                              "s=-\r\n"
+                              "c=IN IP4 127.0.0.1\r\n"
+                              "t=0 0\r\n"
+                              "a=group:BUNDLE 0\r\n"
+                              "m=audio 9 UDP/TLS/RTP/SAVPF 111\r\n"
+                              "a=mid:0\r\n"
+                              "a=rtcp-mux\r\n"
+                              "a=rtpmap:111 opus/48000/2\r\n"
+                              "a=ice-ufrag:browser\r\n"
+                              "a=ice-pwd:browserpassword0123456789\r\n"
+                              "a=fingerprint:sha-256 "
+                              "7B:8B:F0:65:5F:78:E2:51:3B:AC:6F:F3:3F:46:1B:35:DC:B8:5F:64:1A:24:C2:43:F0:A1:58:D0:A1:2C:19:08\r\n"
+                              "a=setup:actpass\r\n";
+
+    CPPUNIT_ASSERT(sdp.setReceivedOfferFromExternalSdp(offer));
+    CPPUNIT_ASSERT_EQUAL(std::string("browser"), sdp.getIceAttributes().ufrag);
+    CPPUNIT_ASSERT_EQUAL(1u, sdp.getRemoteSdpSession()->media_count);
+    CPPUNIT_ASSERT(Sdp::toString(sdp.getRemoteSdpSession()).find("m=audio 9 UDP/TLS/RTP/SAVPF 111")
+                   != std::string::npos);
+    CPPUNIT_ASSERT(!sdp.setReceivedOfferFromExternalSdp("not an SDP"));
+    CPPUNIT_ASSERT_EQUAL(std::string("browser"), sdp.getIceAttributes().ufrag);
 }
 
 } // namespace test
