@@ -54,6 +54,10 @@ std::vector<libjami::MediaMap> mediaAnswerForOffer(const std::vector<MediaAttrib
 class Call;
 class Account;
 class JamiAccount;
+class RingBuffer;
+namespace test {
+class ConferenceTest;
+}
 
 #ifdef ENABLE_VIDEO
 namespace video {
@@ -287,6 +291,17 @@ public:
     void attachHost(const std::vector<libjami::MediaMap>& mediaList);
 
     /**
+     * Attach an external host using its existing, dedicated audio RTP
+     * receive ringbuffer. The caller owns the RTP session and must configure
+     * it without local capture/playback; this conference pins only its buffer.
+     * Returns false without changing the conference if the buffer is missing
+     * or the host is already attached. No local audio device is started.
+     * videoEnabled advertises a browser-owned mixer video stream without
+     * starting a server camera; its RTP session belongs to the caller.
+     */
+    bool attachExternalHostAudio(const std::string& audioStreamId, bool videoEnabled = false);
+
+    /**
      * Detach local audio/video from the conference
      */
     void detachHost();
@@ -385,6 +400,8 @@ public:
     }
 
 private:
+    friend class test::ConferenceTest;
+
     std::weak_ptr<Conference> weak() { return std::static_pointer_cast<Conference>(shared_from_this()); }
 
     static std::shared_ptr<Call> getCall(const std::string& callId);
@@ -442,6 +459,17 @@ private:
     std::vector<MediaAttribute> hostSources_;
     // Because host doesn't have a call, we need to store the audio inputs
     std::map<std::string, std::shared_ptr<jami::AudioInput>> hostAudioInputs_;
+    // Kept alive only while the external audio host is attached.
+    std::shared_ptr<RingBuffer> externalHostAudioBuffer_;
+    bool externalHostAudioWasAttached_ {false};
+    struct ExternalHostAudioLinks
+    {
+        std::set<std::string> readers;
+        std::set<std::string> sources;
+    };
+    std::map<std::string, ExternalHostAudioLinks> externalHostAudioLinks_;
+    void unbindExternalHostAudioLinks(const std::string& callId, bool outgoingOnly);
+    void unbindAllExternalHostAudioLinks(bool outgoingOnly);
 
     // Last media list before detaching from a conference
     std::vector<libjami::MediaMap> lastMediaList_ = {};

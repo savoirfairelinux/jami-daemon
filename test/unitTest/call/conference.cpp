@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <array>
 #include <condition_variable>
+#include <mutex>
 #include <string>
 
 #include "manager.h"
@@ -32,9 +33,14 @@
 #include "account_const.h"
 #include "common.h"
 #include "conference.h"
+#include "media/browser_conference_media.h"
 #include "media_const.h"
 #include "media/media_encoder.h"
 #include "media/media_recorder.h"
+#include "media/audio/audiolayer.h"
+#include "media/audio/audio_rtp_session.h"
+#include "media/audio/ringbuffer.h"
+#include "media/audio/ringbufferpool.h"
 #include "media/video/sinkclient.h"
 #include "media/video/video_mixer.h"
 #include "media/video/video_rtp_session.h"
@@ -93,6 +99,13 @@ public:
 private:
     void testGetConference();
     void testConferenceMediaAnswerPreservesSlots();
+    void testExternalHostAudioAttachDetach();
+    void testExternalHostAudioLateParticipant();
+    void testBrowserHostRejectsInvalidOffer();
+    void testBrowserHostRejectsVideoFirstOffer();
+    void testBrowserHostAnswersRecvonlyVideo();
+    void testBrowserHostRejectsFailedRtpStartup();
+    void testRingBufferPoolBindingDirections();
     void testOneSenderConferenceBudget();
     void testModeratorMuteUpdateParticipantsInfos();
     void testUnauthorizedMute();
@@ -121,6 +134,13 @@ private:
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
     CPPUNIT_TEST(testConferenceMediaAnswerPreservesSlots);
+    CPPUNIT_TEST(testExternalHostAudioAttachDetach);
+    CPPUNIT_TEST(testExternalHostAudioLateParticipant);
+    CPPUNIT_TEST(testBrowserHostRejectsInvalidOffer);
+    CPPUNIT_TEST(testBrowserHostRejectsVideoFirstOffer);
+    CPPUNIT_TEST(testBrowserHostAnswersRecvonlyVideo);
+    CPPUNIT_TEST(testBrowserHostRejectsFailedRtpStartup);
+    CPPUNIT_TEST(testRingBufferPoolBindingDirections);
     CPPUNIT_TEST(testOneSenderConferenceBudget);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
     CPPUNIT_TEST(testUnauthorizedMute);
@@ -172,6 +192,371 @@ private:
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
 
 void
+ConferenceTest::testRingBufferPoolBindingDirections()
+{
+    auto& pool = Manager::instance().getRingBufferPool();
+    auto reader = pool.createRingBuffer("conference-pool-reader");
+    auto first = pool.createRingBuffer("conference-pool-source-first");
+    auto second = pool.createRingBuffer("conference-pool-source-second");
+    auto other = pool.createRingBuffer("conference-pool-other-reader");
+
+    auto hasSubscriber = [](RingBuffer& buffer, const std::string& id) {
+        const auto subscribers = buffer.getSubscribers();
+        return std::find(subscribers.begin(), subscribers.end(), id) != subscribers.end();
+    };
+    pool.bindHalfDuplexOut(reader->getId(), first->getId());
+    pool.bindHalfDuplexOut(reader->getId(), second->getId());
+    pool.bindHalfDuplexOut(other->getId(), first->getId());
+    CPPUNIT_ASSERT(hasSubscriber(*first, reader->getId()));
+    CPPUNIT_ASSERT(hasSubscriber(*second, reader->getId()));
+
+    pool.unBindAllHalfDuplexOut(reader->getId());
+    CPPUNIT_ASSERT(!hasSubscriber(*first, reader->getId()));
+    CPPUNIT_ASSERT(!hasSubscriber(*second, reader->getId()));
+    CPPUNIT_ASSERT(hasSubscriber(*first, other->getId()));
+
+    pool.bindHalfDuplexOut(reader->getId(), first->getId());
+    pool.bindHalfDuplexOut(reader->getId(), second->getId());
+    pool.unBindAllHalfDuplexIn(first->getId());
+    CPPUNIT_ASSERT(first->getSubscribers().empty());
+    CPPUNIT_ASSERT(hasSubscriber(*second, reader->getId()));
+    pool.unBindAllHalfDuplexOut(reader->getId());
+    CPPUNIT_ASSERT(second->getSubscribers().empty());
+}
+
+void
+ConferenceTest::testBrowserHostAnswersRecvonlyVideo()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conference = std::make_shared<Conference>(account);
+    auto iceOptions = account->getIceOptions();
+    iceOptions.stunServers.clear();
+    iceOptions.turnServers.clear();
+    iceOptions.upnpEnable = false;
+    iceOptions.upnpContext.reset();
+
+    Sdp browserOffer("browser-host-test-offer");
+    browserOffer.setPublishedIP("127.0.0.1", pj_AF_INET());
+    browserOffer.setSecureMediaKeyExchange(KeyExchangeProtocol::DTLS);
+    std::string fingerprint("AA");
+    for (int i = 1; i < 32; ++i)
+        fingerprint += ":AA";
+    browserOffer.setLocalDtlsFingerprint("SHA-256", fingerprint);
+    browserOffer.enableRtcpMux(true);
+    browserOffer.enableBundle(true);
+    browserOffer.setLocalPublishedAudioPorts(50000, 0);
+    browserOffer.setLocalPublishedVideoPorts(50000, 0);
+    browserOffer.setLocalMediaCapabilities(MEDIA_AUDIO, account->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    browserOffer.setLocalMediaCapabilities(MEDIA_VIDEO, account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    MediaAttribute audio {MEDIA_AUDIO, false, true, true, "", "audio_0"};
+    MediaAttribute video {MEDIA_VIDEO, true, true, true, "", "video_0"};
+    CPPUNIT_ASSERT(browserOffer.createOffer({audio, video}));
+    browserOffer.addIceAttributes(dhtnet::IceTransport::Attribute {"browserUfrag", "browserPassword0123456789"});
+    const std::vector<std::string> candidates {
+        "1 1 UDP 2130706431 127.0.0.1 50000 typ host"
+    };
+    browserOffer.addIceCandidates(0, candidates);
+    browserOffer.addIceCandidates(1, candidates);
+    const auto offer = Sdp::toString(browserOffer.getLocalSdpSession());
+    CPPUNIT_ASSERT(offer.find("a=recvonly\r\n") != std::string::npos);
+    CPPUNIT_ASSERT(offer.find("a=ice-ufrag:browserUfrag\r\n") != std::string::npos);
+    CPPUNIT_ASSERT(offer.find("a=candidate:1 1 UDP ") != std::string::npos);
+
+    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference, std::move(iceOptions));
+    std::weak_ptr<BrowserConferenceMedia> weakOwner = owner;
+    std::mutex callbackMutex;
+    std::condition_variable callbackCv;
+    std::string answer;
+    std::string error;
+    bool ready = false;
+    owner->start(offer,
+                 [&, weakOwner](const std::string& sdp) {
+                     if (auto active = weakOwner.lock())
+                         active->stop();
+                     std::lock_guard lock(callbackMutex);
+                     answer = sdp;
+                     callbackCv.notify_one();
+                 },
+                 [&](const std::string& reason) {
+                     std::lock_guard lock(callbackMutex);
+                     error = reason;
+                     callbackCv.notify_one();
+                 },
+                 [&] {
+                     std::lock_guard lock(callbackMutex);
+                     ready = true;
+                     callbackCv.notify_one();
+                 });
+    {
+        std::unique_lock lock(callbackMutex);
+        CPPUNIT_ASSERT(callbackCv.wait_for(lock, 20s, [&] { return !answer.empty() || !error.empty(); }));
+        CPPUNIT_ASSERT_MESSAGE(error, error.empty());
+        CPPUNIT_ASSERT(!ready);
+        CPPUNIT_ASSERT(answer.find("a=ice-ufrag:") != std::string::npos);
+        CPPUNIT_ASSERT(answer.find("a=ice-pwd:") != std::string::npos);
+        CPPUNIT_ASSERT(answer.find("a=candidate:") != std::string::npos);
+        CPPUNIT_ASSERT(answer.find("a=fingerprint:SHA-256 ") != std::string::npos);
+        CPPUNIT_ASSERT(answer.find("a=group:BUNDLE ") != std::string::npos);
+        auto videoLine = answer.find("m=video ");
+        CPPUNIT_ASSERT(videoLine != std::string::npos);
+        CPPUNIT_ASSERT(answer.substr(videoLine).find("a=sendonly\r\n") != std::string::npos);
+        CPPUNIT_ASSERT(answer.substr(videoLine).find("a=recvonly\r\n") == std::string::npos);
+    }
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+    owner.reset();
+}
+
+void
+ConferenceTest::testBrowserHostRejectsFailedRtpStartup()
+{
+    MediaDescription send;
+    send.enabled = true;
+    send.key_exchange = KeyExchangeProtocol::DTLS;
+    MediaDescription receive = send;
+
+    auto audio = std::make_shared<AudioRtpSession>("browser-transport-failure",
+                                                   "browser-transport-failure-audio",
+                                                   nullptr,
+                                                   AudioRtpSession::Mode::CONFERENCE_HOST);
+    audio->updateMedia(send, receive);
+    audio->start(nullptr, nullptr);
+    CPPUNIT_ASSERT(!audio->isRtpReady(true, true));
+
+#ifdef ENABLE_VIDEO
+    auto video = std::make_shared<video::VideoRtpSession>("browser-transport-failure",
+                                                          "browser-transport-failure-video",
+                                                          DeviceParams {},
+                                                          nullptr);
+    video->updateMedia(send, receive);
+    video->start(nullptr, nullptr);
+    CPPUNIT_ASSERT(!video->isRtpReady(true, true));
+#endif
+}
+
+void
+ConferenceTest::testBrowserHostRejectsVideoFirstOffer()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conference = std::make_shared<Conference>(account);
+    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference);
+    const std::string offer = "v=0\r\n"
+                              "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                              "s=-\r\n"
+                              "c=IN IP4 127.0.0.1\r\n"
+                              "t=0 0\r\n"
+                              "m=video 5004 UDP/TLS/RTP/SAVPF 96\r\n"
+                              "a=rtpmap:96 VP8/90000\r\n"
+                              "a=rtcp-mux\r\n"
+                              "m=audio 5004 UDP/TLS/RTP/SAVPF 111\r\n"
+                              "a=rtpmap:111 opus/48000/2\r\n"
+                              "a=rtcp-mux\r\n";
+    std::mutex callbackMutex;
+    std::condition_variable callbackCv;
+    std::string error;
+    bool answered = false;
+    bool ready = false;
+    owner->start(offer,
+                 [&](const auto&) {
+                     std::lock_guard lock(callbackMutex);
+                     answered = true;
+                     callbackCv.notify_one();
+                 },
+                 [&](const auto& reason) {
+                     std::lock_guard lock(callbackMutex);
+                     error = reason;
+                     callbackCv.notify_one();
+                 },
+                 [&] {
+                     std::lock_guard lock(callbackMutex);
+                     ready = true;
+                     callbackCv.notify_one();
+                 });
+    {
+        std::unique_lock lock(callbackMutex);
+        CPPUNIT_ASSERT(callbackCv.wait_for(lock, 5s, [&] { return !error.empty(); }));
+        CPPUNIT_ASSERT(error.find("audio m-line first") != std::string::npos);
+        CPPUNIT_ASSERT(!answered);
+        CPPUNIT_ASSERT(!ready);
+    }
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+}
+
+void
+ConferenceTest::testBrowserHostRejectsInvalidOffer()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conference = std::make_shared<Conference>(account);
+    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference);
+    std::mutex callbackMutex;
+    std::condition_variable callbackCv;
+    std::string error;
+    bool answered = false;
+
+    owner->start("not an SDP offer",
+                 [&](const auto&) {
+                     std::lock_guard lock(callbackMutex);
+                     answered = true;
+                     callbackCv.notify_one();
+                 },
+                 [&](const auto& reason) {
+                     std::lock_guard lock(callbackMutex);
+                     error = reason;
+                     callbackCv.notify_one();
+                 });
+    {
+        std::unique_lock lock(callbackMutex);
+        CPPUNIT_ASSERT(callbackCv.wait_for(lock, 5s, [&] { return !error.empty(); }));
+        CPPUNIT_ASSERT(!answered);
+    }
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+    owner->stop();
+}
+
+void
+ConferenceTest::testExternalHostAudioAttachDetach()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto& pool = Manager::instance().getRingBufferPool();
+    auto audioDriver = Manager::instance().getAudioDriver();
+    CPPUNIT_ASSERT(audioDriver);
+    const bool audioWasStarted = audioDriver->isStarted();
+    auto conference = std::make_shared<Conference>(account);
+
+    CPPUNIT_ASSERT(!conference->attachExternalHostAudio(""));
+    CPPUNIT_ASSERT(!conference->attachExternalHostAudio(RingBufferPool::DEFAULT_ID));
+    CPPUNIT_ASSERT(!conference->attachExternalHostAudio("nonexistent-browser-stream"));
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+
+    auto host = pool.createRingBuffer("external-host-test-audio");
+    std::weak_ptr<RingBuffer> weakHost = host;
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_ATTACHED);
+    CPPUNIT_ASSERT(!conference->attachExternalHostAudio(host->getId()));
+    CPPUNIT_ASSERT(conference->hostAudioInputs_.empty());
+    CPPUNIT_ASSERT_EQUAL(audioWasStarted, audioDriver->isStarted());
+    auto sources = conference->currentMediaList();
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, sources.size());
+    CPPUNIT_ASSERT_EQUAL(std::string(libjami::Media::MediaAttributeValue::AUDIO),
+                         sources.front().at(libjami::Media::MediaAttributeKey::MEDIA_TYPE));
+    CPPUNIT_ASSERT(!conference->requestMediaChange(sources));
+
+    host.reset();
+    CPPUNIT_ASSERT(!weakHost.expired());
+    conference->detachHost();
+    CPPUNIT_ASSERT(weakHost.expired());
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+    conference->attachHost({});
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_DETACHED);
+    CPPUNIT_ASSERT(conference->hostAudioInputs_.empty());
+
+    host = pool.createRingBuffer("external-host-test-audio");
+#ifdef ENABLE_VIDEO
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId(), true));
+    auto videoSources = conference->currentMediaList();
+    CPPUNIT_ASSERT_EQUAL(size_t {2}, videoSources.size());
+    CPPUNIT_ASSERT_EQUAL(std::string(libjami::Media::MediaAttributeValue::VIDEO),
+                         videoSources.back().at(libjami::Media::MediaAttributeKey::MEDIA_TYPE));
+    CPPUNIT_ASSERT(conference->hostAudioInputs_.empty());
+#else
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+#endif
+    conference->detachHost();
+
+    auto shutdownHost = pool.createRingBuffer("external-host-shutdown-audio");
+    auto peer = pool.createRingBuffer("external-host-shutdown-peer");
+    std::weak_ptr<RingBuffer> weakShutdownHost = shutdownHost;
+    auto shuttingDown = std::make_shared<Conference>(account);
+    CPPUNIT_ASSERT(shuttingDown->attachExternalHostAudio(shutdownHost->getId()));
+    pool.bindRingBuffers(shutdownHost->getId(), peer->getId());
+    shutdownHost.reset();
+    shuttingDown.reset();
+    // The synthetic link was not made by the conference; destroying it must
+    // leave unrelated ringbuffer bindings alone.
+    CPPUNIT_ASSERT(!weakShutdownHost.expired());
+    const auto subscribers = peer->getSubscribers();
+    CPPUNIT_ASSERT(std::find(subscribers.begin(), subscribers.end(), "external-host-shutdown-audio")
+                   != subscribers.end());
+    pool.unbindRingBuffers("external-host-shutdown-audio", peer->getId());
+    CPPUNIT_ASSERT(weakShutdownHost.expired());
+}
+
+void
+ConferenceTest::testExternalHostAudioLateParticipant()
+{
+    registerSignalHandlers();
+
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto& pool = Manager::instance().getRingBufferPool();
+    auto host = pool.createRingBuffer("external-late-host-audio");
+    auto conference = std::make_shared<Conference>(account);
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+    CPPUNIT_ASSERT(conference->hostAudioInputs_.empty());
+    confId = conference->getConfId();
+    account->attach(conference);
+
+    libjami::MediaMap audio {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+                             {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    auto callId = libjami::placeCallWithMedia(aliceId, bobAccount->getUsername(), {audio});
+    CPPUNIT_ASSERT(!callId.empty());
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    }
+    CPPUNIT_ASSERT(Manager::instance().acceptCall(bobId, bobCall.callId));
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    }
+    auto call = std::dynamic_pointer_cast<SIPCall>(account->getCall(callId));
+    CPPUNIT_ASSERT(call);
+    auto streams = call->getRemoteAudioStreams();
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, streams.size());
+    const auto participantId = streams.begin()->first;
+    auto participant = pool.getRingBuffer(participantId);
+    CPPUNIT_ASSERT(participant);
+
+    conference->addSubCall(callId);
+    auto hasSubscriber = [](RingBuffer& buffer, const std::string& id) {
+        auto subscribers = buffer.getSubscribers();
+        return std::find(subscribers.begin(), subscribers.end(), id) != subscribers.end();
+    };
+    CPPUNIT_ASSERT(hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(hasSubscriber(*participant, host->getId()));
+    CPPUNIT_ASSERT(conference->hostAudioInputs_.empty());
+
+    conference->muteLocalHost(true, libjami::Media::Details::MEDIA_TYPE_AUDIO);
+    CPPUNIT_ASSERT(!hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(hasSubscriber(*participant, host->getId()));
+    conference->muteLocalHost(false, libjami::Media::Details::MEDIA_TYPE_AUDIO);
+    CPPUNIT_ASSERT(hasSubscriber(*host, participantId));
+
+    conference->muteCall(callId, true);
+    CPPUNIT_ASSERT(!hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(!hasSubscriber(*participant, host->getId()));
+    conference->muteCall(callId, false);
+    CPPUNIT_ASSERT(hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(hasSubscriber(*participant, host->getId()));
+
+    conference->detachHost();
+    CPPUNIT_ASSERT(!hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(!hasSubscriber(*participant, host->getId()));
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+    CPPUNIT_ASSERT(hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(hasSubscriber(*participant, host->getId()));
+
+    conference->removeSubCall(callId);
+    CPPUNIT_ASSERT(!hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(!hasSubscriber(*participant, host->getId()));
+    conference->detachHost();
+    CPPUNIT_ASSERT(!hasSubscriber(*host, participantId));
+    CPPUNIT_ASSERT(Manager::instance().hangupCall(aliceId, callId));
+    account->removeConference(confId);
+    libjami::unregisterSignalHandlers();
+}
+
+void
 ConferenceTest::testConferenceMediaAnswerPreservesSlots()
 {
     MediaAttribute audio {MediaType::MEDIA_AUDIO, false, false, true, "host-mic", "audio_0"};
@@ -187,16 +572,13 @@ ConferenceTest::testConferenceMediaAnswerPreservesSlots()
         return conference_detail::mediaAnswerForOffer({audio, video}, offer);
     };
 
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {hostAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {hostAudio, hostVideo}));
 
     audio.muted_ = true;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
 
     video.muted_ = true;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, remoteVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, remoteVideo}));
 
     audio.muted_ = false;
     video.muted_ = false;
@@ -207,14 +589,11 @@ ConferenceTest::testConferenceMediaAnswerPreservesSlots()
 
     auto disabledVideo = remoteVideo;
     disabledVideo[libjami::Media::MediaAttributeKey::ENABLED] = FALSE_STR;
-    CPPUNIT_ASSERT(answer({remoteAudio, disabledVideo})
-                   == (std::vector<libjami::MediaMap> {hostAudio, disabledVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, disabledVideo}) == (std::vector<libjami::MediaMap> {hostAudio, disabledVideo}));
     audio.enabled_ = false;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
     audio.enabled_ = true;
-    CPPUNIT_ASSERT(answer({remoteVideo, remoteAudio})
-                   == (std::vector<libjami::MediaMap> {remoteVideo, remoteAudio}));
+    CPPUNIT_ASSERT(answer({remoteVideo, remoteAudio}) == (std::vector<libjami::MediaMap> {remoteVideo, remoteAudio}));
     CPPUNIT_ASSERT(answer({remoteAudio}) == (std::vector<libjami::MediaMap> {hostAudio}));
 }
 
