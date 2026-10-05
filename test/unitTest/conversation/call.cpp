@@ -27,6 +27,7 @@
 #include "account_const.h"
 #include "common.h"
 #include "conversation/conversationcommon.h"
+#include "jami/callmanager_interface.h"
 #include "manager.h"
 #include "media_const.h"
 #include "sip/sipcall.h"
@@ -848,6 +849,9 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     pInfos_.clear();
+    const auto conferencesBefore = libjami::getConferenceList(aliceId);
+    CPPUNIT_ASSERT(libjami::placeCallWithExternalMedia(aliceId, "swarm:" + aliceData_.id, "external offer").empty());
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId) == conferencesBefore);
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at(CommitKey::TYPE) == CommitType::CALL_HISTORY;

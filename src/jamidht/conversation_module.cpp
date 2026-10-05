@@ -3787,6 +3787,12 @@ ConversationModule::call(const std::string& url,
                                                                 : mediaList;
 
     if (!sendCallRequest || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
+        if (std::any_of(mediaMap.begin(), mediaMap.end(), [](const auto& media) {
+                return media.count(libjami::Media::MediaAttributeKey::EXTERNAL_SDP) != 0;
+            })) {
+            JAMI_ERROR("Cannot attach delegated external SDP as a local conference host media source");
+            return {};
+        }
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
         // TODO attach host with media list
         hostConference(conversationId, confId, "", mediaMap);
