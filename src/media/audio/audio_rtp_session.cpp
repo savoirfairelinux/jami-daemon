@@ -81,6 +81,12 @@ AudioRtpSession::startSender()
         return;
     }
 
+    if (!send_.codec) {
+        JAMI_ERROR("Audio sender has no negotiated codec");
+        reportStartupFailure("Audio sender has no negotiated codec");
+        return;
+    }
+
     if (sender_)
         JAMI_WARNING("Restarting audio sender");
     if (audioInput_)
@@ -103,6 +109,7 @@ AudioRtpSession::startSender()
     } catch (const MediaEncoderException& e) {
         JAMI_ERROR("{}", e.what());
         send_.enabled = false;
+        reportStartupFailure(fmt::format("Audio encoder setup failed: {}", e.what()));
         return;
     }
 
@@ -135,8 +142,10 @@ AudioRtpSession::prepareAudioInput()
 
     // The sender retains this input for subsequent restarts.
     audioInput_ = jami::getAudioInput(audioInputId);
-    if (!audioInput_)
+    if (!audioInput_) {
+        reportStartupFailure("Audio sender input unavailable");
         return {};
+    }
     audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
         asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
             if (auto shared = w.lock())
@@ -155,10 +164,12 @@ AudioRtpSession::prepareAudioInput()
                 localAudioParams_ = newParams.get();
             } else {
                 JAMI_ERROR("No valid new audio parameters");
+                reportStartupFailure("Audio sender input parameters unavailable");
                 return {};
             }
         } catch (const std::exception& e) {
             JAMI_ERROR("Exception while retrieving audio parameters: {}", e.what());
+            reportStartupFailure(fmt::format("Audio sender input parameters failed: {}", e.what()));
             return {};
         }
     }
@@ -195,6 +206,11 @@ AudioRtpSession::startReceiver()
     if (receiveThread_)
         JAMI_WARNING("Restarting audio receiver");
 
+    if (!receive_.codec) {
+        JAMI_ERROR("Audio receiver has no negotiated codec");
+        reportStartupFailure("Audio receiver has no negotiated codec");
+        return;
+    }
     auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(
         new AudioReceiveThread(streamId_, accountAudioCodec->audioformat, receive_.receiving_sdp, mtu_));
@@ -207,6 +223,10 @@ AudioRtpSession::startReceiver()
     });
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+    receiveThread_->setSetupFailureCb([w = weak_from_this()](const std::string& reason) {
+        if (auto session = w.lock())
+            session->reportStartupFailure(reason);
+    });
     receiveThread_->startReceiver();
 
     bindReceivedAudio();
@@ -292,11 +312,17 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         }
     } catch (const std::runtime_error& e) {
         JAMI_ERROR("Socket creation failed: {}", e.what());
+        reportStartupFailure(fmt::format("Audio transport setup failed: {}", e.what()));
         return;
     }
 
-    startSender();
-    startReceiver();
+    try {
+        startSender();
+        startReceiver();
+    } catch (const std::exception& e) {
+        reportStartupFailure(fmt::format("Audio RTP startup failed: {}", e.what()));
+        throw;
+    }
 }
 
 void
