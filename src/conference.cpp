@@ -988,8 +988,14 @@ ConfInfo::toVectorMapStringString() const
 {
     std::vector<std::map<std::string, std::string>> infos;
     infos.reserve(size());
-    for (const auto& info : *this)
-        infos.emplace_back(info.toMap());
+    const auto mixerWidth = std::to_string(w);
+    const auto mixerHeight = std::to_string(h);
+    for (const auto& info : *this) {
+        auto source = info.toMap();
+        source.emplace("mixerWidth", mixerWidth);
+        source.emplace("mixerHeight", mixerHeight);
+        infos.emplace_back(std::move(source));
+    }
     return infos;
 }
 
