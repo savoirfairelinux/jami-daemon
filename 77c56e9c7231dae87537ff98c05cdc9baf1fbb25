@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3ac4e72_4f47d81c",
+        "filename": "meson.build",
+        "patchSetId": 32
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:09:47Z",
+      "side": 1,
+      "message": "[warning] Line 83: 🟡 Meson now hardcodes `dependency(\u0027webrtc-audio-processing-2\u0027)`, while CMake accepts both `webrtc-audio-processing-2` and `webrtc-audio-processing\u003e\u003d2.0`. This inconsistency can break Meson builds on distros exposing only the generic pkg-config name. Align Meson with the same fallback strategy used in CMake.",
+      "revId": "77c56e9c7231dae87537ff98c05cdc9baf1fbb25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4fecb12e_cadb9d77",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:09:47Z",
+      "side": 1,
+      "message": "[warning] Line 76: 🟡 `frameSize_`/`vadBuffer_.size()` are `size_t` but WebRTC VAD APIs take `int`. Relying on implicit narrowing is brittle and can trigger warning-as-error failures on some toolchains. Use an explicit checked conversion (or validate bounds then cast) before calling `WebRtcVad_ValidRateAndFrameLength` and `WebRtcVad_Process`.",
+      "revId": "77c56e9c7231dae87537ff98c05cdc9baf1fbb25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6359d7ed_91b19e9d",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:09:47Z",
+      "side": 1,
+      "message": "[error] Line 79: 🔴 `WebRtcVad_Create()` is used without a null check, then immediately passed to `WebRtcVad_Init()`. On allocation failure this can dereference a null handle and crash during processor construction. Please guard `vad_.get()` before init, log an error, and keep VAD disabled when creation fails.",
+      "revId": "77c56e9c7231dae87537ff98c05cdc9baf1fbb25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
