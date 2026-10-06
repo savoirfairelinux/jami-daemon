@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c178c8e8_5132d943",
+        "filename": "src/media/browser_conference_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 505,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:56:33Z",
+      "side": 1,
+      "message": "[warning] Line 505: 🟡 Add/adjust a test to cover the new `!onReady` path so this contract is enforced long-term. Right now this branch changes runtime behavior (transitioning to failure instead of silently continuing), but the patchset does not show corresponding test coverage for regression protection.",
+      "revId": "838dd20ebfc29c04af863f6069347b483dedd6a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
