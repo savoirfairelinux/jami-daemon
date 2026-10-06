@@ -1098,7 +1098,14 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
            exportable_callback<CallSignal::VideoOrientationChanged>(bind(&videoOrientationChanged, _1, _2, _3, _4)),
            exportable_callback<CallSignal::ConferenceCreated>(bind(&conferenceCreated, _1, _2, _3)),
            exportable_callback<CallSignal::ConferenceChanged>(bind(&conferenceChanged, _1, _2, _3)),
-           exportable_callback<CallSignal::ConferenceRemoved>(bind(&conferenceRemoved, _1, _2))};
+           exportable_callback<CallSignal::ConferenceRemoved>(bind(&conferenceRemoved, _1, _2)),
+           exportable_callback<CallSignal::ConferenceInfosUpdated>(bind(&conferenceInfosUpdated, _1, _2)),
+           exportable_callback<CallSignal::ExternalMediaConferenceHostAnswer>(
+               bind(&externalMediaConferenceHostAnswer, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::ExternalMediaConferenceHostReady>(
+               bind(&externalMediaConferenceHostReady, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaConferenceHostFailure>(
+               bind(&externalMediaConferenceHostFailure, _1, _2, _3))};
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
