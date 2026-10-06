@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c420a061_02e04c0d",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1095,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:14:17Z",
+      "side": 1,
+      "message": "[error] Line 1095: 🔴 `attachExternalHostAudio` rejects when `hostAudioInputs_` is non-empty, but `detachHost()`/`unbindHostAudio()` never clear `hostAudioInputs_`. After any prior native host attach/detach, this stale map makes external-host attach fail permanently in the same conference even when state is `ACTIVE_DETACHED`. This breaks valid host handoff flows. Fix by clearing `hostAudioInputs_` on detach (or stop using map emptiness as a precondition) and key eligibility off actual conference state/active bindings instead.",
+      "revId": "81fa0a823e3696a034e615e5be2501eec78c13df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9d3439ec_06112d5c",
         "filename": "src/media/browser_conference_media.cpp",
         "patchSetId": 1
