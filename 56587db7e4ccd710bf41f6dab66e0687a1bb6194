@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "acb7fec0_0aeac126",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T19:36:01Z",
+      "side": 1,
+      "message": "It is a CACHE default, so -DVCPKG_TARGET_TRIPLET\u003d... overrides it. It matches what the MSVC build supports: CMAKE_CONFIGURATION_TYPES is forced to Release and the MSVC block is x64-only, same as the pywinmake contrib. (Moved to contrib/vcpkg/settings.cmake later in the stack.)",
+      "parentUuid": "49f0d90f_59c6cd8d",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fde091a1_547081bb",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-06T19:32:41Z",
       "side": 1,
       "message": "[warning] Line 261: 🟡 The patch detects vcpkg with `CMAKE_TOOLCHAIN_FILE MATCHES \"vcpkg\\\\.cmake$\"` at the top, but later behavior gates on `VCPKG_TOOLCHAIN`. If `VCPKG_TOOLCHAIN` is absent in some setups (older/chainloaded toolchains), this can incorrectly run `winmake.py` and re-enable non-vcpkg paths. Define a single local boolean from the initial detection and reuse it consistently.",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4bedfa41_3d5726a1",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T19:36:01Z",
+      "side": 1,
+      "message": "Intentional. VCPKG_TOOLCHAIN is set by vcpkg.cmake during project(), so it can\u0027t be used before project(); the early regex only sets manifest/triplet defaults. After project(), VCPKG_TOOLCHAIN is the authoritative signal. Reusing the regex result would be wrong for a wrapper toolchain that includes vcpkg.cmake: vcpkg would be active but winmake.py would still run.",
+      "parentUuid": "fde091a1_547081bb",
       "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
