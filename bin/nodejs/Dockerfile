@@ -12,19 +12,25 @@ RUN apt-get update && apt-get install -y \
     meson \
     curl \
     git \
+    libarchive-dev \
     libasio-dev \
     libasound2-dev \
     libdbus-1-dev \
+    libgnutls28-dev \
     libsystemd-dev \
     libva-dev \
     libvdpau-dev \
     libtool \
     libudev-dev \
     libpcre2-dev \
+    libsecp256k1-dev \
+    libspeexdsp-dev \
+    nettle-dev \
     nasm \
     pkg-config \
     yasm \
-    ninja-build
+    ninja-build \
+    libyaml-cpp-dev
 
 # Install Node
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
