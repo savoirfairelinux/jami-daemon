@@ -1,7 +1,7 @@
 {
   "name": "opendht",
-  "version-date": "2026-09-22",
-  "description": "OpenDHT: A lightweight C++17 Distributed Hash Table library. Jami overlay pinned to savoirfairelinux/opendht master.",
+  "version": "4.4.1",
+  "description": "OpenDHT: A lightweight C++17 Distributed Hash Table library. Jami overlay.",
   "homepage": "https://opendht.net",
   "license": "MIT",
   "dependencies": [
