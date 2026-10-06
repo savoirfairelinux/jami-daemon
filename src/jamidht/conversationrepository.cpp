@@ -1550,7 +1550,8 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
 
     // Retrieve tree for commits
     auto repo = repository();
-    assert(repo);
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -3177,6 +3178,9 @@ bool
 ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>& commitsToValidate) const
 {
     auto repo = repository();
+    if (!repo) {
+        return false;
+    }
 
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
@@ -4410,6 +4414,8 @@ bool
 ConversationRepository::Impl::resolveBan(const std::string_view type, const std::string& uri)
 {
     auto repo = repository();
+    if (!repo)
+        return false;
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto bannedPath = repoPath / "banned";
     auto devicesPath = repoPath / "devices";
@@ -4469,6 +4475,8 @@ bool
 ConversationRepository::Impl::resolveUnban(const std::string_view type, const std::string& uri)
 {
     auto repo = repository();
+    if (!repo)
+        return false;
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto bannedPath = repoPath / "banned";
     auto crtStr = uri + (type != "invited" ? ".crt" : "");
