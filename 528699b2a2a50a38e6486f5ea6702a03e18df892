@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "defe947a_1e133a3e",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1368,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:45:39Z",
+      "side": 1,
+      "message": "[warning] Line 1368: 🟡 On parse failure, the method returns `false` but keeps the previous remote offer active. This can make callers believe the update failed safely while negotiation still uses stale state. Either clear `remoteSession_` (and related derived state) on failure, or document and rename the API to make the retain-on-failure behavior explicit.",
+      "revId": "528699b2a2a50a38e6486f5ea6702a03e18df892",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac8a295f_c2ad3a10",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1370,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:45:39Z",
+      "side": 1,
+      "message": "[error] Line 1370: 🔴 `setReceivedOfferFromExternalSdp` writes `remoteSession_` directly, bypassing `setReceivedOffer(...)`. That can skip any normalization/side effects already centralized in `setReceivedOffer` (media direction/transport caches, invariants, future hooks), creating divergent behavior between SIP and non-SIP offer handling. Use `setReceivedOffer(session)` here instead of assigning `remoteSession_` directly so both paths share the same contract.",
+      "revId": "528699b2a2a50a38e6486f5ea6702a03e18df892",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
