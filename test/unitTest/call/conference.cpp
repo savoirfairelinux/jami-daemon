@@ -112,6 +112,7 @@ private:
     void testAudioVideoMutedStates();
     void testMuteStatusAfterAdd();
     void testCreateParticipantsSinks();
+    void testConferenceSourceReferenceDimensions();
     void testAttachParticipantSinkAfterReceiverStarts();
     void testMuteStatusAfterRemove();
     void testActiveStatusAfterRemove();
@@ -147,6 +148,7 @@ private:
     CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST(testMuteStatusAfterAdd);
     CPPUNIT_TEST(testCreateParticipantsSinks);
+    CPPUNIT_TEST(testConferenceSourceReferenceDimensions);
     CPPUNIT_TEST(testAttachParticipantSinkAfterReceiverStarts);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
     CPPUNIT_TEST(testActiveStatusAfterRemove);
@@ -1097,6 +1099,28 @@ ConferenceTest::testMuteStatusAfterAdd()
     hangupConference();
 
     libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testConferenceSourceReferenceDimensions()
+{
+    ConfInfo infos;
+    infos.w = 1280;
+    infos.h = 960;
+    ParticipantInfo participant;
+    participant.sinkId = "participant-video";
+    participant.x = 640;
+    participant.y = 480;
+    participant.w = 640;
+    participant.h = 480;
+    infos.push_back(participant);
+
+    const auto sources = infos.toVectorMapStringString();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), sources.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("1280"), sources[0].at("mixerWidth"));
+    CPPUNIT_ASSERT_EQUAL(std::string("960"), sources[0].at("mixerHeight"));
+    CPPUNIT_ASSERT_EQUAL(std::string("640"), sources[0].at("x"));
+    CPPUNIT_ASSERT_EQUAL(std::string("480"), sources[0].at("y"));
 }
 
 void
