@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a7546a8_94710c12",
+        "filename": "contrib/src/gmp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T14:54:41Z",
+      "side": 1,
+      "message": "[warning] Line 4: 🟡 This hardcodes a single mirror and bypasses the shared `$(GNU)` source selector used by other GNU packages. Please keep `$(GNU)` (or add a documented fallback mechanism) so distro/CI mirror overrides and centralized source-management policies continue to work consistently.",
+      "revId": "a3b801db6844278d3bc3a671bf4444941792ffd2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
