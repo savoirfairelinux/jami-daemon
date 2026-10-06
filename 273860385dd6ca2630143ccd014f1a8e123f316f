@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a826305_3a223ad1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 3417,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:11:59Z",
+      "side": 1,
+      "message": "[warning] Line 3417: 🟡 `CREATED`/`REMOVED` are only injected when `conv-\u003econversation` is available. In the `else` path you return `md` directly, so syncing/partially-loaded/removed conversations can still miss these fields. Build a single result map and append timestamp keys from `conv-\u003einfo` before returning in both branches.",
+      "revId": "273860385dd6ca2630143ccd014f1a8e123f316f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
