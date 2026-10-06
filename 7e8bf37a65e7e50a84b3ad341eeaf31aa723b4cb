@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea5a6eb1_2f727c80",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:07:22Z",
+      "side": 1,
+      "message": "[error] Line 82: 🔴 The new `!send_.codec` early return can leave an existing `sender_` running during renegotiation/restart. If a prior sender exists, this path returns before detaching/stopping/resetting it, so audio may continue to be sent with stale state. Ensure restart cleanup happens before codec validation, or explicitly stop/reset any existing sender on this failure path.",
+      "revId": "7e8bf37a65e7e50a84b3ad341eeaf31aa723b4cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "957cad08_f28478a7",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 204,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:07:22Z",
+      "side": 1,
+      "message": "[error] Line 204: 🔴 The new `!receive_.codec` guard returns before handling an existing `receiveThread_`. On restart/renegotiation, that can keep the old receiver alive and still consuming media even though startup failed. Stop/reset the existing receiver before returning on missing codec.",
+      "revId": "7e8bf37a65e7e50a84b3ad341eeaf31aa723b4cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8485e145_91677682",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:07:22Z",
+      "side": 1,
+      "message": "[error] Line 299: 🔴 Similar lifecycle regression in video sender: the `!send_.codec` return happens before tearing down an existing `sender_`/attachments, so stale video sending can continue after a failed restart. Perform teardown first or add explicit shutdown/reset in this error branch.",
+      "revId": "7e8bf37a65e7e50a84b3ad341eeaf31aa723b4cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
