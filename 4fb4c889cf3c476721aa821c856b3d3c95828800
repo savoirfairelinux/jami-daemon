@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "535075cf_be51f69d",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T21:31:35Z",
+      "side": 1,
+      "message": "[warning] Line 530: 🟡 The new `for (;;)` + `continue` path on SRTP auth failure can spin indefinitely under a stream of invalid packets (especially in non-blocking mode), keeping a single AVIO read call busy and potentially burning CPU/logging excessively. Add a bounded retry budget (count or elapsed-time based) per `readCallback` invocation and return `AVERROR(EAGAIN)`/timeout when exceeded.",
+      "revId": "4fb4c889cf3c476721aa821c856b3d3c95828800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bd33c14_ff6e7f84",
+        "filename": "test/unitTest/media/test_srtp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T21:31:35Z",
+      "side": 1,
+      "message": "[warning] Line 308: 🟡 Port probing is racy: the test finds a free RTP/RTCP port pair, closes probe sockets, then later binds via `SocketPair`. Another process/test can claim the port in between, causing intermittent failures. Keep the sockets reserved until `SocketPair` is created, or switch to an allocation path that atomically binds the pair inside the object under test.",
+      "revId": "4fb4c889cf3c476721aa821c856b3d3c95828800",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
