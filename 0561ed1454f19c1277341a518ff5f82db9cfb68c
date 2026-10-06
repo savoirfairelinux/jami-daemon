@@ -16,6 +16,24 @@
       "message": "[error] Line 647: 🔴 The MSVC link list now points to `.../_install/lib/libwebrtc-audio-processing-2.a`, but this branch is built with MSVC/link.exe and expects COFF import/static libraries (`.lib`). Using a GNU-style `.a` here is likely to break Windows linking in standard MSVC toolchains. Switch to the installed `.lib` artifact (or make the library filename/extension conditional on the active linker/toolchain).",
       "revId": "0561ed1454f19c1277341a518ff5f82db9cfb68c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c1d894f_29101d55",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T18:53:28Z",
+      "side": 1,
+      "message": "Not an issue: with MSVC, meson names static libraries lib\u003cname\u003e.a by default. This one is built by lib.exe and is a normal COFF archive (`lib /list` shows its 379 members, abseil included). link.exe detects the format from content, not the extension. The meson-generated .pc file uses the same path. jami-core builds against it on the Windows build node.",
+      "parentUuid": "13e1a4b2_7f903cd5",
+      "revId": "0561ed1454f19c1277341a518ff5f82db9cfb68c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
