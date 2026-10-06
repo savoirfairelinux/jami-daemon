@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d3439ec_06112d5c",
+        "filename": "src/media/browser_conference_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:53:42Z",
+      "side": 1,
+      "message": "[warning] Line 297: 🟡 ICE gathering currently accepts only a HOST+UDP local candidate to build the SDP answer address, and fails otherwise (`ICE gathering produced no usable RTP candidate`). This can reject valid TURN/relay-only or host-suppressed environments even when ICE gathering succeeded. Use the first valid UDP candidate regardless of candidate type (HOST/SRFLX/RELAY), or derive the published address from ICE local attributes rather than hard-requiring `PJ_ICE_CAND_TYPE_HOST`.",
+      "revId": "81fa0a823e3696a034e615e5be2501eec78c13df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
