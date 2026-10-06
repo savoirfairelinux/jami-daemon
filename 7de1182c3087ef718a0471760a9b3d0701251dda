@@ -16,6 +16,24 @@
       "message": "Do iOS/Android need different configuration? For the legacy AGC module, `kAdaptiveDigital` mode can be used if analog volume control is unavailable. Is there anything similar in AGC2? Should input volume controller be disabled? Should analog_mic_gain_emulation be enabled?",
       "revId": "7de1182c3087ef718a0471760a9b3d0701251dda",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "866bc725_89b7897b",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-10-06T19:09:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4069cb6b_d8f96640",
+      "revId": "7de1182c3087ef718a0471760a9b3d0701251dda",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
