@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5cb1f28b_a8bd6bd1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 995,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:59:44Z",
+      "side": 1,
+      "message": "[warning] Line 995: 🟡 `emplace` does not overwrite existing keys. If `ParticipantInfo::toMap()` ever starts emitting `mixerWidth`/`mixerHeight` (or a caller pre-populates them), this silently keeps the old value and breaks the contract that these fields reflect `ConfInfo::w/h`. Use `insert_or_assign` (or `operator[]`) for deterministic assignment.",
+      "revId": "0ac717c6180143250a56594f35e7da9230dd0f56",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
