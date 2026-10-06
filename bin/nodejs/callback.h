@@ -875,14 +875,13 @@ browserConferenceHostFailure(const std::string& accountId, const std::string& re
 }
 
 void
-onConferenceInfosUpdated(const std::string& accountId,
-                         const std::string& confId,
+onConferenceInfosUpdated(const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, confId, infos]() {
-        napi_value args[] = {napiString(accountId), napiString(confId), stringMapVecToJsMapArray(infos)};
-        callCallback("OnConferenceInfosUpdated", 3, args);
+    pendingSignals.emplace([confId, infos]() {
+        napi_value args[] = {napiString(confId), stringMapVecToJsMapArray(infos)};
+        callCallback("OnConferenceInfosUpdated", 2, args);
     });
     uv_async_send(&signalAsync);
 }
@@ -1039,6 +1038,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
            exportable_callback<CallSignal::ConferenceCreated>(bind(&conferenceCreated, _1, _2, _3)),
            exportable_callback<CallSignal::ConferenceChanged>(bind(&conferenceChanged, _1, _2, _3)),
            exportable_callback<CallSignal::ConferenceRemoved>(bind(&conferenceRemoved, _1, _2)),
+           exportable_callback<CallSignal::OnConferenceInfosUpdated>(bind(&onConferenceInfosUpdated, _1, _2)),
            exportable_callback<CallSignal::BrowserConferenceHostAnswer>(
                bind(&browserConferenceHostAnswer, _1, _2, _3, _4)),
            exportable_callback<CallSignal::BrowserConferenceHostReady>(bind(&browserConferenceHostReady, _1, _2, _3)),
