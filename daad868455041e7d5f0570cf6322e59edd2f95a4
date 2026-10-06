@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "56ea0a86_a5cbdb8c",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T19:36:01Z",
+      "side": 1,
+      "message": "vcpkg_fixup_pkgconfig() rewrites both CURRENT_INSTALLED_DIR and CURRENT_PACKAGES_DIR to a ${pcfiledir}-relative ${prefix} (scripts/cmake/vcpkg_fixup_pkgconfig.cmake:10-11), so the installed .pc is relocatable. The port is also copied verbatim from savoirfairelinux/opendht ports/, so any change belongs there.",
+      "parentUuid": "d17a9625_1fbb0823",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56269b37_903368f0",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-06T19:30:30Z",
       "side": 1,
       "message": "[warning] Line 187: 🟡 The CMake wrapper is installed under `share/gnutls`, but this port is named `shiftmedia-libgnutls`. In vcpkg, wrappers are expected under the port’s share directory, so this can make the wrapper ineffective for dependency consumers. Install it under `share/shiftmedia-libgnutls` (or `${CURRENT_PACKAGES_DIR}/share/${PORT}`) and keep package-name/lookup behavior consistent.",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53cc6f8e_5746f666",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T19:36:01Z",
+      "side": 1,
+      "message": "vcpkg\u0027s find_package override looks up share/\u003clowercased find_package name\u003e/vcpkg-cmake-wrapper.cmake (scripts/buildsystems/vcpkg.cmake), i.e. share/gnutls for find_package(GnuTLS), not the port name. share/gnutls is correct.",
+      "parentUuid": "56269b37_903368f0",
       "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
