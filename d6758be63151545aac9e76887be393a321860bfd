@@ -16,6 +16,24 @@
       "message": "[error] Line 69: 🔴 `file(WRITE \"${CURRENT_PACKAGES_DIR}/lib/pkgconfig/yrs.pc\" ...)` assumes `lib/pkgconfig` already exists, but this directory is not created in the port. On a clean package tree this can fail and stop packaging. Create the directory explicitly with `file(MAKE_DIRECTORY \"${CURRENT_PACKAGES_DIR}/lib/pkgconfig\")` before `file(WRITE ...)`, and ensure the debug pkgconfig directory exists before copying.",
       "revId": "d6758be63151545aac9e76887be393a321860bfd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51de1ca9_2feabed3",
+        "filename": "contrib/vcpkg/ports/yffi/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-06T19:36:01Z",
+      "side": 1,
+      "message": "CMake\u0027s file(WRITE) creates missing parent directories, so lib/pkgconfig does not need to exist; the port builds and installs yrs.pc from a clean tree.",
+      "parentUuid": "5322f47a_56daaebc",
+      "revId": "d6758be63151545aac9e76887be393a321860bfd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
