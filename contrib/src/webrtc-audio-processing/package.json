@@ -8,7 +8,7 @@
     ],
     "custom_scripts": {
         "pre_build": [
-            "meson setup build-meson --backend=ninja --buildtype=release --default-library=static --wrap-mode=forcefallback --prefix=\"%CD%\\install\" --libdir=lib -Db_vscrt=md -Dcpp_std=c++20 -Dabseil-cpp:cpp_std=c++20"
+            "meson setup build-meson --backend=ninja --buildtype=release --default-library=static --wrap-mode=forcefallback --prefix=\"%CD%\\_install\" --libdir=lib -Db_vscrt=md -Dcpp_std=c++20 -Dabseil-cpp:cpp_std=c++20"
         ],
         "build": [
             "meson compile -C build-meson"
