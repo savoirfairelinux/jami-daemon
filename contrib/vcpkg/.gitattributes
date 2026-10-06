@@ -1,0 +1,5 @@
+# Byte-exact checkout, as in microsoft/vcpkg: CRLF breaks blank context
+# lines in port patches.
+* -text
+*.diff -whitespace
+*.patch -whitespace
