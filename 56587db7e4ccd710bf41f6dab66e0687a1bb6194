@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49f0d90f_59c6cd8d",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T19:32:41Z",
+      "side": 1,
+      "message": "[error] Line 7: 🔴 Hard-coding `VCPKG_TARGET_TRIPLET` to `x64-windows-static-md-release` makes the vcpkg path effectively x64+release-only and can break Debug or non-x64 Windows builds. Prefer leaving triplet selection to the caller/toolchain, or set this only as a fallback when undefined and aligned with `CMAKE_VS_PLATFORM_NAME`/configuration.",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fde091a1_547081bb",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T19:32:41Z",
+      "side": 1,
+      "message": "[warning] Line 261: 🟡 The patch detects vcpkg with `CMAKE_TOOLCHAIN_FILE MATCHES \"vcpkg\\\\.cmake$\"` at the top, but later behavior gates on `VCPKG_TOOLCHAIN`. If `VCPKG_TOOLCHAIN` is absent in some setups (older/chainloaded toolchains), this can incorrectly run `winmake.py` and re-enable non-vcpkg paths. Define a single local boolean from the initial detection and reuse it consistently.",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
