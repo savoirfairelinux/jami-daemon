@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d17a9625_1fbb0823",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T19:30:30Z",
+      "side": 1,
+      "message": "[warning] Line 166: 🟡 `gnutls.pc` is generated with `prefix` set to `${CURRENT_INSTALLED_DIR}`, which bakes an absolute install-tree path into the package metadata. This is fragile for binary caching/relocation and non-default install roots. Generate with `${CURRENT_PACKAGES_DIR}` semantics (or a relocatable prefix pattern) before `vcpkg_fixup_pkgconfig()` so the final `.pc` stays portable.",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56269b37_903368f0",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T19:30:30Z",
+      "side": 1,
+      "message": "[warning] Line 187: 🟡 The CMake wrapper is installed under `share/gnutls`, but this port is named `shiftmedia-libgnutls`. In vcpkg, wrappers are expected under the port’s share directory, so this can make the wrapper ineffective for dependency consumers. Install it under `share/shiftmedia-libgnutls` (or `${CURRENT_PACKAGES_DIR}/share/${PORT}`) and keep package-name/lookup behavior consistent.",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
