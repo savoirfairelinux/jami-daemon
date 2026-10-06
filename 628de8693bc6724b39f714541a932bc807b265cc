@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac8f20f6_7ddd419e",
+        "filename": "test/unitTest/conversation/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 853,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:43:53Z",
+      "side": 1,
+      "message": "[warning] Line 853: 🟡 This assertion checks conference list equality immediately after `placeCallWithExternalMedia`, but conference creation/removal paths can be asynchronous. The test can pass even if a delegated-host conference is created slightly later. Make this deterministic by waiting for a short bounded window and asserting the conference list remains unchanged throughout (or by asserting a specific call/conference event is not emitted).",
+      "revId": "628de8693bc6724b39f714541a932bc807b265cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
