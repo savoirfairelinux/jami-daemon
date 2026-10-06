@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8675e2f6_b4b684ba",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:15:42Z",
+      "side": 1,
+      "message": "[error] Line 371: 🔴 `media-\u003estop()` is called directly here (and similarly in `browserConferenceRemoved`, `cancelBrowserConference`, and the `hostBrowserConference` shutdown callback) instead of using `stopBrowserOwner()`. That loses the IO-thread handoff and exception containment already implemented in `stopBrowserOwner()`, so `stop()` can run on the wrong thread or throw through public API paths. Route all browser-media stop paths through a single helper (`stopBrowserOwner` + local try/catch/log) before hangup.",
+      "revId": "2b17d2cd012b52e092aa909bd40db53792e66884",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7567210f_8a1451a9",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T18:15:42Z",
+      "side": 1,
+      "message": "[error] Line 454: 🔴 In the browser-conference failure callback, after `auto host \u003d registry-\u003etake(key, confId);` you emit failure and hang up, but never stop `host-\u003emedia`. Because the entry is already removed from the registry, the shutdown callback can no longer reclaim/stop it. Stop the media explicitly (via `stopBrowserOwner(host-\u003emedia)`) before `hangupConference` to avoid leaking or leaving media processing alive.",
+      "revId": "2b17d2cd012b52e092aa909bd40db53792e66884",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
