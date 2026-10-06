@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d174c2c_44aa92f0",
+        "filename": "bin/nodejs/callback.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-06T17:58:47Z",
+      "side": 1,
+      "message": "[warning] 🟡 The JS callback contract for `OnConferenceInfosUpdated` is changed from `(accountId, confId, infos)` to `(confId, infos)` by removing `accountId` and reducing `callCallback` arity from 3 to 2. This is a breaking API change for Node consumers that parse positional arguments. Please either preserve backward compatibility (e.g., keep legacy arg ordering/placeholder for one cycle) or explicitly version and document the API change in the Node-facing interface/release notes.",
+      "revId": "f660cdc51cdb3410663931ce532c80c7e6c2ebbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
