@@ -531,7 +531,8 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/include/webrtc-audio-processing-2;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
@@ -562,8 +563,6 @@ if(MSVC)
            "HAVE_CONFIG_H;"
            "WIN32_LEAN_AND_MEAN;"
            "WEBRTC_WIN;"
-           "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
-           "WEBRTC_NS_FLOAT;"
        )
    endif()
 
@@ -650,7 +649,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/lib/libwebrtc-audio-processing-2.a
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
