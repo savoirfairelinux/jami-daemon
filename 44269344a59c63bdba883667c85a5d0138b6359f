@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "82f1290c_859fd644",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:55:32Z",
+      "side": 1,
+      "message": "[error] Line 61: 🔴 `VCPKG_BASELINE` is expanded unquoted in a `bat` command (`... checkout -q %VCPKG_BASELINE%`). Because this value comes from repository content (`contrib/vcpkg/vcpkg-configuration.json`), a crafted baseline string containing CMD metacharacters (`\u0026`, `|`, etc.) can trigger command injection on the Jenkins agent. Validate it first (e.g., strict `^[0-9a-fA-F]{40}$`) and pass it to Git in a safely quoted form (or perform checkout in PowerShell with argument arrays) before executing.",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "04cc491c_145f87e8",
         "filename": "Jenkinsfile.msvc",
         "patchSetId": 1
