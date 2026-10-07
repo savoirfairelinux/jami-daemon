@@ -1327,7 +1327,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     if (tsx->role == PJSIP_ROLE_UAC && tsx->method.id == PJSIP_INVITE_METHOD
         && tsx->state == PJSIP_TSX_STATE_TERMINATED) {
-        call->onInviteTransactionTerminated();
+        call->onInviteTransactionTerminated(tsx->status_code);
     }
 
     // We process here only incoming request message

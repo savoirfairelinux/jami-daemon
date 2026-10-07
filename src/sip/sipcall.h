@@ -123,7 +123,8 @@ public:
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,
             Call::CallType type,
-            const std::vector<libjami::MediaMap>& mediaList);
+            const std::vector<libjami::MediaMap>& mediaList,
+            bool browserConferenceAudio = false);
 
     // Inherited from Call class
     LinkType getLinkType() const override { return LINK_TYPE; }
@@ -151,6 +152,11 @@ public:
      * lines, so the external endpoint must be given the untouched SDP.
      */
     void reportExternalRemoteAnswer(std::string sdp);
+    bool promoteExternalMedia(const std::string& requestId);
+    bool canPromoteExternalMedia() const;
+    bool cancelExternalMediaPromotion(const std::string& requestId);
+    bool isNativeMediaReady() const;
+    bool usesBrowserConferenceAudio() const { return browserConferenceAudio_; }
 
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
@@ -256,7 +262,7 @@ public:
      * completed.
      */
     void onMediaNegotiationComplete();
-    void onInviteTransactionTerminated();
+    void onInviteTransactionTerminated(int status);
     // End fo SiPVoipLink events
 
     const std::string& getContactHeader() const;
@@ -603,6 +609,7 @@ private:
 
     bool mediaRestartRequired_ {true};
     bool enableIce_ {true};
+    bool browserConferenceAudio_ {false};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
@@ -617,6 +624,12 @@ private:
     // Reported verbatim to the endpoint instead of the pjmedia-negotiated
     // session, which mangles WebRTC codec lines.
     std::string externalRemoteSdp_ {};
+    std::string promotionRequestId_ {};
+    bool promotionNegotiated_ {false};
+    bool promotionEnding_ {false};
+    void checkPromotionReady();
+    void failPromotion(const std::string& reason);
+    bool isNativeMediaReadyLocked() const;
 
     // ICE media transport
     std::shared_ptr<dhtnet::IceTransport> iceMedia_;
