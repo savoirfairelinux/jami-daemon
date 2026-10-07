@@ -766,7 +766,7 @@ if(NOT MSVC OR VCPKG_TOOLCHAIN)
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_SPEEXDSP)
     endif()
 
-    if (VCPKG_TOOLCHAIN)
+    if (MSVC AND VCPKG_TOOLCHAIN)
         pkg_search_module (portaudio REQUIRED IMPORTED_TARGET portaudio-2.0)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::portaudio)
     endif()
