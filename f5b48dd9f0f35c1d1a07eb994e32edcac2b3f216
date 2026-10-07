@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d72ed877_0980ea2e",
+        "filename": "BUILD.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T18:41:44Z",
+      "side": 1,
+      "message": "[error] Line 205: 🔴 The Windows CMake command omits generator/architecture selection. On many setups this defaults to a Win32 Visual Studio configuration, which conflicts with the documented x64 vcpkg triplet and can break dependency resolution/builds. Update this command to explicitly use `-G \"Visual Studio 17 2022\" -A x64` (or document an equivalent enforced x64 environment).",
+      "revId": "f5b48dd9f0f35c1d1a07eb994e32edcac2b3f216",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
