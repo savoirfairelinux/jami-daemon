@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4281c853_01848967",
+        "filename": "contrib/vcpkg/ports/ffmpeg/libopusdec-enable-FEC.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T18:54:55Z",
+      "side": 1,
+      "message": "[error] Line 33: 🔴 `nb_lost_samples` is derived from `pkt-\u003epts - expected_next_pts` without a lower bound. On reordering/duplicate/clock-jitter cases this becomes negative, then flows into FEC decode size and buffer sizing, which can trigger decode errors or invalid behavior. Clamp to a non-negative gap (`gap \u003d FFMAX\u003cint64_t\u003e(0, pkt-\u003epts - expected_next_pts)`), and only run the FEC recovery branch when `gap \u003e 0`.",
+      "revId": "58af4ef51dd7f26ef9b1ba976871dc10ea008efe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6ef12db_92434fbc",
+        "filename": "contrib/vcpkg/ports/ffmpeg/libopusdec-enable-FEC.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T18:54:55Z",
+      "side": 1,
+      "message": "[error] Line 70: 🔴 The decoder mutates input packet metadata (`pkt-\u003epts -\u003d nb_samples`). Decoder code should treat `AVPacket` as input-only; mutating it can corrupt downstream timestamp handling for callers that reuse or inspect packet timing. Compute a local recovered start PTS and assign `frame-\u003epts` from that local value, leaving `pkt` unchanged.",
+      "revId": "58af4ef51dd7f26ef9b1ba976871dc10ea008efe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c7b0de3_fa708cb1",
+        "filename": "contrib/vcpkg/ports/ffmpeg/rtp_ext_abs_send_time.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T18:54:55Z",
+      "side": 1,
+      "message": "[warning] Line 64: 🟡 `av_log(... \"ntp64:%lu ...\", ntp64_time, ...)` is not portable for `uint64_t` (notably on MSVC/LLP64 where `unsigned long` is 32-bit). Use `PRIu64` from `\u003cinttypes.h\u003e` or FFmpeg’s 64-bit-safe formatting pattern to avoid truncation/UB in diagnostics.",
+      "revId": "58af4ef51dd7f26ef9b1ba976871dc10ea008efe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e9b45bb_a2d2593c",
+        "filename": "contrib/vcpkg/ports/ffmpeg/vcpkg.json",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T18:54:55Z",
+      "side": 1,
+      "message": "[warning] Line 9: 🟡 `\"license\": null` drops explicit licensing metadata for the overlay port. For dependency governance/compliance tooling this should be an SPDX expression (or equivalent vcpkg-accepted value), e.g. FFmpeg’s effective license terms for this configuration.",
+      "revId": "58af4ef51dd7f26ef9b1ba976871dc10ea008efe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
