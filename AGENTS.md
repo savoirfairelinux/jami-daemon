@@ -22,6 +22,7 @@ Key dependencies include:
 # Work instructions
 
 - Use the relevant skill or topic file before starting work
+- For architecturally significant changes, use the `adr` skill and check `doc/adr/INDEX.md`; read only the ADRs relevant to the work.
 - Ask the user in case of any doubt about the path to follow.
 - Always make sure everything builds after making changes. When relevant, test your changes before committing or completing work.
 - The daemmon test suite is large and can take a long time to run. If you are making changes that are not expected to break the tests, you can run only the relevant test files.
