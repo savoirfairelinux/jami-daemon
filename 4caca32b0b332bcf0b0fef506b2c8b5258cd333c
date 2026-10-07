@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71707d12_06c69134",
+        "filename": "contrib/vcpkg/ports/pjproject/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:09:21Z",
+      "side": 1,
+      "message": "[warning] Line 27: 🟡 Removing the MSVC autolink pragma without adding an equivalent link propagation path can break consumers that do not use `pkg-config` (common on Windows/vcpkg CMake/MSBuild flows). Consider replacing `libgnutls` with `gnutls` instead of deleting the pragma, or ensure the vcpkg port exports `gnutls` as a required link dependency for `pjproject` targets so transitive linking is preserved.",
+      "revId": "4caca32b0b332bcf0b0fef506b2c8b5258cd333c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
