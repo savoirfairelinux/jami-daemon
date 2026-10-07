@@ -16,6 +16,24 @@
       "message": "[warning] Line 27: 🟡 Removing the MSVC autolink pragma without adding an equivalent link propagation path can break consumers that do not use `pkg-config` (common on Windows/vcpkg CMake/MSBuild flows). Consider replacing `libgnutls` with `gnutls` instead of deleting the pragma, or ensure the vcpkg port exports `gnutls` as a required link dependency for `pjproject` targets so transitive linking is preserved.",
       "revId": "4caca32b0b332bcf0b0fef506b2c8b5258cd333c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8cac78ac_0d48b8af",
+        "filename": "contrib/vcpkg/ports/pjproject/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "pjproject is only consumed through pkg-config (daemon and dhtnet), and the port\u0027s libpjproject.pc has Requires.private: gnutls. The pragma named pywinmake\u0027s libgnutls.lib, which does not exist under vcpkg (gnutls.lib), so keeping it breaks the link.",
+      "parentUuid": "71707d12_06c69134",
+      "revId": "4caca32b0b332bcf0b0fef506b2c8b5258cd333c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
