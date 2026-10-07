@@ -104,6 +104,24 @@
       "parentUuid": "b1690ffd_ca9a95c2",
       "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2615f4fb_b64eeba1",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:39:34Z",
+      "side": 1,
+      "message": "No change. The job exists to build changed contrib, so review builds must be able to write their results. Archives are keyed by the ABI hash of the port files and toolchain, so a change that edits a port writes new keys and cannot replace existing ones by accident. A deliberately malicious build already runs arbitrary code on the agent and could write the directory whatever vcpkg is told, so a read-only source would not add isolation.",
+      "parentUuid": "66b282a5_42bca6ae",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
