@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84f61509_de909253",
+        "filename": "contrib/vcpkg/ports/libupnp/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:05:28Z",
+      "side": 1,
+      "message": "[warning] Line 13: 🟡 `UPNP_TARGET` is computed but never used. Remove this dead variable block (lines 13-17) to reduce maintenance noise and avoid confusion about linkage selection logic.",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c989c6c_1240cc09",
+        "filename": "contrib/vcpkg/ports/libupnp/vcpkg.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:05:28Z",
+      "side": 1,
+      "message": "[error] Line 9: 🔴 `pthreads` is listed as an unconditional dependency, but this port only needs `pthreads4w` on Windows/MSVC; Unix-like targets use system `Threads`. Keeping this unconditional can break non-Windows triplets (notably mobile ones) and aligns with the observed iOS/Android CI failures. Make the dependency platform-conditional (e.g., Windows-only, excluding UWP) so non-Windows builds do not pull `pthreads`.",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
