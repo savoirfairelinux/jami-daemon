@@ -149,10 +149,12 @@ initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
-                 const std::vector<libjami::MediaMap>& mediaList)
+                 const std::vector<libjami::MediaMap>& mediaList,
+                 bool browserConferenceAudio)
     : Call(account, callId, type)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
+    , browserConferenceAudio_(browserConferenceAudio)
     , srtpEnabled_(account->isSrtpEnabled())
 {
     jami_tracepoint(call_start, callId.c_str());
@@ -243,7 +245,10 @@ SIPCall::createRtpSession(RtpStream& stream)
     // To get audio_0 ; video_0
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, recorder_);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(
+            id_, streamId, recorder_,
+            (browserConferenceAudio_ || !promotionRequestId_.empty())
+                ? AudioRtpSession::Mode::CONFERENCE_HOST : AudioRtpSession::Mode::DEVICE);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
@@ -288,8 +293,30 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType, bool) {
         // This sends SIP messages on socket, so move to io
         dht::ThreadPool::io().run([w = std::move(w)] {
-            if (auto thisPtr = w.lock())
+            if (auto thisPtr = w.lock()) {
                 thisPtr->rtpSetupSuccess();
+                runOnMainThread([w] {
+                    if (auto call = w.lock())
+                        call->checkPromotionReady();
+                });
+            }
+        });
+    });
+    rtpSession->setStartupFailureCb([w = weak(), session = std::weak_ptr<RtpSession>(rtpSession)](
+                                        MediaType, const std::string& reason) {
+        runOnMainThread([w, session, reason] {
+            if (auto call = w.lock()) {
+                std::lock_guard lk {call->callMutex_};
+                const auto stream = session.lock();
+                const auto& streams = call->rtpStreams_;
+                if (!call->promotionRequestId_.empty() && stream
+                    && std::any_of(streams.begin(), streams.end(), [&](const auto& item) {
+                           return item.rtpSession_ == stream;
+                       })) {
+                    call->failPromotion(reason);
+                    call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+                }
+            }
         });
     });
 
@@ -1554,6 +1581,156 @@ SIPCall::reportExternalRemoteAnswer(std::string sdp)
     emitRemoteSdp();
 }
 
+bool
+SIPCall::canPromoteExternalMedia() const
+{
+    std::lock_guard lk {callMutex_};
+    if (!promotionRequestId_.empty() || !hasExternalMedia() || !rtpStreams_.empty()
+        || isSubcall() || isConferenceParticipant() || getState() != CallState::ACTIVE
+        || getConnectionState() != ConnectionState::CONNECTED || !inviteSession_
+        || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED || inviteSession_->invite_tsx
+        || !sdp_ || !sdp_->getActiveLocalSdpSession() || !sdp_->getActiveRemoteSdpSession()
+        || isWaitingForIceAndMedia_)
+        return false;
+
+    auto account = getSIPAccount();
+    if (!account || !account->isIceForMediaEnabled() || !account->isSrtpEnabled()
+        || !dtlsCertificate_ || !dtlsPrivateKey_ || account->createDefaultMediaList(false).size() != 1)
+        return false;
+
+    const auto* local = sdp_->getActiveLocalSdpSession();
+    const auto* remote = sdp_->getActiveRemoteSdpSession();
+    const auto slots = sdp_->getMediaSlots();
+    if (local->media_count != 1 || remote->media_count != 1 || slots.size() != 1)
+        return false;
+    const auto& [localAudio, remoteAudio] = slots.front();
+    return localAudio.type == MediaType::MEDIA_AUDIO
+           && remoteAudio.type == MediaType::MEDIA_AUDIO
+           && localAudio.enabled && remoteAudio.enabled && !localAudio.hold && !remoteAudio.hold
+           && localAudio.direction_ == MediaDirection::SENDRECV
+           && remoteAudio.direction_ == MediaDirection::SENDRECV
+           && localAudio.transport == MediaTransport::UDP_TLS_RTP_SAVPF
+           && remoteAudio.transport == MediaTransport::UDP_TLS_RTP_SAVPF;
+}
+
+bool
+SIPCall::promoteExternalMedia(const std::string& requestId)
+{
+    std::lock_guard lk {callMutex_};
+    if (requestId.empty() || !canPromoteExternalMedia()) {
+        JAMI_WARNING("[call:{}] Promotion unavailable for the active external-media dialog", getCallId());
+        return false;
+    }
+
+    auto account = getSIPAccount();
+    auto mediaList = account->createDefaultMediaList(false);
+    promotionRequestId_ = requestId;
+    promotionNegotiated_ = false;
+    enableIce_ = true;
+    sdp_->setSecureMediaKeyExchange(KeyExchangeProtocol::DTLS);
+    if (initMediaStreams(mediaList) != mediaList.size()) {
+        failPromotion("Could not create native RTP sessions");
+        hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+        return false;
+    }
+    try {
+        if (trySIPSessionReinvite(mediaList, true) != ReinviteResult::Sent) {
+            failPromotion("Could not send media re-INVITE");
+            hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+            return false;
+        }
+    } catch (const std::exception& e) {
+        failPromotion(e.what());
+        hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+        return false;
+    }
+    externalSdp_.clear();
+    externalRemoteSdp_.clear();
+    emitSignal<libjami::CallSignal::ExternalMediaPromotionAccepted>(getAccountId(), getCallId(), requestId);
+    return true;
+}
+
+bool
+SIPCall::cancelExternalMediaPromotion(const std::string& requestId)
+{
+    std::lock_guard lk {callMutex_};
+    if (requestId.empty() || promotionRequestId_ != requestId)
+        return false;
+    failPromotion("Promotion cancelled");
+    if (inviteSession_ && inviteSession_->invite_tsx)
+        promotionEnding_ = true;
+    else
+        hangup(PJSIP_SC_REQUEST_TERMINATED);
+    return true;
+}
+
+void
+SIPCall::failPromotion(const std::string& reason)
+{
+    if (promotionRequestId_.empty())
+        return;
+    auto requestId = std::move(promotionRequestId_);
+    promotionRequestId_.clear();
+    JAMI_ERROR("[call:{}] External-media promotion failed: {}", getCallId(), reason);
+    emitSignal<libjami::CallSignal::ExternalMediaPromotionFailure>(getAccountId(), getCallId(), requestId, reason);
+}
+
+bool
+SIPCall::isNativeMediaReady() const
+{
+    std::lock_guard lk {callMutex_};
+    return promotionRequestId_.empty() && isNativeMediaReadyLocked();
+}
+
+bool
+SIPCall::isNativeMediaReadyLocked() const
+{
+    if (hasExternalMedia() || isSubcall()
+        || getState() != CallState::ACTIVE || getConnectionState() != ConnectionState::CONNECTED
+        || !sdp_ || !sdp_->getActiveLocalSdpSession() || !sdp_->getActiveRemoteSdpSession()
+        || !isIceRunning())
+        return false;
+
+    const auto slots = sdp_->getMediaSlots();
+    if (slots.empty() || slots.size() != rtpStreams_.size())
+        return false;
+    bool audioReady = false;
+    for (size_t i = 0; i < slots.size(); ++i) {
+        const auto& [local, remote] = slots[i];
+        if (!local.enabled && (!remote.enabled || (browserConferenceAudio_ && local.type == MEDIA_VIDEO)))
+            continue;
+        if (!local.enabled || !remote.enabled || !rtpStreams_[i].rtpSession_)
+            return false;
+        if (local.type == MEDIA_AUDIO) {
+            audioReady = true;
+            if (!std::static_pointer_cast<AudioRtpSession>(rtpStreams_[i].rtpSession_)->isRtpReady(true, true))
+                return false;
+        }
+#ifdef ENABLE_VIDEO
+        else if (local.type == MEDIA_VIDEO) {
+            if (!std::static_pointer_cast<video::VideoRtpSession>(rtpStreams_[i].rtpSession_)->isRtpReady(true, true))
+                return false;
+        }
+#endif
+        else
+            return false;
+    }
+    return audioReady;
+}
+
+void
+SIPCall::checkPromotionReady()
+{
+    std::lock_guard lk {callMutex_};
+    if (promotionRequestId_.empty())
+        return;
+    if (promotionNegotiated_ && isNativeMediaReadyLocked()) {
+        auto requestId = std::move(promotionRequestId_);
+        promotionRequestId_.clear();
+        emitSignal<libjami::CallSignal::ExternalMediaPromotionReady>(getAccountId(), getCallId(), requestId);
+    }
+}
+
 void
 SIPCall::emitExternalRemoteSdp(const std::string& sdp) const
 {
@@ -1594,6 +1771,9 @@ void
 SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard lk {callMutex_};
+    if (!inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+        || getConnectionState() != ConnectionState::CONNECTED)
+        return;
 
     auto account = getSIPAccount();
     if (not account) {
@@ -1602,6 +1782,16 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    if (browserConferenceAudio_) {
+        for (auto& media : mediaAttrList) {
+            if (media.type_ == MediaType::MEDIA_VIDEO) {
+                JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
+                media.enabled_ = false;
+                media.muted_ = true;
+                media.sourceUri_.clear();
+            }
+        }
+    }
 
     // TODO. is the right place?
     // Disable video if disabled in the account.
@@ -1649,6 +1839,10 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
         JAMI_ERROR("[call:{}] No valid remote SDP session", getCallId());
         return;
     }
+
+    if (!inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+        || getConnectionState() != ConnectionState::CONNECTED)
+        return;
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
         JAMI_WARNING("[call:{}] Requesting a new ICE media", getCallId());
@@ -1742,6 +1936,8 @@ void
 SIPCall::hangup(int code)
 {
     std::lock_guard lk {callMutex_};
+    promotionEnding_ = false;
+    failPromotion("Call ended before native media was ready");
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -2225,6 +2421,8 @@ SIPCall::removeCall(int code)
 #endif
     std::lock_guard lk {callMutex_};
     stopCallRecovery();
+    promotionEnding_ = false;
+    failPromotion("Call removed before native media was ready");
     JAMI_DEBUG("[call:{}] removeCall()", getCallId());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
@@ -2246,6 +2444,14 @@ void
 SIPCall::onFailure(int code)
 {
     stopCallRecovery();
+    {
+        std::lock_guard lk {callMutex_};
+        if (!promotionRequestId_.empty()) {
+            failPromotion(fmt::format("Native media negotiation failed ({})", code));
+            hangup(code);
+            return;
+        }
+    }
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, code)) {
         runOnMainThread([w = weak(), code] {
             if (auto shared = w.lock()) {
@@ -2277,6 +2483,8 @@ SIPCall::onBusyHere()
 void
 SIPCall::onClosed()
 {
+    if (auto ice = getIceMedia())
+        ice->cancelOperations();
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
@@ -2654,7 +2862,8 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
-    if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO && stream.mediaAttribute_->sourceUri_.empty()) {
+    if (!browserConferenceAudio_ && stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+        && stream.mediaAttribute_->sourceUri_.empty()) {
         if (auto* monitor = getVideoDeviceMonitor())
             stream.mediaAttribute_->sourceUri_ = monitor->getMRLForDefaultDevice();
     }
@@ -3010,11 +3219,29 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                     call->createCallAVStreams();
                 }
 #endif
+                runOnMainThread([w, rtpSession, idx] {
+                    if (auto call = w.lock()) {
+                        std::lock_guard lk {call->callMutex_};
+                        if (!call->promotionRequestId_.empty() && idx < call->rtpStreams_.size()
+                            && call->rtpStreams_[idx].rtpSession_ == rtpSession)
+                            call->checkPromotionReady();
+                    }
+                });
             } catch (const std::exception& e) {
                 JAMI_ERROR("[call:{}] Failed to start RTP session {}: {}",
                            w.lock() ? w.lock()->getCallId() : "unknown",
                            idx,
                            e.what());
+                runOnMainThread([w, rtpSession, idx, reason = std::string(e.what())] {
+                    if (auto call = w.lock()) {
+                        std::lock_guard lk {call->callMutex_};
+                        if (!call->promotionRequestId_.empty() && idx < call->rtpStreams_.size()
+                            && call->rtpStreams_[idx].rtpSession_ == rtpSession) {
+                            call->failPromotion(fmt::format("Native RTP failed to start: {}", reason));
+                            call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+                        }
+                    }
+                });
             }
         });
         idx++;
@@ -3313,6 +3540,10 @@ bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard lk {callMutex_};
+    if (hasExternalMedia() || !promotionRequestId_.empty()) {
+        JAMI_WARNING("[call:{}] Media change unavailable during external-media promotion", getCallId());
+        return false;
+    }
     // Renegotiating now would cross the renegotiation restoring the call.
     if (recovering_) {
         JAMI_DEBUG("[call:{}] Media change deferred until the call recovers", getCallId());
@@ -3320,6 +3551,13 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         return true;
     }
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    if (browserConferenceAudio_
+        && std::any_of(mediaAttrList.begin(), mediaAttrList.end(), [](const auto& media) {
+               return media.type_ == MediaType::MEDIA_VIDEO;
+           })) {
+        JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
+        return false;
+    }
     bool hasFileSharing {false};
 
     for (const auto& media : mediaAttrList) {
@@ -3509,7 +3747,7 @@ SIPCall::onMediaNegotiationComplete()
 
             // If the call has already ended, we don't need to start the media.
             if (not this_->inviteSession_ or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_) {
+                or not this_->sdp_ || this_->promotionEnding_) {
                 return;
             }
 
@@ -3519,6 +3757,8 @@ SIPCall::onMediaNegotiationComplete()
                 this_->reportMediaNegotiationStatus();
                 return;
             }
+            if (!this_->promotionRequestId_.empty())
+                this_->promotionNegotiated_ = true;
 
             // This method is called to report media negotiation (SDP) for initial
             // invite or subsequent invites (re-invite).
@@ -3545,16 +3785,30 @@ SIPCall::onMediaNegotiationComplete()
                 // this_->updateRemoteMedia();
                 this_->reportMediaNegotiationStatus();
             }
+            if (!this_->promotionRequestId_.empty())
+                this_->checkPromotionReady();
         }
     });
 }
 
 void
-SIPCall::onInviteTransactionTerminated()
+SIPCall::onInviteTransactionTerminated(int status)
 {
-    runOnMainThread([w = weak()] {
-        if (auto call = w.lock())
+    runOnMainThread([w = weak(), status] {
+        if (auto call = w.lock()) {
+            std::lock_guard lk {call->callMutex_};
+            if (call->promotionEnding_) {
+                call->promotionEnding_ = false;
+                call->hangup(PJSIP_SC_REQUEST_TERMINATED);
+                return;
+            }
+            if (!call->promotionRequestId_.empty() && status >= 300) {
+                call->failPromotion(fmt::format("Media re-INVITE rejected ({})", status));
+                call->hangup(status);
+                return;
+            }
             call->startPendingTransportFallback();
+        }
     });
 }
 
@@ -3694,7 +3948,8 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
         // Check if the call is already ended, so we don't need to restart medias
         // This is typically the case in a multi-device context where one device
         // can stop a call. So do not start medias
-        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
+        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_
+            || promotionEnding_) {
             JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
             return;
         }
