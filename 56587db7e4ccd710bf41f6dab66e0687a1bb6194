@@ -121,6 +121,24 @@
       "message": "[warning] Line 776: 🟡 `portaudio` is currently required whenever `VCPKG_TOOLCHAIN` is true, including non-MSVC/non-Windows builds. That broadens behavior beyond the Windows-only scope and can fail where the manifest does not provide `portaudio` for that platform. Gate this with `MSVC`/`WIN32` as well (e.g. `if(MSVC AND VCPKG_TOOLCHAIN)`) to keep the change scoped and avoid regressions.",
       "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "99047617_5e6bb374",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "Done in https://review.jami.net/c/jami-daemon/+/36436: the lookup is now gated by MSVC AND VCPKG_TOOLCHAIN.",
+      "parentUuid": "ddcae61d_50f9ee69",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
