@@ -88,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1af6b17b_178a826a",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "vcpkg.cmake appends installed/\u003chost-triplet\u003e/tools/* to CMAKE_PROGRAM_PATH, which find_program searches before PATH. Verified on the Windows builder: vcpkg\u0027s pkgconf.exe was picked with Strawberry and MSYS2 pkg-config on PATH.",
+      "parentUuid": "924dfbe4_f3db0280",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddcae61d_50f9ee69",
