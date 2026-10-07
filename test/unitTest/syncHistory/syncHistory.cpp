@@ -17,6 +17,7 @@
 
 #include "fileutils.h"
 #include "manager.h"
+#include "jamidht/conversation_module.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -33,6 +34,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
+#include <thread>
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
@@ -94,6 +96,7 @@ private:
     void testCreateMultipleConversationThenAddDevice();
     void testReceivesInviteThenAddDevice();
     void testRemoveConversationOnAllDevices();
+    void testErasureSyncedAfterRemoval();
     void testSyncCreateAccountExportDeleteReimportOldBackup();
     void testSyncCreateAccountExportDeleteReimportWithConvId();
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
@@ -110,6 +113,7 @@ private:
     CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
     CPPUNIT_TEST(testReceivesInviteThenAddDevice);
     CPPUNIT_TEST(testRemoveConversationOnAllDevices);
+    CPPUNIT_TEST(testErasureSyncedAfterRemoval);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
@@ -533,6 +537,32 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !alice2Data.conversationId.empty(); }));
     libjami::removeConversation(aliceId, aliceData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.removed; }));
+}
+
+void
+SyncHistoryTest::testErasureSyncedAfterRemoval()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Another device of alice left the conversation: it first syncs the removal,
+    // then the erasure once a member fetched its leave.
+    auto info = ConversationModule::convInfos(aliceId).at(convId);
+    info.removed = info.created;
+    SyncMsg msg;
+    msg.c[convId] = info;
+    const std::string otherDevice = "7e7c131d49795db3c9e8b864029826bc8e5fbf9d36082093999bdc5741e2898e";
+    // The removal reaches this device some time after it happened.
+    std::this_thread::sleep_for(10ms);
+    aliceAccount->convModule()->onSyncData(msg, aliceUri, otherDevice);
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    msg.c[convId].erased = nowMs();
+    aliceAccount->convModule()->onSyncData(msg, aliceUri, otherDevice);
+    CPPUNIT_ASSERT(!std::filesystem::exists(repoPath));
 }
 
 void
