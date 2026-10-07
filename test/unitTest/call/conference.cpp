@@ -28,6 +28,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation_module.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
@@ -101,6 +102,10 @@ private:
     void testConferenceMediaAnswerPreservesSlots();
     void testExternalHostAudioAttachDetach();
     void testExternalHostAudioLateParticipant();
+    void testBrowserHostedConferenceRetainsLastParticipant();
+#ifdef ENABLE_VIDEO
+    void testVideoMixerPreparationKeepsConferenceAlive();
+#endif
     void testBrowserHostRejectsInvalidOffer();
     void testBrowserHostRejectsVideoFirstOffer();
     void testBrowserHostAnswersRecvonlyVideo();
@@ -137,6 +142,10 @@ private:
     CPPUNIT_TEST(testConferenceMediaAnswerPreservesSlots);
     CPPUNIT_TEST(testExternalHostAudioAttachDetach);
     CPPUNIT_TEST(testExternalHostAudioLateParticipant);
+    CPPUNIT_TEST(testBrowserHostedConferenceRetainsLastParticipant);
+#ifdef ENABLE_VIDEO
+    CPPUNIT_TEST(testVideoMixerPreparationKeepsConferenceAlive);
+#endif
     CPPUNIT_TEST(testBrowserHostRejectsInvalidOffer);
     CPPUNIT_TEST(testBrowserHostRejectsVideoFirstOffer);
     CPPUNIT_TEST(testBrowserHostAnswersRecvonlyVideo);
@@ -557,6 +566,78 @@ ConferenceTest::testExternalHostAudioLateParticipant()
     account->removeConference(confId);
     libjami::unregisterSignalHandlers();
 }
+
+void
+ConferenceTest::testBrowserHostedConferenceRetainsLastParticipant()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(account);
+    auto* module = account->convModule(true);
+    CPPUNIT_ASSERT(module);
+    const auto conversationId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!conversationId.empty());
+    const auto conferenceId = Manager::instance().callFactory.getNewCallID();
+    auto conference = module->hostBrowserConference(conversationId, conferenceId, {});
+    CPPUNIT_ASSERT(conference);
+    CPPUNIT_ASSERT(module->isHosting("", conferenceId));
+
+    auto host = Manager::instance().getRingBufferPool().createRingBuffer("browser-host-last-peer");
+    CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_ATTACHED);
+
+    auto original = std::make_shared<SIPCall>(
+        account, "browser-original-peer", Call::CallType::OUTGOING, std::vector<libjami::MediaMap> {});
+    auto extra = std::make_shared<SIPCall>(
+        account, "browser-extra-peer", Call::CallType::OUTGOING, std::vector<libjami::MediaMap> {});
+    account->attach(original);
+    account->attach(extra);
+    conference->subCalls_.insert(original->getCallId());
+    conference->subCalls_.insert(extra->getCallId());
+    original->enterConference(conference);
+    extra->enterConference(conference);
+
+    Manager::instance().removeParticipant(*extra);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, conference->getSubCalls().size());
+    CPPUNIT_ASSERT(conference->getSubCalls().count(original->getCallId()) == 1);
+    CPPUNIT_ASSERT(account->getConference(conferenceId) == conference);
+    CPPUNIT_ASSERT(original->getConference() == conference);
+    CPPUNIT_ASSERT(module->isHosting("", conferenceId));
+    CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_ATTACHED);
+    CPPUNIT_ASSERT(conference->hasExternalHostAudio());
+
+    Manager::instance().removeParticipant(*original);
+    CPPUNIT_ASSERT(!account->getConference(conferenceId));
+    account->detach(extra);
+    account->detach(original);
+}
+
+#ifdef ENABLE_VIDEO
+void
+ConferenceTest::testVideoMixerPreparationKeepsConferenceAlive()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(account);
+    auto video = std::make_shared<video::VideoRtpSession>(
+        "prepared-video-call", "prepared-video-stream", DeviceParams {}, nullptr);
+    CPPUNIT_ASSERT(!video->prepareConference({}));
+
+    auto conference = std::make_shared<Conference>(account);
+    std::weak_ptr<Conference> weakConference = conference;
+    CPPUNIT_ASSERT(video->prepareConference(conference));
+    CPPUNIT_ASSERT(video->hasConference());
+    CPPUNIT_ASSERT(video->getVideoMixer() == conference->getVideoMixer());
+    CPPUNIT_ASSERT(!video->getVideoLocal());
+    conference.reset();
+    CPPUNIT_ASSERT(!weakConference.expired());
+
+    video->enterConference(*weakConference.lock());
+    CPPUNIT_ASSERT(video->getVideoMixer() == weakConference.lock()->getVideoMixer());
+    CPPUNIT_ASSERT(!video->getVideoLocal());
+    video->exitConference();
+    CPPUNIT_ASSERT(!video->hasConference());
+    CPPUNIT_ASSERT(weakConference.expired());
+}
+#endif
 
 void
 ConferenceTest::testConferenceMediaAnswerPreservesSlots()
