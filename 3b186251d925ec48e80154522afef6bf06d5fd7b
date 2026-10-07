@@ -16,6 +16,24 @@
       "message": "[warning] Line 167: 🟡 The `@WITH_THEORA@` dependency block appears twice in this wrapper (same `find_package(PkgConfig)`, `pkg_check_modules(theora ...)`, and `target_link_libraries(...)`). This duplicates entries in `FFMPEG_LIBRARIES` and can inject repeated link flags into consumers. Keep only one `@WITH_THEORA@` block to avoid duplicated transitive linkage and reduce maintenance risk.",
       "revId": "3b186251d925ec48e80154522afef6bf06d5fd7b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "728f0496_7a9cbba0",
+        "filename": "contrib/vcpkg/ports/ffmpeg/vcpkg-cmake-wrapper.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:20Z",
+      "side": 1,
+      "message": "The upstream wrapper at microsoft/vcpkg@f00e89ae19 has the same two blocks. The file is kept identical to upstream so future syncs stay mechanical.",
+      "parentUuid": "d0fa2a2f_70d21113",
+      "revId": "3b186251d925ec48e80154522afef6bf06d5fd7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
