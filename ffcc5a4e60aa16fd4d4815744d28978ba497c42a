@@ -16,6 +16,24 @@
       "message": "[warning] Line 30: 🟡 The new `PaHostApiInfo` fields are introduced globally, but this patch only initializes them in WASAPI-specific paths. For host APIs that do not explicitly set these fields, they can default to `0` and be interpreted as a valid device index rather than `paNoDevice`, violating the documented contract for unsupported backends. Initialize `defaultCommInputDevice/defaultCommOutputDevice` to `paNoDevice` in a common host-API initialization path (or in every host API initializer) to make behavior deterministic.",
       "revId": "ffcc5a4e60aa16fd4d4815744d28978ba497c42a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "166cb43a_d45807f6",
+        "filename": "contrib/vcpkg/ports/portaudio/0001-add-get-default-comm-devices-api.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:20Z",
+      "side": 1,
+      "message": "This patch is byte-identical to contrib/src/portaudio/0001-add-get-default-comm-devices-api.patch, used by the current Windows build. A fix belongs there.",
+      "parentUuid": "4a3fc5d8_f483573f",
+      "revId": "ffcc5a4e60aa16fd4d4815744d28978ba497c42a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
