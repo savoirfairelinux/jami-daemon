@@ -9,12 +9,11 @@ vcpkg_from_github(
     PATCHES
         0001-Add-NATPMP_BUILD_TOOLS-option-to-conditionally-build.patch
         natpmp-win32-ssize_t.patch
+        # Jami setting from contrib/src/natpmp/package.json (CMAKE_C_FLAGS
+        # there); passing CMAKE_C_FLAGS through vcpkg would clobber the
+        # toolchain flags.
+        max-retries.patch
 )
-
-# Jami setting from contrib/src/natpmp/package.json (CMAKE_C_FLAGS there);
-# passing CMAKE_C_FLAGS through vcpkg would clobber the toolchain flags.
-vcpkg_replace_string("${SOURCE_PATH}/CMakeLists.txt"
-    "-DENABLE_STRNATPMPERR" "-DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=3")
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
