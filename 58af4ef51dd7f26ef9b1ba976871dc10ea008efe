@@ -88,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d839261_404f80c9",
+        "filename": "contrib/vcpkg/ports/ffmpeg/rtp_ext_abs_send_time.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:20Z",
+      "side": 1,
+      "message": "Same hunk as contrib/src/ffmpeg/rtp_ext_abs_send_time.patch (only offsets differ), and it is a trace-level log. Fixing the format belongs in the contrib patch so both stay in sync.",
+      "parentUuid": "6c7b0de3_fa708cb1",
+      "revId": "58af4ef51dd7f26ef9b1ba976871dc10ea008efe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4e9b45bb_a2d2593c",
