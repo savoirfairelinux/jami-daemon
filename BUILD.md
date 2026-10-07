@@ -55,8 +55,9 @@ finds via pkg-config.
 
 **Windows**
 
-- Visual Studio 2022 with C++ workload
-- Python 3 with `pywinmake`
+- Visual Studio 2022 with the C++ workload
+- CMake and Git
+- Rust (rustup, MSVC toolchain)
 
 ---
 
@@ -189,22 +190,26 @@ Then follow the standard Linux/CMake or Linux/Meson steps above.
 
 ## How to compile on Windows
 
-First obtain and install `pywinmake`, which builds the contrib dependencies:
+Dependencies are built with [vcpkg](https://vcpkg.io) from the manifest in
+`contrib/vcpkg`. Clone vcpkg at the baseline listed in
+`contrib/vcpkg/vcpkg-configuration.json`:
 
-```bash
-git clone "https://review.jami.net/pywinmake"
-cd pywinmake
-python -m pip install .
+```bat
+git clone https://github.com/microsoft/vcpkg C:\vcpkg
+git -C C:\vcpkg checkout <baseline>
+C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
 ```
 
-Then build with CMake:
+Then build with CMake; the dependencies are installed during configuration:
 
-```bash
+```bat
 mkdir build
 cd build
-cmake ..
+cmake .. -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
 cmake --build . --config Release
 ```
+
+See `contrib/vcpkg/README.md` for details.
 
 ---
 

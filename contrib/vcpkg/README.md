@@ -1,8 +1,11 @@
 # vcpkg dependencies (Windows/MSVC)
 
-Proof of concept replacing pywinmake (`compat/msvc/winmake.py`) with vcpkg.
+Windows dependencies of the daemon, built with vcpkg in manifest mode. Use a
+vcpkg clone checked out at the baseline in `vcpkg-configuration.json`:
 
-    git clone https://github.com/microsoft/vcpkg %VCPKG_ROOT% && %VCPKG_ROOT%\bootstrap-vcpkg.bat
+    git clone https://github.com/microsoft/vcpkg %VCPKG_ROOT%
+    git -C %VCPKG_ROOT% checkout <baseline>
+    %VCPKG_ROOT%\bootstrap-vcpkg.bat -disableMetrics
     cd contrib\vcpkg
     %VCPKG_ROOT%\vcpkg install --triplet x64-windows-static-md-release
 
@@ -44,13 +47,14 @@ C++/WinRT dxgigrab device.
 ## Building the daemon
 
 The daemon CMake uses this manifest automatically when configured with the vcpkg
-toolchain (it sets `VCPKG_MANIFEST_DIR` and the triplet when top-level), resolves
-dependencies through pkg-config like other platforms, and skips pywinmake:
+toolchain (`settings.cmake` sets `VCPKG_MANIFEST_DIR` and the triplet) and
+resolves dependencies through pkg-config like other platforms:
 
     cmake -B build -G "Visual Studio 17 2022" -A x64 ^
         -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
     cmake --build build --config Release --target jami-core
 
 `jami-core.lib` is no longer a fat library: consumers get dependencies through
-its `PkgConfig::` link interface. When used via `add_subdirectory`, the parent
-must pass `VCPKG_MANIFEST_DIR=<daemon>/contrib/vcpkg` and the triplets itself.
+its `PkgConfig::` link interface. A project using the daemon through
+`add_subdirectory` must include `contrib/vcpkg/settings.cmake` before its
+own `project()`.
