@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9f4747c_2d37184e",
+        "filename": "contrib/vcpkg/ports/libupnp/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "The port is vendored unmodified from microsoft/vcpkg at the manifest baseline (00be0612), so diffs against upstream show only Jami\u0027s changes (next change). Keeping it stock.",
+      "parentUuid": "84f61509_de909253",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4c989c6c_1240cc09",
