@@ -51,6 +51,24 @@
       "message": "[error] Line 9: 🔴 `pthreads` is listed as an unconditional dependency, but this port only needs `pthreads4w` on Windows/MSVC; Unix-like targets use system `Threads`. Keeping this unconditional can break non-Windows triplets (notably mobile ones) and aligns with the observed iOS/Android CI failures. Make the dependency platform-conditional (e.g., Windows-only, excluding UWP) so non-Windows builds do not pull `pthreads`.",
       "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f064ab92_b6b49329",
+        "filename": "contrib/vcpkg/ports/libupnp/vcpkg.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "Stock upstream port at the baseline. On non-Windows targets the vcpkg pthreads port is an empty package (VCPKG_POLICY_EMPTY_PACKAGE), so the dependency is a no-op there; this manifest is also only used on Windows.",
+      "parentUuid": "4c989c6c_1240cc09",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
