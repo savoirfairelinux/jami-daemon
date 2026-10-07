@@ -607,6 +607,8 @@ CollabTest::testRetryAfterInactiveParent()
     // Reload a live parent without recreating the collaborative manager.
     bob->convModule()->loadConversations();
     bob->convModule()->bootstrap(convId);
+    // The inactive parent refused to fetch the announcement; a new commit makes it fetch again.
+    libjami::sendMessage(aliceId, convId, "ping", "");
     CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
     bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
     CPPUNIT_ASSERT(poll([&] { return documentEntry(bobId, convId, docId).at("storedLocally") == "true"; }));
@@ -1233,6 +1235,8 @@ CollabTest::testContactRemovalDropsDocuments()
     const auto convId = aliceAccount->convModule()->getOneToOneConversation(bobUri);
     CPPUNIT_ASSERT(!convId.empty());
     CPPUNIT_ASSERT(convId == bobAccount->convModule()->getOneToOneConversation(aliceUri));
+    // The fixture only waits for the contact to be confirmed, not for alice's clone.
+    CPPUNIT_ASSERT(poll([&] { return aliceAccount->convModule()->getConversation(convId) != nullptr; }));
 
     auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
     CPPUNIT_ASSERT(!docId.empty());
