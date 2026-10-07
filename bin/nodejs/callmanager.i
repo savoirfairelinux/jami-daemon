@@ -40,6 +40,9 @@ public:
     virtual void browserConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
     virtual void browserConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
     virtual void browserConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
+    virtual void externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionFailure(const std::string& accountId, const std::string& callId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
@@ -100,6 +103,12 @@ bool hangUpConference(const std::string& accountId, const std::string& confId);
 bool startBrowserConference(const std::string& accountId, const std::string& conversationId,
                            const std::string& requestId, const std::string& sdpOffer);
 bool cancelBrowserConference(const std::string& accountId, const std::string& requestId);
+bool canPromoteExternalMedia(const std::string& accountId, const std::string& callId);
+bool requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
+bool cancelExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
+bool addNativeParticipantToBrowserConference(const std::string& accountId, const std::string& callId, const std::string& requestId);
+std::string placeBrowserConferenceParticipantCall(const std::string& accountId, const std::string& to, const std::string& requestId);
+std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
 bool holdConference(const std::string& accountId, const std::string& confId);
 bool resumeConference(const std::string& accountId, const std::string& confId);
 std::vector<std::string> getConferenceList(const std::string& accountId);
@@ -175,6 +184,9 @@ public:
     virtual void browserConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
     virtual void browserConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
     virtual void browserConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
+    virtual void externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionFailure(const std::string& accountId, const std::string& callId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}

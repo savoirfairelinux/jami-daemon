@@ -508,14 +508,12 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
     } else {
-        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(conf.getAccount())) {
-            // Stay in a conference if 1 participants for swarm and rendezvous
-            if (auto* cm = acc->convModule(true)) {
-                if (acc->isRendezVous() || cm->isHosting("", conf.getConfId())) {
-                    // Check if attached
-                    if (conf.getState() == Conference::State::ACTIVE_ATTACHED) {
+        if (n == 1 && conf.getState() == Conference::State::ACTIVE_ATTACHED) {
+            // A hosted conference retains its last remote participant.
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(conf.getAccount())) {
+                if (auto* cm = acc->convModule(true)) {
+                    if (acc->isRendezVous() || cm->isHosting("", conf.getConfId()))
                         return;
-                    }
                 }
             }
         }
@@ -1405,11 +1403,16 @@ Manager::addSubCall(Call& call, Conference& conference)
 {
     JAMI_DEBUG("[conf:{}] Adding participant {}", conference.getConfId(), call.getCallId());
 
+    if (auto* sipCall = dynamic_cast<SIPCall*>(&call); sipCall && sipCall->hasExternalMedia()) {
+        JAMI_WARNING("[call:{}] Cannot add external media to a native conference mixer", call.getCallId());
+        return false;
+    }
+
     // Store the current call ID (it will change in resumeCall or in acceptCall)
     pimpl_->bindCallToConference(call, conference);
 
     // Don't attach current user yet
-    if (conference.getState() == Conference::State::ACTIVE_DETACHED) {
+    if (conference.getState() == Conference::State::ACTIVE_DETACHED || conference.hasExternalHostAudio()) {
         return true;
     }
 
@@ -1504,6 +1507,14 @@ Manager::joinParticipant(const std::string& accountId,
     auto call2 = account2->getCall(callId2);
     if (!call2) {
         JAMI_ERROR("Unable to find call {}", callId2);
+        return false;
+    }
+    if (auto sipCall = std::dynamic_pointer_cast<SIPCall>(call1); sipCall && sipCall->hasExternalMedia()) {
+        JAMI_WARNING("[call:{}] Cannot join an external-media call without native RTP", callId1);
+        return false;
+    }
+    if (auto sipCall = std::dynamic_pointer_cast<SIPCall>(call2); sipCall && sipCall->hasExternalMedia()) {
+        JAMI_WARNING("[call:{}] Cannot join an external-media call without native RTP", callId2);
         return false;
     }
 
