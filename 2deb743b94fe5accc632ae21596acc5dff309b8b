@@ -16,6 +16,24 @@
       "message": "[error] Line 4: 🔴 This condition dropped the previous top-level guard (`CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR`), so including jami-daemon as a subdirectory on Windows with a vcpkg toolchain now force-overwrites the parent cache (`VCPKG_MANIFEST_DIR`/triplets). That can silently retarget dependency resolution for the embedding project. Please restore a top-level guard (or equivalent opt-in guard) so daemon `CMakeLists.txt` does not mutate parent vcpkg settings, while still allowing clients to include this file explicitly before their own `project()`.",
       "revId": "2deb743b94fe5accc632ae21596acc5dff309b8b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea025521_9197a037",
+        "filename": "contrib/vcpkg/settings.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:21Z",
+      "side": 1,
+      "message": "The guard is not needed. When the daemon is a subdirectory, the parent\u0027s project() has already loaded the toolchain, which defines VCPKG_MANIFEST_DIR and VCPKG_TARGET_TRIPLET in the cache, so these set(... CACHE) calls (no FORCE) are no-ops. The manifest install also already ran at the parent\u0027s project(). Dropping the guard is what lets the client include this file before its own project().",
+      "parentUuid": "cffe7780_b46fff44",
+      "revId": "2deb743b94fe5accc632ae21596acc5dff309b8b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
