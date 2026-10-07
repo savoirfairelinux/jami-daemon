@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04cc491c_145f87e8",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:54:27Z",
+      "side": 1,
+      "message": "[warning] Line 65: 🟡 `git clone` fetches the full vcpkg history every run, which is expensive on Windows CI and slows setup. Fetch only the required baseline commit (for example with a shallow/focused fetch flow) to reduce network and checkout time while keeping the baseline pinning behavior.",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1690ffd_ca9a95c2",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-07T19:54:27Z",
+      "side": 1,
+      "message": "[error] Line 79: 🔴 The binary cache is configured as a single shared `readwrite` location (`daemon-build\\\\vcpkg-archives`) for all builds. Any build that can run on this agent can write arbitrary cache artifacts that later builds may consume, creating a cache-poisoning/supply-chain risk. Split cache paths by trust boundary (at minimum separate untrusted/PR builds from protected branch/release builds), and make untrusted builds use `read` only or isolated write caches.",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
