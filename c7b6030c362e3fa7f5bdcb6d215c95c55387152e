@@ -16,6 +16,24 @@
       "message": "[warning] Line 19: 🟡 `vcpkg_replace_string` on upstream `CMakeLists.txt` is brittle and can silently stop applying `-DNATPMP_MAX_RETRIES\u003d3` when the upstream text changes during a version bump. Prefer a dedicated patch (like the other two patches in this port) that adds a CMake option for retries, then pass that option via `vcpkg_cmake_configure` for a stable, explicit configuration path.",
       "revId": "c7b6030c362e3fa7f5bdcb6d215c95c55387152e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e15cd60d_b8fadd07",
+        "filename": "contrib/vcpkg/ports/natpmp/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-07T20:14:20Z",
+      "side": 1,
+      "message": "Done in https://review.jami.net/c/jami-daemon/+/36435: the define is now a port patch, which fails the build if it stops applying.",
+      "parentUuid": "890856fb_43a71f56",
+      "revId": "c7b6030c362e3fa7f5bdcb6d215c95c55387152e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
