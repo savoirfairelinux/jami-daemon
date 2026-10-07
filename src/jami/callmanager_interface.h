@@ -123,6 +123,37 @@ LIBJAMI_PUBLIC bool startBrowserConference(const std::string& accountId,
                                            const std::string& requestId,
                                            const std::string& sdpOffer);
 LIBJAMI_PUBLIC bool cancelBrowserConference(const std::string& accountId, const std::string& requestId);
+/* WAITING until the call is answered and its ICE/DTLS-SRTP send and receive
+ * paths are running; READY only for an established native-media call;
+ * UNAVAILABLE for absent/ended/external-media calls. A WAITING call can fail:
+ * observe StateChange and impose a dialing deadline before hanging it up. */
+LIBJAMI_PUBLIC std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
+/* Dial one audio-only native participant for an already Ready browser host.
+ * Its sender reads the conference ring buffer, never the daemon microphone;
+ * no video/device stream or current-call switch is created. An empty call ID
+ * means dialing could not start. Wait for CURRENT and READY before adding. */
+LIBJAMI_PUBLIC std::string placeBrowserConferenceParticipantCall(const std::string& accountId,
+                                                                 const std::string& to,
+                                                                 const std::string& requestId);
+/* Adds a READY native-media call to a ready browser host. True means it was
+ * bound; false leaves the caller responsible for retrying or hanging up. */
+LIBJAMI_PUBLIC bool addNativeParticipantToBrowserConference(const std::string& accountId,
+                                                             const std::string& callId,
+                                                             const std::string& requestId);
+/* Read-only eligibility check against the active local and remote SDP.
+ * Only one enabled, bidirectional audio m-line is supported. Recheck the
+ * result immediately before promotion: dialog state can change meanwhile. */
+LIBJAMI_PUBLIC bool canPromoteExternalMedia(const std::string& accountId,
+                                            const std::string& callId);
+/* True means the in-dialog re-INVITE was sent. Keep the browser media alive
+ * until ExternalMediaPromotionReady; on failure the call is explicitly ended. */
+LIBJAMI_PUBLIC bool requestExternalMediaPromotion(const std::string& accountId,
+                                                  const std::string& callId,
+                                                  const std::string& requestId);
+/* Cancel a pending promotion; the dialog is ended rather than reverting to browser RTP. */
+LIBJAMI_PUBLIC bool cancelExternalMediaPromotion(const std::string& accountId,
+                                                 const std::string& callId,
+                                                 const std::string& requestId);
 /* Called when the account drops a browser-hosted conference, even without Node listeners. */
 LIBJAMI_PUBLIC void browserConferenceRemoved(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC void cancelBrowserConferencesForAccount(const std::string& accountId);
@@ -310,6 +341,21 @@ struct LIBJAMI_PUBLIC CallSignal
     {
         constexpr static const char* name = "BrowserConferenceHostFailure";
         using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaPromotionAccepted
+    {
+        constexpr static const char* name = "ExternalMediaPromotionAccepted";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaPromotionReady
+    {
+        constexpr static const char* name = "ExternalMediaPromotionReady";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaPromotionFailure
+    {
+        constexpr static const char* name = "ExternalMediaPromotionFailure";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC RecordingStateChanged
     {

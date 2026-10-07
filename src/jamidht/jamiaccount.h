@@ -233,6 +233,8 @@ public:
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
                                           const std::vector<libjami::MediaMap>& mediaList) override;
+    std::shared_ptr<Call> newBrowserConferenceOutgoingCall(
+        std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList);
 
     /**
      * Create incoming SIPCall.
@@ -639,6 +641,9 @@ public:
 
 private:
     NON_COPYABLE(JamiAccount);
+    std::shared_ptr<Call> newOutgoingCallImpl(std::string_view toUrl,
+                                               const std::vector<libjami::MediaMap>& mediaList,
+                                               bool browserConferenceAudio);
 
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
