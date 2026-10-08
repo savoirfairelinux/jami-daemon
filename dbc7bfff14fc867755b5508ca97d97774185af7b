@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89e66308_575bafa7",
+        "filename": "BUILD.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:39:53Z",
+      "side": 1,
+      "message": "[error] Line 209: 🔴 The Windows CMake command omits an explicit MSVC generator/architecture, which can default to Win32 on many setups and produce a misconfigured build. Update this command to pin VS 2022 x64 (for example: `cmake -B build -G \"Visual Studio 17 2022\" -A x64 -DCMAKE_TOOLCHAIN_FILE\u003d...`) so the documented flow is deterministic and matches `contrib/vcpkg/README.md`.",
+      "revId": "dbc7bfff14fc867755b5508ca97d97774185af7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
