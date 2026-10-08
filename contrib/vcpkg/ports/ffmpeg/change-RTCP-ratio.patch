@@ -1,0 +1,27 @@
+From a884b62c9e6f23b9f4369d724e25db2f42dad28d Mon Sep 17 00:00:00 2001
+From: Pierre LESPAGNOL <pierre.lespagnol@savoirfairelinux.com>
+Date: Tue, 28 May 2019 16:18:20 -0400
+Subject: [PATCH] Changement du ratio de 0.5% a 5%
+
+---
+ libavformat/rtp.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavformat/rtp.h b/libavformat/rtp.h
+index 54512c6f71..16916ff86a 100644
+--- a/libavformat/rtp.h
++++ b/libavformat/rtp.h
+@@ -78,8 +78,8 @@ enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
+ #define RTP_VERSION 2
+ #define RTP_MAX_SDES 256   /**< maximum text length for SDES */
+ 
+-/* RTCP packets use 0.5% of the bandwidth */
+-#define RTCP_TX_RATIO_NUM 5
++/* RTCP packets use 2.5% of the bandwidth */
++#define RTCP_TX_RATIO_NUM 25
+ #define RTCP_TX_RATIO_DEN 1000
+ 
+ /* An arbitrary id value for RTP Xiph streams - only relevant to indicate
+-- 
+2.17.1
+
