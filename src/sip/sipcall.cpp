@@ -1295,6 +1295,7 @@ SIPCall::completeExternalMediaDemotion(const std::string& requestId)
     enableIce_ = false;
     demotionRequestId_.clear();
     demotionAnswerReceived_ = false;
+    libjami::retireBrowserConferenceHost(getAccountId(), conference->getConfId());
     Manager::instance().removeParticipant(*this);
     emitSignal<libjami::CallSignal::ExternalMediaDemotionReady>(getAccountId(), getCallId(), requestId);
     return true;
