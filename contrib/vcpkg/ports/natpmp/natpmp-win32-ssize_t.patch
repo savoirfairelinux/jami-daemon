@@ -1,0 +1,16 @@
+--- a/natpmp.c
++++ b/natpmp.c
+@@ -34,6 +34,10 @@ POSSIBILITY OF SUCH DAMAGE.
+ #if !defined(_MSC_VER)
+ #include <sys/time.h>
+ #endif
++#if defined(_MSC_VER)
++#include <BaseTsd.h>
++typedef SSIZE_T ssize_t;
++#endif
+ #ifdef _WIN32
+ #include <errno.h>
+ #include <winsock2.h>
+-- 
+2.22.0.windows.1
+

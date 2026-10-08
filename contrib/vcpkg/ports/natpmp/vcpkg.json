@@ -1,0 +1,10 @@
+{
+  "name": "natpmp",
+  "version-date": "2025-04-03",
+  "description": "libnatpmp: portable NAT-PMP client library (Jami overlay: same pin and patches as contrib/src/natpmp)",
+  "homepage": "https://github.com/miniupnp/libnatpmp",
+  "license": "BSD-3-Clause",
+  "dependencies": [
+    { "name": "vcpkg-cmake", "host": true }
+  ]
+}
