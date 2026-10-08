@@ -636,6 +636,15 @@ ConferenceTest::testVideoMixerPreparationKeepsConferenceAlive()
     video->exitConference();
     CPPUNIT_ASSERT(!video->hasConference());
     CPPUNIT_ASSERT(weakConference.expired());
+
+    conference = std::make_shared<Conference>(account);
+    weakConference = conference;
+    CPPUNIT_ASSERT(video->prepareConference(conference));
+    conference.reset();
+    video->stop();
+    CPPUNIT_ASSERT(!video->hasConference());
+    CPPUNIT_ASSERT(!video->getVideoLocal());
+    CPPUNIT_ASSERT(weakConference.expired());
 }
 #endif
 

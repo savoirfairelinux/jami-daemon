@@ -493,7 +493,7 @@ addNativeParticipantToBrowserConference(const std::string& accountId,
 {
     auto account = jami::Manager::instance().getAccount(accountId);
     auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
-    if (!call || !call->isNativeMediaReady() || call->isConferenceParticipant()) {
+    if (!call || !call->isNativeMediaReady()) {
         JAMI_WARNING("[call:{}] Cannot add a call without running native RTP to a browser conference", callId);
         return false;
     }
@@ -509,6 +509,8 @@ addNativeParticipantToBrowserConference(const std::string& accountId,
         JAMI_WARNING("[call:{}] Browser conference {} has no active external host", callId, requestId);
         return false;
     }
+    if (call->isConferenceParticipant())
+        return call->getConference() == conf;
     if (!jami::Manager::instance().addSubCall(accountId, callId, accountId, host->confId))
         return false;
     if (!registry->contains(key, host->confId) || !host->media->isReady()
@@ -523,7 +525,8 @@ addNativeParticipantToBrowserConference(const std::string& accountId,
 std::string
 placeBrowserConferenceParticipantCall(const std::string& accountId,
                                       const std::string& to,
-                                      const std::string& requestId)
+                                      const std::string& requestId,
+                                      bool isVideo)
 {
     if (accountId.empty() || to.empty() || requestId.empty()) {
         JAMI_WARNING("Missing account, peer, or browser host for native participant call");
@@ -543,14 +546,29 @@ placeBrowserConferenceParticipantCall(const std::string& accountId,
         JAMI_WARNING("[account:{}] Browser host {} is not ready for dialing", accountId, requestId);
         return {};
     }
-    std::vector<libjami::MediaMap> audio {
+#ifdef ENABLE_VIDEO
+    if (isVideo && !conf->getVideoMixer()) {
+        JAMI_WARNING("[account:{}] Browser host {} has no video mixer", accountId, requestId);
+        return {};
+    }
+#else
+    if (isVideo)
+        return {};
+#endif
+    std::vector<libjami::MediaMap> media {
         {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
          {libjami::Media::MediaAttributeKey::ENABLED, "true"},
          {libjami::Media::MediaAttributeKey::MUTED, "false"},
          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    if (isVideo)
+        media.push_back(
+            {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+             {libjami::Media::MediaAttributeKey::MUTED, "false"},
+             {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
     std::shared_ptr<jami::Call> call;
     try {
-        call = account->newBrowserConferenceOutgoingCall(to, audio);
+        call = account->newBrowserConferenceOutgoingCall(to, media, conf);
     } catch (const std::exception& e) {
         JAMI_ERROR("[account:{}] Cannot dial browser conference participant: {}", accountId, e.what());
         return {};
@@ -590,6 +608,16 @@ canPromoteExternalMedia(const std::string& accountId, const std::string& callId)
     return call && call->canPromoteExternalMedia();
 }
 
+std::string
+getExternalMediaPromotionState(const std::string& accountId, const std::string& callId)
+{
+    if (accountId.empty() || callId.empty())
+        return "UNAVAILABLE";
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call ? call->getExternalMediaPromotionState() : "UNAVAILABLE";
+}
+
 bool
 requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId)
 {
@@ -597,7 +625,17 @@ requestExternalMediaPromotion(const std::string& accountId, const std::string& c
         return false;
     auto account = jami::Manager::instance().getAccount(accountId);
     auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
-    return call && call->promoteExternalMedia(requestId);
+    if (!call)
+        return false;
+    std::shared_ptr<jami::Conference> conference;
+    if (call->getExternalMediaPromotionState() == "AUDIO_VIDEO") {
+        auto host = browserHosts()->readyHost({accountId, requestId});
+        conference = host && host->media && host->media->isReady() ? account->getConference(host->confId) : nullptr;
+        if (!conference || !conference->hasExternalHostAudio()
+            || conference->getState() != jami::Conference::State::ACTIVE_ATTACHED)
+            return false;
+    }
+    return call->promoteExternalMedia(requestId, conference);
 }
 
 bool
@@ -606,6 +644,44 @@ cancelExternalMediaPromotion(const std::string& accountId, const std::string& ca
     auto account = jami::Manager::instance().getAccount(accountId);
     auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
     return call && call->cancelExternalMediaPromotion(requestId);
+}
+
+bool
+requestExternalMediaDemotion(const std::string& accountId,
+                             const std::string& callId,
+                             const std::string& conferenceId,
+                             const std::string& requestId,
+                             const std::string& sdpOffer)
+{
+    if (accountId.empty() || callId.empty() || conferenceId.empty() || requestId.empty() || sdpOffer.empty())
+        return false;
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    auto conference = account ? account->getConference(conferenceId) : nullptr;
+    if (!call || !conference || call->getConference() != conference || !conference->hasExternalHostAudio()
+        || conference->getState() != jami::Conference::State::ACTIVE_ATTACHED || !call->isNativeMediaReady())
+        return false;
+    return call->requestExternalMediaDemotion(requestId, sdpOffer, conference);
+}
+
+bool
+completeExternalMediaDemotion(const std::string& accountId,
+                              const std::string& callId,
+                              const std::string& requestId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->completeExternalMediaDemotion(requestId);
+}
+
+bool
+cancelExternalMediaDemotion(const std::string& accountId,
+                            const std::string& callId,
+                            const std::string& requestId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->cancelExternalMediaDemotion(requestId);
 }
 
 bool

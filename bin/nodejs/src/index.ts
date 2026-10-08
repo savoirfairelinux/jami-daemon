@@ -84,6 +84,9 @@ export enum JamiSignal {
   ExternalMediaPromotionAccepted = 'ExternalMediaPromotionAccepted',
   ExternalMediaPromotionReady = 'ExternalMediaPromotionReady',
   ExternalMediaPromotionFailure = 'ExternalMediaPromotionFailure',
+  ExternalMediaDemotionAccepted = 'ExternalMediaDemotionAccepted',
+  ExternalMediaDemotionReady = 'ExternalMediaDemotionReady',
+  ExternalMediaDemotionFailure = 'ExternalMediaDemotionFailure',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
@@ -120,6 +123,9 @@ export interface BrowserConferenceSignals {
   [JamiSignal.ExternalMediaPromotionAccepted]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionReady]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]
+  [JamiSignal.ExternalMediaDemotionAccepted]: [accountId: string, callId: string, requestId: string, sdpAnswer: string]
+  [JamiSignal.ExternalMediaDemotionReady]: [accountId: string, callId: string, requestId: string]
+  [JamiSignal.ExternalMediaDemotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]
 }
 
 // ── Generic SWIG collection types ───────────────────────────
@@ -302,10 +308,14 @@ export interface JamiSwig {
   startBrowserConference(accountId: string, conversationId: string, requestId: string, sdp: string): boolean
   cancelBrowserConference(accountId: string, requestId: string): boolean
   canPromoteExternalMedia(accountId: string, callId: string): boolean
+  getExternalMediaPromotionState(accountId: string, callId: string): 'AUDIO_ONLY' | 'AUDIO_VIDEO' | 'UNSUPPORTED_MEDIA' | 'UNAVAILABLE'
   requestExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   cancelExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
+  requestExternalMediaDemotion(accountId: string, callId: string, conferenceId: string, requestId: string, sdpOffer: string): boolean
+  completeExternalMediaDemotion(accountId: string, callId: string, requestId: string): boolean
+  cancelExternalMediaDemotion(accountId: string, callId: string, requestId: string): boolean
   addNativeParticipantToBrowserConference(accountId: string, callId: string, requestId: string): boolean
-  placeBrowserConferenceParticipantCall(accountId: string, to: string, requestId: string): string
+  placeBrowserConferenceParticipantCall(accountId: string, to: string, requestId: string, isVideo?: boolean): string
   getNativeCallMediaState(accountId: string, callId: string): 'WAITING' | 'READY' | 'UNAVAILABLE'
   hangUpConference(accountId: string, confId: string): boolean
 
