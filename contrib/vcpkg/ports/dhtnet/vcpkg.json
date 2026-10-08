@@ -1,0 +1,27 @@
+{
+  "name": "dhtnet",
+  "version-date": "2026-01-27",
+  "description": "Lightweight peer-to-peer communication library (ICE, TLS, NAT traversal) built on OpenDHT and pjproject (Jami overlay: pin from contrib/src/dhtnet)",
+  "homepage": "https://git.jami.net/savoirfairelinux/dhtnet",
+  "license": "GPL-3.0-or-later",
+  "dependencies": [
+    "asio",
+    "fmt",
+    "msgpack",
+    "opendht",
+    "pjproject",
+    { "name": "vcpkg-cmake", "host": true },
+    { "name": "vcpkg-cmake-config", "host": true }
+  ],
+  "default-features": [ "natpmp", "upnp" ],
+  "features": {
+    "natpmp": {
+      "description": "NAT-PMP port mapping",
+      "dependencies": [ "natpmp" ]
+    },
+    "upnp": {
+      "description": "UPnP IGD port mapping via libupnp",
+      "dependencies": [ { "name": "libupnp", "features": [ "client-api" ] } ]
+    }
+  }
+}
