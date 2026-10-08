@@ -54,6 +54,11 @@ pipeline {
                     env.VCPKG_ROOT = "${env.WORKSPACE}\\build\\vcpkg"
                     env.VCPKG_BINARY_CACHE =
                         "${env.JAMI_DAEMON_CACHE_DIR}\\daemon-build\\vcpkg-archives"
+                    // Source tarballs and tools (msys2, meson, yasm). Entries are
+                    // named by version and SHA512-checked, so bumps never reuse
+                    // stale files.
+                    env.VCPKG_DOWNLOADS =
+                        "${env.JAMI_DAEMON_CACHE_DIR}\\daemon-build\\vcpkg-downloads"
                     env.VCPKG_BASELINE = powershell(returnStdout: true, script:
                         "(Get-Content contrib\\vcpkg\\vcpkg-configuration.json | " +
                         "ConvertFrom-Json).'default-registry'.baseline").trim()
@@ -63,6 +68,7 @@ pipeline {
                     git -C "%VCPKG_ROOT%" checkout -q %VCPKG_BASELINE% || exit /b 1
                     call "%VCPKG_ROOT%\\bootstrap-vcpkg.bat" -disableMetrics || exit /b 1
                     if not exist "%VCPKG_BINARY_CACHE%" mkdir "%VCPKG_BINARY_CACHE%"
+                    if not exist "%VCPKG_DOWNLOADS%" mkdir "%VCPKG_DOWNLOADS%"
                 '''
             }
         }
