@@ -42,3 +42,9 @@ not apply to.
 
 `ports/libupnp` is the stock port plus a `.pc` fix for MSVC static (`libupnps`,
 `ixmls`, pthreads, `UPNP_STATIC_LIB`).
+
+`ports/yffi` (Windows only in the manifest; other platforms keep `contrib/src/yffi`)
+runs cargo on Jami's y-crdt pin and installs `yrs.lib`, `libyrs.h` and a `yrs.pc`
+matching the Unix contrib. Rust is a host requirement vcpkg cannot fetch; since
+vcpkg scrubs the environment for port builds, `CARGO_HOME`/`RUSTUP_HOME` are read
+from the registry when not passed through with `VCPKG_KEEP_ENV_VARS`.
