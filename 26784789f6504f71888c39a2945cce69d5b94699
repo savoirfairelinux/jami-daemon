@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b49ccaf2_f22dad71",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T19:21:32Z",
+      "side": 1,
+      "message": "[error] Line 57: 🔴 `GERRIT_REFSPEC` is interpolated unquoted in a Windows `bat` command (`git fetch ... %GERRIT_REFSPEC%`). If this value comes from a job parameter, cmd metacharacters (e.g. `\u0026`, `|`) can alter command execution on the CI agent. Validate the refspec against a strict allowlist (e.g. `^refs/[A-Za-z0-9._/-]+$`) and pass it quoted (or via a safer checkout step) before invoking `git fetch`.",
+      "revId": "26784789f6504f71888c39a2945cce69d5b94699",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
