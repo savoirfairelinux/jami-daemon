@@ -128,25 +128,28 @@ LIBJAMI_PUBLIC bool cancelBrowserConference(const std::string& accountId, const 
  * UNAVAILABLE for absent/ended/external-media calls. A WAITING call can fail:
  * observe StateChange and impose a dialing deadline before hanging it up. */
 LIBJAMI_PUBLIC std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
-/* Dial one audio-only native participant for an already Ready browser host.
- * Its sender reads the conference ring buffer, never the daemon microphone;
- * no video/device stream or current-call switch is created. An empty call ID
- * means dialing could not start. Wait for CURRENT and READY before adding. */
+/* Dial a native participant for an already Ready browser host. Its audio and
+ * optional video senders use the conference mixer, never local input devices.
+ * An empty call ID means dialing could not start. Wait for CURRENT and READY
+ * before adding. */
 LIBJAMI_PUBLIC std::string placeBrowserConferenceParticipantCall(const std::string& accountId,
                                                                  const std::string& to,
-                                                                 const std::string& requestId);
+                                                                 const std::string& requestId,
+                                                                 bool isVideo = false);
 /* Adds a READY native-media call to a ready browser host. True means it was
  * bound; false leaves the caller responsible for retrying or hanging up. */
 LIBJAMI_PUBLIC bool addNativeParticipantToBrowserConference(const std::string& accountId,
                                                              const std::string& callId,
                                                              const std::string& requestId);
-/* Read-only eligibility check against the active local and remote SDP.
- * Only one enabled, bidirectional audio m-line is supported. Recheck the
- * result immediately before promotion: dialog state can change meanwhile. */
-LIBJAMI_PUBLIC bool canPromoteExternalMedia(const std::string& accountId,
-                                            const std::string& callId);
-/* True means the in-dialog re-INVITE was sent. Keep the browser media alive
- * until ExternalMediaPromotionReady; on failure the call is explicitly ended. */
+/* Classify the active external-media SIP dialog without changing it.
+ * AUDIO_ONLY and AUDIO_VIDEO are eligible; UNSUPPORTED_MEDIA means its SDP
+ * cannot be migrated, UNAVAILABLE means the call/dialog is not promotable.
+ * Recheck immediately before promotion: dialog state can change meanwhile. */
+LIBJAMI_PUBLIC std::string getExternalMediaPromotionState(const std::string& accountId,
+                                                          const std::string& callId);
+/* True means the in-dialog re-INVITE was sent. Keep browser media until
+ * ExternalMediaPromotionReady; a late failure is reported, but restoration of
+ * the original browser RTP cannot be guaranteed after peer acceptance. */
 LIBJAMI_PUBLIC bool requestExternalMediaPromotion(const std::string& accountId,
                                                   const std::string& callId,
                                                   const std::string& requestId);
@@ -154,8 +157,25 @@ LIBJAMI_PUBLIC bool requestExternalMediaPromotion(const std::string& accountId,
 LIBJAMI_PUBLIC bool cancelExternalMediaPromotion(const std::string& accountId,
                                                  const std::string& callId,
                                                  const std::string& requestId);
+/* Reverse a browser-hosted native call on its existing SIP dialog. True means
+ * the browser SDP re-INVITE was sent, not that direct browser ICE is ready.
+ * The conference remains active until completeExternalMediaDemotion is called
+ * after the browser establishes direct ICE. Late failure is not guaranteed
+ * recoverable after the peer accepts the re-INVITE. */
+LIBJAMI_PUBLIC bool requestExternalMediaDemotion(const std::string& accountId,
+                                                 const std::string& callId,
+                                                 const std::string& conferenceId,
+                                                 const std::string& requestId,
+                                                 const std::string& sdpOffer);
+LIBJAMI_PUBLIC bool completeExternalMediaDemotion(const std::string& accountId,
+                                                  const std::string& callId,
+                                                  const std::string& requestId);
 /* Called when the account drops a browser-hosted conference, even without Node listeners. */
 LIBJAMI_PUBLIC void browserConferenceRemoved(const std::string& accountId, const std::string& confId);
+/* Detach the browser media owner without hanging up native SIP participants.
+ * Used only after direct browser ICE is ready and the last call is being
+ * detached from its hosted conference. */
+LIBJAMI_PUBLIC void retireBrowserConferenceHost(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC void cancelBrowserConferencesForAccount(const std::string& accountId);
 LIBJAMI_PUBLIC void cancelAllBrowserConferences();
 LIBJAMI_PUBLIC void allowBrowserConferences();
@@ -355,6 +375,21 @@ struct LIBJAMI_PUBLIC CallSignal
     struct LIBJAMI_PUBLIC ExternalMediaPromotionFailure
     {
         constexpr static const char* name = "ExternalMediaPromotionFailure";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionAccepted
+    {
+        constexpr static const char* name = "ExternalMediaDemotionAccepted";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionReady
+    {
+        constexpr static const char* name = "ExternalMediaDemotionReady";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionFailure
+    {
+        constexpr static const char* name = "ExternalMediaDemotionFailure";
         using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC RecordingStateChanged
