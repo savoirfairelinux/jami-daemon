@@ -312,6 +312,7 @@ export interface JamiSwig {
   requestExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   cancelExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   requestExternalMediaDemotion(accountId: string, callId: string, conferenceId: string, requestId: string, sdpOffer: string): boolean
+  requestExternalMediaDemotion(accountId: string, callId: string, hostRequestId: string, sdpOffer: string): boolean
   completeExternalMediaDemotion(accountId: string, callId: string, requestId: string): boolean
   cancelExternalMediaDemotion(accountId: string, callId: string, requestId: string): boolean
   addNativeParticipantToBrowserConference(accountId: string, callId: string, requestId: string): boolean

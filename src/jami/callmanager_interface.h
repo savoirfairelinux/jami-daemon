@@ -169,6 +169,12 @@ LIBJAMI_PUBLIC bool requestExternalMediaDemotion(const std::string& accountId,
                                                  const std::string& conferenceId,
                                                  const std::string& requestId,
                                                  const std::string& sdpOffer);
+/* Resolve an already-ready browser host by its creation request ID. The same
+ * ID correlates Accepted, Ready, and Failure events for this return attempt. */
+LIBJAMI_PUBLIC bool requestExternalMediaDemotion(const std::string& accountId,
+                                                 const std::string& callId,
+                                                 const std::string& hostRequestId,
+                                                 const std::string& sdpOffer);
 LIBJAMI_PUBLIC bool completeExternalMediaDemotion(const std::string& accountId,
                                                   const std::string& callId,
                                                   const std::string& requestId);
@@ -177,6 +183,10 @@ LIBJAMI_PUBLIC bool cancelExternalMediaDemotion(const std::string& accountId,
                                                 const std::string& requestId);
 /* Called when the account drops a browser-hosted conference, even without Node listeners. */
 LIBJAMI_PUBLIC void browserConferenceRemoved(const std::string& accountId, const std::string& confId);
+/* Detach the browser media owner without hanging up native SIP participants.
+ * Used only after direct browser ICE is ready and the last call is being
+ * detached from its hosted conference. */
+LIBJAMI_PUBLIC void retireBrowserConferenceHost(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC void cancelBrowserConferencesForAccount(const std::string& accountId);
 LIBJAMI_PUBLIC void cancelAllBrowserConferences();
 LIBJAMI_PUBLIC void allowBrowserConferences();

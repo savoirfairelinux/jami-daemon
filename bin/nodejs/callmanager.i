@@ -108,6 +108,7 @@ std::string getExternalMediaPromotionState(const std::string& accountId, const s
 bool requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool cancelExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool requestExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& conferenceId, const std::string& requestId, const std::string& sdpOffer);
+bool requestExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& hostRequestId, const std::string& sdpOffer);
 bool completeExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool cancelExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool addNativeParticipantToBrowserConference(const std::string& accountId, const std::string& callId, const std::string& requestId);
