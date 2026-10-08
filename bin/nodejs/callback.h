@@ -914,6 +914,41 @@ externalMediaPromotionFailure(const std::string& accountId, const std::string& c
 }
 
 void
+externalMediaDemotionAccepted(const std::string& accountId, const std::string& callId,
+                              const std::string& requestId, const std::string& sdpAnswer)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId, sdpAnswer]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId), napiString(sdpAnswer)};
+        callCallback("ExternalMediaDemotionAccepted", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaDemotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId)};
+        callCallback("ExternalMediaDemotionReady", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaDemotionFailure(const std::string& accountId, const std::string& callId,
+                             const std::string& requestId, const std::string& reason)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId, reason]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId), napiString(reason)};
+        callCallback("ExternalMediaDemotionFailure", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 onConferenceInfosUpdated(const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
 {
@@ -1088,7 +1123,13 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
            exportable_callback<CallSignal::ExternalMediaPromotionReady>(
                bind(&externalMediaPromotionReady, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaPromotionFailure>(
-               bind(&externalMediaPromotionFailure, _1, _2, _3, _4))};
+               bind(&externalMediaPromotionFailure, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::ExternalMediaDemotionAccepted>(
+               bind(&externalMediaDemotionAccepted, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::ExternalMediaDemotionReady>(
+               bind(&externalMediaDemotionReady, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaDemotionFailure>(
+               bind(&externalMediaDemotionFailure, _1, _2, _3, _4))};
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
