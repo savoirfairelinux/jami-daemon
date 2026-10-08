@@ -1,0 +1,25 @@
+{
+  "name": "jami-daemon-deps",
+  "version-string": "1",
+  "description": "Windows/MSVC dependencies of libjami built with vcpkg",
+  "dependencies": [
+    {
+      "name": "ffmpeg",
+      "default-features": false,
+      "features": [
+        "avcodec",
+        "avdevice",
+        "avfilter",
+        "avformat",
+        "swresample",
+        "swscale",
+        "gpl",
+        "opus",
+        "x264",
+        "vpx",
+        "nvcodec",
+        "qsv"
+      ]
+    }
+  ]
+}
