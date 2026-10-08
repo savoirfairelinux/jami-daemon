@@ -32,3 +32,6 @@ version.
 Windows patches reduce to `config_site.h` defines.
 
 `ports/natpmp` is Jami's contrib pin and patches (no upstream port).
+
+`ports/dhtnet` patches the MSVC CMake branch to use pkg-config under vcpkg and
+guards `unistd.h`; both patches are upstream material.

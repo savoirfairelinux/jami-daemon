@@ -27,6 +27,7 @@
       "features": [
         "proxy"
       ]
-    }
+    },
+    "dhtnet"
   ]
 }
