@@ -39,3 +39,6 @@ guards `unistd.h`; both patches are upstream material.
 `ports/portaudio` is Jami's contrib pin (2025, WASAPI only) plus the
 `Pa_GetDefaultComm*Device` patch; vcpkg's port is a 2021 snapshot the patch does
 not apply to.
+
+`ports/libupnp` is the stock port plus a `.pc` fix for MSVC static (`libupnps`,
+`ixmls`, pthreads, `UPNP_STATIC_LIB`).
