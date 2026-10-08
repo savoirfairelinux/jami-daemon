@@ -28,6 +28,10 @@
         "proxy"
       ]
     },
-    "dhtnet"
+    "dhtnet",
+    {
+      "name": "portaudio",
+      "platform": "windows"
+    }
   ]
 }
