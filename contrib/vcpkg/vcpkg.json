@@ -21,6 +21,12 @@
         "qsv"
       ]
     },
-    "webrtc-audio-processing"
+    "webrtc-audio-processing",
+    {
+      "name": "opendht",
+      "features": [
+        "proxy"
+      ]
+    }
   ]
 }
