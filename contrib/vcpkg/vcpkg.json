@@ -60,6 +60,10 @@
     },
     "simdutf",
     "speexdsp",
-    "yaml-cpp"
+    "yaml-cpp",
+    {
+      "name": "yffi",
+      "platform": "windows"
+    }
   ]
 }
