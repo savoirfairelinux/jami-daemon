@@ -17,12 +17,17 @@
  */
 
 // Windows/MSVC build of libjami with dependencies from vcpkg
-// (contrib/vcpkg). Triggers and the refspec are set by the job.
+// (contrib/vcpkg). Triggers are set by the job.
+//
+// The job must load this script from a trusted branch (master), not from
+// the change under test: the change is fetched below from GERRIT_REFSPEC,
+// so a patchset cannot alter the pipeline itself.
 //
 // Requirements:
 // - ansicolor plugin
 // - builder-win agent: Visual Studio 2022, CMake, Git, Rust (for yffi)
 // - JAMI_DAEMON_CACHE_DIR set on the agent
+// - GERRIT_REFSPEC: ref to build (job parameter or Gerrit trigger)
 //
 // vcpkg is cloned at the manifest baseline for each build. Packages are
 // shared between builds through vcpkg's file binary cache: a package is
@@ -41,7 +46,17 @@ pipeline {
         stage('SCM Checkout') {
             steps {
                 deleteDir()
-                checkout scm
+                script {
+                    if (!env.GERRIT_REFSPEC?.trim()) {
+                        error 'GERRIT_REFSPEC is not set.'
+                    }
+                }
+                bat '''
+                    git init -q . || exit /b 1
+                    git fetch -q --depth=1 https://review.jami.net/jami-daemon %GERRIT_REFSPEC% || exit /b 1
+                    git checkout -q FETCH_HEAD || exit /b 1
+                    git log -1 --oneline
+                '''
             }
         }
 
