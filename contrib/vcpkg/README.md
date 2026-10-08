@@ -18,3 +18,8 @@ component list (`jami-options.cmake`). Jami's `windows-configure*.patch` files a
 not needed: they only bypassed pkg-config, which vcpkg provides. The port also
 backports upstream's `-libpath:` → `-L` rewrite of its `.pc` files and declares
 `runtimeobject` for the C++/WinRT dxgigrab device.
+
+`ports/webrtc-audio-processing` is the closed upstream PR microsoft/vcpkg#52402
+(2.1, meson, abseil) plus `install-vad-header.patch`: APM 2.x has no voice
+detection, so the daemon uses the standalone WebRTC VAD whose header upstream
+does not install.
