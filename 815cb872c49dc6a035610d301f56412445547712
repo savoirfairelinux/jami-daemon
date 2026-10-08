@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0feab6e_0ba5888d",
+        "filename": "contrib/vcpkg/ports/pjproject/portfile.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:35:13Z",
+      "side": 1,
+      "message": "[warning] Line 78: 🟡 The generated debug `libpjproject.pc` sets `prefix\u003d${pcfiledir}/../..`, which resolves to `\u003cpackage\u003e/debug`, so `includedir\u003d${prefix}/include` points to `\u003cpackage\u003e/debug/include` (typically absent in vcpkg ports). This can break debug consumers that read include flags from pkg-config. Use a root-relative prefix for debug (e.g. `${pcfiledir}/../../..`) or set `includedir` explicitly to the non-debug include dir.",
+      "revId": "815cb872c49dc6a035610d301f56412445547712",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "099efddb_75191f2b",
+        "filename": "contrib/vcpkg/ports/pjproject/vcpkg.json",
+        "patchSetId": 6
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:35:13Z",
+      "side": 1,
+      "message": "[warning] Line 8: 🟡 `supports` currently allows `arm64` (`!arm` only excludes 32-bit ARM), but the port builds via `pjproject-vs14.sln` with `PLATFORM ${TRIPLET_SYSTEM_ARCH}` and no explicit ARM64 mapping/guard. If ARM64 is not validated for this solution, add `!arm64` to `supports` (or add tested ARM64 platform handling) to avoid install-time build failures on Windows ARM64 triplets.",
+      "revId": "815cb872c49dc6a035610d301f56412445547712",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
