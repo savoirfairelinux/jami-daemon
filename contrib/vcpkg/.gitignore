@@ -1,0 +1,3 @@
+# contrib/.gitignore patterns (build*, msvc*...) must not hide port files
+!*
+/vcpkg_installed/
