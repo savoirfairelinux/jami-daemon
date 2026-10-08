@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c36eb86_f29e41f2",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 7
+      },
+      "lineNbr": 1149,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:45:05Z",
+      "side": 1,
+      "message": "[warning] Line 1149: 🟡 The `jamiaccount` unit-test target registration was removed from the test list, which silently drops that test from CI and reduces regression coverage for account behavior. If this test is still valid, restore `add_test_executable(jamiaccount test/unitTest/jamiaccount/jamiaccount.cpp)`; if it was intentionally removed, delete/rename the test source in the same change and document the rationale in the commit message to avoid accidental coverage loss.",
+      "revId": "821b0d0a06f49a758c124571a65b08d41921d622",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
