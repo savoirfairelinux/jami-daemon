@@ -30,3 +30,5 @@ version.
 
 `ports/pjproject` builds the SFL fork's library projects with msbuild; the contrib
 Windows patches reduce to `config_site.h` defines.
+
+`ports/natpmp` is Jami's contrib pin and patches (no upstream port).
