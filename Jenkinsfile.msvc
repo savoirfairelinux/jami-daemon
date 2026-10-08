@@ -77,6 +77,10 @@ pipeline {
             environment {
                 VCPKG_DISABLE_METRICS = '1'
                 VCPKG_BINARY_SOURCES = "clear;files,${env.VCPKG_BINARY_CACHE},readwrite"
+                // Concurrent MSBuilds in one session share mspdbsrv.exe and
+                // fail with C1090 when one build's server exits under the
+                // other. A per-build endpoint gives each its own server.
+                _MSPDBSRV_ENDPOINT_ = "${env.BUILD_TAG}"
             }
             steps {
                 // Configuring installs the manifest dependencies.
