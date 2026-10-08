@@ -23,3 +23,7 @@ backports upstream's `-libpath:` → `-L` rewrite of its `.pc` files and declare
 (2.1, meson, abseil) plus `install-vad-header.patch`: APM 2.x has no voice
 detection, so the daemon uses the standalone WebRTC VAD whose header upstream
 does not install.
+
+`ports/shiftmedia-libgnutls` is copied verbatim from savoirfairelinux/opendht
+`ports/` (the future shared registry home). `ports/opendht` follows the contrib
+version.
