@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba011c42_3d56d8c4",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:33:09Z",
+      "side": 1,
+      "message": "[warning] Line 171: 🟡 The generated `gnutls.pc` hard-codes `prefix` to `${CURRENT_INSTALLED_DIR}`, which can leak an environment-specific absolute path into pkg-config metadata before fixups. Prefer generating with `${CURRENT_PACKAGES_DIR}` (or a relative prefix pattern used by vcpkg ports) and let `vcpkg_fixup_pkgconfig()` normalize, so the package remains robust under binary caching/export and non-default install roots.",
+      "revId": "0efc04a27a48963336d7d0dea109c420e215a59f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
