@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2026 Savoir-faire Linux Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation; either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
+ */
+
+// Windows/MSVC build of libjami with dependencies from vcpkg
+// (contrib/vcpkg). Triggers and the refspec are set by the job.
+//
+// Requirements:
+// - ansicolor plugin
+// - builder-win agent: Visual Studio 2022, CMake, Git, Rust (for yffi)
+// - JAMI_DAEMON_CACHE_DIR set on the agent
+//
+// vcpkg is cloned at the manifest baseline for each build. Packages are
+// shared between builds through vcpkg's file binary cache: a package is
+// rebuilt only when its port, version or build inputs change.
+
+pipeline {
+    agent {
+        label 'builder-win'
+    }
+
+    options {
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+
+        stage('Setup vcpkg') {
+            steps {
+                script {
+                    if (!env.JAMI_DAEMON_CACHE_DIR?.trim()) {
+                        error 'JAMI_DAEMON_CACHE_DIR is not set on the agent.'
+                    }
+                    env.VCPKG_ROOT = "${env.WORKSPACE}\\build\\vcpkg"
+                    env.VCPKG_BINARY_CACHE =
+                        "${env.JAMI_DAEMON_CACHE_DIR}\\daemon-build\\vcpkg-archives"
+                    // Source tarballs and tools (msys2, meson, yasm). Entries are
+                    // named by version and SHA512-checked, so bumps never reuse
+                    // stale files.
+                    env.VCPKG_DOWNLOADS =
+                        "${env.JAMI_DAEMON_CACHE_DIR}\\daemon-build\\vcpkg-downloads"
+                    env.VCPKG_BASELINE = powershell(returnStdout: true, script:
+                        "(Get-Content contrib\\vcpkg\\vcpkg-configuration.json | " +
+                        "ConvertFrom-Json).'default-registry'.baseline").trim()
+                }
+                bat '''
+                    git clone -q https://github.com/microsoft/vcpkg "%VCPKG_ROOT%" || exit /b 1
+                    git -C "%VCPKG_ROOT%" checkout -q %VCPKG_BASELINE% || exit /b 1
+                    call "%VCPKG_ROOT%\\bootstrap-vcpkg.bat" -disableMetrics || exit /b 1
+                    if not exist "%VCPKG_BINARY_CACHE%" mkdir "%VCPKG_BINARY_CACHE%"
+                    if not exist "%VCPKG_DOWNLOADS%" mkdir "%VCPKG_DOWNLOADS%"
+                '''
+            }
+        }
+
+        stage('Build') {
+            environment {
+                VCPKG_DISABLE_METRICS = '1'
+                VCPKG_BINARY_SOURCES = "clear;files,${env.VCPKG_BINARY_CACHE},readwrite"
+                // Concurrent MSBuilds in one session share mspdbsrv.exe and
+                // fail with C1090 when one build's server exits under the
+                // other. A per-build endpoint gives each its own server.
+                _MSPDBSRV_ENDPOINT_ = "${env.BUILD_TAG}"
+            }
+            steps {
+                // Configuring installs the manifest dependencies.
+                bat '''
+                    cmake -S . -B build ^
+                        "-DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\\scripts\\buildsystems\\vcpkg.cmake" ^
+                        "-DVCPKG_INSTALL_OPTIONS=--clean-buildtrees-after-build;--clean-packages-after-build" ^
+                        -DBUILD_TESTING=OFF "-DCMAKE_CXX_FLAGS=/FS" "-DCMAKE_C_FLAGS=/FS" || exit /b 1
+                    cmake --build build --config Release -- -m || exit /b 1
+                '''
+            }
+        }
+    }
+}
