@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index df5f117..8a71728 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,7 +24,7 @@ option(NATPMP_BUILD_TOOLS "Build natpmpc and testgetgateway executables" ON)
+ # Library itself
+ add_library(natpmp ${NATPMP_SOURCES})
+ target_include_directories(natpmp PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+-target_compile_definitions(natpmp PRIVATE -DENABLE_STRNATPMPERR)
++target_compile_definitions(natpmp PRIVATE -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=3)
+ 
+ if (WIN32)
+ 	target_link_libraries(natpmp PUBLIC ws2_32 iphlpapi)
