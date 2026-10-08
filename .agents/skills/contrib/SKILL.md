@@ -16,4 +16,4 @@ They are built automatically by CMake when configuring the project (when BUILD_C
 
 # Notes for Windows/MSVC
 
-On Windows with MSVC, the contribs are built using the independent pywinmake system, using rules in `contrib/{contrib-name}/package.json`.
+On Windows with MSVC, the dependencies are built with vcpkg from the manifest and overlay ports in `contrib/vcpkg` (see `contrib/vcpkg/README.md`).

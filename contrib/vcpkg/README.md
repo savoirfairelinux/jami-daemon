@@ -48,3 +48,18 @@ runs cargo on Jami's y-crdt pin and installs `yrs.lib`, `libyrs.h` and a `yrs.pc
 matching the Unix contrib. Rust is a host requirement vcpkg cannot fetch; since
 vcpkg scrubs the environment for port builds, `CARGO_HOME`/`RUSTUP_HOME` are read
 from the registry when not passed through with `VCPKG_KEEP_ENV_VARS`.
+
+## Building the daemon
+
+The daemon CMake uses this manifest automatically when configured with the vcpkg
+toolchain (`settings.cmake` sets `VCPKG_MANIFEST_DIR` and the triplet) and
+resolves dependencies through pkg-config like other platforms:
+
+    cmake -B build -G "Visual Studio 17 2022" -A x64 ^
+        -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
+    cmake --build build --config Release --target jami-core
+
+`jami-core.lib` is no longer a fat library: consumers get dependencies through
+its `PkgConfig::` link interface. A project using the daemon through
+`add_subdirectory` must include `contrib/vcpkg/settings.cmake` before its
+own `project()`.
