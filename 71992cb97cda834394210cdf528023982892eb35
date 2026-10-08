@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae67df7a_d773882a",
+        "filename": "contrib/vcpkg/ports/dhtnet/use-pkgconfig-with-vcpkg.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-08T21:35:59Z",
+      "side": 1,
+      "message": "[error] Line 8: 🔴 The condition uses `VCPKG_TOOLCHAIN`, which is not a stable/standard CMake variable exposed by vcpkg toolchain files. If it is unset, MSVC builds still take the old non-pkg-config branch, so this patch’s main fix is skipped. Gate on a reliable vcpkg signal instead (e.g., `DEFINED VCPKG_TARGET_TRIPLET`, or a dedicated option passed from the portfile), and update all four condition sites consistently.",
+      "revId": "71992cb97cda834394210cdf528023982892eb35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
