@@ -145,10 +145,16 @@ public:
      * lines, so the external endpoint must be given the untouched SDP.
      */
     void reportExternalRemoteAnswer(std::string sdp);
-    bool promoteExternalMedia(const std::string& requestId);
-    bool canPromoteExternalMedia() const;
+    bool promoteExternalMedia(const std::string& requestId,
+                              const std::shared_ptr<Conference>& conference = {});
+    std::string getExternalMediaPromotionState() const;
     bool cancelExternalMediaPromotion(const std::string& requestId);
     bool isNativeMediaReady() const;
+    bool prepareBrowserConferenceVideo(const std::shared_ptr<Conference>& conference);
+    bool requestExternalMediaDemotion(const std::string& requestId,
+                                      const std::string& sdpOffer,
+                                      const std::shared_ptr<Conference>& conference);
+    bool completeExternalMediaDemotion(const std::string& requestId);
     bool usesBrowserConferenceAudio() const { return browserConferenceAudio_; }
 
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
@@ -534,6 +540,7 @@ private:
     bool mediaRestartRequired_ {true};
     bool enableIce_ {true};
     bool browserConferenceAudio_ {false};
+    std::shared_ptr<Conference> conferenceMediaSource_ {};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
@@ -553,6 +560,10 @@ private:
     bool promotionEnding_ {false};
     void checkPromotionReady();
     void failPromotion(const std::string& reason);
+    std::string demotionRequestId_ {};
+    std::shared_ptr<Conference> demotionConference_ {};
+    bool demotionAnswerReceived_ {false};
+    void failDemotion(const std::string& reason);
     bool isNativeMediaReadyLocked() const;
 
     // ICE media transport
