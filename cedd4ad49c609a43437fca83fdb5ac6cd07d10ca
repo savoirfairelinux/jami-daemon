@@ -52,6 +52,24 @@
       "parentUuid": "9716926a_85bacf86",
       "revId": "cedd4ad49c609a43437fca83fdb5ac6cd07d10ca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb372ca7_8c7960c6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2026-10-09T20:23:59Z",
+      "side": 1,
+      "message": "@adrien.beraud@savoirfairelinux.com\nOne more scenario that comes to mind: even during a 1:1 call, a peer could forward the call to a blocked peer (blocked by the caller, by the callee, or by both).\n\nIs this scenario already covered here? If so, what is the expected behavior?",
+      "parentUuid": "6d33e080_39fb9448",
+      "revId": "cedd4ad49c609a43437fca83fdb5ac6cd07d10ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
