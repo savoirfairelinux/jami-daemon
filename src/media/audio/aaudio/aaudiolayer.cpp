@@ -357,7 +357,7 @@ AAudioLayer::dataCallback(AAudioStream* stream, void* userData, void* audioData,
                 std::copy(src, src + numSamples, static_cast<int16_t*>(audioData));
             }
         } else {
-            JAMI_WARNING("Playback underflow: no data available, filling with silence");
+            //JAMI_WARNING("Playback underflow: no data available, filling with silence");
             emitSilence();
         }
     } else if (direction == AAUDIO_DIRECTION_INPUT) { // Capture

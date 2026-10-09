@@ -802,11 +802,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
     }
-    JAMI_DEBUG("[Account {:s}] [Conversation {}] [device {}] fetching '{:s}'",
-               accountId_,
-               conversationId,
-               deviceId,
-               commitId);
+    if (!commitId.empty())
+        JAMI_DEBUG("[Account {:s}] [Conversation {}] [device {}] fetching '{:s}'",
+                accountId_,
+                conversationId,
+                deviceId,
+                commitId);
 
     const bool shouldRequestInvite = username_ != peer;
     if (!conv) {
