@@ -65,6 +65,10 @@ class SIPAccountBase;
 class SipTransport;
 class AudioRtpSession;
 
+namespace test {
+class HandoverTest;
+}
+
 using IceCandidate = pj_ice_sess_cand;
 
 /**
@@ -335,6 +339,8 @@ public:
     const std::vector<RtpStream>& getRtpStreams() const { return rtpStreams_; }
 
 private:
+    friend class test::HandoverTest;
+
     void stopCallRecovery();
     void startRecoveryLocked();
     bool rebindSipDialogLocked(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
@@ -412,6 +418,8 @@ private:
 
     void setCallMediaLocal();
     void startIceMedia();
+    void onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok);
+    void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok);
     void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall = false);
     void setupNegotiatedMedia();
     void startAllMedia();
