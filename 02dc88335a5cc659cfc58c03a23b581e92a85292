@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44cc3625_84f002aa",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T19:08:12Z",
+      "side": 1,
+      "message": "[warning] Line 339: 🟡 Adding `friend class test::HandoverTest;` tightly couples production internals to one unit test and makes future refactors of `SIPCall` harder. Prefer exposing the minimum needed behavior through testable public/protected seams (or a dedicated test hook guarded by test build flags) so tests validate behavior rather than private state layout.",
+      "revId": "02dc88335a5cc659cfc58c03a23b581e92a85292",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
