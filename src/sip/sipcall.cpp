@@ -731,6 +731,7 @@ SIPCall::restartIceAfterRecovery(dhtnet::IceTransportOptions&& options)
     if (not recovering_ or waitingForRecoveryChannel_ or not inviteSession_
         or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED)
         return;
+    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
     // Only use the UPnP port mappings already open: waiting for new ones
     // would delay the offer by seconds on networks refusing them.
     options.upnpMappingTimeout = {};
@@ -749,14 +750,18 @@ SIPCall::onInviteTransactionEnded()
     std::optional<dhtnet::IceTransportOptions> options;
     {
         std::lock_guard lk {callMutex_};
-        if (not recovering_ or waitingForRecoveryChannel_ or not inviteSession_
-            or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or inviteSession_->invite_tsx
-            or not deferredRecoveryIceOptions_)
-            return;
-        options = std::move(deferredRecoveryIceOptions_);
-        deferredRecoveryIceOptions_.reset();
+        std::optional<sip_utils::PJDialogLock> dialogLock;
+        if (inviteSession_)
+            dialogLock.emplace(inviteSession_->dlg);
+        if (recovering_ and not waitingForRecoveryChannel_ and inviteSession_
+            and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and not inviteSession_->invite_tsx
+            and deferredRecoveryIceOptions_)
+            options = std::exchange(deferredRecoveryIceOptions_, std::nullopt);
     }
-    restartIceAfterRecovery(std::move(*options));
+    if (options)
+        restartIceAfterRecovery(std::move(*options));
+    else
+        drainPendingRequests();
 }
 
 void
@@ -768,7 +773,7 @@ SIPCall::completeRecoveryIfReadyLocked()
     stopCallRecovery();
     runOnMainThread([w = weak()] {
         if (auto call = w.lock())
-            call->applyRequestsDeferredByRecovery();
+            call->drainPendingRequests();
     });
 }
 
@@ -794,25 +799,43 @@ SIPCall::stopCallRecovery()
     incomingReinviteTransport_ = nullptr;
 }
 
-void
-SIPCall::applyRequestsDeferredByRecovery()
+bool
+SIPCall::isReinviteBusyLocked() const
 {
-    std::optional<std::vector<libjami::MediaMap>> mediaChange;
+    if (recovering_ or isWaitingForIceAndMedia_)
+        return true;
+    if (not inviteSession_)
+        return false;
+    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
+    return inviteSession_->invite_tsx != nullptr;
+}
+
+void
+SIPCall::drainPendingRequests()
+{
+    auto ready = [this] {
+        return getConnectionState() == ConnectionState::CONNECTED and inviteSession_
+               and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and not isReinviteBusyLocked();
+    };
     std::function<void()> reply;
     {
         std::lock_guard lk {callMutex_};
-        // A new recovery applies them once over.
-        if (recovering_)
+        if (not ready())
             return;
-        if (not isWaitingForIceAndMedia_)
-            reply = processRemainingRequest();
-        mediaChange = std::exchange(pendingMediaChange_, std::nullopt);
+        reply = processRemainingRequest();
     }
-    // The client callbacks may call back into the call.
     if (reply)
         reply();
-    if (mediaChange)
-        requestMediaChange(*mediaChange);
+    {
+        std::lock_guard lk {callMutex_};
+        if (not ready() or remainingRequest_ != Request::NoRequest or not pendingMediaChange_)
+            return;
+        auto mediaChange = MediaAttribute::buildMediaAttributesList(*pendingMediaChange_, isSrtpEnabled());
+        for (auto& media : mediaChange)
+            media.hold_ = getState() == CallState::HOLD;
+        pendingMediaChange_.reset();
+        requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaChange));
+    }
 }
 
 void
@@ -820,13 +843,18 @@ SIPCall::requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool 
 {
     JAMI_DEBUG("[call:{}] Sending a SIP re-invite to request media change", getCallId());
 
-    if (isWaitingForIceAndMedia_) {
-        remainingRequest_ = Request::SwitchInput;
-    } else {
-        if (SIPSessionReinvite(mediaAttrList, needNewIce) == PJ_SUCCESS and reinvIceMedia_) {
-            isWaitingForIceAndMedia_ = true;
-        }
+    // No re-INVITE before the call is confirmed: the change stays local.
+    if (not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED)
+        return;
+    if (isReinviteBusyLocked()) {
+        pendingMediaChange_ = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+        return;
     }
+    auto status = SIPSessionReinvite(mediaAttrList, needNewIce);
+    if (status == PJ_EBUSY)
+        pendingMediaChange_ = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+    else if (status == PJ_SUCCESS and reinvIceMedia_)
+        isWaitingForIceAndMedia_ = true;
 }
 
 /**
@@ -843,9 +871,11 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
 
     std::lock_guard lk {callMutex_};
 
-    // Do nothing if no invitation processed yet
-    if (not inviteSession_ or inviteSession_->invite_tsx)
-        return PJ_SUCCESS;
+    if (not inviteSession_)
+        return PJ_EINVALIDOP;
+    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
+    if (inviteSession_->invite_tsx)
+        return PJ_EBUSY;
 
     JAMI_DEBUG("[call:{}] Preparing and sending a re-invite (state={})",
                getCallId(),
@@ -1578,8 +1608,8 @@ SIPCall::attendedTransfer(const std::string& to)
 bool
 SIPCall::hold(OnReadyCb&& cb)
 {
-    // If ICE is currently negotiating, or the call is recovering, we must wait before hold the call
-    if (isWaitingForIceAndMedia_ or isRecovering()) {
+    std::unique_lock lk {callMutex_};
+    if (isReinviteBusyLocked()) {
         holdCb_ = std::move(cb);
         remainingRequest_ = Request::Hold;
         return false;
@@ -1587,6 +1617,7 @@ SIPCall::hold(OnReadyCb&& cb)
 
     auto result = hold();
 
+    lk.unlock();
     if (cb)
         cb(result);
 
@@ -1612,7 +1643,13 @@ SIPCall::hold()
         stream.mediaAttribute_->hold_ = true;
     }
 
-    if (SIPSessionReinvite() != PJ_SUCCESS) {
+    auto status = SIPSessionReinvite();
+    if (status == PJ_EBUSY) {
+        // An INVITE transaction started meanwhile: tell the peer once it ends.
+        remainingRequest_ = Request::Hold;
+        return true;
+    }
+    if (status != PJ_SUCCESS) {
         JAMI_WARNING("[call:{}] Reinvite failed", getCallId());
         return false;
     }
@@ -1627,8 +1664,8 @@ SIPCall::hold()
 bool
 SIPCall::resume(OnReadyCb&& cb)
 {
-    // If ICE is currently negotiating, or the call is recovering, we must wait before attempting to resume the call
-    if (isWaitingForIceAndMedia_ or isRecovering()) {
+    std::unique_lock lk {callMutex_};
+    if (isReinviteBusyLocked()) {
         JAMI_DEBUG("[call:{}] ICE negotiation in progress. Resume request will be once ICE "
                    "negotiation completes",
                    getCallId());
@@ -1639,6 +1676,7 @@ SIPCall::resume(OnReadyCb&& cb)
     JAMI_DEBUG("[call:{}] Resuming the call", getCallId());
     auto result = resume();
 
+    lk.unlock();
     if (cb)
         cb(result);
 
@@ -1663,7 +1701,7 @@ SIPCall::resume()
     }
 
     // Only wait for ICE if we have an ICE re-invite in progress
-    isWaitingForIceAndMedia_ = success and (reinvIceMedia_ != nullptr);
+    isWaitingForIceAndMedia_ = success and remainingRequest_ != Request::Resume and (reinvIceMedia_ != nullptr);
 
     return success;
 }
@@ -1685,7 +1723,13 @@ SIPCall::internalResume(const std::function<void()>& sdp_cb)
             stream.mediaAttribute_->hold_ = false;
         }
         // For now, call resume will always require new ICE negotiation.
-        if (SIPSessionReinvite(getMediaAttributeList(), true) != PJ_SUCCESS) {
+        auto status = SIPSessionReinvite(getMediaAttributeList(), true);
+        if (status == PJ_EBUSY) {
+            // An INVITE transaction started meanwhile: tell the peer once it ends.
+            remainingRequest_ = Request::Resume;
+            return true;
+        }
+        if (status != PJ_SUCCESS) {
             JAMI_WARNING("[call:{}] Resuming hold", getCallId());
             if (isWaitingForIceAndMedia_) {
                 remainingRequest_ = Request::Hold;
@@ -1702,6 +1746,7 @@ SIPCall::internalResume(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& source)
 {
+    std::lock_guard lk {callMutex_};
     JAMI_DEBUG("[call:{}] Set selected source to {}", getCallId(), source);
 
     for (auto const& stream : rtpStreams_) {
@@ -1713,14 +1758,16 @@ SIPCall::switchInput(const std::string& source)
     // … the recording after the switch
     bool isRec = Call::isRecording();
 
-    if (isWaitingForIceAndMedia_ or isRecovering()) {
+    if (isReinviteBusyLocked()) {
         remainingRequest_ = Request::SwitchInput;
     } else {
         // For now, switchInput will always trigger a re-invite
         // with new ICE session.
-        if (SIPSessionReinvite(getMediaAttributeList(), true) == PJ_SUCCESS and reinvIceMedia_) {
+        auto status = SIPSessionReinvite(getMediaAttributeList(), true);
+        if (status == PJ_EBUSY)
+            remainingRequest_ = Request::SwitchInput;
+        else if (status == PJ_SUCCESS and reinvIceMedia_)
             isWaitingForIceAndMedia_ = true;
-        }
     }
     if (isRec) {
         readyToRecord_ = false;
@@ -1805,6 +1852,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
                                  sip_utils::SIP_METHODS::MESSAGE);
 
                     // Print peer's allowed methods
+                    std::lock_guard methodsLock {peerAllowedMethodsMutex_};
                     JAMI_LOG("[call:{}] Peer's allowed methods: {}", getCallId(), peerAllowedMethods_);
                     return;
                 }
@@ -2037,14 +2085,14 @@ SIPCall::setPeerUaVersion(std::string_view ua)
 void
 SIPCall::setPeerAllowMethods(std::vector<std::string> methods)
 {
-    std::lock_guard lock {callMutex_};
+    std::lock_guard lock {peerAllowedMethodsMutex_};
     peerAllowedMethods_ = std::move(methods);
 }
 
 bool
 SIPCall::isSipMethodAllowedByPeer(const std::string_view method) const
 {
-    std::lock_guard lock {callMutex_};
+    std::lock_guard lock {peerAllowedMethodsMutex_};
 
     return std::find(peerAllowedMethods_.begin(), peerAllowedMethods_.end(), method) != peerAllowedMethods_.end();
 }
@@ -2456,20 +2504,18 @@ SIPCall::startAllMedia()
 
     // Media is restarted, we can process the last hold request.
     isWaitingForIceAndMedia_ = false;
-    // Requests made during a recovery wait for its end.
-    if (not isRecovering()) {
-        if (auto reply = processRemainingRequest())
-            reply();
-    }
-
     mediaRestartRequired_ = false;
+    runOnMainThread([w = weak()] {
+        if (auto call = w.lock())
+            call->drainPendingRequests();
+    });
 }
 
 std::function<void()>
 SIPCall::processRemainingRequest()
 {
     std::function<void()> reply;
-    switch (remainingRequest_) {
+    switch (std::exchange(remainingRequest_, Request::NoRequest)) {
     case Request::Hold: {
         auto result = hold();
         if (auto cb = std::exchange(holdCb_, nullptr))
@@ -2486,13 +2532,17 @@ SIPCall::processRemainingRequest()
             };
         break;
     }
-    case Request::SwitchInput:
-        SIPSessionReinvite();
+    case Request::SwitchInput: {
+        auto status = SIPSessionReinvite(getMediaAttributeList(), true);
+        if (status == PJ_EBUSY)
+            remainingRequest_ = Request::SwitchInput;
+        else if (status == PJ_SUCCESS and reinvIceMedia_)
+            isWaitingForIceAndMedia_ = true;
         break;
+    }
     default:
         break;
     }
-    remainingRequest_ = Request::NoRequest;
     return reply;
 }
 
@@ -2788,9 +2838,9 @@ bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard lk {callMutex_};
-    // Renegotiating now would cross the renegotiation restoring the call.
-    if (recovering_) {
-        JAMI_DEBUG("[call:{}] Media change deferred until the call recovers", getCallId());
+    // Before the call is confirmed, the change is applied locally only (see requestReinvite).
+    if (inviteSession_ and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and isReinviteBusyLocked()) {
+        JAMI_DEBUG("[call:{}] Media change deferred until negotiation completes", getCallId());
         pendingMediaChange_ = mediaList;
         return true;
     }
@@ -2903,6 +2953,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         JAMI_ERROR("[call:{}] Invalid media change request: new media list is empty", getCallId());
         return false;
     }
+    pendingMediaChange_.reset();
     JAMI_DEBUG("[call:{}] Requesting media change. List of new media:", getCallId());
 
     unsigned idx = 0;
@@ -3895,7 +3946,10 @@ SIPCall::merge(Call& call)
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
     peerSupportMultiAudioStream_ = subcall.peerSupportMultiAudioStream_;
     peerSupportMultiIce_ = subcall.peerSupportMultiIce_;
-    peerAllowedMethods_ = subcall.peerAllowedMethods_;
+    {
+        std::scoped_lock methodsLock {peerAllowedMethodsMutex_, subcall.peerAllowedMethodsMutex_};
+        peerAllowedMethods_ = subcall.peerAllowedMethods_;
+    }
     peerSupportReuseIceInReinv_ = subcall.peerSupportReuseIceInReinv_;
     peerSupportsHandover_ = subcall.peerSupportsHandover_.load();
 

@@ -349,7 +349,8 @@ private:
     void sendRecoveryProbeLocked();
     void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options);
     void completeRecoveryIfReadyLocked();
-    void applyRequestsDeferredByRecovery();
+    bool isReinviteBusyLocked() const;
+    void drainPendingRequests();
     // Returns the client callback to run with the result, if any, so that
     // callers holding callMutex_ can run it once released.
     std::function<void()> processRemainingRequest();
@@ -505,7 +506,8 @@ private:
     // Media change requested during a recovery, sent once it is over.
     std::optional<std::vector<libjami::MediaMap>> pendingMediaChange_;
 
-    // Peer's allowed methods.
+    // Peer's allowed methods. Set under the pjsip dialog lock, so not guarded by callMutex_.
+    mutable std::mutex peerAllowedMethodsMutex_;
     std::vector<std::string> peerAllowedMethods_;
 
     // Vector holding the current RTP sessions.
