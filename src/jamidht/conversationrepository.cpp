@@ -555,10 +555,10 @@ public:
             auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
             auto uri = verifiedUriFromDeviceCert(deviceCert, deviceId, tree);
             if (uri.empty())
-                JAMI_ERROR("Device certificate {} is not issued by a member of the conversation", deviceId);
+                JAMI_ERROR("[Account {}] [Conversation {}] Device certificate {} is not issued by a member of the conversation", accountId_, id_, deviceId);
             return uri;
         } catch (const std::exception& e) {
-            JAMI_ERROR("Unable to load certificate for device {}: {}", deviceId, e.what());
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to load certificate for device {}: {}", accountId_, id_, deviceId, e.what());
             return {};
         }
     }
