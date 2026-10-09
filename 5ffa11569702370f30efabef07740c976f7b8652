@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1528e4df_140c748f",
+        "filename": "test/unitTest/syncHistory/syncHistory.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 559,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T21:11:36Z",
+      "side": 1,
+      "message": "[warning] Line 559: 🟡 The test depends on real-time delay (`sleep_for(10ms)`) and wall-clock sampling (`nowMs()`), which can be flaky on loaded CI runners and low timer-resolution environments. Make this deterministic by constructing explicit timestamps from `info.created` (e.g., `removed \u003d created + 1ms`, `erased \u003d removed + 1ms`) and removing the sleep.",
+      "revId": "5ffa11569702370f30efabef07740c976f7b8652",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
