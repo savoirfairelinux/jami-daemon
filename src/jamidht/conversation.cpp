@@ -3321,9 +3321,9 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     // If a connection succeeds, onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstrapped);
     std::vector<DeviceId> devices = knownDevices;
-    JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
 
     if (!devices.empty()) {
+        JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
         pimpl_->swarmManager_->setKnownNodes(devices);
     }
 

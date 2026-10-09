@@ -52,7 +52,7 @@ public:
         , repository_(repository)
         , socket_(socket)
     {
-        JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created", accountId_, repositoryId_, fmt::ptr(this));
+        // JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created", accountId_, repositoryId_, fmt::ptr(this));
         // Check at least if repository is correct
         git_repository* repo;
         if (git_repository_open(&repo, repository_.c_str()) != 0) {
@@ -71,7 +71,7 @@ public:
     ~Impl()
     {
         stop();
-        JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] destroyed", accountId_, repositoryId_, fmt::ptr(this));
+        // JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] destroyed", accountId_, repositoryId_, fmt::ptr(this));
     }
     void stop()
     {
@@ -179,10 +179,10 @@ GitServer::Impl::parseOrder(std::string_view buf)
     if (cmd == UPLOAD_PACK_CMD) {
         // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // References discovery
-        JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Upload pack command detected.",
+        /*JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Upload pack command detected.",
                  accountId_,
                  repositoryId_,
-                 fmt::ptr(this));
+                 fmt::ptr(this));*/
         auto version = 1;
         auto parameters = getParameters(dat);
         auto versionIt = parameters.find("version");
@@ -357,11 +357,11 @@ GitServer::Impl::notifyUpToDate()
     if (sawWant_ || upToDateNotified_ || advertisedHead_.empty())
         return;
     upToDateNotified_ = true;
-    JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer is already up to date at {}",
+    /*JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer is already up to date at {}",
              accountId_,
              repositoryId_,
              fmt::ptr(this),
-             advertisedHead_);
+             advertisedHead_);*/
     if (onFetchedCb_)
         onFetchedCb_(advertisedHead_);
 }

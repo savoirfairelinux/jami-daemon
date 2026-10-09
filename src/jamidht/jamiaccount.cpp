@@ -2491,10 +2491,10 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 auto shared = w.lock();
                 if (!shared)
                     return;
-                JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
+                /*JAMI_LOG("[Account {:s}] [Conversation {}] [device {}] Git server requested",
                          shared->accountID_,
                          conversationId,
-                         remoteDevice);
+                         remoteDevice);*/
                 auto gs = std::make_unique<GitServer>(shared->accountID_, conversationId, channel);
                 shared->syncCnt_.fetch_add(1);
                 // Balances the increment above exactly once, whether the peer ends up
@@ -4454,10 +4454,10 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
     auto currentSha3 = fileutils::sha3File(accProfilePath);
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
-        JAMI_DEBUG("[Account {}] [device {}] Peer {} already got an up-to-date vCard",
+        /*JAMI_DEBUG("[Account {}] [device {}] Peer {} already got an up-to-date vCard",
                    getAccountID(),
                    deviceId,
-                   peerUri);
+                   peerUri);*/
         return;
     }
     // We need a new channel
