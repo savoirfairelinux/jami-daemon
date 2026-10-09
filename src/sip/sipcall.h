@@ -501,15 +501,17 @@ private:
     bool waitingForRecoveryChannel_ {false};
     bool recoveryAttemptPending_ {false};
     std::uint64_t recoveryAttempt_ {0};
-    std::optional<dhtnet::IceTransportOptions> deferredRecoveryIceOptions_;
+    bool recoveryRestartPending_ {false};
     std::unique_ptr<asio::steady_timer> recoveryTimer_;
-    std::shared_ptr<dhtnet::IceTransport> recoveryIce_;
-    std::weak_ptr<SipTransport> recoveryIceTransport_;
-    std::shared_ptr<dhtnet::IceTransport> negotiatedRecoveryIce_;
-    std::shared_ptr<dhtnet::IceTransport> pendingRecoveryAnswerIce_;
-    std::atomic<pjsip_transport*> incomingReinviteTransport_ {nullptr};
-    std::atomic_bool incomingReinviteDuringRecovery_ {false};
-    pjsip_transport* pendingRecoveryAnswerTransport_ {nullptr};
+    struct RecoveryNegotiation
+    {
+        enum class Phase { IcePending, MediaReady };
+        std::uint64_t generation;
+        std::weak_ptr<SipTransport> transport;
+        std::shared_ptr<dhtnet::IceTransport> ice;
+        Phase phase {Phase::IcePending};
+    };
+    std::optional<RecoveryNegotiation> recoveryNegotiation_;
     // Channels left for a newer one, which the dialog must not follow back.
     std::vector<std::weak_ptr<SipTransport>> abandonedTransports_;
     struct SipAdmissionState
