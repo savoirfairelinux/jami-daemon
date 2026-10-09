@@ -82,6 +82,8 @@ private:
     void testResetsPublishedAddresses();
     void testRecoveryOpensNewSocket();
     void testStaleRecoveryAttemptDoesNotTakeOver();
+    void testStaleIceCallbacks();
+    void testCurrentIceFailureEndsCall();
     void testBlockedPeerEndsCall();
     void testRemovedPeerEndsCall();
     void testCalleeBlockingCallerEndsCall();
@@ -103,6 +105,8 @@ private:
     CPPUNIT_TEST(testResetsPublishedAddresses);
     CPPUNIT_TEST(testRecoveryOpensNewSocket);
     CPPUNIT_TEST(testStaleRecoveryAttemptDoesNotTakeOver);
+    CPPUNIT_TEST(testStaleIceCallbacks);
+    CPPUNIT_TEST(testCurrentIceFailureEndsCall);
     CPPUNIT_TEST(testBlockedPeerEndsCall);
     CPPUNIT_TEST(testRemovedPeerEndsCall);
     CPPUNIT_TEST(testCalleeBlockingCallerEndsCall);
@@ -480,6 +484,52 @@ HandoverTest::testStaleRecoveryAttemptDoesNotTakeOver()
     CPPUNIT_ASSERT(before.alice->needsNewSipChannel());
     before.alice->finishRecoveryAttempt(*latest);
     hangUp();
+}
+
+void
+HandoverTest::testStaleIceCallbacks()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.aliceIce);
+    auto replacement = Manager::instance().getIceTransportFactory()->createTransport("replacement");
+    CPPUNIT_ASSERT(replacement);
+    auto subcall = std::make_shared<SIPCall>(alice_, "retired-subcall", Call::CallType::OUTGOING,
+                                             before.alice->currentMediaList());
+    subcall->setIceMedia(before.aliceIce);
+    subcall->parent_ = before.alice;
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        before.alice->setIceMedia(replacement, true);
+        before.alice->waitForIceInit_ = true;
+        before.alice->onIceInitDone(before.aliceIce, true);
+        before.alice->onIceInitDone({}, true);
+        CPPUNIT_ASSERT(before.alice->waitForIceInit_);
+        before.alice->onIceNegoDone(before.aliceIce, false);
+        before.alice->onIceNegoDone(before.aliceIce, true);
+        before.alice->onIceNegoDone({}, false);
+        subcall->onIceNegoDone(before.aliceIce, false);
+        subcall->onIceNegoDone(before.aliceIce, true);
+        CPPUNIT_ASSERT(before.alice->getConnectionState() == Call::ConnectionState::CONNECTED);
+        CPPUNIT_ASSERT(before.alice->getIceMedia() == replacement);
+        before.alice->waitForIceInit_ = false;
+        before.alice->setIceMedia({}, true);
+    }
+    CPPUNIT_ASSERT_EQUAL(before.aliceNegotiations, currentState().aliceNegotiations);
+    hangUp();
+}
+
+void
+HandoverTest::testCurrentIceFailureEndsCall()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.aliceIce);
+    before.alice->onIceNegoDone(before.aliceIce, false);
+    CPPUNIT_ASSERT(before.alice->getConnectionState() == Call::ConnectionState::DISCONNECTED);
+    Manager::instance().hangupCall(bobId_, bobCallId_);
+    std::unique_lock lock(mutex_);
+    CPPUNIT_ASSERT(cv_.wait_for(lock, 5s, [&] { return ended_ == 2; }));
 }
 
 void
