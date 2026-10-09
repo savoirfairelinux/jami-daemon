@@ -382,6 +382,8 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
     auto sip_tr = std::make_shared<SipTransport>(tr, socket->peerCertificate());
     sip_tr->setDeviceId(socket->deviceId().toString());
     sip_tr->setAccount(account);
+    // Before start(), so that a channel already shut down reports DISCONNECTED last.
+    sip_tr->setConnected();
 
     {
         std::lock_guard lock(transportMapMutex_);

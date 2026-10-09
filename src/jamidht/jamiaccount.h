@@ -345,7 +345,6 @@ public:
     void connectivityChanged() override;
     void networkInterfaceChanged();
     bool requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newNetwork = false);
-    void followPeerTransport(const std::shared_ptr<SIPCall>& call, pjsip_transport* transport, bool probe);
 
     // overloaded methods
     void flush() override;

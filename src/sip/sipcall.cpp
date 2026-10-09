@@ -56,6 +56,8 @@
 #include <opendht/thread_pool.h>
 #include <fmt/ranges.h>
 
+#include <utility>
+
 #include "tracepoint.h"
 
 namespace jami {
@@ -502,12 +504,23 @@ SIPCall::beginCallRecovery(bool newNetwork)
         return false;
     {
         std::lock_guard lk {callMutex_};
+        const bool firstRecovery = not recovering_;
+        if (not inviteSession_)
+            return false;
         if (not recovering_) {
             if (not peerSupportsHandover() or not isIceEnabled() or isSubcall()
                 or getConnectionState() != ConnectionState::CONNECTED or not inviteSession_
                 or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_)
                 return false;
             startRecoveryLocked();
+        }
+        if (firstRecovery or newNetwork or not waitingForRecoveryChannel_) {
+            if (inviteSession_->role == PJSIP_ROLE_UAC)
+                ++recoveryGeneration_;
+            else
+                ++recoveryRequest_;
+            recoveryCandidate_.reset();
+            recoveryRestartPending_ = false;
         }
         waitingForRecoveryChannel_ = true;
     }
@@ -526,19 +539,17 @@ void
 SIPCall::startRecoveryLocked()
 {
     recovering_ = true;
-    recoveryIce_.reset();
-    recoveryIceTransport_.reset();
-    negotiatedRecoveryIce_.reset();
-    pendingRecoveryAnswerIce_.reset();
-    pendingRecoveryAnswerTransport_ = nullptr;
-    incomingReinviteDuringRecovery_ = false;
-    incomingReinviteTransport_ = nullptr;
+    recoveryNegotiation_.reset();
     recoveryTimer_ = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(), CALL_RECOVERY_TIMEOUT);
-    recoveryTimer_->async_wait([w = weak()](const asio::error_code& ec) {
+    auto episode = ++recoveryEpisode_;
+    recoveryTimer_->async_wait([w = weak(), episode](const asio::error_code& ec) {
         if (ec)
             return;
-        runOnMainThread([w] {
-            if (auto call = w.lock(); call and call->isRecovering()) {
+        runOnMainThread([w, episode] {
+            if (auto call = w.lock()) {
+                std::lock_guard lk {call->callMutex_};
+                if (not call->recovering_ or call->recoveryEpisode_ != episode)
+                    return;
                 JAMI_WARNING("[call:{}] Network recovery timed out", call->getCallId());
                 call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
             }
@@ -575,25 +586,24 @@ SIPCall::useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
         std::lock_guard lk {callMutex_};
         if (not recovering_ or not waitingForRecoveryChannel_ or (attempt and recoveryAttempt_ != *attempt)
             or not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
-            or not sipTransport_ or not rebindSipDialogLocked(transport, contact))
+            or not sipTransport_ or not transport or not transport->isConnected()
+            or isRetiredSipTransport(transport->get())
+            or sipTransport_->deviceId() != transport->deviceId()
+            or sipTransport_->peerAccountId() != transport->peerAccountId())
+            return false;
+        if (inviteSession_->role != PJSIP_ROLE_UAC) {
+            recoveryCandidate_ = transport;
+            recoveryAttemptPending_ = false;
+            sendRecoveryProbeLocked(transport);
+            scheduleRecoveryProbeLocked();
+            return true;
+        }
+        if (not rebindSipDialogLocked(transport, contact))
             return false;
         waitingForRecoveryChannel_ = false;
         recoveryAttemptPending_ = false;
-        awaitingRecoveryProbe_ = false;
-        deferredRecoveryIceOptions_.reset();
-        if (pendingRecoveryAnswerTransport_ == transport->get()) {
-            recoveryIce_ = std::move(pendingRecoveryAnswerIce_);
-            recoveryIceTransport_ = transport;
-            pendingRecoveryAnswerTransport_ = nullptr;
-        }
-        completeRecoveryIfReadyLocked();
-        // Only the caller offers, so that both peers never send crossing
-        // re-INVITEs; the callee asks it to do so from the new channel.
-        if (inviteSession_->role != PJSIP_ROLE_UAC) {
-            if (recovering_)
-                sendRecoveryProbeLocked();
-            return true;
-        }
+        recoveryRestartPending_ = false;
+        recoveryNegotiation_.reset();
     }
     if (isRecovering())
         requestIceRestart(transport);
@@ -601,43 +611,54 @@ SIPCall::useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
 }
 
 void
-SIPCall::followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe)
+SIPCall::followPeerTransport(const std::shared_ptr<SipTransport>& transport,
+                             const std::string& contact,
+                             std::uint64_t generation,
+                             std::uint64_t request)
 {
     {
         std::lock_guard lk {callMutex_};
         if (not peerSupportsHandover() or isSubcall() or not inviteSession_
-            or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_
-            or isAbandonedTransportLocked(transport))
+            or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or inviteSession_->role != PJSIP_ROLE_UAC
+            or not sipTransport_ or not transport or not request or request <= lastPeerRecoveryRequest_
+            or isRetiredSipTransport(transport->get()))
             return;
-        if (sipTransport_ != transport) {
-            if (not rebindSipDialogLocked(transport, contact))
-                return;
-            JAMI_WARNING("[call:{}] Following the peer to its new SIP channel", getCallId());
-            awaitingRecoveryProbe_ = not probe and inviteSession_->role == PJSIP_ROLE_UAC;
-            deferredRecoveryIceOptions_.reset();
-            const bool wasRecovering = recovering_;
-            if (recovering_) {
-                waitingForRecoveryChannel_ = false;
-                recoveryAttemptPending_ = false;
-                if (pendingRecoveryAnswerTransport_ == transport->get()) {
-                    recoveryIce_ = std::move(pendingRecoveryAnswerIce_);
-                    recoveryIceTransport_ = transport;
-                    pendingRecoveryAnswerTransport_ = nullptr;
-                }
-                completeRecoveryIfReadyLocked();
-            }
-            if (wasRecovering and not recovering_)
-                return;
-        } else if (not probe or not awaitingRecoveryProbe_) {
+        lastPeerRecoveryRequest_ = request;
+        // A delayed probe for a recovery that already completed.
+        if (generation < recoveryGeneration_ and not recovering_)
             return;
-        }
-        if (not probe or inviteSession_->role != PJSIP_ROLE_UAC)
+        if (not rebindSipDialogLocked(transport, contact))
             return;
-        awaitingRecoveryProbe_ = false;
         if (not recovering_)
             startRecoveryLocked();
+        // Our own recovery already issued a generation for this channel.
+        if (not waitingForRecoveryChannel_)
+            ++recoveryGeneration_;
+        waitingForRecoveryChannel_ = false;
+        recoveryAttemptPending_ = false;
+        recoveryNegotiation_.reset();
     }
     requestIceRestart(transport);
+}
+
+bool
+SIPCall::adoptRecoveryOfferLocked(const std::shared_ptr<SipTransport>& transport,
+                                  const std::string& contact,
+                                  std::uint64_t generation)
+{
+    if (not inviteSession_ or inviteSession_->role != PJSIP_ROLE_UAS
+        or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_ or not transport
+        or generation <= recoveryGeneration_ or not rebindSipDialogLocked(transport, contact))
+        return false;
+    JAMI_WARNING("[call:{}] Following the caller to its recovery channel", getCallId());
+    if (not recovering_)
+        startRecoveryLocked();
+    recoveryGeneration_ = generation;
+    waitingForRecoveryChannel_ = false;
+    recoveryAttemptPending_ = false;
+    recoveryCandidate_.reset();
+    recoveryNegotiation_.reset();
+    return true;
 }
 
 bool
@@ -680,86 +701,224 @@ SIPCall::rebindSipDialogLocked(const std::shared_ptr<SipTransport>& transport, c
 
     // Requests sent by the peer before following us must not bring us back.
     std::erase_if(abandonedTransports_, [](const auto& abandoned) { return abandoned.expired(); });
-    abandonedTransports_.emplace_back(sipTransport_);
+    if (sipTransport_->get() != transport->get())
+        abandonedTransports_.emplace_back(sipTransport_);
     setSipTransport(transport, contact);
     return true;
 }
 
 bool
-SIPCall::isAbandonedTransportLocked(const std::shared_ptr<SipTransport>& transport) const
+SIPCall::isRetiredSipTransport(const pjsip_transport* transport) const
 {
-    return std::any_of(abandonedTransports_.begin(), abandonedTransports_.end(), [&](const auto& abandoned) {
-        return abandoned.lock() == transport;
+    std::lock_guard lk {callMutex_};
+    return std::any_of(abandonedTransports_.begin(), abandonedTransports_.end(), [transport](const auto& previous) {
+        auto channel = previous.lock();
+        return channel and channel->get() == transport;
     });
+}
+
+SIPCall::HandoverRequest
+SIPCall::classifyHandoverRequest(const pjsip_rx_data* rdata, bool caller, std::uint64_t generation)
+{
+    if (not rdata or not rdata->msg_info.msg)
+        return HandoverRequest::Pass;
+    const auto* msg = rdata->msg_info.msg;
+    switch (msg->line.req.method.id) {
+    case PJSIP_OPTIONS_METHOD: {
+        auto request = sip_utils::getHandoverRequest(rdata);
+        if (not caller or not request or not *request)
+            return HandoverRequest::Pass;
+        return sip_utils::getHandoverGeneration(rdata) ? HandoverRequest::Probe : HandoverRequest::Invalid;
+    }
+    case PJSIP_INVITE_METHOD: {
+        if (not sip_utils::hasHandoverGeneration(rdata))
+            return HandoverRequest::Pass;
+        auto offered = sip_utils::getHandoverGeneration(rdata);
+        if (not offered)
+            return HandoverRequest::Invalid;
+        if (*offered < generation)
+            return HandoverRequest::Stale;
+        // Only the caller issues generations, always with a new offer.
+        if (*offered > generation and (caller or not msg->body))
+            return HandoverRequest::Invalid;
+        return HandoverRequest::Pass;
+    }
+    default:
+        // Other requests are ordered by the dialog's CSeq on any channel.
+        return HandoverRequest::Pass;
+    }
+}
+
+bool
+SIPCall::isCurrentMediaNegotiation() const
+{
+    return mediaNegotiationGeneration_.load() == recoveryGeneration_.load();
+}
+
+bool
+SIPCall::isPendingReinviteLocked(pj_int32_t cseq) const
+{
+    auto* tsx = inviteSession_ ? inviteSession_->invite_tsx : nullptr;
+    return tsx and tsx->role == PJSIP_ROLE_UAS and tsx->cseq == cseq and tsx->status_code < PJSIP_SC_OK
+           and tsx->state < PJSIP_TSX_STATE_COMPLETED;
+}
+
+void
+SIPCall::rejectPendingReinviteLocked(std::optional<pj_int32_t> cseq)
+{
+    if (not inviteSession_)
+        return;
+    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
+    auto* tsx = inviteSession_->invite_tsx;
+    if (not tsx or not isPendingReinviteLocked(cseq.value_or(tsx->cseq)))
+        return;
+    mediaNegotiationGeneration_ = recoveryGeneration_.load();
+    JAMI_WARNING("[call:{}] Rejecting a re-INVITE superseded by a newer negotiation", getCallId());
+    pjsip_tx_data* tdata = nullptr;
+    auto status = pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_REQUEST_PENDING, nullptr, nullptr, &tdata);
+    if (status != PJ_SUCCESS) {
+        JAMI_ERROR("[call:{}] Unable to create re-INVITE rejection: {}", getCallId(), sip_utils::sip_strerror(status));
+        return;
+    }
+    status = pjsip_inv_send_msg(inviteSession_.get(), tdata);
+    if (status != PJ_SUCCESS)
+        JAMI_ERROR("[call:{}] Unable to send re-INVITE rejection: {}", getCallId(), sip_utils::sip_strerror(status));
 }
 
 void
 SIPCall::requestIceRestart(const std::shared_ptr<SipTransport>& transport)
 {
+    std::lock_guard lk {callMutex_};
     auto account = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock());
     if (not account) {
         JAMI_ERROR("[call:{}] Missing account during SIP recovery", getCallId());
         return;
     }
     account->getIceOptions(
-        [w = weak(), wtransport = std::weak_ptr(transport)](dhtnet::IceTransportOptions&& options) mutable {
-            runOnMainThread([w, wtransport, options = std::move(options)]() mutable {
-                if (auto call = w.lock(); call and call->getTransport() == wtransport.lock().get())
-                    call->restartIceAfterRecovery(std::move(options));
+        [w = weak(), wtransport = std::weak_ptr(transport), generation = recoveryGeneration_.load()]
+        (dhtnet::IceTransportOptions&& options) mutable {
+            runOnMainThread([w, wtransport, generation, options = std::move(options)]() mutable {
+                if (auto call = w.lock()) {
+                    std::lock_guard lk {call->callMutex_};
+                    if (auto transport = wtransport.lock(); transport and call->sipTransport_ == transport)
+                        call->restartIceAfterRecovery(std::move(options), generation);
+                }
             });
         });
 }
 
 void
-SIPCall::sendRecoveryProbeLocked()
+SIPCall::sendRecoveryProbeLocked(const std::shared_ptr<SipTransport>& transport)
 {
+    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
+    auto* dialog = inviteSession_->dlg;
     pjsip_tx_data* tdata = nullptr;
-    auto status = pjsip_dlg_create_request(inviteSession_->dlg, &pjsip_options_method, -1, &tdata);
+    auto status = pjsip_dlg_create_request(dialog, &pjsip_options_method, dialog->local.cseq++, &tdata);
     if (status == PJ_SUCCESS) {
         if (auto account = getSIPAccount())
             sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
-        status = pjsip_dlg_send_request(inviteSession_->dlg, tdata, -1, nullptr);
+        sip_utils::addHandoverRequest(tdata, recoveryRequest_);
+        sip_utils::addHandoverGeneration(tdata, recoveryGeneration_.load());
+        auto* uri = static_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(tdata->msg->line.req.uri));
+        pj_strdup(tdata->pool, &uri->host, &transport->get()->remote_name.host);
+        uri->port = transport->get()->remote_name.port;
+        pj_strdup(tdata->pool, &tdata->dest_info.name, &transport->get()->remote_name.host);
+        tdata->mod_data[dialog->ua->id] = nullptr;
+        pjsip_tpselector selector {};
+        selector.type = PJSIP_TPSELECTOR_TRANSPORT;
+        selector.u.transport = transport->get();
+        pjsip_tx_data_set_transport(tdata, &selector);
+        status = pjsip_endpt_send_request(Manager::instance().sipVoIPLink().getEndpoint(), tdata, -1, nullptr, nullptr);
     }
     if (status != PJ_SUCCESS)
         JAMI_ERROR("[call:{}] Unable to announce the new SIP channel: {}", getCallId(), sip_utils::sip_strerror(status));
 }
 
 void
-SIPCall::restartIceAfterRecovery(dhtnet::IceTransportOptions&& options)
+SIPCall::scheduleRecoveryProbeLocked()
+{
+    auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), std::chrono::milliseconds(500));
+    timer->async_wait([w = weak(), timer, candidate = std::weak_ptr(recoveryCandidate_), request = recoveryRequest_]
+                      (const asio::error_code& ec) {
+        if (ec)
+            return;
+        runOnMainThread([w, candidate, request] {
+            if (auto call = w.lock()) {
+                std::lock_guard lk {call->callMutex_};
+                auto transport = candidate.lock();
+                if (not call->recovering_ or not call->waitingForRecoveryChannel_ or not transport
+                    or call->recoveryRequest_ != request or call->recoveryCandidate_ != transport)
+                    return;
+                if (transport->isConnected()) {
+                    call->sendRecoveryProbeLocked(transport);
+                    call->scheduleRecoveryProbeLocked();
+                } else {
+                    call->recoveryCandidate_.reset();
+                    if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock()))
+                        account->requestCallRecovery(call);
+                }
+            }
+        });
+    });
+}
+
+void
+SIPCall::restartIceAfterRecovery(dhtnet::IceTransportOptions&& options, std::optional<std::uint64_t> generation)
 {
     std::lock_guard lk {callMutex_};
     if (not recovering_ or waitingForRecoveryChannel_ or not inviteSession_
-        or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED)
+        or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
+        or (generation and *generation != recoveryGeneration_))
         return;
-    sip_utils::PJDialogLock dialogLock {inviteSession_->dlg};
     // Only use the UPnP port mappings already open: waiting for new ones
     // would delay the offer by seconds on networks refusing them.
     options.upnpMappingTimeout = {};
-    if (inviteSession_->invite_tsx) {
-        deferredRecoveryIceOptions_ = std::move(options);
-        return;
-    }
-    deferredRecoveryIceOptions_.reset();
-    if (SIPSessionReinvite(getMediaAttributeList(), true, std::move(options), true) != PJ_SUCCESS)
+    recoveryRestartPending_ = false;
+    auto status = SIPSessionReinvite(getMediaAttributeList(), true, std::move(options), true);
+    if (status == PJ_EBUSY)
+        recoveryRestartPending_ = true;
+    else if (status != PJ_SUCCESS)
         JAMI_ERROR("[call:{}] Could not restart ICE on the recovered SIP channel", getCallId());
+}
+
+void
+SIPCall::retryRecoveryOffer(std::uint64_t generation)
+{
+    auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), std::chrono::milliseconds(500));
+    timer->async_wait([w = weak(), timer, generation](const asio::error_code& ec) {
+        if (ec)
+            return;
+        runOnMainThread([w, generation] {
+            if (auto call = w.lock()) {
+                std::lock_guard lk {call->callMutex_};
+                if (call->recovering_ and not call->waitingForRecoveryChannel_
+                    and call->recoveryGeneration_ == generation and call->sipTransport_)
+                    call->requestIceRestart(call->sipTransport_);
+            }
+        });
+    });
 }
 
 void
 SIPCall::onInviteTransactionEnded()
 {
-    std::optional<dhtnet::IceTransportOptions> options;
+    std::shared_ptr<SipTransport> transport;
     {
         std::lock_guard lk {callMutex_};
         std::optional<sip_utils::PJDialogLock> dialogLock;
         if (inviteSession_)
             dialogLock.emplace(inviteSession_->dlg);
+        if (inviteSession_ and not inviteSession_->invite_tsx)
+            mediaNegotiationGeneration_ = recoveryGeneration_.load();
         if (recovering_ and not waitingForRecoveryChannel_ and inviteSession_
             and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and not inviteSession_->invite_tsx
-            and deferredRecoveryIceOptions_)
-            options = std::exchange(deferredRecoveryIceOptions_, std::nullopt);
+            and recoveryRestartPending_) {
+            recoveryRestartPending_ = false;
+            transport = sipTransport_;
+        }
     }
-    if (options)
-        restartIceAfterRecovery(std::move(*options));
+    if (transport)
+        requestIceRestart(transport);
     else
         drainPendingRequests();
 }
@@ -767,8 +926,10 @@ SIPCall::onInviteTransactionEnded()
 void
 SIPCall::completeRecoveryIfReadyLocked()
 {
-    if (not recovering_ or waitingForRecoveryChannel_ or not recoveryIce_ or negotiatedRecoveryIce_ != recoveryIce_
-        or getIceMedia() != recoveryIce_ or sipTransport_ != recoveryIceTransport_.lock())
+    if (not recovering_ or waitingForRecoveryChannel_ or not recoveryNegotiation_
+        or recoveryNegotiation_->generation != recoveryGeneration_
+        or recoveryNegotiation_->phase != RecoveryNegotiation::Phase::MediaReady
+        or getIceMedia() != recoveryNegotiation_->ice or sipTransport_ != recoveryNegotiation_->transport.lock())
         return;
     stopCallRecovery();
     runOnMainThread([w = weak()] {
@@ -784,25 +945,19 @@ SIPCall::stopCallRecovery()
     recovering_ = false;
     waitingForRecoveryChannel_ = false;
     recoveryAttemptPending_ = false;
-    awaitingRecoveryProbe_ = false;
-    deferredRecoveryIceOptions_.reset();
+    recoveryCandidate_.reset();
+    recoveryRestartPending_ = false;
     if (recoveryTimer_) {
         recoveryTimer_->cancel();
         recoveryTimer_.reset();
     }
-    recoveryIce_.reset();
-    recoveryIceTransport_.reset();
-    negotiatedRecoveryIce_.reset();
-    pendingRecoveryAnswerIce_.reset();
-    pendingRecoveryAnswerTransport_ = nullptr;
-    incomingReinviteDuringRecovery_ = false;
-    incomingReinviteTransport_ = nullptr;
+    recoveryNegotiation_.reset();
 }
 
 bool
 SIPCall::isReinviteBusyLocked() const
 {
-    if (recovering_ or isWaitingForIceAndMedia_)
+    if (recovering_ or isWaitingForIceAndMedia_ or (peerSupportsHandover() and not isCurrentMediaNegotiation()))
         return true;
     if (not inviteSession_)
         return false;
@@ -911,6 +1066,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
         sdp_->setPublishedIP(newAddress);
     }
 
+    mediaNegotiationGeneration_ = recoveryGeneration_.load();
     if (not sdp_->createOffer(mediaAttrList))
         return !PJ_SUCCESS;
 
@@ -933,12 +1089,13 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList,
 
         // Add user-agent header
         sip_utils::addUserAgentHeader(acc->getUserAgentName(), tdata);
+        if (peerSupportsHandover())
+            sip_utils::addHandoverGeneration(tdata, recoveryGeneration_);
 
         result = pjsip_inv_send_msg(inviteSession_.get(), tdata);
         if (result == PJ_SUCCESS) {
             if (recoveryOffer and recovering_ and needNewIce and not waitingForRecoveryChannel_) {
-                recoveryIce_ = getIceMedia();
-                recoveryIceTransport_ = sipTransport_;
+                recoveryNegotiation_ = RecoveryNegotiation {recoveryGeneration_, sipTransport_, getIceMedia()};
             }
             return PJ_SUCCESS;
         }
@@ -1280,6 +1437,10 @@ void
 SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard lk {callMutex_};
+    if (peerSupportsHandover() and not isCurrentMediaNegotiation()) {
+        rejectPendingReinviteLocked();
+        return;
+    }
 
     auto account = getSIPAccount();
     if (not account) {
@@ -3028,9 +3189,15 @@ SIPCall::getRemoteAudioStreams() const
 void
 SIPCall::onMediaNegotiationComplete()
 {
-    runOnMainThread([w = weak()] {
+    auto generation = mediaNegotiationGeneration_.load();
+    if (peerSupportsHandover() and generation != recoveryGeneration_.load())
+        return;
+    runOnMainThread([w = weak(), generation] {
         if (auto this_ = w.lock()) {
             std::lock_guard lk {this_->callMutex_};
+            if (this_->peerSupportsHandover()
+                and (this_->mediaNegotiationGeneration_.load() != generation or not this_->isCurrentMediaNegotiation()))
+                return;
             JAMI_DEBUG("[call:{}] Media negotiation complete", this_->getCallId());
 
             // If the call has already ended, we don't need to start the media.
@@ -3156,9 +3323,12 @@ SIPCall::startIceMedia()
 }
 
 void
-SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok)
+SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok,
+                       std::optional<std::uint64_t> generation)
 {
     std::lock_guard lk {callMutex_};
+    if (generation and *generation != recoveryGeneration_)
+        return;
     if (not ok or not initializedIce or initializedIce != getIceMedia() or not sdp_
         or not waitForIceInit_.exchange(false))
         return;
@@ -3169,7 +3339,8 @@ SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedI
 }
 
 void
-SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok)
+SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok,
+                       std::optional<std::uint64_t> generation)
 {
     if (not negotiatedIce)
         return;
@@ -3183,6 +3354,8 @@ SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIc
     if (not mediaCall)
         return;
     std::lock_guard lk {mediaCall->callMutex_};
+    if (generation and *generation != mediaCall->recoveryGeneration_)
+        return;
     if (negotiatedIce != mediaCall->getIceMedia())
         return;
     if (not ok) {
@@ -3207,7 +3380,7 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
         JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
         return;
     }
-    if (negotiatedIce != getIceMedia())
+    if (negotiatedIce != getIceMedia() or (peerSupportsHandover() and not isCurrentMediaNegotiation()))
         return;
 
     // Update the negotiated media.
@@ -3235,9 +3408,8 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
     // Start/Restart the media using the new transport
     stopAllMedia();
     startAllMedia();
-    if (recovering_ and not fromSubcall and negotiatedIce == getIceMedia()
-        and (negotiatedIce == recoveryIce_ or negotiatedIce == pendingRecoveryAnswerIce_)) {
-        negotiatedRecoveryIce_ = negotiatedIce;
+    if (not fromSubcall and recoveryNegotiation_ and negotiatedIce == recoveryNegotiation_->ice) {
+        recoveryNegotiation_->phase = RecoveryNegotiation::Phase::MediaReady;
         completeRecoveryIfReadyLocked();
     }
     reportMediaNegotiationStatus();
@@ -3319,14 +3491,33 @@ pj_status_t
 SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
     JAMI_DEBUG("[call:{}] Received a re-invite", getCallId());
-
-    // A peer recovering from a network change sends its re-INVITE on a new
-    // channel, before this dialog follows it there.
-    if (auto* dialog = inviteSession_ ? inviteSession_->dlg : nullptr;
-        dialog and rdata and dialog->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT)
-        peerMovedInReinvite_ = dialog->tp_sel.u.transport != rdata->tp_info.transport;
-    incomingReinviteTransport_ = rdata ? rdata->tp_info.transport : nullptr;
-    incomingReinviteDuringRecovery_ = recovering_.load();
+    if (not rdata or not rdata->msg_info.cseq) {
+        JAMI_ERROR("[call:{}] Re-INVITE has no CSeq", getCallId());
+        return PJ_EINVAL;
+    }
+    const auto cseq = rdata->msg_info.cseq->cseq;
+    auto rejectOffer = [this, rdata](int code) {
+        pjsip_tx_data* answer = nullptr;
+        auto status = pjsip_inv_initial_answer(inviteSession_.get(), rdata, code, nullptr, nullptr, &answer);
+        if (status != PJ_SUCCESS) {
+            if (answer)
+                pjsip_tx_data_dec_ref(answer);
+            JAMI_ERROR("[call:{}] Unable to create re-INVITE rejection: {}",
+                       getCallId(),
+                       sip_utils::sip_strerror(status));
+            return status;
+        }
+        status = pjsip_inv_send_msg(inviteSession_.get(), answer);
+        if (status != PJ_SUCCESS)
+            JAMI_ERROR("[call:{}] Unable to send re-INVITE rejection: {}", getCallId(), sip_utils::sip_strerror(status));
+        return status;
+    };
+    auto generation = sip_utils::getHandoverGeneration(rdata);
+    auto current = recoveryGeneration_.load();
+    // Our generation may have advanced since request admission.
+    if (peerSupportsHandover() and generation and *generation < current) {
+        return rejectOffer(PJSIP_SC_REQUEST_PENDING);
+    }
 
     pj_status_t res = PJ_SUCCESS;
 
@@ -3335,19 +3526,11 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
         return res;
     }
 
-    sdp_->clearIce();
-    sdp_->setActiveRemoteSdpSession(nullptr);
-    sdp_->setActiveLocalSdpSession(nullptr);
-
     auto acc = getSIPAccount();
     if (not acc) {
         JAMI_ERROR("No account detected");
         return res;
     }
-
-    Sdp::printSession(offer, "Remote session (media change request)", SdpDirection::OFFER);
-
-    sdp_->setReceivedOffer(offer);
 
     // Note: For multistream, here we must ignore disabled remote medias, because
     // we will answer from our medias and remote enabled medias.
@@ -3358,29 +3541,87 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     // cf. pjmedia_sdp_neg_modify_local_offer2 for more details.
     auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer, true);
     if (mediaAttrList.empty()) {
-        JAMI_WARNING("[call:{}] Media list is empty, ignoring", getCallId());
-        return res;
+        JAMI_WARNING("[call:{}] Rejecting a re-INVITE with no usable media", getCallId());
+        return rejectOffer(PJSIP_SC_NOT_ACCEPTABLE_HERE);
     }
+
+    mediaNegotiationGeneration_ = generation.value_or(current);
+
+    // A peer recovering from a network change sends its re-INVITE on a new
+    // channel, before this dialog follows it there.
+    if (auto* dialog = inviteSession_ ? inviteSession_->dlg : nullptr;
+        dialog and dialog->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT)
+        peerMovedInReinvite_ = dialog->tp_sel.u.transport != rdata->tp_info.transport;
+
+    sdp_->clearIce();
+    sdp_->setActiveRemoteSdpSession(nullptr);
+    sdp_->setActiveLocalSdpSession(nullptr);
+    Sdp::printSession(offer, "Remote session (media change request)", SdpDirection::OFFER);
+    sdp_->setReceivedOffer(offer);
 
     if (upnp_) {
         openPortsUPnP();
     }
 
     pjsip_tx_data* tdata = nullptr;
-    if (pjsip_inv_initial_answer(inviteSession_.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-        JAMI_ERROR("[call:{}] Unable to create answer TRYING", getCallId());
-        return res;
+    auto status = pjsip_inv_initial_answer(inviteSession_.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata);
+    if (status != PJ_SUCCESS) {
+        if (tdata)
+            pjsip_tx_data_dec_ref(tdata);
+        JAMI_ERROR("[call:{}] Unable to create answer TRYING: {}", getCallId(), sip_utils::sip_strerror(status));
+        return status;
+    }
+    status = pjsip_inv_send_msg(inviteSession_.get(), tdata);
+    if (status != PJ_SUCCESS) {
+        JAMI_ERROR("[call:{}] Unable to send answer TRYING: {}", getCallId(), sip_utils::sip_strerror(status));
+        return status;
     }
 
-    dht::ThreadPool::io().run([callWkPtr = weak(), mediaAttrList] {
-        if (auto call = callWkPtr.lock()) {
-            // Report the change request.
-            auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-            if (auto conf = call->getConference()) {
-                conf->handleMediaChangeRequest(call, remoteMediaList);
-            } else {
-                call->handleMediaChangeRequest(remoteMediaList);
+    // A newer generation is the caller's recovery offer: the dialog moves to
+    // its channel before answering, on the main thread as it takes callMutex_.
+    std::shared_ptr<pjsip_transport> offerChannel;
+    if (peerSupportsHandover() and generation and *generation > current and rdata) {
+        pjsip_transport_add_ref(rdata->tp_info.transport);
+        offerChannel = {rdata->tp_info.transport, [](pjsip_transport* tp) { pjsip_transport_dec_ref(tp); }};
+    }
+    runOnMainThread([callWkPtr = weak(),
+                     mediaAttrList,
+                     offerChannel,
+                     generation = mediaNegotiationGeneration_.load(),
+                     cseq] {
+        auto call = callWkPtr.lock();
+        if (not call)
+            return;
+        {
+            std::lock_guard lk {call->callMutex_};
+            if (not call->inviteSession_)
+                return;
+            sip_utils::PJDialogLock dialogLock {call->inviteSession_->dlg};
+            if (not call->isPendingReinviteLocked(cseq)) {
+                JAMI_DEBUG("[call:{}] Discarding completed re-INVITE {}", call->getCallId(), cseq);
+                return;
             }
+            if (call->peerSupportsHandover() and offerChannel) {
+                auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(offerChannel.get());
+                auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock());
+                if (not account
+                    or not call->adoptRecoveryOfferLocked(transport, account->getContactHeader(transport), generation)) {
+                    call->rejectPendingReinviteLocked(cseq);
+                    return;
+                }
+            }
+            if (call->peerSupportsHandover()
+                and (call->mediaNegotiationGeneration_.load() != generation or not call->isCurrentMediaNegotiation())) {
+                call->rejectPendingReinviteLocked(cseq);
+                return;
+            }
+        }
+        // Report the change request.
+        auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+        if (auto conf = call->getConference()) {
+            conf->handleMediaChangeRequest(call, remoteMediaList);
+        } else {
+            call->handleMediaChangeRequest(remoteMediaList);
         }
     });
 
@@ -3868,20 +4109,21 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
 
     auto optOnInitDone = std::move(iceOptions.onInitDone);
     auto optOnNegoDone = std::move(iceOptions.onNegoDone);
-    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone), ice = std::weak_ptr(iceMedia)](bool ok) {
-        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, ok] {
+    auto generation = mediaNegotiationGeneration_.load();
+    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
+        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
             if (cb)
                 cb(ok);
             if (auto call = w.lock())
-                call->onIceInitDone(ice.lock(), ok);
+                call->onIceInitDone(ice.lock(), ok, generation);
         });
     };
-    iceOptions.onNegoDone = [w = weak(), cb = std::move(optOnNegoDone), ice = std::weak_ptr(iceMedia)](bool ok) {
-        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, ok] {
+    iceOptions.onNegoDone = [w = weak(), cb = std::move(optOnNegoDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
+        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
             if (cb)
                 cb(ok);
             if (auto call = w.lock())
-                call->onIceNegoDone(ice.lock(), ok);
+                call->onIceNegoDone(ice.lock(), ok, generation);
         });
     };
 
@@ -4052,17 +4294,8 @@ SIPCall::setupIceResponse(bool isReinvite, bool withoutUpnpWait)
         return;
     }
 
-    if (isReinvite and recovering_ and incomingReinviteDuringRecovery_.exchange(false)) {
-        auto ice = getIceMedia();
-        if (not waitingForRecoveryChannel_ and sipTransport_ and sipTransport_->get() == incomingReinviteTransport_) {
-            recoveryIce_ = ice;
-            recoveryIceTransport_ = sipTransport_;
-        } else if (waitingForRecoveryChannel_ and incomingReinviteTransport_ and sipTransport_
-                   and sipTransport_->get() != incomingReinviteTransport_) {
-            pendingRecoveryAnswerIce_ = ice;
-            pendingRecoveryAnswerTransport_ = incomingReinviteTransport_;
-        }
-    }
+    if (isReinvite and recovering_ and not waitingForRecoveryChannel_ and isCurrentMediaNegotiation())
+        recoveryNegotiation_ = RecoveryNegotiation {recoveryGeneration_, sipTransport_, getIceMedia()};
 
     // Media transport changed, must restart the media.
     mediaRestartRequired_ = true;
