@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52c7036a_3220a0b4",
+        "filename": "contrib/src/dhtnet/package.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T18:23:22Z",
+      "side": 1,
+      "message": "[error] Line 23: 🔴 The new entry in `patches` references `0001-fix-connection-manager-onResponse-use-after-free.patch`, but this patch file is not included in the patchset. If the file is absent in-tree, contrib build will fail when applying patches. Add the patch file under `contrib/src/dhtnet/` (or remove the reference if already upstreamed in `DHTNET_VERSION`).",
+      "revId": "0efb94a3e01d459798e4dbd73a960ef3d998b17c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
