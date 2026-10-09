@@ -19,6 +19,7 @@
 #include "jamidht/jamiaccount.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+#include "connectivity/sip_utils.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "media_const.h"
@@ -31,6 +32,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <chrono>
+#include <atomic>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -88,6 +90,10 @@ private:
     void testRemovedPeerEndsCall();
     void testCalleeBlockingCallerEndsCall();
     void testHoldDuringRecovery();
+    void testHoldAndMediaChangeDuringRecovery();
+    void testResumeAndMediaChangeDuringRecovery();
+    void testMediaChangeWaitsForInviteAndIce();
+    void testDeferredCallbackStartsNewRecovery();
     void testCallerMediaChangeDuringRecovery();
     void testCalleeMediaChangeDuringRecovery();
     void testRecoveryAcrossAddressFamilies();
@@ -111,6 +117,10 @@ private:
     CPPUNIT_TEST(testRemovedPeerEndsCall);
     CPPUNIT_TEST(testCalleeBlockingCallerEndsCall);
     CPPUNIT_TEST(testHoldDuringRecovery);
+    CPPUNIT_TEST(testHoldAndMediaChangeDuringRecovery);
+    CPPUNIT_TEST(testResumeAndMediaChangeDuringRecovery);
+    CPPUNIT_TEST(testMediaChangeWaitsForInviteAndIce);
+    CPPUNIT_TEST(testDeferredCallbackStartsNewRecovery);
     CPPUNIT_TEST(testCallerMediaChangeDuringRecovery);
     CPPUNIT_TEST(testCalleeMediaChangeDuringRecovery);
     CPPUNIT_TEST(testRecoveryAcrossAddressFamilies);
@@ -125,6 +135,8 @@ private:
     void hangUp();
     void removePeerDuringCall(bool ban, bool byCallee = false);
     void changeMediaDuringRecovery(bool caller);
+    void changeMediaWithControlDuringRecovery(bool resume);
+    void waitForMediaChange(bool held);
 
     std::shared_ptr<JamiAccount> alice_;
     std::shared_ptr<JamiAccount> bob_;
@@ -212,10 +224,26 @@ HandoverTest::startCall()
     }
     Manager::instance().acceptCall(bobId_, bobCallId);
 
-    std::unique_lock lock(mutex_);
-    CPPUNIT_ASSERT(cv_.wait_for(lock, 30s, [&] {
-        return aliceCurrent_ and bobCurrent_ and negotiations_[aliceCallId_] > 0 and negotiations_[bobCallId_] > 0;
-    }));
+    {
+        std::unique_lock lock(mutex_);
+        CPPUNIT_ASSERT(cv_.wait_for(lock, 30s, [&] {
+            return aliceCurrent_ and bobCurrent_ and negotiations_[aliceCallId_] > 0 and negotiations_[bobCallId_] > 0;
+        }));
+    }
+    auto idle = [&] {
+        auto state = currentState();
+        if (not state.alice or not state.bob)
+            return false;
+        std::scoped_lock lock(state.alice->callMutex_, state.bob->callMutex_);
+        return state.alice->inviteSession_ and state.bob->inviteSession_
+               and state.alice->inviteSession_->state == PJSIP_INV_STATE_CONFIRMED
+               and state.bob->inviteSession_->state == PJSIP_INV_STATE_CONFIRMED
+               and not state.alice->isReinviteBusyLocked() and not state.bob->isReinviteBusyLocked();
+    };
+    auto deadline = std::chrono::steady_clock::now() + 15s;
+    while (not idle() and std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(50ms);
+    CPPUNIT_ASSERT(idle());
 }
 
 HandoverTest::CallState
@@ -595,6 +623,158 @@ HandoverTest::testHoldDuringRecovery()
         std::lock_guard lock(mutex_);
         CPPUNIT_ASSERT_EQUAL(0u, ended_);
     }
+    hangUp();
+}
+
+void
+HandoverTest::waitForMediaChange(bool held)
+{
+    auto applied = [&] {
+        auto state = currentState();
+        if (not state.alice or not state.bob)
+            return false;
+        std::scoped_lock lock(state.alice->callMutex_, state.bob->callMutex_);
+        if (state.alice->isReinviteBusyLocked() or state.bob->isReinviteBusyLocked()
+            or state.alice->getMediaAttributeList().size() != 1 or state.bob->getMediaAttributeList().size() != 1)
+            return false;
+        return state.alice->getState() == (held ? Call::CallState::HOLD : Call::CallState::ACTIVE)
+               and state.alice->getMediaAttributeList().front().hold_ == held and state.bob->peerHold_ == held
+               and state.aliceIce and state.aliceIce->isRunning() and state.bobIce and state.bobIce->isRunning();
+    };
+    auto deadline = std::chrono::steady_clock::now() + 30s;
+    while (not applied() and std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(50ms);
+    CPPUNIT_ASSERT(applied());
+    std::lock_guard lock(mutex_);
+    CPPUNIT_ASSERT_EQUAL(0u, ended_);
+}
+
+void
+HandoverTest::changeMediaWithControlDuringRecovery(bool resume)
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.bob);
+    if (resume) {
+        libjami::hold(aliceId_, aliceCallId_);
+        auto held = [&] {
+            std::lock_guard lock(before.alice->callMutex_);
+            return before.alice->getState() == Call::CallState::HOLD and not before.alice->isReinviteBusyLocked();
+        };
+        auto deadline = std::chrono::steady_clock::now() + 15s;
+        while (not held() and std::chrono::steady_clock::now() < deadline)
+            std::this_thread::sleep_for(50ms);
+        CPPUNIT_ASSERT(held());
+    }
+    auto audioOnly = before.alice->currentMediaList();
+    std::erase_if(audioOnly, [](const auto& media) {
+        return media.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) != libjami::Media::MediaAttributeValue::AUDIO;
+    });
+    auto controlSucceeded = std::make_shared<std::atomic_bool>(false);
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        before.alice->startRecoveryLocked();
+        auto reply = [controlSucceeded](bool ok) { controlSucceeded->store(ok); };
+        if (resume)
+            CPPUNIT_ASSERT(not before.alice->resume(std::move(reply)));
+        else
+            CPPUNIT_ASSERT(not before.alice->hold(std::move(reply)));
+        CPPUNIT_ASSERT(before.alice->requestMediaChange(audioOnly));
+        CPPUNIT_ASSERT_EQUAL(size_t(2), before.alice->getMediaAttributeList().size());
+        before.alice->stopCallRecovery();
+    }
+    before.alice->drainPendingRequests();
+    waitForMediaChange(not resume);
+    CPPUNIT_ASSERT(controlSucceeded->load());
+    hangUp();
+}
+
+void
+HandoverTest::testHoldAndMediaChangeDuringRecovery()
+{
+    changeMediaWithControlDuringRecovery(false);
+}
+
+void
+HandoverTest::testResumeAndMediaChangeDuringRecovery()
+{
+    changeMediaWithControlDuringRecovery(true);
+}
+
+void
+HandoverTest::testMediaChangeWaitsForInviteAndIce()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.alice->inviteSession_);
+    auto audioOnly = before.alice->currentMediaList();
+    std::erase_if(audioOnly, [](const auto& media) {
+        return media.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) != libjami::Media::MediaAttributeValue::AUDIO;
+    });
+    bool sipBlocked;
+    bool iceBlocked;
+    int busyResult;
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        auto* dialog = before.alice->inviteSession_->dlg;
+        sip_utils::PJDialogLock dialogLock {dialog};
+        auto* previousTransaction = before.alice->inviteSession_->invite_tsx;
+        pjsip_transaction transaction {};
+        before.alice->inviteSession_->invite_tsx = &transaction;
+        before.alice->requestMediaChange(audioOnly);
+        before.alice->drainPendingRequests();
+        busyResult = before.alice->SIPSessionReinvite(before.alice->getMediaAttributeList(), true);
+        sipBlocked = before.alice->pendingMediaChange_.has_value()
+                     and before.alice->getMediaAttributeList().size() == 2;
+        before.alice->inviteSession_->invite_tsx = previousTransaction;
+        before.alice->isWaitingForIceAndMedia_ = true;
+        before.alice->onInviteTransactionEnded();
+        iceBlocked = before.alice->pendingMediaChange_.has_value()
+                     and before.alice->getMediaAttributeList().size() == 2;
+        before.alice->isWaitingForIceAndMedia_ = false;
+    }
+    CPPUNIT_ASSERT_EQUAL(PJ_EBUSY, busyResult);
+    CPPUNIT_ASSERT(sipBlocked and iceBlocked);
+    before.alice->onInviteTransactionEnded();
+    waitForMediaChange(false);
+    hangUp();
+}
+
+void
+HandoverTest::testDeferredCallbackStartsNewRecovery()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.alice->inviteSession_);
+    auto audioOnly = before.alice->currentMediaList();
+    std::erase_if(audioOnly, [](const auto& media) {
+        return media.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) != libjami::Media::MediaAttributeValue::AUDIO;
+    });
+    auto replied = std::make_shared<std::atomic_bool>(false);
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        before.alice->startRecoveryLocked();
+        before.alice->hold([w = before.alice->weak(), replied](bool ok) {
+            if (auto call = w.lock()) {
+                std::lock_guard lock(call->callMutex_);
+                call->startRecoveryLocked();
+                replied->store(ok);
+            }
+        });
+        before.alice->requestMediaChange(audioOnly);
+        before.alice->stopCallRecovery();
+    }
+    before.alice->drainPendingRequests();
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        CPPUNIT_ASSERT(replied->load());
+        CPPUNIT_ASSERT(before.alice->isRecovering());
+        CPPUNIT_ASSERT(before.alice->pendingMediaChange_);
+        CPPUNIT_ASSERT_EQUAL(size_t(2), before.alice->getMediaAttributeList().size());
+        before.alice->stopCallRecovery();
+    }
+    before.alice->drainPendingRequests();
+    waitForMediaChange(true);
     hangUp();
 }
 
