@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88842cdc_d64b3b6e",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T19:04:15Z",
+      "side": 1,
+      "message": "[warning] Line 53: 🟡 Several logs are disabled by commenting out statements (same pattern appears in other files in this patch). Commented-out code tends to drift and increases maintenance cost; prefer a proper logging gate (log level/category/rate limiting or a dedicated debug flag) so the code path stays live and testable while still reducing noise.",
+      "revId": "5cedfab74bcb6aca7788cb837d18e395c60f68f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "222858bf_e3809086",
+        "filename": "src/media/audio/aaudio/aaudiolayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T19:04:15Z",
+      "side": 1,
+      "message": "[warning] Line 358: 🟡 The playback-underflow warning is now fully muted. Underflow is a useful production signal for diagnosing audio starvation/glitches; instead of removing it entirely, keep a throttled or sampled warning/counter to preserve observability without log spam.",
+      "revId": "5cedfab74bcb6aca7788cb837d18e395c60f68f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
