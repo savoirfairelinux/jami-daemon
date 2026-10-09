@@ -8,7 +8,7 @@
     "git.addAICoAuthor": "off",
     "github.copilot.chat.commitMessageGeneration.instructions": [
         {
-            "text": "At the bottom of the commit message, add 'Co-authored-by: <model_name>'"
+            "text": "At the bottom of the commit message, add 'Co-authored-by: <model_name>' (no harness just the model name)"
         }
     ],
     "editor.rulers": [

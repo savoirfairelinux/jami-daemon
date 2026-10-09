@@ -12,3 +12,4 @@ One commit per logical unit of work.
 
 - Subject ≤50 chars
 - Body lines ≤72 chars, blank line between subject and body; keep the body concise and to the point
+- At the bottom of the commit message, add 'Co-authored-by: <model_name>' (no harness name like Copilot or Codex - just your model name and version if you know it)
