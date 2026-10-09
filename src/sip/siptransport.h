@@ -27,6 +27,7 @@
 #include <pjsip.h>
 #include <pjnath/stun_config.h>
 
+#include <atomic>
 #include <functional>
 #include <mutex>
 #include <map>
@@ -107,6 +108,8 @@ public:
 
     /** Only makes sense for connection-oriented transports */
     bool isConnected() const noexcept { return connected_; }
+    // For transports whose pjsip side never reports PJSIP_TP_STATE_CONNECTED.
+    void setConnected() noexcept { connected_ = true; }
 
     inline void setDeviceId(const std::string& deviceId) { deviceId_ = deviceId; }
     inline std::string_view deviceId() const { return deviceId_; }
@@ -132,7 +135,7 @@ private:
     std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
     std::weak_ptr<SIPAccountBase> account_ {};
 
-    bool connected_ {false};
+    std::atomic_bool connected_ {false};
     std::string deviceId_ {};
     std::string peerAccountId_ {};
     TlsInfos tlsInfos_;

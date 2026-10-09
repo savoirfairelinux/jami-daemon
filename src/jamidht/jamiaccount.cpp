@@ -3080,39 +3080,17 @@ JamiAccount::requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newN
                                          retry();
                                          return;
                                      }
-                                     runOnMainThread([w, wcall, sipTransport, attempt] {
+                                     runOnMainThread([w, wcall, sipTransport, attempt, retry] {
                                          auto account = w.lock();
                                          auto call = wcall.lock();
-                                         if (account and call)
-                                             call->useRecoveredTransport(sipTransport,
-                                                                         account->getContactHeader(sipTransport),
-                                                                         attempt);
+                                         if (account and call
+                                             and not call->useRecoveredTransport(sipTransport,
+                                                                                 account->getContactHeader(sipTransport),
+                                                                                 attempt))
+                                             retry();
                                      });
                                  });
     return true;
-}
-
-void
-JamiAccount::followPeerTransport(const std::shared_ptr<SIPCall>& call, pjsip_transport* transport, bool probe)
-{
-    std::shared_ptr<SipTransport> sipTransport;
-    {
-        std::lock_guard lk(sipConnsMtx_);
-        for (const auto& [key, connections] : sipConns_) {
-            auto it = std::find_if(connections.begin(), connections.end(), [&](const auto& connection) {
-                return connection.transport and connection.transport->get() == transport;
-            });
-            if (it != connections.end()) {
-                sipTransport = it->transport;
-                break;
-            }
-        }
-    }
-    if (not sipTransport) {
-        JAMI_WARNING("[call:{}] Ignoring a request received on an unknown SIP channel", call->getCallId());
-        return;
-    }
-    call->followPeerTransport(sipTransport, getContactHeader(sipTransport), probe);
 }
 
 bool

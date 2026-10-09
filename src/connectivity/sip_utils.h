@@ -20,6 +20,8 @@
 #include "noncopyable.h"
 
 #include <string>
+#include <cstdint>
+#include <optional>
 #include <vector>
 #include <cstring> // strcmp
 
@@ -145,6 +147,12 @@ void addContactHeader(const std::string& contact, pjsip_tx_data* tdata);
 void addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata);
 void addCallHandoverHeader(pjsip_tx_data* tdata);
 bool supportsCallHandover(const pjsip_rx_data* rdata);
+void addHandoverGeneration(pjsip_tx_data* tdata, std::uint64_t generation);
+void addHandoverRequest(pjsip_tx_data* tdata, std::uint64_t request);
+std::optional<std::uint64_t> getHandoverGeneration(const pjsip_msg* msg);
+std::optional<std::uint64_t> getHandoverGeneration(const pjsip_rx_data* rdata);
+std::optional<std::uint64_t> getHandoverRequest(const pjsip_rx_data* rdata);
+bool hasHandoverGeneration(const pjsip_rx_data* rdata);
 std::string_view getPeerUserAgent(const pjsip_rx_data* rdata);
 std::vector<std::string> getPeerAllowMethods(const pjsip_rx_data* rdata);
 void logMessageHeaders(const pjsip_hdr* hdr_list);
