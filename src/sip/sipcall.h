@@ -349,7 +349,8 @@ private:
     void sendRecoveryProbeLocked();
     void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options);
     void completeRecoveryIfReadyLocked();
-    void applyRequestsDeferredByRecovery();
+    bool isReinviteBusyLocked() const;
+    void drainPendingRequests();
     // Returns the client callback to run with the result, if any, so that
     // callers holding callMutex_ can run it once released.
     std::function<void()> processRemainingRequest();
