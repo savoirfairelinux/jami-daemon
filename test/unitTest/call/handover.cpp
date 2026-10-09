@@ -86,6 +86,8 @@ private:
     void testRecoveryOpensNewSocket();
     void testStaleRecoveryAttemptDoesNotTakeOver();
     void testStaleIceCallbacks();
+    void testRecoveryRequiresMatchingNegotiation();
+    void testRecoveryRestartWaitsForInvite();
     void testCurrentIceFailureEndsCall();
     void testBlockedPeerEndsCall();
     void testRemovedPeerEndsCall();
@@ -116,6 +118,8 @@ private:
     CPPUNIT_TEST(testRecoveryOpensNewSocket);
     CPPUNIT_TEST(testStaleRecoveryAttemptDoesNotTakeOver);
     CPPUNIT_TEST(testStaleIceCallbacks);
+    CPPUNIT_TEST(testRecoveryRequiresMatchingNegotiation);
+    CPPUNIT_TEST(testRecoveryRestartWaitsForInvite);
     CPPUNIT_TEST(testCurrentIceFailureEndsCall);
     CPPUNIT_TEST(testBlockedPeerEndsCall);
     CPPUNIT_TEST(testRemovedPeerEndsCall);
@@ -557,6 +561,72 @@ HandoverTest::testStaleIceCallbacks()
         before.alice->setIceMedia({}, true);
     }
     CPPUNIT_ASSERT_EQUAL(before.aliceNegotiations, currentState().aliceNegotiations);
+    hangUp();
+}
+
+void
+HandoverTest::testRecoveryRequiresMatchingNegotiation()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.aliceIce and before.aliceIce->isRunning());
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.aliceTransport);
+    auto otherTransport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.bobTransport);
+    auto otherIce = Manager::instance().getIceTransportFactory()->createTransport("unrelated-negotiation");
+    CPPUNIT_ASSERT(transport and otherTransport and otherIce);
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        auto& call = *before.alice;
+        call.startRecoveryLocked();
+        call.recoveryNegotiation_ = SIPCall::RecoveryNegotiation {call.recoveryGeneration_, transport, before.aliceIce};
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(call.isRecovering());
+        call.recoveryNegotiation_->phase = SIPCall::RecoveryNegotiation::Phase::MediaReady;
+        ++call.recoveryNegotiation_->generation;
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(call.isRecovering());
+        call.recoveryNegotiation_->generation = call.recoveryGeneration_;
+        call.recoveryNegotiation_->transport = otherTransport;
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(call.isRecovering());
+        call.recoveryNegotiation_->transport = transport;
+        call.recoveryNegotiation_->ice = otherIce;
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(call.isRecovering());
+        call.recoveryNegotiation_->ice = before.aliceIce;
+        call.waitingForRecoveryChannel_ = true;
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(call.isRecovering());
+        call.waitingForRecoveryChannel_ = false;
+        call.completeRecoveryIfReadyLocked();
+        CPPUNIT_ASSERT(not call.isRecovering());
+        CPPUNIT_ASSERT(not call.recoveryNegotiation_);
+    }
+    hangUp();
+}
+
+void
+HandoverTest::testRecoveryRestartWaitsForInvite()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.alice->inviteSession_);
+    bool pending;
+    {
+        std::lock_guard lock(before.alice->callMutex_);
+        sip_utils::PJDialogLock dialogLock {before.alice->inviteSession_->dlg};
+        before.alice->startRecoveryLocked();
+        auto* previousTransaction = before.alice->inviteSession_->invite_tsx;
+        pjsip_transaction transaction {};
+        before.alice->inviteSession_->invite_tsx = &transaction;
+        before.alice->restartIceAfterRecovery(dhtnet::IceTransportOptions {}, before.alice->recoveryGeneration_);
+        pending = before.alice->recoveryRestartPending_ and not before.alice->recoveryNegotiation_
+                  and before.alice->getIceMedia() == before.aliceIce;
+        before.alice->inviteSession_->invite_tsx = previousTransaction;
+        before.alice->stopCallRecovery();
+        CPPUNIT_ASSERT(not before.alice->recoveryRestartPending_);
+    }
+    CPPUNIT_ASSERT(pending);
     hangUp();
 }
 

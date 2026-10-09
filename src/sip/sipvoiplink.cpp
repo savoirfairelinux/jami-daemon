@@ -859,17 +859,16 @@ handover_request_cb(pjsip_rx_data* rdata)
         handover_reject_request(rdata);
         return PJ_TRUE;
     }
+    if (admission == SIPCall::SipRequestAdmission::RecoveryOffer)
+        return PJ_FALSE;
     auto generation = sip_utils::getHandoverGeneration(rdata).value_or(0);
     auto request = sip_utils::getHandoverRequest(rdata).value_or(0);
-    bool probe = admission == SIPCall::SipRequestAdmission::Probe;
-    runOnMainThread([w = call->weak(), transport, generation, request, probe] {
+    runOnMainThread([w = call->weak(), transport, generation, request] {
         if (auto call = w.lock()) {
             if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock()))
-                call->followPeerTransport(transport, account->getContactHeader(transport), probe, generation, request);
+                call->followPeerTransport(transport, account->getContactHeader(transport), true, generation, request);
         }
     });
-    if (not probe)
-        return PJ_FALSE;
     pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
     return PJ_TRUE;
 }
