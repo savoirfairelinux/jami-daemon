@@ -16,6 +16,23 @@
       "message": "[warning] Line 559: 🟡 The test depends on real-time delay (`sleep_for(10ms)`) and wall-clock sampling (`nowMs()`), which can be flaky on loaded CI runners and low timer-resolution environments. Make this deterministic by constructing explicit timestamps from `info.created` (e.g., `removed \u003d created + 1ms`, `erased \u003d removed + 1ms`) and removing the sleep.",
       "revId": "5ffa11569702370f30efabef07740c976f7b8652",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0a4aaf8_63443ba6",
+        "filename": "test/unitTest/syncHistory/syncHistory.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-09T21:14:14Z",
+      "side": 1,
+      "message": "[warning] Line 562: 🟡 The regression test does not actually reproduce the timestamp-ordering bug it targets: `erased` is set with local `nowMs()` after processing removal, so `erased \u003e\u003d local removed` even with the old buggy behavior. This can let the test pass without validating the fix. Set explicit remote-side timestamps in `msg` (e.g., `removed \u003d created + 1ms`, `erased \u003d removed + 1ms`) before delivering both sync messages, so erasure remains older than local reception time but newer than remote removal time.",
+      "revId": "5ffa11569702370f30efabef07740c976f7b8652",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
