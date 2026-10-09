@@ -19,6 +19,7 @@
 #include "jamidht/jamiaccount.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+#include "sip/sipvoiplink.h"
 #include "connectivity/sip_utils.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -98,6 +99,9 @@ private:
     void testCalleeMediaChangeDuringRecovery();
     void testRecoveryAcrossAddressFamilies();
     void testIgnoresRequestsOnAbandonedChannel();
+    void testCandidateAdmissionAndGenerations();
+    void testHandoverHeaderValidation();
+    void testRetirementIsPerCall();
 
     CPPUNIT_TEST_SUITE(HandoverTest);
     CPPUNIT_TEST(testRecoverAfterSipChannelCloses);
@@ -125,6 +129,9 @@ private:
     CPPUNIT_TEST(testCalleeMediaChangeDuringRecovery);
     CPPUNIT_TEST(testRecoveryAcrossAddressFamilies);
     CPPUNIT_TEST(testIgnoresRequestsOnAbandonedChannel);
+    CPPUNIT_TEST(testCandidateAdmissionAndGenerations);
+    CPPUNIT_TEST(testHandoverHeaderValidation);
+    CPPUNIT_TEST(testRetirementIsPerCall);
     CPPUNIT_TEST_SUITE_END();
 
     // Alice calls Bob, who answers; returns once media is negotiated on both sides.
@@ -400,9 +407,9 @@ HandoverTest::testProbeAfterPeerRequest()
 
     // An in-dialog request can be queued before the peer's OPTIONS probe.
     before.alice->followPeerTransport(transport, contact, false);
-    CPPUNIT_ASSERT(before.alice->getTransport() == transport.get());
-    before.alice->followPeerTransport(transport, contact, true);
-    before.alice->followPeerTransport(transport, contact, true);
+    CPPUNIT_ASSERT(before.alice->getTransport() != transport.get());
+    before.alice->followPeerTransport(transport, contact, true, 0, 1);
+    before.alice->followPeerTransport(transport, contact, true, 0, 1);
     {
         std::unique_lock lock(mutex_);
         CPPUNIT_ASSERT(cv_.wait_for(lock, 15s, [&] { return negotiations_[aliceCallId_] > before.aliceNegotiations; }));
@@ -412,6 +419,10 @@ HandoverTest::testProbeAfterPeerRequest()
         std::lock_guard lock(mutex_);
         CPPUNIT_ASSERT_EQUAL(before.aliceNegotiations + 1, negotiations_[aliceCallId_]);
     }
+    auto recovered = currentState();
+    before.alice->followPeerTransport(transport, contact, true, 0, 1);
+    std::this_thread::sleep_for(500ms);
+    CPPUNIT_ASSERT(before.alice->getIceMedia() == recovered.aliceIce);
     hangUp();
 }
 
@@ -536,6 +547,8 @@ HandoverTest::testStaleIceCallbacks()
         before.alice->onIceNegoDone(before.aliceIce, false);
         before.alice->onIceNegoDone(before.aliceIce, true);
         before.alice->onIceNegoDone({}, false);
+        before.alice->onIceInitDone(replacement, true, 999);
+        before.alice->onIceNegoDone(replacement, false, 999);
         subcall->onIceNegoDone(before.aliceIce, false);
         subcall->onIceNegoDone(before.aliceIce, true);
         CPPUNIT_ASSERT(before.alice->getConnectionState() == Call::ConnectionState::CONNECTED);
@@ -861,6 +874,8 @@ HandoverTest::testIgnoresRequestsOnAbandonedChannel()
 {
     startCall();
     auto before = currentState();
+    auto oldAlice = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.aliceTransport);
+    auto oldBob = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.bobTransport);
     alice_->networkInterfaceChanged();
     checkRecovered(before);
     auto recovered = currentState();
@@ -872,8 +887,135 @@ HandoverTest::testIgnoresRequestsOnAbandonedChannel()
     selector.u.transport = before.bobTransport;
     CPPUNIT_ASSERT(pjsip_dlg_set_transport(before.bob->inviteSession_->dlg, &selector) == PJ_SUCCESS);
     before.bob->requestKeyframe();
+    {
+        std::lock_guard lock(before.bob->callMutex_);
+        auto* dialog = before.bob->inviteSession_->dlg;
+        sip_utils::PJDialogLock dialogLock {dialog};
+        for (const auto* method : {&pjsip_invite_method, &pjsip_options_method, &pjsip_bye_method}) {
+            pjsip_tx_data* tdata = nullptr;
+            CPPUNIT_ASSERT(pjsip_dlg_create_request(dialog, method, dialog->local.cseq++, &tdata) == PJ_SUCCESS);
+            tdata->mod_data[dialog->ua->id] = nullptr;
+            pjsip_tx_data_set_transport(tdata, &selector);
+            CPPUNIT_ASSERT(pjsip_endpt_send_request(Manager::instance().sipVoIPLink().getEndpoint(),
+                                                    tdata, -1, nullptr, nullptr) == PJ_SUCCESS);
+        }
+        selector.u.transport = recovered.bobTransport;
+        CPPUNIT_ASSERT(pjsip_dlg_set_transport(dialog, &selector) == PJ_SUCCESS);
+    }
     std::this_thread::sleep_for(2s);
-    CPPUNIT_ASSERT(currentState().aliceTransport == recovered.aliceTransport);
+    auto after = currentState();
+    CPPUNIT_ASSERT(after.aliceTransport == recovered.aliceTransport);
+    CPPUNIT_ASSERT(after.aliceIce == recovered.aliceIce);
+    CPPUNIT_ASSERT_EQUAL(recovered.aliceNegotiations, after.aliceNegotiations);
+    CPPUNIT_ASSERT(before.alice->getConnectionState() == Call::ConnectionState::CONNECTED);
+    CPPUNIT_ASSERT(before.alice->isRetiredSipTransport(oldAlice->get()));
+    {
+        std::lock_guard lock(mutex_);
+        CPPUNIT_ASSERT_EQUAL(0u, ended_);
+    }
+    hangUp();
+}
+
+void
+HandoverTest::testCandidateAdmissionAndGenerations()
+{
+    startCall();
+    auto before = currentState();
+    auto active = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.bobTransport);
+    auto candidate = std::make_shared<SipTransport>(before.aliceTransport, active->getTlsInfos().peerCert);
+    candidate->setPeerAccountId(std::string(active->peerAccountId()));
+    candidate->setDeviceId(std::string(active->deviceId()));
+    auto* pool = pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
+                               "handover-admission-test", 4096, 4096, nullptr);
+    CPPUNIT_ASSERT(pool);
+    auto admit = [&](const std::shared_ptr<SipTransport>& transport, const pjsip_method& method,
+                     std::optional<std::uint64_t> generation) {
+        pjsip_tx_data sent {};
+        sent.pool = pool;
+        sent.msg = pjsip_msg_create(pool, PJSIP_REQUEST_MSG);
+        sent.msg->line.req.method = method;
+        pjsip_msg_body body {};
+        if (method.id == PJSIP_INVITE_METHOD)
+            sent.msg->body = &body;
+        if (generation)
+            sip_utils::addHandoverGeneration(&sent, *generation);
+        pjsip_rx_data received {};
+        received.msg_info.msg = sent.msg;
+        return before.bob->admitSipRequest(transport, &received);
+    };
+    auto original = std::atomic_load(&before.bob->sipAdmissionState_);
+    bool candidateRejected = admit(candidate, pjsip_options_method, std::nullopt) == SIPCall::SipRequestAdmission::Reject;
+    bool selected = admit(candidate, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::RecoveryOffer;
+    bool oldRejected = admit(active, pjsip_invite_method, 2) == SIPCall::SipRequestAdmission::Reject;
+    bool staleRejected = admit(candidate, pjsip_invite_method, 0) == SIPCall::SipRequestAdmission::Reject;
+    pjsip_method info {};
+    auto infoName = sip_utils::CONST_PJ_STR("INFO");
+    pjsip_method_init_np(&info, &infoName);
+    bool selectedAccepts = admit(candidate, info, std::nullopt) == SIPCall::SipRequestAdmission::Accept;
+    bool sameGenerationRejected = admit(active, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::Reject;
+    bool sameChannelAccepted = admit(candidate, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::Accept;
+    std::atomic_store(&before.bob->sipAdmissionState_, original);
+    bool firstSelected = admit(active, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::RecoveryOffer;
+    bool competingRejected = admit(candidate, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::Reject;
+    bool nextSelected = admit(candidate, pjsip_invite_method, 2) == SIPCall::SipRequestAdmission::RecoveryOffer;
+    bool lateOfferRejected = admit(active, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::Reject;
+    bool staleSameChannelRejected = admit(candidate, pjsip_invite_method, 1) == SIPCall::SipRequestAdmission::Reject;
+    std::atomic_store(&before.bob->sipAdmissionState_, original);
+    pj_pool_release(pool);
+    CPPUNIT_ASSERT(candidateRejected and selected and oldRejected and staleRejected and selectedAccepts
+                   and sameGenerationRejected and sameChannelAccepted and firstSelected and competingRejected
+                   and nextSelected and lateOfferRejected and staleSameChannelRejected);
+    hangUp();
+}
+
+void
+HandoverTest::testHandoverHeaderValidation()
+{
+    auto* pool = pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
+                               "handover-header-test", 4096, 4096, nullptr);
+    CPPUNIT_ASSERT(pool);
+    pjsip_tx_data sent {};
+    sent.pool = pool;
+    sent.msg = pjsip_msg_create(pool, PJSIP_REQUEST_MSG);
+    sip_utils::addHandoverGeneration(&sent, 42);
+    sip_utils::addHandoverRequest(&sent, 7);
+    sip_utils::addCallHandoverHeader(&sent);
+    pjsip_rx_data received {};
+    received.msg_info.msg = sent.msg;
+    bool roundTrip = sip_utils::getHandoverGeneration(&received) == 42
+                     and sip_utils::getHandoverRequest(&received) == 7 and sip_utils::supportsCallHandover(&received);
+    sip_utils::addHandoverGeneration(&sent, 42);
+    bool duplicateRejected = not sip_utils::getHandoverGeneration(&received);
+    bool malformedRejected = true;
+    auto name = sip_utils::CONST_PJ_STR("X-Jami-Handover-Generation");
+    for (const auto* text : {"", "-1", "+1", "1x", "18446744073709551616"}) {
+        sent.msg = pjsip_msg_create(pool, PJSIP_REQUEST_MSG);
+        auto value = sip_utils::CONST_PJ_STR(std::string_view(text));
+        auto* header = pjsip_generic_string_hdr_create(pool, &name, &value);
+        pjsip_msg_add_hdr(sent.msg, reinterpret_cast<pjsip_hdr*>(header));
+        received.msg_info.msg = sent.msg;
+        malformedRejected &= sip_utils::hasHandoverGeneration(&received)
+                             and not sip_utils::getHandoverGeneration(&received);
+    }
+    pj_pool_release(pool);
+    CPPUNIT_ASSERT(roundTrip and duplicateRejected and malformedRejected);
+}
+
+void
+HandoverTest::testRetirementIsPerCall()
+{
+    startCall();
+    auto before = currentState();
+    auto old = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.aliceTransport);
+    auto otherCall = std::make_shared<SIPCall>(alice_, "shared-channel-call", Call::CallType::OUTGOING,
+                                               before.alice->currentMediaList());
+    otherCall->setSipTransport(old, alice_->getContactHeader(old));
+    alice_->networkInterfaceChanged();
+    checkRecovered(before);
+    CPPUNIT_ASSERT(before.alice->isRetiredSipTransport(old->get()));
+    CPPUNIT_ASSERT(not otherCall->isRetiredSipTransport(old->get()));
+    CPPUNIT_ASSERT(otherCall->getTransport() == old.get());
+    CPPUNIT_ASSERT(old->isConnected());
     hangUp();
 }
 

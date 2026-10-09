@@ -23,12 +23,25 @@ See the [Contributing](#contributing) section for more information.
 
 # Network handover
 
-When both peers support it, an established one-to-one Jami call can reconnect
+When both peers support it, an established Jami call can reconnect
 after its SIP channel closes or its default IP network changes. The daemon
 opens a new authenticated channel and restarts ICE while retaining the call.
 Recovery has a 20-second limit; audio or video may pause during that time.
-Calls with older clients, conferences, and regular SIP accounts retain their
+Calls with older clients and regular SIP accounts retain their
 previous behavior.
+
+Handover support is advertised with `X-Jami-Call-Handover: 1`. The original caller
+selects the recovery channel and issues a monotonically increasing generation
+in `X-Jami-Handover-Generation`. The callee requests recovery with a numbered
+OPTIONS probe, but does not independently select a competing channel. Delayed
+requests from retired channels are rejected before dialog or SDP processing;
+existing transaction cleanup can finish. Retirement is per call and does not
+close a channel used by another call. Stale SDP and ICE results cannot commit
+media state for a newer generation.
+
+Another network change replaces the connection attempt without extending the
+original 20-second recovery deadline. A peer returning after that deadline
+does not resurrect the ended call.
 
 Clients should call `libjami::connectivityChanged()` to refresh account
 connectivity and `libjami::networkInterfaceChanged()` only when the default

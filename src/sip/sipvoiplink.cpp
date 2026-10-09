@@ -70,6 +70,8 @@ using sip_utils::CONST_PJ_STR;
 
 static pjsip_endpoint* endpt_;
 static pjsip_module mod_ua_;
+static pjsip_module mod_handover_admission_;
+static pj_bool_t handover_request_cb(pjsip_rx_data* rdata);
 
 static void invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void outgoing_request_forked_cb(pjsip_inv_session* inv, pjsip_event* e);
@@ -644,6 +646,12 @@ SIPVoIPLink::SIPVoIPLink()
     mod_ua_.on_rx_response = &transaction_response_cb;
     TRY(pjsip_endpt_register_module(endpt_, &mod_ua_));
 
+    mod_handover_admission_.name = sip_utils::CONST_PJ_STR("jami-handover-admission");
+    mod_handover_admission_.id = -1;
+    mod_handover_admission_.priority = PJSIP_MOD_PRIORITY_TSX_LAYER + 1;
+    mod_handover_admission_.on_rx_request = &handover_request_cb;
+    TRY(pjsip_endpt_register_module(endpt_, &mod_handover_admission_));
+
     TRY(pjsip_evsub_init_module(endpt_));
     TRY(pjsip_xfer_init_module(endpt_));
 
@@ -797,8 +805,73 @@ static std::shared_ptr<SIPCall>
 getCallFromInvite(pjsip_inv_session* inv)
 {
     if (auto* call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
-        return std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
+        return std::static_pointer_cast<SIPCall>(call_ptr->weak_from_this().lock());
     return nullptr;
+}
+
+static void
+handover_reject_request(pjsip_rx_data* rdata)
+{
+    auto method = rdata->msg_info.msg->line.req.method.id;
+    if (method != PJSIP_ACK_METHOD)
+        pjsip_endpt_respond_stateless(endpt_, rdata,
+                                    method == PJSIP_INVITE_METHOD ? PJSIP_SC_REQUEST_PENDING : PJSIP_SC_FORBIDDEN,
+                                    nullptr, nullptr, nullptr);
+}
+
+static pj_bool_t
+handover_request_cb(pjsip_rx_data* rdata)
+{
+    if (not rdata or not rdata->msg_info.msg or not rdata->msg_info.cid or not rdata->msg_info.to
+        or not rdata->msg_info.from or not rdata->msg_info.to->tag.slen)
+        return PJ_FALSE;
+    auto* dialog = pjsip_ua_find_dialog(&rdata->msg_info.cid->id, &rdata->msg_info.to->tag,
+                                      &rdata->msg_info.from->tag, PJ_TRUE);
+    if (not dialog)
+        return PJ_FALSE;
+    auto admission = SIPCall::SipRequestAdmission::Accept;
+    std::shared_ptr<SIPCall> call;
+    std::shared_ptr<SipTransport> transport;
+    if (auto* invite = pjsip_dlg_get_inv_session(dialog)) {
+        call = getCallFromInvite(invite);
+        if (call and call->peerSupportsHandover() and invite->state == PJSIP_INV_STATE_CONFIRMED) {
+            if (call->isRetiredSipTransport(rdata->tp_info.transport)
+                and rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD
+                and not rdata->msg_info.msg->body) {
+                pjsip_dlg_dec_lock(dialog);
+                return PJ_FALSE;
+            }
+            if (rdata->msg_info.msg->line.req.method.id == PJSIP_INVITE_METHOD
+                and sip_utils::hasHandoverGeneration(rdata)
+                and invite->invite_tsx) {
+                pjsip_dlg_dec_lock(dialog);
+                handover_reject_request(rdata);
+                return PJ_TRUE;
+            }
+            transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(rdata->tp_info.transport);
+            admission = call->admitSipRequest(transport, rdata);
+        }
+    }
+    pjsip_dlg_dec_lock(dialog);
+    if (admission == SIPCall::SipRequestAdmission::Accept)
+        return PJ_FALSE;
+    if (admission == SIPCall::SipRequestAdmission::Reject) {
+        handover_reject_request(rdata);
+        return PJ_TRUE;
+    }
+    auto generation = sip_utils::getHandoverGeneration(rdata).value_or(0);
+    auto request = sip_utils::getHandoverRequest(rdata).value_or(0);
+    bool probe = admission == SIPCall::SipRequestAdmission::Probe;
+    runOnMainThread([w = call->weak(), transport, generation, request, probe] {
+        if (auto call = w.lock()) {
+            if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock()))
+                call->followPeerTransport(transport, account->getContactHeader(transport), probe, generation, request);
+        }
+    });
+    if (not probe)
+        return PJ_FALSE;
+    pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
+    return PJ_TRUE;
 }
 
 static void
@@ -1060,7 +1133,7 @@ static void
 sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
 {
     auto call = getCallFromInvite(inv);
-    if (not call)
+    if (not call or (call->peerSupportsHandover() and not call->isCurrentMediaNegotiation()))
         return;
 
     JAMI_LOG("[call:{}] INVITE@{} media update: status {}", call->getCallId(), fmt::ptr(inv), status);
@@ -1294,6 +1367,13 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     if (tsx->method.id == PJSIP_INVITE_METHOD
         and (tsx->state == PJSIP_TSX_STATE_TERMINATED or tsx->state == PJSIP_TSX_STATE_CONFIRMED)) {
+        if (tsx->state == PJSIP_TSX_STATE_TERMINATED and tsx->status_code == PJSIP_SC_REQUEST_PENDING
+            and tsx->role == PJSIP_ROLE_UAC and tsx->last_tx) {
+            pjsip_rx_data sent {};
+            sent.msg_info.msg = tsx->last_tx->msg;
+            if (auto generation = sip_utils::getHandoverGeneration(&sent))
+                call->retryRecoveryOffer(*generation);
+        }
         runOnMainThread([wcall = std::weak_ptr(call)] {
             if (auto call = wcall.lock())
                 call->onInviteTransactionEnded();
@@ -1325,25 +1405,6 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
     JAMI_LOG("[INVITE:{:p}] RX SIP method {:d} ({:s})", fmt::ptr(inv), (int) msg->line.req.method.id, methodName);
-
-    // A peer that recovered from a network change sends its in-dialog
-    // requests on a new channel: move the dialog there as well.
-    auto* const dialog = inv->dlg;
-    auto* const transport = rdata->tp_info.transport;
-    if (call->peerSupportsHandover() and dialog and transport and dialog->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT
-        and (dialog->tp_sel.u.transport != transport or msg->line.req.method.id == PJSIP_OPTIONS_METHOD)) {
-        if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock())) {
-            pjsip_transport_add_ref(transport);
-            const bool probe = msg->line.req.method.id == PJSIP_OPTIONS_METHOD;
-            runOnMainThread([wcall = std::weak_ptr(call), waccount = std::weak_ptr(account), transport, probe] {
-                auto call = wcall.lock();
-                auto account = waccount.lock();
-                if (call and account)
-                    account->followPeerTransport(call, transport, probe);
-                pjsip_transport_dec_ref(transport);
-            });
-        }
-    }
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];

@@ -237,6 +237,11 @@ public:
 
     void setPeerHandoverSupported(bool supported) { peerSupportsHandover_.store(supported); }
     bool peerSupportsHandover() const { return peerSupportsHandover_.load(); }
+    bool isRetiredSipTransport(const pjsip_transport* transport) const;
+    enum class SipRequestAdmission { Accept, Probe, RecoveryOffer, Reject };
+    SipRequestAdmission admitSipRequest(const std::shared_ptr<SipTransport>& transport, const pjsip_rx_data* rdata);
+    bool isCurrentMediaNegotiation() const;
+    void retryRecoveryOffer(std::uint64_t generation);
 
     bool beginCallRecovery(bool newNetwork = false);
     bool isRecovering() const
@@ -255,7 +260,8 @@ public:
                                const std::string& contact,
                                std::optional<std::uint64_t> attempt);
     // Move the dialog to the channel on which the peer sent an in-dialog request.
-    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe);
+    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe,
+                             std::uint64_t generation = 0, std::uint64_t request = 0);
     void onInviteTransactionEnded();
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
@@ -343,11 +349,13 @@ private:
 
     void stopCallRecovery();
     void startRecoveryLocked();
+    void publishSipAdmissionLocked();
     bool rebindSipDialogLocked(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
-    bool isAbandonedTransportLocked(const std::shared_ptr<SipTransport>& transport) const;
     void requestIceRestart(const std::shared_ptr<SipTransport>& transport);
-    void sendRecoveryProbeLocked();
-    void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options);
+    void sendRecoveryProbeLocked(const std::shared_ptr<SipTransport>& transport);
+    void scheduleRecoveryProbeLocked();
+    void restartIceAfterRecovery(dhtnet::IceTransportOptions&& options,
+                                 std::optional<std::uint64_t> generation = std::nullopt);
     void completeRecoveryIfReadyLocked();
     bool isReinviteBusyLocked() const;
     void drainPendingRequests();
@@ -419,8 +427,10 @@ private:
 
     void setCallMediaLocal();
     void startIceMedia();
-    void onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok);
-    void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok);
+    void onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok,
+                       std::optional<std::uint64_t> generation = std::nullopt);
+    void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok,
+                       std::optional<std::uint64_t> generation = std::nullopt);
     void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall = false);
     void setupNegotiatedMedia();
     void startAllMedia();
@@ -491,7 +501,6 @@ private:
     bool waitingForRecoveryChannel_ {false};
     bool recoveryAttemptPending_ {false};
     std::uint64_t recoveryAttempt_ {0};
-    bool awaitingRecoveryProbe_ {false};
     std::optional<dhtnet::IceTransportOptions> deferredRecoveryIceOptions_;
     std::unique_ptr<asio::steady_timer> recoveryTimer_;
     std::shared_ptr<dhtnet::IceTransport> recoveryIce_;
@@ -503,6 +512,20 @@ private:
     pjsip_transport* pendingRecoveryAnswerTransport_ {nullptr};
     // Channels left for a newer one, which the dialog must not follow back.
     std::vector<std::weak_ptr<SipTransport>> abandonedTransports_;
+    struct SipAdmissionState
+    {
+        std::weak_ptr<SipTransport> active;
+        std::vector<std::weak_ptr<SipTransport>> retired;
+        bool caller {false};
+        std::uint64_t generation {0};
+    };
+    std::shared_ptr<const SipAdmissionState> sipAdmissionState_;
+    std::uint64_t recoveryGeneration_ {0};
+    std::uint64_t recoveryRequest_ {0};
+    std::uint64_t lastPeerRecoveryRequest_ {0};
+    std::uint64_t recoveryEpisode_ {0};
+    std::atomic<std::uint64_t> mediaNegotiationGeneration_ {0};
+    std::shared_ptr<SipTransport> recoveryCandidate_;
     // Media change requested during a recovery, sent once it is over.
     std::optional<std::vector<libjami::MediaMap>> pendingMediaChange_;
 

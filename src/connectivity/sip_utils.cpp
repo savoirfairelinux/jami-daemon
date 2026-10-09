@@ -16,6 +16,7 @@
  */
 
 #include "connectivity/sip_utils.h"
+#include <charconv>
 #include "logger.h"
 #include "connectivity/utf8_utils.h"
 
@@ -46,6 +47,8 @@ namespace sip_utils {
 constexpr pj_str_t USER_AGENT_STR = CONST_PJ_STR("User-Agent");
 constexpr pj_str_t CALL_HANDOVER_STR = CONST_PJ_STR("X-Jami-Call-Handover");
 constexpr pj_str_t CALL_HANDOVER_VALUE = CONST_PJ_STR("1");
+constexpr pj_str_t HANDOVER_GENERATION_STR = CONST_PJ_STR("X-Jami-Handover-Generation");
+constexpr pj_str_t HANDOVER_REQUEST_STR = CONST_PJ_STR("X-Jami-Handover-Request");
 
 std::string
 PjsipErrorCategory::message(int condition) const
@@ -230,6 +233,65 @@ supportsCallHandover(const pjsip_rx_data* rdata)
     auto* header = static_cast<const pjsip_generic_string_hdr*>(
         pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &CALL_HANDOVER_STR, nullptr));
     return header and as_view(header->hvalue) == "1";
+}
+
+static void
+addHandoverNumber(pjsip_tx_data* tdata, const pj_str_t& name, std::uint64_t number)
+{
+    auto value = std::to_string(number);
+    auto text = CONST_PJ_STR(value);
+    auto* header = pjsip_generic_string_hdr_create(tdata->pool, &name, &text);
+    pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr*>(header));
+}
+
+static std::optional<std::uint64_t>
+getHandoverNumber(const pjsip_rx_data* rdata, const pj_str_t& name)
+{
+    if (not rdata or not rdata->msg_info.msg)
+        return std::nullopt;
+    auto* header = static_cast<const pjsip_generic_string_hdr*>(
+        pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &name, nullptr));
+    if (not header or pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &name, header->next))
+        return std::nullopt;
+    auto text = as_view(header->hvalue);
+    if (text.empty())
+        return std::nullopt;
+    std::uint64_t value;
+    auto result = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (result.ec != std::errc {} or result.ptr != text.data() + text.size())
+        return std::nullopt;
+    return value;
+}
+
+void
+addHandoverGeneration(pjsip_tx_data* tdata, std::uint64_t generation)
+{
+    addHandoverNumber(tdata, HANDOVER_GENERATION_STR, generation);
+}
+
+void
+addHandoverRequest(pjsip_tx_data* tdata, std::uint64_t request)
+{
+    addHandoverNumber(tdata, HANDOVER_REQUEST_STR, request);
+}
+
+std::optional<std::uint64_t>
+getHandoverGeneration(const pjsip_rx_data* rdata)
+{
+    return getHandoverNumber(rdata, HANDOVER_GENERATION_STR);
+}
+
+std::optional<std::uint64_t>
+getHandoverRequest(const pjsip_rx_data* rdata)
+{
+    return getHandoverNumber(rdata, HANDOVER_REQUEST_STR);
+}
+
+bool
+hasHandoverGeneration(const pjsip_rx_data* rdata)
+{
+    return rdata and rdata->msg_info.msg
+           and pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &HANDOVER_GENERATION_STR, nullptr);
 }
 
 std::string_view
