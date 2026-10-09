@@ -3105,6 +3105,44 @@ SIPCall::startIceMedia()
 }
 
 void
+SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok)
+{
+    std::lock_guard lk {callMutex_};
+    if (not ok or not initializedIce or initializedIce != getIceMedia() or not sdp_
+        or not waitForIceInit_.exchange(false))
+        return;
+    auto remoteIce = sdp_->getIceAttributes();
+    if (remoteIce.ufrag.empty() or remoteIce.pwd.empty())
+        return;
+    startIceMedia();
+}
+
+void
+SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok)
+{
+    if (not negotiatedIce)
+        return;
+    bool fromSubcall;
+    std::shared_ptr<SIPCall> mediaCall;
+    {
+        std::lock_guard lk {callMutex_};
+        fromSubcall = isSubcall();
+        mediaCall = fromSubcall ? std::dynamic_pointer_cast<SIPCall>(parent_) : shared();
+    }
+    if (not mediaCall)
+        return;
+    std::lock_guard lk {mediaCall->callMutex_};
+    if (negotiatedIce != mediaCall->getIceMedia())
+        return;
+    if (not ok) {
+        JAMI_ERROR("[call:{}] Media ICE negotiation failed", mediaCall->getCallId());
+        mediaCall->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+        return;
+    }
+    mediaCall->onIceNegoSucceed(negotiatedIce, fromSubcall);
+}
+
+void
 SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall)
 {
     std::lock_guard lk {callMutex_};
@@ -3118,7 +3156,7 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
         JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
         return;
     }
-    if (not fromSubcall and negotiatedIce != getIceMedia())
+    if (negotiatedIce != getIceMedia())
         return;
 
     // Update the negotiated media.
@@ -3779,41 +3817,20 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
 
     auto optOnInitDone = std::move(iceOptions.onInitDone);
     auto optOnNegoDone = std::move(iceOptions.onNegoDone);
-    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone)](bool ok) {
-        runOnMainThread([w = std::move(w), cb = std::move(cb), ok] {
-            auto call = w.lock();
+    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone), ice = std::weak_ptr(iceMedia)](bool ok) {
+        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, ok] {
             if (cb)
                 cb(ok);
-            if (!ok or !call or !call->waitForIceInit_.exchange(false))
-                return;
-
-            std::lock_guard lk {call->callMutex_};
-            auto rem_ice_attrs = call->sdp_->getIceAttributes();
-            // Init done but no remote_ice_attributes, the ice->start will be triggered later
-            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
-                return;
-            call->startIceMedia();
+            if (auto call = w.lock())
+                call->onIceInitDone(ice.lock(), ok);
         });
     };
     iceOptions.onNegoDone = [w = weak(), cb = std::move(optOnNegoDone), ice = std::weak_ptr(iceMedia)](bool ok) {
         runOnMainThread([w = std::move(w), cb = std::move(cb), ice, ok] {
             if (cb)
                 cb(ok);
-            if (auto call = w.lock()) {
-                // The ICE is related to subcalls, but medias are handled by parent call
-                std::lock_guard lk {call->callMutex_};
-                auto isSubcall = call->isSubcall();
-                call = isSubcall ? std::dynamic_pointer_cast<SIPCall>(call->parent_) : call;
-                if (not call)
-                    return;
-                if (!ok) {
-                    JAMI_ERROR("[call:{}] Media ICE negotiation failed", call->getCallId());
-                    call->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
-                    return;
-                }
-                if (auto negotiatedIce = ice.lock())
-                    call->onIceNegoSucceed(negotiatedIce, isSubcall);
-            }
+            if (auto call = w.lock())
+                call->onIceNegoDone(ice.lock(), ok);
         });
     };
 
