@@ -3616,13 +3616,34 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
                 return;
             }
         }
-        // Report the change request.
-        auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-        if (auto conf = call->getConference()) {
-            conf->handleMediaChangeRequest(call, remoteMediaList);
-        } else {
-            call->handleMediaChangeRequest(remoteMediaList);
-        }
+        dht::ThreadPool::io().run([callWkPtr, mediaAttrList, generation, cseq] {
+            auto call = callWkPtr.lock();
+            if (not call)
+                return;
+            {
+                std::lock_guard lk {call->callMutex_};
+                if (not call->inviteSession_)
+                    return;
+                sip_utils::PJDialogLock dialogLock {call->inviteSession_->dlg};
+                if (not call->isPendingReinviteLocked(cseq)) {
+                    JAMI_DEBUG("[call:{}] Discarding completed re-INVITE {}", call->getCallId(), cseq);
+                    return;
+                }
+                if (call->peerSupportsHandover()
+                    and (call->mediaNegotiationGeneration_.load() != generation
+                         or not call->isCurrentMediaNegotiation())) {
+                    call->rejectPendingReinviteLocked(cseq);
+                    return;
+                }
+            }
+            // Report the change request.
+            auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+            if (auto conf = call->getConference()) {
+                conf->handleMediaChangeRequest(call, remoteMediaList);
+            } else {
+                call->handleMediaChangeRequest(remoteMediaList);
+            }
+        });
     });
 
     return res;

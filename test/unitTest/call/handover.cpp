@@ -104,6 +104,7 @@ private:
     void testHoldAndMediaChangeDuringRecovery();
     void testResumeAndMediaChangeDuringRecovery();
     void testMediaChangeWaitsForInviteAndIce();
+    void testMediaChangeRequestRunsOffMainThread();
     void testDeferredCallbackStartsNewRecovery();
     void testCallerMediaChangeDuringRecovery();
     void testCalleeMediaChangeDuringRecovery();
@@ -141,6 +142,7 @@ private:
     CPPUNIT_TEST(testHoldAndMediaChangeDuringRecovery);
     CPPUNIT_TEST(testResumeAndMediaChangeDuringRecovery);
     CPPUNIT_TEST(testMediaChangeWaitsForInviteAndIce);
+    CPPUNIT_TEST(testMediaChangeRequestRunsOffMainThread);
     CPPUNIT_TEST(testDeferredCallbackStartsNewRecovery);
     CPPUNIT_TEST(testCallerMediaChangeDuringRecovery);
     CPPUNIT_TEST(testCalleeMediaChangeDuringRecovery);
@@ -177,6 +179,7 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     std::map<std::string, unsigned> negotiations_;
+    std::thread::id mediaRequestThread_;
     bool aliceCurrent_ {false};
     bool bobCurrent_ {false};
     unsigned ended_ {0};
@@ -226,7 +229,12 @@ HandoverTest::setUp()
         }));
     // Accept the media changes offered by the peer, as clients do.
     handlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaChangeRequested>(
-        [](const std::string& accountId, const std::string& callId, const std::vector<libjami::MediaMap>& mediaList) {
+        [this](const std::string& accountId, const std::string& callId, const std::vector<libjami::MediaMap>& mediaList) {
+            {
+                std::lock_guard lock(mutex_);
+                mediaRequestThread_ = std::this_thread::get_id();
+                cv_.notify_all();
+            }
             runOnMainThread(
                 [accountId, callId, mediaList] { libjami::answerMediaChangeRequest(accountId, callId, mediaList); });
         }));
@@ -835,6 +843,35 @@ HandoverTest::testMediaChangeWaitsForInviteAndIce()
     CPPUNIT_ASSERT_EQUAL(PJ_EBUSY, busyResult);
     CPPUNIT_ASSERT(sipBlocked and iceBlocked);
     before.alice->onInviteTransactionEnded();
+    waitForMediaChange(false);
+    hangUp();
+}
+
+void
+HandoverTest::testMediaChangeRequestRunsOffMainThread()
+{
+    startCall();
+    auto before = currentState();
+    CPPUNIT_ASSERT(before.alice and before.bob);
+    auto mainThread = std::make_shared<std::promise<std::thread::id>>();
+    auto mainThreadFuture = mainThread->get_future();
+    runOnMainThread([mainThread] { mainThread->set_value(std::this_thread::get_id()); });
+    CPPUNIT_ASSERT(mainThreadFuture.wait_for(15s) == std::future_status::ready);
+    auto mainThreadId = mainThreadFuture.get();
+    auto audioOnly = before.alice->currentMediaList();
+    std::erase_if(audioOnly, [](const auto& media) {
+        return media.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) != libjami::Media::MediaAttributeValue::AUDIO;
+    });
+    {
+        std::lock_guard lock(mutex_);
+        mediaRequestThread_ = {};
+    }
+    CPPUNIT_ASSERT(libjami::requestMediaChange(aliceId_, aliceCallId_, audioOnly));
+    {
+        std::unique_lock lock(mutex_);
+        CPPUNIT_ASSERT(cv_.wait_for(lock, 15s, [&] { return mediaRequestThread_ != std::thread::id {}; }));
+        CPPUNIT_ASSERT(mediaRequestThread_ != mainThreadId);
+    }
     waitForMediaChange(false);
     hangUp();
 }
