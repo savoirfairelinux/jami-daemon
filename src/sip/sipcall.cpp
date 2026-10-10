@@ -3558,13 +3558,25 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
                 return;
             }
         }
-        // Report the change request.
-        auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-        if (auto conf = call->getConference()) {
-            conf->handleMediaChangeRequest(call, remoteMediaList);
-        } else {
-            call->handleMediaChangeRequest(remoteMediaList);
-        }
+        dht::ThreadPool::io().run([callWkPtr, mediaAttrList, generation] {
+            auto call = callWkPtr.lock();
+            if (not call)
+                return;
+            if (call->peerSupportsHandover()) {
+                std::lock_guard lk {call->callMutex_};
+                if (call->mediaNegotiationGeneration_.load() != generation or not call->isCurrentMediaNegotiation()) {
+                    call->rejectPendingReinviteLocked();
+                    return;
+                }
+            }
+            // Report the change request.
+            auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+            if (auto conf = call->getConference()) {
+                conf->handleMediaChangeRequest(call, remoteMediaList);
+            } else {
+                call->handleMediaChangeRequest(remoteMediaList);
+            }
+        });
     });
 
     return res;
