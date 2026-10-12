@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5cbd588_04e76996",
+        "filename": "test/dst/simclient.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T18:54:15Z",
+      "side": 1,
+      "message": "[warning] Line 73: 🟡 With `NDEBUG`, `assert(indexIt !\u003d indexFromMessageId_.end())` is compiled out and `indexIt-\u003esecond` becomes undefined behavior when the key is missing. Prefer an always-on test assertion/failure path (e.g., `CPPUNIT_ASSERT_MESSAGE` / explicit `throw` + `CPPUNIT_FAIL`) before dereferencing.",
+      "revId": "970848c7d3e747e1ad08648c7ef11e0e4e607e6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4a5a1d3_9979c903",
+        "filename": "test/dst/simclient.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T18:54:15Z",
+      "side": 1,
+      "message": "[warning] Line 84: 🟡 Same issue for `parentIndexIt`: the post-assert dereference is unsafe in builds where assertions are disabled. Use an always-on check so missing parent IDs fail deterministically instead of causing UB.",
+      "revId": "970848c7d3e747e1ad08648c7ef11e0e4e607e6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
