@@ -23,6 +23,7 @@
 #include <opendht/default_types.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <optional>
 #include <memory>
 #include <stdexcept>
@@ -242,6 +243,22 @@ public:
      * @return if the operation was successful
      */
     bool fetch(const std::string& remoteDeviceId);
+
+    /**
+     * Merge the pack files that fetches leave behind, once there are too many
+     * of them. See repack(const std::filesystem::path&, std::size_t).
+     */
+    void repack();
+
+    /**
+     * Each fetch stores what it receives in a pack file of its own, and
+     * libgit2 goes through all of them, in quadratic time, whenever it opens
+     * the object database. Once the repository at path holds more than
+     * maxPacks packs, merge the smallest ones, as git repack --geometric=2
+     * does. Nothing is pruned: every object of a merged pack is kept.
+     * @return the number of packs removed
+     */
+    static LIBJAMI_TEST_EXPORT std::size_t repack(const std::filesystem::path& path, std::size_t maxPacks);
 
     /**
      * Merge the history of the conversation with another peer

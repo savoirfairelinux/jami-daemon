@@ -2661,6 +2661,7 @@ Conversation::Impl::pull(const std::string& deviceId)
 
     std::string commitId;
     OnPullCb cb;
+    auto fetchedAny = false;
     while (true) {
         {
             std::lock_guard lk(pullcbsMtx_);
@@ -2690,6 +2691,7 @@ Conversation::Impl::pull(const std::string& deviceId)
             cb(false);
             continue;
         }
+        fetchedAny = true;
 
         auto oldHead = repo->getHead();
 
@@ -2740,6 +2742,10 @@ Conversation::Impl::pull(const std::string& deviceId)
             }
         }
     }
+    // Each fetch stored a pack of its own. This runs once the pulls are done,
+    // and without any lock, so that nobody waits for it.
+    if (fetchedAny)
+        repo->repack();
 }
 
 void

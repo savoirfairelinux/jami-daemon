@@ -42,8 +42,10 @@
 #include <git2/remote.h>
 #include <git2/merge.h>
 #include <git2/diff.h>
+#include <git2/sys/odb_backend.h>
 
 #include <algorithm>
+#include <chrono>
 #include <iterator>
 #include <ctime>
 #include <fstream>
@@ -59,6 +61,12 @@
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
 constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
+// Packs a conversation may hold before the smallest are merged, like git's gc.autoPackLimit
+constexpr std::size_t MAX_PACKS {50};
+// Packs merged together at most. Looking an object up goes through all the
+// packs being merged, so this bounds the cost of a merge, even in a
+// repository that holds thousands of them.
+constexpr std::size_t REPACK_BATCH {64};
 
 namespace jami {
 
@@ -650,6 +658,7 @@ public:
     }
 
     std::mutex opMtx_; // Mutex for operations
+    std::mutex repackMtx_;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -3712,6 +3721,183 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     }
 
     return true;
+}
+
+namespace {
+
+struct PackFile
+{
+    std::filesystem::path idx;
+    std::uintmax_t size;
+};
+
+std::vector<PackFile>
+listPacks(const std::filesystem::path& packDir)
+{
+    std::vector<PackFile> packs;
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(packDir, ec), end; !ec && it != end; it.increment(ec)) {
+        const auto& idx = it->path();
+        if (idx.extension() != ".idx")
+            continue;
+        std::error_code packEc, keepEc;
+        auto size = std::filesystem::file_size(std::filesystem::path(idx).replace_extension(".pack"), packEc);
+        // Like git, leave alone the packs that come with a .keep file
+        if (!packEc && !std::filesystem::exists(std::filesystem::path(idx).replace_extension(".keep"), keepEc))
+            packs.push_back({idx, size});
+    }
+    return packs;
+}
+
+/**
+ * The packs to merge, as git repack --geometric=2 picks them: those that do
+ * not already form a progression where each pack is at least twice as big as
+ * the previous one. A big pack is thus rewritten only once the small ones add
+ * up to half of it. Enough are picked to get back to maxPacks in any case.
+ */
+std::vector<PackFile>
+packsToMerge(std::vector<PackFile> packs, std::size_t maxPacks)
+{
+    if (packs.size() < 2)
+        return {};
+    std::sort(packs.begin(), packs.end(), [](const auto& a, const auto& b) { return a.size < b.size; });
+    auto i = packs.size() - 1;
+    while (i > 0 && packs[i].size >= 2 * packs[i - 1].size)
+        --i;
+    std::size_t split = i ? i + 1 : 0;
+    std::uintmax_t total = 0;
+    for (std::size_t j = 0; j < split; ++j)
+        total += packs[j].size;
+    while (split < packs.size() && packs[split].size < 2 * total)
+        total += packs[split++].size;
+    if (packs.size() > maxPacks)
+        split = std::max(split, packs.size() - maxPacks + 1);
+    packs.resize(split);
+    return packs;
+}
+
+/**
+ * Write every object of the packs, reachable or not, into a single new pack.
+ * @return the name of the new pack, empty on failure
+ */
+std::string
+writeMergedPack(const std::filesystem::path& packDir, const std::vector<PackFile>& packs)
+{
+    // An object database made of these packs only, so that looking an object
+    // up does not go through all the packs of the repository
+    git_odb* odb_ptr = nullptr;
+    if (git_odb_new(&odb_ptr) < 0)
+        return {};
+    GitOdb odb {odb_ptr};
+    for (const auto& pack : packs) {
+        git_odb_backend* backend = nullptr;
+        if (git_odb_backend_one_pack(&backend, pack.idx.string().c_str()) < 0)
+            return {};
+        if (git_odb_add_backend(odb.get(), backend, 1) < 0) {
+            backend->free(backend);
+            return {};
+        }
+    }
+    git_repository* repo_ptr = nullptr;
+    if (git_repository_wrap_odb(&repo_ptr, odb.get()) < 0)
+        return {};
+    GitRepository repo {repo_ptr};
+    git_packbuilder* pb_ptr = nullptr;
+    if (git_packbuilder_new(&pb_ptr, repo.get()) < 0)
+        return {};
+    GitPackBuilder pb {pb_ptr};
+    auto insert = [](const git_oid* id, void* pb) {
+        return git_packbuilder_insert(static_cast<git_packbuilder*>(pb), id, nullptr);
+    };
+    if (git_odb_foreach(odb.get(), insert, pb.get()) < 0
+        || git_packbuilder_write(pb.get(), packDir.string().c_str(), 0, nullptr, nullptr) < 0)
+        return {};
+    return fmt::format("pack-{}", git_packbuilder_name(pb.get()));
+}
+
+void
+removePack(const std::filesystem::path& idx)
+{
+    std::error_code ec;
+    // Like git, remove the pack first: should that fail, it remains usable
+    if (!std::filesystem::remove(std::filesystem::path(idx).replace_extension(".pack"), ec) && ec) {
+        JAMI_WARNING("Unable to remove {}: {}", idx.string(), ec.message());
+        return;
+    }
+    for (auto ext : {".idx", ".rev", ".bitmap", ".mtimes", ".promisor"})
+        std::filesystem::remove(std::filesystem::path(idx).replace_extension(ext), ec);
+}
+
+} // namespace
+
+void
+ConversationRepository::repack()
+{
+    // Fetches from several devices may end together
+    std::unique_lock lk(pimpl_->repackMtx_, std::try_to_lock);
+    if (!lk.owns_lock())
+        return;
+    auto start = std::chrono::steady_clock::now();
+    auto removed = repack(fileutils::get_data_dir() / pimpl_->accountId_ / "conversations" / pimpl_->id_, MAX_PACKS);
+    if (removed)
+        JAMI_LOG("[Account {}] [Conversation {}] Merged {} pack files in {} ms",
+                 pimpl_->accountId_,
+                 pimpl_->id_,
+                 removed,
+                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count());
+}
+
+std::size_t
+ConversationRepository::repack(const std::filesystem::path& path, std::size_t maxPacks)
+{
+    std::filesystem::path packDir;
+    {
+        git_repository* repo_ptr = nullptr;
+        if (git_repository_open(&repo_ptr, path.string().c_str()) < 0)
+            return 0;
+        GitRepository repo {repo_ptr};
+        git_buf objects = {};
+        if (git_repository_item_path(&objects, repo.get(), GIT_REPOSITORY_ITEM_OBJECTS) < 0)
+            return 0;
+        packDir = std::filesystem::path(std::string(objects.ptr, objects.size)) / "pack";
+        git_buf_dispose(&objects);
+    }
+
+    // Merging leaves a pack per batch, which may call for another round. Only
+    // the packs listed and merged into a new one are removed. Readers that
+    // still list a removed pack find its objects in the new one: libgit2
+    // rescans the directory when an object is missing.
+    std::size_t removed = 0;
+    for (auto round = 0; round < 8; ++round) {
+        auto packs = listPacks(packDir);
+        if (packs.size() <= maxPacks)
+            break;
+        auto toMerge = packsToMerge(std::move(packs), maxPacks);
+        auto batches = (toMerge.size() + REPACK_BATCH - 1) / REPACK_BATCH;
+        auto merged = false;
+        for (std::size_t b = 0; b < batches; ++b) {
+            std::vector<PackFile> batch(toMerge.begin() + b * toMerge.size() / batches,
+                                        toMerge.begin() + (b + 1) * toMerge.size() / batches);
+            if (batch.size() < 2)
+                continue;
+            auto name = writeMergedPack(packDir, batch);
+            if (name.empty()) {
+                const git_error* err = git_error_last();
+                JAMI_WARNING("Unable to merge the packs of {}: {}", path.string(), err ? err->message : "");
+                return removed;
+            }
+            for (const auto& pack : batch) {
+                if (pack.idx.stem() != name) {
+                    removePack(pack.idx);
+                    ++removed;
+                }
+            }
+            merged = true;
+        }
+        if (!merged)
+            break;
+    }
+    return removed;
 }
 
 std::vector<std::map<std::string, std::string>>
