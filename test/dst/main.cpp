@@ -178,7 +178,7 @@ main(int argc, char* argv[])
             fatalError("Failed to set up accounts\n");
         }
         dst.runUnitTest(unitTest);
-        if (!dst.checkAppearancesForAllAccounts()) {
+        if (!dst.checkAllAccounts()) {
             ret = 1;
         }
     } else if (!args.seed.empty()) {
