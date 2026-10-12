@@ -52,7 +52,8 @@ public:
         , repository_(repository)
         , socket_(socket)
     {
-        // JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created", accountId_, repositoryId_, fmt::ptr(this));
+        // JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created",
+        //            accountId_, repositoryId_, fmt::ptr(this));
         // Check at least if repository is correct
         git_repository* repo;
         if (git_repository_open(&repo, repository_.c_str()) != 0) {
@@ -475,46 +476,28 @@ GitServer::Impl::sendPackData()
     }
     GitRevWalker walker {walker_ptr};
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
-    // Add first commit
-    std::set<std::string> parents;
-    auto haveCommit = false;
 
-    while (!git_revwalk_next(&oid, walker.get())) {
-        // log until have refs
-        std::string id = git_oid_tostr_s(&oid);
-        haveCommit |= std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
-        auto itParents = std::find(parents.begin(), parents.end(), id);
-        if (itParents != parents.end())
-            parents.erase(itParents);
-        if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)
-            break;
-        if (git_packbuilder_insert_commit(pb.get(), &oid) != 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open insert commit {} for {}",
-                         accountId_,
-                         repositoryId_,
-                         fmt::ptr(this),
-                         git_oid_tostr_s(&oid),
-                         repository_);
-            return;
+    // Hide the commits the peer has. git_packbuilder_insert_walk() then skips
+    // them along with the trees and blobs they reference, rather than sending
+    // the whole tree, every certificate included, with each new commit.
+    git_odb* odb_ptr = nullptr;
+    if (git_repository_odb(&odb_ptr, repo.get()) == 0) {
+        GitOdb odb {odb_ptr};
+        for (const auto& have : haveRefs_) {
+            // Peers also announce commits we lack; skip those without rescanning the packs.
+            git_oid haveOid;
+            if (git_oid_fromstr(&haveOid, have.c_str()) == 0
+                && git_odb_exists_ext(odb.get(), &haveOid, GIT_ODB_LOOKUP_NO_REFRESH))
+                git_revwalk_hide(walker.get(), &haveOid);
         }
-
-        // Get next commit to pack
-        git_commit* commit_ptr;
-        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to look up current commit",
-                       accountId_,
-                       repositoryId_,
-                       fmt::ptr(this));
-            return;
-        }
-        GitCommit commit {commit_ptr};
-        auto parentsCount = git_commit_parentcount(commit.get());
-        for (unsigned int p = 0; p < parentsCount; ++p) {
-            // make sure to explore all branches
-            const git_oid* pid = git_commit_parent_id(commit.get(), p);
-            if (pid)
-                parents.emplace(git_oid_tostr_s(pid));
-        }
+    }
+    if (git_packbuilder_insert_walk(pb.get(), walker.get()) != 0) {
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to insert commits for {}",
+                     accountId_,
+                     repositoryId_,
+                     fmt::ptr(this),
+                     repository_);
+        return;
     }
 
     git_buf data = {};
