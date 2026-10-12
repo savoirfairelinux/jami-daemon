@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8dd8bb4_c91f12d9",
+        "filename": "test/dst/simclient.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-12T18:58:54Z",
+      "side": 1,
+      "message": "Assertions are always enabled in this file.",
+      "parentUuid": "b5cbd588_04e76996",
+      "revId": "970848c7d3e747e1ad08648c7ef11e0e4e607e6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f4a5a1d3_9979c903",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-12T18:54:15Z",
       "side": 1,
       "message": "[warning] Line 84: 🟡 Same issue for `parentIndexIt`: the post-assert dereference is unsafe in builds where assertions are disabled. Use an always-on check so missing parent IDs fail deterministically instead of causing UB.",
+      "revId": "970848c7d3e747e1ad08648c7ef11e0e4e607e6d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "948a6d60_7b8cd480",
+        "filename": "test/dst/simclient.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-12T18:58:54Z",
+      "side": 1,
+      "message": "Assertions are always enabled in this file.",
+      "parentUuid": "f4a5a1d3_9979c903",
       "revId": "970848c7d3e747e1ad08648c7ef11e0e4e607e6d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
