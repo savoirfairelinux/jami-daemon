@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d2238cf_a238357c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2744,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T01:46:00Z",
+      "side": 1,
+      "message": "[warning] Line 2744: 🟡 `repack()` runs after any successful fetch, even if the fetch transferred no new objects. On steady-state syncs this still reopens the repository and scans `objects/pack` each time. Consider gating repack on a positive transfer result (or an equivalent cheap signal) to avoid unnecessary background work.",
+      "revId": "f41e3bf1d5c6fdf30910229c7e8ee3c9610ea67a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca79486f_c60b55bd",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3813,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T01:46:00Z",
+      "side": 1,
+      "message": "[error] Line 3813: 🔴 Source packs are removed right after `git_packbuilder_write(...)`, but the new pack files are never explicitly synced before deletion. A crash/power loss in that window can lose objects permanently. Please fsync the newly written `.pack`/`.idx` (and sync the `objects/pack` directory entry) before calling `removePack(...)`, so the old packs are only removed after durable persistence.",
+      "revId": "f41e3bf1d5c6fdf30910229c7e8ee3c9610ea67a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
