@@ -33,6 +33,12 @@ struct GitRepositoryDeleter
 };
 using GitRepository = std::unique_ptr<git_repository, GitRepositoryDeleter>;
 
+struct GitOdbDeleter
+{
+    inline void operator()(git_odb* p) const { git_odb_free(p); }
+};
+using GitOdb = std::unique_ptr<git_odb, GitOdbDeleter>;
+
 struct GitRevWalkerDeleter
 {
     inline void operator()(git_revwalk* p) const { git_revwalk_free(p); }

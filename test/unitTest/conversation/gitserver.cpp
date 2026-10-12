@@ -20,13 +20,17 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <dhtnet/channel_socket.h>
+#include <fmt/format.h>
 
+#include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
 #include <git2.h>
 #include <mutex>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "fileutils.h"
@@ -72,7 +76,8 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override
     {
         ec = {};
-        std::lock_guard lk(mutex_);
+        // Not mutex_: the server writes its answers from within the receive callback.
+        std::lock_guard lk(writeMutex_);
         written_.insert(written_.end(), buf, buf + len);
         return len;
     }
@@ -121,8 +126,15 @@ public:
         return static_cast<bool>(recvCb_);
     }
 
+    std::vector<uint8_t> written() const
+    {
+        std::lock_guard lk(writeMutex_);
+        return written_;
+    }
+
 private:
     mutable std::mutex mutex_ {};
+    mutable std::mutex writeMutex_ {};
     std::condition_variable cv_ {};
     std::atomic_bool isShutdown_ {false};
     RecvCb recvCb_ {};
@@ -145,12 +157,19 @@ private:
     void testStopShutsDownChannel();
     void testDestructorShutsDownChannel();
     void testStopIsIdempotent();
+    void testPackOnlyHasMissingObjects();
+    void testPackIgnoresUnknownHaves();
 
     CPPUNIT_TEST_SUITE(GitServerTest);
     CPPUNIT_TEST(testStopShutsDownChannel);
     CPPUNIT_TEST(testDestructorShutsDownChannel);
     CPPUNIT_TEST(testStopIsIdempotent);
+    CPPUNIT_TEST(testPackOnlyHasMissingObjects);
+    CPPUNIT_TEST(testPackIgnoresUnknownHaves);
     CPPUNIT_TEST_SUITE_END();
+
+    std::pair<std::string, std::string> writeHistory();
+    uint32_t fetchPackObjectCount(const std::string& want, const std::string& have);
 
     // GitServer derives the repository path from the account and conversation
     // ids, so the fixture has to place a real repository where it will look.
@@ -220,6 +239,142 @@ GitServerTest::testStopIsIdempotent()
     gitServer.reset();
 
     CPPUNIT_ASSERT(socket->waitForShutdown(10s));
+}
+
+namespace {
+
+git_oid
+writeBlob(git_repository* repo, std::string_view content)
+{
+    git_oid id;
+    CPPUNIT_ASSERT_EQUAL(0, git_blob_create_from_buffer(&id, repo, content.data(), content.size()));
+    return id;
+}
+
+git_oid
+writeTree(git_repository* repo, const std::vector<std::tuple<std::string, git_oid, git_filemode_t>>& entries)
+{
+    git_treebuilder* builder = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_treebuilder_new(&builder, repo, nullptr));
+    for (const auto& [name, id, mode] : entries)
+        CPPUNIT_ASSERT_EQUAL(0, git_treebuilder_insert(nullptr, builder, name.c_str(), &id, mode));
+    git_oid id;
+    CPPUNIT_ASSERT_EQUAL(0, git_treebuilder_write(&id, builder));
+    git_treebuilder_free(builder);
+    return id;
+}
+
+git_oid
+writeCommit(git_repository* repo, const git_oid& treeId, const git_oid* parentId)
+{
+    git_signature* sig = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_signature_new(&sig, "test", "test@jami.net", 1700000000, 0));
+    git_tree* tree = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_tree_lookup(&tree, repo, &treeId));
+    git_commit* parent = nullptr;
+    if (parentId)
+        CPPUNIT_ASSERT_EQUAL(0, git_commit_lookup(&parent, repo, parentId));
+    git_oid id;
+    CPPUNIT_ASSERT_EQUAL(
+        0, git_commit_create_v(&id, repo, nullptr, sig, sig, nullptr, "commit", tree, parent ? 1 : 0, parent));
+    git_commit_free(parent);
+    git_tree_free(tree);
+    git_signature_free(sig);
+    return id;
+}
+
+std::vector<uint8_t>
+pktLine(std::string_view payload)
+{
+    auto line = fmt::format("{:04x}{}", payload.size() + 4, payload);
+    return {line.begin(), line.end()};
+}
+
+} // namespace
+
+std::pair<std::string, std::string>
+GitServerTest::writeHistory()
+{
+    // Shaped like a conversation: the certificates of its admins, devices and
+    // members, then a second commit that adds a member.
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repo, repoPath_.string().c_str()));
+    auto member = writeBlob(repo, "member certificate");
+    auto profile = writeBlob(repo, "profile");
+    auto admins = writeTree(repo, {{"admin.crt", writeBlob(repo, "admin certificate"), GIT_FILEMODE_BLOB}});
+    auto devices = writeTree(repo, {{"device.crt", writeBlob(repo, "device certificate"), GIT_FILEMODE_BLOB}});
+    auto members = writeTree(repo, {{"member.crt", member, GIT_FILEMODE_BLOB}});
+    auto moreMembers = writeTree(repo,
+                                 {{"member.crt", member, GIT_FILEMODE_BLOB},
+                                  {"new.crt", writeBlob(repo, "new member certificate"), GIT_FILEMODE_BLOB}});
+    auto first = writeCommit(repo,
+                             writeTree(repo,
+                                       {{"admins", admins, GIT_FILEMODE_TREE},
+                                        {"devices", devices, GIT_FILEMODE_TREE},
+                                        {"members", members, GIT_FILEMODE_TREE},
+                                        {"profile.vcf", profile, GIT_FILEMODE_BLOB}}),
+                             nullptr);
+    auto second = writeCommit(repo,
+                              writeTree(repo,
+                                        {{"admins", admins, GIT_FILEMODE_TREE},
+                                         {"devices", devices, GIT_FILEMODE_TREE},
+                                         {"members", moreMembers, GIT_FILEMODE_TREE},
+                                         {"profile.vcf", profile, GIT_FILEMODE_BLOB}}),
+                              &first);
+    git_repository_free(repo);
+    std::string firstId = git_oid_tostr_s(&first);
+    std::string secondId = git_oid_tostr_s(&second);
+    return {firstId, secondId};
+}
+
+uint32_t
+GitServerTest::fetchPackObjectCount(const std::string& want, const std::string& have)
+{
+    auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer gitServer(accountId_, conversationId_, socket);
+    socket->onRecv(pktLine(fmt::format("want {}\n", want)));
+    socket->onRecv(pktLine(fmt::format("have {}\n", have)));
+    socket->onRecv({'0', '0', '0', '0'});
+    socket->onRecv(pktLine("done\n"));
+
+    // The pack is what the server sent on side-band channel 1
+    auto out = socket->written();
+    std::vector<uint8_t> pack;
+    for (std::size_t pos = 0; pos + 4 <= out.size();) {
+        unsigned len = 0;
+        std::from_chars(reinterpret_cast<const char*>(out.data() + pos),
+                        reinterpret_cast<const char*>(out.data() + pos + 4),
+                        len,
+                        16);
+        if (len == 0) {
+            pos += 4;
+            continue;
+        }
+        CPPUNIT_ASSERT(len > 4 && pos + len <= out.size());
+        if (out[pos + 4] == 1)
+            pack.insert(pack.end(), out.begin() + pos + 5, out.begin() + pos + len);
+        pos += len;
+    }
+    // "PACK", the version, then the number of objects, in network order
+    CPPUNIT_ASSERT(pack.size() >= 12 && std::equal(pack.begin(), pack.begin() + 4, "PACK"));
+    return (uint32_t(pack[8]) << 24) | (uint32_t(pack[9]) << 16) | (uint32_t(pack[10]) << 8) | pack[11];
+}
+
+void
+GitServerTest::testPackOnlyHasMissingObjects()
+{
+    auto [first, second] = writeHistory();
+    // The second commit, its root tree, the members tree and the new certificate.
+    // Neither the unchanged trees nor the certificates the peer has.
+    CPPUNIT_ASSERT_EQUAL(uint32_t(4), fetchPackObjectCount(second, first));
+}
+
+void
+GitServerTest::testPackIgnoresUnknownHaves()
+{
+    auto [first, second] = writeHistory();
+    // A commit we lack hides nothing: both commits, 6 trees and 5 blobs.
+    CPPUNIT_ASSERT_EQUAL(uint32_t(13), fetchPackObjectCount(second, std::string(40, 'a')));
 }
 
 } // namespace test
