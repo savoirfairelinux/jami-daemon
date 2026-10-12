@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76677c75_5cf2e6e5",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T18:57:12Z",
+      "side": 1,
+      "message": "[warning] Line 904: 🟡 The permission expectation is hardcoded to `member.role \u003d\u003d jami::MemberRole::ADMIN`, but the code comment states the required level is configurable (`updateProfilePermLvl_`) and based on \"at least\" that level. This makes the DST assertion brittle and potentially wrong if the permission threshold or role ordering changes. Reuse the same permission rule as production (e.g., via a shared helper / required-level comparison) instead of hardcoding `ADMIN` equality.",
+      "revId": "375bf2f92c38bcb2f6fd70b8ddaab6ec491e9662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
