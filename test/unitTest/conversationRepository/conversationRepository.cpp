@@ -98,6 +98,7 @@ private:
     void testCheckpointDeletingDeviceCertRejected();
     void testAttachmentInConversationRejected();
     void testMessageInDocumentRejected();
+    void testRepackKeepsHistory();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -132,6 +133,7 @@ private:
     CPPUNIT_TEST(testCheckpointDeletingDeviceCertRejected);
     CPPUNIT_TEST(testAttachmentInConversationRejected);
     CPPUNIT_TEST(testMessageInDocumentRejected);
+    CPPUNIT_TEST(testRepackKeepsHistory);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1186,8 +1188,9 @@ ConversationRepositoryTest::testCloneFailureDoesNotWipeExistingConversation()
     const bool savedFlag = ConversationRepository::FETCH_FROM_LOCAL_REPOS;
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
 
-    auto [clonedRepo,
-          commits] = ConversationRepository::cloneConversation(aliceAccount, "device-that-does-not-exist", convId);
+    auto [clonedRepo, commits] = ConversationRepository::cloneConversation(aliceAccount,
+                                                                           "device-that-does-not-exist",
+                                                                           convId);
 
     ConversationRepository::FETCH_FROM_LOCAL_REPOS = savedFlag;
 
@@ -1536,6 +1539,106 @@ ConversationRepositoryTest::testMessageInDocumentRejected()
 
     CPPUNIT_ASSERT(!repository->validCommits(repository->log()));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+}
+
+// Every fetch stores what it receives in a pack of its own. Once there are
+// too many, they are merged, and the history reads and validates as before.
+void
+ConversationRepositoryTest::testRepackKeepsHistory()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+    auto objectsPath = repoPath / ".git" / "objects";
+
+    // Move a commit and its tree from the loose objects to a pack, as a fetch would store them
+    auto storeInPack = [&](const std::string& commitId) {
+        git_repository* repo = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repo, repoPath.string().c_str()));
+        git_packbuilder* pb = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, git_packbuilder_new(&pb, repo));
+        git_oid oid;
+        CPPUNIT_ASSERT_EQUAL(0, git_oid_fromstr(&oid, commitId.c_str()));
+        CPPUNIT_ASSERT_EQUAL(0, git_packbuilder_insert_commit(pb, &oid));
+        CPPUNIT_ASSERT_EQUAL(0, git_packbuilder_write(pb, (objectsPath / "pack").string().c_str(), 0, nullptr, nullptr));
+        git_packbuilder_free(pb);
+        git_repository_free(repo);
+        for (const auto& entry : std::filesystem::directory_iterator(objectsPath))
+            if (entry.path().filename().string().size() == 2)
+                std::filesystem::remove_all(entry.path());
+    };
+    auto countPacks = [&] {
+        std::size_t count = 0;
+        for (const auto& entry : std::filesystem::directory_iterator(objectsPath / "pack"))
+            count += entry.path().extension() == ".pack";
+        return count;
+    };
+    storeInPack(repository->getHead());
+    for (auto i = 0; i < 60; ++i)
+        storeInPack(repository->commitMessage(fmt::format(R"({{"body":"message {}","type":"text/plain"}})", i)));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(61), countPacks());
+    auto before = repository->log();
+    CPPUNIT_ASSERT_EQUAL(std::size_t(61), before.size());
+
+    // Only fetches add packs: without one, there is nothing to merge
+    repository->repack();
+    CPPUNIT_ASSERT_EQUAL(std::size_t(61), countPacks());
+
+    // Fetch a commit from a copy of the conversation, as from another device
+    auto peerPath = fileutils::get_data_dir() / "repackpeer";
+    git_repository* peer = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0,
+                         git_clone(&peer,
+                                   repoPath.string().c_str(),
+                                   (peerPath / "conversations" / repository->id()).string().c_str(),
+                                   nullptr));
+    git_object* head = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_revparse_single(&head, peer, "HEAD"));
+    git_tree* tree = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_commit_tree(&tree, reinterpret_cast<git_commit*>(head)));
+    git_signature* sig = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_signature_now(&sig, "peer", "peer@jami.net"));
+    git_oid peerCommit;
+    CPPUNIT_ASSERT_EQUAL(0,
+                         git_commit_create_v(&peerCommit,
+                                             peer,
+                                             "HEAD",
+                                             sig,
+                                             sig,
+                                             nullptr,
+                                             "from the peer",
+                                             tree,
+                                             1,
+                                             reinterpret_cast<const git_commit*>(head)));
+    git_signature_free(sig);
+    git_tree_free(tree);
+    git_object_free(head);
+    git_repository_free(peer);
+    const bool savedFlag = ConversationRepository::FETCH_FROM_LOCAL_REPOS;
+    ConversationRepository::FETCH_FROM_LOCAL_REPOS = true;
+    auto fetched = repository->fetch("repackpeer");
+    ConversationRepository::FETCH_FROM_LOCAL_REPOS = savedFlag;
+    std::filesystem::remove_all(peerPath);
+    CPPUNIT_ASSERT(fetched);
+    CPPUNIT_ASSERT_EQUAL(std::size_t(62), countPacks());
+
+    repository->repack();
+
+    CPPUNIT_ASSERT_EQUAL(std::size_t(1), countPacks());
+    auto after = repository->log();
+    CPPUNIT_ASSERT_EQUAL(before.size(), after.size());
+    for (std::size_t i = 0; i < before.size(); ++i)
+        CPPUNIT_ASSERT_EQUAL(before[i].id, after[i].id);
+    CPPUNIT_ASSERT(repository->validCommits(after));
+    // The fetched commit, which nothing merged, is kept as well
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repo, repoPath.string().c_str()));
+    git_odb* odb = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_odb(&odb, repo));
+    CPPUNIT_ASSERT(git_odb_exists(odb, &peerCommit));
+    git_odb_free(odb);
+    git_repository_free(repo);
 }
 
 } // namespace test

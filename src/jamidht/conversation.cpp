@@ -2759,6 +2759,9 @@ Conversation::Impl::pull(const std::string& deviceId)
             }
         }
     }
+    // Merge the packs the fetches stored, if they are too many. This runs once
+    // the pulls are done, and without any lock, so that nobody waits for it.
+    repo->repack();
 }
 
 void
