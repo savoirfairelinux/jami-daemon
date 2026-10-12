@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49988b8f_952d59d6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3897,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T02:48:27Z",
+      "side": 1,
+      "message": "[warning] Line 3897: 🟡 `packFetched_` is cleared via `exchange(false)` before the merge attempt, so a transient failure in `repack(path, MAX_PACKS)` (I/O error, temporary libgit2 failure, etc.) drops the retry signal until another fetch receives objects. This can leave repositories above the pack limit indefinitely. Keep the flag set on failed/aborted repack (e.g., set it back to `true` when merge fails, or only clear after a successful/no-op determination) so cleanup is retried.",
+      "revId": "afb829e84ac1e818529ded02071a3a002d23b672",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
