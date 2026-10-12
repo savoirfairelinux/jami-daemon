@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6962ecf_7cf64d6f",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 891,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T18:55:15Z",
+      "side": 1,
+      "message": "[error] Line 891: 🔴 `computeExpectedMessages` and its edition/reaction handling rely on `assert(...)` for malformed-history conditions (`commitMap.has_value()`, target lookup in `quickAccess`, mutual exclusivity checks). In DST this turns validation failures into process aborts instead of a controlled test failure, which prevents diagnostic output and can hide which account/commit caused the mismatch. Replace these asserts with explicit runtime checks that log context and return failure (e.g., propagate `false` via `checkMessagesMatch`/`checkAppearances`).",
+      "revId": "73c1d9769519ede1fa25cdd59a5438debd0905da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
