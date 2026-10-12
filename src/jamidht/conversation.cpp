@@ -2661,6 +2661,7 @@ Conversation::Impl::pull(const std::string& deviceId)
 
     std::string commitId;
     OnPullCb cb;
+    auto merged = false;
     while (true) {
         {
             std::lock_guard lk(pullcbsMtx_);
@@ -2698,6 +2699,7 @@ Conversation::Impl::pull(const std::string& deviceId)
                                           [this](const std::string& peerUri) { this->disconnectFromPeer(peerUri); });
         if (!commits.empty()) {
             announce(commits);
+            merged = true;
         }
         lk.unlock();
 
@@ -2740,6 +2742,10 @@ Conversation::Impl::pull(const std::string& deviceId)
             }
         }
     }
+    // A fetch that brought commits stored them in a pack of its own. This runs
+    // once the pulls are done, and without any lock, so that nobody waits for it.
+    if (merged)
+        repo->repack();
 }
 
 void
