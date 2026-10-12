@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04c67448_f9ebdacd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2743,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-12T02:27:06Z",
+      "side": 1,
+      "message": "[warning] Line 2743: 🟡 `repack()` is now gated on `merged`, but pack growth is caused by fetch transfer, not strictly by whether `mergeHistory()` produced announced commits. A fetch can still leave a pack when `commits.empty()` (e.g., duplicate/filtered history across remotes), so this condition can skip cleanup and let pack count grow again. Gate repack on an explicit \"objects were transferred\" signal from fetch (or equivalent transfer stats), not on merge outcome.",
+      "revId": "179fd7fe1b11ed0834d20bab9a5e6ba1a1084711",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
