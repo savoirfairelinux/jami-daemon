@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c6ceb55_0fb76858",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 782,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T20:26:36Z",
+      "side": 1,
+      "message": "[warning] Line 782: 🟡 Please add/extend a regression test for this signaling path: when removing a reaction, `SwarmMessageUpdated` must not be emitted for the reaction commit, while the expected reaction-removal signal still fires. This behavior change is subtle and easy to regress without coverage.",
+      "revId": "9d03f87feb4e1d62443b4bb8a58ca71871e16bfc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
