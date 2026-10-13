@@ -2880,7 +2880,6 @@ ConversationRepository::Impl::parseCommit(git_repository* repo, const git_commit
     author.name = sig->name;
     author.email = sig->email;
     convCommit.author = std::move(author);
-    convCommit.authorId = uriFromDevice(convCommit.author.email, convCommit.id);
 
     std::vector<std::string> parents;
     auto parentsCount = git_commit_parentcount(commit);
@@ -2890,6 +2889,10 @@ ConversationRepository::Impl::parseCommit(git_repository* repo, const git_commit
         }
     }
     convCommit.parents = std::move(parents);
+    convCommit.authorId = uriFromDevice(convCommit.author.email, convCommit.id);
+    // A member leaving removes its own device certificate: look it up before the commit.
+    if (convCommit.authorId.empty() && convCommit.parents.size() == 1)
+        convCommit.authorId = uriFromDevice(convCommit.author.email, convCommit.parents.front());
 
     git_buf signature = {}, signed_data = {};
     if (git_commit_extract_signature(&signature, &signed_data, repo, &oid, "signature") < 0) {
