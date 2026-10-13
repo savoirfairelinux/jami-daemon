@@ -16,6 +16,23 @@
       "message": "[warning] Line 2027: 🟡 When `targetMessageIndex`/`replyToIndex` is present but the new generation key is missing, the loader silently falls back to generation `0`. That can make replayed unit-test configs behave differently (or drop events) after a conversation reset/rejoin because handles are treated as stale. Please require `targetMessageGeneration`/`replyToGeneration` whenever the corresponding index exists and fail fast with a clear error, or add an explicit compatibility migration path for legacy configs.",
       "revId": "7ac50afd9bd3b7fa923213261748107033587122",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a4a3b34_5cc0558f",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2040,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T00:58:45Z",
+      "side": 1,
+      "message": "[error] Line 2040: 🔴 `loadUnitTestConfig` silently falls back to `receivingRepositoryGeneration \u003d 0` when the `receivingRepositoryGeneration` key is missing. For legacy unit-test configs containing `MERGE` events, this can incorrectly accept or reject delayed merges after repository resets/rejoins, breaking deterministic replay. When `eventType \u003d\u003d MERGE`, require this field and fail with a clear error, or add an explicit compatibility migration path.",
+      "revId": "7ac50afd9bd3b7fa923213261748107033587122",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
