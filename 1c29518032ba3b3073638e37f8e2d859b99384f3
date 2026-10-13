@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25b11799_843393a5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T20:29:17Z",
+      "side": 1,
+      "message": "[warning] 🟡 This change fixes a subtle ordering bug, but there is no regression test in this patchset covering a merge-only batch (no non-merge commits) that triggers `relinearizeAfterMerge()`. Please add a unit/integration test that reproduces this scenario and asserts `SwarmMessageUpdated`/linearized-parent ordering remains correct after merge-only updates, so this behavior is protected against future refactors.",
+      "revId": "1c29518032ba3b3073638e37f8e2d859b99384f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
