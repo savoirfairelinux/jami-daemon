@@ -16,6 +16,23 @@
       "message": "[warning] Line 503: 🟡 `ADD_REACTION` validation says the target must be a visible message, but the check only verifies `targetMessageIndex \u003e\u003d 0`. This allows generating reaction commits for messages already deleted (empty `body`/`tid`), which then become no-op history noise and can reduce DST signal quality. Reuse the same visibility predicate later used in `computeExpectedMessages` (non-empty `CommitKey::BODY` or `CommitKey::TID`) and reject the event when the target is deleted.",
       "revId": "923bb6009221d05b5f60a4414a3b354ea2b45c9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed742c65_f5084ec9",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 797,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T00:55:48Z",
+      "side": 1,
+      "message": "[error] Line 797: 🔴 `REMOVE_REACTION` resolves the reaction to delete by **author** (`reactionByAuthor(...)`) instead of by the specific reaction commit created in `ADD_REACTION`. If the same author reacts multiple times to the same message (or backend deduplicates repeated adds), removal becomes non-deterministic and can erase the wrong reaction or make later scheduled removals fail assertions. Store the created reaction commit id when scheduling `REMOVE_REACTION` and remove by that id.",
+      "revId": "923bb6009221d05b5f60a4414a3b354ea2b45c9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
