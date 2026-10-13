@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e51ed4a5_7b9545a7",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 1111,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T22:54:43Z",
+      "side": 1,
+      "message": "[warning] Line 1111: 🟡 This test is added manually instead of through `add_test_executable`, so it skips shared test-target wiring from that macro (notably coverage integration via `setup_target_for_coverage`). Please register it with `add_test_executable(nodejs_signal_dispatch test/unitTest/nodejs/signal_dispatch.cpp)` to keep behavior consistent with the rest of the unit-test suite.",
+      "revId": "48d89a93f29882f0f8183678000d8b652f3927e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
