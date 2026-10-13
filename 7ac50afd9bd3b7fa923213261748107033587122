@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c7e980c0_8339ed6c",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2027,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-13T01:37:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d5c40373_52edfe8c",
+      "revId": "7ac50afd9bd3b7fa923213261748107033587122",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2a4a3b34_5cc0558f",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-13T00:58:45Z",
       "side": 1,
       "message": "[error] Line 2040: 🔴 `loadUnitTestConfig` silently falls back to `receivingRepositoryGeneration \u003d 0` when the `receivingRepositoryGeneration` key is missing. For legacy unit-test configs containing `MERGE` events, this can incorrectly accept or reject delayed merges after repository resets/rejoins, breaking deterministic replay. When `eventType \u003d\u003d MERGE`, require this field and fail with a clear error, or add an explicit compatibility migration path.",
+      "revId": "7ac50afd9bd3b7fa923213261748107033587122",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7b06588_c4b34611",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2040,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-13T01:37:33Z",
+      "side": 1,
+      "message": "Not a concern because there are no such legacy configs.",
+      "parentUuid": "2a4a3b34_5cc0558f",
       "revId": "7ac50afd9bd3b7fa923213261748107033587122",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
