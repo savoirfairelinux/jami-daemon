@@ -781,7 +781,7 @@ public:
                                     }
                                 }
                             }
-                            if (!signalMsg.id.empty()) {
+                            if (!signalMsg.id.empty() && !signalMsg.body.contains(CommitKey::REACT_TO)) {
                                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                                              convId,
                                                                                              signalMsg);
@@ -801,7 +801,7 @@ public:
                                 signalMsg = *originalIt->second;
                             }
                         }
-                        if (!signalMsg.id.empty()) {
+                        if (!signalMsg.id.empty() && !signalMsg.body.contains(CommitKey::REACT_TO)) {
                             emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, signalMsg);
                         }
                     }
