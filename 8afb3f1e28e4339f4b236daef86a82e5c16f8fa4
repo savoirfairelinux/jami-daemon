@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "20d2cb78_b3bc21b0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 593,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-10-13T20:03:26Z",
+      "side": 1,
+      "message": "This check rejects every newly opened Jami SIP channel.  SipTransport::connected_  defaults to  false, but  ChanneledSIPTransport::start()  never emits  PJSIP_TP_STATE_CONNECTED ; it only emits  DISCONNECTED  on shutdown. Consequently,  useRecoveredTransport()  returns  false  even after ICE, TLS, and SIP-channel setup succeed. Please initialize/notify the connected state for channeled transports and add a recovery test using a real channeled transport.",
+      "range": {
+        "startLine": 593,
+        "startChar": 0,
+        "endLine": 593,
+        "endChar": 2
+      },
+      "revId": "8afb3f1e28e4339f4b236daef86a82e5c16f8fa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b8017210_1c92116c",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
