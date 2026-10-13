@@ -1479,7 +1479,7 @@ JamiAccount::onAuthenticationSuccess(bool migrating,
         try {
             auto newProfile = vCard::utils::initVcard();
             newProfile[std::string(vCard::Property::FORMATTED_NAME)] = info.displayName;
-            newProfile[std::string(vCard::Property::PHOTO)] = info.photo;
+            newProfile[std::string(vCard::Property::PHOTO_PNG)] = info.photo;
 
             const auto& profiles = idPath_ / "profiles";
             const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(info.accountId));
