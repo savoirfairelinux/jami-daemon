@@ -109,6 +109,9 @@ struct ConversationCommit
     std::string linearized_parent {};
     std::string authorId {};
     int64_t timestamp {0};
+    // Set for a commit that was already in the history and is only announced again because its
+    // position in the linearized history may have changed.
+    bool reannounce {false};
 };
 
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
@@ -247,7 +250,9 @@ public:
      * Merge the history of the conversation with another peer
      * @param uri                    The peer uri
      * @param disconnectFromPeerCb   Callback to disconnect from peer when banning
-     * @return                       A vector of media maps representing the merged history
+     * @return                       The commits whose position in the linearized history may have
+     *                               changed, from oldest to newest. This includes all new commits.
+     *                               Commits that were already in the history have a "reannounce" key.
      */
     std::vector<std::map<std::string, std::string>> mergeHistory(
         const std::string& uri, std::function<void(const std::string&)>&& disconnectFromPeerCb = {});
@@ -412,13 +417,6 @@ public:
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri, const std::string_view type, const std::string& voteType);
-
-    /**
-     * Validate a fetch with remote device
-     * @param remotedevice
-     * @return the validated commits and if an error occurs
-     */
-    std::pair<std::vector<ConversationCommit>, bool> validFetch(const std::string& remoteDevice) const;
 
     /**
      * Validate a clone

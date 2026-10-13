@@ -111,6 +111,17 @@ as_view(const GitObject& blob)
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
+// A commit is a standalone "message" (as exposed to clients through
+// libjami::SwarmMessage) if and only if it is not a merge commit, not an
+// edition and not a reaction. Editions and reactions are folded into the
+// message they refer to and therefore don't have their own place in the
+// linearized message history.
+static bool
+isMessageCommit(const ConversationCommit& commit)
+{
+    return commit.parents.size() <= 1 && commit.commitMsg.reactTo.empty() && commit.commitMsg.editedId.empty();
+}
+
 class ConversationRepository::Impl
 {
 public:
@@ -309,12 +320,17 @@ public:
     std::string diffStats(const std::string& newId, const std::string& oldId) const;
     std::string diffStats(const GitDiff& diff) const;
 
-    std::vector<ConversationCommit> behind(const std::string& from) const;
+    // Commits of the linearized history whose position may have changed since HEAD was at
+    // `oldHead`, from oldest to newest. See the definition for details.
+    std::vector<ConversationCommit> reorderedCommits(const std::string& oldHead) const;
     void forEachCommit(PreConditionCb&& preCondition,
                        std::function<void(ConversationCommit&&)>&& emplaceCb,
                        PostConditionCb&& postCondition,
                        const std::string& from = "",
-                       bool logIfNotFound = true) const;
+                       bool logIfNotFound = true,
+                       bool includeTo = true,
+                       const std::string& to = "") const;
+
     std::vector<ConversationCommit> log(const LogOptions& options) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -555,10 +571,18 @@ public:
             auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
             auto uri = verifiedUriFromDeviceCert(deviceCert, deviceId, tree);
             if (uri.empty())
-                JAMI_ERROR("[Account {}] [Conversation {}] Device certificate {} is not issued by a member of the conversation", accountId_, id_, deviceId);
+                JAMI_ERROR("[Account {}] [Conversation {}] Device certificate {} is not issued by a member of the "
+                           "conversation",
+                           accountId_,
+                           id_,
+                           deviceId);
             return uri;
         } catch (const std::exception& e) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to load certificate for device {}: {}", accountId_, id_, deviceId, e.what());
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to load certificate for device {}: {}",
+                       accountId_,
+                       id_,
+                       deviceId,
+                       e.what());
             return {};
         }
     }
@@ -2460,41 +2484,90 @@ ConversationRepository::Impl::diff(git_repository* repo, const std::string& idNe
     return GitDiff(diff_ptr);
 }
 
+/**
+ * Return the commits whose position in the linearized history may have changed when HEAD moved
+ * from `oldHead` to its current value, from oldest to newest.
+ *
+ * These are the commits preceding the longest tail shared by the old and the new linearized
+ * histories, i.e. a contiguous range ending at HEAD. The merge bases of the two heads cannot be
+ * used to bound this range: because of its timestamp, a new commit can be sorted below old
+ * commits that are not ancestors of any merge base, and move them.
+ *
+ * Each message commit gets its message-level linearized parent (the previous message commit in
+ * the linearized history), and the commits that were already reachable from `oldHead` are
+ * flagged with `reannounce`.
+ */
 std::vector<ConversationCommit>
-ConversationRepository::Impl::behind(const std::string& from) const
+ConversationRepository::Impl::reorderedCommits(const std::string& oldHead) const
 {
-    git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
-    if (!repo)
+    git_oid newHeadOid, oldHeadOid;
+    if (!repo || git_reference_name_to_id(&newHeadOid, repo.get(), "HEAD") < 0
+        || git_oid_fromstr(&oldHeadOid, oldHead.c_str()) < 0)
         return {};
-    if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("Unable to get reference for HEAD");
-        return {};
-    }
-    oid_head = oid_local;
-    std::string head = git_oid_tostr_s(&oid_head);
-    if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
-        JAMI_ERROR("Unable to get reference for commit {}", from);
-        return {};
-    }
 
-    git_oidarray bases;
-    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERROR("Unable to get any merge base for commit {} and {}", from, head);
-        return {};
-    }
-    for (std::size_t i = 0; i < bases.count; ++i) {
-        std::string oid = git_oid_tostr_s(&bases.ids[i]);
-        if (oid != head) {
-            oid_local = bases.ids[i];
+    // Comparing both orders only requires the ids, so commits are not parsed at this point.
+    auto linearize = [&](const git_oid& head) {
+        std::vector<git_oid> oids;
+        git_revwalk* walker_ptr = nullptr;
+        if (git_revwalk_new(&walker_ptr, repo.get()) < 0)
+            return oids;
+        GitRevWalker walker {walker_ptr};
+        git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+        if (git_revwalk_push(walker.get(), &head) < 0)
+            return oids;
+        git_oid oid;
+        while (!git_revwalk_next(&oid, walker.get()))
+            oids.emplace_back(oid);
+        return oids;
+    };
+    auto newOrder = linearize(newHeadOid);
+    auto oldOrder = linearize(oldHeadOid);
+
+    size_t commonTail = 0;
+    while (commonTail < newOrder.size() && commonTail < oldOrder.size()
+           && git_oid_equal(&newOrder[newOrder.size() - 1 - commonTail], &oldOrder[oldOrder.size() - 1 - commonTail]))
+        ++commonTail;
+    auto nbReordered = newOrder.size() - commonTail;
+
+    std::set<std::string> oldIds;
+    for (size_t i = 0; i < oldOrder.size() - commonTail; ++i)
+        oldIds.emplace(git_oid_tostr_s(&oldOrder[i]));
+
+    auto parse = [&](const git_oid& oid) -> std::optional<ConversationCommit> {
+        git_commit* commit_ptr = nullptr;
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0)
+            return std::nullopt;
+        GitCommit commit {commit_ptr};
+        return parseCommit(repo.get(), commit.get());
+    };
+
+    // The linearized parent of the oldest reordered message is the newest message of the common tail.
+    std::string previousMessage;
+    for (auto i = nbReordered; i < newOrder.size(); ++i) {
+        if (auto commit = parse(newOrder[i]); commit && isMessageCommit(*commit)) {
+            previousMessage = commit->id;
             break;
         }
     }
-    git_oidarray_free(&bases);
-    std::string to = git_oid_tostr_s(&oid_local);
-    if (to == from)
-        return {};
-    return log(LogOptions {from, to});
+
+    std::vector<ConversationCommit> commits;
+    commits.reserve(nbReordered);
+    for (auto i = nbReordered; i-- > 0;) {
+        auto commit = parse(newOrder[i]);
+        if (!commit) {
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up commit {}",
+                       accountId_,
+                       id_,
+                       git_oid_tostr_s(&newOrder[i]));
+            return {};
+        }
+        if (isMessageCommit(*commit))
+            commit->linearized_parent = std::exchange(previousMessage, commit->id);
+        commit->reannounce = oldIds.contains(commit->id);
+        commits.emplace_back(std::move(*commit));
+    }
+    return commits;
 }
 
 void
@@ -2502,7 +2575,9 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
                                             std::function<void(ConversationCommit&&)>&& emplaceCb,
                                             PostConditionCb&& postCondition,
                                             const std::string& from,
-                                            bool logIfNotFound) const
+                                            bool logIfNotFound,
+                                            bool includeTo,
+                                            const std::string& to) const
 {
     git_oid oid, oidFrom, oidMerge;
 
@@ -2533,6 +2608,16 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     }
 
     GitRevWalker walker {walker_ptr};
+
+    if (!includeTo && to != "") {
+        git_oid oidTo;
+        if (git_oid_fromstr(&oidTo, to.c_str()) < 0) {
+            JAMI_DEBUG("[Account {}] [Conversation {}] Unable to get oid for TO", accountId_, id_);
+            return;
+        }
+        git_revwalk_hide(walker.get(), &oidTo);
+    }
+
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
     while (!git_revwalk_next(&oid, walker.get())) {
@@ -2607,7 +2692,9 @@ ConversationRepository::Impl::log(const LogOptions& options) const
         [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
         [](auto, auto, auto) { return false; },
         options.from,
-        options.logIfNotFound);
+        options.logIfNotFound,
+        options.includeTo,
+        options.to);
     return commits;
 }
 
@@ -2828,6 +2915,8 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     message["author"] = commit.authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
+    if (commit.reannounce)
+        message["reannounce"] = "1";
 
     return message;
 }
@@ -3729,26 +3818,36 @@ std::vector<std::map<std::string, std::string>>
 ConversationRepository::mergeHistory(const std::string& uri,
                                      std::function<void(const std::string&)>&& disconnectFromPeerCb)
 {
-    auto remoteHeadRes = remoteHead(uri);
-    if (remoteHeadRes.empty()) {
+    auto remoteHeadId = remoteHead(uri);
+    if (remoteHeadId.empty()) {
         JAMI_WARNING("[Account {}] [Conversation {}] Unable to get HEAD of {}", pimpl_->accountId_, pimpl_->id_, uri);
+        return {};
+    }
+    auto localHeadId = getHead();
+    if (localHeadId.empty()) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to get local HEAD", pimpl_->accountId_, pimpl_->id_);
         return {};
     }
 
     // Validate commit
-    auto [newCommits, err] = validFetch(uri);
+    auto newCommits = log(LogOptions {remoteHeadId, localHeadId});
     if (newCommits.empty()) {
-        if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
-                       pimpl_->accountId_,
-                       pimpl_->id_,
-                       uri);
+        removeBranchWith(uri);
+        return {};
+    }
+    std::reverse(std::begin(newCommits), std::end(newCommits));
+    auto isValid = pimpl_->validCommits(newCommits);
+    if (!isValid) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
+                   pimpl_->accountId_,
+                   pimpl_->id_,
+                   uri);
         removeBranchWith(uri);
         return {};
     }
 
     // If validated, merge
-    auto [ok, cid] = merge(remoteHeadRes);
+    auto [ok, cid] = merge(remoteHeadId);
     if (!ok) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge history with {}",
                    pimpl_->accountId_,
@@ -3757,25 +3856,20 @@ ConversationRepository::mergeHistory(const std::string& uri,
         removeBranchWith(uri);
         return {};
     }
-    if (!cid.empty()) {
-        // A merge commit was generated, should be added in new commits
-        auto commit = getCommit(cid);
-        if (commit != std::nullopt)
-            newCommits.emplace_back(*commit);
-    }
-
     JAMI_LOG("[Account {}] [Conversation {}] Successfully merged history with {}", pimpl_->accountId_, pimpl_->id_, uri);
-    auto result = convCommitsToMap(newCommits);
-    for (auto& commit : result) {
-        auto it = commit.find(CommitKey::TYPE);
-        if (it != commit.end() && it->second == CommitType::MEMBER) {
-            refreshMembers();
 
-            if (commit[CommitKey::ACTION] == CommitAction::BAN)
-                disconnectFromPeerCb(commit[CommitKey::URI]);
+    auto isMemberCommit = [](const ConversationCommit& commit) {
+        return commit.commitMsg.type == CommitType::MEMBER;
+    };
+    if (std::any_of(newCommits.begin(), newCommits.end(), isMemberCommit)) {
+        refreshMembers();
+        for (const auto& commit : newCommits) {
+            if (isMemberCommit(commit) && commit.commitMsg.action == CommitAction::BAN)
+                disconnectFromPeerCb(commit.commitMsg.uri);
         }
     }
-    return result;
+
+    return convCommitsToMap(pimpl_->reorderedCommits(localHeadId));
 }
 
 std::string
@@ -4568,20 +4662,6 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 
     // If vote nok
     return {};
-}
-
-std::pair<std::vector<ConversationCommit>, bool>
-ConversationRepository::validFetch(const std::string& remoteDevice) const
-{
-    auto newCommit = remoteHead(remoteDevice);
-    if (not pimpl_ or newCommit.empty())
-        return {{}, false};
-    auto commitsToValidate = pimpl_->behind(newCommit);
-    std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
-    auto isValid = pimpl_->validCommits(commitsToValidate);
-    if (isValid)
-        return {commitsToValidate, false};
-    return {{}, true};
 }
 
 std::pair<std::vector<ConversationCommit>, bool>

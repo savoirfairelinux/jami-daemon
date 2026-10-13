@@ -42,9 +42,8 @@ SimClient::onConversationMemberEvent(const std::string& accountId,
     assert(!conversationRemoved_);
 
     auto event = static_cast<MemberEvent>(eventCode);
-    if (event != MemberEvent::ADD) {
-        assert(memberRole_.contains(memberId));
-    }
+    // Only the last event of a batch is reported for each member, so a member may
+    // first appear with any event (e.g. JOIN for ADD followed by JOIN).
 
     switch (event) {
     case MemberEvent::ADD:

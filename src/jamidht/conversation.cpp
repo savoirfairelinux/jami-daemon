@@ -337,6 +337,24 @@ struct History
     std::map<std::string, std::list<std::map<std::string, std::string>>> pendingReactions {};
 };
 
+// Changes made to the loaded history by announced commits. They are recorded while the history is
+// updated and only reported to the client once it is up to date, so that each change is reported
+// once and only with the final state of the messages.
+struct HistoryChanges
+{
+    // Messages that were added to the history or may have moved in it, from oldest to newest.
+    std::vector<std::string> placedMessages {};
+    // The messages of placedMessages that were not in the history before.
+    std::set<std::string> newMessages {};
+    // Messages whose content changed.
+    std::set<std::string> updatedMessages {};
+    // Pairs of (message id, reaction id).
+    std::vector<std::pair<std::string, std::string>> addedReactions {};
+    std::vector<std::pair<std::string, std::string>> removedReactions {};
+    // Latest status of each (peer, message id) pair that changed.
+    std::map<std::pair<std::string, std::string>, int32_t> statuses {};
+};
+
 class Conversation::Impl
 {
 private:
@@ -559,15 +577,13 @@ public:
      * Update activeCalls_ via announced commits (in load or via new commits)
      * @param commit        Commit to check
      * @param eraseOnly     If we want to ignore added commits
-     * @param emitSig    If we want to emit to client
+     * @return whether activeCalls_ changed
      * @note eraseOnly is used by loadMessages. This is a fail-safe, this SHOULD NOT happen
      */
-    void updateActiveCalls(const std::map<std::string, std::string>& commit,
-                           bool eraseOnly = false,
-                           bool emitSig = true) const
+    bool updateActiveCalls(const std::map<std::string, std::string>& commit, bool eraseOnly = false) const
     {
         if (!repository_)
-            return;
+            return false;
         if (commit.at(CommitKey::TYPE) == CommitType::MEMBER) {
             // In this case, we need to check if we are not removing a hosting member or device
             std::lock_guard lk(activeCallsMtx_);
@@ -584,14 +600,9 @@ public:
                     ++it;
                 }
             }
-            if (updateActives) {
+            if (updateActives)
                 saveActiveCalls();
-                if (emitSig)
-                    emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                                 repository_->id(),
-                                                                                 activeCalls_);
-            }
-            return;
+            return updateActives;
         }
         // Else, it's a call information
         if (commit.find(CommitKey::CONF_ID) != commit.end() && commit.find(CommitKey::URI) != commit.end()
@@ -617,10 +628,7 @@ public:
                         {"device", device},
                     });
                     saveActiveCalls();
-                    if (emitSig)
-                        emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                                     repository_->id(),
-                                                                                     activeCalls_);
+                    return true;
                 }
             } else {
                 if (itActive != activeCalls_.end()) {
@@ -650,14 +658,12 @@ public:
                                    device,
                                    uri);
                     }
+                    saveActiveCalls();
+                    return true;
                 }
-                saveActiveCalls();
-                if (emitSig)
-                    emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                                 repository_->id(),
-                                                                                 activeCalls_);
             }
         }
+        return false;
     }
 
     void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false)
@@ -674,6 +680,8 @@ public:
             bool memberEvent = false;
             bool contentChanged = false;
             for (const auto& c : commits) {
+                if (c.contains("reannounce"))
+                    continue;
                 memberEvent |= c.at(CommitKey::TYPE) == CommitType::MEMBER;
                 contentChanged |= c.at(CommitKey::TYPE) == CommitType::CHECKPOINT;
             }
@@ -692,119 +700,195 @@ public:
                     });
             return;
         }
-        auto ok = !commits.empty();
-        auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
-        addToHistory(loadedHistory_, commits, true, commitFromSelf);
-        if (ok) {
-            bool announceMember = false;
-            for (const auto& c : commits) {
-                // Announce member events
-                if (c.at(CommitKey::TYPE) == CommitType::MEMBER) {
-                    if (c.find(CommitKey::URI) != c.end() && c.find(CommitKey::ACTION) != c.end()) {
-                        const auto& uri = c.at(CommitKey::URI);
-                        const auto& actionStr = c.at(CommitKey::ACTION);
-                        auto event = libjami::MemberEvent::INVALID;
-                        if (actionStr == CommitAction::ADD)
-                            event = libjami::MemberEvent::ADD;
-                        else if (actionStr == CommitAction::JOIN)
-                            event = libjami::MemberEvent::JOIN;
-                        else if (actionStr == CommitAction::REMOVE)
-                            event = libjami::MemberEvent::REMOVE;
-                        else if (actionStr == CommitAction::BAN)
-                            event = libjami::MemberEvent::BAN;
-                        else if (actionStr == CommitAction::UNBAN)
-                            event = libjami::MemberEvent::UNBAN;
-                        if (event == libjami::MemberEvent::BAN || event == libjami::MemberEvent::REMOVE) {
-                            // In this case, a potential host was removed during a call.
-                            updateActiveCalls(c);
-                            typers_->removeTyper(uri);
-                        }
-                        if (event != libjami::MemberEvent::INVALID) {
-                            announceMember = true;
-                            emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(accountId_,
-                                                                                             convId,
-                                                                                             uri,
-                                                                                             static_cast<int>(event));
+        if (commits.empty())
+            return;
+
+        HistoryChanges changes;
+        {
+            std::lock_guard lk(loadedHistory_.mutex);
+            addToHistory(loadedHistory_, commits, true, commitFromSelf, &changes);
+        }
+
+        // Only the last event of each member is reported.
+        std::map<std::string, libjami::MemberEvent> memberEvents;
+        std::set<std::string> removedTypers;
+        bool activeCallsChanged = false;
+        for (const auto& c : commits) {
+            if (c.contains("reannounce"))
+                continue;
+            if (c.at(CommitKey::TYPE) == CommitType::MEMBER) {
+                if (c.find(CommitKey::URI) != c.end() && c.find(CommitKey::ACTION) != c.end()) {
+                    const auto& uri = c.at(CommitKey::URI);
+                    const auto& actionStr = c.at(CommitKey::ACTION);
+                    auto event = libjami::MemberEvent::INVALID;
+                    if (actionStr == CommitAction::ADD)
+                        event = libjami::MemberEvent::ADD;
+                    else if (actionStr == CommitAction::JOIN)
+                        event = libjami::MemberEvent::JOIN;
+                    else if (actionStr == CommitAction::REMOVE)
+                        event = libjami::MemberEvent::REMOVE;
+                    else if (actionStr == CommitAction::BAN)
+                        event = libjami::MemberEvent::BAN;
+                    else if (actionStr == CommitAction::UNBAN)
+                        event = libjami::MemberEvent::UNBAN;
+                    if (event == libjami::MemberEvent::BAN || event == libjami::MemberEvent::REMOVE) {
+                        // In this case, a potential host was removed during a call.
+                        activeCallsChanged |= updateActiveCalls(c);
+                        removedTypers.emplace(uri);
+                    }
+                    if (event != libjami::MemberEvent::INVALID)
+                        memberEvents[uri] = event;
+                }
+            } else if (c.at(CommitKey::TYPE) == CommitType::CALL_HISTORY) {
+                activeCallsChanged |= updateActiveCalls(c);
+            }
+#ifdef ENABLE_PLUGIN
+            if (auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                pluginChatManager.hasHandlers()) {
+                auto cm = std::make_shared<JamiMessage>(accountId_, convId, c.at("author") != userId_, c, false);
+                cm->isSwarm = true;
+                pluginChatManager.publishMessage(cm);
+
+                const auto editIt = c.find(CommitKey::EDIT);
+                const bool isEdit = editIt != c.end() && !editIt->second.empty();
+                const bool isText = c.at(CommitKey::TYPE) == CommitType::TEXT;
+
+                if (const auto idIt = c.find("id"); idIt != c.end() && (isEdit || isText)) {
+                    const std::string msgId = idIt->second;
+
+                    // Snapshot under lock.
+                    libjami::SwarmMessage snap;
+                    {
+                        std::lock_guard const lk(loadedHistory_.mutex);
+                        if (auto it = loadedHistory_.quickAccess.find(msgId); it != loadedHistory_.quickAccess.end()) {
+                            snap = *it->second;
                         }
                     }
-                } else if (c.at(CommitKey::TYPE) == CommitType::CALL_HISTORY) {
-                    updateActiveCalls(c);
-                }
-#ifdef ENABLE_PLUGIN
-                if (auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
-                    pluginChatManager.hasHandlers()) {
-                    auto cm = std::make_shared<JamiMessage>(accountId_, convId, c.at("author") != userId_, c, false);
-                    cm->isSwarm = true;
-                    pluginChatManager.publishMessage(cm);
 
-                    const auto editIt = c.find(CommitKey::EDIT);
-                    const bool isEdit = editIt != c.end() && !editIt->second.empty();
-                    const bool isText = c.at(CommitKey::TYPE) == CommitType::TEXT;
+                    if (!snap.id.empty()) {
+                        // Transform outside lock.
+                        std::vector<libjami::SwarmMessage> single {snap};
+                        pluginChatManager.transformSwarmMessages(single, accountId_, convId);
+                        auto& transformed = single[0];
+                        const auto boIt = transformed.pluginData.find("bodyOverwrite");
+                        const bool hasOverwrite = boIt != transformed.pluginData.end() && !boIt->second.empty();
 
-                    if (const auto idIt = c.find("id"); idIt != c.end() && (isEdit || isText)) {
-                        const std::string msgId = idIt->second;
-
-                        // Snapshot under lock.
-                        libjami::SwarmMessage snap;
-                        {
-                            std::lock_guard const lk(loadedHistory_.mutex);
+                        // Write back under lock, the client is notified with the other changes.
+                        std::lock_guard const lk(loadedHistory_.mutex);
+                        if (isEdit || hasOverwrite) {
+                            auto signalMsg = injectEditionOverwrites(msgId, hasOverwrite ? boIt->second : "");
+                            if (!signalMsg.id.empty())
+                                changes.updatedMessages.emplace(signalMsg.id);
+                        } else {
                             if (auto it = loadedHistory_.quickAccess.find(msgId);
                                 it != loadedHistory_.quickAccess.end()) {
-                                snap = *it->second;
+                                it->second->pluginData["bodyOverwrite"] = "";
                             }
-                        }
-
-                        if (!snap.id.empty()) {
-                            // Transform outside lock.
-                            std::vector<libjami::SwarmMessage> single {snap};
-                            pluginChatManager.transformSwarmMessages(single, accountId_, convId);
-                            auto& transformed = single[0];
-                            const auto boIt = transformed.pluginData.find("bodyOverwrite");
-                            const bool hasOverwrite = boIt != transformed.pluginData.end() && !boIt->second.empty();
-
-                            // Write back + build signal under one lock, emit outside.
-                            libjami::SwarmMessage signalMsg;
-                            {
-                                std::lock_guard const lk(loadedHistory_.mutex);
-                                if (isEdit || hasOverwrite) {
-                                    signalMsg = injectEditionOverwrites(msgId, hasOverwrite ? boIt->second : "");
-                                } else {
-                                    if (auto it = loadedHistory_.quickAccess.find(msgId);
-                                        it != loadedHistory_.quickAccess.end()) {
-                                        it->second->pluginData["bodyOverwrite"] = "";
-                                    }
-                                }
-                            }
-                            if (!signalMsg.id.empty()) {
-                                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
-                                                                                             convId,
-                                                                                             signalMsg);
-                            }
-                        }
-                    }
-                } else
-#endif
-                {
-                    // No active handlers: still notify clients when an edit arrives.
-                    if (const auto editIt = c.find(CommitKey::EDIT); editIt != c.end() && !editIt->second.empty()) {
-                        libjami::SwarmMessage signalMsg;
-                        {
-                            std::lock_guard const lk(loadedHistory_.mutex);
-                            if (auto originalIt = loadedHistory_.quickAccess.find(editIt->second);
-                                originalIt != loadedHistory_.quickAccess.end()) {
-                                signalMsg = *originalIt->second;
-                            }
-                        }
-                        if (!signalMsg.id.empty()) {
-                            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, signalMsg);
                         }
                     }
                 }
+            } else
+#endif
+            {
+                // Edits are reported once plugins had a chance to overwrite them.
+                if (const auto editIt = c.find(CommitKey::EDIT); editIt != c.end() && !editIt->second.empty())
+                    changes.updatedMessages.emplace(editIt->second);
             }
+        }
 
-            if (announceMember && onMembersChanged_) {
-                onMembersChanged_(repository_->memberUris("", {}));
+        emitChanges(changes);
+        for (const auto& [uri, event] : memberEvents)
+            emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(accountId_,
+                                                                             convId,
+                                                                             uri,
+                                                                             static_cast<int>(event));
+        for (const auto& uri : removedTypers)
+            typers_->removeTyper(uri);
+        if (activeCallsChanged) {
+            std::vector<std::map<std::string, std::string>> activeCalls;
+            {
+                std::lock_guard lk(activeCallsMtx_);
+                activeCalls = activeCalls_;
             }
+            emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_, convId, activeCalls);
+        }
+        if (!memberEvents.empty() && onMembersChanged_)
+            onMembersChanged_(repository_->memberUris("", {}));
+    }
+
+    /**
+     * Report the changes made to the loaded history to the client.
+     */
+    void emitChanges(const HistoryChanges& changes)
+    {
+        const auto& convId = repository_->id();
+        // Pairs of (is new, message), from oldest to newest.
+        std::vector<std::pair<bool, libjami::SwarmMessage>> placedMessages;
+        std::vector<libjami::SwarmMessage> updatedMessages;
+        std::vector<std::pair<std::string, std::map<std::string, std::string>>> addedReactions;
+        std::vector<std::pair<std::string, std::string>> removedReactions;
+        {
+            std::lock_guard lk(loadedHistory_.mutex);
+            const auto& quickAccess = loadedHistory_.quickAccess;
+            // The client receives these messages in full, along with their reactions.
+            std::set<std::string> sentMessages;
+            placedMessages.reserve(changes.placedMessages.size());
+            for (const auto& id : changes.placedMessages) {
+                if (auto it = quickAccess.find(id); it != quickAccess.end()) {
+                    placedMessages.emplace_back(changes.newMessages.contains(id), *it->second);
+                    sentMessages.emplace(id);
+                }
+            }
+            for (const auto& id : changes.updatedMessages) {
+                auto it = quickAccess.find(id);
+                if (it == quickAccess.end() || sentMessages.contains(id)
+                    || it->second->body.contains(CommitKey::REACT_TO))
+                    continue;
+                updatedMessages.emplace_back(*it->second);
+                sentMessages.emplace(id);
+            }
+            std::set<std::string> addedReactionIds;
+            for (const auto& [messageId, reactionId] : changes.addedReactions) {
+                addedReactionIds.emplace(reactionId);
+                auto it = quickAccess.find(messageId);
+                if (it == quickAccess.end() || sentMessages.contains(messageId))
+                    continue;
+                // The reaction may have been removed since.
+                const auto& reactions = it->second->reactions;
+                auto reactionIt = std::find_if(reactions.begin(), reactions.end(), [&](const auto& reaction) {
+                    auto idIt = reaction.find("id");
+                    return idIt != reaction.end() && idIt->second == reactionId;
+                });
+                if (reactionIt != reactions.end())
+                    addedReactions.emplace_back(messageId, *reactionIt);
+            }
+            for (const auto& [messageId, reactionId] : changes.removedReactions) {
+                if (!sentMessages.contains(messageId) && !addedReactionIds.contains(reactionId))
+                    removedReactions.emplace_back(messageId, reactionId);
+            }
+        }
+
+        for (const auto& [isNew, message] : placedMessages) {
+            if (isNew)
+                emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, convId, message);
+            else
+                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, message);
+        }
+        for (const auto& message : updatedMessages)
+            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, message);
+        for (const auto& [messageId, reaction] : addedReactions)
+            emitSignal<libjami::ConversationSignal::ReactionAdded>(accountId_, convId, messageId, reaction);
+        for (const auto& [messageId, reactionId] : removedReactions)
+            emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_, convId, messageId, reactionId);
+        for (const auto& [key, status] : changes.statuses) {
+            const auto& [peer, messageId] = key;
+            // New messages were received with their status.
+            if (!changes.newMessages.contains(messageId))
+                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(accountId_,
+                                                                                      convId,
+                                                                                      peer,
+                                                                                      messageId,
+                                                                                      status);
         }
     }
 
@@ -1053,16 +1137,22 @@ public:
         History& history,
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
-        bool commitFromSelf = false);
+        bool commitFromSelf = false,
+        HistoryChanges* changes = nullptr);
 
-    void handleReaction(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
+    void handleReaction(History& history,
+                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
+                        HistoryChanges* changes) const;
     void handleEdition(History& history,
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                       bool messageReceived) const;
+                       bool messageReceived,
+                       HistoryChanges* changes) const;
     bool handleMessage(History& history,
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                        bool messageReceived) const;
-    void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message, History& history) const;
+    void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
+                       History& history,
+                       HistoryChanges* changes) const;
     /**
      * {uri, {
      *          {"fetch", "commitId"},
@@ -1591,11 +1681,18 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
     }
+
+    // Set the linearized parent of the ith commit to be that of the i+1'th commit
+    for (size_t i = 0; i + 1 < ret.size(); ++i)
+        ret[i].linearizedParent = ret[i + 1].id;
+
     return ret;
 }
 
 void
-Conversation::Impl::handleReaction(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const
+Conversation::Impl::handleReaction(History& history,
+                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
+                                   HistoryChanges* changes) const
 {
     auto it = history.quickAccess.find(sharedCommit->body.at(CommitKey::REACT_TO));
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
@@ -1615,10 +1712,8 @@ Conversation::Impl::handleReaction(History& history, const std::shared_ptr<libja
         if (bodyIt != target->body.end() && bodyIt->second.empty())
             return;
         target->reactions.emplace_back(sharedCommit->body);
-        emitSignal<libjami::ConversationSignal::ReactionAdded>(accountId_,
-                                                               repository_->id(),
-                                                               target->id,
-                                                               sharedCommit->body);
+        if (changes)
+            changes->addedReactions.emplace_back(target->id, sharedCommit->id);
     } else {
         history.pendingReactions[sharedCommit->body.at(CommitKey::REACT_TO)].emplace_back(sharedCommit->body);
     }
@@ -1627,7 +1722,8 @@ Conversation::Impl::handleReaction(History& history, const std::shared_ptr<libja
 void
 Conversation::Impl::handleEdition(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                                  bool messageReceived) const
+                                  bool messageReceived,
+                                  HistoryChanges* changes) const
 {
     auto editId = sharedCommit->body.at(CommitKey::EDIT);
     auto it = history.quickAccess.find(editId);
@@ -1659,10 +1755,8 @@ Conversation::Impl::handleEdition(History& history,
                         (*itPreviousReact)[toReplace] = body;
                         if (body.empty()) {
                             baseCommit->reactions.erase(itPreviousReact);
-                            emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_,
-                                                                                     repository_->id(),
-                                                                                     baseCommit->id,
-                                                                                     editId);
+                            if (changes)
+                                changes->removedReactions.emplace_back(baseCommit->id, editId);
                         }
                     }
                 } else if (itPending != history.pendingReactions.end()) {
@@ -1715,12 +1809,7 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
-    if (messageReceived) {
-        // For a received message, we place it at the beginning of the list
-        if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.begin())->id;
-        history.messageList.emplace_front(sharedCommit);
-    } else {
+    if (!messageReceived) {
         // For a loaded message, we load from newest to oldest
         // So we change the parent of the last message.
         if (!history.messageList.empty())
@@ -1736,56 +1825,54 @@ Conversation::Impl::handleMessage(History& history,
     }
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
-        auto oldBody = sharedCommit->body;
-        // Tag original body with its own message id for client identification.
-        oldBody["id"] = sharedCommit->id;
-        sharedCommit->latestEditionId = peditIt->second.front()->id;
-        if (sharedCommit->type == CommitType::DATA_TRANSFER) {
-            sharedCommit->body[CommitKey::TID] = peditIt->second.front()->body[CommitKey::TID];
-            sharedCommit->body["fileId"] = "";
-        } else {
-            sharedCommit->body[CommitKey::BODY] = peditIt->second.front()->body[CommitKey::BODY];
+        std::string toReplace = (sharedCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
+        // The pending editions are stored newest first, so we apply them from oldest to newest to
+        // mirror handleEdition. Each edition superseding the current body pushes that body (not the
+        // raw edition commit, which carries the "edit" key and the edition's own parents) into the
+        // editions list, tagged with the id of the commit that introduced it.
+        for (auto it = peditIt->second.rbegin(); it != peditIt->second.rend(); ++it) {
+            const auto& editCommit = *it;
+            auto editionBody = sharedCommit->body;
+            editionBody["id"] = sharedCommit->latestEditionId.empty() ? sharedCommit->id
+                                                                      : sharedCommit->latestEditionId;
+            sharedCommit->editions.emplace(sharedCommit->editions.begin(), std::move(editionBody));
+            sharedCommit->body[toReplace] = editCommit->body.at(toReplace);
+            sharedCommit->latestEditionId = editCommit->id;
+            if (toReplace == CommitKey::TID) {
+                // Avoid to replace fileId in client
+                sharedCommit->body["fileId"] = "";
+            }
+            // Remove reactions if the message was deleted.
+            if (editCommit->body.at(toReplace).empty())
+                sharedCommit->reactions.clear();
         }
-        peditIt->second.pop_front();
-        for (const auto& commit : peditIt->second) {
-            auto edBody = commit->body;
-            // Tag each superseded body with its edition commit id, mirroring
-            // handleEdition so injectEditionOverwrites can find plugin overwrites.
-            edBody["id"] = commit->id;
-            sharedCommit->editions.emplace_back(std::move(edBody));
-        }
-        sharedCommit->editions.emplace_back(std::move(oldBody));
         history.pendingEditions.erase(peditIt);
     }
-    // Announce to client
-    if (messageReceived)
-        emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
     return !messageReceived;
 }
 
 void
-Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message, History& history) const
+Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
+                                  History& history,
+                                  HistoryChanges* changes) const
 {
-    auto parentIt = history.quickAccess.find(message->linearizedParent);
-    auto currentMessage = message;
-
-    while (parentIt != history.quickAccess.end()) {
+    // A status never decreases from a message to an older one, so the propagation stops at the
+    // first ancestor that is already up to date.
+    for (auto parentIt = history.quickAccess.find(message->linearizedParent); parentIt != history.quickAccess.end();
+         parentIt = history.quickAccess.find(parentIt->second->linearizedParent)) {
         const auto& parent = parentIt->second;
+        bool changed = false;
         for (const auto& [peer, value] : message->status) {
-            auto parentStatusIt = parent->status.find(peer);
-            if (parentStatusIt == parent->status.end() || parentStatusIt->second < value) {
-                parent->status[peer] = value;
-                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(accountId_,
-                                                                                      repository_->id(),
-                                                                                      peer,
-                                                                                      parent->id,
-                                                                                      value);
-            } else if (parentStatusIt->second >= value) {
-                break;
+            auto [statusIt, inserted] = parent->status.emplace(peer, value);
+            if (inserted || statusIt->second < value) {
+                statusIt->second = value;
+                changed = true;
+                if (changes)
+                    changes->statuses[{peer, parent->id}] = value;
             }
         }
-        currentMessage = parent;
-        parentIt = history.quickAccess.find(parent->linearizedParent);
+        if (!changed)
+            break;
     }
 }
 
@@ -1793,7 +1880,8 @@ std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(History& history,
                                  const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
-                                 bool commitFromSelf)
+                                 bool commitFromSelf,
+                                 HistoryChanges* changes)
 {
     //
     // NOTE: This function makes the following assumptions on its arguments:
@@ -1809,16 +1897,14 @@ Conversation::Impl::addToHistory(History& history,
     auto acc = account_.lock();
     if (!acc)
         return {};
-    auto username = acc->getUsername();
-    if (messageReceived && (&history == &loadedHistory_ && history.loading)) {
-        std::unique_lock lk(history.mutex);
-        history.cv.wait(lk, [&] { return !history.loading; });
-    }
-
     // Only set messages' status on history for client
     bool needToSetMessageStatus = !commitFromSelf && &history == &loadedHistory_;
 
+    // Pairs of (already in history, commit). Commits already in the history are only
+    // re-announced because their position may have changed.
+    std::vector<std::pair<bool, std::shared_ptr<libjami::SwarmMessage>>> batch;
     std::vector<std::shared_ptr<libjami::SwarmMessage>> sharedCommits;
+    std::set<std::string> existingIds;
     // Apply the document removals of this batch before anything else in it.
     //
     // A removal is always newer than the announcement it retires, but the batch is
@@ -1827,7 +1913,7 @@ Conversation::Impl::addToHistory(History& history,
     // repository of every deleted document each time the user scrolls up.
     for (const auto& commit : commits) {
         auto typeIt = commit.find(CommitKey::TYPE);
-        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC)
+        if (typeIt == commit.end() || typeIt->second != CommitType::COLLAB_DOC || commit.contains("reannounce"))
             continue;
         auto editIt = commit.find(CommitKey::EDIT);
         if (editIt == commit.end() || editIt->second.empty())
@@ -1842,13 +1928,22 @@ Conversation::Impl::addToHistory(History& history,
         }
     }
     for (const auto& commit : commits) {
-        auto commitId = commit.at("id");
-        if (history.quickAccess.find(commitId) != history.quickAccess.end())
-            continue; // Already present
         auto typeIt = commit.find(CommitKey::TYPE);
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
             continue;
+        bool reannounced = commit.contains("reannounce");
+        if (auto quickAccessIt = history.quickAccess.find(commit.at("id")); quickAccessIt != history.quickAccess.end()) {
+            if (reannounced) {
+                // Keep the existing object, which has its reactions and editions applied.
+                auto& existing = quickAccessIt->second;
+                existing->linearizedParent = commit.at("linearizedParent");
+                existingIds.emplace(existing->id);
+                batch.emplace_back(true, existing);
+                sharedCommits.emplace_back(existing);
+            }
+            continue;
+        }
         // A collaborative document is announced here, but its content lives in a
         // separate repository: make sure that repository exists locally so it can
         // be replicated. The commit itself falls through and is displayed like a
@@ -1857,7 +1952,7 @@ Conversation::Impl::addToHistory(History& history,
             // Removals were applied above, before any announcement of this batch.
             auto editIt = commit.find(CommitKey::EDIT);
             bool isRemoval = editIt != commit.end() && !editIt->second.empty();
-            if (!isRemoval) {
+            if (!isRemoval && !reannounced) {
                 if (auto uriIt = commit.find(CommitKey::URI); uriIt != commit.end() && !uriIt->second.empty())
                     acc->collaborativeEditing()->onDocumentAnnounced(repository_->id(), uriIt->second);
             }
@@ -1865,6 +1960,7 @@ Conversation::Impl::addToHistory(History& history,
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
+        sharedCommit->body.erase("reannounce");
 
         if (needToSetMessageStatus) {
             std::lock_guard lk(messageStatusMtx_);
@@ -1875,6 +1971,7 @@ Conversation::Impl::addToHistory(History& history,
                 futureStatus.erase(itFuture);
             }
         }
+        batch.emplace_back(false, sharedCommit);
         sharedCommits.emplace_back(sharedCommit);
     }
 
@@ -1946,20 +2043,46 @@ Conversation::Impl::addToHistory(History& history,
         }
     }
 
+    // The reordered messages are the newest ones of the history: take them out, they are
+    // placed again below in their new order.
+    std::string previousMessage;
+    if (messageReceived) {
+        while (!history.messageList.empty() && existingIds.contains(history.messageList.front()->id))
+            history.messageList.pop_front();
+        if (!history.messageList.empty())
+            previousMessage = history.messageList.front()->id;
+    }
+
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
-    for (const auto& sharedCommit : sharedCommits) {
-        history.quickAccess[sharedCommit->id] = sharedCommit;
+    for (const auto& [existing, sharedCommit] : batch) {
+        if (!existing)
+            history.quickAccess[sharedCommit->id] = sharedCommit;
 
         auto reactToIt = sharedCommit->body.find(CommitKey::REACT_TO);
         auto editIt = sharedCommit->body.find(CommitKey::EDIT);
         if (reactToIt != sharedCommit->body.end() && !reactToIt->second.empty()) {
-            handleReaction(history, sharedCommit);
+            if (!existing)
+                handleReaction(history, sharedCommit, changes);
         } else if (editIt != sharedCommit->body.end() && !editIt->second.empty()) {
-            handleEdition(history, sharedCommit, messageReceived);
-        } else if (handleMessage(history, sharedCommit, messageReceived)) {
-            messages.emplace_back(sharedCommit);
+            if (!existing)
+                handleEdition(history, sharedCommit, messageReceived, changes);
+        } else {
+            if (messageReceived) {
+                // Local commits come without a linearized parent.
+                if (sharedCommit->linearizedParent.empty() && sharedCommit->type != CommitType::INITIAL)
+                    sharedCommit->linearizedParent = previousMessage;
+                previousMessage = sharedCommit->id;
+                history.messageList.emplace_front(sharedCommit);
+                if (changes) {
+                    changes->placedMessages.emplace_back(sharedCommit->id);
+                    if (!existing)
+                        changes->newMessages.emplace(sharedCommit->id);
+                }
+            }
+            if (!existing && handleMessage(history, sharedCommit, messageReceived))
+                messages.emplace_back(sharedCommit);
         }
-        rectifyStatus(sharedCommit, history);
+        rectifyStatus(sharedCommit, history, changes);
     }
 
     return messages;
