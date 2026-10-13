@@ -21,6 +21,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "19d7b797_6c5ea626",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 818,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T15:01:00Z",
+      "side": 1,
+      "message": "[error] Line 818: 🔴 `admitSipRequest()` classifies any in-dialog `OPTIONS` carrying `X-Jami-Handover-Request` as a recovery probe for caller-side calls, even when it arrives on the currently active channel and without validating generation/channel transition. This lets a peer (or delayed/replayed probe traffic) trigger unnecessary recovery restarts on an already healthy channel, causing avoidable media churn and call instability. Restrict probe admission to requests coming from a non-active candidate channel and require a valid/matching handover generation before returning `Probe`; otherwise treat it as normal `OPTIONS` (`Accept`) or reject as stale.",
+      "revId": "8afb3f1e28e4339f4b236daef86a82e5c16f8fa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fb64e253_e6be4745",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
