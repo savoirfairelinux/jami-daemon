@@ -1785,25 +1785,25 @@ Conversation::Impl::handleMessage(History& history,
     }
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
-        auto oldBody = sharedCommit->body;
-        // Tag original body with its own message id for client identification.
-        oldBody["id"] = sharedCommit->id;
-        sharedCommit->latestEditionId = peditIt->second.front()->id;
-        if (sharedCommit->type == CommitType::DATA_TRANSFER) {
-            sharedCommit->body[CommitKey::TID] = peditIt->second.front()->body[CommitKey::TID];
-            sharedCommit->body["fileId"] = "";
-        } else {
-            sharedCommit->body[CommitKey::BODY] = peditIt->second.front()->body[CommitKey::BODY];
+        std::string toReplace = (sharedCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
+        // Pending editions are stored newest first: replay them oldest first, as handleEdition would.
+        for (auto it = peditIt->second.rbegin(); it != peditIt->second.rend(); ++it) {
+            const auto& editCommit = *it;
+            // Retiring a collaborative document carries no body: absent means empty.
+            std::string body;
+            if (auto itBody = editCommit->body.find(toReplace); itBody != editCommit->body.end())
+                body = itBody->second;
+            auto editionBody = sharedCommit->body;
+            editionBody["id"] = sharedCommit->latestEditionId.empty() ? sharedCommit->id
+                                                                      : sharedCommit->latestEditionId;
+            sharedCommit->editions.emplace(sharedCommit->editions.begin(), std::move(editionBody));
+            sharedCommit->body[toReplace] = body;
+            sharedCommit->latestEditionId = editCommit->id;
+            if (toReplace == CommitKey::TID)
+                sharedCommit->body["fileId"] = "";
+            if (body.empty())
+                sharedCommit->reactions.clear();
         }
-        peditIt->second.pop_front();
-        for (const auto& commit : peditIt->second) {
-            auto edBody = commit->body;
-            // Tag each superseded body with its edition commit id, mirroring
-            // handleEdition so injectEditionOverwrites can find plugin overwrites.
-            edBody["id"] = commit->id;
-            sharedCommit->editions.emplace_back(std::move(edBody));
-        }
-        sharedCommit->editions.emplace_back(std::move(oldBody));
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
