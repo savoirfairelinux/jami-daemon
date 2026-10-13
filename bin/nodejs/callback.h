@@ -4,6 +4,7 @@
 #include <uv.h>
 
 #include "jami/networkservice_interface.h"
+#include "signal_dispatch.h"
 
 #include <queue>
 #include <functional>
@@ -233,11 +234,7 @@ handlePendingSignals(uv_async_t*)
     napi_handle_scope scope;
     napi_open_handle_scope(g_env, &scope);
 
-    std::lock_guard lock(pendingSignalsLock);
-    while (!pendingSignals.empty()) {
-        pendingSignals.front()();
-        pendingSignals.pop();
-    }
+    libjami::nodejs::drainPendingSignals(pendingSignals, pendingSignalsLock);
 
     napi_close_handle_scope(g_env, scope);
 }

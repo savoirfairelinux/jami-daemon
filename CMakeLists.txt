@@ -1109,6 +1109,9 @@ else()
             add_test(NAME ${test_name} COMMAND ut_${test_name})
         endmacro()
 
+        add_executable(ut_nodejs_signal_dispatch test/unitTest/nodejs/signal_dispatch.cpp)
+        add_test(NAME nodejs_signal_dispatch COMMAND ut_nodejs_signal_dispatch)
+
         add_test_executable(bootstrap test/unitTest/swarm/bootstrap.cpp)
         add_test_executable(conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
         add_test_executable(simulation test/unitTest/simulation/simulation.cpp)
