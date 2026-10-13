@@ -1844,11 +1844,8 @@ Conversation::Impl::relinearizeAfterMerge(const std::vector<std::map<std::string
     auto& history = loadedHistory_;
 
     std::set<std::string> newIds;
-    for (const auto& c : commits) {
-        auto typeIt = c.find(CommitKey::TYPE);
-        if (typeIt == c.end() || typeIt->second != CommitType::MERGE)
-            newIds.emplace(c.at(ConversationMapKeys::ID));
-    }
+    for (const auto& c : commits)
+        newIds.emplace(c.at(ConversationMapKeys::ID));
     if (newIds.empty())
         return;
 
@@ -1864,8 +1861,13 @@ Conversation::Impl::relinearizeAfterMerge(const std::vector<std::map<std::string
     size_t remaining = newIds.size();
     bool anchorFound = false;
     repository_->log(
-        [&](const auto&, const auto&, const auto& commit) {
-            return git_commit_parentcount(commit.get()) > 1 ? CallbackResult::Skip : CallbackResult::Ok;
+        [&](const auto& id, const auto&, const auto& commit) {
+            if (git_commit_parentcount(commit.get()) <= 1)
+                return CallbackResult::Ok;
+            // A batch of merges alone can still reorder commits sharing a timestamp.
+            if (newIds.erase(id))
+                --remaining;
+            return CallbackResult::Skip;
         },
         [&](auto&& cc) { order.emplace_back(std::move(cc.id)); },
         [&](const auto& id, const auto&, const auto&) {
