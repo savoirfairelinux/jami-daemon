@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c4bba9e0_eb1e6af6",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 503,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-13T01:09:46Z",
+      "side": 1,
+      "message": "\"visible\" as in \"visible to the client\", as opposed to something like a merge commit which is never announced to the client. The daemon currently doesn\u0027t enforce that the target of a reaction hasn\u0027t been deleted, so the tests shouldn\u0027t do so either.",
+      "parentUuid": "40f9d7c2_4efb55b9",
+      "revId": "923bb6009221d05b5f60a4414a3b354ea2b45c9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed742c65_f5084ec9",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-13T00:55:48Z",
       "side": 1,
       "message": "[error] Line 797: 🔴 `REMOVE_REACTION` resolves the reaction to delete by **author** (`reactionByAuthor(...)`) instead of by the specific reaction commit created in `ADD_REACTION`. If the same author reacts multiple times to the same message (or backend deduplicates repeated adds), removal becomes non-deterministic and can erase the wrong reaction or make later scheduled removals fail assertions. Store the created reaction commit id when scheduling `REMOVE_REACTION` and remove by that id.",
+      "revId": "923bb6009221d05b5f60a4414a3b354ea2b45c9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f04e0d6_06441837",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 797,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-13T01:09:46Z",
+      "side": 1,
+      "message": "Commit IDs are not deterministic across test runs, so this would break the replay feature. The current approach is not ideal but is acceptable for now and can be improved later.",
+      "parentUuid": "ed742c65_f5084ec9",
       "revId": "923bb6009221d05b5f60a4414a3b354ea2b45c9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
