@@ -494,7 +494,7 @@ public:
         std::vector<ConversationCommit> convcommits;
         convcommits.reserve(commits.size());
         for (const auto& cid : commits) {
-            if (auto commit = repository_->getCommit(cid)) {
+            if (auto commit = repository_->getCommit2(cid)) {
                 convcommits.emplace_back(*commit);
             }
         }
@@ -698,6 +698,8 @@ public:
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
+                if (c.at("reannounce") == "1")
+                    continue;
                 // Announce member events
                 if (c.at(CommitKey::TYPE) == CommitType::MEMBER) {
                     if (c.find(CommitKey::URI) != c.end() && c.find(CommitKey::ACTION) != c.end()) {
@@ -775,7 +777,7 @@ public:
                                     }
                                 }
                             }
-                            if (!signalMsg.id.empty()) {
+                            if (!signalMsg.id.empty() && !signalMsg.body.contains(CommitKey::REACT_TO)) {
                                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                                              convId,
                                                                                              signalMsg);
@@ -795,7 +797,7 @@ public:
                                 signalMsg = *originalIt->second;
                             }
                         }
-                        if (!signalMsg.id.empty()) {
+                        if (!signalMsg.id.empty() && !signalMsg.body.contains(CommitKey::REACT_TO)) {
                             emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, signalMsg);
                         }
                     }
@@ -1591,6 +1593,14 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
     }
+
+    // Set the linearized parent of the ith commit to be that of the i+1'th commit
+    for (size_t i = 0; i + 1 < ret.size(); ++i) {
+        ret[i].linearizedParent = ret[i + 1].id;
+        // Log the linearized parent for debugging purposes
+        JAMI_LOG("Setting linearized parent of commit {:s} to {:s}", ret[i].id, ret[i].linearizedParent);
+    }
+
     return ret;
 }
 
@@ -1715,18 +1725,17 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
-    if (messageReceived) {
-        // For a received message, we place it at the beginning of the list
-        if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.begin())->id;
-        history.messageList.emplace_front(sharedCommit);
-    } else {
-        // For a loaded message, we load from newest to oldest
-        // So we change the parent of the last message.
-        if (!history.messageList.empty())
+    if (!messageReceived) {
+        if (!history.messageList.empty()) {
             (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
-        history.messageList.emplace_back(sharedCommit);
+        }
     }
+
+    // Re-announced commits that were already ingested are handled directly in
+    // addToHistory (which preserves their folded reactions/editions), so any
+    // commit reaching this point is new to the history and simply appended.
+    assert(sharedCommit->reannounce == "0"); // TODO remove before merging
+    history.messageList.emplace_back(sharedCommit);
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
     if (reactIt != history.pendingReactions.end()) {
@@ -1736,30 +1745,33 @@ Conversation::Impl::handleMessage(History& history,
     }
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
-        auto oldBody = sharedCommit->body;
-        // Tag original body with its own message id for client identification.
-        oldBody["id"] = sharedCommit->id;
-        sharedCommit->latestEditionId = peditIt->second.front()->id;
-        if (sharedCommit->type == CommitType::DATA_TRANSFER) {
-            sharedCommit->body[CommitKey::TID] = peditIt->second.front()->body[CommitKey::TID];
-            sharedCommit->body["fileId"] = "";
-        } else {
-            sharedCommit->body[CommitKey::BODY] = peditIt->second.front()->body[CommitKey::BODY];
+        std::string toReplace = (sharedCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
+        // The pending editions are stored newest first, so we apply them from oldest to newest to
+        // mirror handleEdition. Each edition superseding the current body pushes that body (not the
+        // raw edition commit, which carries the "edit" key and the edition's own parents) into the
+        // editions list, tagged with the id of the commit that introduced it.
+        for (auto it = peditIt->second.rbegin(); it != peditIt->second.rend(); ++it) {
+            const auto& editCommit = *it;
+            auto editionBody = sharedCommit->body;
+            editionBody["id"] = sharedCommit->latestEditionId.empty() ? sharedCommit->id
+                                                                      : sharedCommit->latestEditionId;
+            sharedCommit->editions.emplace(sharedCommit->editions.begin(), std::move(editionBody));
+            sharedCommit->body[toReplace] = editCommit->body.at(toReplace);
+            sharedCommit->latestEditionId = editCommit->id;
+            if (toReplace == CommitKey::TID) {
+                // Avoid to replace fileId in client
+                sharedCommit->body["fileId"] = "";
+            }
+            // Remove reactions if the message was deleted.
+            if (editCommit->body.at(toReplace).empty())
+                sharedCommit->reactions.clear();
         }
-        peditIt->second.pop_front();
-        for (const auto& commit : peditIt->second) {
-            auto edBody = commit->body;
-            // Tag each superseded body with its edition commit id, mirroring
-            // handleEdition so injectEditionOverwrites can find plugin overwrites.
-            edBody["id"] = commit->id;
-            sharedCommit->editions.emplace_back(std::move(edBody));
-        }
-        sharedCommit->editions.emplace_back(std::move(oldBody));
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
-    if (messageReceived)
+    if (messageReceived) {
         emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
+    }
     return !messageReceived;
 }
 
@@ -1843,8 +1855,14 @@ Conversation::Impl::addToHistory(History& history,
     }
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
-        if (history.quickAccess.find(commitId) != history.quickAccess.end())
-            continue; // Already present
+        auto quickAccessIt = history.quickAccess.find(commitId);
+        if (quickAccessIt != history.quickAccess.end()) {
+            auto reannounceIt = commit.find("reannounce");
+            if (reannounceIt == commit.end() || reannounceIt->second == "0") {
+                assert(false);
+                continue; // Already present and not forced to reannounce
+            }
+        }
         auto typeIt = commit.find(CommitKey::TYPE);
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == CommitType::MERGE)
@@ -1948,6 +1966,29 @@ Conversation::Impl::addToHistory(History& history,
 
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     for (const auto& sharedCommit : sharedCommits) {
+        // A re-announced commit has already been ingested (and, for a message,
+        // folded: its reactions and editions have been applied). The only thing
+        // that may have changed is its linearized parent, as a result of a
+        // merge. Update the existing object in place and re-announce it, rather
+        // than replacing it with a freshly-built one, which would discard the
+        // folded reactions and editions.
+        if (sharedCommit->reannounce == "1") {
+            auto& existing = history.quickAccess.at(sharedCommit->id);
+            existing->linearizedParent = sharedCommit->linearizedParent;
+            rectifyStatus(existing, history);
+            // Reactions and editions are folded into the message they refer
+            // to and don't appear as standalone messages, so only real
+            // messages need to be re-announced to the client.
+            auto reactToIt = existing->body.find(CommitKey::REACT_TO);
+            auto editIt = existing->body.find(CommitKey::EDIT);
+            bool isReaction = reactToIt != existing->body.end() && !reactToIt->second.empty();
+            bool isEdition = editIt != existing->body.end() && !editIt->second.empty();
+            if (!isReaction && !isEdition) {
+                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *existing);
+            }
+            continue;
+        }
+
         history.quickAccess[sharedCommit->id] = sharedCommit;
 
         auto reactToIt = sharedCommit->body.find(CommitKey::REACT_TO);
