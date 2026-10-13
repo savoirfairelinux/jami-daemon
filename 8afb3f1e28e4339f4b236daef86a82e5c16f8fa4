@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb64e253_e6be4745",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 831,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T14:56:38Z",
+      "side": 1,
+      "message": "[error] Line 831: 🔴 `requestIceRestart()` can deadlock: the callback acquires `callMutex_` and then calls `restartIceAfterRecovery()`, which acquires the same mutex again. This is a self-deadlock on the main thread under normal recovery flow. Drop the outer lock in the callback (or split into a `_Locked` variant) so the mutex is only taken once.",
+      "revId": "8afb3f1e28e4339f4b236daef86a82e5c16f8fa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77bff666_eb200dd8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-13T14:56:38Z",
+      "side": 1,
+      "message": "[error] Line 931: 🔴 `retryRecoveryOffer()` holds `callMutex_` and calls `requestIceRestart()`, which now also locks `callMutex_` at entry. This introduces another self-deadlock path when a 491 retry is scheduled. Capture the selected transport under lock, release the lock, then call `requestIceRestart()`.",
+      "revId": "8afb3f1e28e4339f4b236daef86a82e5c16f8fa4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
