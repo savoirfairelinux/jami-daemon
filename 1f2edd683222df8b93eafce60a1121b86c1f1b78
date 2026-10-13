@@ -16,6 +16,24 @@
       "message": "[warning] Line 1543: 🟡 `checkActiveCalls` sorts by `id` only before vector comparison. If two active calls ever share the same `id` (e.g., malformed history, future ID-generation changes, or cross-device collisions), ordering of equal keys is unspecified and this can create flaky false mismatches. Sort by a full key tuple (`id`,`uri`,`device`) or compare as a multiset/map keyed by all three fields.",
       "revId": "1f2edd683222df8b93eafce60a1121b86c1f1b78",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7d699dfd_42390a68",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1543,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-13T01:14:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "75e82cb3_89193739",
+      "revId": "1f2edd683222df8b93eafce60a1121b86c1f1b78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
