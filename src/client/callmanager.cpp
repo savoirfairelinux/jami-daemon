@@ -573,6 +573,34 @@ getNativeCallMediaState(const std::string& accountId, const std::string& callId)
 }
 
 bool
+canPromoteExternalMedia(const std::string& accountId, const std::string& callId)
+{
+    if (accountId.empty() || callId.empty())
+        return false;
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->canPromoteExternalMedia();
+}
+
+bool
+requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId)
+{
+    if (accountId.empty() || callId.empty() || requestId.empty())
+        return false;
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->promoteExternalMedia(requestId);
+}
+
+bool
+cancelExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->cancelExternalMediaPromotion(requestId);
+}
+
+bool
 cancelBrowserConference(const std::string& accountId, const std::string& requestId)
 {
     if (accountId.empty() || requestId.empty())
