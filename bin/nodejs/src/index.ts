@@ -127,6 +127,7 @@ export interface Constructable<T> {
 interface SwigVect<T> {
   size(): number
   get(index: number): T | undefined
+  add(value: T): void
 }
 
 interface SwigMap<T, U> {
@@ -303,6 +304,9 @@ export interface JamiSwig {
   hangUp(accountId: string, callId: string): boolean
   startBrowserConference(accountId: string, conversationId: string, requestId: string, sdp: string): boolean
   cancelBrowserConference(accountId: string, requestId: string): boolean
+  addNativeToBrowserConference(accountId: string, callId: string, requestId: string): boolean
+  placeBrowserParticipantCall(accountId: string, to: string, requestId: string): string
+  getNativeCallMediaState(accountId: string, callId: string): 'WAITING' | 'READY' | 'UNAVAILABLE'
   hangUpConference(accountId: string, confId: string): boolean
 
   // File transfer
@@ -327,6 +331,7 @@ export interface JamiSwig {
 
   // Constructors for SWIG types
   StringMap: Constructable<StringMap>
+  VectMap: Constructable<VectMap>
   Blob: Constructable<Blob>
   BlobMap: Constructable<BlobMap>
 }
