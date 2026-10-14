@@ -97,6 +97,7 @@ libjami_sources = files(
     'sip/sipaccountbase.cpp',
     'sip/sipaccountbase_config.cpp',
     'sip/sipcall.cpp',
+    'sip/sipcall_external_media.cpp',
     'sip/sippresence.cpp',
     'sip/siptransport.cpp',
     'sip/sipvoiplink.cpp',
