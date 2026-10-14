@@ -1392,6 +1392,20 @@ Sdp::createOfferFromExternalSdp(const std::string& sdp)
     return true;
 }
 
+Sdp::LocalOfferState
+Sdp::saveLocalOfferState() const
+{
+    return {negotiator_, localSession_, sdpDirection_};
+}
+
+void
+Sdp::restoreLocalOfferState(const LocalOfferState& state)
+{
+    negotiator_ = state.negotiator;
+    localSession_ = state.localSession;
+    sdpDirection_ = state.direction;
+}
+
 bool
 Sdp::setLocalAnswerFromExternalSdp(const std::string& sdp)
 {
