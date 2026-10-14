@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d624536_f3ae0833",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2120,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:28:31Z",
+      "side": 1,
+      "message": "[warning] Line 2120: 🟡 `onClosed()` no longer calls `failPromotion(...)` for an in-flight external-media promotion. If the peer closes during promotion, `promotionRequestId_` can be left unresolved from the API consumer’s perspective (no `ExternalMediaPromotionFailure` signal), which can strand browser-side promotion state. Emit a promotion failure (and clear request state) before teardown when a promotion is pending.",
+      "revId": "08a41c1009fcc77e1b4a561c336f73476d6d3e1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e86d491_aaa63889",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2845,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:28:31Z",
+      "side": 1,
+      "message": "[error] Line 2845: 🔴 `startRtpStreams()` acquires `callMutex_` and then calls `checkPromotionReady()`, which also acquires `callMutex_`. This is a deterministic self-deadlock on the first matching promotion path. Call `checkPromotionReady()` outside the locked section, or split it into a `checkPromotionReadyLocked()` helper used only when the mutex is already held.",
+      "revId": "08a41c1009fcc77e1b4a561c336f73476d6d3e1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
