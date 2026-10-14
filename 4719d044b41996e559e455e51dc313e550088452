@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16f12538_ccdf08b4",
+        "filename": "src/connectivity/sip_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:27:04Z",
+      "side": 1,
+      "message": "[warning] Line 113: 🟡 `quoteDisplayName()` still allows other C0 control characters (e.g. `\\x01..\\x1F` except CR/LF) and DEL through unmodified, but RFC 3261 quoted-string does not permit them. Please normalize or drop all disallowed control chars (not just `\\r`/`\\n`/`\\0`) to avoid generating invalid SIP headers and parse failures on strict peers.",
+      "revId": "4719d044b41996e559e455e51dc313e550088452",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
