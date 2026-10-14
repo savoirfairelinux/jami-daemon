@@ -234,7 +234,8 @@ public:
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
                                           const std::vector<libjami::MediaMap>& mediaList) override;
     std::shared_ptr<Call> newExternalMediaConferenceOutgoingCall(std::string_view toUrl,
-                                                                 const std::vector<libjami::MediaMap>& mediaList);
+                                                                 const std::vector<libjami::MediaMap>& mediaList,
+                                                                 const std::shared_ptr<Conference>& conference);
 
     /**
      * Create incoming SIPCall.
@@ -653,7 +654,8 @@ private:
     NON_COPYABLE(JamiAccount);
     std::shared_ptr<Call> newOutgoingCallImpl(std::string_view toUrl,
                                               const std::vector<libjami::MediaMap>& mediaList,
-                                              bool externalMediaConferenceAudio);
+                                              bool externalMediaConferenceAudio,
+                                              const std::shared_ptr<Conference>& conference = {});
 
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
