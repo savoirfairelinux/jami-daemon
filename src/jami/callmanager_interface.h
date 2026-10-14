@@ -157,8 +157,25 @@ LIBJAMI_PUBLIC bool requestExternalMediaPromotion(const std::string& accountId,
 LIBJAMI_PUBLIC bool cancelExternalMediaPromotion(const std::string& accountId,
                                                  const std::string& callId,
                                                  const std::string& requestId);
+/* Reverse a browser-hosted native call on its existing SIP dialog. True means
+ * the browser SDP re-INVITE was sent, not that direct browser ICE is ready.
+ * The conference remains active until completeExternalMediaDemotion is called
+ * after the browser establishes direct ICE. Late failure is not guaranteed
+ * recoverable after the peer accepts the re-INVITE. */
+LIBJAMI_PUBLIC bool requestExternalMediaDemotion(const std::string& accountId,
+                                                 const std::string& callId,
+                                                 const std::string& conferenceId,
+                                                 const std::string& requestId,
+                                                 const std::string& sdpOffer);
+LIBJAMI_PUBLIC bool completeExternalMediaDemotion(const std::string& accountId,
+                                                  const std::string& callId,
+                                                  const std::string& requestId);
 /* Called when the account drops a browser-hosted conference, even without Node listeners. */
 LIBJAMI_PUBLIC void browserConferenceRemoved(const std::string& accountId, const std::string& confId);
+/* Detach the browser media owner without hanging up native SIP participants.
+ * Used only after direct browser ICE is ready and the last call is being
+ * detached from its hosted conference. */
+LIBJAMI_PUBLIC void retireBrowserConferenceHost(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC void cancelBrowserConferencesForAccount(const std::string& accountId);
 LIBJAMI_PUBLIC void cancelAllBrowserConferences();
 LIBJAMI_PUBLIC void allowBrowserConferences();
@@ -358,6 +375,21 @@ struct LIBJAMI_PUBLIC CallSignal
     struct LIBJAMI_PUBLIC ExternalMediaPromotionFailure
     {
         constexpr static const char* name = "ExternalMediaPromotionFailure";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionAccepted
+    {
+        constexpr static const char* name = "ExternalMediaDemotionAccepted";
+        using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionReady
+    {
+        constexpr static const char* name = "ExternalMediaDemotionReady";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct LIBJAMI_PUBLIC ExternalMediaDemotionFailure
+    {
+        constexpr static const char* name = "ExternalMediaDemotionFailure";
         using cb_type = void(const std::string&, const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC RecordingStateChanged
