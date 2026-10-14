@@ -16,6 +16,24 @@
       "message": "[warning] 🟡 Add a regression test covering a leave commit where the author certificate is removed in the commit tree and the cache is cold. This change fixes a subtle behavior path, and without a targeted test the bug can silently reappear during future refactors.",
       "revId": "b8dec976251e59637a2d602efb898cd556a4919a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "12aa5491_2bb2257d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-10-14T01:09:21Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2eb54106_8d977618",
+      "revId": "b8dec976251e59637a2d602efb898cd556a4919a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
