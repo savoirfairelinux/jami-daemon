@@ -83,6 +83,15 @@ public:
         return it != hosts_.end() && it->second.confId == confId;
     }
 
+    std::optional<BrowserHost> readyHost(const Key& key)
+    {
+        std::lock_guard lock(mutex_);
+        auto it = hosts_.find(key);
+        if (it == hosts_.end() || !it->second.media || !it->second.media->isReady())
+            return std::nullopt;
+        return it->second;
+    }
+
     std::optional<BrowserHost> take(const Key& key, const std::string& confId = {})
     {
         std::lock_guard lock(mutex_);
@@ -475,6 +484,100 @@ startBrowserConference(const std::string& accountId,
                          jami::emitSignal<CallSignal::BrowserConferenceHostReady>(key.first, key.second, confId);
                  });
     return true;
+}
+
+bool
+addNativeParticipantToBrowserConference(const std::string& accountId,
+                                        const std::string& callId,
+                                        const std::string& requestId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    if (!call || !call->isNativeMediaReady() || call->isConferenceParticipant()) {
+        JAMI_WARNING("[call:{}] Cannot add a call without running native RTP to a browser conference", callId);
+        return false;
+    }
+    const BrowserHostRegistry::Key key {accountId, requestId};
+    auto registry = browserHosts();
+    auto host = registry->readyHost(key);
+    if (!host) {
+        JAMI_WARNING("[call:{}] Browser conference {} is not ready", callId, requestId);
+        return false;
+    }
+    auto conf = account->getConference(host->confId);
+    if (!conf || !conf->hasExternalHostAudio() || conf->getState() != jami::Conference::State::ACTIVE_ATTACHED) {
+        JAMI_WARNING("[call:{}] Browser conference {} has no active external host", callId, requestId);
+        return false;
+    }
+    if (!jami::Manager::instance().addSubCall(accountId, callId, accountId, host->confId))
+        return false;
+    if (!registry->contains(key, host->confId) || !host->media->isReady()
+        || account->getConference(host->confId) != conf || !call->isNativeMediaReady()) {
+        JAMI_WARNING("[call:{}] Browser conference closed while adding participant", callId);
+        jami::Manager::instance().removeParticipant(*call);
+        return false;
+    }
+    return true;
+}
+
+std::string
+placeBrowserConferenceParticipantCall(const std::string& accountId,
+                                      const std::string& to,
+                                      const std::string& requestId)
+{
+    if (accountId.empty() || to.empty() || requestId.empty()) {
+        JAMI_WARNING("Missing account, peer, or browser host for native participant call");
+        return {};
+    }
+    auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId);
+    if (!account || !account->isUsable()) {
+        JAMI_WARNING("[account:{}] Cannot dial a browser conference participant", accountId);
+        return {};
+    }
+    const BrowserHostRegistry::Key key {accountId, requestId};
+    auto registry = browserHosts();
+    auto host = registry->readyHost(key);
+    auto conf = host ? account->getConference(host->confId) : nullptr;
+    if (!host || !conf || !conf->hasExternalHostAudio()
+        || conf->getState() != jami::Conference::State::ACTIVE_ATTACHED) {
+        JAMI_WARNING("[account:{}] Browser host {} is not ready for dialing", accountId, requestId);
+        return {};
+    }
+    std::vector<libjami::MediaMap> audio {
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::MUTED, "false"},
+         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    std::shared_ptr<jami::Call> call;
+    try {
+        call = account->newBrowserConferenceOutgoingCall(to, audio);
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[account:{}] Cannot dial browser conference participant: {}", accountId, e.what());
+        return {};
+    }
+    if (!call)
+        return {};
+    if (!registry->contains(key, host->confId) || !host->media->isReady()
+        || account->getConference(host->confId) != conf) {
+        JAMI_WARNING("[call:{}] Browser host closed while dialing participant", call->getCallId());
+        jami::Manager::instance().hangupCall(accountId, call->getCallId());
+        return {};
+    }
+    return call->getCallId();
+}
+
+std::string
+getNativeCallMediaState(const std::string& accountId, const std::string& callId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    if (!call || call->hasExternalMedia()
+        || (call->getState() != jami::Call::CallState::INACTIVE
+            && call->getState() != jami::Call::CallState::ACTIVE)
+        || (call->getState() == jami::Call::CallState::ACTIVE
+            && call->getConnectionState() == jami::Call::ConnectionState::DISCONNECTED))
+        return "UNAVAILABLE";
+    return call->isNativeMediaReady() ? "READY" : "WAITING";
 }
 
 bool

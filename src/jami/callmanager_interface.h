@@ -123,6 +123,23 @@ LIBJAMI_PUBLIC bool startBrowserConference(const std::string& accountId,
                                            const std::string& requestId,
                                            const std::string& sdpOffer);
 LIBJAMI_PUBLIC bool cancelBrowserConference(const std::string& accountId, const std::string& requestId);
+/* WAITING until the call is answered and its ICE/DTLS-SRTP send and receive
+ * paths are running; READY only for an established native-media call;
+ * UNAVAILABLE for absent/ended/external-media calls. A WAITING call can fail:
+ * observe StateChange and impose a dialing deadline before hanging it up. */
+LIBJAMI_PUBLIC std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
+/* Dial one audio-only native participant for an already Ready browser host.
+ * Its sender reads the conference ring buffer, never the daemon microphone;
+ * no video/device stream or current-call switch is created. An empty call ID
+ * means dialing could not start. Wait for CURRENT and READY before adding. */
+LIBJAMI_PUBLIC std::string placeBrowserConferenceParticipantCall(const std::string& accountId,
+                                                                 const std::string& to,
+                                                                 const std::string& requestId);
+/* Adds a READY native-media call to a ready browser host. True means it was
+ * bound; false leaves the caller responsible for retrying or hanging up. */
+LIBJAMI_PUBLIC bool addNativeParticipantToBrowserConference(const std::string& accountId,
+                                                             const std::string& callId,
+                                                             const std::string& requestId);
 /* Called when the account drops a browser-hosted conference, even without Node listeners. */
 LIBJAMI_PUBLIC void browserConferenceRemoved(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC void cancelBrowserConferencesForAccount(const std::string& accountId);

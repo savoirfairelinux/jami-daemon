@@ -425,8 +425,32 @@ JamiAccount::newIncomingCall(const std::string& from,
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
 {
+    return newOutgoingCallImpl(toUrl, mediaList, false);
+}
+
+std::shared_ptr<Call>
+JamiAccount::newBrowserConferenceOutgoingCall(std::string_view toUrl,
+                                              const std::vector<libjami::MediaMap>& mediaList)
+{
+    if (toUrl.empty() || mediaList.size() != 1
+        || MediaAttribute::getMediaType(mediaList.front()) != std::pair {true, MediaType::MEDIA_AUDIO}) {
+        JAMI_WARNING("Browser conference participant dialing requires exactly one audio media");
+        return {};
+    }
+    return newOutgoingCallImpl(toUrl, mediaList, true);
+}
+
+std::shared_ptr<Call>
+JamiAccount::newOutgoingCallImpl(std::string_view toUrl,
+                                 const std::vector<libjami::MediaMap>& mediaList,
+                                 bool browserConferenceAudio)
+{
     auto uri = Uri(toUrl);
     if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS) {
+        if (browserConferenceAudio) {
+            JAMI_WARNING("A browser conference participant must be a direct Jami peer");
+            return {};
+        }
         // NOTE: In this case newOutgoingCall can act as "resumeConference" and just attach the
         // host to the current hosted conference. So, no call will be returned in that case.
         return newSwarmOutgoingCallHelper(uri, mediaList);
@@ -437,7 +461,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 
     // SIP allows sending empty invites, this use case is not used with Jami accounts.
     if (not mediaList.empty()) {
-        call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+        call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList, browserConferenceAudio);
     } else {
         JAMI_WARNING("Media list is empty, setting a default list");
         call = manager.callFactory.newSipCall(shared(),
@@ -450,8 +474,14 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
         return {};
 
     std::shared_lock lkCM(connManagerMtx_);
-    if (!connectionManager_)
+    if (!connectionManager_) {
+        JAMI_WARNING("[account:{}] Cannot place call without a connection manager", getAccountID());
+        if (browserConferenceAudio) {
+            manager.callFactory.removeCall(*call);
+            detach(call);
+        }
         return {};
+    }
 
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
@@ -699,7 +729,10 @@ JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
         return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
     }
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
-    return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+    return Manager::instance().callFactory.newSipCall(shared(),
+                                                      Call::CallType::OUTGOING,
+                                                      mediaList,
+                                                      mainCall->usesBrowserConferenceAudio());
 }
 
 void
