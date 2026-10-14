@@ -84,6 +84,9 @@ export enum JamiSignal {
   ExternalMediaPromotionAccepted = 'ExternalMediaPromotionAccepted',
   ExternalMediaPromotionReady = 'ExternalMediaPromotionReady',
   ExternalMediaPromotionFailure = 'ExternalMediaPromotionFailure',
+  ExternalMediaDemotionAccepted = 'ExternalMediaDemotionAccepted',
+  ExternalMediaDemotionReady = 'ExternalMediaDemotionReady',
+  ExternalMediaDemotionFailure = 'ExternalMediaDemotionFailure',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
@@ -120,6 +123,9 @@ export interface BrowserConferenceSignals {
   [JamiSignal.ExternalMediaPromotionAccepted]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionReady]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]
+  [JamiSignal.ExternalMediaDemotionAccepted]: [accountId: string, callId: string, requestId: string, sdpAnswer: string]
+  [JamiSignal.ExternalMediaDemotionReady]: [accountId: string, callId: string, requestId: string]
+  [JamiSignal.ExternalMediaDemotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]
 }
 
 // ── Generic SWIG collection types ───────────────────────────
@@ -304,6 +310,8 @@ export interface JamiSwig {
   getExternalMediaPromotionState(accountId: string, callId: string): 'AUDIO_ONLY' | 'AUDIO_VIDEO' | 'UNSUPPORTED_MEDIA' | 'UNAVAILABLE'
   requestExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   cancelExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
+  requestExternalMediaDemotion(accountId: string, callId: string, conferenceId: string, requestId: string, sdpOffer: string): boolean
+  completeExternalMediaDemotion(accountId: string, callId: string, requestId: string): boolean
   addNativeParticipantToBrowserConference(accountId: string, callId: string, requestId: string): boolean
   placeBrowserConferenceParticipantCall(accountId: string, to: string, requestId: string, isVideo?: boolean): string
   getNativeCallMediaState(accountId: string, callId: string): 'WAITING' | 'READY' | 'UNAVAILABLE'

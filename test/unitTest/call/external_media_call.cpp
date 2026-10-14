@@ -112,6 +112,19 @@ makeExternalAnswer(std::string offer)
     return offer;
 }
 
+static std::string
+makeReturnOffer(std::string offer)
+{
+    auto replaceAll = [&offer](std::string_view from, std::string_view to) {
+        for (auto pos = offer.find(from); pos != std::string::npos; pos = offer.find(from, pos + to.size()))
+            offer.replace(pos, from.size(), to);
+    };
+    replaceAll("3899017587 IN", "3899017588 IN");
+    replaceAll("extufrag", "returnufrag");
+    replaceAll("extpwd012345678901234567", "returnpwd012345678901234567");
+    return offer;
+}
+
 class ExternalMediaCallTest : public CppUnit::TestFixture
 {
 public:
@@ -135,10 +148,12 @@ private:
     void testPromoteExternalMediaCall();
     void testPromoteExternalVideoCall();
     void testPromotionCancellation();
+    void testReturnExternalMediaAudio();
+    void testReturnExternalMediaVideo();
     void testNativeCallMediaReadiness();
     void testBrowserConferenceParticipantAudio();
     void testBrowserConferenceParticipantVideo();
-    void runPromotion(bool cancel, bool video = false);
+    void runPromotion(bool cancel, bool video = false, bool demote = false);
 
     CPPUNIT_TEST_SUITE(ExternalMediaCallTest);
     CPPUNIT_TEST(testRejectUnmigratedExternalMedia);
@@ -148,6 +163,10 @@ private:
     CPPUNIT_TEST(testPromoteExternalVideoCall);
 #endif
     CPPUNIT_TEST(testPromotionCancellation);
+    CPPUNIT_TEST(testReturnExternalMediaAudio);
+#ifdef ENABLE_VIDEO
+    CPPUNIT_TEST(testReturnExternalMediaVideo);
+#endif
     CPPUNIT_TEST(testNativeCallMediaReadiness);
     CPPUNIT_TEST(testBrowserConferenceParticipantAudio);
 #ifdef ENABLE_VIDEO
@@ -348,7 +367,19 @@ ExternalMediaCallTest::testPromotionCancellation()
 }
 
 void
-ExternalMediaCallTest::runPromotion(bool cancel, bool video)
+ExternalMediaCallTest::testReturnExternalMediaAudio()
+{
+    runPromotion(false, false, true);
+}
+
+void
+ExternalMediaCallTest::testReturnExternalMediaVideo()
+{
+    runPromotion(false, true, true);
+}
+
+void
+ExternalMediaCallTest::runPromotion(bool cancel, bool video, bool demote)
 {
     add_confirmed_contact(aliceId, bobId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -362,6 +393,9 @@ ExternalMediaCallTest::runPromotion(bool cancel, bool video)
     std::string accepted;
     std::string ready;
     std::string failure;
+    std::string directAnswer;
+    std::string directReady;
+    std::string directFailure;
     bool bobOver = false;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
     handlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
@@ -400,6 +434,27 @@ ExternalMediaCallTest::runPromotion(bool cancel, bool video)
             std::lock_guard guard(mtx);
             if (account == aliceId && request == "promote")
                 failure = reason;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaDemotionAccepted>(
+        [&](const std::string& account, const std::string&, const std::string& request, const std::string& answer) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId && request == "return")
+                directAnswer = answer;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaDemotionReady>(
+        [&](const std::string& account, const std::string&, const std::string& request) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                directReady = request;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaDemotionFailure>(
+        [&](const std::string& account, const std::string&, const std::string& request, const std::string& reason) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId && request == "return")
+                directFailure = reason;
             cv.notify_all();
         }));
     libjami::registerSignalHandlers(handlers);
@@ -490,6 +545,81 @@ ExternalMediaCallTest::runPromotion(bool cancel, bool video)
 #endif
     CPPUNIT_ASSERT(Manager::instance().getCallFromCallID(aliceCallId) == aliceCall);
     lk.unlock();
+    if (demote) {
+        auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+        auto* module = aliceAccount->convModule(true);
+        CPPUNIT_ASSERT(module);
+        const auto conversationId = libjami::startConversation(aliceId);
+        CPPUNIT_ASSERT(!conversationId.empty());
+        const auto conferenceId = Manager::instance().callFactory.getNewCallID();
+        auto conference = module->hostBrowserConference(conversationId, conferenceId, {});
+        CPPUNIT_ASSERT(conference);
+        auto host = Manager::instance().getRingBufferPool().createRingBuffer("direct-return-host");
+        CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
+        CPPUNIT_ASSERT(Manager::instance().addSubCall(aliceId, aliceCallId, aliceId, conferenceId));
+        const auto offer = makeReturnOffer(video ? kExternalVideoOffer : kExternalOffer);
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(aliceId, aliceCallId, "wrong-host", "return", offer));
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(aliceId, aliceCallId, conferenceId, "return", "bad SDP"));
+        auto wrongTransport = offer;
+        const auto transport = wrongTransport.find("UDP/TLS/RTP/SAVPF");
+        CPPUNIT_ASSERT(transport != std::string::npos);
+        wrongTransport.replace(transport, std::string("UDP/TLS/RTP/SAVPF").size(), "RTP/AVP");
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+            aliceId, aliceCallId, conferenceId, "return", wrongTransport));
+        auto noMux = offer;
+        const auto mux = noMux.find("a=rtcp-mux\r\n");
+        CPPUNIT_ASSERT(mux != std::string::npos);
+        noMux.erase(mux, std::string("a=rtcp-mux\r\n").size());
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+            aliceId, aliceCallId, conferenceId, "return", noMux));
+        auto noFingerprint = offer;
+        const auto fingerprint = noFingerprint.find("a=fingerprint:sha-256 ");
+        CPPUNIT_ASSERT(fingerprint != std::string::npos);
+        noFingerprint.erase(fingerprint, noFingerprint.find("\r\n", fingerprint) + 2 - fingerprint);
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+            aliceId, aliceCallId, conferenceId, "return", noFingerprint));
+        auto noSetup = offer;
+        const auto setup = noSetup.find("a=setup:actpass\r\n");
+        CPPUNIT_ASSERT(setup != std::string::npos);
+        noSetup.erase(setup, std::string("a=setup:actpass\r\n").size());
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+            aliceId, aliceCallId, conferenceId, "return", noSetup));
+        auto invalidSetup = offer;
+        invalidSetup.replace(setup, std::string("a=setup:actpass").size(), "a=setup:invalid");
+        CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+            aliceId, aliceCallId, conferenceId, "return", invalidSetup));
+        if (video) {
+            auto noVideoSetup = offer;
+            const auto videoSetup = noVideoSetup.rfind("a=setup:actpass\r\n");
+            CPPUNIT_ASSERT(videoSetup != std::string::npos && videoSetup != setup);
+            noVideoSetup.erase(videoSetup, std::string("a=setup:actpass\r\n").size());
+            CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+                aliceId, aliceCallId, conferenceId, "return", noVideoSetup));
+            auto wrongOrder = offer;
+            const auto audio = wrongOrder.find("m=audio ");
+            CPPUNIT_ASSERT(audio != std::string::npos);
+            wrongOrder.replace(audio, std::string("m=audio ").size(), "m=video ");
+            CPPUNIT_ASSERT(!libjami::requestExternalMediaDemotion(
+                aliceId, aliceCallId, conferenceId, "return", wrongOrder));
+        }
+        CPPUNIT_ASSERT(libjami::requestExternalMediaDemotion(aliceId, aliceCallId, conferenceId, "return", offer));
+        lk.lock();
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !directAnswer.empty() || !directFailure.empty(); }));
+        CPPUNIT_ASSERT_MESSAGE(directFailure, directFailure.empty());
+        CPPUNIT_ASSERT(directAnswer.find("a=ice-ufrag:") != std::string::npos);
+        CPPUNIT_ASSERT(directAnswer.find("a=fingerprint:") != std::string::npos);
+        CPPUNIT_ASSERT(aliceCall->getConference() == conference);
+        CPPUNIT_ASSERT(!aliceCall->getRtpSessionList().empty());
+        lk.unlock();
+        CPPUNIT_ASSERT(libjami::completeExternalMediaDemotion(aliceId, aliceCallId, "return"));
+        lk.lock();
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return directReady == "return"; }));
+        CPPUNIT_ASSERT(aliceCall->hasExternalMedia());
+        CPPUNIT_ASSERT(aliceCall->getRtpSessionList().empty());
+        CPPUNIT_ASSERT(!aliceCall->isConferenceParticipant());
+        CPPUNIT_ASSERT(Manager::instance().getCallFromCallID(aliceCallId) == aliceCall);
+        lk.unlock();
+    }
     libjami::hangUp(aliceId, aliceCallId);
     libjami::unregisterSignalHandlers();
 }

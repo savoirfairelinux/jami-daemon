@@ -1579,6 +1579,12 @@ SIPCall::reportExternalRemoteAnswer(std::string sdp)
 {
     std::lock_guard lk {callMutex_};
     externalRemoteSdp_ = std::move(sdp);
+    if (!demotionRequestId_.empty() && !demotionAnswerReceived_) {
+        demotionAnswerReceived_ = true;
+        emitSignal<libjami::CallSignal::ExternalMediaDemotionAccepted>(
+            getAccountId(), getCallId(), demotionRequestId_, externalRemoteSdp_);
+        return;
+    }
     emitRemoteSdp();
 }
 
@@ -1832,6 +1838,7 @@ SIPCall::hangup(int code)
     std::lock_guard lk {callMutex_};
     promotionEnding_ = false;
     failPromotion("Call ended before native media was ready");
+    failDemotion("Call ended before direct browser media was ready");
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -2317,6 +2324,7 @@ SIPCall::removeCall(int code)
     stopCallRecovery();
     promotionEnding_ = false;
     failPromotion("Call removed before native media was ready");
+    failDemotion("Call removed before direct media was ready");
     JAMI_DEBUG("[call:{}] removeCall()", getCallId());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
@@ -3713,6 +3721,15 @@ SIPCall::onInviteTransactionTerminated(int status)
             if (!call->promotionRequestId_.empty() && status >= 300) {
                 call->failPromotion(fmt::format("Media re-INVITE rejected ({})", status));
                 call->hangup(status);
+                return;
+            }
+            if (!call->demotionRequestId_.empty() && status >= 300) {
+                call->failDemotion(fmt::format("Direct media re-INVITE rejected ({})", status));
+                return;
+            }
+            if (!call->demotionRequestId_.empty() && status >= 200
+                && !call->demotionAnswerReceived_) {
+                call->failDemotion("Peer accepted direct media without an SDP answer");
                 return;
             }
             call->startPendingTransportFallback();
