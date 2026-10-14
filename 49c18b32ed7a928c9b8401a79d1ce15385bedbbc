@@ -21,6 +21,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "37a0de55_76ecc0ef",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T20:00:48Z",
+      "side": 1,
+      "message": "[error] Line 286: 🔴 MID demultiplexing currently only supports one-byte RTP header extensions (`extId` 1..14), but SDP negotiation can accept/echo any MID extmap id from the peer (including 15+ with `extmap-allow-mixed`). In those sessions `getOneByteRtpExtensionString`/`appendOneByteRtpExtensionString` silently stop parsing/inserting MID, so bundled RTP can be misrouted (or delivered without MID) when payload types overlap across m-lines. Fix by either implementing two-byte RTP header extension support (RFC 8285) for MID, or hard-failing/falling back out of BUNDLE whenever the negotiated MID extmap id is outside the supported one-byte range.",
+      "revId": "49c18b32ed7a928c9b8401a79d1ce15385bedbbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "516ee2d2_418113f3",
         "filename": "src/media/socket_pair.cpp",
         "patchSetId": 7
