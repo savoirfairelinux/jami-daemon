@@ -152,6 +152,9 @@ public:
      * lines, so the external endpoint must be given the untouched SDP.
      */
     void reportExternalRemoteAnswer(std::string sdp);
+    bool promoteExternalMedia(const std::string& requestId);
+    bool canPromoteExternalMedia() const;
+    bool cancelExternalMediaPromotion(const std::string& requestId);
     bool isNativeMediaReady() const;
     bool usesBrowserConferenceAudio() const { return browserConferenceAudio_; }
 
@@ -259,7 +262,7 @@ public:
      * completed.
      */
     void onMediaNegotiationComplete();
-    void onInviteTransactionTerminated();
+    void onInviteTransactionTerminated(int status);
     // End fo SiPVoipLink events
 
     const std::string& getContactHeader() const;
@@ -652,6 +655,17 @@ private:
     // Reported verbatim to the endpoint instead of the pjmedia-negotiated
     // session, which mangles WebRTC codec lines.
     std::string externalRemoteSdp_ {};
+    std::string promotionRequestId_ {};
+    bool promotionNegotiated_ {false};
+    bool promotionAccepted_ {false};
+    bool promotionEnding_ {false};
+    std::string promotionStateLocked() const;
+    void checkPromotionReady();
+    std::string takePromotionReadyLocked();
+    void reportPromotionReady(const std::string& requestId) const;
+    std::string takePromotionFailureLocked();
+    void reportPromotionFailure(const std::string& requestId, const std::string& reason) const;
+    void queuePromotionFailureLocked(const std::string& reason);
     bool isNativeMediaReadyLocked() const;
 
     // ICE media transport
