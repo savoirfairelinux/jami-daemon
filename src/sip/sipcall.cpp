@@ -247,7 +247,8 @@ SIPCall::createRtpSession(RtpStream& stream)
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
         stream.rtpSession_ = std::make_shared<AudioRtpSession>(
             id_, streamId, recorder_,
-            browserConferenceAudio_ ? AudioRtpSession::Mode::CONFERENCE_HOST : AudioRtpSession::Mode::DEVICE);
+            (browserConferenceAudio_ || !promotionRequestId_.empty())
+                ? AudioRtpSession::Mode::CONFERENCE_HOST : AudioRtpSession::Mode::DEVICE);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
@@ -292,8 +293,32 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType, bool) {
         // This sends SIP messages on socket, so move to io
         dht::ThreadPool::io().run([w = std::move(w)] {
-            if (auto thisPtr = w.lock())
+            if (auto thisPtr = w.lock()) {
                 thisPtr->rtpSetupSuccess();
+                runOnMainThread([w] {
+                    if (auto call = w.lock())
+                        call->checkPromotionReady();
+                });
+            }
+        });
+    });
+    rtpSession->setStartupFailureCb([w = weak(), session = std::weak_ptr<RtpSession>(rtpSession)](
+                                        MediaType, const std::string& reason) {
+        runOnMainThread([w, session, reason] {
+            if (auto call = w.lock()) {
+                std::unique_lock lk {call->callMutex_};
+                const auto stream = session.lock();
+                const auto& streams = call->rtpStreams_;
+                if (!call->promotionRequestId_.empty() && stream
+                    && std::any_of(streams.begin(), streams.end(), [&](const auto& item) {
+                           return item.rtpSession_ == stream;
+                       })) {
+                    auto failedRequest = call->takePromotionFailureLocked();
+                    lk.unlock();
+                    call->reportPromotionFailure(failedRequest, reason);
+                    call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+                }
+            }
         });
     });
 
@@ -1562,7 +1587,7 @@ bool
 SIPCall::isNativeMediaReady() const
 {
     std::lock_guard lk {callMutex_};
-    return isNativeMediaReadyLocked();
+    return promotionRequestId_.empty() && isNativeMediaReadyLocked();
 }
 
 bool
@@ -1806,6 +1831,16 @@ void
 SIPCall::hangup(int code)
 {
     std::lock_guard lk {callMutex_};
+    if (!promotionRequestId_.empty()) {
+        auto failedRequest = takePromotionFailureLocked();
+        promotionEnding_ = true;
+        runOnMainThread([call = shared(), code, failedRequest = std::move(failedRequest)] {
+            call->reportPromotionFailure(failedRequest, "Call ended before native media was ready");
+            call->hangup(code);
+        });
+        return;
+    }
+    promotionEnding_ = false;
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -2289,6 +2324,8 @@ SIPCall::removeCall(int code)
 #endif
     std::lock_guard lk {callMutex_};
     stopCallRecovery();
+    promotionEnding_ = false;
+    queuePromotionFailureLocked("Call removed before native media was ready");
     JAMI_DEBUG("[call:{}] removeCall()", getCallId());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
@@ -2310,6 +2347,19 @@ void
 SIPCall::onFailure(int code)
 {
     stopCallRecovery();
+    std::string failedRequest;
+    {
+        std::lock_guard lk {callMutex_};
+        failedRequest = takePromotionFailureLocked();
+    }
+    if (!failedRequest.empty()) {
+        runOnMainThread([call = shared(), code, failedRequest = std::move(failedRequest)] {
+            call->reportPromotionFailure(failedRequest,
+                                         fmt::format("Native media negotiation failed ({})", code));
+            call->hangup(code);
+        });
+        return;
+    }
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, code)) {
         runOnMainThread([w = weak(), code] {
             if (auto shared = w.lock()) {
@@ -2341,6 +2391,8 @@ SIPCall::onBusyHere()
 void
 SIPCall::onClosed()
 {
+    if (auto ice = getIceMedia())
+        ice->cancelOperations();
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
@@ -3075,11 +3127,37 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                     call->createCallAVStreams();
                 }
 #endif
+                runOnMainThread([w, rtpSession, idx] {
+                    if (auto call = w.lock()) {
+                        std::string requestId;
+                        {
+                            std::lock_guard lk {call->callMutex_};
+                            if (!call->promotionRequestId_.empty() && idx < call->rtpStreams_.size()
+                                && call->rtpStreams_[idx].rtpSession_ == rtpSession)
+                                requestId = call->takePromotionReadyLocked();
+                        }
+                        if (!requestId.empty())
+                            call->reportPromotionReady(requestId);
+                    }
+                });
             } catch (const std::exception& e) {
                 JAMI_ERROR("[call:{}] Failed to start RTP session {}: {}",
                            w.lock() ? w.lock()->getCallId() : "unknown",
                            idx,
                            e.what());
+                runOnMainThread([w, rtpSession, idx, reason = std::string(e.what())] {
+                    if (auto call = w.lock()) {
+                        std::unique_lock lk {call->callMutex_};
+                        if (!call->promotionRequestId_.empty() && idx < call->rtpStreams_.size()
+                            && call->rtpStreams_[idx].rtpSession_ == rtpSession) {
+                            auto failedRequest = call->takePromotionFailureLocked();
+                            lk.unlock();
+                            call->reportPromotionFailure(failedRequest,
+                                                         fmt::format("Native RTP failed to start: {}", reason));
+                            call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+                        }
+                    }
+                });
             }
         });
         idx++;
@@ -3378,8 +3456,8 @@ bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard lk {callMutex_};
-    if (hasExternalMedia()) {
-        JAMI_WARNING("[call:{}] Media change unavailable during external media", getCallId());
+    if (hasExternalMedia() || !promotionRequestId_.empty()) {
+        JAMI_WARNING("[call:{}] Media change unavailable during external-media promotion", getCallId());
         return false;
     }
     // Renegotiating now would cross the renegotiation restoring the call.
@@ -3580,12 +3658,13 @@ SIPCall::onMediaNegotiationComplete()
 {
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
-            std::lock_guard lk {this_->callMutex_};
+            std::string readyRequest;
+            std::unique_lock lk {this_->callMutex_};
             JAMI_DEBUG("[call:{}] Media negotiation complete", this_->getCallId());
 
             // If the call has already ended, we don't need to start the media.
             if (not this_->inviteSession_ or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_) {
+                or not this_->sdp_ || this_->promotionEnding_) {
                 return;
             }
 
@@ -3595,6 +3674,8 @@ SIPCall::onMediaNegotiationComplete()
                 this_->reportMediaNegotiationStatus();
                 return;
             }
+            if (!this_->promotionRequestId_.empty())
+                this_->promotionNegotiated_ = true;
 
             // This method is called to report media negotiation (SDP) for initial
             // invite or subsequent invites (re-invite).
@@ -3621,16 +3702,36 @@ SIPCall::onMediaNegotiationComplete()
                 // this_->updateRemoteMedia();
                 this_->reportMediaNegotiationStatus();
             }
+            if (!this_->promotionRequestId_.empty())
+                readyRequest = this_->takePromotionReadyLocked();
+            lk.unlock();
+            if (!readyRequest.empty())
+                this_->reportPromotionReady(readyRequest);
         }
     });
 }
 
 void
-SIPCall::onInviteTransactionTerminated()
+SIPCall::onInviteTransactionTerminated(int status)
 {
-    runOnMainThread([w = weak()] {
-        if (auto call = w.lock())
+    runOnMainThread([w = weak(), status] {
+        if (auto call = w.lock()) {
+            std::unique_lock lk {call->callMutex_};
+            if (call->promotionEnding_) {
+                call->promotionEnding_ = false;
+                lk.unlock();
+                call->hangup(PJSIP_SC_REQUEST_TERMINATED);
+                return;
+            }
+            if (!call->promotionRequestId_.empty() && status >= 300) {
+                auto failedRequest = call->takePromotionFailureLocked();
+                lk.unlock();
+                call->reportPromotionFailure(failedRequest, fmt::format("Media re-INVITE rejected ({})", status));
+                call->hangup(status);
+                return;
+            }
             call->startPendingTransportFallback();
+        }
     });
 }
 
@@ -3770,7 +3871,8 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
         // Check if the call is already ended, so we don't need to restart medias
         // This is typically the case in a multi-device context where one device
         // can stop a call. So do not start medias
-        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
+        if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_
+            || promotionEnding_) {
             JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
             return;
         }
