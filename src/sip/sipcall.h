@@ -123,7 +123,8 @@ public:
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,
             Call::CallType type,
-            const std::vector<libjami::MediaMap>& mediaList);
+            const std::vector<libjami::MediaMap>& mediaList,
+            bool browserConferenceAudio = false);
 
     // Inherited from Call class
     LinkType getLinkType() const override { return LINK_TYPE; }
@@ -151,6 +152,8 @@ public:
      * lines, so the external endpoint must be given the untouched SDP.
      */
     void reportExternalRemoteAnswer(std::string sdp);
+    bool isNativeMediaReady() const;
+    bool usesBrowserConferenceAudio() const { return browserConferenceAudio_; }
 
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
@@ -634,6 +637,7 @@ private:
 
     bool mediaRestartRequired_ {true};
     bool enableIce_ {true};
+    bool browserConferenceAudio_ {false};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
@@ -648,6 +652,7 @@ private:
     // Reported verbatim to the endpoint instead of the pjmedia-negotiated
     // session, which mangles WebRTC codec lines.
     std::string externalRemoteSdp_ {};
+    bool isNativeMediaReadyLocked() const;
 
     // ICE media transport
     std::shared_ptr<dhtnet::IceTransport> iceMedia_;
