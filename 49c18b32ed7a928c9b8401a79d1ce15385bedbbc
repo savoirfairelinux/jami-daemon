@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1a3b564_0c8a4b06",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1218,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:57:39Z",
+      "side": 1,
+      "message": "[error] Line 1218: 🔴 When `rtcpProtection_` is enabled, failed SRTCP decryption currently falls back to parsing the packet as plaintext. That accepts unauthenticated RTCP in DTLS-SRTP sessions (e.g., spoofed PLI/FIR/REMB), which defeats RTCP integrity/authentication guarantees. Fix by dropping RTCP packets on decrypt failure whenever `rtcpProtection_` is true, and keep plaintext parsing only when protection is disabled.",
+      "revId": "49c18b32ed7a928c9b8401a79d1ce15385bedbbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "772d2bf4_6ff4faaf",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1505,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:57:39Z",
+      "side": 1,
+      "message": "[error] Line 1505: 🔴 Incoming re-INVITE handling updates `rtcpMuxEnabled_` but does not re-evaluate `bundleEnabled_`. If the peer removes BUNDLE (or BUNDLE becomes ineligible), the call can keep stale bundled transport assumptions (ICE stream/component counts, shared sockets) and break the intended non-BUNDLE fallback. Add `setBundleEnabled(accountSupportsBundle(account) \u0026\u0026 remoteOfferSupportsBundle())` alongside `setRtcpMuxEnabled(...)` before SDP processing.",
+      "revId": "49c18b32ed7a928c9b8401a79d1ce15385bedbbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0bf6cbb2_b69869d9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3726,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:57:39Z",
+      "side": 1,
+      "message": "[error] Line 3726: 🔴 In the \u0027offer-in-200-OK\u0027 path (late offer), transport mode flags are not synchronized with the received SDP before media/ICE setup. With RTCP mux now default-enabled, this can leave stale mux/bundle state when the remote offer does not advertise them, leading to wrong socket/component setup. After `setReceivedOffer(offer)`, recompute both `setRtcpMuxEnabled(account-\u003eisRtcpMuxEnabled() \u0026\u0026 remoteOfferSupportsRtcpMux())` and `setBundleEnabled(accountSupportsBundle(acc) \u0026\u0026 remoteOfferSupportsBundle())` before `processIncomingOffer(...)`.",
+      "revId": "49c18b32ed7a928c9b8401a79d1ce15385bedbbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
