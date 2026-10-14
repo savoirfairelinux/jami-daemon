@@ -54,6 +54,7 @@ public:
     // ReadyCb reports completed ICE, DTLS-SRTP, and negotiated RTP startup.
     void start(std::string offer, AnswerCb onAnswer, FailureCb onFailure, ReadyCb onReady = {});
     void stop();
+    bool isReady() const;
 
 private:
     enum class State { IDLE, GATHERING, ANSWERED, STARTING, RUNNING, CLOSED };
@@ -65,7 +66,7 @@ private:
     void close(bool notify, std::string reason = {});
     void armTimeout(std::chrono::seconds duration, std::string reason);
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::mutex mediaStartMtx_;
     const std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
     std::atomic_bool stopRequested_ {false};

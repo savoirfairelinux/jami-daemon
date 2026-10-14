@@ -114,6 +114,13 @@ public:
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
+    /**
+     * Bind a conference mixer before starting RTP and retain the conference
+     * until exitConference() or stop(), even if the host releases its own
+     * reference. A prepared session must never fall back to local capture.
+     * Returns false if RTP has already started or no mixer is available.
+     */
+    bool prepareConference(const std::shared_ptr<Conference>& conference);
     void enterConference(Conference& conference);
     void exitConference();
 
@@ -134,6 +141,8 @@ public:
 private:
     friend class test::CongestionControlTest;
 
+    void enterConferenceLocked(Conference& conference, std::shared_ptr<Conference>& previousOwner);
+    void exitConferenceLocked(std::shared_ptr<Conference>& previousOwner);
     void setupConferenceVideoPipeline(Conference& conference, Direction dir);
     void setupVideoPipeline();
     void startSender();
@@ -156,7 +165,9 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::shared_ptr<VideoReceiveThread> receiveThread_;
+    std::shared_ptr<Conference> conferenceOwner_;
     Conference* conference_ {nullptr};
+    bool conferenceSourceRequired_ {false};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
