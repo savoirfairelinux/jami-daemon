@@ -151,10 +151,12 @@ initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
-                 const std::vector<libjami::MediaMap>& mediaList)
+                 const std::vector<libjami::MediaMap>& mediaList,
+                 bool browserConferenceAudio)
     : Call(account, callId, type)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
+    , browserConferenceAudio_(browserConferenceAudio)
     , srtpEnabled_(account->isSrtpEnabled())
 {
     jami_tracepoint(call_start, callId.c_str());
@@ -245,7 +247,12 @@ SIPCall::createRtpSession(RtpStream& stream)
     // To get audio_0 ; video_0
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, recorder_);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_,
+                                                               streamId,
+                                                               recorder_,
+                                                               browserConferenceAudio_
+                                                                   ? AudioRtpSession::Mode::CONFERENCE_HOST
+                                                                   : AudioRtpSession::Mode::DEVICE);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
@@ -1744,6 +1751,48 @@ SIPCall::reportExternalRemoteAnswer(std::string sdp)
     emitRemoteSdp();
 }
 
+bool
+SIPCall::isNativeMediaReady() const
+{
+    std::lock_guard lk {callMutex_};
+    return isNativeMediaReadyLocked();
+}
+
+bool
+SIPCall::isNativeMediaReadyLocked() const
+{
+    if (hasExternalMedia() || isSubcall() || getState() != CallState::ACTIVE
+        || getConnectionState() != ConnectionState::CONNECTED || !sdp_ || !sdp_->getActiveLocalSdpSession()
+        || !sdp_->getActiveRemoteSdpSession() || !isIceRunning())
+        return false;
+
+    const auto slots = sdp_->getMediaSlots();
+    if (slots.empty() || slots.size() != rtpStreams_.size())
+        return false;
+    bool audioReady = false;
+    for (size_t i = 0; i < slots.size(); ++i) {
+        const auto& [local, remote] = slots[i];
+        if (!local.enabled && (!remote.enabled || (browserConferenceAudio_ && local.type == MEDIA_VIDEO)))
+            continue;
+        if (!local.enabled || !remote.enabled || !rtpStreams_[i].rtpSession_)
+            return false;
+        if (local.type == MEDIA_AUDIO) {
+            audioReady = true;
+            if (!std::static_pointer_cast<AudioRtpSession>(rtpStreams_[i].rtpSession_)->isRtpReady(true, true))
+                return false;
+        }
+#ifdef ENABLE_VIDEO
+        else if (local.type == MEDIA_VIDEO) {
+            if (!std::static_pointer_cast<video::VideoRtpSession>(rtpStreams_[i].rtpSession_)->isRtpReady(true, true))
+                return false;
+        }
+#endif
+        else
+            return false;
+    }
+    return audioReady;
+}
+
 void
 SIPCall::emitExternalRemoteSdp(const std::string& sdp) const
 {
@@ -1784,6 +1833,9 @@ void
 SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard lk {callMutex_};
+    if (!inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+        || getConnectionState() != ConnectionState::CONNECTED)
+        return;
     if (peerSupportsHandover() and not isCurrentMediaNegotiation()) {
         rejectPendingReinviteLocked();
         return;
@@ -1796,6 +1848,16 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    if (browserConferenceAudio_) {
+        for (auto& media : mediaAttrList) {
+            if (media.type_ == MediaType::MEDIA_VIDEO) {
+                JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
+                media.enabled_ = false;
+                media.muted_ = true;
+                media.sourceUri_.clear();
+            }
+        }
+    }
 
     // TODO. is the right place?
     // Disable video if disabled in the account.
@@ -1843,6 +1905,10 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
         JAMI_ERROR("[call:{}] No valid remote SDP session", getCallId());
         return;
     }
+
+    if (!inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+        || getConnectionState() != ConnectionState::CONNECTED)
+        return;
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
         JAMI_WARNING("[call:{}] Requesting a new ICE media", getCallId());
@@ -2866,7 +2932,8 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
-    if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO && stream.mediaAttribute_->sourceUri_.empty()) {
+    if (!browserConferenceAudio_ && stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+        && stream.mediaAttribute_->sourceUri_.empty()) {
         if (auto* monitor = getVideoDeviceMonitor())
             stream.mediaAttribute_->sourceUri_ = monitor->getMRLForDefaultDevice();
     }
@@ -3523,6 +3590,10 @@ bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard lk {callMutex_};
+    if (hasExternalMedia()) {
+        JAMI_WARNING("[call:{}] Media change unavailable during external media", getCallId());
+        return false;
+    }
     // Before the call is confirmed, the change is applied locally only (see requestReinvite).
     if (inviteSession_ and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and isReinviteBusyLocked()) {
         JAMI_DEBUG("[call:{}] Media change deferred until negotiation completes", getCallId());
@@ -3530,6 +3601,12 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         return true;
     }
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    if (browserConferenceAudio_ && std::any_of(mediaAttrList.begin(), mediaAttrList.end(), [](const auto& media) {
+            return media.type_ == MediaType::MEDIA_VIDEO;
+        })) {
+        JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
+        return false;
+    }
     bool hasFileSharing {false};
 
     for (const auto& media : mediaAttrList) {
