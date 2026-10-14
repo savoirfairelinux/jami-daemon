@@ -2220,7 +2220,9 @@ ConversationModule::loadSingleConversation(const std::string& convId)
     pimpl_->conversations_.clear();
 
     try {
-        auto sconv = std::make_shared<SyncedConversation>(convId);
+        auto infoIt = pimpl_->convInfos_.find(convId);
+        auto sconv = infoIt != pimpl_->convInfos_.end() ? std::make_shared<SyncedConversation>(infoIt->second)
+                                                        : std::make_shared<SyncedConversation>(convId);
 
         auto conv = std::make_shared<Conversation>(acc, convId);
 
