@@ -37,57 +37,79 @@
 
 namespace jami {
 
-bool
-SIPCall::canPromoteExternalMedia() const
+static bool
+isBrowserMediaLayout(const std::vector<MediaDescription>& media)
+{
+    return (media.size() == 1 || media.size() == 2)
+           && media.front().type == MEDIA_AUDIO
+           && (media.size() == 1 || media.back().type == MEDIA_VIDEO);
+}
+
+std::string
+SIPCall::getExternalMediaPromotionState() const
 {
     std::lock_guard lk {callMutex_};
-    return promotionStateLocked() == "AUDIO_ONLY";
+    return promotionStateLocked();
 }
 
 std::string
 SIPCall::promotionStateLocked() const
 {
-    if (!promotionRequestId_.empty() || !hasExternalMedia() || !rtpStreams_.empty()
-        || isSubcall() || isConferenceParticipant() || getState() != CallState::ACTIVE
-        || getConnectionState() != ConnectionState::CONNECTED || !inviteSession_
-        || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED || inviteSession_->invite_tsx
-        || !sdp_ || !sdp_->getActiveLocalSdpSession() || !sdp_->getActiveRemoteSdpSession()
-        || isWaitingForIceAndMedia_)
+    if (!hasExternalMedia() || !rtpStreams_.empty() || !promotionRequestId_.empty()
+        || isSubcall() || isConferenceParticipant())
+        return "UNAVAILABLE";
+    if (getState() != CallState::ACTIVE || getConnectionState() != ConnectionState::CONNECTED
+        || !inviteSession_ || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
+        || inviteSession_->invite_tsx || isWaitingForIceAndMedia_ || !sdp_
+        || !sdp_->getActiveLocalSdpSession() || !sdp_->getActiveRemoteSdpSession())
         return "UNAVAILABLE";
 
     auto account = getSIPAccount();
     if (!account || !account->isIceForMediaEnabled() || !account->isSrtpEnabled()
-        || !dtlsCertificate_ || !dtlsPrivateKey_ || account->createDefaultMediaList(false).size() != 1)
+        || !dtlsCertificate_ || !dtlsPrivateKey_)
         return "UNAVAILABLE";
 
     const auto* local = sdp_->getActiveLocalSdpSession();
     const auto* remote = sdp_->getActiveRemoteSdpSession();
-    const auto slots = sdp_->getMediaSlots();
-    if (local->media_count != 1 || remote->media_count != 1 || slots.size() != 1)
+    const auto localMedia = sdp_->getMediaDescriptions(local, false);
+    const auto remoteMedia = sdp_->getMediaDescriptions(remote, true);
+    if (local->media_count != remote->media_count || !isBrowserMediaLayout(localMedia))
         return "UNSUPPORTED_MEDIA";
-    const auto& [localAudio, remoteAudio] = slots.front();
-    if (localAudio.type == MediaType::MEDIA_AUDIO
-        && remoteAudio.type == MediaType::MEDIA_AUDIO
-        && localAudio.enabled && remoteAudio.enabled && !localAudio.hold && !remoteAudio.hold
-        && localAudio.direction_ == MediaDirection::SENDRECV
-        && remoteAudio.direction_ == MediaDirection::SENDRECV
-        && localAudio.transport == MediaTransport::UDP_TLS_RTP_SAVPF
-        && remoteAudio.transport == MediaTransport::UDP_TLS_RTP_SAVPF)
-        return "AUDIO_ONLY";
-    return "UNSUPPORTED_MEDIA";
+#ifndef ENABLE_VIDEO
+    if (localMedia.size() == 2)
+        return "UNSUPPORTED_MEDIA";
+#endif
+    for (size_t i = 0; i < localMedia.size(); ++i) {
+        const auto& native = localMedia[i];
+        const auto& peer = remoteMedia[i];
+        if (native.type != peer.type || !native.enabled || !peer.enabled
+            || native.direction_ != MediaDirection::SENDRECV
+            || peer.direction_ != MediaDirection::SENDRECV
+            || native.transport != MediaTransport::UDP_TLS_RTP_SAVPF
+            || peer.transport != MediaTransport::UDP_TLS_RTP_SAVPF)
+            return "UNSUPPORTED_MEDIA";
+    }
+    return localMedia.size() == 1 ? "AUDIO_ONLY" : "AUDIO_VIDEO";
 }
 
 bool
-SIPCall::promoteExternalMedia(const std::string& requestId)
+SIPCall::promoteExternalMedia(const std::string& requestId,
+                              const std::shared_ptr<Conference>& conference)
 {
     std::unique_lock lk {callMutex_};
-    if (requestId.empty() || promotionStateLocked() != "AUDIO_ONLY") {
+    const auto state = promotionStateLocked();
+    if (requestId.empty() || (state != "AUDIO_ONLY" && state != "AUDIO_VIDEO")) {
         JAMI_WARNING("[call:{}] Promotion unavailable for the active external-media dialog", getCallId());
         return false;
     }
+#ifdef ENABLE_VIDEO
+    if (state == "AUDIO_VIDEO" && (!conference || !conference->getVideoMixer())) {
+        JAMI_WARNING("[call:{}] Promotion unavailable without conference video mixer", getCallId());
+        return false;
+    }
+#endif
 
-    auto account = getSIPAccount();
-    auto mediaList = account->createDefaultMediaList(false);
+    auto mediaList = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveLocalSdpSession());
     promotionRequestId_ = requestId;
     promotionNegotiated_ = false;
     enableIce_ = true;
@@ -98,6 +120,16 @@ SIPCall::promoteExternalMedia(const std::string& requestId)
         hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
         return false;
     }
+#ifdef ENABLE_VIDEO
+    if (state == "AUDIO_VIDEO") {
+        if (!prepareBrowserConferenceVideo(conference)) {
+            failPromotion("Conference video mixer unavailable before RTP startup");
+            lk.unlock();
+            hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+            return false;
+        }
+    }
+#endif
     try {
         if (trySIPSessionReinvite(mediaList, true) != ReinviteResult::Sent) {
             failPromotion("Could not send media re-INVITE");
@@ -115,6 +147,24 @@ SIPCall::promoteExternalMedia(const std::string& requestId)
     externalRemoteSdp_.clear();
     emitSignal<libjami::CallSignal::ExternalMediaPromotionAccepted>(getAccountId(), getCallId(), requestId);
     return true;
+}
+
+bool
+SIPCall::prepareBrowserConferenceVideo(const std::shared_ptr<Conference>& conference)
+{
+#ifdef ENABLE_VIDEO
+    if (!conference || !conference->getVideoMixer())
+        return false;
+    const auto videoSessions = getRtpSessionList(MediaType::MEDIA_VIDEO);
+    if (videoSessions.size() != 1
+        || !std::static_pointer_cast<video::VideoRtpSession>(videoSessions.front())->prepareConference(conference))
+        return false;
+    conferenceMediaSource_ = conference;
+    return true;
+#else
+    (void) conference;
+    return false;
+#endif
 }
 
 bool
