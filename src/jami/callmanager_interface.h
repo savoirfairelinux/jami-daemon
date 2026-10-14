@@ -128,24 +128,27 @@ LIBJAMI_PUBLIC bool cancelBrowserConference(const std::string& accountId, const 
  * UNAVAILABLE for absent/ended/external-media calls. A WAITING call can fail:
  * observe StateChange and impose a dialing deadline before hanging it up. */
 LIBJAMI_PUBLIC std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
-/* Dial one audio-only native participant for an already Ready browser host.
- * Its sender reads the conference ring buffer, never the daemon microphone;
- * no video/device stream or current-call switch is created. An empty call ID
- * means dialing could not start. Wait for CURRENT and READY before adding. */
+/* Dial a native participant for an already Ready browser host. Its audio and
+ * optional video senders use the conference mixer, never local input devices.
+ * An empty call ID means dialing could not start. Wait for CURRENT and READY
+ * before adding. */
 LIBJAMI_PUBLIC std::string placeBrowserParticipantCall(const std::string& accountId,
                                                        const std::string& to,
-                                                       const std::string& requestId);
+                                                       const std::string& requestId,
+                                                       bool isVideo = false);
 /* Adds a READY native-media call to a ready browser host. True means it was
  * bound; false leaves the caller responsible for retrying or hanging up. */
 LIBJAMI_PUBLIC bool addNativeToBrowserConference(const std::string& accountId,
                                                  const std::string& callId,
                                                  const std::string& requestId);
-/* Read-only eligibility check against the active local and remote SDP.
- * Only one enabled, bidirectional audio m-line is supported. Recheck the
- * result immediately before promotion: dialog state can change meanwhile. */
-LIBJAMI_PUBLIC bool canPromoteExternalMedia(const std::string& accountId, const std::string& callId);
-/* True means the in-dialog re-INVITE was sent. Keep the browser media alive
- * until ExternalMediaPromotionReady; on failure the call is explicitly ended. */
+/* Classify the active external-media SIP dialog without changing it.
+ * AUDIO_ONLY and AUDIO_VIDEO are eligible; UNSUPPORTED_MEDIA means its SDP
+ * cannot be migrated, UNAVAILABLE means the call/dialog is not promotable.
+ * Recheck immediately before promotion: dialog state can change meanwhile. */
+LIBJAMI_PUBLIC std::string getExternalMediaPromotionState(const std::string& accountId, const std::string& callId);
+/* True means the in-dialog re-INVITE was sent. Keep browser media until
+ * ExternalMediaPromotionReady; a late failure is reported, but restoration of
+ * the original browser RTP cannot be guaranteed after peer acceptance. */
 LIBJAMI_PUBLIC bool requestExternalMediaPromotion(const std::string& accountId,
                                                   const std::string& callId,
                                                   const std::string& requestId);
