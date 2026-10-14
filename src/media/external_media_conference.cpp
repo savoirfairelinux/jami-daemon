@@ -523,6 +523,13 @@ ExternalMediaConference::fail(std::string reason)
     close(!stopRequested_.load(), std::move(reason));
 }
 
+bool
+ExternalMediaConference::isReady() const
+{
+    std::lock_guard lock(mutex_);
+    return state_ == State::RUNNING && !stopRequested_.load();
+}
+
 void
 ExternalMediaConference::stop()
 {
