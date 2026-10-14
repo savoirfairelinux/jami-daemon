@@ -523,6 +523,13 @@ BrowserConferenceMedia::fail(std::string reason)
     close(!stopRequested_.load(), std::move(reason));
 }
 
+bool
+BrowserConferenceMedia::isReady() const
+{
+    std::lock_guard lock(mutex_);
+    return state_ == State::RUNNING && !stopRequested_.load();
+}
+
 void
 BrowserConferenceMedia::stop()
 {
