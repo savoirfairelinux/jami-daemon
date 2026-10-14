@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1feaf889_b6b6c463",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:52:54Z",
+      "side": 1,
+      "message": "[warning] Line 78: 🟡 `requestMediaChange`, `accept`, `acceptWithMedia`, and `answerMediaChangeRequest` now return `true` once work is queued, not when the operation actually succeeds. This changes the public API contract from execution result to enqueue result and can make callers report success even when the operation later fails (or the call disappears before execution). Either preserve result semantics (e.g., synchronous path / completion callback / future) or document and rename these APIs to reflect fire-and-forget behavior.",
+      "revId": "501f8958100921dd52ad1b7f7089f1f7ca7c576c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "caa5bc7e_c04e82fa",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:52:54Z",
+      "side": 1,
+      "message": "[error] Line 89: 🔴 The conference branch dispatches `conf-\u003erequestMediaChange(mediaList)` on the IO thread without any exception guard. If this path throws (as the call path already anticipates via `catch (const std::runtime_error\u0026)`), the exception can escape the worker task and terminate the process. Wrap this call in the same explicit exception handling pattern used for call media changes (at least `std::runtime_error`, and preferably a final catch/log for unexpected exceptions on threadpool boundaries).",
+      "revId": "501f8958100921dd52ad1b7f7089f1f7ca7c576c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
