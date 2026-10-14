@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75483c3b_a0d049d2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 4553,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T20:06:33Z",
+      "side": 1,
+      "message": "[error] Line 4553: 🔴 `failPendingTransportFallback()` holds `callMutex_` while calling `stopAllMedia()`, which is a blocking operation that waits on async RTP shutdown. Other teardown paths call `stopAllMedia()` without `callMutex_`; taking it here risks lock-order inversion/deadlock if any RTP stop callback or concurrent SIP path needs `callMutex_`. Move `stopAllMedia()`/`detachAudioFromConference()` out of the `callMutex_` critical section and only guard the flag mutation.",
+      "revId": "2776bce73d28397965ed0c898c63d63d9bf836a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30b3a466_73c99134",
+        "filename": "test/unitTest/call/dtls_call.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 291,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T20:06:33Z",
+      "side": 1,
+      "message": "[warning] Line 291: 🟡 The test mutates `inviteSession_-\u003estate` directly (`EARLY`/`CONFIRMED`) on a live PJSIP invite session. This bypasses PJSIP state-machine synchronization and can make the test flaky/racy against transaction threads. Drive state transitions through SIP events (or a controlled test seam around `trySIPSessionReinvite`) instead of writing internal PJSIP state fields.",
+      "revId": "2776bce73d28397965ed0c898c63d63d9bf836a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
