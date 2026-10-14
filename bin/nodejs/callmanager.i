@@ -106,6 +106,8 @@ bool cancelBrowserConference(const std::string& accountId, const std::string& re
 std::string getExternalMediaPromotionState(const std::string& accountId, const std::string& callId);
 bool requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool cancelExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
+bool requestExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& conferenceId, const std::string& requestId, const std::string& sdpOffer);
+bool completeExternalMediaDemotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool addNativeToBrowserConference(const std::string& accountId, const std::string& callId, const std::string& requestId);
 std::string placeBrowserParticipantCall(const std::string& accountId, const std::string& to, const std::string& requestId, bool isVideo = false);
 std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
