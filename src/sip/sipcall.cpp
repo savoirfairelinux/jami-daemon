@@ -81,6 +81,7 @@ static constexpr std::chrono::milliseconds EXPECTED_ICE_INIT_MAX_TIME {5000};
 static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
 static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
+
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
 static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
     = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
@@ -1605,7 +1606,7 @@ SIPCall::isNativeMediaReadyLocked() const
     bool audioReady = false;
     for (size_t i = 0; i < slots.size(); ++i) {
         const auto& [local, remote] = slots[i];
-        if (!local.enabled && (!remote.enabled || (browserConferenceAudio_ && local.type == MEDIA_VIDEO)))
+        if (!local.enabled && !remote.enabled)
             continue;
         if (!local.enabled || !remote.enabled || !rtpStreams_[i].rtpSession_)
             return false;
@@ -2770,7 +2771,8 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
-    if (!browserConferenceAudio_ && stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+    if (!browserConferenceAudio_ && promotionRequestId_.empty()
+        && stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
         && stream.mediaAttribute_->sourceUri_.empty()) {
         if (auto* monitor = getVideoDeviceMonitor())
             stream.mediaAttribute_->sourceUri_ = monitor->getMRLForDefaultDevice();
@@ -2966,6 +2968,24 @@ SIPCall::startAllMedia()
 
     // reset
     readyToRecord_ = false;
+
+#ifdef ENABLE_VIDEO
+    if (conferenceMediaSource_) {
+        for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+            if (!std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
+                     ->prepareConference(conferenceMediaSource_)) {
+                auto failedRequest = takePromotionFailureLocked();
+                runOnMainThread([call = shared(), failedRequest = std::move(failedRequest)] {
+                    if (!failedRequest.empty())
+                        call->reportPromotionFailure(failedRequest,
+                                                     "Conference video mixer unavailable before RTP startup");
+                    call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
+                });
+                return;
+            }
+        }
+    }
+#endif
 
     // Not restarting media loop on hold as it's a huge waste of CPU resources
     if (getState() != CallState::HOLD) {
