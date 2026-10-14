@@ -80,6 +80,7 @@ export enum JamiSignal {
   MessagesFound = 'MessagesFound',
   SwarmMessageReceived = 'SwarmMessageReceived',
   SwarmMessageUpdated = 'SwarmMessageUpdated',
+  SwarmMessagesUpdated = 'SwarmMessagesUpdated',
   ReactionAdded = 'ReactionAdded',
   ReactionRemoved = 'ReactionRemoved',
   ConversationProfileUpdated = 'ConversationProfileUpdated',
@@ -105,7 +106,7 @@ export enum JamiSignal {
 // ── Generic SWIG collection types ───────────────────────────
 
 export interface Constructable<T> {
-  new (): T
+  new(): T
 }
 
 interface SwigVect<T> {

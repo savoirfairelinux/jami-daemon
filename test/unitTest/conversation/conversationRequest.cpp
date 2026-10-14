@@ -285,15 +285,19 @@ ConversationRequestTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::vector<libjami::SwarmMessage>& messages) {
             std::lock_guard lk {mtx};
-            if (accountId == aliceId) {
-                aliceData.messages.emplace_back(message);
-            } else if (accountId == bobId) {
-                bobData.messages.emplace_back(message);
-            } else if (accountId == carlaId) {
-                carlaData.messages.emplace_back(message);
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId) {
+                    aliceData.messages.emplace_back(message);
+                } else if (accountId == bobId) {
+                    bobData.messages.emplace_back(message);
+                } else if (accountId == carlaId) {
+                    carlaData.messages.emplace_back(message);
+                }
             }
             cv.notify_one();
         }));
@@ -996,11 +1000,15 @@ ConversationRequestTest::testBanContactRestartAccount()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages) {
             std::lock_guard lk {mtx};
-            if (accountId == aliceId && conversationId == convId && message.type == CommitType::MEMBER) {
-                memberMessageGenerated = true;
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId && conversationId == convId && message.type == CommitType::MEMBER) {
+                    memberMessageGenerated = true;
+                }
             }
             cv.notify_one();
         }));

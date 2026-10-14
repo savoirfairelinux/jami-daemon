@@ -155,20 +155,52 @@ SimClient::onSwarmLoaded(uint32_t /* id */,
 }
 
 void
-SimClient::onSwarmMessageReceived(const std::string& accountId,
+SimClient::onSwarmMessagesUpdated(const std::string& accountId,
                                   const std::string& conversationId,
-                                  const SwarmMessage& message)
+                                  const std::vector<SwarmMessage>& messages)
 {
     assert(accountId == accountId_);
     assert(conversationId == conversationId_);
     assert(!conversationRemoved_);
-    assert(indexFromMessageId_.find(message.id) == indexFromMessageId_.end());
-    if (auto replyToIt = message.body.find(CommitKey::REPLY_TO); replyToIt != message.body.end()) {
-        assert(!replyToIt->second.empty());
-        assert(indexFromMessageId_.contains(replyToIt->second));
-    }
+    assert(!messages.empty());
 
-    insertMessage(message);
+    // The messages replace all the ones that follow the linearized parent of the first one.
+    auto first = sortedIndices_.begin();
+    if (const auto& parentId = messages.front().linearizedParent; !parentId.empty()) {
+        auto parentIndexIt = indexFromMessageId_.find(parentId);
+        assert(parentIndexIt != indexFromMessageId_.end());
+        first = std::find(sortedIndices_.begin(), sortedIndices_.end(), parentIndexIt->second);
+        assert(first != sortedIndices_.end());
+        ++first;
+    } else {
+        assert(messages.front().type == CommitType::INITIAL);
+    }
+    std::set<size_t> replacedIndices(first, sortedIndices_.end());
+    sortedIndices_.erase(first, sortedIndices_.end());
+
+    for (const auto& message : messages) {
+        if (!sortedIndices_.empty())
+            assert(message.linearizedParent == swarmMessages_[sortedIndices_.back()].id);
+        if (auto replyToIt = message.body.find(CommitKey::REPLY_TO); replyToIt != message.body.end()) {
+            assert(!replyToIt->second.empty());
+            assert(indexFromMessageId_.contains(replyToIt->second));
+        }
+        size_t index;
+        if (auto indexIt = indexFromMessageId_.find(message.id); indexIt != indexFromMessageId_.end()) {
+            index = indexIt->second;
+            // A known message must not be moved before the start of the update.
+            [[maybe_unused]] auto replaced = replacedIndices.erase(index);
+            assert(replaced == 1);
+            swarmMessages_[index] = message;
+        } else {
+            index = swarmMessages_.size();
+            indexFromMessageId_[message.id] = index;
+            swarmMessages_.push_back(message);
+        }
+        sortedIndices_.push_back(index);
+    }
+    // Every message that followed the start of the update must be part of it.
+    assert(replacedIndices.empty());
 }
 
 void

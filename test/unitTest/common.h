@@ -21,6 +21,9 @@
 #include <map>
 #include <string>
 #include <filesystem>
+#include <vector>
+
+#include "conversation_interface.h"
 
 constexpr size_t WAIT_FOR_ANNOUNCEMENT_TIMEOUT = 30;
 constexpr size_t WAIT_FOR_REMOVAL_TIMEOUT = 30;
@@ -42,3 +45,9 @@ extern void add_confirmed_contact(const std::string& accountId, const std::strin
 extern std::map<std::string, std::string> load_actors(const std::filesystem::path& from_yaml);
 
 extern std::map<std::string, std::string> load_actors_and_wait_for_announcement(const std::string& from_yaml);
+
+/**
+ * Return the messages of a SwarmMessagesUpdated signal that the account receives for the first time.
+ */
+extern std::vector<libjami::SwarmMessage> new_swarm_messages(const std::string& accountId,
+                                                             const std::vector<libjami::SwarmMessage>& messages);

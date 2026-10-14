@@ -231,14 +231,15 @@ MigrationTest::testExpiredDeviceInSwarm()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            const libjami::SwarmMessage& /*message*/) {
+            const std::vector<libjami::SwarmMessage>& messages) {
+            auto newMessages = new_swarm_messages(accountId, messages).size();
             if (accountId == bobId) {
-                messageBobReceived += 1;
+                messageBobReceived += newMessages;
             } else {
-                messageAliceReceived += 1;
+                messageAliceReceived += newMessages;
             }
             cv.notify_one();
         }));
@@ -273,7 +274,7 @@ MigrationTest::testExpiredDeviceInSwarm()
             if (accountId == aliceId) {
                 {
                     std::lock_guard lock(mtx);
-                aliceState = state;
+                    aliceState = state;
                 }
                 cv.notify_one();
             }

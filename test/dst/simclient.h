@@ -55,9 +55,9 @@ public:
                        const std::string& accountId,
                        const std::string& conversationId,
                        const std::vector<SwarmMessage>& messages);
-    void onSwarmMessageReceived(const std::string& accountId,
+    void onSwarmMessagesUpdated(const std::string& accountId,
                                 const std::string& conversationId,
-                                const SwarmMessage& message);
+                                const std::vector<SwarmMessage>& messages);
     void onSwarmMessageUpdated(const std::string& accountId,
                                const std::string& conversationId,
                                const SwarmMessage& message);

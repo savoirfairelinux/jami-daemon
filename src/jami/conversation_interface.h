@@ -426,6 +426,17 @@ struct LIBJAMI_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              const SwarmMessage& /*message*/);
     };
+    /**
+     * The latest messages of a conversation, from oldest to newest, ending with the latest
+     * message. They replace all the messages that follow the linearized parent of the first one.
+     */
+    struct LIBJAMI_PUBLIC SwarmMessagesUpdated
+    {
+        constexpr static const char* name = "SwarmMessagesUpdated";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::vector<SwarmMessage> /*messages*/);
+    };
     struct LIBJAMI_PUBLIC ReactionAdded
     {
         constexpr static const char* name = "ReactionAdded";

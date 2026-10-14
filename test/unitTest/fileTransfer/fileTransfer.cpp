@@ -218,15 +218,19 @@ FileTransferTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::vector<libjami::SwarmMessage>& messages) {
             std::unique_lock<std::mutex> lk {mtx};
-            if (accountId == aliceId) {
-                aliceData.messages.emplace_back(message);
-            } else if (accountId == bobId) {
-                bobData.messages.emplace_back(message);
-            } else if (accountId == carlaId) {
-                carlaData.messages.emplace_back(message);
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId) {
+                    aliceData.messages.emplace_back(message);
+                } else if (accountId == bobId) {
+                    bobData.messages.emplace_back(message);
+                } else if (accountId == carlaId) {
+                    carlaData.messages.emplace_back(message);
+                }
             }
             cv.notify_one();
         }));
@@ -1091,12 +1095,16 @@ FileTransferTest::testDeleteFile()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false;
     std::string iid, tid;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
-            if (message.type == CommitType::DATA_TRANSFER) {
-                if (accountId == aliceId) {
-                    iid = message.id;
-                    tid = message.body[CommitKey::TID];
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (auto& message : new_swarm_messages(accountId, messages)) {
+                if (message.type == CommitType::DATA_TRANSFER) {
+                    if (accountId == aliceId) {
+                        iid = message.id;
+                        tid = message.body[CommitKey::TID];
+                    }
                 }
             }
             cv.notify_one();

@@ -120,11 +120,15 @@ SwarmConversationTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
-            for (const auto& accId : accountIds) {
-                if (accountId == accId && accountMap[accId].id == conversationId) {
-                    accountMap[accId].messages.emplace_back(message);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                for (const auto& accId : accountIds) {
+                    if (accountId == accId && accountMap[accId].id == conversationId) {
+                        accountMap[accId].messages.emplace_back(message);
+                    }
                 }
             }
             cv.notify_one();

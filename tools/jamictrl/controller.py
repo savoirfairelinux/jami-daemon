@@ -127,7 +127,7 @@ class libjamiCtrl(Thread):
             proxy_confmgr.connect_to_signal('conversationReady', self.onConversationReady)
             proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
             proxy_confmgr.connect_to_signal('conversationPreferencesUpdated', self.onConversationPreferencesUpdated)
-            proxy_confmgr.connect_to_signal('swarmMessageReceived', self.onMessageReceived)
+            proxy_confmgr.connect_to_signal('swarmMessagesUpdated', self.onMessagesUpdated)
 
         except dbus.DBusException as e:
             raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")
@@ -326,10 +326,11 @@ class libjamiCtrl(Thread):
     def onConversationPreferencesUpdated(self, account, conversationId, metadatas):
         print(f'New conversation preferences for {account} with id {conversationId}')
 
-    def onMessageReceived(self, account, conversationId, message):
-        print(f'New message for {account} in conversation {conversationId} with id {message["id"]}')
-        for key in message:
-            print(f'\t {key}: {message[key]}')
+    def onMessagesUpdated(self, account, conversationId, messages):
+        for (msgId, msgType, linearizedParent, body, reactions, editions, status) in messages:
+            print(f'Message for {account} in conversation {conversationId} with id {msgId}')
+            for key in body:
+                print(f'\t {key}: {body[key]}')
 
     #
     # Account management

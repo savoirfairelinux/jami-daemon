@@ -141,13 +141,14 @@ ConversationClonedTest::connectSignals()
                 bobData.requestReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string&, libjami::SwarmMessage) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId, const std::string&, const std::vector<libjami::SwarmMessage>& messages) {
             std::lock_guard guard {mtx};
+            auto newMessages = new_swarm_messages(accountId, messages).size();
             if (accountId == aliceId)
-                aliceData.messagesReceived++;
+                aliceData.messagesReceived += newMessages;
             else if (accountId == bobId)
-                bobData.messagesReceived++;
+                bobData.messagesReceived += newMessages;
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationCloned>(

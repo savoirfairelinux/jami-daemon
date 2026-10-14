@@ -162,16 +162,20 @@ BootstrapTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /*conversationId*/, const libjami::SwarmMessage& message) {
-            if (accountId == aliceData.accountId) {
-                aliceData.messages.emplace_back(message.body);
-            } else if (accountId == bobData.accountId) {
-                bobData.messages.emplace_back(message.body);
-            } else if (accountId == bob2Data.accountId) {
-                bob2Data.messages.emplace_back(message.body);
-            } else if (accountId == carlaData.accountId) {
-                carlaData.messages.emplace_back(message.body);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /*conversationId*/,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceData.accountId) {
+                    aliceData.messages.emplace_back(message.body);
+                } else if (accountId == bobData.accountId) {
+                    bobData.messages.emplace_back(message.body);
+                } else if (accountId == bob2Data.accountId) {
+                    bob2Data.messages.emplace_back(message.body);
+                } else if (accountId == carlaData.accountId) {
+                    carlaData.messages.emplace_back(message.body);
+                }
             }
             cv.notify_one();
         }));

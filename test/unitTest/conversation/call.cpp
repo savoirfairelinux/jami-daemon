@@ -164,16 +164,20 @@ ConversationCallTest::connectSignals()
                 carlaData_.id = conversationId;
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
-            if (accountId == aliceId && aliceData_.id == conversationId)
-                aliceData_.messages.emplace_back(message);
-            if (accountId == bobId && bobData_.id == conversationId)
-                bobData_.messages.emplace_back(message);
-            if (accountId == bob2Id && bob2Data_.id == conversationId)
-                bob2Data_.messages.emplace_back(message);
-            if (accountId == carlaId && carlaData_.id == conversationId)
-                carlaData_.messages.emplace_back(message);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId && aliceData_.id == conversationId)
+                    aliceData_.messages.emplace_back(message);
+                if (accountId == bobId && bobData_.id == conversationId)
+                    bobData_.messages.emplace_back(message);
+                if (accountId == bob2Id && bob2Data_.id == conversationId)
+                    bob2Data_.messages.emplace_back(message);
+                if (accountId == carlaId && carlaData_.id == conversationId)
+                    carlaData_.messages.emplace_back(message);
+            }
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(

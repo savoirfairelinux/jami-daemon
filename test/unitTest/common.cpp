@@ -21,6 +21,9 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <mutex>
+#include <set>
+
 #include "common.h"
 
 /* Jami */
@@ -33,6 +36,20 @@
 /* Make GCC quiet about unused functions */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+std::vector<libjami::SwarmMessage>
+new_swarm_messages(const std::string& accountId, const std::vector<libjami::SwarmMessage>& messages)
+{
+    static std::mutex mtx;
+    static std::set<std::pair<std::string, std::string>> received;
+    std::lock_guard lk(mtx);
+    std::vector<libjami::SwarmMessage> ret;
+    for (const auto& message : messages) {
+        if (received.emplace(accountId, message.id).second)
+            ret.emplace_back(message);
+    }
+    return ret;
+}
 
 void
 add_confirmed_contact(const std::string& accountId, const std::string& contactId)

@@ -334,14 +334,18 @@ ConversationTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
-            if (accountId == aliceId) {
-                aliceData.messages.emplace_back(message);
-            } else if (accountId == bobId) {
-                bobData.messages.emplace_back(message);
-            } else if (accountId == carlaId) {
-                carlaData.messages.emplace_back(message);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId) {
+                    aliceData.messages.emplace_back(message);
+                } else if (accountId == bobId) {
+                    bobData.messages.emplace_back(message);
+                } else if (accountId == carlaId) {
+                    carlaData.messages.emplace_back(message);
+                }
             }
             cv.notify_one();
         }));
@@ -553,12 +557,13 @@ ConversationTest::testCreateConversationInvalidDisplayName()
             }
         }));
     auto messageAliceReceived = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            const libjami::SwarmMessage& /*message*/) {
+            const std::vector<libjami::SwarmMessage>& messages) {
+            auto newMessages = new_swarm_messages(accountId, messages).size();
             if (accountId == aliceId) {
-                messageAliceReceived += 1;
+                messageAliceReceived += newMessages;
             }
             cv.notify_one();
         }));
@@ -830,16 +835,17 @@ ConversationTest::testSendMessageToMultipleParticipants()
     auto messageReceivedBob = 0;
     auto messageReceivedCarla = 0;
     auto requestReceived = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            const libjami::SwarmMessage& /*message*/) {
+            const std::vector<libjami::SwarmMessage>& messages) {
+            auto newMessages = new_swarm_messages(accountId, messages).size();
             if (accountId == aliceId)
-                messageReceivedAlice += 1;
+                messageReceivedAlice += newMessages;
             if (accountId == bobId)
-                messageReceivedBob += 1;
+                messageReceivedBob += newMessages;
             if (accountId == carlaId)
-                messageReceivedCarla += 1;
+                messageReceivedCarla += newMessages;
             cv.notify_one();
         }));
 

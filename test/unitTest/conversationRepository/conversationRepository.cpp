@@ -1069,10 +1069,14 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
-            if (accountId == aliceId) {
-                aliceMessages.emplace_back(message);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (const auto& message : new_swarm_messages(accountId, messages)) {
+                if (accountId == aliceId) {
+                    aliceMessages.emplace_back(message);
+                }
             }
             cv.notify_one();
         }));

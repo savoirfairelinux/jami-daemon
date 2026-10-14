@@ -710,14 +710,15 @@ PluginsTest::testMessage()
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            const libjami::SwarmMessage& /*message*/) {
+            const std::vector<libjami::SwarmMessage>& messages) {
+            auto newMessages = new_swarm_messages(accountId, messages).size();
             if (accountId == bobData.accountId_) {
-                messageBobReceived += 1;
+                messageBobReceived += newMessages;
             } else {
-                messageAliceReceived += 1;
+                messageAliceReceived += newMessages;
             }
             cv.notify_one();
         }));

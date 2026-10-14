@@ -189,11 +189,13 @@ ConversationDST::setUp(int numAccountsToSimulate)
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessagesUpdated>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages) {
             for (auto& repoAcc : repositoryAccounts) {
                 if (accountId == repoAcc.account->getAccountID()) {
-                    repoAcc.client.onSwarmMessageReceived(accountId, conversationId, message);
+                    repoAcc.client.onSwarmMessagesUpdated(accountId, conversationId, messages);
                 }
             }
             cv.notify_one();

@@ -167,7 +167,9 @@ swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
 
 // Callback management
 
-void setCallback(std::string signal, napi_value func) {
+void
+setCallback(std::string signal, napi_value func)
+{
     auto& ref = callbackRefs[std::move(signal)];
     if (ref) {
         napi_delete_reference(g_env, ref);
@@ -642,6 +644,19 @@ swarmMessageUpdated(const std::string& accountId,
 }
 
 void
+swarmMessagesUpdated(const std::string& accountId,
+                     const std::string& conversationId,
+                     const std::vector<libjami::SwarmMessage>& messages)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, messages]() {
+        napi_value args[] = {napiString(accountId), napiString(conversationId), swarmMessagesToJsArray(messages)};
+        callCallback("SwarmMessagesUpdated", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 reactionAdded(const std::string& accountId,
               const std::string& conversationId,
               const std::string& messageId,
@@ -987,8 +1002,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
         exportable_callback<ConfigurationSignal::DeviceAuthStateChanged>(bind(&deviceAuthStateChanged, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AddDeviceStateChanged>(bind(&addDeviceStateChanged, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4)),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
-            bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(
             bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::MessageSend>(bind(&logMessage, _1)),
@@ -1010,6 +1024,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
            exportable_callback<ConversationSignal::MessagesFound>(bind(&messagesFound, _1, _2, _3, _4)),
            exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&swarmMessageReceived, _1, _2, _3)),
            exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&swarmMessageUpdated, _1, _2, _3)),
+           exportable_callback<ConversationSignal::SwarmMessagesUpdated>(bind(&swarmMessagesUpdated, _1, _2, _3)),
            exportable_callback<ConversationSignal::ReactionAdded>(bind(&reactionAdded, _1, _2, _3, _4)),
            exportable_callback<ConversationSignal::ReactionRemoved>(bind(&reactionRemoved, _1, _2, _3, _4)),
            exportable_callback<ConversationSignal::ConversationProfileUpdated>(

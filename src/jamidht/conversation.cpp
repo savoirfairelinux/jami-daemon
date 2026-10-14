@@ -343,9 +343,8 @@ struct History
 struct HistoryChanges
 {
     // Messages that were added to the history or may have moved in it, from oldest to newest.
+    // They are the latest messages of the history.
     std::vector<std::string> placedMessages {};
-    // The messages of placedMessages that were not in the history before.
-    std::set<std::string> newMessages {};
     // Messages whose content changed.
     std::set<std::string> updatedMessages {};
     // Pairs of (message id, reaction id).
@@ -822,8 +821,9 @@ public:
     void emitChanges(const HistoryChanges& changes)
     {
         const auto& convId = repository_->id();
-        // Pairs of (is new, message), from oldest to newest.
-        std::vector<std::pair<bool, libjami::SwarmMessage>> placedMessages;
+        // The latest messages, from oldest to newest.
+        std::vector<libjami::SwarmMessage> suffix;
+        std::set<std::string> suffixIds;
         std::vector<libjami::SwarmMessage> updatedMessages;
         std::vector<std::pair<std::string, std::map<std::string, std::string>>> addedReactions;
         std::vector<std::pair<std::string, std::string>> removedReactions;
@@ -832,10 +832,11 @@ public:
             const auto& quickAccess = loadedHistory_.quickAccess;
             // The client receives these messages in full, along with their reactions.
             std::set<std::string> sentMessages;
-            placedMessages.reserve(changes.placedMessages.size());
+            suffix.reserve(changes.placedMessages.size());
             for (const auto& id : changes.placedMessages) {
                 if (auto it = quickAccess.find(id); it != quickAccess.end()) {
-                    placedMessages.emplace_back(changes.newMessages.contains(id), *it->second);
+                    suffix.emplace_back(*it->second);
+                    suffixIds.emplace(id);
                     sentMessages.emplace(id);
                 }
             }
@@ -868,12 +869,8 @@ public:
             }
         }
 
-        for (const auto& [isNew, message] : placedMessages) {
-            if (isNew)
-                emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, convId, message);
-            else
-                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, message);
-        }
+        if (!suffix.empty())
+            emitSignal<libjami::ConversationSignal::SwarmMessagesUpdated>(accountId_, convId, std::move(suffix));
         for (const auto& message : updatedMessages)
             emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, message);
         for (const auto& [messageId, reaction] : addedReactions)
@@ -882,8 +879,8 @@ public:
             emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_, convId, messageId, reactionId);
         for (const auto& [key, status] : changes.statuses) {
             const auto& [peer, messageId] = key;
-            // New messages were received with their status.
-            if (!changes.newMessages.contains(messageId))
+            // The suffix is sent with its status.
+            if (!suffixIds.contains(messageId))
                 emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(accountId_,
                                                                                       convId,
                                                                                       peer,
@@ -2073,11 +2070,8 @@ Conversation::Impl::addToHistory(History& history,
                     sharedCommit->linearizedParent = previousMessage;
                 previousMessage = sharedCommit->id;
                 history.messageList.emplace_front(sharedCommit);
-                if (changes) {
+                if (changes)
                     changes->placedMessages.emplace_back(sharedCommit->id);
-                    if (!existing)
-                        changes->newMessages.emplace(sharedCommit->id);
-                }
             }
             if (!existing && handleMessage(history, sharedCommit, messageReceived))
                 messages.emplace_back(sharedCommit);
