@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b75b4bcd_ccfc1b7b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1839,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:17:13Z",
+      "side": 1,
+      "message": "[error] Line 1839: 🔴 `handleMessage()` now applies pending editions with `editCommit-\u003ebody.at(toReplace)`, but editions are allowed to omit the replaced field (the code already documents/handles this in `handleEdition()` by treating missing as empty). With pending editions, this throws `std::out_of_range` and can abort processing when applying commits such as collaborative-document removals. Use the same safe pattern as `handleEdition()` (`find` + default empty string), and avoid `.at()` for the follow-up empty-check as well.",
+      "revId": "ce148a8ff72276fa71d9dd3b2adf416487d8afd0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
