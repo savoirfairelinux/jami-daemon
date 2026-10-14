@@ -429,20 +429,29 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 }
 
 std::shared_ptr<Call>
-JamiAccount::newBrowserConferenceOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
+JamiAccount::newBrowserConferenceOutgoingCall(std::string_view toUrl,
+                                              const std::vector<libjami::MediaMap>& mediaList,
+                                              const std::shared_ptr<Conference>& conference)
 {
-    if (toUrl.empty() || mediaList.size() != 1
-        || MediaAttribute::getMediaType(mediaList.front()) != std::pair {true, MediaType::MEDIA_AUDIO}) {
-        JAMI_WARNING("Browser conference participant dialing requires exactly one audio media");
+    if (toUrl.empty() || !conference || mediaList.empty() || mediaList.size() > 2
+        || MediaAttribute::getMediaType(mediaList.front()) != std::pair {true, MediaType::MEDIA_AUDIO}
+        || (mediaList.size() == 2
+            && MediaAttribute::getMediaType(mediaList.back()) != std::pair {true, MediaType::MEDIA_VIDEO})) {
+        JAMI_WARNING("Browser conference participant dialing requires audio and optional video mixer media");
         return {};
     }
-    return newOutgoingCallImpl(toUrl, mediaList, true);
+#ifndef ENABLE_VIDEO
+    if (mediaList.size() == 2)
+        return {};
+#endif
+    return newOutgoingCallImpl(toUrl, mediaList, true, conference);
 }
 
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCallImpl(std::string_view toUrl,
                                  const std::vector<libjami::MediaMap>& mediaList,
-                                 bool browserConferenceAudio)
+                                 bool browserConferenceAudio,
+                                 const std::shared_ptr<Conference>& conference)
 {
     auto uri = Uri(toUrl);
     if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS) {
@@ -471,6 +480,16 @@ JamiAccount::newOutgoingCallImpl(std::string_view toUrl,
 
     if (not call)
         return {};
+
+#ifdef ENABLE_VIDEO
+    if (browserConferenceAudio && mediaList.size() == 2) {
+        if (!call->prepareBrowserConferenceVideo(conference)) {
+            manager.callFactory.removeCall(*call);
+            detach(call);
+            return {};
+        }
+    }
+#endif
 
     std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_) {
