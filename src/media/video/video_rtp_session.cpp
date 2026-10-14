@@ -296,6 +296,10 @@ VideoRtpSession::startSender()
     }
 
     if (send_.enabled and not send_.hold) {
+        if (conferenceSourceRequired_ && (!conference_ || !videoMixer_)) {
+            reportStartupFailure("Conference video source is no longer available");
+            return;
+        }
         if (!send_.codec) {
             JAMI_ERROR("Video sender has no negotiated codec");
             reportStartupFailure("Video sender has no negotiated codec");
@@ -691,12 +695,17 @@ VideoRtpSession::isRtpReady(bool expectSender, bool expectReceiver)
 void
 VideoRtpSession::stop()
 {
+    std::shared_ptr<Conference> previousOwner;
     // Release a start() still blocked on a DTLS-SRTP handshake before asking for
     // the mutex it holds, otherwise stopping waits out the handshake timeout.
     dtlsAbort_->store(true);
     std::lock_guard lock(mutex_);
     srtpInstalled_ = false;
 
+    if (conferenceOwner_) {
+        previousOwner = conferenceOwner_;
+        exitConference();
+    }
     stopSender(true);
     stopReceiver(true);
 
@@ -832,11 +841,36 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
     }
 }
 
+bool
+VideoRtpSession::prepareConference(const std::shared_ptr<Conference>& conference)
+{
+    if (!conference)
+        return false;
+
+    std::lock_guard lock(mutex_);
+    if (socketPair_ || sender_ || receiveThread_)
+        return false;
+
+    if (!conference->getVideoMixer())
+        return false;
+
+    if (conference_ != conference.get())
+        enterConference(*conference);
+    conferenceOwner_ = conference;
+    conferenceSourceRequired_ = true;
+    return true;
+}
+
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
+    std::shared_ptr<Conference> previousOwner;
     std::lock_guard lock(mutex_);
 
+    if (conference_ == &conference && conferenceOwner_)
+        return;
+
+    previousOwner = conferenceOwner_;
     exitConference();
 
     conference_ = &conference;
@@ -860,11 +894,13 @@ VideoRtpSession::enterConference(Conference& conference)
 void
 VideoRtpSession::exitConference()
 {
+    std::shared_ptr<Conference> previousOwner;
     std::lock_guard lock(mutex_);
 
     if (!conference_)
         return;
 
+    previousOwner = std::move(conferenceOwner_);
     JAMI_DEBUG("[conf:{}] Exiting conference", conference_->getConfId());
 
     if (videoMixer_) {
