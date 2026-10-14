@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8abf4436_723cf43f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1330,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:29:49Z",
+      "side": 1,
+      "message": "[warning] Line 1330: 🟡 `completeExternalMediaDemotion()` unconditionally calls `retireBrowserConferenceHost(...)`, but the API comment says this should happen when the *last* call is being detached. Without an explicit guard (participant count / conference membership check), one completion can stop shared browser-host media while other participants still depend on it. Add an in-daemon safety check before retiring the host, or make retirement conditional on conference emptiness.",
+      "revId": "493b2172f153270379b172176226b64a69da9730",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2b48734_3b672937",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1528,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T19:29:49Z",
+      "side": 1,
+      "message": "[error] Line 1528: 🔴 `checkPromotionReady()` no longer enforces any deadline, and related timeout state (`promotionTimer_`/`promotionDeadline_`) was removed. If native RTP never reaches ready and no startup-failure callback fires (silent ICE/DTLS stall), `promotionRequestId_` can remain pending forever and no terminal `ExternalMediaPromotionFailure` is emitted. Reintroduce a bounded timeout path (as before) that fails promotion and terminates/rolls back the call state deterministically.",
+      "revId": "493b2172f153270379b172176226b64a69da9730",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
