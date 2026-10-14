@@ -37,11 +37,146 @@
 
 namespace jami {
 
+using sip_utils::CONST_PJ_STR;
+
 static bool
 isBrowserMediaLayout(const std::vector<MediaDescription>& media)
 {
     return (media.size() == 1 || media.size() == 2) && media.front().type == MEDIA_AUDIO
            && (media.size() == 1 || media.back().type == MEDIA_VIDEO);
+}
+
+static bool
+isCompatibleBrowserReturnOffer(const Sdp& browserSdp,
+                               const pjmedia_sdp_session* offer,
+                               const std::vector<Sdp::MediaSlot>& slots)
+{
+    if (!offer || offer->media_count != slots.size())
+        return false;
+    const auto mediaDescriptions = browserSdp.getMediaDescriptions(offer, false);
+    if (!isBrowserMediaLayout(mediaDescriptions) || mediaDescriptions.size() != slots.size())
+        return false;
+
+    for (size_t i = 0; i < slots.size(); ++i) {
+        const auto& [local, remote] = slots[i];
+        auto* media = offer->media[i];
+        const auto& browser = mediaDescriptions[i];
+        if (!media || local.type != browser.type || remote.type != browser.type
+            || !local.enabled || !remote.enabled || !media->desc.port
+            || browser.transport != MediaTransport::UDP_TLS_RTP_SAVPF
+            || browser.dtls_fingerprint.empty() || browser.dtls_setup == DtlsSetup::NONE)
+            return false;
+        auto hasAttr = [offer, media](const char* name) {
+            auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, name, nullptr);
+            if (!attr)
+                attr = pjmedia_sdp_attr_find2(offer->attr_count, offer->attr, name, nullptr);
+            return attr && (pj_stricmp2(&attr->name, "rtcp-mux") == 0 || attr->value.slen > 0);
+        };
+        if (!hasAttr("ice-ufrag") || !hasAttr("ice-pwd") || !hasAttr("fingerprint")
+            || !hasAttr("rtcp-mux"))
+            return false;
+    }
+    return true;
+}
+
+bool
+SIPCall::requestExternalMediaDemotion(const std::string& requestId,
+                                      const std::string& sdpOffer,
+                                      const std::shared_ptr<Conference>& conference)
+{
+    std::lock_guard lk {callMutex_};
+    if (requestId.empty() || sdpOffer.empty() || !conference || getConference() != conference
+        || !promotionRequestId_.empty() || !demotionRequestId_.empty() || hasExternalMedia()
+        || !isNativeMediaReadyLocked() || !inviteSession_
+        || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED || inviteSession_->invite_tsx)
+        return false;
+    const auto participants = conference->getSubCalls();
+    if (participants.size() != 1 || !participants.contains(getCallId()))
+        return false;
+
+    Sdp browserOffer(getCallId() + "-external-return");
+    if (!browserOffer.createOfferFromExternalSdp(sdpOffer))
+        return false;
+    const auto slots = sdp_->getMediaSlots();
+    if (!isCompatibleBrowserReturnOffer(browserOffer, browserOffer.getLocalSdpSession(), slots))
+        return false;
+    const auto priorOffer = sdp_->saveLocalOfferState();
+    if (!sdp_->createOfferFromExternalSdp(sdpOffer)) {
+        sdp_->restoreLocalOfferState(priorOffer);
+        return false;
+    }
+
+    pjsip_tx_data* tdata = nullptr;
+    auto result = pjsip_inv_reinvite(inviteSession_.get(), nullptr, sdp_->getLocalSdpSession(), &tdata);
+    if (result != PJ_SUCCESS || !tdata) {
+        JAMI_ERROR("[call:{}] Could not create reverse external-media re-INVITE", getCallId());
+        sdp_->restoreLocalOfferState(priorOffer);
+        return false;
+    }
+    pj_str_t type = CONST_PJ_STR("application");
+    pj_str_t subtype = CONST_PJ_STR("sdp");
+    pj_str_t content {const_cast<char*>(sdpOffer.data()), (pj_ssize_t) sdpOffer.size()};
+    // Preserve WebRTC attributes that pjmedia can rewrite when serializing SDP.
+    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &content);
+    sip_utils::addUserAgentHeader(getSIPAccount()->getUserAgentName(), tdata);
+
+    demotionRequestId_ = requestId;
+    demotionConference_ = conference;
+    demotionAnswerReceived_ = false;
+    demotionPriorOffer_ = priorOffer;
+    externalSdp_ = sdpOffer;
+    externalRemoteSdp_.clear();
+    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
+        pjsip_tx_data* cancel = nullptr;
+        pjsip_inv_cancel_reinvite(inviteSession_.get(), &cancel);
+        failDemotion("Could not send reverse media re-INVITE");
+        return false;
+    }
+    return true;
+}
+
+bool
+SIPCall::completeExternalMediaDemotion(const std::string& requestId)
+{
+    std::lock_guard lk {callMutex_};
+    if (requestId.empty() || demotionRequestId_ != requestId || !demotionAnswerReceived_
+        || !demotionConference_ || getConference() != demotionConference_
+        || !inviteSession_ || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED)
+        return false;
+    const auto participants = demotionConference_->getSubCalls();
+    if (participants.size() != 1 || !participants.contains(getCallId()))
+        return false;
+    auto conference = std::move(demotionConference_);
+    stopAllMedia();
+    rtpStreams_.clear();
+    conferenceMediaSource_.reset();
+    enableIce_ = false;
+    demotionRequestId_.clear();
+    demotionAnswerReceived_ = false;
+    demotionPriorOffer_.reset();
+    libjami::retireBrowserConferenceHost(getAccountId(), conference->getConfId());
+    Manager::instance().removeParticipant(*this);
+    emitSignal<libjami::CallSignal::ExternalMediaDemotionReady>(getAccountId(), getCallId(), requestId);
+    return true;
+}
+
+void
+SIPCall::failDemotion(const std::string& reason)
+{
+    if (demotionRequestId_.empty())
+        return;
+    auto requestId = std::move(demotionRequestId_);
+    demotionRequestId_.clear();
+    if (demotionPriorOffer_) {
+        sdp_->restoreLocalOfferState(*demotionPriorOffer_);
+        demotionPriorOffer_.reset();
+    }
+    externalSdp_.clear();
+    externalRemoteSdp_.clear();
+    demotionConference_.reset();
+    demotionAnswerReceived_ = false;
+    emitSignal<libjami::CallSignal::ExternalMediaDemotionFailure>(
+        getAccountId(), getCallId(), requestId, reason);
 }
 
 std::string
