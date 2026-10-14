@@ -103,11 +103,11 @@ bool hangUpConference(const std::string& accountId, const std::string& confId);
 bool startBrowserConference(const std::string& accountId, const std::string& conversationId,
                            const std::string& requestId, const std::string& sdpOffer);
 bool cancelBrowserConference(const std::string& accountId, const std::string& requestId);
-bool canPromoteExternalMedia(const std::string& accountId, const std::string& callId);
+std::string getExternalMediaPromotionState(const std::string& accountId, const std::string& callId);
 bool requestExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool cancelExternalMediaPromotion(const std::string& accountId, const std::string& callId, const std::string& requestId);
 bool addNativeParticipantToBrowserConference(const std::string& accountId, const std::string& callId, const std::string& requestId);
-std::string placeBrowserConferenceParticipantCall(const std::string& accountId, const std::string& to, const std::string& requestId);
+std::string placeBrowserConferenceParticipantCall(const std::string& accountId, const std::string& to, const std::string& requestId, bool isVideo = false);
 std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
 bool holdConference(const std::string& accountId, const std::string& confId);
 bool resumeConference(const std::string& accountId, const std::string& confId);
