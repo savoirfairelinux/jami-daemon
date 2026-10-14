@@ -94,6 +94,15 @@ public:
 
     const pjmedia_sdp_session* getActiveLocalSdpSession() const { return activeLocalSession_; }
 
+    struct LocalOfferState {
+        pjmedia_sdp_neg* negotiator;
+        pjmedia_sdp_session* localSession;
+        SdpDirection direction;
+    };
+
+    LocalOfferState saveLocalOfferState() const;
+    void restoreLocalOfferState(const LocalOfferState& state);
+
     /**
      * Read accessor. Get the remote passive sdp session information before negotiation
      *
