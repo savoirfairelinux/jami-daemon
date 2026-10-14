@@ -880,6 +880,40 @@ browserConferenceHostFailure(const std::string& accountId, const std::string& re
 }
 
 void
+externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId)};
+        callCallback("ExternalMediaPromotionAccepted", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaPromotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId)};
+        callCallback("ExternalMediaPromotionReady", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+externalMediaPromotionFailure(const std::string& accountId, const std::string& callId,
+                              const std::string& requestId, const std::string& reason)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, callId, requestId, reason]() {
+        napi_value args[] = {napiString(accountId), napiString(callId), napiString(requestId), napiString(reason)};
+        callCallback("ExternalMediaPromotionFailure", 4, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 onConferenceInfosUpdated(const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
 {
@@ -1048,7 +1082,13 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&browserConferenceHostAnswer, _1, _2, _3, _4)),
            exportable_callback<CallSignal::BrowserConferenceHostReady>(bind(&browserConferenceHostReady, _1, _2, _3)),
            exportable_callback<CallSignal::BrowserConferenceHostFailure>(
-               bind(&browserConferenceHostFailure, _1, _2, _3))};
+               bind(&browserConferenceHostFailure, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaPromotionAccepted>(
+               bind(&externalMediaPromotionAccepted, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaPromotionReady>(
+               bind(&externalMediaPromotionReady, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaPromotionFailure>(
+               bind(&externalMediaPromotionFailure, _1, _2, _3, _4))};
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
