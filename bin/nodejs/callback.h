@@ -228,13 +228,18 @@ callCallback(std::string_view signal, size_t argc, const napi_value* argv)
 void
 handlePendingSignals(uv_async_t*)
 {
+    decltype(pendingSignals) localPendingSignals;
+    {
+        std::lock_guard lock(pendingSignalsLock);
+        std::swap(localPendingSignals, pendingSignals);
+    }
+
     napi_handle_scope scope;
     napi_open_handle_scope(g_env, &scope);
 
-    std::lock_guard lock(pendingSignalsLock);
-    while (!pendingSignals.empty()) {
-        pendingSignals.front()();
-        pendingSignals.pop();
+    while (!localPendingSignals.empty()) {
+        localPendingSignals.front()();
+        localPendingSignals.pop();
     }
 
     napi_close_handle_scope(g_env, scope);
