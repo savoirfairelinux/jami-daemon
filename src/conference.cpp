@@ -1127,6 +1127,7 @@ Conference::attachExternalHostAudio(const std::string& audioStreamId, bool video
     setState(State::ACTIVE_ATTACHED);
     if (!isMuted("host"sv))
         bindHostAudio();
+    externalHostAudioActive_.store(true);
     return true;
 }
 
@@ -1138,6 +1139,7 @@ Conference::detachHost()
     lastMediaList_ = currentMediaList();
 
     if (getState() == State::ACTIVE_ATTACHED) {
+        externalHostAudioActive_.store(false);
         unbindHostAudio();
         if (externalHostAudioBuffer_) {
             unbindAllExternalHostAudioLinks(false);
