@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8e9fff9_6492d87e",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:19:32Z",
+      "side": 1,
+      "message": "[error] Line 18: 🔴 The SWIG header directive was rewritten from the project-standard `%header %{ ... %}` form to `% header %` with a standalone `%` terminator (line 120). This pattern is unique to this patch and risks breaking SWIG parsing/codegen for the JNI bindings. Restore canonical SWIG directive syntax (`%header %{` and `%}`) while keeping the new `swarmMessagesUpdated` callback additions.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59d11aa3_a9abfaa0",
+        "filename": "bin/nodejs/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:19:32Z",
+      "side": 1,
+      "message": "[error] Line 18: 🔴 Same SWIG syntax regression as in `bin/jni/conversation.i`: `% header %` plus standalone `%` (line 87) deviates from valid/canonical `%header %{ ... %}` usage in the rest of the SWIG interfaces. This can break Node.js binding generation. Revert only the directive formatting and keep the functional callback changes.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d91865da_acc68361",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:19:32Z",
+      "side": 1,
+      "message": "[warning] Line 44: 🟡 `new_swarm_messages` stores seen `(accountId, messageId)` pairs in a process-wide static set with no reset path. This can make tests order-dependent and causes unbounded growth across the test process. Scope this cache to test fixture lifetime or add an explicit reset helper invoked between tests.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
