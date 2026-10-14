@@ -301,11 +301,11 @@ export interface JamiSwig {
   hangUp(accountId: string, callId: string): boolean
   startBrowserConference(accountId: string, conversationId: string, requestId: string, sdp: string): boolean
   cancelBrowserConference(accountId: string, requestId: string): boolean
-  canPromoteExternalMedia(accountId: string, callId: string): boolean
+  getExternalMediaPromotionState(accountId: string, callId: string): 'AUDIO_ONLY' | 'AUDIO_VIDEO' | 'UNSUPPORTED_MEDIA' | 'UNAVAILABLE'
   requestExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   cancelExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   addNativeToBrowserConference(accountId: string, callId: string, requestId: string): boolean
-  placeBrowserParticipantCall(accountId: string, to: string, requestId: string): string
+  placeBrowserParticipantCall(accountId: string, to: string, requestId: string, isVideo?: boolean): string
   getNativeCallMediaState(accountId: string, callId: string): 'WAITING' | 'READY' | 'UNAVAILABLE'
   hangUpConference(accountId: string, confId: string): boolean
 
