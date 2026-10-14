@@ -16,7 +16,9 @@
  */
 
 #include "manager.h"
+#include "conference.h"
 #include "jamidht/jamiaccount.h"
+#include "media/audio/audio_rtp_session.h"
 #include "media/media_attribute.h"
 #include "sip/sipcall.h"
 #include "../../test_runner.h"
@@ -101,10 +103,21 @@ public:
     std::string bobId;
 
 private:
+    void testRejectUnmigratedExternalMedia();
     void testOutgoingExternalMediaCall();
+    void testPromoteExternalMediaCall();
+    void testPromotionCancellation();
+    void testNativeCallMediaReadiness();
+    void testBrowserConferenceParticipantAudio();
+    void runPromotion(bool cancel);
 
     CPPUNIT_TEST_SUITE(ExternalMediaCallTest);
+    CPPUNIT_TEST(testRejectUnmigratedExternalMedia);
     CPPUNIT_TEST(testOutgoingExternalMediaCall);
+    CPPUNIT_TEST(testPromoteExternalMediaCall);
+    CPPUNIT_TEST(testPromotionCancellation);
+    CPPUNIT_TEST(testNativeCallMediaReadiness);
+    CPPUNIT_TEST(testBrowserConferenceParticipantAudio);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -125,8 +138,36 @@ ExternalMediaCallTest::tearDown()
 }
 
 void
+ExternalMediaCallTest::testRejectUnmigratedExternalMedia()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(account);
+    auto call = std::make_shared<SIPCall>(
+        account,
+        "external-media-guard",
+        Call::CallType::OUTGOING,
+        std::vector<libjami::MediaMap> {{{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, kExternalOffer}}});
+    auto conf = std::make_shared<Conference>(account, "browser-host-guard");
+    CPPUNIT_ASSERT(call->hasExternalMedia());
+    CPPUNIT_ASSERT(!call->canPromoteExternalMedia());
+    CPPUNIT_ASSERT(!call->isNativeMediaReady());
+    CPPUNIT_ASSERT(call->getRtpSessionList().empty());
+    std::vector<libjami::MediaMap> media {
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    CPPUNIT_ASSERT(not call->requestMediaChange(media));
+    CPPUNIT_ASSERT(not Manager::instance().addSubCall(*call, *conf));
+    CPPUNIT_ASSERT(call->hasExternalMedia());
+    CPPUNIT_ASSERT(call->getRtpSessionList().empty());
+    CPPUNIT_ASSERT(not call->isConferenceParticipant());
+    CPPUNIT_ASSERT(conf->getSubCalls().empty());
+}
+
+void
 ExternalMediaCallTest::testOutgoingExternalMediaCall()
 {
+    add_confirmed_contact(aliceId, bobId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     CPPUNIT_ASSERT(kExternalOffer.size() > 4096);
@@ -199,6 +240,17 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
     // The call is established at the SIP level.
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT"; }));
     std::this_thread::sleep_for(3s);
+    CPPUNIT_ASSERT(libjami::canPromoteExternalMedia(aliceId, aliceCallId));
+
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceCallId));
+    CPPUNIT_ASSERT(aliceCall);
+    CPPUNIT_ASSERT(aliceCall->hasExternalMedia());
+    CPPUNIT_ASSERT(aliceCall->getRtpSessionList().empty());
+    CPPUNIT_ASSERT(not aliceCall->requestMediaChange(answerMedia));
+    CPPUNIT_ASSERT(aliceCall->hasExternalMedia());
+    CPPUNIT_ASSERT(aliceCall->getRtpSessionList().empty());
+    CPPUNIT_ASSERT(not libjami::addNativeToBrowserConference(aliceId, aliceCallId, "missing-host"));
+    CPPUNIT_ASSERT(not aliceCall->isConferenceParticipant());
 
     auto updatedMedia = answerMedia;
     updatedMedia.emplace_back(
@@ -230,10 +282,255 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
                          != std::string::npos;
     }
     CPPUNIT_ASSERT(answerReceived);
+    CPPUNIT_ASSERT(!libjami::canPromoteExternalMedia(aliceId, aliceCallId));
+    CPPUNIT_ASSERT(not libjami::requestExternalMediaPromotion(aliceId, aliceCallId, "video-not-ready"));
+    CPPUNIT_ASSERT(aliceCall->hasExternalMedia());
 
     libjami::hangUp(aliceId, aliceCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped >= 2; }));
 
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ExternalMediaCallTest::testPromoteExternalMediaCall()
+{
+    runPromotion(false);
+}
+
+void
+ExternalMediaCallTest::testPromotionCancellation()
+{
+    runPromotion(true);
+}
+
+void
+ExternalMediaCallTest::runPromotion(bool cancel)
+{
+    add_confirmed_contact(aliceId, bobId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    CPPUNIT_ASSERT(bobAccount);
+
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
+    std::string bobCallId;
+    std::string aliceCallState;
+    std::string accepted;
+    std::string ready;
+    std::string failure;
+    bool bobOver = false;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
+        [&](const std::string& account, const std::string& callId, const std::string&,
+            const std::vector<libjami::MediaMap>&) {
+            std::lock_guard guard(mtx);
+            if (account == bobId)
+                bobCallId = callId;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& account, const std::string&, const std::string& state, signed) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                aliceCallState = state;
+            if (account == bobId && state == "OVER")
+                bobOver = true;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaPromotionAccepted>(
+        [&](const std::string& account, const std::string&, const std::string& request) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                accepted = request;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaPromotionReady>(
+        [&](const std::string& account, const std::string&, const std::string& request) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                ready = request;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::ExternalMediaPromotionFailure>(
+        [&](const std::string& account, const std::string&, const std::string& request, const std::string& reason) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId && request == "promote")
+                failure = reason;
+            cv.notify_all();
+        }));
+    libjami::registerSignalHandlers(handlers);
+
+    const auto aliceCallId = libjami::placeCallWithExternalMedia(aliceId, bobAccount->getUsername(), kExternalOffer);
+    CPPUNIT_ASSERT(!aliceCallId.empty());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
+    std::vector<libjami::MediaMap> media {
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    CPPUNIT_ASSERT(libjami::acceptWithMedia(bobId, bobCallId, media));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT"; }));
+    std::this_thread::sleep_for(1s);
+    CPPUNIT_ASSERT(libjami::canPromoteExternalMedia(aliceId, aliceCallId));
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceCallId));
+    CPPUNIT_ASSERT(aliceCall && aliceCall->hasExternalMedia());
+    CPPUNIT_ASSERT_EQUAL(std::string("UNAVAILABLE"), libjami::getNativeCallMediaState(aliceId, aliceCallId));
+    lk.unlock();
+    CPPUNIT_ASSERT(!libjami::requestExternalMediaPromotion(aliceId, aliceCallId, ""));
+    CPPUNIT_ASSERT(libjami::requestExternalMediaPromotion(aliceId, aliceCallId, "promote"));
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return accepted == "promote" || !failure.empty(); }));
+    CPPUNIT_ASSERT_EQUAL(std::string("promote"), accepted);
+    lk.unlock();
+    CPPUNIT_ASSERT(!libjami::requestExternalMediaPromotion(aliceId, aliceCallId, "duplicate"));
+    if (cancel)
+        CPPUNIT_ASSERT(libjami::cancelExternalMediaPromotion(aliceId, aliceCallId, "promote"));
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&] { return ready == "promote" || !failure.empty(); }));
+    if (cancel) {
+        CPPUNIT_ASSERT(!failure.empty());
+        CPPUNIT_ASSERT(ready.empty());
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobOver; }));
+        lk.unlock();
+        libjami::unregisterSignalHandlers();
+        return;
+    }
+    CPPUNIT_ASSERT_MESSAGE(failure, failure.empty());
+    CPPUNIT_ASSERT(!aliceCall->hasExternalMedia());
+    CPPUNIT_ASSERT(!libjami::canPromoteExternalMedia(aliceId, aliceCallId));
+    CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, aliceCallId));
+    CPPUNIT_ASSERT(!aliceCall->getRtpSessionList().empty());
+    CPPUNIT_ASSERT(Manager::instance().getCallFromCallID(aliceCallId) == aliceCall);
+    lk.unlock();
+    libjami::hangUp(aliceId, aliceCallId);
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ExternalMediaCallTest::testNativeCallMediaReadiness()
+{
+    add_confirmed_contact(aliceId, bobId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    CPPUNIT_ASSERT(bobAccount);
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
+    std::string bobCallId;
+    std::string aliceState;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
+        [&](const std::string& account, const std::string& callId, const std::string&,
+            const std::vector<libjami::MediaMap>&) {
+            std::lock_guard guard(mtx);
+            if (account == bobId)
+                bobCallId = callId;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& account, const std::string&, const std::string& state, signed) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                aliceState = state;
+            cv.notify_all();
+        }));
+    libjami::registerSignalHandlers(handlers);
+    std::vector<libjami::MediaMap> media {
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    CPPUNIT_ASSERT(libjami::placeCallWithMedia(aliceId, "", media).empty());
+    CPPUNIT_ASSERT_EQUAL(std::string("UNAVAILABLE"), libjami::getNativeCallMediaState(aliceId, "missing-call"));
+    const auto callId = libjami::placeCallWithMedia(aliceId, bobAccount->getUsername(), media);
+    CPPUNIT_ASSERT(!callId.empty());
+    CPPUNIT_ASSERT(!libjami::canPromoteExternalMedia(aliceId, callId));
+    CPPUNIT_ASSERT_EQUAL(std::string("WAITING"), libjami::getNativeCallMediaState(aliceId, callId));
+    CPPUNIT_ASSERT(!libjami::addNativeToBrowserConference(aliceId, callId, "missing-host"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
+    CPPUNIT_ASSERT(libjami::acceptWithMedia(bobId, bobCallId, media));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceState == "CURRENT"; }));
+    if (libjami::getNativeCallMediaState(aliceId, callId) == "WAITING")
+        CPPUNIT_ASSERT(!libjami::addNativeToBrowserConference(aliceId, callId, "missing-host"));
+    for (unsigned i = 0; i < 300 && libjami::getNativeCallMediaState(aliceId, callId) != "READY"; ++i)
+        std::this_thread::sleep_for(100ms);
+    CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, callId));
+    CPPUNIT_ASSERT(!libjami::addNativeToBrowserConference(aliceId, callId, "missing-host"));
+    lk.unlock();
+    CPPUNIT_ASSERT(libjami::hangUp(aliceId, callId));
+    for (unsigned i = 0; i < 100 && libjami::getNativeCallMediaState(aliceId, callId) != "UNAVAILABLE"; ++i)
+        std::this_thread::sleep_for(100ms);
+    CPPUNIT_ASSERT_EQUAL(std::string("UNAVAILABLE"), libjami::getNativeCallMediaState(aliceId, callId));
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ExternalMediaCallTest::testBrowserConferenceParticipantAudio()
+{
+    add_confirmed_contact(aliceId, bobId);
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    CPPUNIT_ASSERT(aliceAccount && bobAccount);
+    const auto currentCallId = Manager::instance().getCurrentCallId();
+    const auto callCount = aliceAccount->getCallList().size();
+    CPPUNIT_ASSERT(libjami::placeBrowserParticipantCall(
+                       aliceId, bobAccount->getUsername(), "missing-host").empty());
+    CPPUNIT_ASSERT_EQUAL(callCount, aliceAccount->getCallList().size());
+
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
+    std::string incomingId;
+    std::string aliceState;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
+        [&](const std::string& account, const std::string& callId, const std::string&,
+            const std::vector<libjami::MediaMap>&) {
+            std::lock_guard guard(mtx);
+            if (account == bobId)
+                incomingId = callId;
+            cv.notify_all();
+        }));
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& account, const std::string&, const std::string& state, signed) {
+            std::lock_guard guard(mtx);
+            if (account == aliceId)
+                aliceState = state;
+            cv.notify_all();
+        }));
+    libjami::registerSignalHandlers(handlers);
+    std::vector<libjami::MediaMap> audio {
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::MUTED, "false"},
+         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}}};
+    auto withVideo = audio;
+    withVideo.push_back(
+        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+         {libjami::Media::MediaAttributeKey::MUTED, "false"},
+         {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
+    CPPUNIT_ASSERT(!aliceAccount->newBrowserConferenceOutgoingCall(bobAccount->getUsername(), withVideo));
+    auto outgoing = std::dynamic_pointer_cast<SIPCall>(
+        aliceAccount->newBrowserConferenceOutgoingCall(bobAccount->getUsername(), audio));
+    CPPUNIT_ASSERT(outgoing);
+    CPPUNIT_ASSERT_EQUAL(currentCallId, Manager::instance().getCurrentCallId());
+    auto sessions = outgoing->getRtpSessionList(MediaType::MEDIA_AUDIO);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, sessions.size());
+    CPPUNIT_ASSERT(std::static_pointer_cast<AudioRtpSession>(sessions.front())->mode_
+                   == AudioRtpSession::Mode::CONFERENCE_HOST);
+    CPPUNIT_ASSERT(outgoing->getRtpSessionList(MediaType::MEDIA_VIDEO).empty());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !incomingId.empty(); }));
+    CPPUNIT_ASSERT(libjami::acceptWithMedia(bobId, incomingId, audio));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceState == "CURRENT"; }));
+    for (unsigned i = 0; i < 300 && libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()) != "READY"; ++i)
+        std::this_thread::sleep_for(100ms);
+    CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()));
+    CPPUNIT_ASSERT(!outgoing->requestMediaChange(withVideo));
+    sessions = outgoing->getRtpSessionList(MediaType::MEDIA_AUDIO);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, sessions.size());
+    CPPUNIT_ASSERT(std::static_pointer_cast<AudioRtpSession>(sessions.front())->mode_
+                   == AudioRtpSession::Mode::CONFERENCE_HOST);
+    lk.unlock();
+    CPPUNIT_ASSERT(libjami::hangUp(aliceId, outgoing->getCallId()));
     libjami::unregisterSignalHandlers();
 }
 
