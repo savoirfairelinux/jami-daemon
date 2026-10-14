@@ -40,6 +40,9 @@ public:
     virtual void externalMediaConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
     virtual void externalMediaConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
     virtual void externalMediaConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
+    virtual void externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionFailure(const std::string& accountId, const std::string& callId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
@@ -100,6 +103,9 @@ bool hangUpConference(const std::string& accountId, const std::string& confId);
 bool startExternalMediaConference(const std::string& accountId, const std::string& conversationId,
                            const std::string& requestId, const std::string& sdpOffer);
 bool cancelExternalMediaConference(const std::string& accountId, const std::string& requestId);
+bool addNativeToExternalMediaConference(const std::string& accountId, const std::string& callId, const std::string& requestId);
+std::string placeExternalMediaConferenceCall(const std::string& accountId, const std::string& to, const std::string& requestId);
+std::string getNativeCallMediaState(const std::string& accountId, const std::string& callId);
 bool holdConference(const std::string& accountId, const std::string& confId);
 bool resumeConference(const std::string& accountId, const std::string& confId);
 std::vector<std::string> getConferenceList(const std::string& accountId);
@@ -175,6 +181,9 @@ public:
     virtual void externalMediaConferenceHostAnswer(const std::string& accountId, const std::string& requestId, const std::string& confId, const std::string& sdpAnswer){}
     virtual void externalMediaConferenceHostReady(const std::string& accountId, const std::string& requestId, const std::string& confId){}
     virtual void externalMediaConferenceHostFailure(const std::string& accountId, const std::string& requestId, const std::string& reason){}
+    virtual void externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionReady(const std::string& accountId, const std::string& callId, const std::string& requestId){}
+    virtual void externalMediaPromotionFailure(const std::string& accountId, const std::string& callId, const std::string& requestId, const std::string& reason){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
