@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "260dccaf_f0068ddd",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T20:08:03Z",
+      "side": 1,
+      "message": "[error] Line 535: 🔴 The test asserts `videoBitrateMax` immediately after `video-\u003erestartSender()`; sender restart and bitrate reseeding are not guaranteed to be completed synchronously across platforms, so this can race and fail intermittently (consistent with current CI failures on Linux/MSVC). Use a bounded wait/poll (or existing test sync callback) until the session reports the expected capped max before asserting, for both restart cycles.",
+      "revId": "beb3318aa447ee2b885129ce1617d7b23b1df16b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
