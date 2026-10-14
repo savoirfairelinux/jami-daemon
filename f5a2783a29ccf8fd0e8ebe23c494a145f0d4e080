@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a436da43_21080bb3",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T20:03:03Z",
+      "side": 1,
+      "message": "[error] Line 769: 🔴 `previousLocalMedia` is selected by `mediaIndex`, but `mediaIndex` is based on the **new** offer’s emitted m-lines (`localSession_-\u003emedia_count`), and `createOffer()` skips disabled entries. If any m-line is disabled/removed/reordered, this index can point to a different prior media section, so the re-offer may copy the wrong transport/MID/PT/RTCP-fb (e.g., video inheriting audio MID/PT). This can produce invalid or incompatible SDP. Match prior m-lines by a stable identity (MID first, then validated media type), or keep positional alignment by emitting inactive sections instead of compacting enabled-only media.",
+      "revId": "f5a2783a29ccf8fd0e8ebe23c494a145f0d4e080",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
