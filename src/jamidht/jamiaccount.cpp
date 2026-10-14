@@ -3368,7 +3368,7 @@ JamiAccount::getFromUri() const
 {
     std::string uri = "<sip:" + accountManager_->getInfo()->accountId + "@ring.dht>";
     if (not config().displayName.empty())
-        return "\"" + config().displayName + "\" " + uri;
+        return sip_utils::quoteDisplayName(config().displayName) + " " + uri;
     return uri;
 }
 
@@ -3452,15 +3452,17 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
         auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport);
         auto address = td->self->getLocalAddress().toString(true);
         bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
-        return fmt::format("\"{}\" <sips:{}{}{};transport={}>",
-                           config().displayName,
+        return fmt::format("{} <sips:{}{}{};transport={}>",
+                           sip_utils::quoteDisplayName(config().displayName),
                            id_.second->getId().toString(),
                            address.empty() ? "" : "@",
                            address,
                            reliable ? "tls" : "dtls");
     } else {
         JAMI_ERROR("getContactHeader: no SIP transport provided");
-        return fmt::format("\"{}\" <sips:{}@ring.dht>", config().displayName, id_.second->getId().toString());
+        return fmt::format("{} <sips:{}@ring.dht>",
+                           sip_utils::quoteDisplayName(config().displayName),
+                           id_.second->getId().toString());
     }
 }
 

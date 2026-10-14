@@ -103,18 +103,46 @@ createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
 }
 
 std::string
+quoteDisplayName(std::string_view displayName)
+{
+    std::string quoted;
+    quoted.reserve(displayName.size() + 2);
+    quoted += '"';
+    for (char c : displayName) {
+        if (c == '\0')
+            continue;
+        // CR and LF cannot appear in a quoted-string, even escaped
+        if (c == '\r' or c == '\n')
+            c = ' ';
+        else if (c == '"' or c == '\\')
+            quoted += '\\';
+        quoted += c;
+    }
+    quoted += '"';
+    return quoted;
+}
+
+std::string
 parseDisplayName(const pjsip_name_addr* sip_name_addr)
 {
     if (not sip_name_addr->display.ptr or not sip_name_addr->display.slen)
         return {};
 
-    auto displayName = as_view(sip_name_addr->display);
+    // pjsip strips the surrounding quotes but keeps quoted-pairs escaped
+    auto raw = as_view(sip_name_addr->display);
+    std::string displayName;
+    displayName.reserve(raw.size());
+    for (size_t i = 0; i < raw.size(); ++i) {
+        if (raw[i] == '\\' and i + 1 < raw.size())
+            ++i;
+        displayName += raw[i];
+    }
 
     // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
     if (not utf8_validate(displayName))
         return utf8_make_valid(displayName);
 
-    return std::string(displayName);
+    return displayName;
 }
 
 std::string
@@ -185,10 +213,19 @@ addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
      * Jami.  Bind lifetime of the duplicated string to the pool allocator of
      * tdata.
      */
-    auto pjContact = pj_strdup3(tdata->pool, contactHdr.c_str());
+    // The pjsip scanner requires a NUL-terminated buffer
+    pj_str_t pjContact;
+    pj_strdup2_with_null(tdata->pool, &pjContact, contactHdr.c_str());
+
+    auto* uri = pjsip_parse_uri(tdata->pool, pjContact.ptr, pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    if (!uri) {
+        // A NULL uri would crash pjsip_msg_print(); keep the dialog's default Contact instead
+        JAMI_ERROR("Unable to parse contact header, not adding it: {}", contactHdr);
+        return;
+    }
 
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr, pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    contact->uri = uri;
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);

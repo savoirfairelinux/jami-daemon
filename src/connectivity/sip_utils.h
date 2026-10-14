@@ -132,6 +132,9 @@ pjsip_route_hdr* createRouteSet(const std::string& route, pj_pool_t* hdr_pool);
 
 std::string_view stripSipUriPrefix(std::string_view sipUri);
 
+/** Return displayName as an RFC 3261 quoted-string, e.g. `"John \"JD\" Doe"`. */
+std::string quoteDisplayName(std::string_view displayName);
+
 std::string parseDisplayName(const pjsip_name_addr* sip_name_addr);
 std::string parseDisplayName(const pjsip_from_hdr* header);
 std::string parseDisplayName(const pjsip_contact_hdr* header);

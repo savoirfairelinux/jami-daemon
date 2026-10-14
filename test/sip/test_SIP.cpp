@@ -140,3 +140,23 @@ test_SIP::testNegativePjStringLength()
 
     CPPUNIT_ASSERT(sip_utils::as_view(pjString).empty());
 }
+
+void
+test_SIP::testQuotedDisplayName()
+{
+    std::cout << ">>>> test quoted display name <<<< " << '\n';
+
+    auto pool = sip_utils::smart_alloc_pool(Manager::instance().sipVoIPLink().getEndpoint(), "test_SIP", 512, 512);
+    CPPUNIT_ASSERT(pool);
+
+    for (const auto& name : {"John Doe"s, "John \"JD\" Doe"s, "back\\slash\\"s, "\""s, "Élodie 😀"s}) {
+        auto contact = sip_utils::quoteDisplayName(name) + " <sips:abcdef@127.0.0.1:5061;transport=tls>";
+        std::string buf = contact;
+        auto* uri = pjsip_parse_uri(pool.get(), buf.data(), buf.size(), PJSIP_PARSE_URI_AS_NAMEADDR);
+        CPPUNIT_ASSERT_MESSAGE(contact, uri != nullptr);
+        CPPUNIT_ASSERT_EQUAL(name, sip_utils::parseDisplayName(reinterpret_cast<pjsip_name_addr*>(uri)));
+    }
+
+    // CR/LF cannot be carried in a quoted-string
+    CPPUNIT_ASSERT_EQUAL("\"a b\""s, sip_utils::quoteDisplayName("a\nb"));
+}

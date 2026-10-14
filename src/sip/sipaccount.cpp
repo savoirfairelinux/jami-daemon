@@ -1165,7 +1165,7 @@ SIPAccount::getFromUri() const
 
     std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
     if (not conf.displayName.empty())
-        return "\"" + conf.displayName + "\" " + uri;
+        return sip_utils::quoteDisplayName(conf.displayName) + " " + uri;
     return uri;
 }
 
@@ -1338,7 +1338,7 @@ SIPAccount::printContactHeader(const std::string& username,
     // Example with push notification:
     // John Doe<sips:jdoe@10.10.10.10:5060;transport=tls;pn-provider=XXX;pn-param=YYY;pn-prid=ZZZ>
 
-    std::string quotedDisplayName = displayName.empty() ? "" : "\"" + displayName + "\" ";
+    std::string quotedDisplayName = displayName.empty() ? "" : sip_utils::quoteDisplayName(displayName) + " ";
 
     std::ostringstream contact;
     const auto* scheme = secure ? "sips" : "sip";
