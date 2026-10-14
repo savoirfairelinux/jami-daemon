@@ -35,7 +35,8 @@ CallFactory::getNewCallID() const
 std::shared_ptr<SIPCall>
 CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                         Call::CallType type,
-                        const std::vector<libjami::MediaMap>& mediaList)
+                        const std::vector<libjami::MediaMap>& mediaList,
+                        bool browserConferenceAudio)
 {
     if (not allowNewCall_) {
         JAMI_WARNING("Creation of new calls is not allowed");
@@ -44,7 +45,7 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
 
     std::lock_guard lk(callMapsMutex_);
     auto id = getNewCallID();
-    auto call = std::make_shared<SIPCall>(account, id, type, mediaList);
+    auto call = std::make_shared<SIPCall>(account, id, type, mediaList, browserConferenceAudio);
     callMaps_[call->getLinkType()].emplace(id, call);
     account->attach(call);
     return call;
