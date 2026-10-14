@@ -35,6 +35,7 @@ class MediaRecorder;
 class RingBuffer;
 namespace test {
 class BrowserHostAudioTest;
+class ExternalMediaCallTest;
 }
 
 struct RTCPInfo
@@ -76,6 +77,7 @@ public:
 
 private:
     friend class test::BrowserHostAudioTest;
+    friend class test::ExternalMediaCallTest;
 
     std::shared_ptr<AudioInput> prepareAudioInput();
     void bindReceivedAudio();

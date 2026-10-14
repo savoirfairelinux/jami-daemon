@@ -49,7 +49,8 @@ public:
      */
     std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                                         Call::CallType type,
-                                        const std::vector<libjami::MediaMap>& mediaList);
+                                        const std::vector<libjami::MediaMap>& mediaList,
+                                        bool browserConferenceAudio = false);
 
     /**
      * Forbid creation of new calls.
