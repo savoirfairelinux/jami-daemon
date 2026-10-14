@@ -393,6 +393,14 @@ browserConferenceRemoved(const std::string& accountId, const std::string& confId
 }
 
 void
+retireBrowserConferenceHost(const std::string& accountId, const std::string& confId)
+{
+    auto host = browserHosts()->takeConference(accountId, confId);
+    if (host.media)
+        host.media->stop();
+}
+
+void
 cancelBrowserConferencesForAccount(const std::string& accountId)
 {
     stopAndHangupBrowserHosts(accountId, browserHosts()->takeAccount(accountId));
@@ -627,6 +635,34 @@ cancelExternalMediaPromotion(const std::string& accountId, const std::string& ca
     auto account = jami::Manager::instance().getAccount(accountId);
     auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
     return call && call->cancelExternalMediaPromotion(requestId);
+}
+
+bool
+requestExternalMediaDemotion(const std::string& accountId,
+                             const std::string& callId,
+                             const std::string& conferenceId,
+                             const std::string& requestId,
+                             const std::string& sdpOffer)
+{
+    if (accountId.empty() || callId.empty() || conferenceId.empty() || requestId.empty() || sdpOffer.empty())
+        return false;
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    auto conference = account ? account->getConference(conferenceId) : nullptr;
+    if (!call || !conference || call->getConference() != conference || !conference->hasExternalHostAudio()
+        || conference->getState() != jami::Conference::State::ACTIVE_ATTACHED || !call->isNativeMediaReady())
+        return false;
+    return call->requestExternalMediaDemotion(requestId, sdpOffer, conference);
+}
+
+bool
+completeExternalMediaDemotion(const std::string& accountId,
+                              const std::string& callId,
+                              const std::string& requestId)
+{
+    auto account = jami::Manager::instance().getAccount(accountId);
+    auto call = account ? std::dynamic_pointer_cast<jami::SIPCall>(account->getCall(callId)) : nullptr;
+    return call && call->completeExternalMediaDemotion(requestId);
 }
 
 bool

@@ -157,6 +157,10 @@ public:
     bool cancelExternalMediaPromotion(const std::string& requestId);
     bool isNativeMediaReady() const;
     bool prepareBrowserConferenceVideo(const std::shared_ptr<Conference>& conference);
+    bool requestExternalMediaDemotion(const std::string& requestId,
+                                      const std::string& sdpOffer,
+                                      const std::shared_ptr<Conference>& conference);
+    bool completeExternalMediaDemotion(const std::string& requestId);
     bool usesBrowserConferenceAudio() const { return browserConferenceAudio_; }
 
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
@@ -668,6 +672,11 @@ private:
     std::string takePromotionFailureLocked();
     void reportPromotionFailure(const std::string& requestId, const std::string& reason) const;
     void queuePromotionFailureLocked(const std::string& reason);
+    std::string demotionRequestId_ {};
+    std::shared_ptr<Conference> demotionConference_ {};
+    bool demotionAnswerReceived_ {false};
+    std::optional<Sdp::LocalOfferState> demotionPriorOffer_ {};
+    void failDemotion(const std::string& reason);
     bool isNativeMediaReadyLocked() const;
 
     // ICE media transport
