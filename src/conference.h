@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <atomic>
 #include <chrono>
 #include <set>
 #include <string>
@@ -217,6 +218,8 @@ public:
      * Return the current conference state
      */
     State getState() const;
+
+    bool hasExternalHostAudio() const { return externalHostAudioActive_.load(); }
 
     /**
      * Set conference state
@@ -461,6 +464,7 @@ private:
     std::map<std::string, std::shared_ptr<jami::AudioInput>> hostAudioInputs_;
     // Kept alive only while the external audio host is attached.
     std::shared_ptr<RingBuffer> externalHostAudioBuffer_;
+    std::atomic_bool externalHostAudioActive_ {false};
     bool externalHostAudioWasAttached_ {false};
     struct ExternalHostAudioLinks
     {
