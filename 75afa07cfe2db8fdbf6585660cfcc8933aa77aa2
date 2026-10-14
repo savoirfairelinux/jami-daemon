@@ -20,6 +20,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4526966c_2892dbfe",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:21:40Z",
+      "side": 1,
+      "message": "[error] Line 123: 🔴 SWIG directive syntax is invalid here: `% feature(\"director\")` is not a valid directive form. SWIG expects `%feature(...)` (no space). In its current form, wrapper generation can fail. Replace with `%feature(\"director\") ConversationCallback;`.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b2253a1_b380bf71",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:21:40Z",
+      "side": 1,
+      "message": "[error] Line 124: 🔴 `% template(...)` is invalid SWIG syntax; it must be `%template(...)` (no space). This can prevent `SwarmMessageVect` wrapper generation and break JNI bindings relying on that vector type. Change to `%template(SwarmMessageVect) std::vector\u003clibjami::SwarmMessage\u003e;`.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "59d11aa3_a9abfaa0",
         "filename": "bin/nodejs/conversation.i",
         "patchSetId": 1
@@ -31,6 +65,23 @@
       "writtenOn": "2026-10-14T13:19:32Z",
       "side": 1,
       "message": "[error] Line 18: 🔴 Same SWIG syntax regression as in `bin/jni/conversation.i`: `% header %` plus standalone `%` (line 87) deviates from valid/canonical `%header %{ ... %}` usage in the rest of the SWIG interfaces. This can break Node.js binding generation. Revert only the directive formatting and keep the functional callback changes.",
+      "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "736ef8e7_4b7254ae",
+        "filename": "bin/nodejs/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-14T13:21:40Z",
+      "side": 1,
+      "message": "[error] Line 90: 🔴 Same SWIG directive regression appears in Node bindings: `% feature(\"director\")` should be `%feature(\"director\")`. This is a binding-generation blocker and should be corrected to canonical SWIG syntax.",
       "revId": "75afa07cfe2db8fdbf6585660cfcc8933aa77aa2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
