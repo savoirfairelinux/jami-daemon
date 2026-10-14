@@ -19,6 +19,7 @@ list (APPEND Source_Files__sip
       "${CMAKE_CURRENT_SOURCE_DIR}/sipaccountbase_config.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/sipaccountbase_config.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/sipcall.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/sipcall_external_media.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/sipcall.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/sippresence.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/sippresence.h"
