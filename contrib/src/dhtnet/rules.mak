@@ -25,6 +25,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/dhtnet/0001-ip_utils-fix-stack-overflow-in-isValid.patch
 	$(MOVE)
 
 CMAKE_PKGS += dhtnet

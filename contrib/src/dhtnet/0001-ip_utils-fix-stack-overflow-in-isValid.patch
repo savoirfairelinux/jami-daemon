@@ -1,0 +1,39 @@
+From 818ed67e967416cb10b8d7c5750198537e5ab957 Mon Sep 17 00:00:00 2001
+From: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
+Date: Wed, 14 Oct 2026 16:09:53 -0400
+Subject: [PATCH] ip_utils: fix stack overflow in IpAddr::isValid() for IPv6
+
+isValid() let inet_pton() write into &sockaddr::sa_data, which is only
+14 bytes (a 16-byte struct sockaddr at offset 2). A parsed IPv6 address
+is a 16-byte in6_addr, so every valid IPv6 literal overwrote 2 bytes past
+the end of the local.
+
+With LTO the function is inlined into callers such as getAddrList(), whose
+stack canary then trips: Jami on Android aborts in __stack_chk_fail from
+SIPAccount::hostnameMatch() when a SIP request carries an IPv6 host.
+
+Decode into an in6_addr, which fits both families.
+
+Change-Id: I5764ed10a095126f42d21cd93bad7148885c056e
+---
+ src/ip_utils.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/ip_utils.cpp b/src/ip_utils.cpp
+index 8db4a3a..39b5f83 100644
+--- a/src/ip_utils.cpp
++++ b/src/ip_utils.cpp
+@@ -431,8 +431,8 @@ IpAddr::isValid(std::string_view address, pj_uint16_t family)
+     char buf[PJ_INET6_ADDRSTRLEN];
+     pj_str_t addr_with_null = {buf, 0};
+     pj_strncpy_with_null(&addr_with_null, &ret_str, sizeof(buf));
+-    struct sockaddr sa;
+-    return inet_pton(ret_family == pj_AF_INET6() ? AF_INET6 : AF_INET, buf, &(sa.sa_data)) == 1;
++    in6_addr dst; // large enough for both in_addr and in6_addr
++    return inet_pton(ret_family == pj_AF_INET6() ? AF_INET6 : AF_INET, buf, &dst) == 1;
+ }
+ 
+ bool
+-- 
+2.56.0
+
