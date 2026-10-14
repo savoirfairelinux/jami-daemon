@@ -81,6 +81,9 @@ export enum JamiSignal {
   BrowserConferenceHostAnswer = 'BrowserConferenceHostAnswer',
   BrowserConferenceHostReady = 'BrowserConferenceHostReady',
   BrowserConferenceHostFailure = 'BrowserConferenceHostFailure',
+  ExternalMediaPromotionAccepted = 'ExternalMediaPromotionAccepted',
+  ExternalMediaPromotionReady = 'ExternalMediaPromotionReady',
+  ExternalMediaPromotionFailure = 'ExternalMediaPromotionFailure',
 
   // libjami::ConversationSignal
   ConversationLoaded = 'ConversationLoaded',
@@ -114,6 +117,9 @@ export interface BrowserConferenceSignals {
   [JamiSignal.BrowserConferenceHostAnswer]: [accountId: string, requestId: string, conferenceId: string, sdp: string]
   [JamiSignal.BrowserConferenceHostReady]: [accountId: string, requestId: string, conferenceId: string]
   [JamiSignal.BrowserConferenceHostFailure]: [accountId: string, requestId: string, error: string]
+  [JamiSignal.ExternalMediaPromotionAccepted]: [accountId: string, callId: string, requestId: string]
+  [JamiSignal.ExternalMediaPromotionReady]: [accountId: string, callId: string, requestId: string]
+  [JamiSignal.ExternalMediaPromotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]
 }
 
 // ── Generic SWIG collection types ───────────────────────────
@@ -295,6 +301,9 @@ export interface JamiSwig {
   hangUp(accountId: string, callId: string): boolean
   startBrowserConference(accountId: string, conversationId: string, requestId: string, sdp: string): boolean
   cancelBrowserConference(accountId: string, requestId: string): boolean
+  canPromoteExternalMedia(accountId: string, callId: string): boolean
+  requestExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
+  cancelExternalMediaPromotion(accountId: string, callId: string, requestId: string): boolean
   addNativeParticipantToBrowserConference(accountId: string, callId: string, requestId: string): boolean
   placeBrowserConferenceParticipantCall(accountId: string, to: string, requestId: string): string
   getNativeCallMediaState(accountId: string, callId: string): 'WAITING' | 'READY' | 'UNAVAILABLE'
