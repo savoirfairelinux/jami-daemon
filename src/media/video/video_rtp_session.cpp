@@ -706,6 +706,7 @@ VideoRtpSession::stop()
         exitConferenceLocked(previousOwner);
     stopSender(true);
     stopReceiver(true);
+    receiveThread_.reset();
 
     if (socketPair_)
         socketPair_->interrupt();
