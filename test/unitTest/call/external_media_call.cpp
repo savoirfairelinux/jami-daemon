@@ -826,6 +826,49 @@ ExternalMediaCallTest::testBrowserConferenceParticipantVideo()
     CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()));
     CPPUNIT_ASSERT(!videoSession->getVideoLocal());
     lk.unlock();
+
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(bobAccount->getCall(incomingId));
+    CPPUNIT_ASSERT(bobCall);
+    auto previousIce = outgoing->getIceMedia();
+    answer.back()[libjami::Media::MediaAttributeKey::MUTED] = "true";
+    CPPUNIT_ASSERT(libjami::requestMediaChange(bobId, incomingId, answer));
+    for (unsigned i = 0; i < 300; ++i) {
+        const auto* localSdp = bobCall->getSDP().getActiveLocalSdpSession();
+        if (localSdp && Sdp::toString(localSdp).find("a=recvonly") != std::string::npos
+            && outgoing->getIceMedia() != previousIce
+            && libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()) == "READY")
+            break;
+        std::this_thread::sleep_for(100ms);
+    }
+    CPPUNIT_ASSERT(bobAccount->getCall(incomingId));
+    CPPUNIT_ASSERT(aliceAccount->getCall(outgoing->getCallId()));
+    CPPUNIT_ASSERT(outgoing->getIceMedia() != previousIce);
+    CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()));
+    CPPUNIT_ASSERT(videoSession->hasConference());
+    CPPUNIT_ASSERT(videoSession->getVideoMixer() == conference->getVideoMixer());
+    CPPUNIT_ASSERT(!videoSession->getVideoLocal());
+    CPPUNIT_ASSERT(!videoSession->getVideoReceive());
+    CPPUNIT_ASSERT(videoSession->isRtpReady(true, false));
+
+    previousIce = outgoing->getIceMedia();
+    answer.back()[libjami::Media::MediaAttributeKey::MUTED] = "false";
+    CPPUNIT_ASSERT(libjami::requestMediaChange(bobId, incomingId, answer));
+    for (unsigned i = 0; i < 300; ++i) {
+        const auto* localSdp = bobCall->getSDP().getActiveLocalSdpSession();
+        if (localSdp && Sdp::toString(localSdp).find("a=recvonly") == std::string::npos
+            && outgoing->getIceMedia() != previousIce
+            && libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()) == "READY")
+            break;
+        std::this_thread::sleep_for(100ms);
+    }
+    CPPUNIT_ASSERT(bobAccount->getCall(incomingId));
+    CPPUNIT_ASSERT(aliceAccount->getCall(outgoing->getCallId()));
+    CPPUNIT_ASSERT(outgoing->getIceMedia() != previousIce);
+    CPPUNIT_ASSERT_EQUAL(std::string("READY"), libjami::getNativeCallMediaState(aliceId, outgoing->getCallId()));
+    CPPUNIT_ASSERT(videoSession->hasConference());
+    CPPUNIT_ASSERT(!videoSession->getVideoLocal());
+    CPPUNIT_ASSERT(videoSession->isRtpReady(true, true));
+
     CPPUNIT_ASSERT(libjami::hangUp(aliceId, outgoing->getCallId()));
     libjami::unregisterSignalHandlers();
 }
