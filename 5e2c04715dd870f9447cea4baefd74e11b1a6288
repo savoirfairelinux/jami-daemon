@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68649550_0d887c19",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T17:54:36Z",
+      "side": 1,
+      "message": "[error] Line 701: 🔴 `stop()` takes `mutex_` and then calls `exitConference()`, which also locks `mutex_`. This is a deterministic self-deadlock when `conferenceOwner_` is set, and it can freeze call teardown. Fix by splitting `exitConference()` into a locked helper (no re-lock) or by releasing the outer lock before calling a lock-taking variant.",
+      "revId": "5e2c04715dd870f9447cea4baefd74e11b1a6288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb24b229_6783e90f",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T17:54:36Z",
+      "side": 1,
+      "message": "[error] Line 854: 🔴 `prepareConference()` holds `mutex_` and calls `enterConference()`, which also acquires `mutex_`. This self-deadlocks on the normal path (`conference_ !\u003d conference.get()`), so the new pre-bind flow can hang before RTP start. Use an internal `enterConferenceLocked()` helper or restructure so only one lock acquisition occurs.",
+      "revId": "5e2c04715dd870f9447cea4baefd74e11b1a6288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "359c0924_5f665961",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 899,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T17:54:36Z",
+      "side": 1,
+      "message": "[error] Line 899: 🔴 `enterConference()` locks `mutex_` and then calls `exitConference()`, which locks the same mutex again. That creates another deterministic self-deadlock during conference switches and blocks media path reconfiguration. Refactor to avoid nested locking of `mutex_` (single-lock state transition function).",
+      "revId": "5e2c04715dd870f9447cea4baefd74e11b1a6288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
