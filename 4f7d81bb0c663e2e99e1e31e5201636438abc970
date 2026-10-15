@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "97e9bc1b_7e6eb97f",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-10-15T19:47:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3b1e3717_5e0ec52c",
+      "revId": "4f7d81bb0c663e2e99e1e31e5201636438abc970",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "856d2366_608d188f",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-15T15:12:14Z",
       "side": 1,
       "message": "[error] Line 116: 🔴 **Critical:** `completeExternalMediaDemotion()` always calls `retireBrowserConferenceHost()` and removes the call from the conference without verifying this is the last participant using the hosted conference. In multi-participant cases this can tear down the shared browser host media for still-active calls. Add an explicit guard (e.g., no remaining conference participants/subcalls) before retiring the host; otherwise reject completion or only detach this call.",
+      "revId": "4f7d81bb0c663e2e99e1e31e5201636438abc970",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41b66500_3c533ffb",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-10-15T19:47:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "856d2366_608d188f",
       "revId": "4f7d81bb0c663e2e99e1e31e5201636438abc970",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
