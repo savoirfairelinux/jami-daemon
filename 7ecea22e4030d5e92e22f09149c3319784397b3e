@@ -20,6 +20,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "063ad611_2dd71b57",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3120,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T15:19:06Z",
+      "side": 1,
+      "message": "[error] Line 3120: 🔴 `checkPromotionReady()` is invoked while `callMutex_` is already held, but `checkPromotionReady()` acquires `callMutex_` internally. This causes a self-deadlock in the RTP-start success path, so promotion can stall indefinitely. Fix by either calling `checkPromotionReady()` only after releasing `callMutex_`, or by introducing a `_Locked` variant that assumes the caller already holds the mutex.",
+      "revId": "7ecea22e4030d5e92e22f09149c3319784397b3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70187926_1a1f7bc2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3680,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T15:19:06Z",
+      "side": 1,
+      "message": "[error] Line 3680: 🔴 `onMediaNegotiationComplete()` calls `checkPromotionReady()` from inside a critical section protected by `callMutex_`; since `checkPromotionReady()` locks the same mutex again, this can deadlock during normal promotion negotiation completion. Refactor to avoid recursive locking (unlock before call, or use a lock-free/locked-helper split).",
+      "revId": "7ecea22e4030d5e92e22f09149c3319784397b3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b9ebb414_cb12ccab",
         "filename": "src/sip/sipcall_external_media.cpp",
         "patchSetId": 1
