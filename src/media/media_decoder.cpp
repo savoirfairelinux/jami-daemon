@@ -717,6 +717,10 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     }
 
+    if (!packet.size && !packet.side_data_elems) {
+        return DecodeStatus::Success;
+    }
+
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
     // TODO: Investigate avcodec_send_packet returning AVERROR_INVALIDDATA.
