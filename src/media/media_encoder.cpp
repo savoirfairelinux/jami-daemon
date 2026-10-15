@@ -1395,7 +1395,9 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_p
         // iOS
         if (accel_) {
             auto pix = accel_->getSoftwareFormat();
-            if (input->format() != pix) {
+            if (input->width() != getWidth() || input->height() != getHeight()) {
+                output = getScaledSWFrame(*input.get());
+            } else if (input->format() != pix) {
                 output = scaler_.convertFormat(*input.get(), pix);
             } else {
                 // Fully accelerated pipeline, skip main memory
@@ -1441,9 +1443,12 @@ MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
     AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
     std::shared_ptr<VideoFrame> framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
     if (!accel_) {
-        framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+        if (framePtr->width() != getWidth() || framePtr->height() != getHeight())
+            framePtr = getScaledSWFrame(*framePtr);
+        else
+            framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
     } else {
-        framePtr = accel_->transfer(*framePtr);
+        framePtr = getHWFrameFromSWFrame(*framePtr);
     }
     return framePtr;
 }
@@ -1453,7 +1458,10 @@ MediaEncoder::getHWFrameFromSWFrame(const VideoFrame& input)
 {
     std::shared_ptr<VideoFrame> framePtr;
     auto pix = accel_->getSoftwareFormat();
-    if (input.format() != pix) {
+    if (input.width() != getWidth() || input.height() != getHeight()) {
+        framePtr = getScaledSWFrame(input);
+        framePtr = accel_->transfer(*framePtr);
+    } else if (input.format() != pix) {
         framePtr = scaler_.convertFormat(input, pix);
         framePtr = accel_->transfer(*framePtr);
     } else {
