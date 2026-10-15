@@ -1814,7 +1814,13 @@ SIPCall::isNativeMediaReadyLocked() const
         }
 #ifdef ENABLE_VIDEO
         else if (local.type == MEDIA_VIDEO) {
-            if (!std::static_pointer_cast<video::VideoRtpSession>(rtpStreams_[i].rtpSession_)->isRtpReady(true, true))
+            const bool sending = local.direction_ == MediaDirection::SENDRECV
+                                 || local.direction_ == MediaDirection::SENDONLY;
+            const bool receiving = local.direction_ == MediaDirection::SENDRECV
+                                   || local.direction_ == MediaDirection::RECVONLY;
+            if ((sending || receiving)
+                && !std::static_pointer_cast<video::VideoRtpSession>(rtpStreams_[i].rtpSession_)
+                        ->isRtpReady(sending, receiving))
                 return false;
         }
 #endif
@@ -1879,7 +1885,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
-    if (browserConferenceAudio_) {
+    if (browserConferenceAudio_ && !conferenceMediaSource_) {
         for (auto& media : mediaAttrList) {
             if (media.type_ == MediaType::MEDIA_VIDEO) {
                 JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
@@ -3192,11 +3198,11 @@ SIPCall::startAllMedia()
     if (conferenceMediaSource_) {
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
             if (!std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->prepareConference(conferenceMediaSource_)) {
+                JAMI_ERROR("[call:{}] Could not prepare conference video RTP session", getCallId());
                 auto failedRequest = takePromotionFailureLocked();
                 runOnMainThread([call = shared(), failedRequest = std::move(failedRequest)] {
                     if (!failedRequest.empty())
-                        call->reportPromotionFailure(failedRequest,
-                                                     "Conference video mixer unavailable before RTP startup");
+                        call->reportPromotionFailure(failedRequest, "Could not prepare conference video RTP session");
                     call->hangup(PJSIP_SC_INTERNAL_SERVER_ERROR);
                 });
                 return;
@@ -3703,9 +3709,10 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         return true;
     }
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
-    if (browserConferenceAudio_ && std::any_of(mediaAttrList.begin(), mediaAttrList.end(), [](const auto& media) {
-            return media.type_ == MediaType::MEDIA_VIDEO;
-        })) {
+    if (browserConferenceAudio_ && !conferenceMediaSource_
+        && std::any_of(mediaAttrList.begin(), mediaAttrList.end(), [](const auto& media) {
+               return media.type_ == MediaType::MEDIA_VIDEO;
+           })) {
         JAMI_WARNING("[call:{}] Browser conference participant video is not supported", getCallId());
         return false;
     }
