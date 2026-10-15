@@ -35,7 +35,9 @@ selects the recovery channel and issues a monotonically increasing generation
 in `X-Jami-Handover-Generation`. The callee requests recovery with a numbered
 OPTIONS probe, but does not independently select a competing channel. Delayed
 requests from retired channels are rejected before dialog or SDP processing;
-existing transaction cleanup can finish. Retirement is per call and does not
+existing transaction cleanup can finish. A channel is retired only once the
+callee adopts the caller's recovery offer; a rejected offer leaves the call on
+its current channel. Retirement is per call and does not
 close a channel used by another call. Stale SDP and ICE results cannot commit
 media state for a newer generation.
 

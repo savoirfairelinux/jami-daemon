@@ -240,6 +240,7 @@ public:
     bool isRetiredSipTransport(const pjsip_transport* transport) const;
     enum class SipRequestAdmission { Accept, Probe, RecoveryOffer, Reject };
     SipRequestAdmission admitSipRequest(const std::shared_ptr<SipTransport>& transport, const pjsip_rx_data* rdata);
+    void rollbackSipAdmission(int offerCseq);
     bool isCurrentMediaNegotiation() const;
     void retryRecoveryOffer(std::uint64_t generation);
 
@@ -520,6 +521,10 @@ private:
         std::vector<std::weak_ptr<SipTransport>> retired;
         bool caller {false};
         std::uint64_t generation {0};
+        // Set while a recovery offer selected this channel but the dialog has
+        // not adopted it yet, so a failed offer can restore the bound channel.
+        std::shared_ptr<const SipAdmissionState> rollback;
+        int offerCseq {-1};
     };
     std::shared_ptr<const SipAdmissionState> sipAdmissionState_;
     std::uint64_t recoveryGeneration_ {0};

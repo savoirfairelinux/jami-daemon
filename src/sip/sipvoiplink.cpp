@@ -1371,6 +1371,10 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
             if (auto generation = sip_utils::getHandoverGeneration(tsx->last_tx->msg))
                 call->retryRecoveryOffer(*generation);
         }
+        // pjsip may reject a recovery offer before the call sees it.
+        if (tsx->state == PJSIP_TSX_STATE_TERMINATED and tsx->role == PJSIP_ROLE_UAS
+            and tsx->status_code >= PJSIP_SC_MULTIPLE_CHOICES)
+            call->rollbackSipAdmission(tsx->cseq);
         runOnMainThread([wcall = std::weak_ptr(call)] {
             if (auto call = wcall.lock())
                 call->onInviteTransactionEnded();
