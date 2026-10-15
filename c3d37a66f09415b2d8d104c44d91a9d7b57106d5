@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ceb0c2a_814a8752",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 833,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T18:24:07Z",
+      "side": 1,
+      "message": "[error] Line 833: 🔴 `drainPendingRequests()` calls `requestMediaChange()` while still holding `callMutex_`. `requestMediaChange()` starts by locking `callMutex_`, so this is another self-deadlock path. Compute/extract pending media under lock, release it, then call `requestMediaChange()` unlocked.",
+      "revId": "c3d37a66f09415b2d8d104c44d91a9d7b57106d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dae0b453_4f640da8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1616,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T18:24:07Z",
+      "side": 1,
+      "message": "[error] Line 1616: 🔴 `hold(OnReadyCb\u0026\u0026)` takes `callMutex_` and then calls `hold()`, which can call `SIPSessionReinvite()`. `SIPSessionReinvite()` also locks `callMutex_`, causing self-deadlock on the same thread. Release `callMutex_` before invoking `hold()` (or split locked state checks from the actual operation).",
+      "revId": "c3d37a66f09415b2d8d104c44d91a9d7b57106d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5662a45_8734d6de",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1677,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T18:24:07Z",
+      "side": 1,
+      "message": "[error] Line 1677: 🔴 `resume(OnReadyCb\u0026\u0026)` has the same re-entrant lock pattern as hold: it holds `callMutex_` while calling `resume()`, and that path can reach `SIPSessionReinvite()` which locks `callMutex_` again. This can deadlock resume requests. Use the lock only for admission/defer decision, then unlock before calling `resume()`.",
+      "revId": "c3d37a66f09415b2d8d104c44d91a9d7b57106d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3718e52_10b443f1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1763,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T18:24:07Z",
+      "side": 1,
+      "message": "[error] Line 1763: 🔴 `switchInput()` now takes `callMutex_` and may call `SIPSessionReinvite()` in the same critical section. Since `SIPSessionReinvite()` acquires `callMutex_`, this introduces a self-deadlock when renegotiation is attempted. Move the reinvite call outside the locked region or provide a lock-free/internal variant used under `callMutex_`.",
+      "revId": "c3d37a66f09415b2d8d104c44d91a9d7b57106d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
