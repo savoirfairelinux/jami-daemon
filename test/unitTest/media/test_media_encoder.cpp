@@ -24,6 +24,7 @@
 #include "jami.h"
 #include "fileutils.h"
 #include "media/libav_deps.h"
+#include "media/media_decoder.h"
 #include "media/media_encoder.h"
 #include "media/media_io_handle.h"
 #include "media/system_codec_container.h"
@@ -53,6 +54,7 @@ private:
     void testVP8DynamicBitrate();
     void testVP8BitrateKeepsResolution();
     void testVideoToolboxLiveBitrateAndResizeRequiresRestart();
+    void testUnalignedResolutionHwEncoding();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
@@ -63,9 +65,13 @@ private:
     CPPUNIT_TEST(testVP8DynamicBitrate);
     CPPUNIT_TEST(testVP8BitrateKeepsResolution);
     CPPUNIT_TEST(testVideoToolboxLiveBitrateAndResizeRequiresRestart);
+    CPPUNIT_TEST(testUnalignedResolutionHwEncoding);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaIOHandle> ioContext_;
+    size_t encodedBytes_ {};
+    std::vector<uint32_t> timestamps_;
     std::vector<std::string> files_;
 };
 
@@ -76,6 +82,8 @@ MediaEncoderTest::setUp()
 {
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
+    encodedBytes_ = 0;
+    timestamps_.clear();
     encoder_.reset(new MediaEncoder);
     files_.push_back("test.mkv");
 }
@@ -83,6 +91,9 @@ MediaEncoderTest::setUp()
 void
 MediaEncoderTest::tearDown()
 {
+    // Encoder teardown writes a trailer through the I/O callbacks.
+    encoder_.reset();
+    ioContext_.reset();
     // clean up behind ourselves
     for (const auto& file : files_)
         dhtnet::fileutils::remove(file);
@@ -256,10 +267,9 @@ MediaEncoderTest::testH264DynamicBitrate()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -291,10 +301,9 @@ MediaEncoderTest::testH264BitrateKeepsResolution()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -331,10 +340,10 @@ MediaEncoderTest::testPassthroughPacketRtpTimestamps()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 800, 30);
 
     try {
-        std::vector<uint32_t> timestamps;
-        MediaIOHandle ioContext(4096, true, nullptr, collectRtpTimestamps, nullptr, &timestamps);
+        auto& timestamps = timestamps_;
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, collectRtpTimestamps, nullptr, &timestamps);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -383,10 +392,9 @@ MediaEncoderTest::testPassthroughBitrateChangeKeepsStream()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 800, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -458,10 +466,9 @@ MediaEncoderTest::testVP8BitrateKeepsResolution()
     auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(v);
         int videoIdx = encoder_->addStream(*vp8Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -511,11 +518,10 @@ MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->enableAccel(true);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -532,6 +538,79 @@ MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
         CPPUNIT_FAIL(e.what());
     }
 #endif
+}
+
+void
+MediaEncoderTest::testUnalignedResolutionHwEncoding()
+{
+    // 540 is not a multiple of 8: MediaEncoder rounds the output height to 536.
+    // Verify that encoding a 960x540 software frame (e.g. YUV422P from software MJPEG)
+    // with hardware encoding enabled scales the frame to the hardware frame context
+    // dimensions (960x536) before GPU transfer, preserving chroma instead of leaving
+    // the UV plane zeroed (green screen).
+    const constexpr int width = 960;
+    const constexpr int height = 540;
+    const std::string fileName = "test_960x540.h264";
+    files_.push_back(fileName);
+
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(true);
+    auto h264Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
+        codecs->searchCodecByName("H264", jami::MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    // Keep the bitrate budget above the source size to isolate alignment.
+    auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1200, 30);
+
+    encoder_->openOutput(fileName);
+    encoder_->setOptions(v);
+#ifdef ENABLE_HWACCEL
+    encoder_->enableAccel(true);
+#endif
+    CPPUNIT_ASSERT(encoder_->addStream(*h264Codec) >= 0);
+    encoder_->setIOContext(nullptr);
+
+    for (int i = 0; i < 10; ++i) {
+        auto input = std::make_shared<VideoFrame>();
+        input->reserve(AV_PIX_FMT_YUV422P, width, height);
+        auto* avf = input->pointer();
+        for (int y = 0; y < height; ++y) {
+            std::memset(avf->data[0] + y * avf->linesize[0], 128, width);
+            std::memset(avf->data[1] + y * avf->linesize[1], 128, width / 2);
+            std::memset(avf->data[2] + y * avf->linesize[2], 128, width / 2);
+        }
+        CPPUNIT_ASSERT(encoder_->encode(input, i == 0, i) >= 0);
+    }
+    CPPUNIT_ASSERT(encoder_->flush() >= 0);
+    encoder_.reset();
+
+    std::shared_ptr<VideoFrame> decodedFrame;
+    MediaDecoder decoder(
+        [&](const std::shared_ptr<MediaFrame>& frame) { decodedFrame = std::dynamic_pointer_cast<VideoFrame>(frame); });
+#ifdef ENABLE_HWACCEL
+    decoder.enableAccel(false);
+#endif
+    DeviceParams params;
+    params.input = fileName;
+    CPPUNIT_ASSERT(decoder.openInput(params) >= 0);
+    CPPUNIT_ASSERT(decoder.setupVideo() >= 0);
+    while (!decodedFrame) {
+        auto status = decoder.decode();
+        if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError)
+            break;
+    }
+    CPPUNIT_ASSERT(decodedFrame);
+    CPPUNIT_ASSERT_EQUAL(960, decodedFrame->width());
+    CPPUNIT_ASSERT_EQUAL(536, decodedFrame->height());
+
+    const auto* out = decodedFrame->pointer();
+    const int cx = out->width / 4;
+    const int cy = out->height / 4;
+    const int u = out->data[1][cy * out->linesize[1] + cx];
+    const int vChroma = out->data[2][cy * out->linesize[2] + cx];
+    // Neutral gray has U=128, V=128; if GPU UV transfer failed, U and V remain ~0 (green).
+    CPPUNIT_ASSERT(std::abs(u - 128) < 15);
+    CPPUNIT_ASSERT(std::abs(vChroma - 128) < 15);
 }
 
 } // namespace test
