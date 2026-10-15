@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d038e74_af30392b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1834,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T19:05:20Z",
+      "side": 1,
+      "message": "[error] Line 1834: 🔴 `hangup()` schedules `runOnMainThread(...)` while `callMutex_` is still held, and the scheduled lambda calls `hangup()` again. If `runOnMainThread` executes inline on the main thread, this re-enters `hangup()` and self-deadlocks on `callMutex_`. Capture `failedRequest`/flags under lock, release the lock, then call `reportPromotionFailure(...)` and `hangup(...)` outside the critical section.",
+      "revId": "d5d56d55a7f8d6072f4fd38d64e2ce2e102a4070",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "430f16ec_2997968c",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T19:05:20Z",
+      "side": 1,
+      "message": "[error] Line 155: 🔴 `queuePromotionFailureLocked()` is invoked with `callMutex_` held and then calls `runOnMainThread(...)` whose body immediately reacquires `callMutex_` (empty lock scope). If dispatch is inline, this deadlocks on the same mutex. Remove this re-lock from the callback and keep the locked/unlocked split explicit: take/clear promotion state under lock, emit failure signal strictly after unlocking.",
+      "revId": "d5d56d55a7f8d6072f4fd38d64e2ce2e102a4070",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
