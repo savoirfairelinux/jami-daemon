@@ -809,64 +809,49 @@ getCallFromInvite(pjsip_inv_session* inv)
     return nullptr;
 }
 
-static void
-handover_reject_request(pjsip_rx_data* rdata)
-{
-    auto method = rdata->msg_info.msg->line.req.method.id;
-    if (method != PJSIP_ACK_METHOD)
-        pjsip_endpt_respond_stateless(endpt_, rdata,
-                                    method == PJSIP_INVITE_METHOD ? PJSIP_SC_REQUEST_PENDING : PJSIP_SC_FORBIDDEN,
-                                    nullptr, nullptr, nullptr);
-}
-
 static pj_bool_t
 handover_request_cb(pjsip_rx_data* rdata)
 {
     if (not rdata or not rdata->msg_info.msg or not rdata->msg_info.cid or not rdata->msg_info.to
         or not rdata->msg_info.from or not rdata->msg_info.to->tag.slen)
         return PJ_FALSE;
-    auto* dialog = pjsip_ua_find_dialog(&rdata->msg_info.cid->id, &rdata->msg_info.to->tag,
-                                      &rdata->msg_info.from->tag, PJ_TRUE);
+    auto method = rdata->msg_info.msg->line.req.method.id;
+    if (method != PJSIP_INVITE_METHOD and method != PJSIP_OPTIONS_METHOD)
+        return PJ_FALSE;
+    auto* dialog = pjsip_ua_find_dialog(&rdata->msg_info.cid->id,
+                                        &rdata->msg_info.to->tag,
+                                        &rdata->msg_info.from->tag,
+                                        PJ_TRUE);
     if (not dialog)
         return PJ_FALSE;
-    auto admission = SIPCall::SipRequestAdmission::Accept;
+    auto kind = SIPCall::HandoverRequest::Pass;
     std::shared_ptr<SIPCall> call;
-    std::shared_ptr<SipTransport> transport;
     if (auto* invite = pjsip_dlg_get_inv_session(dialog)) {
         call = getCallFromInvite(invite);
-        if (call and call->peerSupportsHandover() and invite->state == PJSIP_INV_STATE_CONFIRMED) {
-            if (call->isRetiredSipTransport(rdata->tp_info.transport)
-                and rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD
-                and not rdata->msg_info.msg->body) {
-                pjsip_dlg_dec_lock(dialog);
-                return PJ_FALSE;
-            }
-            if (rdata->msg_info.msg->line.req.method.id == PJSIP_INVITE_METHOD
-                and sip_utils::hasHandoverGeneration(rdata)
-                and invite->invite_tsx) {
-                pjsip_dlg_dec_lock(dialog);
-                handover_reject_request(rdata);
-                return PJ_TRUE;
-            }
-            transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(rdata->tp_info.transport);
-            admission = call->admitSipRequest(transport, rdata);
-        }
+        if (call and call->peerSupportsHandover() and invite->state == PJSIP_INV_STATE_CONFIRMED)
+            kind = SIPCall::classifyHandoverRequest(rdata, invite->role == PJSIP_ROLE_UAC, call->recoveryGeneration());
     }
     pjsip_dlg_dec_lock(dialog);
-    if (admission == SIPCall::SipRequestAdmission::Accept)
+
+    switch (kind) {
+    case SIPCall::HandoverRequest::Pass:
         return PJ_FALSE;
-    if (admission == SIPCall::SipRequestAdmission::Reject) {
-        handover_reject_request(rdata);
+    case SIPCall::HandoverRequest::Stale:
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_REQUEST_PENDING, nullptr, nullptr, nullptr);
         return PJ_TRUE;
+    case SIPCall::HandoverRequest::Invalid:
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_BAD_REQUEST, nullptr, nullptr, nullptr);
+        return PJ_TRUE;
+    case SIPCall::HandoverRequest::Probe:
+        break;
     }
-    if (admission == SIPCall::SipRequestAdmission::RecoveryOffer)
-        return PJ_FALSE;
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(rdata->tp_info.transport);
     auto generation = sip_utils::getHandoverGeneration(rdata).value_or(0);
     auto request = sip_utils::getHandoverRequest(rdata).value_or(0);
     runOnMainThread([w = call->weak(), transport, generation, request] {
         if (auto call = w.lock()) {
             if (auto account = std::dynamic_pointer_cast<JamiAccount>(call->getAccount().lock()))
-                call->followPeerTransport(transport, account->getContactHeader(transport), true, generation, request);
+                call->followPeerTransport(transport, account->getContactHeader(transport), generation, request);
         }
     });
     pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
@@ -1371,10 +1356,6 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
             if (auto generation = sip_utils::getHandoverGeneration(tsx->last_tx->msg))
                 call->retryRecoveryOffer(*generation);
         }
-        // pjsip may reject a recovery offer before the call sees it.
-        if (tsx->state == PJSIP_TSX_STATE_TERMINATED and tsx->role == PJSIP_ROLE_UAS
-            and tsx->status_code >= PJSIP_SC_MULTIPLE_CHOICES)
-            call->rollbackSipAdmission(tsx->cseq);
         runOnMainThread([wcall = std::weak_ptr(call)] {
             if (auto call = wcall.lock())
                 call->onInviteTransactionEnded();

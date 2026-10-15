@@ -33,11 +33,14 @@ previous behavior.
 Handover support is advertised with `X-Jami-Call-Handover: 1`. The original caller
 selects the recovery channel and issues a monotonically increasing generation
 in `X-Jami-Handover-Generation`. The callee requests recovery with a numbered
-OPTIONS probe, but does not independently select a competing channel. Delayed
-requests from retired channels are rejected before dialog or SDP processing;
-existing transaction cleanup can finish. A channel is retired only once the
-callee adopts the caller's recovery offer; a rejected offer leaves the call on
-its current channel. Retirement is per call and does not
+OPTIONS probe, but does not independently select a competing channel.
+Re-INVITEs carrying a previous generation are rejected with 491 before dialog
+or SDP processing. Other in-dialog requests are accepted on any channel of the
+call and ordered by their CSeq, so a delayed request is refused by the dialog
+and does not move the call. A channel is retired only once the dialog adopts a
+newer one: the caller when it accepts a probe, the callee when it accepts the
+caller's recovery offer. A rejected offer leaves the call on its current
+channel. Retirement is per call and does not
 close a channel used by another call. Stale SDP and ICE results cannot commit
 media state for a newer generation.
 

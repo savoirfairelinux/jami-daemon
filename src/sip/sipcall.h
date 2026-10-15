@@ -238,9 +238,11 @@ public:
     void setPeerHandoverSupported(bool supported) { peerSupportsHandover_.store(supported); }
     bool peerSupportsHandover() const { return peerSupportsHandover_.load(); }
     bool isRetiredSipTransport(const pjsip_transport* transport) const;
-    enum class SipRequestAdmission { Accept, Probe, RecoveryOffer, Reject };
-    SipRequestAdmission admitSipRequest(const std::shared_ptr<SipTransport>& transport, const pjsip_rx_data* rdata);
-    void rollbackSipAdmission(int offerCseq);
+    // Handover requests filtered before dialog processing: stale re-INVITEs
+    // get 491, malformed ones 400, and the caller answers recovery probes.
+    enum class HandoverRequest { Pass, Probe, Stale, Invalid };
+    static HandoverRequest classifyHandoverRequest(const pjsip_rx_data* rdata, bool caller, std::uint64_t generation);
+    std::uint64_t recoveryGeneration() const { return recoveryGeneration_.load(); }
     bool isCurrentMediaNegotiation() const;
     void retryRecoveryOffer(std::uint64_t generation);
 
@@ -260,9 +262,9 @@ public:
     bool useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
                                const std::string& contact,
                                std::optional<std::uint64_t> attempt);
-    // Move the dialog to the channel on which the peer sent an in-dialog request.
-    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact, bool probe,
-                             std::uint64_t generation = 0, std::uint64_t request = 0);
+    // Caller only: move the dialog to the channel of the callee's recovery probe.
+    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact,
+                             std::uint64_t generation, std::uint64_t request);
     void onInviteTransactionEnded();
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
@@ -350,8 +352,13 @@ private:
 
     void stopCallRecovery();
     void startRecoveryLocked();
-    void publishSipAdmissionLocked();
     bool rebindSipDialogLocked(const std::shared_ptr<SipTransport>& transport, const std::string& contact);
+    // Callee only: move the dialog to the channel of the caller's recovery offer.
+    bool adoptRecoveryOfferLocked(const std::shared_ptr<SipTransport>& transport,
+                                  const std::string& contact,
+                                  std::uint64_t generation);
+    // Answers the pending incoming re-INVITE with 491, which the peer retries.
+    void rejectPendingReinviteLocked();
     void requestIceRestart(const std::shared_ptr<SipTransport>& transport);
     void sendRecoveryProbeLocked(const std::shared_ptr<SipTransport>& transport);
     void scheduleRecoveryProbeLocked();
@@ -515,19 +522,9 @@ private:
     std::optional<RecoveryNegotiation> recoveryNegotiation_;
     // Channels left for a newer one, which the dialog must not follow back.
     std::vector<std::weak_ptr<SipTransport>> abandonedTransports_;
-    struct SipAdmissionState
-    {
-        std::weak_ptr<SipTransport> active;
-        std::vector<std::weak_ptr<SipTransport>> retired;
-        bool caller {false};
-        std::uint64_t generation {0};
-        // Set while a recovery offer selected this channel but the dialog has
-        // not adopted it yet, so a failed offer can restore the bound channel.
-        std::shared_ptr<const SipAdmissionState> rollback;
-        int offerCseq {-1};
-    };
-    std::shared_ptr<const SipAdmissionState> sipAdmissionState_;
-    std::uint64_t recoveryGeneration_ {0};
+    // Issued by the caller, adopted by the callee with the recovery offer.
+    // Written under callMutex_, read lock-free by request admission.
+    std::atomic<std::uint64_t> recoveryGeneration_ {0};
     std::uint64_t recoveryRequest_ {0};
     std::uint64_t lastPeerRecoveryRequest_ {0};
     std::uint64_t recoveryEpisode_ {0};
