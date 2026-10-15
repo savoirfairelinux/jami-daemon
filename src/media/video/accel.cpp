@@ -275,6 +275,10 @@ HardwareAccel::transfer(const VideoFrame& frame)
                        av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format)));
             return nullptr;
         }
+        if (input->width != width_ || input->height != height_) {
+            JAMI_ERROR("Frame size mismatch: expected {}x{}, got {}x{}", width_, height_, input->width, input->height);
+            return nullptr;
+        }
 
         auto framePtr = std::make_unique<VideoFrame>();
         auto* hwFrame = framePtr->pointer();
