@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e0dfdb4_9ae675d0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2343,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T15:11:07Z",
+      "side": 1,
+      "message": "[error] Line 2343: 🔴 Several new paths call `hangup()` while holding `callMutex_` (`onFailure`, `onInviteTransactionTerminated`, RTP startup-failure callbacks). Since `hangup()` acquires the same mutex, these paths can deadlock and leave calls stuck. Refactor these branches to compute flags/reasons under lock, unlock, then invoke `hangup()` and signaling methods.",
+      "revId": "7ecea22e4030d5e92e22f09149c3319784397b3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b9ebb414_cb12ccab",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T15:11:07Z",
+      "side": 1,
+      "message": "[error] Line 77: 🔴 `promoteExternalMedia()` takes `callMutex_` and then calls `canPromoteExternalMedia()`, which also takes `callMutex_`. This is a self-deadlock on a non-recursive mutex, so valid promotion requests can block forever. Fix by splitting eligibility logic into a `_Locked` helper (called while already holding the lock) or by performing the check before acquiring `callMutex_`.",
+      "revId": "7ecea22e4030d5e92e22f09149c3319784397b3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7357bb98_8505cdf6",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T15:11:07Z",
+      "side": 1,
+      "message": "[error] Line 97: 🔴 `hangup()` is called while `callMutex_` is still held (here and also in `cancelExternalMediaPromotion()`), but `hangup()` itself locks `callMutex_`. That creates re-entrant deadlocks in failure/cancel paths. Record the failure state under lock, release the lock, then call `hangup()` outside the critical section.",
+      "revId": "7ecea22e4030d5e92e22f09149c3319784397b3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
