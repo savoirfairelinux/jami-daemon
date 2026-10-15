@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1cdc6898_0fc5d1a6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1586,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T19:10:18Z",
+      "side": 1,
+      "message": "[error] Line 1586: 🔴 `ExternalMediaDemotionAccepted` is emitted while `callMutex_` is held (`reportExternalRemoteAnswer` keeps the lock for the whole function). `emitSignal` is synchronous, so a client callback that calls back into call APIs (e.g. completion/cancel/hangup/state queries) can re-enter and block on `callMutex_`, deadlocking the call thread. Capture the request/SDP under lock, release `callMutex_`, then emit the signal outside the critical section (same pattern already used for promotion ready/failure reporting).",
+      "revId": "058764fc94ac32bedf31d1a9547bf5de82d1e5ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18ba32b4_558f1300",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T19:10:18Z",
+      "side": 1,
+      "message": "[error] Line 179: 🔴 `failDemotion()` emits `ExternalMediaDemotionFailure` while still on callers\u0027 lock context (many call sites invoke it under `callMutex_`, e.g. `hangup`, `removeCall`, `onInviteTransactionTerminated`). Because signal dispatch is synchronous, callback re-entry into call methods can deadlock on `callMutex_`. Refactor `failDemotion` to only extract/reset demotion state under lock and return `(requestId, reason)` for reporting after unlocking, mirroring the promotion `take* + report*` split.",
+      "revId": "058764fc94ac32bedf31d1a9547bf5de82d1e5ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
