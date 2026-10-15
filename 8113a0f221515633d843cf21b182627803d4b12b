@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed2fcec9_c638e41e",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T23:59:08Z",
+      "side": 1,
+      "message": "[warning] Line 719: 🟡 `if (!packet.size) return DecodeStatus::Success;` drops all zero-size packets globally, including packets that may carry meaningful side data. Narrow this to the problematic path (e.g., V4L2/NVDEC-corrupted empty buffers) or require both empty payload and no side data before skipping, so decoder state updates are not accidentally lost.",
+      "revId": "8113a0f221515633d843cf21b182627803d4b12b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c8a4b3b_3432756a",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 417,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-15T23:59:08Z",
+      "side": 1,
+      "message": "[error] Line 417: 🔴 This mutates `videoOpts_.width/height` from the first input frame whenever dimensions differ, which can override an explicitly configured output resolution (e.g., requested 1280x720 becomes 1920x1080 if the first frame is 1080p). Keep configured stream dimensions authoritative and only derive from input when options are unset/auto. A safe fix is to gate this assignment behind an explicit \"auto size\" condition (or remove it) and handle scaling against encoder-context dimensions instead.",
+      "revId": "8113a0f221515633d843cf21b182627803d4b12b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
