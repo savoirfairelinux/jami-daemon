@@ -1448,6 +1448,13 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   const std::string& deviceId,
                                                   bool bootstrapReplay)
 {
+#if TARGET_OS_IOS
+    // The notification extension only fetches commits; it never announces them
+    // to other devices. It stops right after the fetch, so connections opened to
+    // announce would be cut off.
+    if (Manager::isIOSExtension)
+        return;
+#endif
     auto acc = account_.lock();
     if (!acc)
         return;
