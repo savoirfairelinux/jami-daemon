@@ -915,7 +915,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             std::lock_guard lk(conv->mtx);
                             deferred = conv->finishFetch(deviceId);
                             // Notify peers that a new commit is there (DRT)
-                            if (not commitId.empty() && ok && conv->conversation && !conv->info.isRemoved()) {
+                            if (not commitId.empty() && ok && conv->conversation && !conv->info.isRemoved()
+                                && !Manager::isIOSExtension) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
