@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30efc922_666b1fb4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T22:05:00Z",
+      "side": 1,
+      "message": "[error] Line 628: 🔴 Stale probe generations are only rejected when `!recovering_`, so a delayed/old probe can still be accepted during an active recovery and move the caller to an obsolete channel. That breaks generation fencing and can derail the current recovery attempt. Reject `generation \u003c recoveryGeneration_` unconditionally before rebind/restart.",
+      "revId": "9d7fc04f4404e2b35bf64c6f461a0b18d95e0a71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60c671b7_72903c6c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 727,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T22:05:00Z",
+      "side": 1,
+      "message": "[error] Line 727: 🔴 OPTIONS probe classification ignores generation validity. A probe with a malformed/missing `X-Jami-Handover-Generation` still classifies as `Probe` if `X-Jami-Handover-Request` is present, and later `value_or(0)` in admission path can trigger recovery with synthetic generation 0. Validate generation for probe admission (including duplicate/parse failure) and reject invalid probes with 400.",
+      "revId": "9d7fc04f4404e2b35bf64c6f461a0b18d95e0a71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
