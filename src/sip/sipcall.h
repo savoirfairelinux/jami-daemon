@@ -529,6 +529,7 @@ private:
     // Check if a new ICE media session is needed when performing a re-invite
     bool isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList);
     void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
+    bool requestTransportFallback();
     void startPendingTransportFallback();
     void failPendingTransportFallback();
     enum class ReinviteResult { Sent, Deferred, Failed };
