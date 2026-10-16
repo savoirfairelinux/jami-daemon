@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "221ba75e_4525a759",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T15:15:10Z",
+      "side": 1,
+      "message": "[warning] 🟡 This patch introduces subtle state-machine behavior (`rollback` + `offerCseq`) across multiple asynchronous rejection paths, but no regression test accompanies it. Please add a focused SIP handover test that covers: (1) recovery offer admitted then rejected before adoption, (2) PJSIP pre-delivery rejection (`\u003e\u003d300`) before `onReceiveReinvite`, and (3) fallback update when a newer committed admission is published while an older offer is pending. Without this, future refactors can silently reintroduce channel-retirement regressions.",
+      "revId": "972f60f5e3a48252577defd25fb179d6b3b47fdd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
