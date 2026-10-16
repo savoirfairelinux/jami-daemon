@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8127823_a27f0d24",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T15:14:15Z",
+      "side": 1,
+      "message": "[error] Line 619: 🔴 `followPeerTransport()` acquires `callMutex_` and then calls `isRetiredSipTransport()`, which now also acquires `callMutex_`. Because this mutex is non-recursive, this can self-deadlock on the probe path and stall recovery handling. Fix by splitting `isRetiredSipTransport` into a `_Locked` helper that assumes the mutex is already held (or by checking `abandonedTransports_` directly inside `followPeerTransport`), and keep a separate externally-locking wrapper for callers that do not already hold the lock.",
+      "revId": "65cd3b09a70e769b21742a2f4ba844b9d68ac7cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
