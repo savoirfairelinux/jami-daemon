@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5a47a51_3538a442",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4730,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T18:36:35Z",
+      "side": 1,
+      "message": "[error] Line 4730: 🔴 `merge()` still holds `callMutex_` via `lk1` when calling `requestTransportFallback()`, and `requestTransportFallback()` immediately takes `callMutex_` again. If `callMutex_` is non-recursive, this is a self-deadlock on conference join. Fix by either (a) moving the `requestTransportFallback()` call after the merge locks are released, or (b) splitting into a `requestTransportFallbackLocked()` variant that assumes the caller already holds the lock and does not relock.",
+      "revId": "e56db50c7a61f4aca5b26d194fbd42dd19a04bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f585e750_08470caf",
+        "filename": "test/unitTest/conversation/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1028,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T18:36:35Z",
+      "side": 1,
+      "message": "[warning] Line 1028: 🟡 The readiness check uses a fixed sleep loop (`200 x 100ms`) instead of waiting on a signal/state transition, which makes this test timing-sensitive and prone to flakes under CI load. Prefer waiting on an explicit media-ready event (or condition variable tied to call state callbacks) with a single timeout window.",
+      "revId": "e56db50c7a61f4aca5b26d194fbd42dd19a04bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
