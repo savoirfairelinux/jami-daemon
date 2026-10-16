@@ -33,6 +33,23 @@
       "message": "[warning] Line 1028: 🟡 The readiness check uses a fixed sleep loop (`200 x 100ms`) instead of waiting on a signal/state transition, which makes this test timing-sensitive and prone to flakes under CI load. Prefer waiting on an explicit media-ready event (or condition variable tied to call state callbacks) with a single timeout window.",
       "revId": "e56db50c7a61f4aca5b26d194fbd42dd19a04bee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9da47d8_709bf0f3",
+        "filename": "test/unitTest/conversation/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1067,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-16T18:39:44Z",
+      "side": 1,
+      "message": "[warning] Line 1067: 🟡 The expected ICE component set is computed as `1..(attributes.size()*2)` when RTCP mux is disabled, but ICE component IDs in SDP candidates are per-media RTP/RTCP component identifiers (typically `1` and `2`), not globally incremented across m-lines. With audio+video this can wrongly expect `{1,2,3,4}` and fail on valid SDP. Fix by asserting `{1,2}` for non-mux (or validating components per m-line instead of one global set).",
+      "revId": "e56db50c7a61f4aca5b26d194fbd42dd19a04bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
