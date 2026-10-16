@@ -21,16 +21,21 @@
 
 #include <condition_variable>
 #include <filesystem>
+#include <set>
+#include <sstream>
 #include <string>
+#include <thread>
 
 #include "../../test_runner.h"
 #include "account_const.h"
 #include "common.h"
 #include "conversation/conversationcommon.h"
+#include "conference.h"
 #include "jami/callmanager_interface.h"
 #include "manager.h"
 #include "media_const.h"
 #include "sip/sipcall.h"
+#include "sip/sdp.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -88,6 +93,9 @@ private:
     void testCallSelfIfDefaultHost();
     void testNeedsHost();
     void testAudioOnly();
+    void testJoinConferenceWithoutRtcpMux();
+    void testJoinConferenceWithModernTransport();
+    void testJoinConferenceTransport(bool rtcpMux);
     void testJoinAfterMuteHost();
     void testBusy();
     void testDecline();
@@ -105,6 +113,8 @@ private:
     CPPUNIT_TEST(testCallSelfIfDefaultHost);
     CPPUNIT_TEST(testNeedsHost);
     CPPUNIT_TEST(testAudioOnly);
+    CPPUNIT_TEST(testJoinConferenceWithoutRtcpMux);
+    CPPUNIT_TEST(testJoinConferenceWithModernTransport);
     CPPUNIT_TEST(testJoinAfterMuteHost);
     CPPUNIT_TEST(testBusy);
     CPPUNIT_TEST(testDecline);
@@ -949,6 +959,115 @@ ConversationCallTest::testAudioOnly()
 
     // get active calls = 0
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
+}
+
+void
+ConversationCallTest::testJoinConferenceWithoutRtcpMux()
+{
+    testJoinConferenceTransport(false);
+}
+
+void
+ConversationCallTest::testJoinConferenceWithModernTransport()
+{
+    testJoinConferenceTransport(true);
+}
+
+void
+ConversationCallTest::testJoinConferenceTransport(bool rtcpMux)
+{
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    aliceAccount->enableRtcpMux(rtcpMux);
+
+    const auto conversationId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData_.id == conversationId; }));
+    libjami::addConversationMember(aliceId, conversationId, bobAccount->getUsername());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return bobData_.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData_.id == conversationId; }));
+
+    MediaAttribute audio {MediaType::MEDIA_AUDIO};
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+    std::vector<MediaAttribute> attributes {audio};
+#ifdef ENABLE_VIDEO
+    MediaAttribute video {MediaType::MEDIA_VIDEO};
+    video.label_ = "video_0";
+    video.enabled_ = true;
+    video.sourceUri_ = "file://" + std::filesystem::absolute("media/data/test_video_file.mp4").string();
+    attributes.emplace_back(video);
+#endif
+    const auto media = MediaAttribute::mediaAttributesToMediaMaps(attributes);
+
+    libjami::placeCallWithMedia(aliceId, "swarm:" + conversationId, media);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return !aliceData_.confId.empty() && !libjami::getActiveCalls(bobId, conversationId).empty();
+    }));
+    const auto active = libjami::getActiveCalls(bobId, conversationId).front();
+    const auto destination = fmt::format("rdv:{}/{}/{}/{}",
+                                         conversationId,
+                                         active.at("uri"),
+                                         active.at("device"),
+                                         active.at("id"));
+    auto conference = aliceAccount->getConference(aliceData_.confId);
+    CPPUNIT_ASSERT(conference);
+    const auto bobCallId = libjami::placeCallWithMedia(bobId, destination, media);
+    CPPUNIT_ASSERT(!bobCallId.empty());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return bobData_.state == "CURRENT" && bobData_.hostState == "CURRENT" && conference->getSubCalls().size() == 1;
+    }));
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, conference->getSubCalls().size());
+    auto aliceCall = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(*conference->getSubCalls().begin()));
+    auto bobCall = std::dynamic_pointer_cast<SIPCall>(bobAccount->getCall(bobCallId));
+    CPPUNIT_ASSERT(aliceCall);
+    CPPUNIT_ASSERT(bobCall);
+    lk.unlock();
+    bool ready = false;
+    for (int i = 0; i < 200; ++i) {
+        if ((ready = aliceCall->isNativeMediaReady() && bobCall->isNativeMediaReady()))
+            break;
+        std::this_thread::sleep_for(100ms);
+    }
+    CPPUNIT_ASSERT_MESSAGE("Both conference legs must establish ICE and audio/video RTP", ready);
+
+    for (const auto& call : {aliceCall, bobCall}) {
+        const auto slots = call->getSDP().getMediaSlots();
+        CPPUNIT_ASSERT_EQUAL(attributes.size(), slots.size());
+        for (const auto& [local, remote] : slots) {
+            CPPUNIT_ASSERT(local.enabled);
+            CPPUNIT_ASSERT(remote.enabled);
+        }
+        const auto* session = call->getSDP().getActiveLocalSdpSession();
+        CPPUNIT_ASSERT(session);
+        const auto sdp = Sdp::toString(session);
+        CPPUNIT_ASSERT_EQUAL(rtcpMux, sdp.find("a=group:BUNDLE ") != std::string::npos);
+        CPPUNIT_ASSERT_EQUAL(rtcpMux, sdp.find("a=rtcp-mux") != std::string::npos);
+        std::set<unsigned> components;
+        for (unsigned i = 0; i < session->media_count; ++i) {
+            const auto* medium = session->media[i];
+            for (unsigned j = 0; j < medium->attr_count; ++j) {
+                const auto* attr = medium->attr[j];
+                if (std::string_view(attr->name.ptr, attr->name.slen) != "candidate")
+                    continue;
+                std::istringstream candidate(std::string(attr->value.ptr, attr->value.slen));
+                std::string foundation;
+                unsigned component;
+                CPPUNIT_ASSERT(static_cast<bool>(candidate >> foundation >> component));
+                components.insert(component);
+            }
+        }
+        std::set<unsigned> expected {1};
+        if (!rtcpMux) {
+            for (unsigned i = 2; i <= attributes.size() * 2; ++i)
+                expected.insert(i);
+        }
+        CPPUNIT_ASSERT(components == expected);
+    }
+    CPPUNIT_ASSERT(Manager::instance().hangupConference(aliceId, aliceData_.confId));
+    libjami::unregisterSignalHandlers();
+    lk.lock();
 }
 
 void

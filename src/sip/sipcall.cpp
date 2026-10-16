@@ -3720,6 +3720,9 @@ SIPCall::onMediaNegotiationComplete()
             // in the re-invite. In this case, the media transport is unchanged (reused).
             if (this_->isIceEnabled() and this_->remoteHasValidIceAttributes()) {
                 if (not this_->isSubcall()) {
+                    // Rendezvous calls do not merge a device subcall.
+                    if (this_->requestTransportFallback())
+                        return;
                     // Start ICE checks. Media will be started once ICE checks complete.
                     this_->startIceMedia();
                 }
@@ -4699,13 +4702,6 @@ SIPCall::merge(Call& call)
     std::lock(callMutex_, subcall.callMutex_);
     std::lock_guard lk1 {callMutex_, std::adopt_lock};
     std::lock_guard lk2 {subcall.callMutex_, std::adopt_lock};
-    const auto* activeRemoteSession = subcall.sdp_->getActiveRemoteSdpSession();
-    const auto acceptedRtcpMux = subcall.remoteOfferSupportsRtcpMux(activeRemoteSession);
-    const auto acceptedBundle = acceptedRtcpMux
-                                && subcall.remoteOfferSupportsBundle(activeRemoteSession);
-    const auto needsTransportFallback = !subcall.hasExternalMedia()
-                                        && ((subcall.rtcpMuxEnabled_ && !acceptedRtcpMux)
-                                            || (subcall.bundleEnabled_ && !acceptedBundle));
     inviteSession_ = std::move(subcall.inviteSession_);
     if (inviteSession_)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
@@ -4728,20 +4724,43 @@ SIPCall::merge(Call& call)
     peerSupportsHandover_ = subcall.peerSupportsHandover_.load();
 
     Call::merge(subcall);
-    if (needsTransportFallback) {
-        JAMI_WARNING("[call:{}] Peer rejected the offered media transport; retrying with its negotiated topology",
-                     getCallId());
-        setRtcpMuxEnabled(acceptedRtcpMux);
-        setBundleEnabled(acceptedBundle);
-        legacySdesFallback_ = !acceptedRtcpMux;
-        transportFallbackPending_ = true;
-        runOnMainThread([w = weak()] {
-            if (auto call = w.lock())
-                call->startPendingTransportFallback();
-        });
-    } else if (isIceEnabled()) {
+    if (!requestTransportFallback() && isIceEnabled()) {
         startIceMedia();
     }
+}
+
+bool
+SIPCall::requestTransportFallback()
+{
+    std::lock_guard lk {callMutex_};
+    if (hasExternalMedia())
+        return false;
+    if (transportFallbackPending_)
+        return true;
+    if (!inviteSession_ || !inviteSession_->neg || !sdp_
+        || pjmedia_sdp_neg_get_state(inviteSession_->neg) != PJMEDIA_SDP_NEG_STATE_DONE
+        || !pjmedia_sdp_neg_was_answer_remote(inviteSession_->neg))
+        return false;
+
+    const auto* activeRemoteSession = sdp_->getActiveRemoteSdpSession();
+    if (!activeRemoteSession)
+        return false;
+    const auto acceptedRtcpMux = remoteOfferSupportsRtcpMux(activeRemoteSession);
+    const auto acceptedBundle = acceptedRtcpMux && remoteOfferSupportsBundle(activeRemoteSession);
+    if ((!rtcpMuxEnabled_ || acceptedRtcpMux) && (!bundleEnabled_ || acceptedBundle))
+        return false;
+
+    JAMI_WARNING("[call:{}] Peer rejected the offered media transport; retrying with its negotiated topology",
+                 getCallId());
+    setRtcpMuxEnabled(acceptedRtcpMux);
+    setBundleEnabled(acceptedBundle);
+    legacySdesFallback_ = !acceptedRtcpMux;
+    transportFallbackPending_ = true;
+    runOnMainThread([w = weak()] {
+        if (auto call = w.lock())
+            call->startPendingTransportFallback();
+    });
+    return true;
 }
 
 void

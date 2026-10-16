@@ -106,6 +106,7 @@ DtlsCallTest::setUp()
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
+    add_confirmed_contact(bobId, aliceId);
 }
 
 void
