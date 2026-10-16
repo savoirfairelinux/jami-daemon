@@ -43,6 +43,7 @@ public:
     virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
     virtual void collaborativeDocumentReplicated(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*stored*/){}
+    virtual void feedsChanged(const std::string& /*accountId*/){}
 };
 %}
 
@@ -74,6 +75,14 @@ struct SwarmMessage
   std::map<std::string, std::string> conversationInfos(const std::string& accountId, const std::string& conversationId);
   void setConversationPreferences(const std::string& accountId, const std::string& conversationId, const std::map<std::string, std::string>& prefs);
   std::map<std::string, std::string> getConversationPreferences(const std::string& accountId, const std::string& conversationId);
+
+  // Feeds (owner-published private swarms)
+  std::string createFeed(const std::string& accountId, const std::string& title, const std::string& avatar, bool replies);
+  std::vector<std::map<std::string, std::string>> getFeeds(const std::string& accountId);
+  void refreshFeeds(const std::string& accountId);
+  bool updateFeed(const std::string& accountId, const std::string& feedId, const std::map<std::string, std::string>& settings);
+  bool setFeedAccess(const std::string& accountId, const std::string& feedId, const std::string& contactUri, bool authorized);
+  bool subscribeFeed(const std::string& accountId, const std::string& feedId, bool subscribed);
 
   // Member management
   void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
@@ -139,4 +148,5 @@ public:
     virtual void collaborativeDocumentRemoved(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*everywhere*/){}
     virtual void collaborativeAttachmentAdded(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, const std::string& /*attachmentId*/){}
     virtual void collaborativeDocumentReplicated(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*documentId*/, bool /*stored*/){}
+    virtual void feedsChanged(const std::string& /*accountId*/){}
 };
