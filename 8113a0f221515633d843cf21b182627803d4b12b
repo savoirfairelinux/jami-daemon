@@ -1,6 +1,24 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc307638_54b12847",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-10-16T00:02:52Z",
+      "side": 1,
+      "message": "Done in PS2: narrowed the guard to `if (!packet.size \u0026\u0026 !packet.side_data_elems)`.",
+      "parentUuid": "ed2fcec9_c638e41e",
+      "revId": "8113a0f221515633d843cf21b182627803d4b12b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed2fcec9_c638e41e",
@@ -14,6 +32,24 @@
       "writtenOn": "2026-10-15T23:59:08Z",
       "side": 1,
       "message": "[warning] Line 719: 🟡 `if (!packet.size) return DecodeStatus::Success;` drops all zero-size packets globally, including packets that may carry meaningful side data. Narrow this to the problematic path (e.g., V4L2/NVDEC-corrupted empty buffers) or require both empty payload and no side data before skipping, so decoder state updates are not accidentally lost.",
+      "revId": "8113a0f221515633d843cf21b182627803d4b12b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc9986cb_64b2a316",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-10-16T00:02:52Z",
+      "side": 1,
+      "message": "Done in PS2: removed the first-frame override of videoOpts_.width/height so configured stream dimensions remain authoritative.",
+      "parentUuid": "6c8a4b3b_3432756a",
       "revId": "8113a0f221515633d843cf21b182627803d4b12b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
