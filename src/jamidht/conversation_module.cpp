@@ -2850,13 +2850,8 @@ ConversationModule::onMessageDisplayed(const std::string& peer,
                                        const std::string& conversationId,
                                        const std::string& interactionId)
 {
-    if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::unique_lock lk(conv->mtx);
-        if (auto conversation = conv->conversation) {
-            lk.unlock();
-            return conversation->setMessageDisplayed(peer, interactionId);
-        }
-    }
+    if (auto conv = getConversation(conversationId))
+        return conv->setMessageDisplayed(peer, interactionId);
     return false;
 }
 
