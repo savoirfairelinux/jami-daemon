@@ -5,6 +5,7 @@
 #include <array>
 #include "jami.h"
 #include "manager.h"
+#include "connectivity/sip_utils.h"
 #include "sip/sdp.h"
 #include "sip/sipaccount.h"
 #include "sip/sipvoiplink.h"
@@ -195,6 +196,8 @@ private:
     void remoteSdpKeepsMuxOnRtpPort();
     void remoteSdpParsesTransportCcFeedback();
     void parsesBrowserOfferWithoutSipSession();
+    void publishedIpAcceptsMediaLevelConnections();
+    void publishedIpUpdatesSessionConnection();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxByDefault);
@@ -220,6 +223,8 @@ private:
     CPPUNIT_TEST(remoteSdpKeepsMuxOnRtpPort);
     CPPUNIT_TEST(remoteSdpParsesTransportCcFeedback);
     CPPUNIT_TEST(parsesBrowserOfferWithoutSipSession);
+    CPPUNIT_TEST(publishedIpAcceptsMediaLevelConnections);
+    CPPUNIT_TEST(publishedIpUpdatesSessionConnection);
     CPPUNIT_TEST_SUITE_END();
 
     std::string accountId_ {};
@@ -1294,6 +1299,57 @@ RtcpMuxSdpTest::parsesBrowserOfferWithoutSipSession()
                    != std::string::npos);
     CPPUNIT_ASSERT(!sdp.setReceivedOfferFromExternalSdp("not an SDP"));
     CPPUNIT_ASSERT_EQUAL(std::string("browser"), sdp.getIceAttributes().ufrag);
+}
+
+void
+RtcpMuxSdpTest::publishedIpAcceptsMediaLevelConnections()
+{
+    Sdp sdp("browser-published-address");
+    const std::string offer = "v=0\r\n"
+                              "o=- 1 1 IN IP4 127.0.0.1\r\n"
+                              "s=-\r\n"
+                              "t=0 0\r\n"
+                              "m=audio 9 UDP/TLS/RTP/SAVPF 111\r\n"
+                              "c=IN IP4 192.0.2.10\r\n"
+                              "a=rtpmap:111 opus/48000/2\r\n"
+                              "m=video 9 UDP/TLS/RTP/SAVPF 96\r\n"
+                              "c=IN IP4 192.0.2.11\r\n"
+                              "a=rtpmap:96 H264/90000\r\n";
+    CPPUNIT_ASSERT(sdp.createOfferFromExternalSdp(offer));
+    const auto* session = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(not session->conn);
+    CPPUNIT_ASSERT_EQUAL(2u, session->media_count);
+
+    sdp.setPublishedIP("2001:db8::1", pj_AF_INET6());
+
+    CPPUNIT_ASSERT(not session->conn);
+    CPPUNIT_ASSERT_EQUAL(std::string_view("IP6"), sip_utils::as_view(session->origin.addr_type));
+    CPPUNIT_ASSERT_EQUAL(std::string_view("2001:db8::1"), sip_utils::as_view(session->origin.addr));
+    CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.10"), sip_utils::as_view(session->media[0]->conn->addr));
+    CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.11"), sip_utils::as_view(session->media[1]->conn->addr));
+    CPPUNIT_ASSERT(pjmedia_sdp_validate(session) == PJ_SUCCESS);
+}
+
+void
+RtcpMuxSdpTest::publishedIpUpdatesSessionConnection()
+{
+    Sdp sdp("native-published-address");
+    const std::string offer = "v=0\r\n"
+                              "o=- 1 1 IN IP4 127.0.0.1\r\n"
+                              "s=-\r\n"
+                              "c=IN IP4 127.0.0.1\r\n"
+                              "t=0 0\r\n"
+                              "m=audio 9 RTP/AVP 0\r\n"
+                              "a=rtpmap:0 PCMU/8000\r\n";
+    CPPUNIT_ASSERT(sdp.createOfferFromExternalSdp(offer));
+    const auto* session = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(session->conn);
+
+    sdp.setPublishedIP("192.0.2.1", pj_AF_INET());
+
+    CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.1"), sip_utils::as_view(session->origin.addr));
+    CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.1"), sip_utils::as_view(session->conn->addr));
+    CPPUNIT_ASSERT(pjmedia_sdp_validate(session) == PJ_SUCCESS);
 }
 
 } // namespace test
