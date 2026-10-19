@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a882ce90_514b3484",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 10
+      },
+      "lineNbr": 1095,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:40:34Z",
+      "side": 1,
+      "message": "[warning] Line 1095: 🟡 The interop harness binary is built but not exercised by the test runner. Without a CTest entry invoking `test/webrtc_interop/external_media_interop.js`, regressions in the end-to-end browser/Jami bridge path can pass CI unnoticed. Add a conditional test target (when Node/werift are available) or clearly wire an equivalent CI job.",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a715d61b_fc1978c1",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:40:34Z",
+      "side": 1,
+      "message": "[error] Line 153: 🔴 `setVideoOrientation` can throw through this public API path. `SIPCall::setVideoOrientation` calls `sendSIPInfo`, which throws when the invite dialog is unavailable; here it is called synchronously with no exception handling, so a client request on an early/tearing-down call can terminate the process. Execute on the I/O thread and catch/translate exceptions, returning `false` on failure.",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74280a56_35cdfec0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1675,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:40:34Z",
+      "side": 1,
+      "message": "[error] Line 1675: 🔴 The call state is mutated before external SDP validation succeeds. `externalSdp_`, `enableIce_`, and `rtpStreams_` are changed before `setLocalAnswerFromExternalSdp(sdp)`; if parsing/validation fails, the function returns with the call left in external-media mode and streams cleared, which can prevent any later `acceptWithMedia` recovery. Validate first, then apply these state changes only after success (or rollback on failure).",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
