@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fbb0b164_f9eb129f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3478,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T21:16:07Z",
+      "side": 1,
+      "message": "[warning] Line 3478: 🟡 `externalAudioMuted_` is only updated inside `muteMedia(...)`. If a call is already muted before switching to external media, this field stays at its default (`false`) until the next mute toggle, so `getAudioStreams()` can publish an incorrect mute state. Initialize/synchronize `externalAudioMuted_` when external media is attached (or derive from current audio media attributes) to preserve state across mode transitions.",
+      "revId": "ebf0f9b614315bb8ef0f3aed383a2a80f0a7a97e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f6984fd2_252d60c7",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
