@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4a2ad60_7f9c465c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1892,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:44:46Z",
+      "side": 1,
+      "message": "[error] Line 1892: 🔴 `pjsip_msg_body_create` is fed with `pj_str_t content` pointing to `sdp.data()` from a function parameter (`answerMediaChangeRequestWithExternalSdp`). That buffer lifetime ends when the function returns, but PJSIP message body keeps a pointer, which can cause use-after-free/corrupted SDP on async send. Build the body from storage that outlives the send (e.g., `externalSdp_` after assignment) or duplicate into `tdata-\u003epool` (e.g., `pj_strdup*`) before assigning `tdata-\u003emsg-\u003ebody`.",
+      "revId": "c6aab83b5be22e78aabab8eaeaceb9853b43ee60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
