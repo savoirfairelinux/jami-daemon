@@ -657,6 +657,7 @@ private:
     // SDP session provided by an external media endpoint. When set, the
     // call media is delegated: no local ICE/RTP is created.
     std::string externalSdp_ {};
+    bool externalAudioMuted_ {false};
 
     // Raw remote SDP answer received on the wire for an external-media call.
     // Reported verbatim to the endpoint instead of the pjmedia-negotiated
