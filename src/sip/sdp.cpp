@@ -1138,7 +1138,9 @@ Sdp::setPublishedIP(const std::string& addr, pj_uint16_t addr_type)
         else
             localSession_->origin.addr_type = sip_utils::CONST_PJ_STR("IP4");
         localSession_->origin.addr = sip_utils::CONST_PJ_STR(publishedIpAddr_);
-        localSession_->conn->addr = localSession_->origin.addr;
+        // External SDP may carry connection addresses only at media level.
+        if (localSession_->conn)
+            localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
             JAMI_ERROR("Unable to validate SDP");
     }
