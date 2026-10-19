@@ -853,6 +853,7 @@ Conference::removeSubCall(const std::string& callId)
 #endif // ENABLE_VIDEO
         unbindSubCallAudio(callId);
         call->exitConference();
+        dht::ThreadPool::io().run([call] { call->resetConfInfoIfDetached(); });
         if (call->isPeerRecording())
             call->peerRecording(false);
     }
@@ -1028,8 +1029,10 @@ Conference::sendConferenceInfos()
             return;
 
         dht::ThreadPool::io().run(
-            [call, confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht", call->getPeerNumber())] {
-                call->sendConfInfo(confInfo.toString());
+            [call,
+             conference = weak_from_this(),
+             confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht", call->getPeerNumber())] {
+                call->sendConfInfoIfConference(conference, confInfo.toString());
             });
     });
 

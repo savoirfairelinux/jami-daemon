@@ -4642,6 +4642,7 @@ SIPCall::getDetails() const
 void
 SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
+    std::lock_guard lk {callMutex_};
     JAMI_DEBUG("[call:{}] Entering conference [{}]", getCallId(), conference->getConfId());
     conf_ = conference;
     // Unbind audio. It will be rebinded in the conference if needed
