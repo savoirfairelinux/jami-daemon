@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0d20936_a02dfab1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3474,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T21:12:22Z",
+      "side": 1,
+      "message": "[warning] Line 3474: 🟡 `callMutex_` is now held across `sendMuteState(...)` and `emitSignal(...)` in `muteMedia`. Emitting signals or triggering SIP state updates while holding the call mutex can create lock inversion/re-entrancy deadlocks if callbacks re-enter call accessors. Narrow the lock scope to only mutate/read local state (`externalAudioMuted_`, external-media check), then release before signaling/network side effects.",
+      "revId": "ebf0f9b614315bb8ef0f3aed383a2a80f0a7a97e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6984fd2_252d60c7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3883,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T21:12:22Z",
+      "side": 1,
+      "message": "[warning] Line 3883: 🟡 The external-media branch in `getAudioStreams()` dereferences `sdp_` (`sdp_-\u003egetActiveLocalSdpSession()`) without a local null/validity guard. External media setup can be transitional, so this path can crash if queried before SDP is initialized. Add a defensive check (consistent with surrounding SDP access patterns) and return an empty map when the active local session is unavailable.",
+      "revId": "ebf0f9b614315bb8ef0f3aed383a2a80f0a7a97e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
