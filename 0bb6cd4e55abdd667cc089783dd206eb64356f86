@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "693b3e38_ea489ca0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:36:32Z",
+      "side": 1,
+      "message": "[error] Line 163: 🔴 Outgoing calls enable `rtcpMuxEnabled_` before negotiation is complete, and `getIceCompCountPerStream()` then reduces ICE to one component immediately. If the peer declines `a\u003drtcp-mux` in the answer, this offer path has already committed to 1-component ICE and no separate RTCP transport, which breaks fallback/interop with legacy peers. Keep two-component ICE until mux is actually negotiated (e.g., default `rtcpMuxEnabled_` to false for initial outgoing offer, then switch to true only after remote SDP confirms mux for all enabled media). Apply the same negotiated-state rule to re-INVITEs.",
+      "revId": "0bb6cd4e55abdd667cc089783dd206eb64356f86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1e5957d_1598d85e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1151,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:36:32Z",
+      "side": 1,
+      "message": "[warning] Line 1151: 🟡 `SIPSessionReinvite()` unconditionally resets mux from account preference (`setRtcpMuxEnabled(acc-\u003eisRtcpMuxEnabled())`) instead of current negotiated capability. On established non-mux dialogs this can silently upgrade the next re-INVITE to mux-only transport. Base this on negotiated remote support (or persisted session capability), not only local preference.",
+      "revId": "0bb6cd4e55abdd667cc089783dd206eb64356f86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
