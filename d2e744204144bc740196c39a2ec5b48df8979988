@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0af0c55c_9ac81c22",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1141,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:59:38Z",
+      "side": 1,
+      "message": "[warning] Line 1141: 🟡 `externalHostAudioActive_` is only reset inside `detachHost()` when state is `ACTIVE_ATTACHED`. If `detachHost()` is reached after a state transition, the flag can remain stale-true while host audio is actually gone. Since `Manager::addSubCall()` now gates behavior on `hasExternalHostAudio()`, this can misroute participant-attach behavior. Make the flag reset unconditional during host detach (or derive it from the same synchronized source of truth used for host-audio bindings).",
+      "revId": "d2e744204144bc740196c39a2ec5b48df8979988",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2695e509_caf33de9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 906,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:59:38Z",
+      "side": 1,
+      "message": "[error] Line 906: 🔴 `conferenceSourceRequired_` is set to `true` in `prepareConference()` but never cleared when leaving conference mode (`exitConferenceLocked()` / `stop()`). After a participant exits conference, a later sender restart hits `startSender()`’s guard and fails with \"Conference video source is no longer available\" instead of allowing normal pipeline setup. This creates a deterministic failure path for reused sessions. Clear `conferenceSourceRequired_` when conference ownership is released (or explicitly scope it to active prepared-conference lifetime).",
+      "revId": "d2e744204144bc740196c39a2ec5b48df8979988",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
