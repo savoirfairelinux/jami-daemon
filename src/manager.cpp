@@ -3066,15 +3066,23 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
         const auto& accountBaseDir = fileutils::get_data_dir();
         auto configFile = accountBaseDir / accountId / "config.yml";
         try {
+            auto configNode = YAML::LoadFile(configFile.string());
             if ((account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId))) {
                 account->enableAutoLoadConversations(false);
-                auto configNode = YAML::LoadFile(configFile.string());
                 auto config = account->buildConfig();
                 config->unserialize(configNode);
                 account->setConfig(std::move(config));
             }
         } catch (const std::runtime_error& e) {
             JAMI_WARNING("[account:{}] Failed to load account: {}", accountId, e.what());
+            if (account)
+                accountFactory.removeAccount(*account);
+            return;
+        }
+        auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (jamiAcc && !jamiAcc->accountManager()) {
+            JAMI_WARNING("[account:{}] Failed to load account identity", accountId);
+            accountFactory.removeAccount(*account);
             return;
         }
     }
