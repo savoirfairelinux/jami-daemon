@@ -3471,7 +3471,18 @@ SIPCall::stopAllMedia()
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
+    std::lock_guard lk {callMutex_};
     auto type = MediaAttribute::stringToMediaType(mediaType);
+
+    if (type == MediaType::MEDIA_AUDIO && hasExternalMedia()) {
+        // The browser controls capture. Only publish its mute state; running
+        // requestMediaChange here would try to renegotiate daemon-owned RTP.
+        externalAudioMuted_ = mute;
+        sendMuteState(mute);
+        if (!isSubcall())
+            emitSignal<libjami::CallSignal::AudioMuted>(getCallId(), mute);
+        return;
+    }
 
     if (type == MediaType::MEDIA_AUDIO) {
         JAMI_WARNING("[call:{}] {} all audio media", getCallId(), mute ? "muting " : "unmuting ");
@@ -3869,7 +3880,15 @@ SIPCall::getMediaAttributeList() const
 std::map<std::string, bool>
 SIPCall::getAudioStreams() const
 {
+    std::lock_guard lk {callMutex_};
     std::map<std::string, bool> audioMedias {};
+    if (hasExternalMedia()) {
+        auto medias = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveLocalSdpSession());
+        for (const auto& media : medias)
+            if (media.type_ == MEDIA_AUDIO)
+                audioMedias.emplace(fmt::format("{}_{}", getCallId(), media.label_), externalAudioMuted_);
+        return audioMedias;
+    }
     auto medias = getMediaAttributeList();
     for (const auto& media : medias) {
         if (media.type_ == MEDIA_AUDIO) {
