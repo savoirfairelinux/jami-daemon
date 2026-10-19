@@ -679,4 +679,20 @@ Call::resetConfInfo()
     sendConfInfo("{}");
 }
 
+void
+Call::sendConfInfoIfConference(const std::weak_ptr<Conference>& conference, const std::string& json)
+{
+    std::lock_guard lk(callMutex_);
+    if (auto current = conference.lock(); current && conf_.lock() == current)
+        sendConfInfo(json);
+}
+
+void
+Call::resetConfInfoIfDetached()
+{
+    std::lock_guard lk(callMutex_);
+    if (connectionState_ == ConnectionState::CONNECTED && !isConferenceParticipant())
+        resetConfInfo();
+}
+
 } // namespace jami
