@@ -50,6 +50,74 @@
       "message": "[error] Line 1675: 🔴 The call state is mutated before external SDP validation succeeds. `externalSdp_`, `enableIce_`, and `rtpStreams_` are changed before `setLocalAnswerFromExternalSdp(sdp)`; if parsing/validation fails, the function returns with the call left in external-media mode and streams cleared, which can prevent any later `acceptWithMedia` recovery. Validate first, then apply these state changes only after success (or rollback on failure).",
       "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7085501a_02769998",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 3648,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:43:37Z",
+      "side": 1,
+      "message": "[warning] Line 3648: 🟡 Incoming external-media calls can get duplicate `RemoteSdpReceived` notifications for the initial offer: once in `Manager::processIncomingCall` and again here on initial negotiation completion. This can make clients interpret the second emission as a new offer. Gate this path to re-negotiations (or suppress when the initial incoming offer was already signaled).",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc9eff96_a73a8063",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 4407,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:43:37Z",
+      "side": 1,
+      "message": "[warning] Line 4407: 🟡 `VideoOrientationChanged` emits `getCallId()` directly, which is a subcall ID in forked/multi-device scenarios. Public call signals in this class usually normalize to the parent call ID, and clients track the parent ID from `IncomingCall`/`placeCall`. Emit `parent_-\u003egetCallId()` when `isSubcall()` to keep signal correlation stable.",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cc84135_f891a652",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1384,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:43:37Z",
+      "side": 1,
+      "message": "[error] Line 1384: 🔴 For external-media outgoing calls, remote SDP is captured only from `2xx` INVITE responses. SIP offer/answer allows the answer in reliable provisional responses (e.g. `183` with PRACK), and the final `200` may then contain no SDP; in that valid flow, `RemoteSdpReceived` is never emitted and the external endpoint cannot complete `setRemoteDescription`. Capture the first SDP-bearing INVITE response (provisional or final) once, instead of filtering to `2xx` only.",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb72f38d_4a9f19a6",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T18:43:37Z",
+      "side": 1,
+      "message": "[warning] Line 131: 🟡 The callbacks write shared state (`bobCallId`, `bobRemoteSdp`, `aliceRemoteSdp`, `aliceCallState`) without holding `mtx`, while wait predicates read the same variables under lock. That is a data race (undefined behavior) and can make the test flaky. Protect all reads/writes with the same mutex (or use atomics where appropriate) before `notify_one()`.",
+      "revId": "7a23a0fac714740d071a4b59ce78ca5c2713352d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
