@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a04b3fa_25281d96",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3949,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-19T19:01:31Z",
+      "side": 1,
+      "message": "[error] Line 3949: 🔴 In `onInviteTransactionTerminated(int status)`, `startPendingTransportFallback()` is called while `callMutex_` is still held on the non-promotion path. `startPendingTransportFallback()` follows the usual call-state helpers pattern and takes `callMutex_` internally, so this introduces another self-deadlock path. Unlock before calling it (or split into a `_Locked` variant).",
+      "revId": "d64f150d954682e122bc16bb94afa31889c80ab2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
