@@ -432,7 +432,9 @@ public:
     std::unique_ptr<AudioDeviceGuard> audioGuard;
     void sendConfOrder(const Json::Value& root);
     void sendConfInfo(const std::string& json);
+    void sendConfInfoIfConference(const std::weak_ptr<Conference>& conference, const std::string& json);
     void resetConfInfo();
+    void resetConfInfoIfDetached();
 
     virtual void monitor() const = 0;
 
