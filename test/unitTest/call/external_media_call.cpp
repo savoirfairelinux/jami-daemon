@@ -328,6 +328,22 @@ ExternalMediaCallTest::testOutgoingExternalMediaCall()
 
     auto bobCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(bobCallId));
     CPPUNIT_ASSERT(bobCall);
+    // Browser tracks are muted outside the daemon, but native peers still
+    // need the same SIP mute notification as for daemon-owned capture.
+    for (bool muted : {true, false}) {
+        CPPUNIT_ASSERT(libjami::muteLocalMedia(aliceId, aliceCallId,
+                                             libjami::Media::Details::MEDIA_TYPE_AUDIO, muted));
+        bool received = false;
+        for (unsigned i = 0; i < 100 && !received; ++i) {
+            std::this_thread::sleep_for(100ms);
+            received = bobCall->isPeerMuted() == muted;
+        }
+        CPPUNIT_ASSERT(received);
+        const auto audioStreams = aliceCall->getAudioStreams();
+        CPPUNIT_ASSERT_EQUAL(size_t(1), audioStreams.size());
+        CPPUNIT_ASSERT_EQUAL(muted, audioStreams.begin()->second);
+        CPPUNIT_ASSERT(aliceCall->getRtpSessionList().empty());
+    }
     bool answerReceived = false;
     for (unsigned i = 0; i < 100 and not answerReceived; ++i) {
         std::this_thread::sleep_for(100ms);
