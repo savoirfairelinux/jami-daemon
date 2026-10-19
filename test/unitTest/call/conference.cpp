@@ -196,6 +196,8 @@ private:
     std::string confId {};
     std::vector<std::map<std::string, std::string>> pInfos_ {};
     bool confChanged {false};
+    bool layoutReceived {false};
+    bool layoutCleared {false};
 
     CallData bobCall {};
     CallData carlaCall {};
@@ -581,7 +583,10 @@ void
 ConferenceTest::testBrowserHostedConferenceRetainsLastParticipant()
 {
     auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(bobAccount);
+    registerSignalHandlers();
     auto* module = account->convModule(true);
     CPPUNIT_ASSERT(module);
     const auto conversationId = libjami::startConversation(aliceId);
@@ -595,15 +600,40 @@ ConferenceTest::testBrowserHostedConferenceRetainsLastParticipant()
     CPPUNIT_ASSERT(conference->attachExternalHostAudio(host->getId()));
     CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_ATTACHED);
 
-    auto original = std::make_shared<SIPCall>(account,
-                                              "browser-original-peer",
-                                              Call::CallType::OUTGOING,
-                                              std::vector<libjami::MediaMap> {});
+    auto originalId = libjami::placeCallWithMedia(aliceId, bobAccount->getUsername(), {});
+    CPPUNIT_ASSERT(!originalId.empty());
+    std::string peerCallId;
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+        peerCallId = bobCall.callId;
+    }
+    CPPUNIT_ASSERT(Manager::instance().acceptCall(bobId, peerCallId));
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    }
+    auto original = std::dynamic_pointer_cast<SIPCall>(account->getCall(originalId));
+    CPPUNIT_ASSERT(original);
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> layoutHandlers;
+    layoutHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
+        [this, peerCallId](const std::string& callId,
+                           const std::vector<std::map<std::string, std::string>>& participants) {
+            if (callId != peerCallId)
+                return;
+            std::lock_guard lk(mtx);
+            if (!participants.empty())
+                layoutReceived = true;
+            else if (layoutReceived)
+                layoutCleared = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(layoutHandlers);
+
     auto extra = std::make_shared<SIPCall>(account,
                                            "browser-extra-peer",
                                            Call::CallType::OUTGOING,
                                            std::vector<libjami::MediaMap> {});
-    account->attach(original);
     account->attach(extra);
     conference->subCalls_.insert(original->getCallId());
     conference->subCalls_.insert(extra->getCallId());
@@ -619,10 +649,20 @@ ConferenceTest::testBrowserHostedConferenceRetainsLastParticipant()
     CPPUNIT_ASSERT(conference->getState() == Conference::State::ACTIVE_ATTACHED);
     CPPUNIT_ASSERT(conference->hasExternalHostAudio());
 
+    conference->sendConferenceInfos();
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return layoutReceived; }));
+    }
     Manager::instance().removeParticipant(*original);
     CPPUNIT_ASSERT(!account->getConference(conferenceId));
+    {
+        std::unique_lock lk(mtx);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return layoutCleared; }));
+    }
+    CPPUNIT_ASSERT(Manager::instance().hangupCall(aliceId, originalId));
     account->detach(extra);
-    account->detach(original);
+    libjami::unregisterSignalHandlers();
 }
 
 #ifdef ENABLE_VIDEO
@@ -762,6 +802,8 @@ ConferenceTest::setUp()
     daviCall.reset();
     confId = {};
     confChanged = false;
+    layoutReceived = false;
+    layoutCleared = false;
     hostRecording = false;
 }
 
