@@ -34,6 +34,24 @@
       "parentUuid": "d72ed877_0980ea2e",
       "revId": "f5b48dd9f0f35c1d1a07eb994e32edcac2b3f216",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d0bb560_7731ff20",
+        "filename": "BUILD.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Done: the command now pins -G \"Visual Studio 17 2022\" -A x64, matching contrib/vcpkg/README.md.",
+      "parentUuid": "d72ed877_0980ea2e",
+      "revId": "f5b48dd9f0f35c1d1a07eb994e32edcac2b3f216",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
