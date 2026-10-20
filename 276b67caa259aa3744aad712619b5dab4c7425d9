@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39188ae0_4b4f030e",
+        "filename": "contrib/src/ffmpeg/windows-configure.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T15:42:36Z",
+      "side": 1,
+      "message": "[error] Line 14: 🔴 `require_pkg_config()` is globally neutered by commenting out `check_pkg_config ... || die ...`. This converts hard dependency checks into silent success for every pkg-config-gated library, which can produce misconfigured binaries or late link/runtime failures that are hard to diagnose (and can mask missing security-related libs). Keep this override narrowly scoped to the specific Windows-only problematic deps (as done in `windows-configure-ffnvcodec.patch`) instead of disabling the core guardrail globally.",
+      "revId": "276b67caa259aa3744aad712619b5dab4c7425d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
