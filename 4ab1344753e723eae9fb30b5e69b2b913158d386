@@ -16,6 +16,24 @@
       "message": "[warning] Line 187: 🟡 The `@WITH_THEORA@` handling block is duplicated (already present at lines 157-164, repeated again at 187-194). This appends `PkgConfig::theora` and adds `target_link_libraries()` twice, which needlessly duplicates link inputs and can destabilize static link order on some toolchains. Keep a single `WITH_THEORA` block and remove the duplicate section.",
       "revId": "4ab1344753e723eae9fb30b5e69b2b913158d386",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e889e144_3aa34813",
+        "filename": "contrib/vcpkg/ports/ffmpeg/vcpkg-cmake-wrapper.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:52:40Z",
+      "side": 1,
+      "message": "Upstream vcpkg\u0027s wrapper has the same duplicated block (verified against microsoft/vcpkg master); this overlay keeps the file identical to upstream to ease rebasing onto newer ports, and theora is not enabled in our manifest so the block is inert.",
+      "parentUuid": "e9f10e39_0f54cc5b",
+      "revId": "4ab1344753e723eae9fb30b5e69b2b913158d386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
