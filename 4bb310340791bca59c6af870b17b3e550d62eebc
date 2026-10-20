@@ -33,6 +33,57 @@
       "message": "[error] Line 1137: 🔴 `av_assert0(n_planes \u003c\u003d AV_DRM_MAX_PLANES)` can abort the whole process on malformed/unexpected PipeWire input. This is externally supplied data, so this must be a runtime validation path instead of a hard assert. Replace with an explicit bounds check, log an error, recycle the buffer, and return to avoid a crash/DoS vector.",
       "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "38d91098_89f0aa69",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 1276,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T16:40:15Z",
+      "side": 1,
+      "message": "[error] Line 1276: 🔴 `memcpy(..., row_size)` uses negotiated width while source stride comes from PipeWire metadata, but there is no validation that `chunk-\u003estride` is positive and at least `row_size`, nor that `offset + stride * (height-1) + row_size` stays within the mapped buffer. A malformed/buggy producer can trigger out-of-bounds reads. Add explicit bounds checks before copying and drop/recycle the frame on invalid geometry.",
+      "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83e0767b_0b409553",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 1360,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T16:40:15Z",
+      "side": 1,
+      "message": "[warning] Line 1360: 🟡 `subscribe_to_signal` leaks `dbus_signal_data` when `sd_bus_match_signal` fails, and it does not handle `av_asprintf` failure for `request_path`. Add allocation checks and free both `request_path` and `dbus_signal_data` on all error exits before returning the failure code.",
+      "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4dfd8e7e_facf47fa",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 1476,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T16:40:15Z",
+      "side": 1,
+      "message": "[warning] Line 1476: 🟡 `params \u003d av_mallocz(...)` is used without a NULL check and is never freed on either success or failure paths, which can crash on OOM and leaks memory during init retries. Check allocation result, propagate `AVERROR(ENOMEM)` on failure, and `av_free(params)` after `pw_stream_connect` (and in `fail:`).",
+      "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
