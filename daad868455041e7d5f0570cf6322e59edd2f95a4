@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a89defb3_018d9133",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:51Z",
+      "side": 1,
+      "message": "This is upstream vcpkg\u0027s shiftmedia-libgnutls portfile unchanged: vcpkg_fixup_pkgconfig() rewrites ${CURRENT_INSTALLED_DIR} into a ${pcfiledir}-relative prefix, and the wrapper lives under share/gnutls because vcpkg looks wrappers up by find_package() name (GnuTLS), not by port name.",
+      "parentUuid": "d17a9625_1fbb0823",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56269b37_903368f0",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-10-06T19:36:01Z",
       "side": 1,
       "message": "vcpkg\u0027s find_package override looks up share/\u003clowercased find_package name\u003e/vcpkg-cmake-wrapper.cmake (scripts/buildsystems/vcpkg.cmake), i.e. share/gnutls for find_package(GnuTLS), not the port name. share/gnutls is correct.",
+      "parentUuid": "56269b37_903368f0",
+      "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bdff80de_4f970b06",
+        "filename": "contrib/vcpkg/ports/shiftmedia-libgnutls/portfile.cmake",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:51Z",
+      "side": 1,
+      "message": "This is upstream vcpkg\u0027s shiftmedia-libgnutls portfile unchanged: vcpkg_fixup_pkgconfig() rewrites ${CURRENT_INSTALLED_DIR} into a ${pcfiledir}-relative prefix, and the wrapper lives under share/gnutls because vcpkg looks wrappers up by find_package() name (GnuTLS), not by port name.",
       "parentUuid": "56269b37_903368f0",
       "revId": "daad868455041e7d5f0570cf6322e59edd2f95a4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
