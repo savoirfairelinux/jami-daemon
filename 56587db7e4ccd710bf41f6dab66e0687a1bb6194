@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fbd272d_fb4d987a",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "The triplet is a CACHE default (contrib/vcpkg/settings.cmake), so -DVCPKG_TARGET_TRIPLET\u003d overrides it; deps are release-only by design, matching what the contrib build does today.",
+      "parentUuid": "49f0d90f_59c6cd8d",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fde091a1_547081bb",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-10-06T19:36:01Z",
       "side": 1,
       "message": "Intentional. VCPKG_TOOLCHAIN is set by vcpkg.cmake during project(), so it can\u0027t be used before project(); the early regex only sets manifest/triplet defaults. After project(), VCPKG_TOOLCHAIN is the authoritative signal. Reusing the regex result would be wrong for a wrapper toolchain that includes vcpkg.cmake: vcpkg would be active but winmake.py would still run.",
+      "parentUuid": "fde091a1_547081bb",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed01d9b4_4b1f9f21",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "settings.cmake runs before project(), where the toolchain is not loaded yet, so it must match on the file name; everything after project() uses VCPKG_TOOLCHAIN, which vcpkg.cmake sets unconditionally. Both are needed.",
       "parentUuid": "fde091a1_547081bb",
       "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
@@ -106,6 +142,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1128e516_712a718c",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "pkgconf is a host dependency in contrib/vcpkg/vcpkg.json and vcpkg.cmake puts installed/\u003chost\u003e/tools/* on CMAKE_PROGRAM_PATH, which find_program searches before PATH, so the vcpkg tool wins.",
+      "parentUuid": "924dfbe4_f3db0280",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddcae61d_50f9ee69",
@@ -136,6 +190,24 @@
       "writtenOn": "2026-10-07T20:14:21Z",
       "side": 1,
       "message": "Done in https://review.jami.net/c/jami-daemon/+/36436: the lookup is now gated by MSVC AND VCPKG_TOOLCHAIN.",
+      "parentUuid": "ddcae61d_50f9ee69",
+      "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "914034bb_22f4e74c",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Done since ps3: gated on MSVC AND VCPKG_TOOLCHAIN.",
       "parentUuid": "ddcae61d_50f9ee69",
       "revId": "56587db7e4ccd710bf41f6dab66e0687a1bb6194",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
