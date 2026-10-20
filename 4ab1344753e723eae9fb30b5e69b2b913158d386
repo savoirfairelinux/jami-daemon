@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e9ea2544_023d82fe",
+        "filename": "contrib/vcpkg/ports/ffmpeg/FindFFMPEG.cmake.in",
+        "patchSetId": 6
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:37:57Z",
+      "side": 1,
+      "message": "[warning] Line 68: 🟡 `append_dependencies()` always calls `find_library(... REQUIRED)` right after the `NO_DEFAULT_PATH` lookup, so a dependency found in `${CURRENT_INSTALLED_DIR}` can be overwritten by a system copy. This can silently mix vcpkg and non-vcpkg libs (or pick wrong debug/release variants). Guard the fallback lookup with `if(NOT FFMPEG_DEPENDENCY_${lib_name}_${config})` before the second `find_library` call.",
+      "revId": "4ab1344753e723eae9fb30b5e69b2b913158d386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d3cb73bc_9980487b",
+        "filename": "contrib/vcpkg/ports/ffmpeg/build.sh.in",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:37:57Z",
+      "side": 1,
+      "message": "[warning] Line 43: 🟡 The binary iteration uses command substitution (`for BINARY in $(find . -type f)`) and later executes an unquoted assembled command string. This is fragile for paths containing spaces/special chars and can break universal-binary merging on valid filesystem layouts. Iterate with `find ... -print0` + `while IFS\u003d read -r -d \u0027\u0027` and invoke `lipo` directly with quoted args/arrays.",
+      "revId": "4ab1344753e723eae9fb30b5e69b2b913158d386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e9f10e39_0f54cc5b",
         "filename": "contrib/vcpkg/ports/ffmpeg/vcpkg-cmake-wrapper.cmake",
         "patchSetId": 6
