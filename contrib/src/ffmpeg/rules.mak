@@ -24,6 +24,8 @@ ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
 ifndef DISABLE_PIPEWIRE
 FFMPEGCONF += --enable-libpipewire \
+              --enable-libdrm \
+              --enable-libsystemd \
               --enable-filter=pipewiregrab \
               --enable-indev=lavfi \
               --enable-decoder=wrapped_avframe
