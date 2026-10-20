@@ -16,6 +16,24 @@
       "message": "[warning] Line 60: 🟡 The build example uses `%VCPKG_ROOT%` but this variable is never set in the documented flow (BUILD.md uses `C:\\vcpkg` directly). This can make the command fail for users who copy-paste it verbatim. Either add an explicit `set VCPKG_ROOT\u003dC:\\vcpkg` step or switch the example to the same absolute path style used in BUILD.md to keep instructions deterministic.",
       "revId": "0d42eb3273801499dd9bc6888db411c714cc53af",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5ab70ad_e4c99089",
+        "filename": "contrib/vcpkg/README.md",
+        "patchSetId": 6
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:52:40Z",
+      "side": 1,
+      "message": "%VCPKG_ROOT% is the placeholder used consistently throughout this README from the first command (git clone ... %VCPKG_ROOT%), so a reader following the flow has it set; BUILD.md is the quick-start path and uses a concrete directory.",
+      "parentUuid": "88728b9b_c7a27233",
+      "revId": "0d42eb3273801499dd9bc6888db411c714cc53af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
