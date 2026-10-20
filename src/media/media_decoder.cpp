@@ -117,6 +117,11 @@ MediaDemuxer::openInput(const DeviceParams& params)
         // library), its options must all be passed as part of the `input` string.
         //
         input = fmt::format("pipewiregrab=draw_mouse=1:fd={}:node={}", params.fd, params.node);
+        const auto* filter = avfilter_get_by_name("pipewiregrab");
+        const AVClass* filterClass = filter ? filter->priv_class : nullptr;
+        // Preview and software screen-share encoding need CPU-readable buffers.
+        if (filterClass && av_opt_find(&filterClass, "enable_dmabuf", nullptr, 0, AV_OPT_SEARCH_FAKE_OBJ))
+            input += ":enable_dmabuf=0";
         JAMI_LOG("Attempting to open input {}", input);
         //
         // In all other cases, we use the `options_` AVDictionary to pass options to FFmpeg.
