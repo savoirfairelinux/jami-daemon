@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76fe8a34_b93ecc71",
+        "filename": "contrib/vcpkg/ports/pjproject/portfile.cmake",
+        "patchSetId": 7
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:31:38Z",
+      "side": 1,
+      "message": "[warning] Line 26: 🟡 The `vcpkg_replace_string` match for the GnuTLS autolink pragma is whitespace-exact (`#  pragma ...`) and brittle to upstream formatting changes. Use a less fragile replacement (e.g., patching the file or matching the pragma token without hardcoded spacing) so future upstream syncs don\u0027t silently reintroduce `libgnutls.lib` linkage issues.",
+      "revId": "96ef9b5c1a914da9e7ee3e0ca9cc17ca6af87429",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4d34137_664bde01",
+        "filename": "contrib/vcpkg/ports/pjproject/vcpkg.json",
+        "patchSetId": 7
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:31:38Z",
+      "side": 1,
+      "message": "[warning] Line 8: 🟡 `supports` excludes `arm64`, which unnecessarily blocks Windows ARM64 consumers even though the portfile already parameterizes `PLATFORM` from the triplet. If ARM64 is actually unsupported, add an explicit build-time guard/error with rationale; otherwise remove `!arm64` to keep package availability aligned with vcpkg triplets.",
+      "revId": "96ef9b5c1a914da9e7ee3e0ca9cc17ca6af87429",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
