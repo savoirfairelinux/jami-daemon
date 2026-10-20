@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libasio-dev \
     libasound2-dev \
     libdbus-1-dev \
+    libdrm-dev \
     libexpat1-dev \
     libgmp-dev \
     nettle-dev \
