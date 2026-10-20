@@ -44,6 +44,11 @@ finds via pkg-config.
 - libxcb, libx11, libxext, libxfixes
 - lttng-ust *(optional)*
 
+Wayland screen capture requires the system development packages for libdrm,
+PipeWire >= 0.3.40, and libsystemd >= 246. On Debian/Ubuntu, install
+`libdrm-dev libpipewire-0.3-dev libsystemd-dev` before building the FFmpeg
+contrib. These libraries are not built by the FFmpeg contrib recipe.
+
 **macOS**
 
 - Xcode command line tools
