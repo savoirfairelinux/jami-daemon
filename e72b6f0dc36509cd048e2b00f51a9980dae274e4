@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21d20367_ffea5dce",
+        "filename": "contrib/vcpkg/ports/dhtnet/portfile.cmake",
+        "patchSetId": 7
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:12:33Z",
+      "side": 1,
+      "message": "[error] Line 3: 🔴 **Version drift in the new overlay port.** `DHTNET_REF` is pinned to `7e6324f...`, but this patchset updates contrib’s canonical dhtnet pin to `01333a9...` (`contrib/src/dhtnet/{package.json,rules.mak}`). That means MSVC/vcpkg builds will compile a different dhtnet revision than the rest of contrib, risking behavior divergence and hard-to-reproduce bugs. Please align the vcpkg port to the same dhtnet commit (and update the SHA512 accordingly), or explicitly document and justify a deliberate split pin.",
+      "revId": "e72b6f0dc36509cd048e2b00f51a9980dae274e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
