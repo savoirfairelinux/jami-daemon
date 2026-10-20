@@ -19,7 +19,9 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
 #include <cstdlib>
+#include <iostream>
 
 #include "jami.h"
 #include "fileutils.h"
@@ -53,6 +55,9 @@ private:
     void testVP8DynamicBitrate();
     void testVP8BitrateKeepsResolution();
     void testVideoToolboxLiveBitrateAndResizeRequiresRestart();
+    void testHardwareEncodingScalesSoftwareFrames();
+    void testHardwareEncodingScalesUnlinkedFrames();
+    void checkHardwareEncodingScaling(bool hardwareInput);
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
@@ -63,9 +68,14 @@ private:
     CPPUNIT_TEST(testVP8DynamicBitrate);
     CPPUNIT_TEST(testVP8BitrateKeepsResolution);
     CPPUNIT_TEST(testVideoToolboxLiveBitrateAndResizeRequiresRestart);
+    CPPUNIT_TEST(testHardwareEncodingScalesSoftwareFrames);
+    CPPUNIT_TEST(testHardwareEncodingScalesUnlinkedFrames);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaIOHandle> ioContext_;
+    size_t encodedBytes_ {};
+    std::vector<uint32_t> timestamps_;
     std::vector<std::string> files_;
 };
 
@@ -76,6 +86,8 @@ MediaEncoderTest::setUp()
 {
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
+    encodedBytes_ = 0;
+    timestamps_.clear();
     encoder_.reset(new MediaEncoder);
     files_.push_back("test.mkv");
 }
@@ -83,6 +95,9 @@ MediaEncoderTest::setUp()
 void
 MediaEncoderTest::tearDown()
 {
+    // Encoder teardown writes a trailer through the I/O callbacks.
+    encoder_.reset();
+    ioContext_.reset();
     // clean up behind ourselves
     for (const auto& file : files_)
         dhtnet::fileutils::remove(file);
@@ -242,6 +257,82 @@ MediaEncoderTest::testMultiStream()
 }
 
 void
+MediaEncoderTest::testHardwareEncodingScalesSoftwareFrames()
+{
+    checkHardwareEncodingScaling(false);
+}
+
+void
+MediaEncoderTest::testHardwareEncodingScalesUnlinkedFrames()
+{
+    checkHardwareEncodingScaling(true);
+}
+
+void
+MediaEncoderTest::checkHardwareEncodingScaling(bool hardwareInput)
+{
+#if defined(ENABLE_HWACCEL) && defined(__linux__)
+    constexpr int width = 800;
+    constexpr int height = 600;
+    auto accelerators = video::HardwareAccel::getCompatibleAccel(AV_CODEC_ID_H264, width, height, CODEC_ENCODER);
+    auto vaapi = std::find_if(accelerators.begin(), accelerators.end(), [](const auto& accelerator) {
+        return accelerator.getName() == "vaapi";
+    });
+    if (vaapi == accelerators.end() || vaapi->initAPI(false, nullptr) < 0) {
+        std::cerr << "Skipping hardware scaling test: VA-API device unavailable\n";
+        return;
+    }
+
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<SystemVideoCodecInfo>(codecs->searchCodecByName("H264", MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    for (auto format : {AV_PIX_FMT_YUVJ422P, AV_PIX_FMT_NV12}) {
+        if (hardwareInput && format != AV_PIX_FMT_NV12)
+            continue;
+        auto input = std::make_shared<VideoFrame>();
+        input->reserve(format, width, height);
+        libav_utils::fillWithBlack(input->pointer());
+        input->pointer()->data[0][0] = 76;
+        if (hardwareInput) {
+            input = vaapi->transfer(*input);
+            CPPUNIT_ASSERT(input);
+        }
+
+        for (int bitrate : {800, 1200}) {
+            size_t encodedBytes = 0;
+            MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+            MediaEncoder encoder;
+            encoder.enableAccel(true);
+            encoder.openOutput("rtp://127.0.0.1:5004", "rtp");
+            encoder.setIOContext(ioContext.getContext());
+            encoder.setOptions(MediaStream("v", format, rational<int>(1, 30), width, height, bitrate, 30));
+            int videoIdx = encoder.addStream(*h264Codec);
+            CPPUNIT_ASSERT(videoIdx >= 0);
+            CPPUNIT_ASSERT_EQUAL(bitrate == 800 ? 640 : width, encoder.getWidth());
+            CPPUNIT_ASSERT_EQUAL(bitrate == 800 ? 480 : height, encoder.getHeight());
+            for (int frame = 0; frame < 4; ++frame) {
+                int result = encoder.encode(input, frame == 0, frame);
+                if (encoder.getStream("v", videoIdx).format != AV_PIX_FMT_NV12) {
+                    std::cerr << "Skipping hardware scaling test: H264 hardware encoder unavailable\n";
+                    return;
+                }
+                CPPUNIT_ASSERT_MESSAGE("Hardware upload must match the encoder resolution", result >= 0);
+            }
+            CPPUNIT_ASSERT(encoder.flush() >= 0);
+            CPPUNIT_ASSERT(encodedBytes > 0);
+            if (!hardwareInput)
+                CPPUNIT_ASSERT_EQUAL(76, static_cast<int>(input->pointer()->data[0][0]));
+        }
+    }
+#else
+    (void) hardwareInput;
+    std::cerr << "Skipping hardware scaling test: Linux hardware acceleration required\n";
+#endif
+}
+
+void
 MediaEncoderTest::testH264DynamicBitrate()
 {
     const constexpr int width = 320;
@@ -256,10 +347,9 @@ MediaEncoderTest::testH264DynamicBitrate()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -291,10 +381,9 @@ MediaEncoderTest::testH264BitrateKeepsResolution()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -331,10 +420,10 @@ MediaEncoderTest::testPassthroughPacketRtpTimestamps()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 800, 30);
 
     try {
-        std::vector<uint32_t> timestamps;
-        MediaIOHandle ioContext(4096, true, nullptr, collectRtpTimestamps, nullptr, &timestamps);
+        auto& timestamps = timestamps_;
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, collectRtpTimestamps, nullptr, &timestamps);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -383,10 +472,9 @@ MediaEncoderTest::testPassthroughBitrateChangeKeepsStream()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 800, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -458,10 +546,9 @@ MediaEncoderTest::testVP8BitrateKeepsResolution()
     auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(v);
         int videoIdx = encoder_->addStream(*vp8Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
@@ -511,11 +598,10 @@ MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        size_t encodedBytes = 0;
-        MediaIOHandle ioContext(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes);
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
         encoder_->enableAccel(true);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
-        encoder_->setIOContext(ioContext.getContext());
+        encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);

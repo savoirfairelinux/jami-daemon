@@ -1443,7 +1443,7 @@ MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
     if (!accel_) {
         framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
     } else {
-        framePtr = accel_->transfer(*framePtr);
+        framePtr = getHWFrameFromSWFrame(*framePtr);
     }
     return framePtr;
 }
@@ -1453,13 +1453,14 @@ MediaEncoder::getHWFrameFromSWFrame(const VideoFrame& input)
 {
     std::shared_ptr<VideoFrame> framePtr;
     auto pix = accel_->getSoftwareFormat();
-    if (input.format() != pix) {
+    if (input.width() != videoOpts_.width || input.height() != videoOpts_.height) {
+        framePtr = getScaledSWFrame(input);
+    } else if (input.format() != pix) {
         framePtr = scaler_.convertFormat(input, pix);
-        framePtr = accel_->transfer(*framePtr);
     } else {
-        framePtr = accel_->transfer(input);
+        return accel_->transfer(input);
     }
-    return framePtr;
+    return accel_->transfer(*framePtr);
 }
 #endif
 
