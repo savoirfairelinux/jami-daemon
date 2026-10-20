@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "02220237_679738ce",
+        "filename": "contrib/vcpkg/ports/pjproject/portfile.cmake",
+        "patchSetId": 7
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T22:06:07Z",
+      "side": 1,
+      "message": "The source is pinned by REF/SHA512, so the file cannot drift without a deliberate bump, and vcpkg_replace_string warns when the match is not found, which is exactly the signal wanted on a bump.",
+      "parentUuid": "76fe8a34_b93ecc71",
+      "revId": "96ef9b5c1a914da9e7ee3e0ca9cc17ca6af87429",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e4d34137_664bde01",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-20T21:31:38Z",
       "side": 1,
       "message": "[warning] Line 8: 🟡 `supports` excludes `arm64`, which unnecessarily blocks Windows ARM64 consumers even though the portfile already parameterizes `PLATFORM` from the triplet. If ARM64 is actually unsupported, add an explicit build-time guard/error with rationale; otherwise remove `!arm64` to keep package availability aligned with vcpkg triplets.",
+      "revId": "96ef9b5c1a914da9e7ee3e0ca9cc17ca6af87429",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c70f9f28_5ed83020",
+        "filename": "contrib/vcpkg/ports/pjproject/vcpkg.json",
+        "patchSetId": 7
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T22:06:07Z",
+      "side": 1,
+      "message": "Keeping !arm64: it was added at review request on ps6 since the MSVC solution build is untested on ARM64. Removing it again would reintroduce the earlier concern; it can be lifted once validated.",
+      "parentUuid": "e4d34137_664bde01",
       "revId": "96ef9b5c1a914da9e7ee3e0ca9cc17ca6af87429",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
