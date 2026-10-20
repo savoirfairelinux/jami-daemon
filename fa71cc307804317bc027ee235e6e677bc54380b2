@@ -16,6 +16,24 @@
       "message": "[error] Line 67: 🔴 `merge_binaries()` invokes lipo with command substitution (`$($COMMAND)`), which executes *lipo’s stdout* as a new command instead of executing the lipo command itself. In the normal case this yields an empty command and fails under `set -e`, breaking multi-arch/macOS universal builds. Run lipo directly (e.g. `eval \"$COMMAND\"`, or preferably avoid string-eval and call `lipo -create -output ...` with proper quoting).",
       "revId": "fa71cc307804317bc027ee235e6e677bc54380b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8de1df6_341e94de",
+        "filename": "contrib/vcpkg/ports/ffmpeg/build.sh.in",
+        "patchSetId": 5
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:51Z",
+      "side": 1,
+      "message": "Done: lipo is now run directly (this was inherited verbatim from upstream vcpkg\u0027s port).",
+      "parentUuid": "814ac343_e57d735d",
+      "revId": "fa71cc307804317bc027ee235e6e677bc54380b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
