@@ -1116,6 +1116,7 @@ if(NOT MSVC)
             target_compile_definitions(ut_media_decoder PRIVATE JAMI_TEST_WRAP_AVFORMAT_OPEN_INPUT)
             target_link_options(ut_media_decoder PRIVATE
                 "LINKER:--wrap=avformat_open_input"
+                "LINKER:--wrap=avfilter_get_by_name"
                 "LINKER:--wrap=av_read_frame"
                 "LINKER:--wrap=av_gettime_relative"
                 "LINKER:--wrap=nanosleep")

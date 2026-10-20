@@ -48,9 +48,32 @@ struct OpenInputCall
     int flags;
     AVIOInterruptCB interrupt;
     const AVInputFormat* format;
+    std::string input;
 };
 
 std::vector<OpenInputCall> openInputCalls;
+
+constexpr AVOption pipewireOptions[] = {{"enable_dmabuf", nullptr, 0, AV_OPT_TYPE_BOOL, {.i64 = 1}, 0, 1, 0, nullptr},
+                                        {}};
+constexpr AVOption legacyPipewireOptions[] = {{}};
+
+struct PipewireFilterProbe;
+thread_local PipewireFilterProbe* pipewireFilterProbe {};
+
+struct PipewireFilterProbe
+{
+    explicit PipewireFilterProbe(bool supportsDmaBuf)
+    {
+        filterClass.option = supportsDmaBuf ? pipewireOptions : legacyPipewireOptions;
+        filter.priv_class = &filterClass;
+        pipewireFilterProbe = this;
+    }
+
+    ~PipewireFilterProbe() { pipewireFilterProbe = nullptr; }
+
+    AVClass filterClass {};
+    AVFilter filter {};
+};
 
 struct CaptureReadProbe;
 thread_local CaptureReadProbe* captureReadProbe {};
@@ -95,15 +118,25 @@ __wrap_avformat_open_input(AVFormatContext** ctx, const char* url, const AVInput
         (*ctx)->iformat = &captureReadProbe->format;
         return 0;
     }
-    if (!url || std::string_view(url) != testInput)
+    if (!url || (std::string_view(url) != testInput && !std::string_view(url).starts_with("pipewiregrab=")))
         return __real_avformat_open_input(ctx, url, format, options);
 
     openInputCalls.push_back(
-        {*ctx != nullptr, *ctx ? (*ctx)->flags : 0, *ctx ? (*ctx)->interrupt_callback : AVIOInterruptCB {}, format});
+        {*ctx != nullptr, *ctx ? (*ctx)->flags : 0, *ctx ? (*ctx)->interrupt_callback : AVIOInterruptCB {}, format, url});
     // Model FFmpeg's failed-open ownership contract without opening any device.
     avformat_free_context(*ctx);
     *ctx = nullptr;
     return AVERROR(EBUSY);
+}
+
+extern "C" const AVFilter* __real_avfilter_get_by_name(const char*);
+
+extern "C" const AVFilter*
+__wrap_avfilter_get_by_name(const char* name)
+{
+    if (pipewireFilterProbe && std::string_view(name) == "pipewiregrab")
+        return &pipewireFilterProbe->filter;
+    return __real_avfilter_get_by_name(name);
 }
 
 extern "C" int __real_av_read_frame(AVFormatContext*, AVPacket*);
@@ -166,6 +199,8 @@ private:
     void testV4L2RetryNonBlocking();
     void testOpenRetryInterruptCallback();
     void testNonV4L2FlagsUnchanged();
+    void testPipewireSharedMemoryCapture();
+    void testLegacyPipewireCapture();
     void testV4L2NoFramePacing();
     void testV4L2StalledFramePacing();
     void testV4L2UnknownRatePacing();
@@ -188,6 +223,8 @@ private:
     CPPUNIT_TEST(testV4L2RetryNonBlocking);
     CPPUNIT_TEST(testOpenRetryInterruptCallback);
     CPPUNIT_TEST(testNonV4L2FlagsUnchanged);
+    CPPUNIT_TEST(testPipewireSharedMemoryCapture);
+    CPPUNIT_TEST(testLegacyPipewireCapture);
     CPPUNIT_TEST(testV4L2NoFramePacing);
     CPPUNIT_TEST(testV4L2StalledFramePacing);
     CPPUNIT_TEST(testV4L2UnknownRatePacing);
@@ -433,6 +470,37 @@ MediaDecoderTest::testNonV4L2FlagsUnchanged()
             CPPUNIT_ASSERT_EQUAL(defaultFlags, call.hasContext ? call.flags : defaultFlags);
         }
     }
+}
+
+void
+MediaDecoderTest::testPipewireSharedMemoryCapture()
+{
+    PipewireFilterProbe probe(true);
+    MediaDemuxer demuxer;
+    DeviceParams params;
+    params.input = "pipewiregrab";
+    params.format = "lavfi";
+    params.fd = 17;
+    params.node = "42";
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EBUSY), demuxer.openInput(params));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), openInputCalls.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("pipewiregrab=draw_mouse=1:fd=17:node=42:enable_dmabuf=0"),
+                         openInputCalls.front().input);
+}
+
+void
+MediaDecoderTest::testLegacyPipewireCapture()
+{
+    PipewireFilterProbe probe(false);
+    MediaDemuxer demuxer;
+    DeviceParams params;
+    params.input = "pipewiregrab";
+    params.format = "lavfi";
+    params.fd = 17;
+    params.node = "42";
+    CPPUNIT_ASSERT_EQUAL(AVERROR(EBUSY), demuxer.openInput(params));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), openInputCalls.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("pipewiregrab=draw_mouse=1:fd=17:node=42"), openInputCalls.front().input);
 }
 
 void
