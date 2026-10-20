@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea0b0618_a82dd9a7",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Done: the baseline is validated against /[0-9a-f]{40}/ before use.",
+      "parentUuid": "82f1290c_859fd644",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "04cc491c_145f87e8",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-10-07T19:56:01Z",
       "side": 1,
       "message": "No change. Measured on the builder: clone + checkout + bootstrap take 13 s, against ~2 min warm and ~30 min cold builds. The builtin registry resolves versions through the clone\u0027s git objects, so a shallow fetch would trade a few seconds for a fragile setup.",
+      "parentUuid": "04cc491c_145f87e8",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ce18df3_51f74401",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "A full clone is intentional: vcpkg\u0027s versioning database refers to git-tree objects from vcpkg history, which a shallow fetch of the baseline commit alone does not guarantee to contain.",
       "parentUuid": "04cc491c_145f87e8",
       "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
@@ -119,6 +155,42 @@
       "writtenOn": "2026-10-07T20:39:34Z",
       "side": 1,
       "message": "No change. The job exists to build changed contrib, so review builds must be able to write their results. Archives are keyed by the ABI hash of the port files and toolchain, so a change that edits a port writes new keys and cannot replace existing ones by accident. A deliberately malicious build already runs arbitrary code on the agent and could write the directory whatever vcpkg is told, so a read-only source would not add isolation.",
+      "parentUuid": "66b282a5_42bca6ae",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dcc47bf9_1aecf44e",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Resolving as discussed above: this cache is only consumed by this CI job (not by packaging/release builds), and a read-only source would not isolate anything since the build under test already runs code on the agent.",
+      "parentUuid": "b1690ffd_ca9a95c2",
+      "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9bbcc527_c3e9c6ac",
+        "filename": "Jenkinsfile.msvc",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Resolving as discussed above: this cache is only consumed by this CI job (not by packaging/release builds), and a read-only source would not isolate anything since the build under test already runs code on the agent.",
       "parentUuid": "66b282a5_42bca6ae",
       "revId": "44269344a59c63bdba883667c85a5d0138b6359f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
