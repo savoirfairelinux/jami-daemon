@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43bc7406_c4e21d66",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 911,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T16:38:42Z",
+      "side": 1,
+      "message": "[error] Line 911: 🔴 `pw_ctx-\u003eframe_size \u003d pw_ctx-\u003ewidth * pw_ctx-\u003eheight * pw_ctx-\u003eBpp;` performs arithmetic on 32-bit operands before assignment, so very large negotiated dimensions can overflow before the later size check. The same pattern appears in DMA size computation (`offset + pitch * height`). Use checked/widened arithmetic (`size_t` casts before multiply/add plus overflow guards, or FFmpeg size helpers) and reject invalid dimensions early to prevent undersized allocations/metadata and potential memory-safety issues.",
+      "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03931ebd_55c091b0",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 1137,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T16:38:42Z",
+      "side": 1,
+      "message": "[error] Line 1137: 🔴 `av_assert0(n_planes \u003c\u003d AV_DRM_MAX_PLANES)` can abort the whole process on malformed/unexpected PipeWire input. This is externally supplied data, so this must be a runtime validation path instead of a hard assert. Replace with an explicit bounds check, log an error, recycle the buffer, and return to avoid a crash/DoS vector.",
+      "revId": "4bb310340791bca59c6af870b17b3e550d62eebc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
