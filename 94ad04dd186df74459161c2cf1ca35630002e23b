@@ -16,6 +16,24 @@
       "message": "[warning] Line 11: 🟡 The compiler guard `defined(__GNUC__) || defined(__clang__)` is too broad for the Windows/MSVC family: `clang-cl` defines `__clang__` but still follows MSVC frontend constraints where GNU-style inline asm is not supported on ARM/AArch64. This can reintroduce the same build failure for clang-cl targets. Please gate these asm branches with an explicit MSVC exclusion (e.g. `!defined(_MSC_VER)`) or with a positive check for GNU-style asm support so both `ReadStatusWord()` and `SetStatusWord()` are safe across Windows ARM toolchains.",
       "revId": "94ad04dd186df74459161c2cf1ca35630002e23b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6dda339_b265ddd7",
+        "filename": "contrib/vcpkg/ports/webrtc-audio-processing/fix-asm-windows-arm.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:51Z",
+      "side": 1,
+      "message": "clang-cl is the clang frontend and supports GNU-style inline asm on all targets (unlike cl.exe), so the __clang__ branch is correct for it; the x86 path two lines above relies on the same thing.",
+      "parentUuid": "81ab156c_6a0eb8c0",
+      "revId": "94ad04dd186df74459161c2cf1ca35630002e23b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
