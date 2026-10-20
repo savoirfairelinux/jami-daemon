@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d83747bc_174fe5f9",
+        "filename": "test/unitTest/media/test_media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T20:03:03Z",
+      "side": 1,
+      "message": "[warning] Line 140: 🟡 `std::string_view(name)` is constructed without a null check in the wrapper. If any call reaches `__wrap_avfilter_get_by_name` with `name \u003d\u003d nullptr` while `pipewireFilterProbe` is active, this is undefined behavior and can crash the test process. Guard it explicitly (e.g., `if (pipewireFilterProbe \u0026\u0026 name \u0026\u0026 std::string_view(name) \u003d\u003d \"pipewiregrab\")`).",
+      "revId": "c7db9a9b32ae2714f081b2c831ecef316c990519",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
