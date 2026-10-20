@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "28928138_552e144d",
+        "filename": "contrib/vcpkg/ports/libupnp/portfile.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Done: dead UPNP_TARGET block removed.",
+      "parentUuid": "84f61509_de909253",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4c989c6c_1240cc09",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-10-07T20:14:21Z",
       "side": 1,
       "message": "Stock upstream port at the baseline. On non-Windows targets the vcpkg pthreads port is an empty package (VCPKG_POLICY_EMPTY_PACKAGE), so the dependency is a no-op there; this manifest is also only used on Windows.",
+      "parentUuid": "4c989c6c_1240cc09",
+      "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8d9193d_9f7f80cb",
+        "filename": "contrib/vcpkg/ports/libupnp/vcpkg.json",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:52Z",
+      "side": 1,
+      "message": "Done: pthreads is now a windows-only dependency.",
       "parentUuid": "4c989c6c_1240cc09",
       "revId": "243ce6e3fdcb06d790cfe134eabc13446ad3f0ce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
