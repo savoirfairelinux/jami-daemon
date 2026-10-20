@@ -34,6 +34,24 @@
       "parentUuid": "4a3fc5d8_f483573f",
       "revId": "ffcc5a4e60aa16fd4d4815744d28978ba497c42a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "225774fb_db9475d2",
+        "filename": "contrib/vcpkg/ports/portaudio/0001-add-get-default-comm-devices-api.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-20T20:44:51Z",
+      "side": 1,
+      "message": "Byte-identical to contrib/src/portaudio/0001-add-get-default-comm-devices-api.patch already used by the Windows build; the overlay only carries it over. Out of scope here.",
+      "parentUuid": "4a3fc5d8_f483573f",
+      "revId": "ffcc5a4e60aa16fd4d4815744d28978ba497c42a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
