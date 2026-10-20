@@ -23,6 +23,7 @@ RUN add-apt-repository universe && \
         meson \
         dpkg-dev \
         libdbus-1-dev \
+        libdrm-dev \
         libupnp-dev \
         libgnutls28-dev \
         libargon2-dev \
