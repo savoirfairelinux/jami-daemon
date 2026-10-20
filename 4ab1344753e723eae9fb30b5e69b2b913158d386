@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9f10e39_0f54cc5b",
+        "filename": "contrib/vcpkg/ports/ffmpeg/vcpkg-cmake-wrapper.cmake",
+        "patchSetId": 6
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T20:46:31Z",
+      "side": 1,
+      "message": "[warning] Line 187: 🟡 The `@WITH_THEORA@` handling block is duplicated (already present at lines 157-164, repeated again at 187-194). This appends `PkgConfig::theora` and adds `target_link_libraries()` twice, which needlessly duplicates link inputs and can destabilize static link order on some toolchains. Keep a single `WITH_THEORA` block and remove the duplicate section.",
+      "revId": "4ab1344753e723eae9fb30b5e69b2b913158d386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
