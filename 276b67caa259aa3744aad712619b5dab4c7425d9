@@ -3,6 +3,40 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "58e7ea9c_d1839cd9",
+        "filename": "contrib/src/ffmpeg/windows-configure.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T15:43:43Z",
+      "side": 1,
+      "message": "[error] 🔴 The patch also deletes the `for linkunit in $LIBRARY_LIST; do ... prepend ${linkunit}_extralibs ... done` aggregation step from `configure`. In static/minimal builds this is a core mechanism that propagates component-level extra libs into final link lines; removing it can cause unresolved symbols and cross-platform link breakage. Restore this loop (or gate any workaround strictly behind a Windows/MSVC condition) so non-Windows targets keep upstream link dependency resolution.",
+      "revId": "276b67caa259aa3744aad712619b5dab4c7425d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35ad50ba_51b8eeef",
+        "filename": "contrib/src/ffmpeg/windows-configure.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T15:43:43Z",
+      "side": 1,
+      "message": "[error] 🔴 This patch still removes FFmpeg’s `enabled libvpx \u0026\u0026 { ... }` detection block from `configure` globally (not Windows-scoped). That block validates available VP8/VP9 encode/decode components and fails early when `--enable-libvpx` cannot satisfy any supported codec; dropping it can silently mis-detect capabilities and later fail at compile/link/runtime on Linux/macOS/Android. Keep this logic intact and limit Windows-specific workarounds to MSVC-targeted branches only.",
+      "revId": "276b67caa259aa3744aad712619b5dab4c7425d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "39188ae0_4b4f030e",
         "filename": "contrib/src/ffmpeg/windows-configure.patch",
         "patchSetId": 16
