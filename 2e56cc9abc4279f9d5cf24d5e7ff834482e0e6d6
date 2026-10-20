@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bec3de99_9157eea0",
+        "filename": "contrib/vcpkg/ports/yffi/vcpkg.json",
+        "patchSetId": 8
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-20T21:40:38Z",
+      "side": 1,
+      "message": "[warning] Line 8: 🟡 `supports` is currently `\"static\"`, but this port is Windows-only in practice (`portfile.cmake` hard-fails on non-Windows). Please encode that constraint directly in metadata, e.g. `\"supports\": \"windows \u0026 static\"`, so vcpkg can reject unsupported triplets during resolution instead of failing later at build time.",
+      "revId": "2e56cc9abc4279f9d5cf24d5e7ff834482e0e6d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
