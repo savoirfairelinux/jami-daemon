@@ -8,9 +8,8 @@ vcpkg_from_github(
     HEAD_REF master
 )
 
-# Same settings contrib/src/pjproject/000{1,2}-win-*.patch add to config_site.h
-# (minus THIRD_PARTY_MEDIA, unused outside pjsip-apps). The include/lib dir
-# injection of 0002 is done by USE_VCPKG_INTEGRATION.
+# Jami config_site.h settings for Windows (THIRD_PARTY_MEDIA left out, unused
+# outside pjsip-apps). Include/lib dirs come from USE_VCPKG_INTEGRATION.
 file(APPEND "${SOURCE_PATH}/pjlib/include/pj/config_site.h" [[
 
 /*
@@ -21,7 +20,7 @@ file(APPEND "${SOURCE_PATH}/pjlib/include/pj/config_site.h" [[
 #define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
 ]])
 
-# The autolink pragma names pywinmake's libgnutls.lib; vcpkg's is gnutls.lib and
+# The autolink pragma names libgnutls.lib; vcpkg's is gnutls.lib and
 # consumers get it from pkg-config (libpjproject.pc Requires.private: gnutls).
 vcpkg_replace_string("${SOURCE_PATH}/pjlib/src/pj/ssl_sock_gtls.c"
     [[#  pragma comment( lib, "libgnutls")]] "")

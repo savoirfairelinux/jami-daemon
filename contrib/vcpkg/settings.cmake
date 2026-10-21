@@ -1,5 +1,5 @@
 # Include before project(), which runs the vcpkg manifest install: with vcpkg's
-# toolchain on Windows, dependencies come from this manifest instead of pywinmake.
+# toolchain on Windows, dependencies come from this manifest.
 # Used by the daemon and by projects embedding it (e.g. the Qt client).
 if(CMAKE_HOST_WIN32 AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg\\.cmake$")
     set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "")

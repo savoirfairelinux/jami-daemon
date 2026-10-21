@@ -9,9 +9,8 @@ vcpkg_from_github(
     PATCHES
         0001-Add-NATPMP_BUILD_TOOLS-option-to-conditionally-build.patch
         natpmp-win32-ssize_t.patch
-        # Jami setting from contrib/src/natpmp/package.json (CMAKE_C_FLAGS
-        # there); passing CMAKE_C_FLAGS through vcpkg would clobber the
-        # toolchain flags.
+        # Jami setting, formerly a CMAKE_C_FLAGS define; passing CMAKE_C_FLAGS
+        # through vcpkg would clobber the toolchain flags.
         max-retries.patch
 )
 

@@ -10,7 +10,7 @@ vcpkg_from_github(
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" PA_BUILD_SHARED_LIBS)
 
-# Same host API selection as contrib/src/portaudio/package.json.
+# WASAPI is the only host API Jami uses on Windows.
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS

@@ -1,9 +1,0 @@
-{
-    "name": "gmp",
-    "version": "6.2.1-4",
-    "cpe": "cpe:2.3:a:gmplib:gmp:6.2.1:*:*:*:*:*:*:*",
-    "url": "https://github.com/ShiftMediaProject/gmp/archive/refs/tags/__VERSION__.tar.gz",
-    "project_paths": [
-        "SMP/libgmp.vcxproj"
-    ]
-}

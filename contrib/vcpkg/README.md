@@ -14,8 +14,7 @@ what the current MSVC build produces.
 
 `ports/` holds Jami overlays. `ports/ffmpeg` is the upstream vcpkg port at its last
 6.1.x revision (microsoft/vcpkg@f00e89ae19) pinned to 6.1.3 with Jami's patches and
-component list (`jami-options.cmake`). Jami's `windows-configure*.patch` files are
-not needed: they only bypassed pkg-config, which vcpkg provides. The port also
+component list (`jami-options.cmake`). The port also
 backports upstream's `-libpath:` → `-L` rewrite of its `.pc` files and declares
 `runtimeobject` for the C++/WinRT dxgigrab device.
 
@@ -28,8 +27,8 @@ does not install.
 `ports/` (the future shared registry home). `ports/opendht` follows the contrib
 version.
 
-`ports/pjproject` builds the SFL fork's library projects with msbuild; the contrib
-Windows patches reduce to `config_site.h` defines.
+`ports/pjproject` builds the SFL fork's library projects with msbuild; Jami's
+Windows settings are `config_site.h` defines.
 
 `ports/natpmp` is Jami's contrib pin and patches (no upstream port).
 

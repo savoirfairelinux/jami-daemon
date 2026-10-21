@@ -1,4 +1,4 @@
-# Jami component selection. Mirrors contrib/src/ffmpeg/{rules.mak,windows-configure-make.sh}.
+# Jami component selection. Mirrors contrib/src/ffmpeg/rules.mak.
 # Library-level toggles (libopus, libx264, libvpx, nvcodec, qsv, gpl, ...) are
 # driven by vcpkg features; only ffmpeg *components* are listed here.
 # --disable-everything must precede every --enable-<component>, so it is prepended.
