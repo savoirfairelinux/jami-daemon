@@ -464,8 +464,8 @@ MediaDemuxer::decode()
         if (baseHeight_ != codecpar->height || baseWidth_ != codecpar->width) {
             baseHeight_ = codecpar->height;
             baseWidth_ = codecpar->width;
-            inputParams_.height = ((baseHeight_ >> 3) << 3);
-            inputParams_.width = ((baseWidth_ >> 3) << 3);
+            inputParams_.height = baseHeight_;
+            inputParams_.width = baseWidth_;
             return Status::RestartRequired;
         }
     }
