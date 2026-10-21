@@ -3,6 +3,57 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3e950f67_3fc257cb",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0005-fix-nasm.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:54:17Z",
+      "side": 1,
+      "message": "[error] Line 10: 🔴 `%ifn` is not a valid NASM/YASM conditional directive, so these hunks will fail assembly parsing instead of gating code on non-x86_64 paths. Use a valid negated condition (for example `%if !ARCH_X86_64` or equivalent `%ifndef`-style logic) in each touched asm file.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6f927ac_1208bd01",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0007-fix-lib-naming.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:54:17Z",
+      "side": 1,
+      "message": "[warning] Line 8: 🟡 This hunk drops the `-lz -\u003e zlib.lib` MSVC mapping while adding `-lmp3lame`. With the generic `-l*` rule, any remaining `-lz` now maps to `z.lib`, which does not match the vcpkg zlib import library naming on Windows. Keep the existing `-lz` special-case alongside the new `-lmp3lame` mapping (or prove `-lz` can no longer be emitted).",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8059467_48934735",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0024-fix-osx-host-c11.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:54:17Z",
+      "side": 1,
+      "message": "[warning] Line 11: 🟡 This removes the explicit configure failure when host C11 probing fails, turning a hard capability check into a silent fallback. That can defer incompatibility to later compile/link stages with less actionable diagnostics. Keep an explicit `die` (or equivalent guarded error path) unless there is a narrow, documented macOS exception.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cfb29f33_d9422bee",
         "filename": "contrib/vcpkg/ports/ffmpeg/0050-fix-test-ld-absolute-lib-paths.patch",
         "patchSetId": 1
