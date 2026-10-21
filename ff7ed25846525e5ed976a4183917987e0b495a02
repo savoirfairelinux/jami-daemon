@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfb29f33_d9422bee",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0050-fix-test-ld-absolute-lib-paths.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:48:36Z",
+      "side": 1,
+      "message": "[warning] Line 3: 🟡 The patch header uses placeholder blob IDs (`index 1111111..2222222`). Some patch application paths ignore this, but stricter `git apply` modes can reject or mishandle such hunks. Regenerate this patch against the actual FFmpeg tree so headers/hunks are consistent and robust.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be91f66f_77c96003",
+        "filename": "contrib/vcpkg/ports/ffmpeg/build.sh.in",
+        "patchSetId": 1
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:48:36Z",
+      "side": 1,
+      "message": "[error] Line 54: 🔴 `merge_binaries()` now runs `lipo` as `$($COMMAND)`, which is command substitution, not command execution. This executes `COMMAND`, captures its stdout, and then tries to execute that output as a shell command. `lipo` normally prints nothing on success, so this can fail with an empty-command error and breaks multi-arch merge. Replace with direct execution (`$COMMAND`) or safer `eval \"$COMMAND\"`/array-based invocation.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98af3273_9365933b",
+        "filename": "contrib/vcpkg/ports/ffmpeg/change-RTCP-ratio.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:48:36Z",
+      "side": 1,
+      "message": "[warning] Line 21: 🟡 This patch now includes an additional diff that creates `libavformat/rtp.h.orig`. Shipping `.orig` files inside applied source patches is usually accidental and introduces non-source artifacts into vendor trees, hurting reproducibility and maintenance. Drop the `*.orig` diff block and keep only the intended `rtp.h` hunk.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3ca6ac1_1dbdea80",
+        "filename": "contrib/vcpkg/ports/ffmpeg/libopusdec-enable-FEC.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T14:48:36Z",
+      "side": 1,
+      "message": "[warning] Line 126: 🟡 This patch also adds a full `libavcodec/libopusdec.c.orig` file. Like other backup artifacts, this is unnecessary in the patched FFmpeg source and can confuse downstream audits/tools. Remove the `.orig` file addition from the patch.",
+      "revId": "ff7ed25846525e5ed976a4183917987e0b495a02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
