@@ -253,8 +253,8 @@ VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
 
     loop_.start();
 
-    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
-    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
+    decOpts_.width = decoder_->getWidth();
+    decOpts_.height = decoder_->getHeight();
     decOpts_.framerate = decoder_->getFps();
     AVPixelFormat fmt = decoder_->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
@@ -357,8 +357,8 @@ VideoInput::createDecoder()
         return;
     }
 
-    decOpts_.width = ((decoder->getWidth() >> 3) << 3);
-    decOpts_.height = ((decoder->getHeight() >> 3) << 3);
+    decOpts_.width = decoder->getWidth();
+    decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
     AVPixelFormat fmt = decoder->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
@@ -422,12 +422,6 @@ VideoInput::initCamera(const std::string& device)
         return true;
     }
     return false;
-}
-
-static constexpr unsigned
-round2pow(unsigned i, unsigned n)
-{
-    return (i >> n) << n;
 }
 
 #if !defined(WIN32) && !defined(__APPLE__)
@@ -499,9 +493,8 @@ VideoInput::initLinuxGrab(const std::string& display)
         if (p.window_id.empty()) {
             p.input = display.substr(0, space);
             auto splits = jami::split_string_to_unsigned(display.substr(space + 1), 'x');
-            // round to 8 pixel block
-            p.width = round2pow(splits[0], 3);
-            p.height = round2pow(splits[1], 3);
+            p.width = splits[0];
+            p.height = splits[1];
             p.is_area = 1;
         }
     } else {
@@ -540,8 +533,8 @@ VideoInput::initAVFoundation(const std::string& display)
         char sep;
         unsigned w, h;
         iss >> w >> sep >> h;
-        decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3);
+        decOpts_.width = w;
+        decOpts_.height = h;
     } else {
         decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
