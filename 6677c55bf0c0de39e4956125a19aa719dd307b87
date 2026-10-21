@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82673d3a_02055978",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T17:51:28Z",
+      "side": 1,
+      "message": "[warning] Line 117: 🟡 The new hard gate relies on `VCPKG_TOOLCHAIN`, which may not be set in all valid vcpkg integrations (for example, when users only pass `-DCMAKE_TOOLCHAIN_FILE\u003d.../vcpkg.cmake` or chainload another toolchain). That can incorrectly fail MSVC configuration. Prefer checking the canonical toolchain signal (`CMAKE_TOOLCHAIN_FILE` pointing to vcpkg, or another vcpkg-defined variable guaranteed by your setup) and keep the error message tied to that condition.",
+      "revId": "6677c55bf0c0de39e4956125a19aa719dd307b87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
