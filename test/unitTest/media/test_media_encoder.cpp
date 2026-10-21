@@ -53,6 +53,8 @@ private:
     void testVP8DynamicBitrate();
     void testVP8BitrateKeepsResolution();
     void testVideoToolboxLiveBitrateAndResizeRequiresRestart();
+    void testVideoSizeSelection();
+    void testSourceSizeChangesWithinEightPixels();
 
     CPPUNIT_TEST_SUITE(MediaEncoderTest);
     CPPUNIT_TEST(testMultiStream);
@@ -63,6 +65,8 @@ private:
     CPPUNIT_TEST(testVP8DynamicBitrate);
     CPPUNIT_TEST(testVP8BitrateKeepsResolution);
     CPPUNIT_TEST(testVideoToolboxLiveBitrateAndResizeRequiresRestart);
+    CPPUNIT_TEST(testVideoSizeSelection);
+    CPPUNIT_TEST(testSourceSizeChangesWithinEightPixels);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
@@ -532,6 +536,61 @@ MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
         CPPUNIT_FAIL(e.what());
     }
 #endif
+}
+
+void
+MediaEncoderTest::testVideoSizeSelection()
+{
+    struct SizeCase
+    {
+        int width;
+        int height;
+        uint64_t bitrate;
+        int outputWidth;
+        int outputHeight;
+    };
+    const SizeCase cases[] {{960, 540, 1200, 960, 540},
+                            {854, 480, 1200, 854, 480},
+                            {961, 541, 1200, 960, 540},
+                            {1280, 720, 1200, 960, 540},
+                            {800, 600, 800, 640, 480},
+                            {160, 90, 1, 160, 90}};
+
+    for (const auto& size : cases) {
+        auto stream
+            = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), size.width, size.height, size.bitrate, 30);
+        encoder_->setOptions(stream);
+        CPPUNIT_ASSERT_EQUAL(size.outputWidth, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(size.outputHeight, encoder_->getHeight());
+    }
+}
+
+void
+MediaEncoderTest::testSourceSizeChangesWithinEightPixels()
+{
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<SystemVideoCodecInfo>(codecs->searchCodecByName("H264", MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+    const std::string fileName = "test_source_size_change.h264";
+    files_.push_back(fileName);
+    encoder_->openOutput(fileName);
+    encoder_->setOptions(MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), 641, 481, 1200, 30));
+#ifdef ENABLE_HWACCEL
+    encoder_->enableAccel(false);
+#endif
+    CPPUNIT_ASSERT(encoder_->addStream(*h264Codec) >= 0);
+    encoder_->setIOContext(nullptr);
+
+    for (int i = 0; i < 2; ++i) {
+        auto input = std::make_shared<VideoFrame>();
+        input->reserve(AV_PIX_FMT_YUV444P, 641 + 2 * i, 481 + 2 * i);
+        libav_utils::fillWithBlack(input->pointer());
+        CPPUNIT_ASSERT(encoder_->encode(input, true, i) >= 0);
+        CPPUNIT_ASSERT_EQUAL(640 + 2 * i, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(480 + 2 * i, encoder_->getHeight());
+    }
+    CPPUNIT_ASSERT(encoder_->flush() >= 0);
 }
 
 } // namespace test
