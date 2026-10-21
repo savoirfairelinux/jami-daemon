@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a96f125_de280a1a",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 1551,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T22:08:37Z",
+      "side": 1,
+      "message": "[warning] Line 1551: 🟡 `reply` from `sd_bus_call_method(..., \u0026reply, ...)` is never unref’d in `portal_open_pipewire_remote`, on both success and error exits. This leaks a DBus message object each init attempt. Add a single cleanup path (or `sd_bus_message_unref(reply)` before every return) to avoid cumulative leaks during retries/reinitialization.",
+      "revId": "e5d962247c72c01364a8db17212b4aeaa9696ccf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7385654_a07fad6e",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 1816,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T22:08:37Z",
+      "side": 1,
+      "message": "[warning] Line 1816: 🟡 `av_strireplace(aux + 1, \".\", \"_\")` is used without a NULL check. On OOM, `sender_name` stays NULL and later `%s` formatting / path construction can fail unpredictably. Check the allocation result, return `AVERROR(ENOMEM)`, and abort init cleanly when it fails.",
+      "revId": "e5d962247c72c01364a8db17212b4aeaa9696ccf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
