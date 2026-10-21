@@ -114,6 +114,11 @@ endif()
 
 # Windows SDK selection for MSVC
 if (MSVC)
+    if (NOT VCPKG_TOOLCHAIN)
+        message(FATAL_ERROR "MSVC builds require the vcpkg toolchain; "
+            "see contrib/vcpkg/README.md")
+    endif()
+
     # Enforce minimum SDK 10.0.26100.0.
     set(MIN_WIN_SDK "10.0.26100.0")
 
@@ -258,18 +263,6 @@ if (BUILD_CONTRIB)
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
-    elseif (NOT VCPKG_TOOLCHAIN)
-        set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
-        execute_process(
-            COMMAND python ${SCRIPTS_DIR}/winmake.py
-            WORKING_DIRECTORY ${SCRIPTS_DIR}
-            RESULT_VARIABLE BUILD_RESULT
-        )
-        if (BUILD_RESULT)
-            message(FATAL_ERROR "Contrib build failed.")
-        else()
-            message(STATUS "Contrib build successful.")
-        endif()
     endif()
 endif()
 
@@ -407,12 +400,6 @@ elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
    )
-   if(NOT VCPKG_TOOLCHAIN)
-    list (APPEND ALL_FILES
-            "${Source_Files__media__audio__webrtc}"
-            "${Source_Files__media__audio__speexdsp}"
-    )
-   endif()
    if(JAMI_VIDEO)
     list (APPEND ALL_FILES ${ALL_FILES}
             "${Source_Files__media__video__uwpvideo}"
@@ -520,39 +507,6 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
        )
    endif()
-   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64" AND NOT VCPKG_TOOLCHAIN)
-       target_include_directories(${PROJECT_NAME} PUBLIC
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/sndfile/src;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/llhttp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/jsoncpp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/include/webrtc-audio-processing-2;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/tests-ffi/include;"
-       )
-   endif()
 
    ################################################################################
    # Compile definitions
@@ -574,11 +528,6 @@ if(MSVC)
            "NOMINMAX;"
            "HAVE_CONFIG_H;"
            "WIN32_LEAN_AND_MEAN;"
-       )
-   endif()
-   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64" AND NOT VCPKG_TOOLCHAIN)
-       target_compile_definitions(${PROJECT_NAME} PRIVATE
-           "WEBRTC_WIN;"
        )
    endif()
 
@@ -623,60 +572,6 @@ if(MSVC)
        )
    endif()
 
-   ################################################################################
-   # Dependencies
-   ################################################################################
-
-   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG
-        ws2_32.lib
-        advapi32.lib
-        Secur32.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavcodec.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavdevice.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavfilter.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavformat.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavutil.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libswresample.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libswscale.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libx264.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libvpx.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libopus.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libmfx.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/opendht.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/build/Release/yaml-cpp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/build/Release/natpmp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/llhttp/build/Release/llhttp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/_install/lib/libwebrtc-audio-processing-2.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/build/src/Release/simdutf.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yffi/target/release/yrs.lib
-        /ignore:4006"
-   )
-
-   if(NOT VCPKG_TOOLCHAIN)
-       set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
-   endif()
 endif()
 
 if(NOT MSVC)
@@ -691,90 +586,88 @@ if(NOT MSVC)
     message("Data directory: ${JAMI_DATADIR}")
 endif()
 
-if(NOT MSVC OR VCPKG_TOOLCHAIN)
-    if(VCPKG_TOOLCHAIN)
-        find_program(PKG_CONFIG_EXECUTABLE NAMES pkgconf pkg-config REQUIRED)
-        include(FindPkgConfig)
+if(MSVC)
+    find_program(PKG_CONFIG_EXECUTABLE NAMES pkgconf pkg-config REQUIRED)
+    include(FindPkgConfig)
+endif()
+find_package (yaml-cpp CONFIG REQUIRED)
+pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
+pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
+pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing-2 webrtc-audio-processing>=2.0)
+pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
+pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
+pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
+pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
+pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
+pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)
+pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
+pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
+pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
+pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice)
+pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter)
+pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec)
+pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
+pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
+pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
+pkg_search_module (speexdsp REQUIRED IMPORTED_TARGET speexdsp)
+pkg_search_module (simdutf REQUIRED IMPORTED_TARGET simdutf)
+if (JAMI_PLUGIN)
+    if (APPLE)
+        pkg_search_module (archive REQUIRED IMPORTED_TARGET minizip)
+    else()
+        pkg_search_module (archive REQUIRED IMPORTED_TARGET libarchive)
     endif()
-    find_package (yaml-cpp CONFIG REQUIRED)
-    pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
-    pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
-    pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing-2 webrtc-audio-processing>=2.0)
-    pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
-    pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
-    pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
-    pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
-    pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
-    pkg_search_module (yrs REQUIRED IMPORTED_TARGET yrs)
-    pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
-    pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
-    pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
-    pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice)
-    pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter)
-    pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec)
-    pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
-    pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
-    pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
-    pkg_search_module (speexdsp REQUIRED IMPORTED_TARGET speexdsp)
-    pkg_search_module (simdutf REQUIRED IMPORTED_TARGET simdutf)
-    if (JAMI_PLUGIN)
-        if (APPLE)
-            pkg_search_module (archive REQUIRED IMPORTED_TARGET minizip)
-        else()
-            pkg_search_module (archive REQUIRED IMPORTED_TARGET libarchive)
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    PkgConfig::dhtnet
+    PkgConfig::opendht
+    PkgConfig::pjproject
+    PkgConfig::git2
+    PkgConfig::yrs
+    PkgConfig::gnutls
+    PkgConfig::nettle
+    PkgConfig::avformat
+    PkgConfig::avdevice
+    PkgConfig::avfilter
+    PkgConfig::avcodec
+    PkgConfig::swresample
+    PkgConfig::swscale
+    PkgConfig::jsoncpp
+    PkgConfig::secp256k1
+    PkgConfig::simdutf
+    PUBLIC
+    PkgConfig::fmt
+    PkgConfig::avutil
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
+macro(jami_link_optional_deps)
+if (JAMI_PLUGIN)
+    target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
+    if (APPLE)
+        # minizip's pkg-config metadata can miss zstd when built statically.
+        # Link it explicitly to avoid unresolved ZSTD_* symbols at final app link.
+        if (EXISTS "${CONTRIB_PATH}/lib/libzstd.a")
+            target_link_libraries(${PROJECT_NAME} PUBLIC "${CONTRIB_PATH}/lib/libzstd.a")
         endif()
     endif()
+endif()
+if (webrtcap_FOUND)
+    target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
+    target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
+endif()
+if (speexdsp_FOUND)
+    target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__speexdsp} )
+    target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::speexdsp)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_SPEEXDSP)
+endif()
+endmacro()
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        PkgConfig::dhtnet
-        PkgConfig::opendht
-        PkgConfig::pjproject
-        PkgConfig::git2
-        PkgConfig::yrs
-        PkgConfig::gnutls
-        PkgConfig::nettle
-        PkgConfig::avformat
-        PkgConfig::avdevice
-        PkgConfig::avfilter
-        PkgConfig::avcodec
-        PkgConfig::swresample
-        PkgConfig::swscale
-        PkgConfig::jsoncpp
-        PkgConfig::secp256k1
-        PkgConfig::simdutf
-        PUBLIC
-        PkgConfig::fmt
-        PkgConfig::avutil
-    )
-    target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
-    macro(jami_link_optional_deps)
-    if (JAMI_PLUGIN)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
-        if (APPLE)
-            # minizip's pkg-config metadata can miss zstd when built statically.
-            # Link it explicitly to avoid unresolved ZSTD_* symbols at final app link.
-            if (EXISTS "${CONTRIB_PATH}/lib/libzstd.a")
-                target_link_libraries(${PROJECT_NAME} PUBLIC "${CONTRIB_PATH}/lib/libzstd.a")
-            endif()
-        endif()
-    endif()
-    if (webrtcap_FOUND)
-        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
-    endif()
-    if (speexdsp_FOUND)
-        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__speexdsp} )
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::speexdsp)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_SPEEXDSP)
-    endif()
-    endmacro()
-
-    if (MSVC AND VCPKG_TOOLCHAIN)
-        jami_link_optional_deps()
-        pkg_search_module (portaudio REQUIRED IMPORTED_TARGET portaudio-2.0)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::portaudio)
-    endif()
+if (MSVC)
+    jami_link_optional_deps()
+    pkg_search_module (portaudio REQUIRED IMPORTED_TARGET portaudio-2.0)
+    target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::portaudio)
 endif()
 
 if(NOT MSVC)
