@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3837d672_5cc506e6",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0005-fix-nasm.patch",
+        "patchSetId": 18
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T22:02:02Z",
+      "side": 1,
+      "message": "[error] Line 10: 🔴 This patch introduces `%ifn ...` in multiple NASM sources, but NASM/YASM conditional directives do not provide a plain `%ifn` form for boolean expressions. That makes the patched assembly invalid or toolchain-dependent. Use valid conditionals (`%if !ARCH_X86_64`, `%if !(ARCH_X86_64 \u0026\u0026 HAVE_AVX2_EXTERNAL)`, etc.) consistently across all affected hunks.",
+      "revId": "f79d19ddf2efa5fc0cd20d07a34230530f3e5737",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81582eea_11002e2e",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0007-fix-lib-naming.patch",
+        "patchSetId": 18
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T22:02:02Z",
+      "side": 1,
+      "message": "[error] Line 7: 🔴 The `-lz` special-case mapping was removed from `msvc_common_flags()`. On MSVC, generic `-l*` translation turns `-lz` into `z.lib` instead of `zlib.lib`, which can break link resolution for zlib users and cause feature-dependent build failures. Keep the existing `-lz -\u003e zlib.lib` mapping and add the new `-lmp3lame -\u003e libmp3lame.lib` mapping in addition to it, not instead of it.",
+      "revId": "f79d19ddf2efa5fc0cd20d07a34230530f3e5737",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
