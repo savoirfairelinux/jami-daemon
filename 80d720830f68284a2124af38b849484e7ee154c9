@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae250109_a21ec87f",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0045-use-prebuilt-bin2c.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T15:18:41Z",
+      "side": 1,
+      "message": "[warning] Line 12: 🟡 `BIN2C \u003d bin2c` now relies on whatever `bin2c` appears first in `PATH`, instead of a deterministic host-tool path. On shared/heterogeneous builders this can pick the wrong binary (or none), causing non-reproducible generated sources or intermittent build failures. Please wire `BIN2C` to an explicit absolute path from the vcpkg host tools location.",
+      "revId": "80d720830f68284a2124af38b849484e7ee154c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2eefafa7_8f812fba",
+        "filename": "contrib/vcpkg/ports/ffmpeg/0046-fix-msvc-detection.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-21T15:18:41Z",
+      "side": 1,
+      "message": "[warning] Line 11: 🟡 Replacing `grep -q ^Microsoft` with unanchored `grep -qi Microsoft` broadens matching and can misclassify non-MSVC toolchains if diagnostics contain the word “Microsoft” incidentally. Keep case-insensitive matching but preserve start anchoring (for example `grep -qi \u0027^Microsoft\u0027`) to avoid false positives in compiler-type detection.",
+      "revId": "80d720830f68284a2124af38b849484e7ee154c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
