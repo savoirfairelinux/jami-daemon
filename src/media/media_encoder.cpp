@@ -56,7 +56,7 @@ constexpr double LOGREG_PARAM_B {-5.};
 constexpr double LOGREG_PARAM_A_HEVC {96};
 constexpr double LOGREG_PARAM_B_HEVC {-5.};
 constexpr double VIDEO_CONFERENCE_TARGET_BPP {0.06};
-constexpr int VIDEO_DIMENSION_ALIGNMENT {8};
+constexpr int VIDEO_DIMENSION_ALIGNMENT {2};
 constexpr int VIDEO_MIN_WIDTH {160};
 constexpr int VIDEO_MIN_HEIGHT {90};
 constexpr std::array<std::pair<int, int>, 7> VIDEO_RESOLUTION_LADDER_16_9 {
@@ -143,11 +143,6 @@ MediaEncoder::setOptions(const MediaStream& opts)
 
     if (opts.isVideo) {
         videoOpts_ = opts;
-        // Make sure width and height are even (required by x264)
-        // This is especially for image/gif streaming, as video files and cameras usually have even
-        // resolutions
-        videoOpts_.width = ((videoOpts_.width >> 3) << 3);
-        videoOpts_.height = ((videoOpts_.height >> 3) << 3);
         if (!videoOpts_.frameRate)
             videoOpts_.frameRate = 30;
         if (!videoOpts_.bitrate) {
@@ -463,8 +458,8 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
         return send(*pkt, -1) ? 0 : -1;
     }
 
-    auto width = (input->width() >> 3) << 3;
-    auto height = (input->height() >> 3) << 3;
+    auto width = input->width();
+    auto height = input->height();
     if (sourceVideoWidth_ != width || sourceVideoHeight_ != height) {
         sourceVideoWidth_ = width;
         sourceVideoHeight_ = height;
@@ -1240,7 +1235,7 @@ MediaEncoder::targetVideoSize(uint64_t br) const
 
     const auto minWidth = std::min(sourceVideoWidth_, VIDEO_MIN_WIDTH);
     const auto minHeight = std::min(sourceVideoHeight_, VIDEO_MIN_HEIGHT);
-    return {alignVideoDimension(minWidth), alignVideoDimension(minHeight)};
+    return {minWidth, minHeight};
 }
 
 bool
@@ -1254,7 +1249,10 @@ MediaEncoder::applyVideoBitrateTarget(uint64_t br)
     if (passthrough_)
         return false;
 
-    const auto [width, height] = targetVideoSize(br);
+    const auto [targetWidth, targetHeight] = targetVideoSize(br);
+    // YUV420P and NV12 output require even dimensions, unlike the source.
+    const auto width = alignVideoDimension(targetWidth);
+    const auto height = alignVideoDimension(targetHeight);
     if (width == videoOpts_.width && height == videoOpts_.height)
         return false;
 
