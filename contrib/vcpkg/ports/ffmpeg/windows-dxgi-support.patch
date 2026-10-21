@@ -3,45 +3,24 @@ From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
 Date: Thu, 29 Dec 2022 12:59:19 -0300
 Subject: [PATCH] Add dxgi support
 
----
- configure                        |   1 +
- libavdevice/Makefile             |   4 +
- libavdevice/alldevices.c         |   1 +
- libavdevice/d3dHelpers.h         |  59 ++++++++
- libavdevice/direct3d11.interop.h |  51 +++++++
- libavdevice/dxgigrab.cpp         | 225 +++++++++++++++++++++++++++++++
- libavdevice/dxgigrab.h           |  83 ++++++++++++
- libavdevice/dxgigrab_c.c         |  59 ++++++++
- libavdevice/dxgigrab_c.h         |  98 ++++++++++++++
- libavdevice/windows_capture.cpp  | 184 +++++++++++++++++++++++++
- libavdevice/windows_capture.h    |  82 +++++++++++
- 11 files changed, 847 insertions(+)
- create mode 100644 libavdevice/d3dHelpers.h
- create mode 100644 libavdevice/direct3d11.interop.h
- create mode 100644 libavdevice/dxgigrab.cpp
- create mode 100644 libavdevice/dxgigrab.h
- create mode 100644 libavdevice/dxgigrab_c.c
- create mode 100644 libavdevice/dxgigrab_c.h
- create mode 100644 libavdevice/windows_capture.cpp
- create mode 100644 libavdevice/windows_capture.h
 
 diff --git a/configure b/configure
-index 7d258c5..fa64981 100755
+index 374bd5c..21ef400 100755
 --- a/configure
 +++ b/configure
-@@ -3595,6 +3595,7 @@ fbdev_outdev_deps="linux_fb_h"
+@@ -4041,6 +4041,7 @@ fbdev_outdev_deps="linux_fb_h"
  gdigrab_indev_deps="CreateDIBSection"
  gdigrab_indev_extralibs="-lgdi32"
  gdigrab_indev_select="bmp_decoder"
-+dxgigrab_indev_extralibs="-ldxgi -ld3d11 -lruntimeobject"
++dxgigrab_indev_extralibs="-ldxgi -ld3d11"
  iec61883_indev_deps="libiec61883"
  iec61883_indev_select="dv_demuxer"
  jack_indev_deps="libjack"
 diff --git a/libavdevice/Makefile b/libavdevice/Makefile
-index c304492..5bb89f6 100644
+index 256c8e7..89096ca 100644
 --- a/libavdevice/Makefile
 +++ b/libavdevice/Makefile
-@@ -30,6 +30,7 @@ OBJS-$(CONFIG_FBDEV_INDEV)               += fbdev_dec.o \
+@@ -29,6 +29,7 @@ OBJS-$(CONFIG_FBDEV_INDEV)               += fbdev_dec.o \
  OBJS-$(CONFIG_FBDEV_OUTDEV)              += fbdev_enc.o \
                                              fbdev_common.o
  OBJS-$(CONFIG_GDIGRAB_INDEV)             += gdigrab.o
@@ -49,7 +28,7 @@ index c304492..5bb89f6 100644
  OBJS-$(CONFIG_IEC61883_INDEV)            += iec61883.o
  OBJS-$(CONFIG_JACK_INDEV)                += jack.o timefilter.o
  OBJS-$(CONFIG_KMSGRAB_INDEV)             += kmsgrab.o
-@@ -73,5 +74,8 @@ SKIPHEADERS-$(CONFIG_V4L2_INDEV)         += v4l2-common.h
+@@ -70,5 +71,8 @@ SKIPHEADERS-$(CONFIG_V4L2_INDEV)         += v4l2-common.h
  SKIPHEADERS-$(CONFIG_V4L2_OUTDEV)        += v4l2-common.h
  SKIPHEADERS-$(CONFIG_ALSA)               += alsa.h
  SKIPHEADERS-$(CONFIG_SNDIO)              += sndio.h
@@ -59,17 +38,17 @@ index c304492..5bb89f6 100644
  
  TESTPROGS-$(CONFIG_JACK_INDEV)           += timefilter
 diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
-index 8a90fcb..0f8e5f8 100644
+index 573595f..0d652ba 100644
 --- a/libavdevice/alldevices.c
 +++ b/libavdevice/alldevices.c
-@@ -36,6 +36,7 @@ extern const AVInputFormat  ff_dshow_demuxer;
- extern const AVInputFormat  ff_fbdev_demuxer;
+@@ -39,6 +39,7 @@ extern const FFInputFormat  ff_dshow_demuxer;
+ extern const FFInputFormat  ff_fbdev_demuxer;
  extern const FFOutputFormat ff_fbdev_muxer;
- extern const AVInputFormat  ff_gdigrab_demuxer;
-+extern const AVInputFormat  ff_dxgigrab_demuxer;
- extern const AVInputFormat  ff_iec61883_demuxer;
- extern const AVInputFormat  ff_jack_demuxer;
- extern const AVInputFormat  ff_kmsgrab_demuxer;
+ extern const FFInputFormat  ff_gdigrab_demuxer;
++extern const FFInputFormat  ff_dxgigrab_demuxer;
+ extern const FFInputFormat  ff_iec61883_demuxer;
+ extern const FFInputFormat  ff_jack_demuxer;
+ extern const FFInputFormat  ff_kmsgrab_demuxer;
 diff --git a/libavdevice/d3dHelpers.h b/libavdevice/d3dHelpers.h
 new file mode 100644
 index 0000000..d8d2c00
@@ -197,7 +176,7 @@ new file mode 100644
 index 0000000..9774e72
 --- /dev/null
 +++ b/libavdevice/dxgigrab.cpp
-@@ -0,0 +1,225 @@
+@@ -0,0 +1,226 @@
 +/*
 + * DXGI video grab interface
 + *
@@ -235,6 +214,7 @@ index 0000000..9774e72
 +extern "C" {
 +#endif
 +#include <libavutil/parseutils.h>
++#include <libavutil/mem.h>
 +#ifdef __cplusplus
 +}
 +#endif
@@ -514,7 +494,7 @@ index 0000000..92cad7d
 +#endif /* AVDEVICE_DXGI_H */
 diff --git a/libavdevice/dxgigrab_c.c b/libavdevice/dxgigrab_c.c
 new file mode 100644
-index 0000000..c53d757
+index 0000000..6dc3a58
 --- /dev/null
 +++ b/libavdevice/dxgigrab_c.c
 @@ -0,0 +1,59 @@
@@ -567,22 +547,22 @@ index 0000000..c53d757
 +};
 +
 +/** dxgi grabber device demuxer declaration */
-+AVInputFormat ff_dxgigrab_demuxer = {
-+    .name           = "dxgigrab",
-+    .long_name      = NULL_IF_CONFIG_SMALL("DXGI API Windows frame grabber"),
++const FFInputFormat ff_dxgigrab_demuxer = {
++    .p.name         = "dxgigrab",
++    .p.long_name    = NULL_IF_CONFIG_SMALL("DXGI API Windows frame grabber"),
++    .p.flags        = AVFMT_NOFILE,
++    .p.priv_class   = &dxgigrab_class,
 +    .priv_data_size = sizeof(struct dxgigrab),
 +    .read_header    = dxgigrab_read_header,
 +    .read_packet    = dxgigrab_read_packet,
 +    .read_close     = dxgigrab_read_close,
-+    .flags          = AVFMT_NOFILE,
-+    .priv_class     = &dxgigrab_class,
 +};
 diff --git a/libavdevice/dxgigrab_c.h b/libavdevice/dxgigrab_c.h
 new file mode 100644
 index 0000000..d624ca0
 --- /dev/null
 +++ b/libavdevice/dxgigrab_c.h
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,99 @@
 +/*
 + * DXGI video grab interface
 + *
@@ -620,6 +600,7 @@ index 0000000..d624ca0
 +extern "C" {
 +#endif
 +
++#include "libavformat/demux.h"
 +#include "libavformat/internal.h"
 +#include "config.h"
 +#include "libavutil/opt.h"
