@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f66b301f_0a5df822",
+        "filename": "contrib/vcpkg/ports/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-22T19:44:55Z",
+      "side": 1,
+      "message": "[warning] Line 391: 🟡 The resize signal is propagated by mutating `streams[0]-\u003ecodecpar` from `read_packet`, but `codecpar` is stream-level metadata and not the packet-level mechanism FFmpeg uses for runtime parameter changes. This can make resize propagation ambiguous for consumers and fragile across API expectations. Prefer attaching `AV_PKT_DATA_PARAM_CHANGE` side data (width/height) to the packet when dimensions change, and keep `codecpar` as baseline stream metadata.",
+      "revId": "f84fc4ef9d4c88c85a0a51e419a23503302ab266",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
