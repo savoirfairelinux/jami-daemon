@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fced903e_4df283ae",
+        "filename": "contrib/vcpkg/ports/ffmpeg/jami-options.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-22T16:07:22Z",
+      "side": 1,
+      "message": "[error] 🔴 The `daemon-msvc-vcpkg` CI job is failing on this patchset, and this change directly targets that toolchain path. Please fix or clearly root-cause the MSVC failure before merge so we can confirm `--stdcxx\u003dc++20` resolves the ABI mismatch without introducing a new breakage.",
+      "revId": "461e38be800c7cb2ce98a0cfb2b3707d0f6ace6b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
