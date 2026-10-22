@@ -106,7 +106,7 @@ public:
 
         auto sizes = getSizeList(settings.channel);
         for (auto& s : sizes) {
-            if (s.second > 640)
+            if (s.second > 720)
                 continue;
             auto rates = getRateList(settings.channel, s);
             if (rates.empty())
