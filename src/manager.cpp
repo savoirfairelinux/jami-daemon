@@ -3171,9 +3171,17 @@ Manager::createSinkClients(const std::string& callId,
                 // This is a local sink that must already exist
                 continue;
             }
+            if (auto existingIt = sinksMap.find(sinkId); existingIt != sinksMap.end()) {
+                existingIt->second->setCrop(participant.x, participant.y, participant.w, participant.h);
+                currentSinkW = existingIt->second;
+                sinkIdsList.emplace(sinkId);
+                continue;
+            }
             if (auto currentSink = currentSinkW.lock()) {
-                // If sink exists, update it
+                // If sink exists, update it and ensure it is tracked in sinksMap
                 currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
+                newSinks.emplace_back(currentSink, std::make_pair(participant.w, participant.h));
+                sinksMap.insert_or_assign(sinkId, std::move(currentSink));
                 sinkIdsList.emplace(sinkId);
                 continue;
             }
@@ -3181,10 +3189,8 @@ Manager::createSinkClients(const std::string& callId,
             currentSinkW = newSink;
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSinks.emplace_back(newSink, std::make_pair(participant.w, participant.h));
-            sinksMap.emplace(sinkId, std::move(newSink));
+            sinksMap.insert_or_assign(sinkId, std::move(newSink));
             sinkIdsList.emplace(sinkId);
-        } else {
-            sinkIdsList.erase(sinkId);
         }
     }
     lk.unlock();
@@ -3203,6 +3209,8 @@ Manager::createSinkClients(const std::string& callId,
 
     // create new video sinks
     for (const auto& [sink, size] : newSinks) {
+        if (sinkIdsList.find(sink->getId()) == sinkIdsList.end())
+            continue;
         sink->start();
         sink->setFrameSize(size.first, size.second);
         for (auto& videoStream : videoStreams)
