@@ -82,8 +82,11 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_UWP)
     if(VCPKG_DETECTED_MSVC)
         # dxgigrab is C++/WinRT and needs the Win10 API surface; configure
         # forces -D_WIN32_WINNT=0x0600 for msvc, so override it for C++ only.
+        # --stdcxx (not --extra-cxxflags) so configure's own -std=$stdcxx
+        # (c++17 by default) doesn't override it: without C++20 cppwinrt
+        # uses the legacy coroutine ABI and the client link fails (LNK2038).
         list(APPEND JAMI_OPTIONS
-            "--extra-cxxflags=-std:c++20" "--extra-cxxflags=/Zc:__cplusplus"
+            "--stdcxx=c++20" "--extra-cxxflags=/Zc:__cplusplus"
             "--extra-cxxflags=-D_WIN32_WINNT=0x0A00")
     endif()
 endif()
