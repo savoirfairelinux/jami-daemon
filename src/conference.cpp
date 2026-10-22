@@ -631,8 +631,10 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 #ifdef ENABLE_VIDEO
     if (videoMixer_) {
         if (newVideoInputs.empty()) {
+            videoMixer_->stopInputs();
             videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
         } else {
+            videoMixer_->removeAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
             videoMixer_->switchInputs(newVideoInputs);
         }
     }
@@ -1054,8 +1056,10 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
                         videoInputs.emplace_back(source.sourceUri_);
                 }
                 if (videoInputs.empty()) {
+                    videoMixer_->stopInputs();
                     videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
                 } else {
+                    videoMixer_->removeAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
                     videoMixer_->switchInputs(videoInputs);
                 }
             }
@@ -1682,6 +1686,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         if (is_muted) {
             if (auto mixer = videoMixer_) {
                 mixer->stopInputs();
+                mixer->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
             }
         } else {
             if (auto mixer = videoMixer_) {
@@ -1690,6 +1695,8 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
                     if (source.type_ == MediaType::MEDIA_VIDEO)
                         videoInputs.emplace_back(source.sourceUri_);
                 }
+                if (!videoInputs.empty())
+                    mixer->removeAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
                 mixer->switchInputs(videoInputs);
             }
         }
