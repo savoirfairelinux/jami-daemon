@@ -176,7 +176,7 @@ new file mode 100644
 index 0000000..9774e72
 --- /dev/null
 +++ b/libavdevice/dxgigrab.cpp
-@@ -0,0 +1,226 @@
+@@ -0,0 +1,233 @@
 +/*
 + * DXGI video grab interface
 + *
@@ -386,6 +386,13 @@ index 0000000..9774e72
 +    ret = x_internal->m_capture->GetPkt(pkt);
 +    if (ret < 0)
 +        return ret;
++
++    if (pkt->size > 0) {
++        // Publish frame-pool resizes before the daemon decodes the new pixels.
++        auto* codecpar = s1->streams[0]->codecpar;
++        codecpar->width = x_internal->m_capture->m_DeviceSize.Width;
++        codecpar->height = x_internal->m_capture->m_DeviceSize.Height;
++    }
 +    pkt->dts = pkt->pts = pts;
 +
 +    return ret;

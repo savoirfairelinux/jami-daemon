@@ -17,6 +17,8 @@ with the upstream vcpkg compatibility patches and Jami's patches and component
 list (`jami-options.cmake`). Intel QSV uses libvpl. The port preserves
 upstream's `-libpath:` → `-L` rewrite of its `.pc` files and declares
 `runtimeobject` for the C++/WinRT dxgigrab device.
+The DXGI device publishes resized-window dimensions with each valid packet,
+allowing the daemon to restart decoding without calling private FFmpeg callbacks.
 
 `ports/webrtc-audio-processing` is the closed upstream PR microsoft/vcpkg#52402
 (2.1, meson, abseil) plus `install-vad-header.patch`: APM 2.x has no voice
