@@ -1,177 +1,394 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-set -euo pipefail
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from urllib.parse import urlsplit
 
-usage() {
-    cat <<'EOF'
-Usage: update_contrib <package> <version>
 
-Updates the contrib package metadata for the specified version:
- - <package>/rules.mak
- - <package>/package.json
- - <package>/SHA512SUMS
-EOF
-}
+PORT_NAMES = {"upnp": "libupnp", "gnutls": "shiftmedia-libgnutls"}
+MAKE_VARIABLE = re.compile(r"\$\(([A-Za-z0-9_]+)\)|\$\{([A-Za-z0-9_]+)\}")
+CMAKE_VARIABLE = re.compile(r"\$\{([A-Za-z0-9_]+)\}")
+VERSION_KEYS = ("version", "version-semver", "version-string", "version-date")
 
-die() {
-    echo "$*" >&2
-    exit 1
-}
 
-require_command() {
-    command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
-}
+def expand(value, variables, pattern):
+    for _ in range(50):
+        if "$" not in value:
+            return value
 
-compute_sha512() {
-    local archive_path=$1
+        def replacement(match):
+            name = next(group for group in match.groups() if group is not None)
+            if name not in variables:
+                raise ValueError(f"Unknown variable {name} in {value}")
+            return variables[name]
 
-    if command -v shasum >/dev/null 2>&1; then
-        shasum -a 512 "$archive_path" | awk '{ print $1 }'
-        return
-    fi
+        expanded = pattern.sub(replacement, value)
+        if expanded == value:
+            break
+        value = expanded
+    raise ValueError(f"Unsupported or recursive variable expansion: {value}")
 
-    die "Unable to compute SHA-512 checksum"
-}
 
-extract_json_field() {
-    local field_name=$1
-    local file_path=$2
+def replace_one(pattern, replacement, text, description):
+    updated, count = re.subn(pattern, replacement, text, flags=re.MULTILINE)
+    if count != 1:
+        raise ValueError(f"Expected exactly one {description}, found {count}")
+    return updated
 
-    sed -nE "s/^[[:space:]]*\"${field_name}\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\1/p" "$file_path" | head -n 1
-}
 
-extract_version_var() {
-    local rules_file=$1
+def replace_version(value, old, new):
+    if old and is_commit(old) and is_commit(value):
+        return new
+    return value.replace(old, new, 1) if old and old in value else new
 
-    sed -nE 's/^([A-Z0-9_]+_(VERSION|VER|HASH))[[:space:]]*[:+?]?=.*/\1/p' "$rules_file" | head -n 1
-}
 
-extract_archive_template() {
-    local rules_file=$1
+def is_commit(value):
+    return bool(re.fullmatch(r"[a-fA-F0-9]{7,40}", value))
 
-    sed -nE 's|^\$\(TARBALLS\)/([^:]+):.*|\1|p' "$rules_file" | head -n 1
-}
 
-extract_make_value() {
-    local variable_name=$1
-    local rules_file=$2
+def update_json(text, values):
+    original = json.loads(text)
+    updated = text
+    for key in original.keys() - values.keys():
+        updated = re.sub(
+            rf'^[ \t]*"{re.escape(key)}"[ \t]*:[^\r\n]*\r?\n',
+            "", updated, flags=re.MULTILINE,
+        )
+    for key, value in values.items():
+        if key in original:
+            if original[key] != value:
+                updated = re.sub(
+                    rf'("{re.escape(key)}"[ \t]*:[ \t]*)'
+                    + re.escape(json.dumps(original[key])),
+                    lambda match: match[1] + json.dumps(value), updated,
+                )
+        else:
+            updated = re.sub(
+                r'^(?P<indent>[ \t]*)"version(?:-semver|-string|-date)?"[^\r\n]*,\r?\n',
+                lambda match: match[0] + match["indent"]
+                + json.dumps(key) + ": " + json.dumps(value) + ",\n",
+                updated, count=1, flags=re.MULTILINE,
+            )
+    try:
+        if json.loads(updated) == values:
+            return updated
+    except ValueError:
+        pass
+    return json.dumps(values, indent=2, ensure_ascii=False) + "\n"
 
-    sed -nE "s/^${variable_name}[[:space:]]*[:+?]?=[[:space:]]*([^#[:space:]].*[^[:space:]]|[^#[:space:]])([[:space:]]+#.*)?$/\1/p" "$rules_file" | head -n 1
-}
 
-replace_make_value() {
-    local variable_name=$1
-    local new_value=$2
-    local rules_file=$3
+def archive_name(value):
+    if not value or value in (".", "..") or Path(value).name != value:
+        raise ValueError(f"Unsafe archive filename: {value}")
+    return value
 
-    UPDATE_CONTRIB_VAR_NAME="$variable_name" \
-    UPDATE_CONTRIB_NEW_VALUE="$new_value" \
-    perl -0pi -e 's/^(\Q$ENV{UPDATE_CONTRIB_VAR_NAME}\E\s*[:+?]?=\s*).*$/$1 . $ENV{UPDATE_CONTRIB_NEW_VALUE}/me' "$rules_file"
-}
 
-replace_json_version() {
-    local new_value=$1
-    local package_file=$2
+def make_update(package_dir, version, updates, checksum):
+    rules_file = package_dir / "rules.mak"
+    rules = rules_file.read_text()
+    assignments = re.findall(
+        r"^([A-Z0-9_]+)[ \t]*[:+?]?=[ \t]*([^\r\n]*)", rules, re.MULTILINE,
+    )
+    variables = {
+        name: re.split(r"[ \t]+#", value, maxsplit=1)[0].strip()
+        for name, value in assignments
+    }
+    targets = re.findall(
+        r"^\$\(TARBALLS\)/([^:\r\n]+):[^\n]*\n((?:\t[^\n]*(?:\n|$))*)",
+        rules, re.MULTILINE,
+    )
+    if len(targets) != 1:
+        raise ValueError(f"Expected one archive target in {rules_file}")
+    template, recipe = targets[0]
+    candidates = [
+        name for name in variables
+        if re.search(r"_(VERSION|VER|HASH)$", name)
+        and any(name in match.groups() for match in MAKE_VARIABLE.finditer(template))
+    ]
+    if len(candidates) != 1:
+        raise ValueError(f"Cannot identify the archive version variable in {rules_file}")
+    variable = candidates[0]
+    old_version = variables[variable]
+    old_archive = archive_name(expand(template, variables, MAKE_VARIABLE))
+    variables[variable] = version
+    new_archive = archive_name(expand(template, variables, MAKE_VARIABLE))
+    download = re.search(r"\$\(call[ \t]+download,[ \t]*(.+)\)[ \t]*$", recipe)
+    if not download:
+        raise ValueError(f"Unsupported download recipe in {rules_file}")
+    url = expand(download[1], variables, MAKE_VARIABLE)
+    rules = replace_one(
+        rf"^({re.escape(variable)}[ \t]*[:+?]?=[ \t]*)([^#\r\n]*?)([ \t]*(?:#[^\r\n]*)?)$",
+        lambda match: match[1] + version + match[3], rules, variable,
+    )
+    sums_file = package_dir / "SHA512SUMS"
+    sums = sums_file.read_text() if sums_file.exists() else None
+    sum_pattern = rf"^[a-fA-F0-9]{{128}}([ \t]+\*?){re.escape(old_archive)}$"
+    if sums is not None and len(re.findall(sum_pattern, sums, re.MULTILINE)) != 1:
+        raise ValueError(f"Expected one checksum for {old_archive} in {sums_file}")
+    digest = checksum(url)
+    updates[sums_file] = f"{digest}  {new_archive}\n" if sums is None else replace_one(
+        sum_pattern, lambda match: digest + match[1] + new_archive,
+        sums, f"checksum for {old_archive}",
+    )
+    updates[rules_file] = rules
+    package_file = package_dir / "package.json"
+    if package_file.exists():
+        text = package_file.read_text()
+        data = json.loads(text)
+        if not isinstance(data, dict) or not isinstance(data.get("version"), str) or not data["version"]:
+            raise ValueError(f"Missing version in {package_file}")
+        data["version"] = replace_version(data["version"], old_version, version)
+        updates[package_file] = update_json(text, data)
+    return old_version
 
-    UPDATE_CONTRIB_NEW_VALUE="$new_value" \
-    perl -0pi -e 's/^(\s*"version"\s*:\s*").*("\s*,?\s*)$/$1 . $ENV{UPDATE_CONTRIB_NEW_VALUE} . $2/me' "$package_file"
-}
 
-build_archive_name() {
-    local archive_template=$1
-    local version_var=$2
-    local new_rules_version=$3
+def cmake_field(block, key, value=None, optional=False):
+    pattern = rf'^([ \t]+{key}[ \t]+)("[^"\r\n]*"|[^ \t\r\n)]+)([ \t]*(?:#[^\r\n]*)?)$'
+    matches = list(re.finditer(pattern, block, re.MULTILINE))
+    if not matches and optional:
+        return None
+    if len(matches) != 1:
+        raise ValueError(f"Expected one {key} in the vcpkg source download")
+    if value is None:
+        return matches[0][2].strip('"')
+    return replace_one(
+        pattern,
+        lambda match: match[1] + (json.dumps(value) if match[2].startswith('"') else value) + match[3],
+        block, key,
+    )
 
-    local archive_name=$archive_template
-    archive_name=${archive_name//\$\($version_var\)/$new_rules_version}
-    archive_name=${archive_name//\$\{$version_var\}/$new_rules_version}
-    echo "$archive_name"
-}
 
-main() {
-    if [[ $# -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
-        usage
-        exit 0
-    fi
+def vcpkg_update(port_dir, version, old_version, updates, checksum, source_ref=None):
+    manifest_file = port_dir / "vcpkg.json"
+    manifest_text = manifest_file.read_text()
+    manifest = json.loads(manifest_text)
+    if not isinstance(manifest, dict):
+        raise ValueError(f"Expected a JSON object in {manifest_file}")
+    keys = [key for key in VERSION_KEYS if key in manifest]
+    if len(keys) != 1 or not isinstance(manifest[keys[0]], str) or not manifest[keys[0]]:
+        raise ValueError(f"Expected one version field in {manifest_file}")
+    if type(manifest.get("port-version", 0)) is not int or manifest.get("port-version", 0) < 0:
+        raise ValueError(f"Invalid port-version in {manifest_file}")
+    version_key = keys[0]
+    manifest_version = manifest[version_key]
+    if (version_key in ("version", "version-semver") and not is_commit(version)) or (
+        version_key == "version-string" and (
+            manifest_version == old_version or is_commit(manifest_version) or not is_commit(version)
+        )
+    ):
+        if version_key in ("version", "version-semver") and not re.fullmatch(
+            r"[0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?", version,
+        ):
+            raise ValueError(f"Invalid {version_key}: {version}")
+        manifest[version_key] = version
+        if manifest_version != version:
+            manifest.pop("port-version", None)
 
-    if [[ $# -ne 2 ]]; then
-        usage
-        exit 1
-    fi
+    portfile = port_dir / "portfile.cmake"
+    original_text = portfile.read_text()
+    text = original_text
+    source = re.search(
+        r"^(vcpkg_from_github|vcpkg_from_gitlab|vcpkg_download_distfile)\([^\n]*\n.*?^\)",
+        text, re.MULTILINE | re.DOTALL,
+    )
+    if not source:
+        raise ValueError(f"Unsupported source download in {portfile}")
+    block = source[0]
+    variables = {"VERSION": manifest[version_key]}
+    set_pattern = r'^(set\(([A-Za-z0-9_]+)[ \t]+)("[^"\r\n]*"|[^ \t\r\n)]+)([ \t]*\)[ \t]*(?:#[^\r\n]*)?)$'
+    assignments = list(re.finditer(set_pattern, text, re.MULTILINE))
+    for match in assignments:
+        variables[match[2]] = match[3].strip('"')
 
-    require_command curl
-    require_command perl
-    require_command sed
-    require_command shasum
+    def update_reference(reference, is_url=False):
+        nonlocal text
+        references = CMAKE_VARIABLE.findall(reference)
+        if not references:
+            if is_url:
+                if not old_version or old_version not in urlsplit(reference).path:
+                    raise ValueError("A literal vcpkg URL must contain the current Make version")
+                parsed = urlsplit(reference)
+                return parsed._replace(path=parsed.path.replace(old_version, source_ref or version)).geturl()
+            if source_ref:
+                return source_ref
+            for current in (old_version, manifest_version):
+                if current and current in reference:
+                    return replace_version(reference, current, version)
+            if is_commit(reference) and not is_commit(version):
+                if version == manifest_version:
+                    return reference
+                raise ValueError("The vcpkg fork pins a commit; specify its new pin with --vcpkg-ref")
+            return version
+        names = set(references)
+        if len(names) != 1:
+            raise ValueError(f"Ambiguous vcpkg version reference: {reference}")
+        name = names.pop()
+        if name != "VERSION":
+            if not re.search(r"(?:^|_)(?:VERSION|VER|HASH|REF|TAG|COMMIT)$", name):
+                raise ValueError(f"Not a vcpkg version/ref variable: {name}")
+            matches = [match for match in assignments if match[2] == name]
+            if len(matches) != 1:
+                raise ValueError(f"Expected one set({name} ...) in {portfile}")
+            new_value = source_ref or replace_version(variables[name], old_version or variables[name], version)
+            variables[name] = new_value
+            match = matches[0]
+            replacement = json.dumps(new_value) if match[3].startswith('"') else new_value
+            text = text[:match.start(3)] + replacement + text[match.end(3):]
+        elif source_ref:
+            if is_url:
+                raise ValueError("--vcpkg-ref cannot override a URL using ${VERSION}")
+            return source_ref
+        elif manifest[version_key] != version:
+            raise ValueError(f"Cannot use {version_key} as a vcpkg source ref")
+        return reference
 
-    local package_name=$1
-    local new_rules_version=$2
-    local script_dir
-    script_dir=$(cd "$(dirname "$0")" && pwd)
+    if source[1] == "vcpkg_download_distfile":
+        url_template = cmake_field(block, "URLS")
+        new_template = update_reference(url_template, is_url=True)
+        if new_template != url_template:
+            block = cmake_field(block, "URLS", new_template)
+            filename = cmake_field(block, "FILENAME")
+            if not old_version or old_version not in filename:
+                raise ValueError("A literal vcpkg filename must contain the current Make version")
+            block = cmake_field(
+                block, "FILENAME", filename.replace(old_version, source_ref or version),
+            )
+        archive_name(expand(cmake_field(block, "FILENAME"), variables, CMAKE_VARIABLE))
+        url = expand(cmake_field(block, "URLS"), variables, CMAKE_VARIABLE)
+    else:
+        reference = update_reference(cmake_field(block, "REF"))
+        block = cmake_field(block, "REF", reference)
+        reference = expand(reference, variables, CMAKE_VARIABLE)
+        repo = cmake_field(block, "REPO")
+        if source[1] == "vcpkg_from_github":
+            url = f"https://github.com/{repo}/archive/{reference}.tar.gz"
+        else:
+            host = cmake_field(block, "GITLAB_URL", optional=True) or "https://gitlab.com"
+            url = f"{host.rstrip('/')}/{repo}/-/archive/{reference}/{repo.rsplit('/', 1)[-1]}-{reference}.tar.gz"
+    block = cmake_field(block, "SHA512", checksum(url))
+    updated = text.replace(source[0], block, 1)
+    if updated != original_text and manifest[version_key] == manifest_version:
+        manifest["port-version"] = manifest.get("port-version", 0) + 1
+    updates[portfile] = updated
+    updates[manifest_file] = update_json(manifest_text, manifest)
 
-    local package_dir="$script_dir/$package_name"
-    local rules_file="$package_dir/rules.mak"
-    local package_file="$package_dir/package.json"
-    local sha_file="$package_dir/SHA512SUMS"
 
-    [[ -d "$package_dir" ]] || die "Unknown contrib package: $package_name"
-    [[ -f "$rules_file" ]] || die "Missing rules file: $rules_file"
-    [[ -f "$package_file" ]] || die "Missing package.json: $package_file"
-    [[ -f "$sha_file" ]] || die "Missing SHA512SUMS: $sha_file"
+def write_updates(updates):
+    staged = {}
+    originals = {file: file.read_bytes() if file.exists() else None for file in updates}
 
-    local version_var
-    version_var=$(extract_version_var "$rules_file")
-    [[ -n "$version_var" ]] || die "Unsupported rules.mak format in $rules_file: expected a *_VERSION, *_VER or *_HASH variable"
+    def stage(file, contents):
+        with tempfile.NamedTemporaryFile(dir=file.parent, prefix=".update_contrib-", delete=False) as output:
+            staged_file = Path(output.name)
+            staged[staged_file] = file
+            output.write(contents)
+        if file.exists():
+            shutil.copymode(file, staged_file)
+        else:
+            staged_file.chmod(0o644)
+        return staged_file
 
-    local current_rules_version
-    current_rules_version=$(extract_make_value "$version_var" "$rules_file")
-    [[ -n "$current_rules_version" ]] || die "Unable to read $version_var from $rules_file"
+    replaced = []
+    try:
+        prepared = {file: stage(file, text.encode()) for file, text in updates.items()}
+        for file, staged_file in prepared.items():
+            os.replace(staged_file, file)
+            replaced.append(file)
+    except BaseException:
+        for file in reversed(replaced):
+            if originals[file] is None:
+                file.unlink()
+            else:
+                os.replace(stage(file, originals[file]), file)
+        raise
+    finally:
+        for staged_file in staged:
+            if staged_file.exists():
+                staged_file.unlink()
 
-    local current_json_version
-    current_json_version=$(extract_json_field version "$package_file")
-    [[ -n "$current_json_version" ]] || die "Unable to read version from $package_file"
 
-    local url_template
-    url_template=$(extract_json_field url "$package_file")
-    [[ -n "$url_template" ]] || die "Unable to read url from $package_file"
-    [[ "$url_template" == *"__VERSION__"* ]] || die "Unsupported package.json format in $package_file: expected url to contain __VERSION__"
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Update contrib Make metadata and matching vcpkg overlay sources/checksums. "
+        "Requires Python 3 and curl. Unsupported metadata is rejected without writing files.",
+    )
+    parser.add_argument("package", help="contrib package or vcpkg overlay port name")
+    parser.add_argument("version", help="upstream release version or commit hash")
+    parser.add_argument("--port", help="override the matching vcpkg overlay port name")
+    parser.add_argument("--vcpkg-ref", help="use a different source ref for the vcpkg fork")
+    parser.add_argument("--dry-run", action="store_true", help="download and validate without writing metadata")
+    args = parser.parse_args(argv)
+    port_name = args.port or PORT_NAMES.get(args.package, args.package)
+    for name in (args.package, port_name):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.+-]*", name):
+            raise ValueError(f"Invalid package name: {name}")
+    for value in (args.version, args.vcpkg_ref):
+        if value is not None and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.+-]*", value):
+            raise ValueError(f"Invalid version or ref: {value}")
+    if not shutil.which("curl"):
+        raise ValueError("Missing required command: curl")
+    src_dir = Path(__file__).resolve().parent
+    make_name = next((name for name, port in PORT_NAMES.items() if port == args.package), args.package)
+    package_dir = src_dir / make_name
+    port_dir = src_dir.parent / "vcpkg" / "ports" / port_name
+    has_make = (package_dir / "rules.mak").is_file()
+    has_port = port_dir.is_dir()
+    if args.port and not has_port:
+        raise ValueError(f"Unknown vcpkg overlay port: {port_name}")
+    if args.vcpkg_ref and not has_port:
+        raise ValueError("--vcpkg-ref requires a matching vcpkg overlay port")
+    if not has_make and not has_port:
+        raise ValueError(f"Unknown contrib package or vcpkg overlay port: {args.package}")
+    updates = {}
+    with tempfile.TemporaryDirectory(prefix="update_contrib-") as temporary:
+        checksums = {}
 
-    local archive_template
-    archive_template=$(extract_archive_template "$rules_file")
-    [[ -n "$archive_template" ]] || die "Unsupported rules.mak format in $rules_file: expected a \\$(TARBALLS)/... target"
+        def checksum(url):
+            parsed = urlsplit(url)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc or re.search(r"\s", url):
+                raise ValueError(f"Unsupported download URL: {url}")
+            if url not in checksums:
+                destination = Path(temporary) / "archive"
+                print(f"Downloading {url}", flush=True)
+                subprocess.run([
+                    "curl", "-LfsS", "--retry", "3", "--connect-timeout", "30",
+                    "--max-time", "600", "--proto", "=http,https",
+                    "--proto-redir", "=http,https", "-o", str(destination), "--", url,
+                ], check=True)
+                if destination.stat().st_size == 0:
+                    raise ValueError(f"Downloaded an empty archive: {url}")
+                digest = hashlib.sha512()
+                with destination.open("rb") as archive:
+                    for chunk in iter(lambda: archive.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                checksums[url] = digest.hexdigest()
+            return checksums[url]
 
-    local new_json_version=$new_rules_version
-    if [[ "$current_json_version" == *"$current_rules_version"* ]]; then
-        new_json_version=${current_json_version/"$current_rules_version"/"$new_rules_version"}
-    fi
+        old_version = make_update(package_dir, args.version, updates, checksum) if has_make else None
+        if has_port:
+            vcpkg_update(port_dir, args.version, old_version, updates, checksum, args.vcpkg_ref)
+        updates = {
+            file: text for file, text in updates.items()
+            if not file.exists() or file.read_text() != text
+        }
+        if not args.dry_run:
+            write_updates(updates)
+        for file in updates:
+            print(f"{'Would update' if args.dry_run else 'Updated'} {file.relative_to(src_dir.parent)}")
+        if not updates:
+            print(f"{args.package} is already up to date")
 
-    local download_url
-    download_url=${url_template//__VERSION__/$new_json_version}
 
-    local archive_name
-    archive_name=$(build_archive_name "$archive_template" "$version_var" "$new_rules_version")
-    [[ -n "$archive_name" ]] || die "Unable to derive archive name from $download_url"
-
-    local temp_dir
-    temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
-
-    local archive_path="$temp_dir/$archive_name"
-
-    echo "Downloading $download_url"
-    curl -LfsS "$download_url" -o "$archive_path"
-
-    local checksum
-    checksum=$(compute_sha512 "$archive_path")
-
-    replace_make_value "$version_var" "$new_rules_version" "$rules_file"
-    replace_json_version "$new_json_version" "$package_file"
-    printf '%s  %s\n' "$checksum" "$archive_name" > "$sha_file"
-
-    echo "Updated $package_name from $current_rules_version to $new_rules_version"
-    echo "  rules variable: $version_var"
-    echo "  package.json version: $new_json_version"
-    echo "  archive: $archive_name"
-}
-
-main "$@"
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        sys.exit(f"update_contrib: {error}")
