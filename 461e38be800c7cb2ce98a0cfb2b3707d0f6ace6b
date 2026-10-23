@@ -16,6 +16,24 @@
       "message": "[error] 🔴 The `daemon-msvc-vcpkg` CI job is failing on this patchset, and this change directly targets that toolchain path. Please fix or clearly root-cause the MSVC failure before merge so we can confirm `--stdcxx\u003dc++20` resolves the ABI mismatch without introducing a new breakage.",
       "revId": "461e38be800c7cb2ce98a0cfb2b3707d0f6ace6b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9512ebde_f067ee95",
+        "filename": "contrib/vcpkg/ports/ffmpeg/jami-options.cmake",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-10-23T16:08:42Z",
+      "side": 1,
+      "message": "No change. daemon-msvc-vcpkg is not failing on this patchset: https://jenkins.jami.net/job/jami_daemon/job/daemon-msvc-vcpkg/55/ (PS4) and /54/ (PS2) both SUCCESS. The job is not part of the Verified vote set, which is presumably why it looked absent.",
+      "parentUuid": "fced903e_4df283ae",
+      "revId": "461e38be800c7cb2ce98a0cfb2b3707d0f6ace6b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
