@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9343ea34_a36685d3",
+        "filename": "contrib/vcpkg/ports/dhtnet/vcpkg.json",
+        "patchSetId": 3
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-23T21:05:10Z",
+      "side": 1,
+      "message": "[warning] Line 3: 🟡 The upstream source revision changed (`DHTNET_REF`), but `version-date` stayed the same and only `port-version` was incremented. In vcpkg versioning, `port-version` is intended for packaging-only changes when the upstream version is unchanged; for a new upstream snapshot, bump `version-date` and reset/remove `port-version` to keep version semantics clear and avoid confusion in downstream version tracking.",
+      "revId": "a39cf186d9b550a712965645b1fe0aaf919b5df1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
