@@ -50,6 +50,51 @@ matching the Unix contrib. Rust is a host requirement vcpkg cannot fetch; since
 vcpkg scrubs the environment for port builds, `CARGO_HOME`/`RUSTUP_HOME` are read
 from the registry when not passed through with `VCPKG_KEEP_ENV_VARS`.
 
+## Updating dependencies
+
+From `contrib/`, use Python 3 and curl to update both Make metadata and the
+matching vcpkg overlay:
+
+```sh
+./src/update_contrib dhtnet 01333a9d
+./src/update_contrib opendht 4.4.1 --dry-run
+```
+
+The updater reads the archive name and URL from `src/<package>/rules.mak`,
+updates its version and matching `SHA512SUMS` entry, and updates legacy
+`package.json` metadata only when present. Missing checksum files are created;
+other checksum entries are preserved.
+For vcpkg, it updates the primary `vcpkg_from_github`, `vcpkg_from_gitlab`, or
+`vcpkg_download_distfile` source and its SHA-512 checksum. Auxiliary downloads
+and patches are left alone. Each distinct URL is downloaded and hashed
+separately, since Make and vcpkg may use different archives for the same version.
+
+Release updates change the manifest version and reset `port-version`. Commit
+updates preserve numeric/date manifest versions and increment `port-version`
+when the source changes. The `upnp`/`libupnp` and
+`gnutls`/`shiftmedia-libgnutls` aliases are recognized in both directions;
+`--port <name>` selects another overlay. Packages with only Make rules or only
+a vcpkg overlay are supported too.
+
+When vcpkg pins a fork commit rather than a release tag, supply its new ref
+explicitly, for example:
+
+```sh
+./src/update_contrib gnutls <release-version> --vcpkg-ref <fork-commit>
+```
+
+All downloads and metadata validation finish before files are replaced. Failed
+replacements are rolled back. `--dry-run` still downloads and validates the
+archives but does not write metadata. Unsupported or ambiguous Make/CMake
+expressions are rejected instead of evaluated. Review the resulting diff and
+verify existing patches against the new sources before rebuilding.
+
+Run the offline updater tests with:
+
+```sh
+python3 src/test_update_contrib.py
+```
+
 ## Building the daemon
 
 The daemon CMake uses this manifest automatically when configured with the vcpkg
