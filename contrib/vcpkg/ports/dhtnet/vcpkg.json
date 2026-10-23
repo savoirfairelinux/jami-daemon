@@ -1,6 +1,7 @@
 {
   "name": "dhtnet",
   "version-date": "2026-10-09",
+  "port-version": 1,
   "description": "Lightweight peer-to-peer communication library (ICE, TLS, NAT traversal) built on OpenDHT and pjproject (Jami overlay: pin from contrib/src/dhtnet)",
   "homepage": "https://git.jami.net/savoirfairelinux/dhtnet",
   "license": "GPL-3.0-or-later",
