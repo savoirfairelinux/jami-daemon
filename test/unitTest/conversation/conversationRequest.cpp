@@ -100,6 +100,7 @@ public:
     void testRemoveContactRemoveTrustRequest();
     void testAddConversationNoPresenceThenConnects();
     void testRequestBigPayload();
+    void testRequestBigVCardPayload();
     void testBothRemoveReadd();
     void doNotLooseMetadata();
     std::string aliceId;
@@ -145,6 +146,7 @@ private:
     CPPUNIT_TEST(testRemoveContactRemoveTrustRequest);
     CPPUNIT_TEST(testAddConversationNoPresenceThenConnects);
     CPPUNIT_TEST(testRequestBigPayload);
+    CPPUNIT_TEST(testRequestBigVCardPayload);
     CPPUNIT_TEST(testBothRemoveReadd);
     CPPUNIT_TEST(doNotLooseMetadata);
     CPPUNIT_TEST_SUITE_END();
@@ -1453,6 +1455,34 @@ ConversationRequestTest::testRequestBigPayload()
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     }
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
+}
+
+void
+ConversationRequestTest::testRequestBigVCardPayload()
+{
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+
+    // About the size of a 350x350 avatar sent by jami-client-qt
+    auto vCard = "BEGIN:VCARD\nVERSION:2.1\nFN:Alice\nPHOTO;ENCODING=BASE64;TYPE=JPEG:" + std::string(38000, 'A')
+                 + "\nEND:VCARD\n";
+    aliceAccount->sendTrustRequest(bobUri, std::vector<uint8_t>(vCard.begin(), vCard.end()));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    }
+
+    // The request is sent without the photo, but still introduces Alice
+    auto requests = bobAccount->getTrustRequests();
+    CPPUNIT_ASSERT_EQUAL((size_t) 1, requests.size());
+    const auto& payload = requests.front().at(libjami::Account::TrustRequest::PAYLOAD);
+    CPPUNIT_ASSERT(payload.size() <= 16 * 1024);
+    CPPUNIT_ASSERT(payload.find("FN:Alice") != std::string::npos);
+    CPPUNIT_ASSERT(payload.find("PHOTO") == std::string::npos);
 }
 
 void

@@ -109,6 +109,22 @@ removeByKey(VCardData& vCard, std::string_view key)
     }
 }
 
+std::string
+fitToSize(std::string_view vCard, size_t maxSize)
+{
+    if (vCard.size() <= maxSize)
+        return std::string(vCard);
+    auto data = toMap(vCard);
+    auto size = data.size();
+    removeByKey(data, Property::PHOTO);
+    if (data.size() == size)
+        return {};
+    auto withoutPhoto = toString(data);
+    if (withoutPhoto.size() > maxSize)
+        return {};
+    return withoutPhoto;
+}
+
 } // namespace utils
 } // namespace vCard
 } // namespace jami

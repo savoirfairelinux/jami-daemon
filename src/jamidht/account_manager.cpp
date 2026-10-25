@@ -22,6 +22,7 @@
 #include "account_schema.h"
 #include "archiver.h"
 #include "manager.h"
+#include "vcard.h"
 
 #include "libdevcrypto/Common.h"
 #include "json_utils.h"
@@ -35,6 +36,11 @@
 #include <gnutls/ocsp.h>
 
 namespace jami {
+
+// Trust requests are encrypted DHT values: the bigger their payload (the vCard
+// of the sender, mostly its photo), the more UDP packets they are split into and
+// the more likely they are lost. The full profile is shared once connected.
+static constexpr size_t MAX_TRUST_REQUEST_PAYLOAD_SIZE {16 * 1024};
 
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
@@ -350,31 +356,30 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                          JAMI_WARNING(
-                              "[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
-                              accountId_,
-                              v.owner->getLongId().toString(),
-                              v.confirm,
-                              peer_account.toString(),
-                              v.conversationId);
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  nowMs(),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload),
-                                                                  v.invitedMs > 0
-                                                                      ? timePointFromMilliseconds(v.invitedMs)
-                                                                      : TimePoint {})) {
-                                  if (v.confirm) // No need to send a confirmation as already accepted here
-                                      return;
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                             accountId_,
+                             v.owner->getLongId().toString(),
+                             v.confirm,
+                             peer_account.toString(),
+                             v.conversationId);
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        nowMs(),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload),
+                                                        v.invitedMs > 0 ? timePointFromMilliseconds(v.invitedMs)
+                                                                        : TimePoint {})) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
+                        sendTrustRequestConfirm(peer_account, v.conversationId);
+                    }
+            });
         return true;
     });
 }
@@ -715,7 +720,7 @@ AccountManager::discardTrustRequest(const std::string& from)
 void
 AccountManager::sendTrustRequest(const std::string& to,
                                  const std::string& convId,
-                                 const std::vector<uint8_t>& payload,
+                                 std::vector<uint8_t> payload,
                                  TimePoint invited)
 {
     JAMI_WARNING("[Account {}] AccountManager::sendTrustRequest", accountId_);
@@ -730,6 +735,15 @@ AccountManager::sendTrustRequest(const std::string& to,
     }
     if (info_->contacts->addContact(toH, false, convId)) {
         syncDevices();
+    }
+    auto vCard = vCard::utils::fitToSize({reinterpret_cast<const char*>(payload.data()), payload.size()},
+                                         MAX_TRUST_REQUEST_PAYLOAD_SIZE);
+    if (vCard.size() != payload.size()) {
+        JAMI_WARNING("[Account {}] Trust request payload is too big ({} bytes), sending {} bytes",
+                     accountId_,
+                     payload.size(),
+                     vCard.size());
+        payload.assign(vCard.begin(), vCard.end());
     }
     auto invitedMs = invited != TimePoint {} ? toMillisecondsSinceEpoch(invited) : toMillisecondsSinceEpoch(nowMs());
     forEachDevice(toH, [this, toH, convId, payload, invitedMs](const std::shared_ptr<dht::crypto::PublicKey>& dev) {

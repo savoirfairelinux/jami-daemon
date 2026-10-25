@@ -219,7 +219,7 @@ public:
 
     void sendTrustRequest(const std::string& to,
                           const std::string& convId,
-                          const std::vector<uint8_t>& payload,
+                          std::vector<uint8_t> payload,
                           TimePoint invited = {});
     void sendTrustRequestConfirm(const dht::InfoHash& to,
                                  const std::string& conversationId); // TODO ideally no convId here
