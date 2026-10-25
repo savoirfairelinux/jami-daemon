@@ -1218,28 +1218,19 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    TimePoint received,
-                                                    TimePoint invited) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               TimePoint received,
+               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -1891,12 +1882,6 @@ JamiAccount::onTrackedBuddyOnline(const std::string& contactId)
                 try {
                     payload = fileutils::loadFile(requestPath);
                 } catch (...) {
-                }
-                if (payload.size() >= 64000) {
-                    JAMI_WARNING("[Account {:s}] Trust request for contact {:s} is too big, reset payload",
-                                 getAccountID(),
-                                 contactId);
-                    payload.clear();
                 }
                 // Reuse the original invite timestamp so this passive retry isn't treated as a
                 // fresh invitation; fall back to now() if no cached timestamp is found (e.g.
@@ -3051,8 +3036,8 @@ JamiAccount::requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newN
     };
     requestRecoverySIPConnection(deviceId,
                                  call->hasVideo() ? "videoCall" : "audioCall",
-                                 [w = weak(), wcall = std::weak_ptr(call), peerId, deviceId, attempt = *attempt,
-                                  retry](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+                                 [w = weak(), wcall = std::weak_ptr(call), peerId, deviceId, attempt = *attempt, retry](
+                                     const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
                                      if (not socket) {
                                          retry();
                                          return;
@@ -3785,20 +3770,13 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     else
         JAMI_WARNING("Unable to write invite timestamp cache to {}", cachedTsFile);
 
-    if (payload.size() >= 64000) {
-        JAMI_WARNING("Trust request is too big. Remove payload");
-    }
-
     auto conversation = convModule()->getOneToOneConversation(to);
     if (conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
     if (not conversation.empty()) {
         std::lock_guard lock(configurationMutex_);
         if (accountManager_)
-            accountManager_->sendTrustRequest(to,
-                                              conversation,
-                                              payload.size() >= 64000 ? std::vector<uint8_t> {} : payload,
-                                              invited);
+            accountManager_->sendTrustRequest(to, conversation, payload, invited);
         else
             JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
     } else

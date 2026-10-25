@@ -688,6 +688,21 @@ test(
     timeout: 1800,
 )
 
+ut_vcard = executable(
+    'ut_vcard',
+    sources: files('unitTest/vcard/testVcard.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'vcard',
+    ut_vcard,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_sync_history = executable(
     'ut_sync_history',
     sources: files('unitTest/syncHistory/syncHistory.cpp'),

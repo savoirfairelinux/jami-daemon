@@ -99,6 +99,12 @@ VCardData toMap(std::string_view content);
 VCardData initVcard();
 std::string toString(const VCardData& vCard);
 void removeByKey(VCardData& vCard, std::string_view key);
+/**
+ * Fit a vCard in maxSize bytes, dropping its photo if it is too big.
+ * @return the vCard, without photo if needed, or an empty string if it
+ *         does not fit even without photo.
+ */
+std::string fitToSize(std::string_view vCard, size_t maxSize);
 void save(const VCardData& vCard, const std::filesystem::path& path, const std::filesystem::path& pathLink);
 
 } // namespace utils
