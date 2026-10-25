@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "40fc694e_4470fc9b",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 734,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-25T00:32:23Z",
+      "side": 1,
+      "message": "[warning] Line 734: 🟡 `fitToSize()` is applied to any payload larger than 16 KiB, but there is no hard upper bound before parsing/re-serializing. After removing the old 64k guard in `JamiAccount::sendTrustRequest`, a very large payload can now force expensive parsing/allocation in `toMap()`/`toString()`. Add an absolute size cap (e.g., reject/clear payload above a conservative limit) before calling `fitToSize()` to avoid local DoS via oversized trust-request payloads.",
+      "revId": "61f44d98126ea128678d7b1edddadd929177f678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
