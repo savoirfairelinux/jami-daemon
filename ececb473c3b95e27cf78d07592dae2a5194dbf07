@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fa3528d_81330abc",
+        "filename": "docker/Dockerfile_ubuntu_24.04",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-27T17:31:07Z",
+      "side": 1,
+      "message": "[error] Line 65: 🔴 `libcrypto++-dev` was removed in this patch even though the change scope is VDPAU removal. This looks accidental and can break daemon/contrib builds that still rely on Crypto++ headers/libs. Please restore `libcrypto++-dev` (or justify and update all dependent build logic in the same change).",
+      "revId": "ececb473c3b95e27cf78d07592dae2a5194dbf07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
