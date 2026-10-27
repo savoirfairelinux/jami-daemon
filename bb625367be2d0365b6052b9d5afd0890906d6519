@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ebafa3f_8ef3cafd",
+        "filename": "src/jamidht/feed_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-27T00:47:47Z",
+      "side": 1,
+      "message": "[warning] Line 210: 🟡 `updateFeed()` currently accepts `feedAdd`/`feedRemove` via the generic settings path, which bypasses the stricter contact checks implemented in `setAccess()` (confirmed, active, not banned). That makes the API contract inconsistent and allows callers to sidestep intended validation. Restrict `updateFeed` to profile fields (`title`, `avatar`, `feedReplies`, `feedClosed`) and handle access changes only through `setFeedAccess`, or enforce the same contact validation in `update()` when these keys are present.",
+      "revId": "bb625367be2d0365b6052b9d5afd0890906d6519",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
