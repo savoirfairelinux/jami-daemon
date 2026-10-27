@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y \
     libdbus-1-dev \
     libsystemd-dev \
     libva-dev \
-    libvdpau-dev \
     libtool \
     libudev-dev \
     libpcre2-dev \
@@ -46,7 +45,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 # directory of its own, outside the tree and outside PATH, shared between build
 # users with the sticky bit so none of them can remove another's files.
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-        | CARGO_HOME=/usr/local/cargo sh -s -- -y --profile minimal --default-toolchain 1.96.0 && \
+    | CARGO_HOME=/usr/local/cargo sh -s -- -y --profile minimal --default-toolchain 1.96.0 && \
     chmod -R a+rX /usr/local/rustup /usr/local/cargo && \
     install -d -m 1777 /var/cache/cargo
 

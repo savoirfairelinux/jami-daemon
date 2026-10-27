@@ -35,7 +35,6 @@ RUN apt-get update && apt-get install -y \
     libudev-dev \
     libupnp-dev \
     libva-dev \
-    libvdpau-dev \
     libvpx-dev \
     libx264-dev \
     libyaml-cpp-dev \
