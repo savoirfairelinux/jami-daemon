@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4c8d434_42cfe2f7",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 466,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-28T20:16:15Z",
+      "side": 1,
+      "message": "[warning] Line 466: 🟡 `CPPUNIT_ASSERT(subcalls \u003d\u003d conf-\u003egetSubCalls())` is order-sensitive and can make the test flaky if the conference internals return the same members in a different order after recovery. Compare membership/order-independent equality instead (e.g., sort both vectors first or compare as sets), while keeping the size check.",
+      "revId": "4973459752ed8f09e3c71d468f226ed30bfe6956",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
