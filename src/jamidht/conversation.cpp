@@ -1870,15 +1870,18 @@ Conversation::Impl::relinearizeAfterMerge(const std::vector<std::map<std::string
             return CallbackResult::Skip;
         },
         [&](auto&& cc) { order.emplace_back(std::move(cc.id)); },
-        [&](const auto& id, const auto&, const auto&) {
+        [&](const auto& id, const auto&, const auto& commit) {
+            while (oldIt != list.end() && visited.count((*oldIt)->id))
+                ++oldIt;
+            // The anchor must follow the affected prefix, not be its last message.
+            const bool isAnchor = remaining == 0 && oldIt == list.end() && commit.commitMsg.reactTo.empty()
+                                  && commit.commitMsg.editedId.empty();
             visited.emplace(id);
             if (newIds.erase(id))
                 --remaining;
             if (remaining != 0)
                 return false;
-            while (oldIt != list.end() && visited.count((*oldIt)->id))
-                ++oldIt;
-            anchorFound = oldIt == list.end() || (*oldIt)->id == id;
+            anchorFound = isAnchor;
             return anchorFound;
         },
         "",
