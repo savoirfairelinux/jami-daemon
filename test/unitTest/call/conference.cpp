@@ -111,8 +111,8 @@ private:
     void testHostAddRmSecondVideo();
     void testParticipantAddRmSecondVideo();
     void testPropagateRecording();
-    void testBrokenParticipantAudioAndVideo();
-    void testBrokenParticipantAudioOnly();
+    void testParticipantSipRecoveryAudioAndVideo();
+    void testParticipantSipRecoveryAudioOnly();
     void testAudioOnlyLeaveLayout();
     void testRemoveConferenceInOneOne();
     void testHostNetworkSwitch();
@@ -139,8 +139,8 @@ private:
     CPPUNIT_TEST(testHostAddRmSecondVideo);
     CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST(testPropagateRecording);
-    CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
-    CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testParticipantSipRecoveryAudioAndVideo);
+    CPPUNIT_TEST(testParticipantSipRecoveryAudioOnly);
     CPPUNIT_TEST(testAudioOnlyLeaveLayout);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST(testHostNetworkSwitch);
@@ -168,7 +168,10 @@ private:
     void registerSignalHandlers();
     void startConference(bool audioOnly = false, bool addDavi = false);
     void hangupConference();
-    void recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel = false);
+    void recoverConferenceAfterNetworkChange(bool hostSwitch,
+                                             bool closeChannel = false,
+                                             bool audioOnly = false,
+                                             bool addDavi = false);
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
@@ -390,24 +393,33 @@ ConferenceTest::hangupConference()
 }
 
 void
-ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel)
+ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeChannel, bool audioOnly, bool addDavi)
 {
     registerSignalHandlers();
-    startConference();
+    startConference(audioOnly, addDavi);
 
     auto host = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carla = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto guest = addDavi ? Manager::instance().getAccount<JamiAccount>(daviId) : bob;
+    auto guestCall = std::dynamic_pointer_cast<SIPCall>(guest->getCall(addDavi ? daviCall.callId : bobCall.callId));
     auto conf = host->getConference(confId);
     CPPUNIT_ASSERT(conf);
     auto subcalls = conf->getSubCalls();
-    CPPUNIT_ASSERT_EQUAL(size_t(2), subcalls.size());
+    CPPUNIT_ASSERT_EQUAL(addDavi ? size_t(3) : size_t(2), subcalls.size());
+    const auto expectedParticipants = subcalls.size() + 1;
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedParticipants; }));
+    }
 
     std::vector<std::shared_ptr<SIPCall>> calls;
     for (const auto& id : subcalls)
         calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(host->getCall(id)));
     calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(bob->getCall(bobCall.callId)));
     calls.emplace_back(std::dynamic_pointer_cast<SIPCall>(carla->getCall(carlaCall.callId)));
+    if (addDavi)
+        calls.emplace_back(guestCall);
 
     auto ready = [&] {
         return std::all_of(calls.begin(), calls.end(), [](const auto& call) {
@@ -431,29 +443,30 @@ ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeC
         before.push_back({call,
                           call->getTransport()->get(),
                           call->getIceMedia(),
-                          hostSwitch or call == calls[2] or call->getPeerAccountId() == bob->getUsername()});
+                          hostSwitch or call == guestCall or call->getPeerAccountId() == guest->getUsername()});
     }
 
     if (closeChannel) {
-        auto hostBobCall = std::find_if(calls.begin(), calls.begin() + subcalls.size(), [&](const auto& call) {
-            return call->getPeerAccountId() == bob->getUsername();
+        auto hostGuestCall = std::find_if(calls.begin(), calls.begin() + subcalls.size(), [&](const auto& call) {
+            return call->getPeerAccountId() == guest->getUsername();
         });
-        CPPUNIT_ASSERT(hostBobCall != calls.begin() + subcalls.size());
-        CPPUNIT_ASSERT(pjsip_transport_shutdown((*hostBobCall)->getTransport()->get()) == PJ_SUCCESS);
+        CPPUNIT_ASSERT(hostGuestCall != calls.begin() + subcalls.size());
+        const auto& callToClose = addDavi ? guestCall : *hostGuestCall;
+        CPPUNIT_ASSERT(pjsip_transport_shutdown(callToClose->getTransport()->get()) == PJ_SUCCESS);
     } else if (hostSwitch) {
         host->networkInterfaceChanged();
     } else {
-        bob->networkInterfaceChanged();
+        guest->networkInterfaceChanged();
     }
 
     auto recovered = [&] {
         return std::all_of(before.begin(), before.end(), [](const auto& state) {
             if (state.call->getConnectionState() != Call::ConnectionState::CONNECTED or not state.call->getTransport()
-                or not state.call->getIceMedia())
+                or not state.call->getIceMedia() or not state.call->getIceMedia()->isRunning()
+                or state.call->isRecovering())
                 return false;
             return not state.shouldRecover
-                   or (not state.call->isRecovering() and state.call->getTransport()->get() != state.sip
-                       and state.call->getIceMedia() != state.ice and state.call->getIceMedia()->isRunning());
+                   or (state.call->getTransport()->get() != state.sip and state.call->getIceMedia() != state.ice);
         });
     };
     deadline = std::chrono::steady_clock::now() + 18s;
@@ -461,7 +474,11 @@ ConferenceTest::recoverConferenceAfterNetworkChange(bool hostSwitch, bool closeC
         std::this_thread::sleep_for(50ms);
     CPPUNIT_ASSERT(recovered());
     CPPUNIT_ASSERT(host->getConference(confId) == conf);
-    CPPUNIT_ASSERT_EQUAL(size_t(2), conf->getSubCalls().size());
+    CPPUNIT_ASSERT(subcalls == conf->getSubCalls());
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return pInfos_.size() == expectedParticipants; }));
+    }
     for (const auto& call : calls)
         CPPUNIT_ASSERT(call->getConnectionState() == Call::ConnectionState::CONNECTED);
     for (size_t i = 0; i < subcalls.size(); ++i) {
@@ -1342,66 +1359,15 @@ ConferenceTest::testPropagateRecording()
 }
 
 void
-ConferenceTest::testBrokenParticipantAudioAndVideo()
+ConferenceTest::testParticipantSipRecoveryAudioAndVideo()
 {
-    registerSignalHandlers();
-
-    // Start conference with four participants
-    startConference(false, true);
-    auto expectedNumberOfParticipants = 4u;
-
-    // Check participants number
-    {
-        std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
-    }
-
-    // Crash participant
-    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
-    auto call2Crash = std::dynamic_pointer_cast<SIPCall>(daviAccount->getCall(daviCall.callId));
-    pjsip_transport_shutdown(call2Crash->getTransport()->get());
-
-    // Check participants number
-    // It should have one less participant than in the conference start
-    {
-        std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
-    }
-
-    hangupConference();
-
-    libjami::unregisterSignalHandlers();
+    recoverConferenceAfterNetworkChange(false, true, false, true);
 }
 
 void
-ConferenceTest::testBrokenParticipantAudioOnly()
+ConferenceTest::testParticipantSipRecoveryAudioOnly()
 {
-    registerSignalHandlers();
-
-    // Start conference with four participants
-    startConference(true, true);
-    auto expectedNumberOfParticipants = 4u;
-
-    // Check participants number
-    {
-        std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
-    }
-
-    // Crash participant
-    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
-    auto call2Crash = std::dynamic_pointer_cast<SIPCall>(daviAccount->getCall(daviCall.callId));
-    pjsip_transport_shutdown(call2Crash->getTransport()->get());
-
-    // Check participants number
-    // It should have one less participant than in the conference start
-    {
-        std::unique_lock lk {mtx};
-        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
-    }
-
-    hangupConference();
-    libjami::unregisterSignalHandlers();
+    recoverConferenceAfterNetworkChange(false, true, true, true);
 }
 
 void
