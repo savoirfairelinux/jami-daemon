@@ -123,6 +123,11 @@ public:
                             const std::string& deviceId = ""); // ToDO this is a bit dirty imho
     bool acceptTrustRequest(const dht::InfoHash& from);
     bool discardTrustRequest(const dht::InfoHash& from);
+    // A delayed callback must not discard a replacement invitation.
+    bool discardTrustRequest(const dht::InfoHash& from,
+                             const std::string& conversationId,
+                             TimePoint received,
+                             TimePoint invited);
 
     /* Devices */
     const std::map<dht::PkId, KnownDevice>& getKnownDevices() const { return knownDevices_; }

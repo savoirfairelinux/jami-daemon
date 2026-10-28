@@ -216,6 +216,10 @@ public:
     // Note: includeConversation used for compatibility test, do not use if not in test env.
     bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
+    bool discardTrustRequest(const std::string& from,
+                             const std::string& conversationId,
+                             TimePoint received,
+                             TimePoint invited);
 
     void sendTrustRequest(const std::string& to,
                           const std::string& convId,

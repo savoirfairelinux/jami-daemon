@@ -461,6 +461,22 @@ ContactList::discardTrustRequest(const dht::InfoHash& from)
     return false;
 }
 
+bool
+ContactList::discardTrustRequest(const dht::InfoHash& from,
+                                 const std::string& conversationId,
+                                 TimePoint received,
+                                 TimePoint invited)
+{
+    std::lock_guard lk(mutex_);
+    auto it = trustRequests_.find(from);
+    if (it == trustRequests_.end() || it->second.conversationId != conversationId || it->second.invited != invited
+        || it->second.received > received)
+        return false;
+    trustRequests_.erase(it);
+    saveTrustRequests();
+    return true;
+}
+
 void
 ContactList::loadKnownDevices()
 {

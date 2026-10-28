@@ -484,8 +484,8 @@ public:
                 if (req.declined < it->second.received)
                     return false;
             } else if (existingDeclined) {
-                // Accept a re-invitation only if it arrived after the previous decline.
-                if (req.received <= it->second.declined)
+                // A retry stays declined even when the sender's clock is ahead.
+                if (req.received <= std::max(it->second.received, it->second.declined))
                     return false;
             } else {
                 // Ignore duplicate active requests.
@@ -2387,7 +2387,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
         return;
     }
 
-    if (pimpl_->addConversationRequest(conversationId, std::move(req))) {
+    if (pimpl_->addConversationRequest(conversationId, req)) {
         lk.unlock();
         emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
                                                                        conversationId,
@@ -2398,6 +2398,15 @@ ConversationModule::onTrustRequest(const std::string& uri,
         pimpl_->needsSyncingCb_({});
     } else {
         JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. Ignore", pimpl_->accountId_);
+        auto it = pimpl_->conversationsRequests_.find(conversationId);
+        if (it != pimpl_->conversationsRequests_.end() && it->second.from == uri && it->second.declined != TimePoint {}
+            && req.received <= std::max(it->second.received, it->second.declined)) {
+            lk.unlock();
+            if (pimpl_->accountManager_->discardTrustRequest(uri, conversationId, received, invited))
+                JAMI_DEBUG("[Account {}] Removed redelivered trust request for declined conversation {}",
+                           pimpl_->accountId_,
+                           conversationId);
+        }
     }
 }
 

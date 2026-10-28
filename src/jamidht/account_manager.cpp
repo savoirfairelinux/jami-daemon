@@ -712,6 +712,15 @@ AccountManager::discardTrustRequest(const std::string& from)
     return info_ and info_->contacts->discardTrustRequest(f);
 }
 
+bool
+AccountManager::discardTrustRequest(const std::string& from,
+                                    const std::string& conversationId,
+                                    TimePoint received,
+                                    TimePoint invited)
+{
+    return info_ and info_->contacts->discardTrustRequest(dht::InfoHash(from), conversationId, received, invited);
+}
+
 void
 AccountManager::sendTrustRequest(const std::string& to,
                                  const std::string& convId,
