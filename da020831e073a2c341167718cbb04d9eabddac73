@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50ae940f_0b6b041e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-28T22:09:20Z",
+      "side": 1,
+      "message": "[warning] 🟡 This patch changes subtle ordering and timestamp semantics (decline vs resend vs delayed callback) but does not include regression coverage in the patchset. Add targeted tests for: (1) declined invite + unchanged resend, (2) delayed callback must not remove a newer trust request, and (3) sender clock-skew case described in the commit message. Without tests, this behavior is likely to regress.",
+      "revId": "da020831e073a2c341167718cbb04d9eabddac73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3c443e1_d45dff42",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2393,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-28T22:09:20Z",
+      "side": 1,
+      "message": "[warning] Line 2393: 🟡 The declined/stale invitation predicate is re-implemented here after `addConversationRequest` already made the accept/reject decision. Duplicating this rule in two places is brittle and can drift on future edits, causing mismatched behavior (e.g., reject reason changes without matching trust-request cleanup). Please refactor `addConversationRequest` to return a reason/status enum (added, duplicate-active, duplicate-declined-stale, etc.) and drive cleanup from that single source of truth.",
+      "revId": "da020831e073a2c341167718cbb04d9eabddac73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
