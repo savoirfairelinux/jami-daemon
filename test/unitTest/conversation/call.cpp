@@ -19,6 +19,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <filesystem>
 #include <string>
@@ -75,6 +76,7 @@ public:
 private:
     void connectSignals();
     void enableCarla();
+    void waitForContactConversation(const std::string& accountId, const std::string& peerId);
 
     void testActiveCalls();
     void testActiveCalls3Peers();
@@ -133,6 +135,28 @@ ConversationCallTest::setUp()
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
     add_confirmed_contact(bobId, aliceId);
+    waitForContactConversation(bobId, aliceId);
+}
+
+void
+ConversationCallTest::waitForContactConversation(const std::string& accountId, const std::string& peerId)
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(accountId);
+    auto peer = Manager::instance().getAccount<JamiAccount>(peerId);
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(peer);
+    auto ready = [&] {
+        auto accountConvId = account->convModule()->getOneToOneConversation(peer->getUsername());
+        auto peerConvId = peer->convModule()->getOneToOneConversation(account->getUsername());
+        // Contact metadata can name a conversation whose repository is still being cloned.
+        return !accountConvId.empty() && accountConvId == peerConvId
+               && account->convModule()->getConversation(accountConvId)
+               && peer->convModule()->getConversation(peerConvId);
+    };
+    auto deadline = std::chrono::steady_clock::now() + 30s;
+    while (!ready() && std::chrono::steady_clock::now() < deadline)
+        cv.wait_for(lk, 100ms);
+    CPPUNIT_ASSERT(ready());
 }
 
 void
@@ -154,9 +178,9 @@ ConversationCallTest::connectSignals()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId)
-                aliceData_.id = conversationId;
-            else if (accountId == bobId)
+            if (conversationId != aliceData_.id)
+                return;
+            if (accountId == bobId)
                 bobData_.id = conversationId;
             else if (accountId == bob2Id)
                 bob2Data_.id = conversationId;
@@ -178,8 +202,10 @@ ConversationCallTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
         [&](const std::string& accountId,
-            const std::string& /*conversationId*/,
+            const std::string& conversationId,
             std::map<std::string, std::string> /*metadatas*/) {
+            if (conversationId != aliceData_.id)
+                return;
             if (accountId == aliceId)
                 aliceData_.requestReceived = true;
             if (accountId == bobId)
@@ -275,6 +301,7 @@ ConversationCallTest::enableCarla()
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaConnected; }));
     add_confirmed_contact(carlaId, aliceId);
+    waitForContactConversation(carlaId, aliceId);
     confHandlers.clear();
     libjami::unregisterSignalHandlers();
 }
@@ -289,8 +316,8 @@ ConversationCallTest::testActiveCalls()
     connectSignals();
 
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     // get active calls = 0
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
@@ -331,8 +358,8 @@ ConversationCallTest::testActiveCalls3Peers()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.id, carlaUri);
@@ -410,8 +437,8 @@ ConversationCallTest::testRejoinCall()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.id, carlaUri);
@@ -502,8 +529,8 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived; }));
@@ -553,8 +580,8 @@ ConversationCallTest::testJoinFinishedCall()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.id, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived && carlaData_.requestReceived; }));
@@ -634,8 +661,8 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     // Do not host conference for others
     libjami::setConversationPreferences(aliceId, aliceData_.id, {{"hostConference", "false"}});
@@ -729,8 +756,8 @@ ConversationCallTest::testUsePreference()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
     aliceData_.messages.clear();
@@ -750,7 +777,8 @@ ConversationCallTest::testUsePreference()
                                          {"rdvDevice", aliceDevice},
                                      });
     // should get message
-    cv.wait_for(lk, 30s, [&]() { return lastCommitIsProfile(aliceData_) && lastCommitIsProfile(bobData_); });
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return lastCommitIsProfile(aliceData_) && lastCommitIsProfile(bobData_); }));
 
     // start call
     aliceData_.messages.clear();
@@ -760,7 +788,7 @@ ConversationCallTest::testUsePreference()
         return !data.messages.empty() && data.messages.rbegin()->body.at(CommitKey::TYPE) == CommitType::CALL_HISTORY;
     };
     // should get message
-    cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_); });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_); }));
     auto confId = bobData_.messages.rbegin()->body.at(CommitKey::CONF_ID);
 
     // Alice should be the host
@@ -782,8 +810,8 @@ ConversationCallTest::testJoinWhileActiveCall()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     // start call
     aliceData_.messages.clear();
@@ -823,8 +851,8 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
     aliceData_.messages.clear();
@@ -872,8 +900,8 @@ ConversationCallTest::testNeedsHost()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
     aliceData_.messages.clear();
@@ -911,8 +939,8 @@ ConversationCallTest::testAudioOnly()
     connectSignals();
 
     // Start conversation
-    libjami::startConversation(aliceId);
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     // get active calls = 0
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
@@ -957,8 +985,8 @@ ConversationCallTest::testJoinAfterMuteHost()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Start conversation
-    libjami::startConversation(aliceId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); }));
+    aliceData_.id = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived; }));
@@ -1100,6 +1128,8 @@ ConversationCallTest::testNoDevice()
 
     aliceAccount->addContact("e2eb225c76be68713d4874d290200849436c6355");
     aliceAccount->sendTrustRequest("e2eb225c76be68713d4874d290200849436c6355", {});
+    aliceData_.id = aliceAccount->convModule()->getOneToOneConversation("e2eb225c76be68713d4874d290200849436c6355");
+    CPPUNIT_ASSERT(!aliceData_.id.empty());
 
     // start call
     aliceData_.messages.clear();
