@@ -123,7 +123,7 @@ public:
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
     virtual void syncDevices() = 0;
-    virtual void onSyncData(DeviceSync&& device, bool checkDevice = true);
+    virtual void onSyncData(DeviceSync&& sync, const DeviceId& device);
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
     virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) { return {}; };
@@ -182,7 +182,7 @@ public:
         return false;
     };
 
-    const std::map<dht::PkId, KnownDevice>& getKnownDevices() const;
+    std::map<dht::PkId, KnownDevice> getKnownDevices() const;
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
                             const std::string& name = {},
                             const time_point& last_sync = time_point::min());
