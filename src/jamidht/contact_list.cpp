@@ -61,6 +61,7 @@ ContactList::save()
 {
     saveContacts();
     saveTrustRequests();
+    std::lock_guard lock(devicesMutex_);
     saveKnownDevices();
 }
 
@@ -483,7 +484,7 @@ ContactList::loadKnownDevices()
             }
         }
         if (not knownDevices.empty()) {
-            callbacks_.devicesChanged(knownDevices_);
+            callbacks_.devicesChanged(getKnownDevices());
         }
     } catch (const std::exception& e) {
         JAMI_WARNING("[Account {}] [Contacts] Error loading devices: {}", accountId_, e.what());
@@ -509,19 +510,22 @@ ContactList::saveKnownDevices() const
 void
 ContactList::foundAccountDevice(const dht::PkId& device, const std::string& name, const time_point& updated)
 {
+    std::unique_lock lock(devicesMutex_);
     // insert device
     auto it = knownDevices_.emplace(device, KnownDevice {{}, name, updated});
     if (it.second) {
         JAMI_LOG("[Account {}] [Contacts] Found account device: {} {}", accountId_, name, device);
         saveKnownDevices();
-        callbacks_.devicesChanged(knownDevices_);
+        lock.unlock();
+        callbacks_.devicesChanged(getKnownDevices());
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
             JAMI_LOG("[Account {}] [Contacts] Updating device name: {} {}", accountId_, name, device);
             it.first->second.name = name;
             saveKnownDevices();
-            callbacks_.devicesChanged(knownDevices_);
+            lock.unlock();
+            callbacks_.devicesChanged(getKnownDevices());
         }
     }
 }
@@ -548,6 +552,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     // insert device
+    std::unique_lock lock(devicesMutex_);
     auto it = knownDevices_.emplace(id, KnownDevice {crt, name, updated});
     if (it.second) {
         JAMI_LOG("[Account {}] [Contacts] Found account device: {} {}", accountId_, name, id);
@@ -561,7 +566,8 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         }
         if (notify) {
             saveKnownDevices();
-            callbacks_.devicesChanged(knownDevices_);
+            lock.unlock();
+            callbacks_.devicesChanged(getKnownDevices());
         }
     } else {
         // update device name
@@ -570,7 +576,8 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
             it.first->second.name = name;
             if (notify) {
                 saveKnownDevices();
-                callbacks_.devicesChanged(knownDevices_);
+                lock.unlock();
+                callbacks_.devicesChanged(getKnownDevices());
             }
         }
     }
@@ -580,6 +587,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
 bool
 ContactList::removeAccountDevice(const dht::PkId& device)
 {
+    std::lock_guard lock(devicesMutex_);
     if (knownDevices_.erase(device) > 0) {
         saveKnownDevices();
         return true;
@@ -590,12 +598,14 @@ ContactList::removeAccountDevice(const dht::PkId& device)
 void
 ContactList::setAccountDeviceName(const dht::PkId& device, const std::string& name)
 {
+    std::unique_lock lock(devicesMutex_);
     auto dev = knownDevices_.find(device);
     if (dev != knownDevices_.end()) {
         if (dev->second.name != name) {
             dev->second.name = name;
             saveKnownDevices();
-            callbacks_.devicesChanged(knownDevices_);
+            lock.unlock();
+            callbacks_.devicesChanged(getKnownDevices());
         }
     }
 }
@@ -603,6 +613,7 @@ ContactList::setAccountDeviceName(const dht::PkId& device, const std::string& na
 std::string
 ContactList::getAccountDeviceName(const dht::PkId& device) const
 {
+    std::lock_guard lock(devicesMutex_);
     auto dev = knownDevices_.find(device);
     if (dev != knownDevices_.end()) {
         return dev->second.name;
@@ -644,7 +655,7 @@ ContactList::getSyncData() const
         }
     }
 
-    for (const auto& dev : knownDevices_) {
+    for (const auto& dev : getKnownDevices()) {
         if (!dev.second.certificate) {
             JAMI_WARNING("[Account {}] [Contacts] No certificate found for {}", accountId_, dev.first);
             continue;
@@ -654,19 +665,25 @@ ContactList::getSyncData() const
     return sync_data;
 }
 
-bool
-ContactList::syncDevice(const dht::PkId& device, const time_point& syncDate)
+std::map<dht::PkId, KnownDevice>
+ContactList::getKnownDevices() const
 {
+    std::lock_guard lock(devicesMutex_);
+    return knownDevices_;
+}
+
+bool
+ContactList::recordDeviceSync(const dht::PkId& device, const time_point& receivedAt)
+{
+    std::unique_lock lock(devicesMutex_);
     auto it = knownDevices_.find(device);
-    if (it == knownDevices_.end()) {
-        JAMI_WARNING("[Account {}] [Contacts] Dropping sync data from unknown device", accountId_);
+    if (it == knownDevices_.end() || it->second.last_sync >= receivedAt)
         return false;
-    }
-    if (it->second.last_sync >= syncDate) {
-        JAMI_LOG("[Account {}] [Contacts] Dropping outdated sync data", accountId_);
-        return false;
-    }
-    it->second.last_sync = syncDate;
+    it->second.last_sync = receivedAt;
+    saveKnownDevices();
+    auto devices = knownDevices_;
+    lock.unlock();
+    callbacks_.devicesChanged(devices);
     return true;
 }
 

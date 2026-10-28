@@ -125,7 +125,7 @@ public:
     bool discardTrustRequest(const dht::InfoHash& from);
 
     /* Devices */
-    const std::map<dht::PkId, KnownDevice>& getKnownDevices() const { return knownDevices_; }
+    std::map<dht::PkId, KnownDevice> getKnownDevices() const;
     void foundAccountDevice(const dht::PkId& device,
                             const std::string& name = {},
                             const time_point& last_sync = time_point::min());
@@ -138,7 +138,7 @@ public:
     std::string getAccountDeviceName(const dht::PkId& device) const;
 
     DeviceSync getSyncData() const;
-    bool syncDevice(const dht::PkId& device, const time_point& syncDate);
+    bool recordDeviceSync(const dht::PkId& device, const time_point& receivedAt);
 
 private:
     const std::string accountId_;
@@ -148,6 +148,7 @@ private:
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
     std::map<dht::InfoHash, KnownDevice> knownDevicesLegacy_;
 
+    mutable std::mutex devicesMutex_;
     std::map<dht::PkId, KnownDevice> knownDevices_;
 
     // Trust store with account main certificate as the only CA

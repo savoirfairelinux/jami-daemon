@@ -292,7 +292,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
         try {
             if (auto manager = account->accountManager())
-                manager->onSyncData(std::move(msg.ds), false);
+                manager->onSyncData(std::move(msg.ds), device);
 
             if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                 if (auto cm = account->convModule(true))

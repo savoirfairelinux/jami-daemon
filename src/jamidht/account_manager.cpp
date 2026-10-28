@@ -57,15 +57,10 @@ AccountManager::~AccountManager()
 }
 
 void
-AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
+AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
 {
-    auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (checkDevice) {
-        // If the DHT is used, we need to check the device here
-        if (not info_->contacts->syncDevice(sync.owner->getLongId(), sync_date)) {
-            return;
-        }
-    }
+    if (sync.date == 0)
+        return;
 
     // Sync known devices
     JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
@@ -77,11 +72,9 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
                 return;
-            // std::lock_guard lock(deviceListMutex_);
             foundAccountDevice(crt, d.second.name);
         });
     }
-    // saveKnownDevices();
 
     // Sync contacts
     if (!sync.peers.empty()) {
@@ -103,6 +96,8 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
                                         tr.second.conversationId,
                                         {},
                                         tr.second.invited);
+
+    info_->contacts->recordDeviceSync(device, clock::now());
 }
 
 dht::crypto::Identity
@@ -379,7 +374,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
     });
 }
 
-const std::map<dht::PkId, KnownDevice>&
+std::map<dht::PkId, KnownDevice>
 AccountManager::getKnownDevices() const
 {
     return info_->contacts->getKnownDevices();

@@ -336,7 +336,7 @@ struct KnownDeviceSync
 struct DeviceSync : public dht::EncryptedValue<DeviceSync>
 {
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    uint64_t date;
+    uint64_t date {0};
     std::string device_name;
     std::map<dht::PkId, KnownDeviceSync> devices;
     std::map<dht::InfoHash, Contact> peers;

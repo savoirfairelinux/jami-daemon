@@ -18,6 +18,7 @@
 #include "fileutils.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/account_manager.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
@@ -58,6 +59,7 @@ struct UserData
     std::vector<libjami::SwarmMessage> messagesLoaded;
     std::vector<libjami::SwarmMessage> messagesUpdated;
     std::map<std::string, int> members;
+    std::map<std::string, int64_t> deviceSyncs;
 };
 
 class SyncHistoryTest : public CppUnit::TestFixture
@@ -88,6 +90,9 @@ public:
     void connectSignals();
 
 private:
+    void testRecordDeviceSync();
+    void testAccountSyncTimestamp();
+    void testDeviceSyncTimestamp();
     void testCreateConversationThenSync();
     void testCreateConversationWithOnlineDevice();
     void testCreateConversationWithMessagesThenAddDevice();
@@ -104,6 +109,9 @@ private:
     void testLastInteractionAfterSomeMessages();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
+    CPPUNIT_TEST(testRecordDeviceSync);
+    CPPUNIT_TEST(testAccountSyncTimestamp);
+    CPPUNIT_TEST(testDeviceSyncTimestamp);
     CPPUNIT_TEST(testCreateConversationThenSync);
     CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
     CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
@@ -151,6 +159,23 @@ void
 SyncHistoryTest::connectSignals()
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>&) {
+            if (accountId != aliceId && accountId != alice2Id)
+                return;
+            auto account = Manager::instance().getAccount<JamiAccount>(accountId);
+            if (!account)
+                return;
+            const auto devices = account->getDeviceList();
+            std::lock_guard lock(mtx);
+            auto& data = accountId == aliceId ? aliceData : alice2Data;
+            for (const auto& device : devices) {
+                auto timestamp = device.find("lastSync");
+                if (timestamp != device.end() && std::stoll(timestamp->second) > 0)
+                    data.deviceSyncs[device.at("id")] = std::stoll(timestamp->second);
+            }
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
         [&](const std::string& accountId, const std::map<std::string, std::string>&) {
             if (accountId == aliceId) {
@@ -338,6 +363,94 @@ SyncHistoryTest::connectSignals()
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
+}
+
+void
+SyncHistoryTest::testRecordDeviceSync()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto info = aliceAccount->accountManager()->getInfo();
+    auto path = aliceAccount->getPath() / "device-sync-test";
+    std::filesystem::create_directories(path);
+    const auto device = info->identity.second->getLongId();
+    const auto receivedAt = ContactList::time_point(std::chrono::milliseconds(1700000001123));
+    const auto unknownDevice = dht::PkId::getRandom();
+    size_t notifications = 0;
+    std::unique_ptr<ContactList> contacts;
+    ContactList::OnChangeCallback callbacks;
+    callbacks.devicesChanged = [&](const std::map<dht::PkId, KnownDevice>& devices) {
+        ++notifications;
+        CPPUNIT_ASSERT_EQUAL(devices.size(), contacts->getKnownDevices().size());
+    };
+    contacts = std::make_unique<ContactList>(aliceId, info->identity.second->issuer, path, callbacks);
+    CPPUNIT_ASSERT(contacts->foundAccountDevice(info->identity.second, "source"));
+    notifications = 0;
+
+    CPPUNIT_ASSERT(!contacts->recordDeviceSync(unknownDevice, receivedAt));
+    CPPUNIT_ASSERT_EQUAL(size_t(0), notifications);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), contacts->getKnownDevices().size());
+
+    CPPUNIT_ASSERT(contacts->recordDeviceSync(device, receivedAt));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), notifications);
+    CPPUNIT_ASSERT(contacts->getKnownDevices().at(device).last_sync == receivedAt);
+    CPPUNIT_ASSERT(!contacts->recordDeviceSync(device, receivedAt));
+    CPPUNIT_ASSERT(!contacts->recordDeviceSync(device, receivedAt - 1ms));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), notifications);
+
+    const auto nextReceipt = receivedAt + 1ms;
+    CPPUNIT_ASSERT(contacts->recordDeviceSync(device, nextReceipt));
+    CPPUNIT_ASSERT_EQUAL(size_t(2), notifications);
+    CPPUNIT_ASSERT(contacts->getKnownDevices().at(device).last_sync == nextReceipt);
+
+    ContactList reloaded(aliceId, info->identity.second->issuer, path, callbacks);
+    reloaded.load();
+    CPPUNIT_ASSERT(reloaded.getKnownDevices().at(device).last_sync == nextReceipt);
+}
+
+void
+SyncHistoryTest::testAccountSyncTimestamp()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto manager = aliceAccount->accountManager();
+    const auto device = manager->getInfo()->devicePk->getLongId();
+    const auto receivedAt = AccountManager::clock::now();
+    DeviceSync sync;
+    sync.date = 1;
+    manager->onSyncData(std::move(sync), device);
+    const auto timestamp = manager->getKnownDevices().at(device).last_sync;
+    CPPUNIT_ASSERT(timestamp >= receivedAt);
+
+    manager->onSyncData(DeviceSync {}, device);
+    CPPUNIT_ASSERT(manager->getKnownDevices().at(device).last_sync == timestamp);
+}
+
+void
+SyncHistoryTest::testDeviceSyncTimestamp()
+{
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const auto aliceDevice = aliceAccount->getVolatileAccountDetails().at(ConfProperties::DEVICE_ID);
+    const auto started
+        = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    CPPUNIT_ASSERT(aliceAccount->exportArchive(aliceArchive));
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.deviceSyncs.count(aliceDevice) > 0; }));
+    const auto timestamp = alice2Data.deviceSyncs.at(aliceDevice);
+    CPPUNIT_ASSERT(timestamp >= started);
+
+    auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
+    auto file = fileutils::loadFile("knownDevices", alice2Account->getPath());
+    auto decoded = msgpack::unpack(reinterpret_cast<const char*>(file.data()), file.size());
+    auto devices = decoded.get().as<std::map<dht::PkId, KnownDeviceData>>();
+    const auto savedTimestamp = devices.at(dht::PkId(aliceDevice)).lastSyncMs;
+    CPPUNIT_ASSERT(savedTimestamp >= timestamp * 1000);
 }
 
 void
