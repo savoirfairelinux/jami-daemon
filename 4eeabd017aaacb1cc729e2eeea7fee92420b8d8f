@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb82a692_15bb1b7b",
+        "filename": "test/unitTest/swarm/mobile_wakeup.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-29T16:19:43Z",
+      "side": 1,
+      "message": "[warning] Line 542: 🟡 This unit test now depends on the live wall clock (`system_clock::now()`), which makes behavior time-dependent and can become flaky around the exact cutoff second (or under clock skew in CI). Prefer deriving expectation from a controlled/frozen test clock or from the same timestamp source used by the code under test, so the assertion is deterministic regardless of execution time.",
+      "revId": "4eeabd017aaacb1cc729e2eeea7fee92420b8d8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
