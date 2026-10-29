@@ -94,7 +94,7 @@ public:
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
-    void connectSignals();
+    void connectSignals(const std::string& expectedConversationId = {});
 
 private:
     void testConversationFileTransfer();
@@ -191,11 +191,15 @@ FileTransferTest::tearDown()
 }
 
 void
-FileTransferTest::connectSignals()
+FileTransferTest::connectSignals(const std::string& expectedConversationId)
 {
+    if (!expectedConversationId.empty())
+        aliceData.conversationId = expectedConversationId;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.conversationId = conversationId;
             } else if (accountId == bobId) {
@@ -206,9 +210,11 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*metadatas*/) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    std::map<std::string, std::string> /*metadatas*/) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.requestReceived = true;
             } else if (accountId == bobId) {
@@ -219,7 +225,11 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             std::unique_lock<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
@@ -231,7 +241,11 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.messagesUpdated.emplace_back(message);
             } else if (accountId == bobId) {
@@ -242,7 +256,9 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId)
                 aliceData.removed = true;
             else if (accountId == bobId)
@@ -250,12 +266,12 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string& /*fileId*/,
-            int code) {
-            if (conversationId.empty())
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string&,
+                                    const std::string& /*fileId*/,
+                                    int code) {
+            if (conversationId.empty() || (!expectedConversationId.empty() && conversationId != expectedConversationId))
                 return;
             if (accountId == aliceId)
                 aliceData.code = code;
@@ -370,8 +386,8 @@ FileTransferTest::testVcfFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    connectSignals();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
@@ -553,8 +569,8 @@ FileTransferTest::testCancelInTransfer()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    connectSignals();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
