@@ -16,6 +16,24 @@
       "message": "[error] Line 1884: 🔴 `isAnchor` is computed before advancing `oldIt` past visited entries, then reused as `anchorFound`. This can miss the exact transition where `oldIt` becomes `list.end()` in the current callback, so the \"no older anchor\" case is not recognized at the right point and anchor selection can drift to a later commit. Compute anchor status *after* the `while (oldIt !\u003d list.end() \u0026\u0026 visited.count((*oldIt)-\u003eid)) ++oldIt;` loop (or recompute with updated `oldIt`) before assigning `anchorFound`.",
       "revId": "40139ee50956ccb85584f68f12ca9afb04626c11",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "800726e4_d7ed19b8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1884,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-10-29T14:30:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d1fbd49_fced159b",
+      "revId": "40139ee50956ccb85584f68f12ca9afb04626c11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
