@@ -538,7 +538,11 @@ MobileWakeUpTest::testLegacyMobileAnnouncementLifecycle()
     inbound->shutdown();
     CPPUNIT_ASSERT(waitFor([&] { return toSet(desktop->getMobileNodesToNotify()).contains(inbound->deviceId()); },
                            CONVERGENCE_TIMEOUT));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), desktop->getMobileNodeInfosToNotify().size());
+    const auto now
+        = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    // Legacy mobility remains known, but cannot trigger wake-ups after the cutoff.
+    const size_t expectedWakeups = now < LEGACY_MOBILE_NODE_SUNSET ? 1 : 0;
+    CPPUNIT_ASSERT_EQUAL(expectedWakeups, desktop->getMobileNodeInfosToNotify().size());
     desktop->shutdown();
 }
 
