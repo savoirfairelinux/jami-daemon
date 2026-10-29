@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "338e08de_81f516c7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1675,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-29T18:16:53Z",
+      "side": 1,
+      "message": "[error] Line 1675: 🔴 This change drops the `RegisteredNameFound(..., Response::error, ...)` emission when `accountManager_` is null (same pattern in `lookupAddress`). Previously callers always received an async completion signal even on immediate failure; now they may get no completion event unless they explicitly check the return value, which can break existing clients waiting on the signal. Preserve the signal emission for compatibility, and still return `false` so synchronous callers can detect immediate failure.",
+      "revId": "20591d2d3e988ad289ae47a785746309fa41d31d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
