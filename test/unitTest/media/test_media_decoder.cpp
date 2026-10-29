@@ -78,16 +78,10 @@ thread_local CaptureReadProbe* captureReadProbe {};
 
 struct CaptureReadProbe
 {
-    CaptureReadProbe()
-    {
-        format.name = testCaptureInput;
-        format.flags = AVFMT_NOFILE;
-        captureReadProbe = this;
-    }
+    CaptureReadProbe() { captureReadProbe = this; }
 
     ~CaptureReadProbe() { captureReadProbe = nullptr; }
 
-    AVInputFormat format {};
     AVFormatContext* context {};
     int readResult = AVERROR(EAGAIN);
     unsigned reads {};
@@ -112,8 +106,7 @@ __wrap_avformat_open_input(AVFormatContext** ctx, const char* url, const AVInput
         if (!captureReadProbe || !*ctx)
             return AVERROR(EINVAL);
         captureReadProbe->context = *ctx;
-        // No device callbacks: reads are supplied below, teardown only frees the context.
-        (*ctx)->iformat = &captureReadProbe->format;
+        // No device was opened: leave iformat unset so teardown only frees the context.
         return 0;
     }
     if (!url || (std::string_view(url) != testInput && !std::string_view(url).starts_with("pipewiregrab=")))
