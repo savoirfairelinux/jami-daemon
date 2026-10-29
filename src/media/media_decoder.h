@@ -223,11 +223,12 @@ private:
 
     const AVCodec* inputDecoder_ = nullptr;
     AVCodecContext* decoderCtx_ = nullptr;
+    std::mutex decoderCtxMutex_;
     AVStream* avStream_ = nullptr;
     bool decoderReady_ = false;
     bool emulateRate_ = false;
     bool passthrough_ = false;
-    int64_t startTime_;
+    std::atomic<int64_t> startTime_ {0};
     int64_t lastTimestamp_ {0};
 
     DeviceParams inputParams_;
@@ -244,8 +245,7 @@ private:
 #endif
     MediaObserver callback_;
     int prepareDecoderContext();
-    int64_t seekTime_ = -1;
-    void resetSeekTime() { seekTime_ = -1; }
+    std::atomic<int64_t> seekTime_ {-1};
     std::function<void(int, int)> resolutionChangedCallback_;
 
     int width_;

@@ -531,6 +531,7 @@ MediaDecoder::~MediaDecoder()
 void
 MediaDecoder::flushBuffers()
 {
+    std::lock_guard lk(decoderCtxMutex_);
     avcodec_flush_buffers(decoderCtx_);
 }
 
@@ -718,6 +719,7 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     }
 
+    std::unique_lock lk(decoderCtxMutex_);
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
     // TODO: Investigate avcodec_send_packet returning AVERROR_INVALIDDATA.
@@ -762,11 +764,14 @@ MediaDecoder::decode(AVPacket& packet)
         decoderCtx_->time_base.den = decoderCtx_->sample_rate;
     }
     frame->time_base = decoderCtx_->time_base;
+    const auto width = decoderCtx_->width;
+    const auto height = decoderCtx_->height;
+    lk.unlock();
     if (resolutionChangedCallback_) {
-        if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
-            JAMI_LOG("Resolution changed from {}x{} to {}x{}", width_, height_, decoderCtx_->width, decoderCtx_->height);
-            width_ = decoderCtx_->width;
-            height_ = decoderCtx_->height;
+        if (width != width_ or height != height_) {
+            JAMI_LOG("Resolution changed from {}x{} to {}x{}", width_, height_, width, height);
+            width_ = width;
+            height_ = height;
             resolutionChangedCallback_(width_, height_);
         }
     }
@@ -791,24 +796,24 @@ MediaDecoder::decode(AVPacket& packet)
             }
         }
         auto packetTimestamp = frame->pts; // in stream time base
-        frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
+        const auto startTime = startTime_.load();
+        frame->pts = av_rescale_q_rnd(av_gettime() - startTime,
                                       {1, AV_TIME_BASE},
-                                      decoderCtx_->time_base,
+                                      frame->time_base,
                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
-            auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
+            auto streamStartTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
             rational<double> frame_time = rational<double>(getTimeBase())
-                                          * rational<double>(static_cast<double>(packetTimestamp - startTime));
+                                          * rational<double>(static_cast<double>(packetTimestamp - streamStartTime));
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
-            auto target_absolute = startTime_ + target_relative;
-            if (target_relative < seekTime_) {
+            auto target_absolute = startTime + target_relative;
+            auto seekTime = seekTime_.load();
+            if (target_relative < seekTime) {
                 return DecodeStatus::Success;
             }
-            // required frame found. Reset seek time
-            if (target_relative >= seekTime_) {
-                resetSeekTime();
-            }
+            // Do not clear a newer seek issued while this frame was being processed.
+            seekTime_.compare_exchange_strong(seekTime, -1);
             auto now = av_gettime();
             if (target_absolute > now) {
                 std::this_thread::sleep_for(std::chrono::microseconds(target_absolute - now));
@@ -838,6 +843,7 @@ MediaDecoder::decode()
 {
     auto ret = demuxer_->decode();
     if (ret == MediaDemuxer::Status::RestartRequired) {
+        std::lock_guard lk(decoderCtxMutex_);
         avcodec_flush_buffers(decoderCtx_);
         setupStream();
         ret = MediaDemuxer::Status::EndOfFile;
@@ -863,6 +869,7 @@ MediaDecoder::enableAccel(bool enableAccel)
 DecodeStatus
 MediaDecoder::flush()
 {
+    std::unique_lock lk(decoderCtxMutex_);
     AVPacket inpacket;
     av_init_packet(&inpacket);
 
@@ -881,6 +888,7 @@ MediaDecoder::flush()
 
     if (frameFinished) {
         av_packet_unref(&inpacket);
+        lk.unlock();
         if (callback_)
             callback_(std::move(result));
         return DecodeStatus::FrameFinished;

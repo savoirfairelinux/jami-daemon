@@ -18,6 +18,7 @@
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <chrono>
 #include <cmath>
 
 #include "jami.h"
@@ -205,20 +206,26 @@ MediaPlayerTest::testSeekWhilePlaying()
     cv.wait_for(lk, 5s);
     mediaPlayer->pause(false);
 
+    auto seekAndCheck = [&](int64_t target) {
+        auto before = std::chrono::steady_clock::now();
+        CPPUNIT_ASSERT(mediaPlayer->seekToTime(target));
+        auto position = mediaPlayer->getPlayerPosition();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - before)
+                           .count();
+        CPPUNIT_ASSERT(position >= target);
+        CPPUNIT_ASSERT(position <= target + elapsed + 1);
+    };
+
     int64_t startTime = mediaPlayer->getPlayerPosition();
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 10000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 10000, 50));
+    seekAndCheck(startTime + 10000);
 
     startTime = mediaPlayer->getPlayerPosition();
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime - 5000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime - 5000, 50));
+    seekAndCheck(startTime - 5000);
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(10000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 10000, 50));
+    seekAndCheck(10000);
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
+    seekAndCheck(0);
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_LOG("End testSeekWhilePlaying");
