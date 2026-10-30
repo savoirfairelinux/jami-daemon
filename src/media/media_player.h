@@ -78,4 +78,6 @@ private:
 
     bool streamsFinished();
 };
+
+libjami::MediaPreview getMediaPreview(const std::string& path);
 } // namespace jami
