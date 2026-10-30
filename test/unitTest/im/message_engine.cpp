@@ -22,10 +22,16 @@
 #include "../../test_runner.h"
 #include "fileutils.h"
 #include "jami.h"
+#include "jamidht/message_channel_handler.h"
 #include "manager.h"
 #include "sip/sipaccount_config.h"
 #include "sip/sipaccountbase.h"
 
+#include <dhtnet/certstore.h>
+#include <dhtnet/connectionmanager.h>
+#include <dhtnet/ice_transport_factory.h>
+#include <opendht/crypto.h>
+#include <opendht/dhtrunner.h>
 #include <msgpack.hpp>
 
 #include <condition_variable>
@@ -121,6 +127,7 @@ public:
 private:
     void testDeviceQueueSurvivesRestart();
     void testLegacyQueueStillLoads();
+    void testMessageChannelHandlerChainsPendingCallbacks();
 
     static constexpr auto ACCOUNT_ID = "message-engine-test";
     static constexpr auto LEGACY_ACCOUNT_ID = "message-engine-legacy-test";
@@ -128,6 +135,7 @@ private:
     CPPUNIT_TEST_SUITE(MessageEngineTest);
     CPPUNIT_TEST(testDeviceQueueSurvivesRestart);
     CPPUNIT_TEST(testLegacyQueueStillLoads);
+    CPPUNIT_TEST(testMessageChannelHandlerChainsPendingCallbacks);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -202,6 +210,83 @@ MessageEngineTest::testLegacyQueueStillLoads()
     account->resume();
     CPPUNIT_ASSERT(account->waitForAttempts(1));
     CPPUNIT_ASSERT(account->attempts().front().device.empty());
+}
+
+void
+MessageEngineTest::testMessageChannelHandlerChainsPendingCallbacks()
+{
+    auto ca = dht::crypto::generateIdentity("ca");
+    auto aliceAccount = dht::crypto::generateIdentity("alice-acc", ca, 2048, true);
+    auto bobAccount = dht::crypto::generateIdentity("bob-acc", ca, 2048, true);
+    auto aliceDevice = dht::crypto::generateIdentity("alice-dev", aliceAccount);
+    auto bobDevice = dht::crypto::generateIdentity("bob-dev", bobAccount);
+    auto bobDeviceId = bobDevice.second->getLongId();
+
+    auto cacheDir = fileutils::get_cache_dir() / ACCOUNT_ID;
+    auto certStore = std::make_shared<dhtnet::tls::CertificateStore>(cacheDir / "certs", nullptr);
+    certStore->pinCertificate(bobDevice.second);
+
+    auto dht = std::make_shared<dht::DhtRunner>();
+    dht::DhtRunner::Config dhtConfig;
+    dhtConfig.dht_config.id = aliceDevice;
+    dhtConfig.threaded = true;
+    dht->run(dhtConfig, {});
+
+    auto config = std::make_shared<dhtnet::ConnectionManager::Config>();
+    config->id = aliceDevice;
+    config->dht = dht;
+    config->certStore = certStore;
+    config->ioContext = Manager::instance().ioContext();
+    config->factory = Manager::instance().getIceTransportFactory();
+    config->cachePath = cacheDir / "cm";
+    config->legacyMode = dhtnet::LegacyMode::Disabled;
+
+    auto cm = std::make_unique<dhtnet::ConnectionManager>(config);
+    cm->dhtStarted();
+
+    MessageChannelHandler handler(
+        *cm,
+        [](const auto&, std::string&, const std::string&) {},
+        [](const std::string&, bool) {},
+        [](const std::string&, const DeviceId&) {});
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool firstCalled = false;
+    bool secondCalled = false;
+
+    handler.connect(
+        bobDeviceId,
+        "",
+        [&](const std::shared_ptr<dhtnet::ChannelSocket>&, const DeviceId&) {
+            std::lock_guard lk(mtx);
+            firstCalled = true;
+            cv.notify_all();
+        },
+        "");
+
+    const auto channelName = "msg:" + bobDeviceId.toString();
+    auto deadline = std::chrono::steady_clock::now() + 5s;
+    while (!cm->isConnecting(bobDeviceId, channelName) && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(10ms);
+    }
+    CPPUNIT_ASSERT(cm->isConnecting(bobDeviceId, channelName));
+
+    handler.connect(
+        bobDeviceId,
+        "",
+        [&](const std::shared_ptr<dhtnet::ChannelSocket>&, const DeviceId&) {
+            std::lock_guard lk(mtx);
+            secondCalled = true;
+            cv.notify_all();
+        },
+        "application/im-gitmessage-id");
+
+    cm.reset();
+    dht->join();
+
+    std::unique_lock lk(mtx);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return firstCalled && secondCalled; }));
 }
 
 } // namespace jami::test
