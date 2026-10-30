@@ -3084,7 +3084,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             if (conv->info.removed == TimePoint {}) {
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+                // Preserve the revision so the sender's later erasure is not stale.
+                conv->info.removed = convInfo.removed;
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {

@@ -226,6 +226,7 @@ private:
     void testRemoveDocumentLocallyAndReopen();
     void testDocumentBanRefusesClone();
     void testParentConversationLeaveLeavesDocuments();
+    void testDeviceSyncErasureAfterRemoval();
     void testDeviceSyncLeaveDropsDocuments();
     void testContactRemovalDropsDocuments();
     void testReopenAfterParentRejoin();
@@ -256,6 +257,7 @@ private:
     CPPUNIT_TEST(testRemoveDocumentLocallyAndReopen);
     CPPUNIT_TEST(testDocumentBanRefusesClone);
     CPPUNIT_TEST(testParentConversationLeaveLeavesDocuments);
+    CPPUNIT_TEST(testDeviceSyncErasureAfterRemoval);
     CPPUNIT_TEST(testDeviceSyncLeaveDropsDocuments);
     CPPUNIT_TEST(testContactRemovalDropsDocuments);
     CPPUNIT_TEST(testReopenAfterParentRejoin);
@@ -1232,6 +1234,33 @@ CollabTest::testParentConversationLeaveLeavesDocuments()
 
     // Alice's replica of the document saw the leave: bob is no longer a member.
     CPPUNIT_ASSERT(poll([&] { return !std::filesystem::exists(aliceRepo / "members" / (bobUri + ".crt")); }));
+}
+
+void
+CollabTest::testDeviceSyncErasureAfterRemoval()
+{
+    connectSignals();
+    auto convId = createConversationWithBob();
+    auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Notes", "text/plain");
+    CPPUNIT_ASSERT(poll([&] {
+        auto entry = documentEntry(bobId, convId, docId);
+        return !entry.empty() && entry.at("storedLocally") == "true";
+    }));
+
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto info = ConversationModule::convInfos(bobId).at(convId);
+    // Deliver removal late, followed by erasure with the same removal timestamp.
+    info.removed = std::max(info.created, nowMs() - 1s);
+    SyncMsg removal;
+    removal.c.emplace(convId, info);
+    bob->convModule()->onSyncData(removal, bob->getUsername(), {});
+    CPPUNIT_ASSERT(info.removed == ConversationModule::convInfos(bobId).at(convId).removed);
+    CPPUNIT_ASSERT(std::filesystem::exists(docRepoPath(bobId, convId)));
+    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, docId)));
+
+    removal.c.at(convId).erased = nowMs();
+    bob->convModule()->onSyncData(removal, bob->getUsername(), {});
+    CPPUNIT_ASSERT(!std::filesystem::exists(docRepoPath(bobId, convId)));
 }
 
 void
