@@ -539,7 +539,7 @@ AccountManager::removeContactConversation(const std::string& uri)
 }
 
 void
-AccountManager::updateContactConversation(const std::string& uri, const std::string& convId, bool added)
+AccountManager::updateContactConversation(const std::string& uri, const std::string& convId)
 {
     dht::InfoHash h(uri);
     if (not h) {
@@ -550,7 +550,7 @@ AccountManager::updateContactConversation(const std::string& uri, const std::str
         JAMI_ERROR("[Account {}] updateContactConversation: account not loaded", accountId_);
         return;
     }
-    if (info_->contacts->updateConversation(h, convId, added)) {
+    if (info_->contacts->updateConversation(h, convId)) {
         // Also decline trust request if there is one
         auto req = info_->contacts->getTrustRequest(h);
         auto convIt = req.find(libjami::Account::TrustRequest::CONVERSATIONID);

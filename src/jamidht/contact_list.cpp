@@ -96,7 +96,8 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
         c = contacts_.emplace(h, Contact {}).first;
     else if (c->second.isActive() and c->second.confirmed == confirmed && c->second.conversationId == conversationId)
         return false;
-    c->second.added = nowMs();
+    if (!c->second.isActive())
+        c->second.added = nowMs();
     // NOTE: because we can re-add a contact after removing it
     // we should reset removed (as not removed anymore). This fix isActive()
     // if addContact is called just after removeContact within the same instant
@@ -112,15 +113,12 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
 }
 
 bool
-ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId, bool added)
+ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId)
 {
     std::lock_guard lk(mutex_);
     auto c = contacts_.find(h);
     if (c != contacts_.end() && c->second.conversationId != conversationId) {
         c->second.conversationId = conversationId;
-        if (added) {
-            c->second.added = nowMs();
-        }
         saveContacts();
         return true;
     }
