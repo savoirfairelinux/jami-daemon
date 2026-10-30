@@ -858,12 +858,9 @@ MediaDecoder::enableAccel(bool enableAccel)
 DecodeStatus
 MediaDecoder::flush()
 {
-    AVPacket inpacket;
-    av_init_packet(&inpacket);
-
     int frameFinished = 0;
     int ret = 0;
-    ret = avcodec_send_packet(decoderCtx_, &inpacket);
+    ret = avcodec_send_packet(decoderCtx_, nullptr);
     if (ret < 0 && ret != AVERROR(EAGAIN))
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
 
@@ -875,7 +872,8 @@ MediaDecoder::flush()
         frameFinished = 1;
 
     if (frameFinished) {
-        av_packet_unref(&inpacket);
+        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
+            result->pointer()->format = (AVPixelFormat) correctPixFmt(result->pointer()->format);
         if (callback_)
             callback_(std::move(result));
         return DecodeStatus::FrameFinished;
