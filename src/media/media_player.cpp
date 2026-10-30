@@ -337,4 +337,71 @@ MediaPlayer::streamsFinished()
     return audioFinished && videoFinished;
 }
 
+namespace {
+
+#ifdef ENABLE_VIDEO
+constexpr int MAX_PREVIEW_PACKETS = 500;
+
+std::shared_ptr<MediaFrame>
+decodeFirstFrame(const std::shared_ptr<MediaDemuxer>& demuxer, int stream)
+{
+    std::shared_ptr<MediaFrame> first;
+    MediaDecoder decoder(demuxer, stream, [&first](std::shared_ptr<MediaFrame>&& frame) {
+        if (!first)
+            first = std::move(frame);
+    });
+    bool rewound = false;
+    for (int packets = 0; decoder.isReady() && !first && packets < MAX_PREVIEW_PACKETS; ++packets) {
+        const auto status = demuxer->decode();
+        if (status == MediaDemuxer::Status::EndOfFile)
+            break;
+        if (status == MediaDemuxer::Status::FallBack && !rewound) {
+            rewound = true;
+            if (!demuxer->seekFrame(stream, 0))
+                break;
+            continue;
+        }
+        if (status == MediaDemuxer::Status::ReadError || status == MediaDemuxer::Status::RestartRequired)
+            break;
+    }
+    if (decoder.isReady() && !first)
+        decoder.flush();
+    demuxer->setStreamCallback(stream);
+    return first;
+}
+#endif
+
+} // namespace
+
+libjami::MediaPreview
+getMediaPreview(const std::string& path)
+{
+    libjami::MediaPreview preview;
+    preview.info = {{"duration", "0"}, {"audio_stream", "-1"}, {"video_stream", "-1"}};
+    auto demuxer = std::make_shared<MediaDemuxer>();
+    DeviceParams params;
+    params.input = path;
+    params.name = path;
+    if (demuxer->openInput(params) < 0)
+        return preview;
+    demuxer->findStreamInfo();
+
+    const auto audioStream = std::max(-1, demuxer->selectStream(AVMEDIA_TYPE_AUDIO));
+    const auto videoStream = std::max(-1, demuxer->selectStream(AVMEDIA_TYPE_VIDEO));
+    preview.info["duration"] = std::to_string(std::max<int64_t>(0, demuxer->getDuration()));
+    preview.info["audio_stream"] = std::to_string(audioStream);
+    preview.info["video_stream"] = std::to_string(videoStream);
+
+#ifdef ENABLE_VIDEO
+    if (videoStream >= 0) {
+        if (auto frame = decodeFirstFrame(demuxer, videoStream)) {
+            preview.frame.reset(av_frame_alloc());
+            if (av_frame_ref(preview.frame.get(), frame->pointer()) < 0)
+                preview.frame.reset();
+        }
+    }
+#endif
+    return preview;
+}
+
 } // namespace jami

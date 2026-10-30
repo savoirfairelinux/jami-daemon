@@ -1043,6 +1043,7 @@ if(NOT MSVC)
             add_test_executable(video_input test/unitTest/media/video/testVideo_input.cpp)
             add_test_executable(media_filter test/unitTest/media/test_media_filter.cpp)
             add_test_executable(media_player test/unitTest/media/test_media_player.cpp)
+            add_test_executable(media_preview test/unitTest/media/test_media_preview.cpp)
         endif()
 
         add_test_executable(namedirectory test/unitTest/namedirectory/namedirectory.cpp)
