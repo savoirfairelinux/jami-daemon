@@ -90,6 +90,11 @@ public:
     void connectSignals();
 
 private:
+    void testContactMetadataPreservesAddedDate();
+    void testContactReadditionUpdatesAddedDate();
+    void testContactLinkSyncBeforeRemoval();
+    void testContactLinkSyncAfterRemoval();
+    void checkContactLinkSync(bool removalFirst);
     void testRecordDeviceSync();
     void testAccountSyncTimestamp();
     void testDeviceSyncTimestamp();
@@ -109,6 +114,10 @@ private:
     void testLastInteractionAfterSomeMessages();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
+    CPPUNIT_TEST(testContactMetadataPreservesAddedDate);
+    CPPUNIT_TEST(testContactReadditionUpdatesAddedDate);
+    CPPUNIT_TEST(testContactLinkSyncBeforeRemoval);
+    CPPUNIT_TEST(testContactLinkSyncAfterRemoval);
     CPPUNIT_TEST(testRecordDeviceSync);
     CPPUNIT_TEST(testAccountSyncTimestamp);
     CPPUNIT_TEST(testDeviceSyncTimestamp);
@@ -363,6 +372,161 @@ SyncHistoryTest::connectSignals()
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
+}
+
+void
+SyncHistoryTest::testContactMetadataPreservesAddedDate()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto info = alice->accountManager()->getInfo();
+    auto path = alice->getPath() / "contact-dates-test";
+    std::filesystem::create_directories(path);
+    ContactList::OnChangeCallback callbacks;
+    callbacks.contactAdded = [](const std::string&, bool) {
+    };
+    callbacks.contactRemoved = [](const std::string&, bool) {
+    };
+    ContactList contacts(aliceId, info->identity.second->issuer, path, callbacks);
+    const auto peer = dht::InfoHash::getRandom();
+    Contact original;
+    original.added = nowMs() - 24h;
+    original.conversationId = "original";
+    contacts.setContacts({{peer, original}});
+
+    CPPUNIT_ASSERT(contacts.addContact(peer, true, "original"));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->added == original.added);
+    CPPUNIT_ASSERT(contacts.addContact(peer, true, "replacement"));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->added == original.added);
+    CPPUNIT_ASSERT(contacts.updateConversation(peer, "existing"));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->added == original.added);
+    CPPUNIT_ASSERT(contacts.removeContactConversation(peer));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->added == original.added);
+
+    ContactList reloaded(aliceId, info->identity.second->issuer, path, callbacks);
+    reloaded.load();
+    CPPUNIT_ASSERT(reloaded.getContactInfo(peer)->added == original.added);
+    CPPUNIT_ASSERT(reloaded.getContactInfo(peer)->confirmed);
+    CPPUNIT_ASSERT(reloaded.getContactInfo(peer)->conversationId.empty());
+}
+
+void
+SyncHistoryTest::testContactReadditionUpdatesAddedDate()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto info = alice->accountManager()->getInfo();
+    auto path = alice->getPath() / "contact-readdition-test";
+    std::filesystem::create_directories(path);
+    ContactList::OnChangeCallback callbacks;
+    callbacks.contactAdded = [](const std::string&, bool) {
+    };
+    callbacks.contactRemoved = [](const std::string&, bool) {
+    };
+    ContactList contacts(aliceId, info->identity.second->issuer, path, callbacks);
+    const auto peer = dht::InfoHash::getRandom();
+    Contact original;
+    original.added = nowMs() - 24h;
+    original.confirmed = true;
+    original.conversationId = "original";
+    contacts.setContacts({{peer, original}});
+
+    CPPUNIT_ASSERT(contacts.removeContact(peer, false));
+    const auto removed = *contacts.getContactInfo(peer);
+    CPPUNIT_ASSERT(removed.added == original.added);
+    CPPUNIT_ASSERT(!removed.isActive());
+    CPPUNIT_ASSERT(contacts.addContact(peer, false, "replacement"));
+    const auto readded = *contacts.getContactInfo(peer);
+    CPPUNIT_ASSERT(readded.added > original.added);
+    CPPUNIT_ASSERT(readded.removed == TimePoint {});
+    CPPUNIT_ASSERT(readded.isActive());
+
+    auto offline = original;
+    offline.update(readded);
+    CPPUNIT_ASSERT(offline.added == readded.added);
+    CPPUNIT_ASSERT_EQUAL(readded.conversationId, offline.conversationId);
+    offline.update(original);
+    CPPUNIT_ASSERT(offline.added == readded.added);
+    CPPUNIT_ASSERT_EQUAL(readded.conversationId, offline.conversationId);
+}
+
+void
+SyncHistoryTest::testContactLinkSyncBeforeRemoval()
+{
+    checkContactLinkSync(false);
+}
+
+void
+SyncHistoryTest::testContactLinkSyncAfterRemoval()
+{
+    checkContactLinkSync(true);
+}
+
+void
+SyncHistoryTest::checkContactLinkSync(bool removalFirst)
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    const auto peer = dht::InfoHash(bob->getUsername());
+    auto* module = alice->convModule();
+    auto startUniqueConversation = [&] {
+        // Initial commit IDs use second-resolution timestamps.
+        const auto second = toSecondsSinceEpoch(nowMs());
+        const auto deadline = std::chrono::steady_clock::now() + 2s;
+        while (toSecondsSinceEpoch(nowMs()) == second && std::chrono::steady_clock::now() < deadline)
+            std::this_thread::sleep_for(10ms);
+        CPPUNIT_ASSERT(toSecondsSinceEpoch(nowMs()) != second);
+        const auto id = module->startConversation(ConversationMode::ONE_TO_ONE, peer);
+        CPPUNIT_ASSERT(!id.empty());
+        return id;
+    };
+    const auto oldId = startUniqueConversation();
+    const auto oldInfo = ConversationModule::convInfos(aliceId).at(oldId);
+    Contact original;
+    original.added = nowMs() - 24h;
+    original.confirmed = true;
+    original.conversationId = oldId;
+    alice->accountManager()->getInfo()->contacts->setContacts({{peer, original}});
+
+    SyncMsg removal;
+    removal.c.emplace(oldId, oldInfo);
+    removal.c.at(oldId).removed = nowMs();
+    if (removalFirst)
+        module->onSyncData(removal, alice->getUsername(), {});
+
+    const auto newId = startUniqueConversation();
+    SyncMsg replacement;
+    replacement.c.emplace(newId, ConversationModule::convInfos(aliceId).at(newId));
+    replacement.c.at(newId).created = std::max(replacement.c.at(newId).created, oldInfo.created + 1ms);
+    module->onSyncData(replacement, alice->getUsername(), {});
+    if (!removalFirst) {
+        CPPUNIT_ASSERT_EQUAL(oldId, alice->getContactInfo(peer.toString())->conversationId);
+        module->onSyncData(removal, alice->getUsername(), {});
+    }
+
+    auto contact = alice->getContactInfo(peer.toString());
+    CPPUNIT_ASSERT(contact->added == original.added);
+    CPPUNIT_ASSERT_EQUAL(newId, contact->conversationId);
+    CPPUNIT_ASSERT(contact->isActive());
+    SyncMsg stale;
+    stale.c.emplace(oldId, oldInfo);
+    module->onSyncData(stale, alice->getUsername(), {});
+    CPPUNIT_ASSERT_EQUAL(newId, alice->getContactInfo(peer.toString())->conversationId);
+
+    const auto concurrentId = startUniqueConversation();
+    SyncMsg concurrent;
+    concurrent.c.emplace(concurrentId, ConversationModule::convInfos(aliceId).at(concurrentId));
+    module->onSyncData(concurrent, alice->getUsername(), {});
+    CPPUNIT_ASSERT_EQUAL(newId, alice->getContactInfo(peer.toString())->conversationId);
+    module->onSyncData(replacement, alice->getUsername(), {});
+    CPPUNIT_ASSERT_EQUAL(newId, alice->getContactInfo(peer.toString())->conversationId);
+
+    auto legacy = *contact;
+    legacy.added = contact->added + 1ms;
+    auto received = *contact;
+    received.update(legacy);
+    CPPUNIT_ASSERT(received.added == legacy.added);
+    alice->removeContact(peer.toString(), false);
+    module->onSyncData(replacement, alice->getUsername(), {});
+    CPPUNIT_ASSERT(!alice->getContactInfo(peer.toString())->isActive());
 }
 
 void
@@ -790,7 +954,9 @@ SyncHistoryTest::testSyncOneToOne()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
-    aliceAccount->addContact(bobAccount->getUsername());
+    const auto bobUri = bobAccount->getUsername();
+    aliceAccount->addContact(bobUri);
+    const auto original = *aliceAccount->getContactInfo(bobUri);
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
@@ -804,6 +970,18 @@ SyncHistoryTest::testSyncOneToOne()
 
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !alice2Data.conversationId.empty(); }));
+    auto alice2 = Manager::instance().getAccount<JamiAccount>(alice2Id);
+    CPPUNIT_ASSERT(alice2->getContactInfo(bobUri)->added == original.added);
+    alice2Data.conversationId.clear();
+    CPPUNIT_ASSERT(libjami::removeConversation(aliceId, original.conversationId));
+    const auto replacement = *aliceAccount->getContactInfo(bobUri);
+    CPPUNIT_ASSERT(replacement.conversationId != original.conversationId);
+    CPPUNIT_ASSERT(replacement.added == original.added);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return alice2Data.conversationId == replacement.conversationId; }));
+    const auto synced = *alice2->getContactInfo(bobUri);
+    CPPUNIT_ASSERT_EQUAL(replacement.conversationId, synced.conversationId);
+    CPPUNIT_ASSERT(synced.added == original.added);
+    CPPUNIT_ASSERT(ContactList::contactsFromPath(alice2->getPath()).at(dht::InfoHash(bobUri)).added == original.added);
 }
 
 void

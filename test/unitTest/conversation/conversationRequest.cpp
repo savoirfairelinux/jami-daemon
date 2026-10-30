@@ -923,7 +923,12 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
     }
     auto oldConvId = bobData.conversationId;
-    libjami::removeConversation(bobId, bobData.conversationId);
+    auto contacts = bobAccount->accountManager()->getContacts();
+    const auto peer = dht::InfoHash(aliceUri);
+    const auto added = nowMs() - 24h;
+    contacts.at(peer).added = added;
+    bobAccount->accountManager()->getInfo()->contacts->setContacts(contacts);
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, oldConvId));
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
@@ -931,6 +936,8 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
 
     auto details = bobAccount->getContactDetails(aliceUri);
     CPPUNIT_ASSERT(details[libjami::Account::TrustRequest::CONVERSATIONID] != oldConvId);
+    CPPUNIT_ASSERT(bobAccount->getContactInfo(aliceUri)->added == added);
+    CPPUNIT_ASSERT(bobAccount->getContactInfo(aliceUri)->isActive());
 }
 
 void

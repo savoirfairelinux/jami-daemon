@@ -386,6 +386,8 @@ public:
 
     bool updateConvForContact(const std::string& uri, const std::string& oldConv, const std::string& newConv);
 
+    void linkReplacementConversation(Conversation& conversation);
+
     std::shared_ptr<SyncedConversation> getConversation(std::string_view convId) const
     {
         std::lock_guard lk(conversationsMtx_);
@@ -1131,6 +1133,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
 
+        linkReplacementConversation(*conversation);
         acc->collaborativeEditing()->syncDocuments(conversationId);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -1238,6 +1241,32 @@ ConversationModule::Impl::updateConvForContact(const std::string& uri,
         return true;
     }
     return false;
+}
+
+void
+ConversationModule::Impl::linkReplacementConversation(Conversation& conversation)
+{
+    if (conversation.mode() != ConversationMode::ONE_TO_ONE || conversation.isRemoving())
+        return;
+    const auto members = conversation.memberUris({}, {MemberRole::LEFT, MemberRole::BANNED});
+    if (!members.contains(username_))
+        return;
+    for (const auto& member : members) {
+        if (member == username_ && members.size() != 1)
+            continue;
+        auto contact = accountManager_->getContactInfo(member);
+        if (!contact || !contact->isActive() || contact->conversationId == conversation.id())
+            continue;
+        if (!contact->conversationId.empty()) {
+            auto current = getConversation(contact->conversationId);
+            if (!current)
+                continue;
+            std::lock_guard lk(current->mtx);
+            if (!current->info.isRemoved())
+                continue;
+        }
+        updateConvForContact(member, contact->conversationId, conversation.id());
+    }
 }
 
 void
@@ -3022,6 +3051,7 @@ void
 ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, const std::string& deviceId)
 {
     std::vector<std::string> toClone;
+    std::vector<std::shared_ptr<Conversation>> toLink;
     // Conversations whose removal was learned from this message. Their
     // documents must be forfeited too, and documents are excluded from the
     // device sync (holding one is a per-device choice), so the forfeit is
@@ -3074,6 +3104,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                     addConvInfo(convInfo);
                     toClone.emplace_back(convId);
                 }
+            } else if (conv->info.mode == ConversationMode::ONE_TO_ONE) {
+                toLink.emplace_back(conv->conversation);
             }
         } else {
             if (conv->conversation && !conv->conversation->isRemoving()) {
@@ -3108,6 +3140,27 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
     // conversation's own lock nest the other way around.
     for (const auto& documentId : pimpl_->childDocuments(removedConversations))
         pimpl_->removeDocumentReplica(documentId);
+
+    // Reuse the normal clear path's lookup only for contacts whose linked
+    // conversation was removed by this sync.
+    for (const auto& removedId : removedConversations) {
+        auto removed = pimpl_->getConversation(removedId);
+        if (!removed)
+            continue;
+        std::set<std::string> members;
+        {
+            std::lock_guard lk(removed->mtx);
+            if (removed->info.mode != ConversationMode::ONE_TO_ONE)
+                continue;
+            members = removed->info.members;
+        }
+        members.emplace(pimpl_->username_);
+        const auto replacement = findMatchingOneToOneConversation(removedId, members);
+        if (auto conversation = getConversation(replacement))
+            toLink.emplace_back(std::move(conversation));
+    }
+    for (const auto& conversation : toLink)
+        pimpl_->linkReplacementConversation(*conversation);
 
     for (const auto& cid : toClone) {
         auto members = getConversationMembers(cid);
@@ -3724,7 +3777,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
 
     auto handleNewConversation = [&](const std::string& uri) {
         std::string newConvId = startConversation(ConversationMode::ONE_TO_ONE, dht::InfoHash(uri));
-        pimpl_->accountManager_->updateContactConversation(uri, newConvId, true);
+        pimpl_->accountManager_->updateContactConversation(uri, newConvId);
         sendNotification(newConvId);
         return newConvId;
     };
@@ -3774,7 +3827,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
             existingConvId = findMatchingOneToOneConversation(conversationId, conv->memberUris("", {}));
             if (!existingConvId.empty()) {
                 // Found an existing conversation, just update the contact
-                pimpl_->accountManager_->updateContactConversation(uri, existingConvId, true);
+                pimpl_->accountManager_->updateContactConversation(uri, existingConvId);
                 sendNotification(existingConvId);
             } else {
                 // No existing conversation found, create a new one
@@ -3803,7 +3856,7 @@ ConversationModule::findMatchingOneToOneConversation(const std::string& excluded
         if (info.removed != TimePoint {} && info.isRemoved())
             continue;
 
-        auto otherUris = otherConvPtr->conversation->memberUris();
+        auto otherUris = otherConvPtr->conversation->memberUris({}, {MemberRole::LEFT, MemberRole::BANNED});
 
         if (otherUris == targetUris)
             return otherConvId;

@@ -233,7 +233,7 @@ public:
     bool addContact(const dht::InfoHash& uri, bool confirmed = false, const std::string& conversationId = "");
     void removeContact(const std::string& uri, bool banned = true);
     void removeContactConversation(const std::string& uri); // for non swarm contacts
-    void updateContactConversation(const std::string& uri, const std::string& convId, bool added = false);
+    void updateContactConversation(const std::string& uri, const std::string& convId);
     std::map<dht::InfoHash, Contact> getContacts(bool includeRemoved = false) const;
 
     /** Obtain details about one account contact in serializable form. */
