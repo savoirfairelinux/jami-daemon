@@ -22,10 +22,16 @@
 #include "../../test_runner.h"
 #include "fileutils.h"
 #include "jami.h"
+#include "jamidht/message_channel_handler.h"
 #include "manager.h"
 #include "sip/sipaccount_config.h"
 #include "sip/sipaccountbase.h"
 
+#include <dhtnet/certstore.h>
+#include <dhtnet/connectionmanager.h>
+#include <dhtnet/ice_transport_factory.h>
+#include <opendht/crypto.h>
+#include <opendht/dhtrunner.h>
 #include <msgpack.hpp>
 
 #include <condition_variable>
@@ -121,6 +127,7 @@ public:
 private:
     void testDeviceQueueSurvivesRestart();
     void testLegacyQueueStillLoads();
+    void testMessageChannelHandlerChainsPendingCallbacks();
 
     static constexpr auto ACCOUNT_ID = "message-engine-test";
     static constexpr auto LEGACY_ACCOUNT_ID = "message-engine-legacy-test";
@@ -128,6 +135,7 @@ private:
     CPPUNIT_TEST_SUITE(MessageEngineTest);
     CPPUNIT_TEST(testDeviceQueueSurvivesRestart);
     CPPUNIT_TEST(testLegacyQueueStillLoads);
+    CPPUNIT_TEST(testMessageChannelHandlerChainsPendingCallbacks);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -202,6 +210,133 @@ MessageEngineTest::testLegacyQueueStillLoads()
     account->resume();
     CPPUNIT_ASSERT(account->waitForAttempts(1));
     CPPUNIT_ASSERT(account->attempts().front().device.empty());
+}
+
+struct TestPeerConnectionRequest : public dht::EncryptedValue<TestPeerConnectionRequest>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    dht::Value::Id id = dht::Value::INVALID_ID;
+    std::string ice_msg {};
+    bool isAnswer {false};
+    std::string connType {};
+    MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer, connType)
+};
+
+void
+MessageEngineTest::testMessageChannelHandlerChainsPendingCallbacks()
+{
+    auto ca = dht::crypto::generateIdentity("ca");
+    auto aliceAccount = dht::crypto::generateIdentity("alice-acc", ca, 2048, true);
+    auto bobAccount = dht::crypto::generateIdentity("bob-acc", ca, 2048, true);
+    auto aliceDevice = dht::crypto::generateIdentity("alice-dev", aliceAccount);
+    auto bobDevice = dht::crypto::generateIdentity("bob-dev", bobAccount);
+    auto bobDeviceId = bobDevice.second->getLongId();
+
+    auto cacheDir = fileutils::get_cache_dir() / ACCOUNT_ID;
+    auto certStore = std::make_shared<dhtnet::tls::CertificateStore>(cacheDir / "certs", nullptr);
+    certStore->pinCertificate(aliceDevice.second);
+    certStore->pinCertificate(bobDevice.second);
+
+    auto makeContext = [certStore]() {
+        dht::DhtRunner::Context ctx;
+        ctx.certificateStore = [certStore](const dht::PkId& pk_id) {
+            std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
+            if (auto cert = certStore->getCertificate(pk_id.toString()))
+                ret.emplace_back(std::move(cert));
+            return ret;
+        };
+        return ctx;
+    };
+
+    auto bobDht = std::make_shared<dht::DhtRunner>();
+    dht::DhtRunner::Config bobDhtConfig;
+    bobDhtConfig.dht_config.id = bobDevice;
+    bobDhtConfig.threaded = true;
+    bobDht->run(0, bobDhtConfig, makeContext());
+
+    auto dht = std::make_shared<dht::DhtRunner>();
+    dht::DhtRunner::Config dhtConfig;
+    dhtConfig.dht_config.id = aliceDevice;
+    dhtConfig.threaded = true;
+    dht->run(0, dhtConfig, makeContext());
+    dht->bootstrap(fmt::format("127.0.0.1:{}", bobDht->getBoundPort(AF_INET)));
+
+    auto config = std::make_shared<dhtnet::ConnectionManager::Config>();
+    config->id = aliceDevice;
+    config->dht = dht;
+    config->certStore = certStore;
+    config->ioContext = Manager::instance().ioContext();
+    config->factory = Manager::instance().getIceTransportFactory();
+    config->cachePath = cacheDir / "cm";
+    config->legacyMode = dhtnet::LegacyMode::Disabled;
+
+    auto cm = std::make_unique<dhtnet::ConnectionManager>(config);
+    cm->dhtStarted();
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool firstCalled = false;
+    bool secondCalled = false;
+    std::string observedConnType;
+
+    const auto peerKey = dht::InfoHash::get("peer:" + bobDeviceId.toString());
+    bobDht->listen<TestPeerConnectionRequest>(
+        peerKey,
+        [&](TestPeerConnectionRequest&& req) {
+            std::lock_guard lk(mtx);
+            observedConnType = req.connType;
+            cv.notify_all();
+            return true;
+        },
+        dht::Value::UserTypeFilter("peer_request"));
+
+    {
+        MessageChannelHandler handler(
+            *cm,
+            [](const auto&, std::string&, const std::string&) {},
+            [](const std::string&, bool) {},
+            [](const std::string&, const DeviceId&) {});
+
+        handler.connect(
+            bobDeviceId,
+            "",
+            [&](const std::shared_ptr<dhtnet::ChannelSocket>&, const DeviceId&) {
+                std::lock_guard lk(mtx);
+                firstCalled = true;
+                cv.notify_all();
+            },
+            "application/im-gitmessage-id");
+
+        const auto channelName = "msg:" + bobDeviceId.toString();
+        auto deadline = std::chrono::steady_clock::now() + 5s;
+        while (!cm->isConnecting(bobDeviceId, channelName) && std::chrono::steady_clock::now() < deadline) {
+            std::this_thread::sleep_for(10ms);
+        }
+        CPPUNIT_ASSERT(cm->isConnecting(bobDeviceId, channelName));
+
+        // Chained onto the pending uniqueName request while isConnecting is true
+        handler.connect(
+            bobDeviceId,
+            "",
+            [&](const std::shared_ptr<dhtnet::ChannelSocket>&, const DeviceId&) {
+                std::lock_guard lk(mtx);
+                secondCalled = true;
+                cv.notify_all();
+            },
+            "application/im-gitmessage-id");
+
+        {
+            std::unique_lock lk(mtx);
+            CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return observedConnType == "application/im-gitmessage-id"; }));
+        }
+    }
+
+    cm.reset();
+    dht->join();
+    bobDht->join();
+
+    std::unique_lock lk(mtx);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return firstCalled && secondCalled; }));
 }
 
 } // namespace jami::test
