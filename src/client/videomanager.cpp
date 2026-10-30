@@ -605,6 +605,12 @@ setAutoRestart(const std::string& id, const bool& restart)
     jami::setAutoRestart(id, restart);
 }
 
+MediaPreview
+getMediaPreview(const std::string& path)
+{
+    return jami::getMediaPreview(path);
+}
+
 bool
 getDecodingAccelerated()
 {

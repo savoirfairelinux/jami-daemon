@@ -736,6 +736,21 @@ test(
 # # # #
 
 if conf.get('ENABLE_VIDEO')
+    ut_media_preview = executable(
+        'ut_media_preview',
+        sources: files('unitTest/media/test_media_preview.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library,
+    )
+    test(
+        'media_preview',
+        ut_media_preview,
+        workdir: ut_workdir,
+        is_parallel: false,
+        timeout: 1800,
+    )
+
     ut_plugins = executable(
         'ut_plugins',
         sources: files('unitTest/plugins/plugins.cpp'),
