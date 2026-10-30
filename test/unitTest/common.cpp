@@ -127,19 +127,25 @@ add_confirmed_contact(const std::string& accountId, const std::string& contactId
         lk.unlock();
         if (!isConfirmed(contact, accountUri))
             CPPUNIT_ASSERT(contact->acceptTrustRequest(accountUri));
-        lk.lock();
-        const auto isContactReady = [&] {
-            const auto accountConv = account->convModule()->getOneToOneConversation(contactUri);
-            const auto contactConv = contact->convModule()->getOneToOneConversation(accountUri);
-            return isConfirmed(account, contactUri) && isConfirmed(contact, accountUri) && !accountConv.empty()
-                   && accountConv == contactConv;
-        };
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT);
-        while (!isContactReady() && std::chrono::steady_clock::now() < deadline)
-            cv.wait_for(lk, std::chrono::milliseconds(100));
-        CPPUNIT_ASSERT(isContactReady());
-        lk.unlock();
     }
+
+    const auto isContactReady = [&] {
+        const auto accountConv = account->convModule()->getOneToOneConversation(contactUri);
+        const auto contactConv = contact->convModule()->getOneToOneConversation(accountUri);
+        return isConfirmed(account, contactUri) && isConfirmed(contact, accountUri) && !accountConv.empty()
+               && accountConv == contactConv && account->convModule()->getConversation(accountConv)
+               && contact->convModule()->getConversation(contactConv);
+    };
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT);
+    auto ready = isContactReady();
+    while (!ready && std::chrono::steady_clock::now() < deadline) {
+        lk.lock();
+        cv.wait_for(lk, std::chrono::milliseconds(100));
+        lk.unlock();
+        // Clone completion can emit callbacks while holding conversation locks.
+        ready = isContactReady();
+    }
+    CPPUNIT_ASSERT(ready);
 
     if (!accountWasEnabled)
         jami::Manager::instance().sendRegister(accountId, false);

@@ -122,7 +122,7 @@ public:
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
-    void connectSignals();
+    void connectSignals(const std::string& expectedConversationId = {});
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
@@ -204,8 +204,10 @@ ConversationMembersEventTest::tearDown()
 }
 
 void
-ConversationMembersEventTest::connectSignals()
+ConversationMembersEventTest::connectSignals(const std::string& expectedConversationId)
 {
+    if (!expectedConversationId.empty())
+        aliceData.conversationId = expectedConversationId;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
         [&](const std::string& accountId, const std::map<std::string, std::string>&) {
@@ -257,7 +259,9 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.conversationId = conversationId;
             } else if (accountId == bobId) {
@@ -270,7 +274,12 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-        [&](const std::string& accountId, const std::string& /*conversationId*/, const std::string& member, int status) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& member,
+                                    int status) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.members[member] = status;
             } else if (accountId == bobId) {
@@ -296,9 +305,11 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*metadatas*/) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    std::map<std::string, std::string> /*metadatas*/) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.requestReceived = true;
             } else if (accountId == bobId) {
@@ -311,7 +322,9 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
-        [&](const std::string& accountId, const std::string&) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == bobId) {
                 bobData.requestRemoved = true;
             } else if (accountId == bob2Id) {
@@ -320,7 +333,11 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
@@ -333,7 +350,11 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.messagesUpdated.emplace_back(message);
             } else if (accountId == bobId) {
@@ -344,10 +365,12 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            int /*code*/,
-            const std::string& /* what */) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    int /*code*/,
+                                    const std::string& /* what */) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId)
                 aliceData.errorDetected = true;
             else if (accountId == bobId)
@@ -357,7 +380,9 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId)
                 aliceData.removed = true;
             else if (accountId == bobId)
@@ -558,14 +583,17 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
 void
 ConversationMembersEventTest::testAddOfflineMemberThenConnects()
 {
-    add_confirmed_contact(carlaId, aliceId);
-    connectSignals();
-
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
+    CPPUNIT_ASSERT(!carlaAccount->isEnabled());
+    // Authorize the peers without bringing Carla online during setup.
+    CPPUNIT_ASSERT(aliceAccount->setCertificateStatus(carlaUri, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED));
+    CPPUNIT_ASSERT(carlaAccount->setCertificateStatus(aliceAccount->getUsername(),
+                                                      dhtnet::tls::TrustStore::PermissionStatus::ALLOWED));
     aliceAccount->trackBuddyPresence(carlaUri, true);
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return !aliceData.conversationId.empty(); }));
 
     auto aliceMsgSize = aliceData.messages.size();
@@ -851,13 +879,13 @@ ConversationMembersEventTest::testRemoveInvitedMember()
 {
     add_confirmed_contact(bobId, aliceId);
     add_confirmed_contact(carlaId, aliceId);
-    connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
 
     // Add carla
     Manager::instance().sendRegister(carlaId, true);
@@ -1059,12 +1087,12 @@ ConversationMembersEventTest::testMemberCannotBanOther()
 {
     add_confirmed_contact(bobId, aliceId);
     add_confirmed_contact(carlaId, aliceId);
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
@@ -1381,13 +1409,13 @@ void
 ConversationMembersEventTest::testMemberAddedNoCertificate()
 {
     add_confirmed_contact(aliceId, carlaId);
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
 
     auto aliceMsgSize = aliceData.messages.size();
     aliceAccount->convModule()->addConversationMember(convId, dht::InfoHash(carlaUri), false);
@@ -1408,16 +1436,22 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     std::string invitedPath = repoPathCarla / "invited";
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
 
+    addAll(carlaAccount, convId);
     auto message = CommitMessage::member(CommitAction::JOIN, carlaUri);
     ConversationRepository cr(carlaAccount, convId);
-    cr.commitMessage(message.toString(), false);
+    auto commitId = cr.commitMessage(message.toString(), false);
+    CPPUNIT_ASSERT(!commitId.empty());
 
     // Start Carla, should merge and all messages should be there
     carlaAccount->convModule()->loadConversations(); // Because of the copy
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.deviceAnnounced; }));
 
-    libjami::sendMessage(carlaId, convId, "hi"s, "");
+    // Ordinary sends reject Carla locally because her member certificate is missing.
+    aliceAccount->convModule()->fetchNewCommits(carlaUri,
+                                                std::string(carlaAccount->currentDeviceId()),
+                                                convId,
+                                                commitId);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceData.errorDetected; }));
 }
@@ -1640,11 +1674,11 @@ void
 ConversationMembersEventTest::testBanUnbanMultiDevice()
 {
     add_confirmed_contact(bobId, aliceId);
-    connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
 
     // Bob creates a second device
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
