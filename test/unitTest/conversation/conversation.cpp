@@ -105,7 +105,7 @@ public:
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
-    void connectSignals();
+    void connectSignals(const std::string& expectedConversationId = {});
 
 private:
     void testCreateConversation();
@@ -239,7 +239,7 @@ ConversationTest::setUp()
 }
 
 void
-ConversationTest::connectSignals()
+ConversationTest::connectSignals(const std::string& expectedConversationId)
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
@@ -292,7 +292,9 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&, expectedConversationId](const std::string& accountId, const std::string& conversationId) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.conversationId = conversationId;
             } else if (accountId == alice2Id) {
@@ -320,9 +322,11 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*metadatas*/) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    std::map<std::string, std::string> /*metadatas*/) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.requestReceived = true;
             } else if (accountId == bobId) {
@@ -335,7 +339,11 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
@@ -346,7 +354,11 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
-        [&](const std::string& accountId, const std::string& /* conversationId */, libjami::SwarmMessage message) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    libjami::SwarmMessage message) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 aliceData.messagesUpdated.emplace_back(message);
             } else if (accountId == bobId) {
@@ -385,10 +397,12 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            int /*code*/,
-            const std::string& /* what */) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    int /*code*/,
+                                    const std::string& /* what */) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId)
                 aliceData.errorDetected = true;
             else if (accountId == bobId)
@@ -398,11 +412,13 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-        [&](const std::string& accountId,
-            const std::string& /*conversationId*/,
-            const std::string& /*peer*/,
-            const std::string& /*msgId*/,
-            int status) {
+        [&, expectedConversationId](const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& /*peer*/,
+                                    const std::string& /*msgId*/,
+                                    int status) {
+            if (!expectedConversationId.empty() && conversationId != expectedConversationId)
+                return;
             if (accountId == aliceId) {
                 if (status == 2)
                     aliceData.sending = true;
@@ -958,22 +974,21 @@ ConversationTest::testSetMessageDisplayedTwice()
 void
 ConversationTest::testSetMessageDisplayedPreference()
 {
-    add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
-    auto convId = libjami::startConversation(aliceId);
 
     auto details = aliceAccount->getAccountDetails();
     CPPUNIT_ASSERT(details[ConfProperties::SENDREADRECEIPT] == "true");
     details[ConfProperties::SENDREADRECEIPT] = "false";
     libjami::setAccountDetails(aliceId, details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.registered; }));
+    wait_for_announcement_of(aliceId);
+    add_confirmed_contact(bobId, aliceId);
 
+    auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
     auto aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
@@ -981,7 +996,9 @@ ConversationTest::testSetMessageDisplayedPreference()
     }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationId == convId && aliceMsgSize + 2 == aliceData.messages.size();
+    }));
 
     aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
     // Bob should not receive anything here, as sendMessageDisplayed is disabled for Alice
@@ -1249,22 +1266,21 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
 void
 ConversationTest::testVoteNonEmpty()
 {
+    Manager::instance().sendRegister(carlaId, true);
+    wait_for_announcement_of(carlaId);
     add_confirmed_contact(bobId, aliceId);
     add_confirmed_contact(carlaId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-
-    Manager::instance().sendRegister(carlaId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaData.deviceAnnounced; }));
 
     auto aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(aliceId, convId, bobUri);
@@ -1272,7 +1288,9 @@ ConversationTest::testVoteNonEmpty()
         return bobData.requestReceived && aliceMsgSize + 1 == aliceData.messages.size();
     }));
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationId == convId && aliceMsgSize + 2 == aliceData.messages.size();
+    }));
 
     aliceMsgSize = aliceData.messages.size();
     auto bobMsgSize = bobData.messages.size();
@@ -2153,24 +2171,25 @@ ConversationTest::testMessageEdition()
 {
     add_confirmed_contact(bobId, aliceId);
     std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
+    connectSignals(convId);
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !bobData.conversationId.empty() && aliceData.messages.size() == aliceMsgSize + 1;
+        return bobData.conversationId == convId && aliceData.messages.size() == aliceMsgSize + 1;
     }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+    CPPUNIT_ASSERT_EQUAL("hi"s, bobData.messages.at(bobMsgSize).body.at(CommitKey::BODY));
     auto editedId = bobData.messages.at(bobMsgSize).id;
     // Should trigger MessageUpdated
     bobMsgSize = bobData.messagesUpdated.size();
