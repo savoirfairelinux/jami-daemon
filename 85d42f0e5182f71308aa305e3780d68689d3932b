@@ -1,0 +1,40 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0755ad0e_dd0d9846",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-10-30T21:59:21Z",
+      "side": 1,
+      "message": "Addressed in PS3: readCallback handles at most 32 rejected SRTP packets per invocation, then returns AVERROR(EAGAIN) to yield to the demuxer. SocketPair logs only the first rejection in each invocation. The regression sends 64 replayed packets followed by valid media, checks the EAGAIN yield, then verifies reception resumes through avio_read_partial without spurious packet-loss updates.",
+      "parentUuid": "535075cf_be51f69d",
+      "revId": "85d42f0e5182f71308aa305e3780d68689d3932b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "314c0716_1787027a",
+        "filename": "test/unitTest/media/test_srtp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 617
+      },
+      "writtenOn": "2026-10-30T21:59:21Z",
+      "side": 1,
+      "message": "Addressed in PS3: removed the probe-and-close phase. Each bounded allocation attempt constructs the actual SocketPair and retains its two sockets for the duration of the test; bind failures retry another pair. Verified the test still passes with the first candidate port occupied. Test reads also have a five-second deadline and interrupt the receiver on timeout, so a failed read cannot leave CI blocked indefinitely.",
+      "parentUuid": "9bd33c14_ff6e7f84",
+      "revId": "85d42f0e5182f71308aa305e3780d68689d3932b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
