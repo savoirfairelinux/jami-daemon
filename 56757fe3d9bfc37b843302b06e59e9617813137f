@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67f76baf_8f3cb6d2",
+        "filename": "test/unitTest/im/message_engine.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T15:15:56Z",
+      "side": 1,
+      "message": "[warning] Line 263: 🟡 The new test verifies callbacks are not dropped, but it does not verify that the second request’s `connectionType` is preserved, which is part of the regression described in the commit message. Add an assertion path that observes the effective connection type (or equivalent side effect) for the second queued connect request.",
+      "revId": "56757fe3d9bfc37b843302b06e59e9617813137f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "302b4e75_b051b210",
+        "filename": "test/unitTest/im/message_engine.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T15:15:56Z",
+      "side": 1,
+      "message": "[error] Line 278: 🔴 `MessageChannelHandler` is constructed with `*cm` (non-owning reference), but `cm.reset()` is called before `handler` is destroyed. This breaks object lifetime ordering and can lead to undefined behavior if `handler` destructor (or any pending callback path) touches `ConnectionManager`. Fix by ensuring `handler` is destroyed first (e.g., wrap `handler` usage in an inner scope, then reset `cm` after that scope).",
+      "revId": "56757fe3d9bfc37b843302b06e59e9617813137f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
