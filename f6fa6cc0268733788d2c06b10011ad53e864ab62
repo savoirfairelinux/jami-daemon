@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4858bc9d_4e579336",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T15:34:54Z",
+      "side": 1,
+      "message": "[error] Line 208: 🔴 `connectSignals(convId)` pre-populates `aliceData.conversationId`, which makes waits like `cv.wait_for(..., [] { return !aliceData.conversationId.empty(); })` pass immediately even if `ConversationReady` was never emitted for that conversation. This weakens the test and can mask ordering/race regressions. Keep callback scoping, but do not seed `conversationId`; instead gate readiness with a dedicated flag set only inside the filtered `ConversationReady` callback (or compare `aliceData.conversationId \u003d\u003d convId` after callback assignment).",
+      "revId": "f6fa6cc0268733788d2c06b10011ad53e864ab62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
