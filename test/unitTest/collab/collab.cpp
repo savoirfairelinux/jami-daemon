@@ -614,10 +614,17 @@ CollabTest::testRetryAfterInactiveParent()
     auto docId = libjami::createCollaborativeDocument(aliceId, convId, "Retry", "text/plain");
     // Register the announcement while its parent cannot be used.
     bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
-    std::this_thread::sleep_for(1s);
+    CPPUNIT_ASSERT(poll([&] {
+        std::lock_guard<std::mutex> lk(mtx);
+        const auto& reports = bobData.replicated[docId];
+        return std::find(reports.begin(), reports.end(), std::make_pair(convId, false)) != reports.end();
+    }));
     // Reload a live parent without recreating the collaborative manager.
     bob->convModule()->loadConversations();
     bob->convModule()->bootstrap(convId);
+    // The inactive parent discarded the notification, so fetch its missed history.
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    bob->convModule()->fetchNewCommits(alice->getUsername(), std::string(alice->currentDeviceId()), convId, {});
     CPPUNIT_ASSERT(poll([&] { return !documentEntry(bobId, convId, docId).empty(); }));
     bob->collaborativeEditing()->onDocumentAnnounced(convId, docId);
     CPPUNIT_ASSERT(poll([&] { return documentEntry(bobId, convId, docId).at("storedLocally") == "true"; }));
