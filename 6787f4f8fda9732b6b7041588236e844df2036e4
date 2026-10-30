@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb6e368c_7497894d",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T17:47:52Z",
+      "side": 1,
+      "message": "[error] Line 353: 🔴 The `while (decoder.isReady() \u0026\u0026 !first)` loop is now unbounded and can spin forever when `demuxer-\u003edecode()` keeps returning `MediaDemuxer::Status::FallBack` after the first rewind (or repeatedly returns another non-breaking status without producing a frame). Previously the packet cap guaranteed termination; removing it makes this synchronous API vulnerable to hangs. Add an explicit termination guard (e.g., fallback-attempt limit and/or bounded decode budget by packet/time) and break on repeated `FallBack` after rewind.",
+      "revId": "6787f4f8fda9732b6b7041588236e844df2036e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
