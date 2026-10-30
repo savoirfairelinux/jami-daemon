@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b6b912c_1f7f21d9",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T16:35:27Z",
+      "side": 1,
+      "message": "[warning] Line 344: 🟡 The hard cap `MAX_PREVIEW_PACKETS \u003d 500` can miss previews for long-GOP/high-bitrate files where the first decodable video frame arrives later, causing intermittent empty previews despite a valid video stream. Consider a time-based or keyframe-based stop condition (or making the cap configurable) to improve reliability while still bounding work.",
+      "revId": "bde54c690c95f88ceb69a62771a3d43a178871fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8802a32_dad292e4",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-30T16:35:27Z",
+      "side": 1,
+      "message": "[error] Line 396: 🔴 `av_frame_alloc()` result is used without a null check before `av_frame_ref(...)`. If allocation fails, `preview.frame.get()` is null and `av_frame_ref` can crash. Fix by checking allocation success first (e.g., allocate into a temporary `AVFrame*`/`FrameBuffer`, verify non-null, then call `av_frame_ref`; on failure keep `preview.frame` empty).",
+      "revId": "bde54c690c95f88ceb69a62771a3d43a178871fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
