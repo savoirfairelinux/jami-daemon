@@ -1456,7 +1456,7 @@ CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, con
     // leaving that path, without pretending a client has opened the document.
     dht::ThreadPool::io().run([w = weak_from_this(), conversationId, documentId] {
         if (auto sthis = w.lock()) {
-            sthis->ensureDocumentReplica(conversationId, documentId, false);
+            auto replicaRequested = sthis->ensureDocumentReplica(conversationId, documentId, false);
             {
                 std::lock_guard<std::mutex> lk(sthis->announcedMtx_);
                 sthis->replicating_.erase(key(conversationId, documentId));
@@ -1466,6 +1466,9 @@ CollaborativeEditing::onDocumentAnnounced(const std::string& conversationId, con
             auto* cm = account ? account->convModule() : nullptr;
             if (cm && !cm->isCloningDocument(documentId)) {
                 auto stored = sthis->documentConversation(documentId) != nullptr;
+                // Source discovery can still be running before a pending clone exists.
+                if (replicaRequested && !stored)
+                    return;
                 emitSignal<libjami::ConversationSignal::CollaborativeDocumentReplicated>(sthis->accountId_,
                                                                                          conversationId,
                                                                                          documentId,
