@@ -337,4 +337,79 @@ MediaPlayer::streamsFinished()
     return audioFinished && videoFinished;
 }
 
+namespace {
+
+using clock = std::chrono::steady_clock;
+
+constexpr auto PREVIEW_TIMEOUT = std::chrono::seconds(3);
+
+int
+deadlineReached(void* opaque)
+{
+    return clock::now() >= *static_cast<const clock::time_point*>(opaque);
+}
+
+#ifdef ENABLE_VIDEO
+std::shared_ptr<MediaFrame>
+decodeFirstFrame(const std::shared_ptr<MediaDemuxer>& demuxer, int stream, clock::time_point deadline)
+{
+    std::shared_ptr<MediaFrame> first;
+    MediaDecoder decoder(demuxer, stream, [&first](std::shared_ptr<MediaFrame>&& frame) {
+        if (!first)
+            first = std::move(frame);
+    });
+    bool rewound = false;
+    while (decoder.isReady() && !first && clock::now() < deadline) {
+        const auto status = demuxer->decode();
+        if (status == MediaDemuxer::Status::FallBack) {
+            if (rewound || !demuxer->seekFrame(stream, 0))
+                break;
+            rewound = true;
+            continue;
+        }
+        if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError
+            || status == MediaDemuxer::Status::RestartRequired)
+            break;
+    }
+    if (decoder.isReady() && !first)
+        decoder.flush();
+    demuxer->setStreamCallback(stream);
+    return first;
+}
+#endif
+
+} // namespace
+
+libjami::MediaPreview
+getMediaPreview(const std::string& path)
+{
+    libjami::MediaPreview preview;
+    preview.info = {{"duration", "0"}, {"audio_stream", "-1"}, {"video_stream", "-1"}};
+    // Must outlive the demuxer, which reads it from FFmpeg's interrupt callback.
+    auto deadline = clock::now() + PREVIEW_TIMEOUT;
+    auto demuxer = std::make_shared<MediaDemuxer>();
+    demuxer->setInterruptCallback(deadlineReached, &deadline);
+    DeviceParams params;
+    params.input = path;
+    params.name = path;
+    if (demuxer->openInput(params) < 0)
+        return preview;
+    demuxer->findStreamInfo();
+
+    const auto audioStream = std::max(-1, demuxer->selectStream(AVMEDIA_TYPE_AUDIO));
+    const auto videoStream = std::max(-1, demuxer->selectStream(AVMEDIA_TYPE_VIDEO));
+    preview.info["duration"] = std::to_string(std::max<int64_t>(0, demuxer->getDuration()));
+    preview.info["audio_stream"] = std::to_string(audioStream);
+    preview.info["video_stream"] = std::to_string(videoStream);
+
+#ifdef ENABLE_VIDEO
+    if (videoStream >= 0) {
+        if (auto frame = decodeFirstFrame(demuxer, videoStream, deadline)) {
+            preview.frame.reset(av_frame_clone(frame->pointer()));
+        }
+    }
+#endif
+    return preview;
+}
+
 } // namespace jami

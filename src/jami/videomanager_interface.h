@@ -198,6 +198,14 @@ LIBJAMI_PUBLIC int64_t getPlayerPosition(const std::string& id);
 LIBJAMI_PUBLIC int64_t getPlayerDuration(const std::string& id);
 LIBJAMI_PUBLIC void setAutoRestart(const std::string& id, const bool& restart);
 
+struct LIBJAMI_PUBLIC MediaPreview
+{
+    std::map<std::string, std::string> info;
+    FrameBuffer frame;
+};
+
+LIBJAMI_PUBLIC MediaPreview getMediaPreview(const std::string& path);
+
 LIBJAMI_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
 #ifdef ENABLE_SHM
 LIBJAMI_PUBLIC void startShmSink(const std::string& sinkId, bool value);
