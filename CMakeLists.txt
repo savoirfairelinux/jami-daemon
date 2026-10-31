@@ -1032,6 +1032,7 @@ if(NOT MSVC)
         add_test_executable(trust test/unitTest/trust/trust.cpp)
         add_test_executable(syncHistory test/unitTest/syncHistory/syncHistory.cpp)
         add_test_executable(base64 test/unitTest/base64/base64.cpp)
+        add_test_executable(vcard test/unitTest/vcard/vcard.cpp)
         add_test_executable(srtp test/unitTest/media/test_srtp.cpp)
         add_test_executable(linkdevice test/unitTest/linkdevice/linkdevice.cpp)
 
