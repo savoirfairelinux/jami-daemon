@@ -50,7 +50,6 @@ initVcard()
     return {
         {std::string(Property::VCARD_VERSION), "2.1"},
         {std::string(Property::FORMATTED_NAME), ""},
-        {std::string(Property::PHOTO_PNG), ""},
     };
 }
 
