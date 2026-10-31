@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e09dd92b_05c79e85",
+        "filename": "src/jamidht/namedirectory.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-10-31T20:53:14Z",
+      "side": 1,
+      "message": "[warning] Line 194: 🟡 This behavior change (dropping and recreating the resolver on `status_code \u003d\u003d 0`) lacks a regression test path in this patch. Please add/extend a NameDirectory test that simulates an initial resolution/connection failure and verifies a subsequent request re-resolves and can succeed, to prevent regressions in this recovery logic.",
+      "revId": "ab2dd626de9cd1795b4be7108cce1d4ce5b8e08b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
