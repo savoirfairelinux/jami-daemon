@@ -108,6 +108,12 @@ private:
      */
     std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
+    // A Resolver resolves its host once and replays that result (or that error) to every later
+    // request. Requests take it through resolver(), and a request that got no HTTP response at all
+    // drops it, so the next request resolves the host again.
+    std::mutex resolverMtx_ {};
+    std::shared_ptr<dht::http::Resolver> resolver();
+    void dropResolver(const std::shared_ptr<dht::http::Resolver>& failed);
     std::mutex requestsMtx_ {};
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 

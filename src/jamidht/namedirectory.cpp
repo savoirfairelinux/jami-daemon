@@ -112,6 +112,25 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     cachePath_ = fileutils::get_cache_dir() / CACHE_DIRECTORY / resolver_->get_url().host;
 }
 
+std::shared_ptr<dht::http::Resolver>
+NameDirectory::resolver()
+{
+    std::lock_guard lk(resolverMtx_);
+    if (!resolver_)
+        resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl_, logger_);
+    return resolver_;
+}
+
+void
+NameDirectory::dropResolver(const std::shared_ptr<dht::http::Resolver>& failed)
+{
+    std::lock_guard lk(resolverMtx_);
+    if (resolver_ && resolver_ == failed) {
+        resolver_.reset();
+        JAMI_WARNING("[NameDirectory] No HTTP response from {}; resolving the host again", serverUrl_);
+    }
+}
+
 NameDirectory::~NameDirectory()
 {
     decltype(requests_) requests;
@@ -173,11 +192,14 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         cb(cacheResult.first, cacheResult.second, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_ADDR + addr);
+    auto res = resolver();
+    auto request = std::make_shared<Request>(*httpContext_, res, serverUrl_ + QUERY_ADDR + addr);
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, cb, addr](const dht::http::Response& response) {
+        request->add_on_done_callback([this, res, cb, addr](const dht::http::Response& response) {
+            if (response.status_code == 0)
+                dropResolver(res);
             if (response.status_code > 400 && response.status_code < 500) {
                 auto cacheResult = nameCache(addr);
                 if (not cacheResult.first.empty())
@@ -249,11 +271,14 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
         return;
     }
     auto encodedName = urlEncode(name);
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_NAME + encodedName);
+    auto res = resolver();
+    auto request = std::make_shared<Request>(*httpContext_, res, serverUrl_ + QUERY_NAME + encodedName);
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, name, cb](const dht::http::Response& response) {
+        request->add_on_done_callback([this, res, name, cb](const dht::http::Response& response) {
+            if (response.status_code == 0)
+                dropResolver(res);
             if (response.status_code > 400 && response.status_code < 500)
                 cb("", "", Response::notFound);
             else if (response.status_code == 400)
@@ -359,7 +384,8 @@ NameDirectory::registerName(const std::string& addr,
                                    base64::encode(publickey));
 
     auto encodedName = urlEncode(name);
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_NAME + encodedName);
+    auto res = resolver();
+    auto request = std::make_shared<Request>(*httpContext_, res, serverUrl_ + QUERY_NAME + encodedName);
     try {
         request->set_method(restinio::http_method_post());
         setHeaderFields(*request);
@@ -367,7 +393,9 @@ NameDirectory::registerName(const std::string& addr,
 
         JAMI_WARNING("RegisterName: sending request {} {}", addr, name);
 
-        request->add_on_done_callback([this, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
+        request->add_on_done_callback([this, res, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
+            if (response.status_code == 0)
+                dropResolver(res);
             {
                 std::lock_guard l(cacheLock_);
                 pendingRegistrations_.erase(name);
