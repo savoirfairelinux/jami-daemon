@@ -68,6 +68,10 @@ constexpr std::size_t MAX_PACKS {50};
 // packs being merged, so this bounds the cost of a merge, even in a
 // repository that holds thousands of them.
 constexpr std::size_t REPACK_BATCH {64};
+// Opened repositories a conversation keeps for reuse. An operation holds one
+// while it runs, so more than this many are open only while that many run at
+// once, and the extra ones are closed as they end.
+constexpr std::size_t MAX_IDLE_REPOSITORIES {2};
 
 namespace jami {
 
@@ -236,18 +240,69 @@ public:
 
     OnMembersChanged onMembersChanged_ {};
 
-    // NOTE! We use temporary GitRepository to avoid keeping the file opened
-    // TODO: check why git_remote_fetch() leaves pack-data opened
-    GitRepository repository() const
+    // An opened repository lent by repository(), given back for reuse once
+    // destroyed. libgit2 objects are not thread-safe, so one is never lent to
+    // two callers at a time: concurrent operations each get their own.
+    class Repository
     {
+    public:
+        Repository() = default;
+        Repository(GitRepository&& repo, const Impl& owner)
+            : repo_(std::move(repo))
+            , owner_(&owner)
+        {}
+        Repository(Repository&&) noexcept = default;
+        Repository& operator=(Repository&&) = delete;
+        ~Repository()
+        {
+            if (repo_)
+                owner_->recycle(std::move(repo_));
+        }
+        git_repository* get() const noexcept { return repo_.get(); }
+        explicit operator bool() const noexcept { return static_cast<bool>(repo_); }
+
+    private:
+        GitRepository repo_;
+        const Impl* owner_ {nullptr};
+    };
+
+    // Opening a repository reads its configuration and scans its packs each
+    // time, so opened ones are kept for the next operation. Each caches the
+    // index it has read: re-read it before relying on it, another one may have
+    // written it since.
+    Repository repository() const
+    {
+        {
+            std::lock_guard lk(idleReposMtx_);
+            if (!idleRepos_.empty()) {
+                auto repo = std::move(idleRepos_.back());
+                idleRepos_.pop_back();
+                return {std::move(repo), *this};
+            }
+        }
         auto path = fmt::format("{}/{}/conversations/{}", fileutils::get_data_dir().string(), accountId_, id_);
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
         if (err < 0) {
             JAMI_ERROR("Unable to open Git repository: {} ({})", path, git_error_last()->message);
-            return nullptr;
+            return {};
         }
-        return GitRepository(std::move(repo));
+        return {GitRepository(repo), *this};
+    }
+
+    void recycle(GitRepository repo) const
+    {
+        std::lock_guard lk(idleReposMtx_);
+        if (idleRepos_.size() < MAX_IDLE_REPOSITORIES)
+            idleRepos_.emplace_back(std::move(repo));
+    }
+
+    // Closes the repositories nobody is using, e.g. before erasing the files
+    void closeIdleRepositories() const
+    {
+        std::vector<GitRepository> repos;
+        std::lock_guard lk(idleReposMtx_);
+        repos.swap(idleRepos_);
     }
 
     std::string getDisplayName() const
@@ -674,6 +729,8 @@ public:
     std::mutex repackMtx_;
     // A fetch stored a pack since the last repack()
     std::atomic_bool packFetched_ {false};
+    mutable std::mutex idleReposMtx_;
+    mutable std::vector<GitRepository> idleRepos_;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1167,6 +1224,10 @@ ConversationRepository::Impl::add(const std::string& path)
         return false;
     }
     GitIndex index {index_ptr};
+    if (git_index_read(index.get(), false) < 0) {
+        JAMI_ERROR("Unable to read repository index");
+        return false;
+    }
     if (git_index_add_bypath(index.get(), path.c_str()) != 0) {
         const git_error* err = giterr_last();
         if (err)
@@ -2226,6 +2287,10 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
         return {};
     }
     GitIndex index {index_ptr};
+    if (git_index_read(index.get(), false) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to read repository index", accountId_, id_);
+        return {};
+    }
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
@@ -4488,12 +4553,14 @@ ConversationRepository::leave()
 void
 ConversationRepository::erase()
 {
-    // First, we need to add the member file to the repository if not present
-    if (auto repo = pimpl_->repository()) {
-        std::string repoPath = git_repository_workdir(repo.get());
-        JAMI_LOG("Erasing {}", repoPath);
-        dhtnet::fileutils::removeAll(repoPath, true);
-    }
+    std::string repoPath;
+    if (auto repo = pimpl_->repository())
+        repoPath = git_repository_workdir(repo.get());
+    if (repoPath.empty())
+        return;
+    pimpl_->closeIdleRepositories();
+    JAMI_LOG("Erasing {}", repoPath);
+    dhtnet::fileutils::removeAll(repoPath, true);
 }
 
 ConversationMode
