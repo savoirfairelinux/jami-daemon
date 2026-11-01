@@ -114,6 +114,11 @@ namespace jami {
 using CallIDSet = std::set<std::string>;
 
 static constexpr const char* PACKAGE_OLD = "ring";
+// Conversations keep their git repositories open, and each holds the pack
+// files it has read. libgit2 closes the least recently used past this count
+// and reopens them on demand, so many conversations cannot exhaust the
+// descriptors.
+static constexpr size_t MAX_OPEN_PACK_FILES = 256;
 
 std::atomic_bool Manager::initialized = {false};
 
@@ -743,6 +748,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     git_libgit2_init();
     git_libgit2_opts(GIT_OPT_ENABLE_FSYNC_GITDIR, 1);
+    git_libgit2_opts(GIT_OPT_SET_MWINDOW_FILE_LIMIT, MAX_OPEN_PACK_FILES);
     auto res = git_transport_register("git", p2p_transport_cb, nullptr);
     if (res < 0) {
         const git_error* error = giterr_last();

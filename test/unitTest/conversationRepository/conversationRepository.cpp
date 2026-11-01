@@ -91,6 +91,7 @@ private:
     void testMergeWithInvalidFile();
     void testCloneFailureDoesNotWipeExistingConversation();
     void testCommitIsNotBlockedByAStalledFetch();
+    void testCommitUsesIndexWrittenByAnotherInstance();
     void testCreateDocumentRepository();
     void testDocumentCheckpointsAndAttachments();
     void testCheckpointInConversationRejected();
@@ -133,6 +134,7 @@ private:
     CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST(testCloneFailureDoesNotWipeExistingConversation);
     CPPUNIT_TEST(testCommitIsNotBlockedByAStalledFetch);
+    CPPUNIT_TEST(testCommitUsesIndexWrittenByAnotherInstance);
     CPPUNIT_TEST(testCreateDocumentRepository);
     CPPUNIT_TEST(testDocumentCheckpointsAndAttachments);
     CPPUNIT_TEST(testCheckpointInConversationRejected);
@@ -1315,6 +1317,34 @@ ConversationRepositoryTest::testCommitIsNotBlockedByAStalledFetch()
         stall->cv.wait_for(lk, 30s, [&] { return stall->pulled; });
     }
     CPPUNIT_ASSERT_MESSAGE("A commit had to wait for a stalled fetch", done);
+}
+
+// Operations on a conversation reuse opened libgit2 repositories, each of which
+// keeps the index it has read in memory. What one of them stages has to end up
+// in the tree of the next commit, whichever repository that commit goes through.
+void
+ConversationRepositoryTest::testCommitUsesIndexWrittenByAnotherInstance()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+
+    // commitMessages() does not reset the index, so it keeps what is staged
+    // below: the first commit makes its repository read the index, the second
+    // reuses it.
+    auto id1 = repository->commitMessages({CommitMessage::text("Commit 1").toString()}).front();
+    CPPUNIT_ASSERT(!id1.empty());
+
+    std::ofstream(repoPath / "profile.vcf") << "TITLE: SWARM\n";
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    addAll(repo);
+    git_repository_free(repo);
+
+    auto id2 = repository->commitMessages({CommitMessage::text("Commit 2").toString()}).front();
+    CPPUNIT_ASSERT(!id2.empty());
+    CPPUNIT_ASSERT(ConversationRepository::changedFiles(repository->diffStats(id2, id1))
+                   == std::vector<std::string> {"profile.vcf"});
 }
 
 // A collaborative document repository is a conversation repository in the
