@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6bfe587_b1ab495c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2698,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-02T22:34:57Z",
+      "side": 1,
+      "message": "[error] Line 2698: 🔴 `isAuthorizedCommit()` allows unknown commit types in non-document modes via `return mode() !\u003d ConversationMode::DOCUMENT;` without checking role-based permission. This bypasses `hasPermissionAtTree()` for the fallback path, so an `INVITED` participant (who should only be allowed to `Join`) can still submit arbitrary unknown commits. Keep forward-compatibility, but gate fallback through an explicit permission check (for example `allowed(Permission::Text)`), or add a dedicated `Permission::UnknownMessage` granted only to ADMIN/MEMBER.",
+      "revId": "bb1eee4d2294a2a81bc8da323d8e574148d6d1b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
