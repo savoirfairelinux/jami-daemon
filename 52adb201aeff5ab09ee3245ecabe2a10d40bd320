@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f70aac16_24cffd01",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-02T20:13:03Z",
+      "side": 1,
+      "message": "[warning] Line 202: 🟡 `PERMISSION_NAME_TABLE` manually mirrors the `Permission` enum, so a future enum addition can be granted by `hasPermission` but silently omitted from client-visible permissions. Add a compile-time completeness check (tied to an enum sentinel/count) or centralize the name mapping with the enum definition to prevent drift.",
+      "revId": "52adb201aeff5ab09ee3245ecabe2a10d40bd320",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
