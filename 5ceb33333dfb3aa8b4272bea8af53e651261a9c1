@@ -16,6 +16,24 @@
       "message": "[error] Line 3104: 🔴 `toLink` can receive a null `conv-\u003econversation` here when local state is removed (`conv-\u003einfo.isRemoved()\u003d\u003dtrue`) but the incoming sync entry is non-removed/stale; later `for (const auto\u0026 conversation : toLink) pimpl_-\u003elinkReplacementConversation(*conversation);` unconditionally dereferences it. This is a potential null-deref crash on malformed or out-of-order sync. Guard before emplacing (`if (conv-\u003econversation)`) and/or guard before dereference (`if (!conversation) continue`).",
       "revId": "5ceb33333dfb3aa8b4272bea8af53e651261a9c1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46c341c7_2d6f573c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3104,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-02T19:26:00Z",
+      "side": 1,
+      "message": "Not a valid",
+      "parentUuid": "2511eca2_8632df86",
+      "revId": "5ceb33333dfb3aa8b4272bea8af53e651261a9c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
