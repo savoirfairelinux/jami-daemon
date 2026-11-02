@@ -34,6 +34,24 @@
       "parentUuid": "2511eca2_8632df86",
       "revId": "5ceb33333dfb3aa8b4272bea8af53e651261a9c1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1a48167_86e977cc",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3104,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-02T19:37:16Z",
+      "side": 1,
+      "message": "Not a valid comment. Null check is present before adding conversation to link.",
+      "parentUuid": "46c341c7_2d6f573c",
+      "revId": "5ceb33333dfb3aa8b4272bea8af53e651261a9c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
