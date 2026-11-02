@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5583af38_4fbfd063",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-11-02T17:24:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2b6b912c_1f7f21d9",
+      "revId": "bde54c690c95f88ceb69a62771a3d43a178871fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b8802a32_dad292e4",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-30T16:35:27Z",
       "side": 1,
       "message": "[error] Line 396: 🔴 `av_frame_alloc()` result is used without a null check before `av_frame_ref(...)`. If allocation fails, `preview.frame.get()` is null and `av_frame_ref` can crash. Fix by checking allocation success first (e.g., allocate into a temporary `AVFrame*`/`FrameBuffer`, verify non-null, then call `av_frame_ref`; on failure keep `preview.frame` empty).",
+      "revId": "bde54c690c95f88ceb69a62771a3d43a178871fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b44fb7f1_1cf8fa6f",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2026-11-02T17:24:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b8802a32_dad292e4",
       "revId": "bde54c690c95f88ceb69a62771a3d43a178871fd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
