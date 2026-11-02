@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ec80071_e95b4cea",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-02T20:14:15Z",
+      "side": 1,
+      "message": "[error] Line 202: 🔴 In FEED mode, `Permission::Edit`, `Permission::Delete`, and `Permission::DeleteFile` are granted to every member (`return true`). Unless every call site also enforces ownership, this lets non-admin members alter or remove admin content, which breaks the intended “admin publishing/member replies” model and creates an authorization gap. Restrict these permissions to admins, or add explicit ownership-aware checks (own reply/file only) in the authorization path.",
+      "revId": "a85d173f236114340afbc4b4649610ab5191b84d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "893ee4b7_01c041fc",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1787,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-02T20:14:15Z",
+      "side": 1,
+      "message": "[warning] Line 1787: 🟡 The FEED tests currently validate permission-name lists only. They should also verify runtime behavior (member post rejected, member reply accepted, member cannot edit/delete admin post/file) to catch authorization regressions beyond static permission mapping.",
+      "revId": "a85d173f236114340afbc4b4649610ab5191b84d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
