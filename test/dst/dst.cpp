@@ -1577,21 +1577,30 @@ ConversationDST::checkAllAccounts()
 static bool
 swarmMessagesEqual(const libjami::SwarmMessage& a, const libjami::SwarmMessage& b)
 {
+    // The body map retains the parent from the original repository log (or none for
+    // a direct lookup). Only SwarmMessage::linearizedParent tracks the displayed chain.
+    // This stale metadata also gets copied into reactions and superseded edition bodies.
+    auto bodiesEqual = [](std::map<std::string, std::string> x, std::map<std::string, std::string> y) {
+        x.erase("linearizedParent");
+        y.erase("linearizedParent");
+        return x == y;
+    };
     // Reactions are appended in ingestion order, which differs between the incremental signals
     // (arrival order) and a fresh load or the oracle (git-log order). Their order is therefore not
     // a well-defined property of the shared history, so we compare them independently of order,
     // keyed by their unique commit id.
-    auto reactionsEqual = [](std::vector<std::map<std::string, std::string>> x,
-                             std::vector<std::map<std::string, std::string>> y) {
+    auto reactionsEqual = [&](std::vector<std::map<std::string, std::string>> x,
+                              std::vector<std::map<std::string, std::string>> y) {
         auto byId = [](const auto& lhs, const auto& rhs) {
             return lhs.at("id") < rhs.at("id");
         };
         std::sort(x.begin(), x.end(), byId);
         std::sort(y.begin(), y.end(), byId);
-        return x == y;
+        return std::equal(x.begin(), x.end(), y.begin(), y.end(), bodiesEqual);
     };
-    return a.id == b.id && a.type == b.type && a.linearizedParent == b.linearizedParent && a.body == b.body
-           && reactionsEqual(a.reactions, b.reactions) && a.editions == b.editions
+    return a.id == b.id && a.type == b.type && a.linearizedParent == b.linearizedParent && bodiesEqual(a.body, b.body)
+           && reactionsEqual(a.reactions, b.reactions)
+           && std::equal(a.editions.begin(), a.editions.end(), b.editions.begin(), b.editions.end(), bodiesEqual)
            && a.latestEditionId == b.latestEditionId;
 }
 
