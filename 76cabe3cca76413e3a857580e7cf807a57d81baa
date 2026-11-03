@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9fc4222_cc3b9efb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2691,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-03T14:53:56Z",
+      "side": 1,
+      "message": "[error] Line 2691: 🔴 Unknown commit types are now authorized with `return mode() !\u003d ConversationMode::DOCUMENT;` without any membership/role check, which lets non-members or invited-only users bypass the permission gate for non-document swarms. Keep forward-compat handling, but still require author authorization (e.g., `allowed(Permission::Text)` for non-document modes or at least `hasPermissionAtTree` + role-based allowlist) so unknown types cannot bypass access control.",
+      "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3efa9131_e9fb2d7d",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-03T14:53:56Z",
+      "side": 1,
+      "message": "[error] Line 212: 🔴 `PERMISSION_NAME_TABLE` omits the newly added `Permission::Join` and `Permission::Leave`, so `permissionNames()`/`getConversationPermissions()`/`SwarmLoaded` expose an incomplete permission set and silently hide real grants. Add both entries and keep table/enum synchronized with a compile-time guard tied to a sentinel/count.",
+      "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c765491e_740ffcb2",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1829,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-03T14:53:56Z",
+      "side": 1,
+      "message": "[warning] Line 1829: 🟡 The test currently asserts `permissionNames(..., MemberRole::INVITED).empty()`, which encodes the current omission bug instead of the intended behavior (`INVITED` should expose `join`). Update this assertion to check for `\"join\"` and absence of disallowed permissions so coverage protects the client-facing contract.",
+      "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
