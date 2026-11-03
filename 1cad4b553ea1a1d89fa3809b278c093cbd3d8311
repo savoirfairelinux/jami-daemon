@@ -69,6 +69,24 @@
       "message": "[warning] Line 200: 🟡 FEED mode does not grant `Permission::Leave` to admin/member, while `JOIN`/`LEAVE` were made explicit and `isAuthorizedCommit` now enforces `Leave` for `CommitAction::REMOVE`. This makes FEED participants unable to leave via a member-remove commit. If FEED is expected to behave like other swarm modes for self-removal, add `Leave` for ADMIN/MEMBER (and corresponding tests).",
       "revId": "1cad4b553ea1a1d89fa3809b278c093cbd3d8311",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "413404e9_0d266c4d",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-11-03T16:18:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "668fbc0c_403c4f62",
+      "revId": "1cad4b553ea1a1d89fa3809b278c093cbd3d8311",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
