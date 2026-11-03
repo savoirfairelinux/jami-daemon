@@ -1,10 +1,10 @@
 # LIBGIT2
-LIBGIT2_VERSION := 1.8.0
+LIBGIT2_VERSION := 1.9.7
 PKG_CPE += cpe:2.3:a:libgit2:libgit2:${LIBGIT2_VERSION}:*:*:*:*:*:*:*
 LIBGIT2_URL := https://github.com/libgit2/libgit2/archive/v${LIBGIT2_VERSION}.tar.gz
 
 PKGS += libgit2
-ifeq ($(call need_pkg,"libgit2 >= 1.6.4"),)
+ifeq ($(call need_pkg,"libgit2 >= 1.9.7"),)
 PKGS_FOUND += libgit2
 endif
 
@@ -18,11 +18,11 @@ $(TARBALLS)/libgit2-v$(LIBGIT2_VERSION).tar.gz:
 libgit2: libgit2-v$(LIBGIT2_VERSION).tar.gz .sum-libgit2
 	$(UNPACK)
 	mv libgit2-$(LIBGIT2_VERSION) libgit2-v$(LIBGIT2_VERSION)
-	$(APPLY) $(SRC)/libgit2/c-standard.diff
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 LIBGIT2_CONF = -DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_C_STANDARD=99 \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DBUILD_TESTS=OFF \
 		-DBUILD_CLI=OFF \
