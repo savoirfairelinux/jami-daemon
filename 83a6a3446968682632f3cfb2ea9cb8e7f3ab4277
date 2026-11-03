@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e0af3e3_3bb87e3d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2640,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-03T04:27:55Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d084aadc_3c0d2e30",
+      "revId": "83a6a3446968682632f3cfb2ea9cb8e7f3ab4277",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "149b3952_0eb4d7b3",
@@ -37,6 +55,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "92c4a458_c1acd21a",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-03T04:27:55Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "149b3952_0eb4d7b3",
+      "revId": "83a6a3446968682632f3cfb2ea9cb8e7f3ab4277",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b6473165_a882a19f",
@@ -50,6 +86,24 @@
       "writtenOn": "2026-11-02T20:11:53Z",
       "side": 1,
       "message": "[warning] Line 147: 🟡 `hasPermission()` uses `default` branches in the permission switches, which suppresses compiler exhaustiveness diagnostics when `Permission` grows. For security-sensitive authorization matrices, this can let new permissions ship without an explicit policy decision. Prefer removing `default` for enum switches (and relying on `-Wswitch-enum`), or route the fallback through an `unreachable` helper so new enum entries force a code update.",
+      "revId": "83a6a3446968682632f3cfb2ea9cb8e7f3ab4277",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ef7bb58_f54aa14c",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-03T04:27:55Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b6473165_a882a19f",
       "revId": "83a6a3446968682632f3cfb2ea9cb8e7f3ab4277",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

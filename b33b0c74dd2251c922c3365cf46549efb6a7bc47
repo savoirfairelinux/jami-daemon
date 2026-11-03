@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e0d74cb_d1a9f144",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-03T04:27:55Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "abcacf33_50f643e3",
+      "revId": "b33b0c74dd2251c922c3365cf46549efb6a7bc47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "74559638_38bb34dd",
@@ -32,6 +50,24 @@
       "writtenOn": "2026-10-02T18:51:00Z",
       "side": 1,
       "message": "[warning] Line 139: 🟡 `hasPermission` uses `default` branches in the `switch (permission)` blocks. That prevents compiler exhaustiveness checks when new `Permission` values are added, so new permissions can be silently denied without any review-time signal. Keep deny-by-default, but remove `default` in inner switches and add an explicit fallback after the switch (or a helper with `static_assert`/`unreachable`) so enum growth is caught at compile time.",
+      "revId": "b33b0c74dd2251c922c3365cf46549efb6a7bc47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "451b9d80_3346f12b",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-03T04:27:55Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "74559638_38bb34dd",
       "revId": "b33b0c74dd2251c922c3365cf46549efb6a7bc47",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
