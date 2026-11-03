@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9edc355b_485ccdb9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2700,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-03T15:51:32Z",
+      "side": 1,
+      "message": "[error] Line 2700: 🔴 Unknown commit types are now accepted unconditionally for every non-DOCUMENT conversation mode (`return mode() !\u003d ConversationMode::DOCUMENT`). This bypasses role/membership permission checks for these commits, so in FEED mode a non-admin (and potentially an invited participant) can still publish arbitrary commit types despite the intended admin-only publishing rule. Gate unknown types behind an authorization check (at minimum role-based/member-state validation), and in FEED restrict top-level unknown posts to admin-equivalent permissions.",
+      "revId": "1cad4b553ea1a1d89fa3809b278c093cbd3d8311",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "668fbc0c_403c4f62",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-03T15:51:32Z",
+      "side": 1,
+      "message": "[warning] Line 200: 🟡 FEED mode does not grant `Permission::Leave` to admin/member, while `JOIN`/`LEAVE` were made explicit and `isAuthorizedCommit` now enforces `Leave` for `CommitAction::REMOVE`. This makes FEED participants unable to leave via a member-remove commit. If FEED is expected to behave like other swarm modes for self-removal, add `Leave` for ADMIN/MEMBER (and corresponding tests).",
+      "revId": "1cad4b553ea1a1d89fa3809b278c093cbd3d8311",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
