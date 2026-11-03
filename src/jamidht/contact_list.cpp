@@ -452,12 +452,23 @@ ContactList::acceptConversation(const std::string& convId, const std::string& de
 bool
 ContactList::discardTrustRequest(const dht::InfoHash& from)
 {
+    return discardTrustRequest(from, {}, TimePoint::max());
+}
+
+bool
+ContactList::discardTrustRequest(const dht::InfoHash& from, const std::string& conversationId, TimePoint declined)
+{
     std::lock_guard lk(mutex_);
-    if (trustRequests_.erase(from) > 0) {
-        saveTrustRequests();
-        return true;
-    }
-    return false;
+    auto request = trustRequests_.find(from);
+    if (request == trustRequests_.end()
+        || (!conversationId.empty() && request->second.conversationId != conversationId))
+        return false;
+    const auto invited = request->second.invited != TimePoint {} ? request->second.invited : request->second.received;
+    if (invited > declined)
+        return false;
+    trustRequests_.erase(request);
+    saveTrustRequests();
+    return true;
 }
 
 void

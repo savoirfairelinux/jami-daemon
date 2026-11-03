@@ -3185,7 +3185,13 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         }
 
         // New request
-        if (!pimpl_->addConversationRequest(convId, req))
+        const auto requestChanged = pimpl_->addConversationRequest(convId, req);
+        auto currentRequest = pimpl_->conversationsRequests_.find(convId);
+        if (currentRequest != pimpl_->conversationsRequests_.end() && currentRequest->second.declined != TimePoint {})
+            pimpl_->accountManager_->discardTrustRequest(currentRequest->second.from,
+                                                         convId,
+                                                         currentRequest->second.declined);
+        if (!requestChanged)
             continue;
         // A request was added or transitioned to declined: the request list
         // changed and must be re-propagated to our other devices.
