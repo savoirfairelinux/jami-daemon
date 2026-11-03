@@ -51,6 +51,24 @@
       "message": "[warning] Line 1787: 🟡 The FEED tests currently validate permission-name lists only. They should also verify runtime behavior (member post rejected, member reply accepted, member cannot edit/delete admin post/file) to catch authorization regressions beyond static permission mapping.",
       "revId": "a85d173f236114340afbc4b4649610ab5191b84d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f4c4f9a_f1ee2c09",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1787,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-11-03T16:01:17Z",
+      "side": 1,
+      "message": "Done. Added testFeedMemberActions covering admin publishing, member text/file replies and own-reply edits/deletions, plus rejected member posts and edits/deletions of admin content through both local commit creation and incoming commit validation. The test compiles; runtime execution is blocked locally by dependency linker errors.",
+      "parentUuid": "893ee4b7_01c041fc",
+      "revId": "a85d173f236114340afbc4b4649610ab5191b84d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
