@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fef0112b_7e01c13c",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-11-03T15:12:33Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "0ec80071_e95b4cea",
+      "revId": "a85d173f236114340afbc4b4649610ab5191b84d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "893ee4b7_01c041fc",
