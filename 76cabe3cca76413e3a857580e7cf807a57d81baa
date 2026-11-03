@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0958169f_da2b4b46",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-11-03T15:48:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3efa9131_e9fb2d7d",
+      "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c765491e_740ffcb2",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-11-03T14:53:56Z",
       "side": 1,
       "message": "[warning] Line 1829: 🟡 The test currently asserts `permissionNames(..., MemberRole::INVITED).empty()`, which encodes the current omission bug instead of the intended behavior (`INVITED` should expose `join`). Update this assertion to check for `\"join\"` and absence of disallowed permissions so coverage protects the client-facing contract.",
+      "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4d35993_e62b8cdd",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1829,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-11-03T15:48:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c765491e_740ffcb2",
       "revId": "76cabe3cca76413e3a857580e7cf807a57d81baa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
