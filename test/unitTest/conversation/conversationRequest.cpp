@@ -78,6 +78,7 @@ public:
     void testGetRequests();
     void testDeclineRequest();
     void testSyncDeclinedRequestTwiceDoesNotRetrigger();
+    void testSyncDeclinedRequestPreservesNewerTrustRequest();
     void testAddContact();
     void testIncomingTrustRequestArgumentOrder();
     void testDeclineConversationRequestRemoveTrustRequest();
@@ -123,6 +124,7 @@ private:
     CPPUNIT_TEST(testGetRequests);
     CPPUNIT_TEST(testDeclineRequest);
     CPPUNIT_TEST(testSyncDeclinedRequestTwiceDoesNotRetrigger);
+    CPPUNIT_TEST(testSyncDeclinedRequestPreservesNewerTrustRequest);
     CPPUNIT_TEST(testAddContact);
     CPPUNIT_TEST(testIncomingTrustRequestArgumentOrder);
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
@@ -506,12 +508,70 @@ ConversationRequestTest::testSyncDeclinedRequestTwiceDoesNotRetrigger()
     msg.cr[req.conversationId] = req;
 
     auto fakeDeviceId = "7e7c131d49795db3c9e8b864029826bc8e5fbf9d36082093999bdc5741e2898e"s;
+    auto syncTrustRequest = [&] {
+        DeviceSync sync;
+        sync.date = nowMs().time_since_epoch().count();
+        sync.trust_requests.emplace(dht::InfoHash(aliceUri),
+                                    TrustRequest {{}, req.conversationId, req.received, {}, req.received});
+        bobAccount->accountManager()->onSyncData(std::move(sync), DeviceId(fakeDeviceId));
+        CPPUNIT_ASSERT_EQUAL(size_t {1}, bobAccount->getTrustRequests().size());
+    };
+    syncTrustRequest();
     bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
     CPPUNIT_ASSERT_EQUAL(1, declinedCount);
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().empty());
 
     // Re-receiving the exact same declined request must not re-detect a change
+    syncTrustRequest();
     bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
     CPPUNIT_ASSERT_EQUAL(1, declinedCount);
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().empty());
+
+    auto file = fileutils::loadFile("incomingTrustRequests", bobAccount->getPath());
+    std::map<dht::InfoHash, TrustRequest> persistedRequests;
+    msgpack::unpack(reinterpret_cast<const char*>(file.data()), file.size()).get().convert(persistedRequests);
+    CPPUNIT_ASSERT(persistedRequests.empty());
+}
+
+void
+ConversationRequestTest::testSyncDeclinedRequestPreservesNewerTrustRequest()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto accountManager = bobAccount->accountManager();
+    auto fakeDeviceId = "7e7c131d49795db3c9e8b864029826bc8e5fbf9d36082093999bdc5741e2898e"s;
+
+    ConversationRequest declined;
+    declined.conversationId = "0000000000000000000000000000000000000000";
+    declined.from = aliceUri;
+    declined.received = nowMs();
+    declined.declined = declined.received;
+    SyncMsg msg;
+    msg.cr[declined.conversationId] = declined;
+    bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
+
+    for (const auto& request : {
+             TrustRequest {{}, "1111111111111111111111111111111111111111", declined.received, {}, declined.received},
+             TrustRequest {{}, declined.conversationId, declined.received + 1s, {}, declined.received + 1s},
+             TrustRequest {{}, declined.conversationId, declined.received + 1s, {}, {}},
+         }) {
+        DeviceSync sync;
+        sync.date = nowMs().time_since_epoch().count();
+        sync.trust_requests.emplace(dht::InfoHash(aliceUri), request);
+        accountManager->onSyncData(std::move(sync), DeviceId(fakeDeviceId));
+        CPPUNIT_ASSERT_EQUAL(size_t {1}, bobAccount->getTrustRequests().size());
+        CPPUNIT_ASSERT(!accountManager->discardTrustRequest(aliceUri, declined.conversationId, declined.declined));
+
+        bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
+        auto requests = bobAccount->getTrustRequests();
+        CPPUNIT_ASSERT_EQUAL(size_t {1}, requests.size());
+        CPPUNIT_ASSERT_EQUAL(request.conversationId, requests.front().at(libjami::Account::TrustRequest::CONVERSATIONID));
+        CPPUNIT_ASSERT(accountManager->discardTrustRequest(aliceUri));
+    }
 }
 
 void

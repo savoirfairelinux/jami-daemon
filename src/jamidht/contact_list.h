@@ -123,6 +123,7 @@ public:
                             const std::string& deviceId = ""); // ToDO this is a bit dirty imho
     bool acceptTrustRequest(const dht::InfoHash& from);
     bool discardTrustRequest(const dht::InfoHash& from);
+    bool discardTrustRequest(const dht::InfoHash& from, const std::string& conversationId, TimePoint declined);
 
     /* Devices */
     std::map<dht::PkId, KnownDevice> getKnownDevices() const;
