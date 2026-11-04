@@ -1,6 +1,6 @@
 {
   "name": "opendht",
-  "version": "4.4.1",
+  "version": "4.4.99",
   "description": "OpenDHT: A lightweight C++17 Distributed Hash Table library. Jami overlay.",
   "homepage": "https://opendht.net",
   "license": "MIT",

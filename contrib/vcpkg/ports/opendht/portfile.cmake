@@ -3,8 +3,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO savoirfairelinux/opendht
-    REF v4.4.1
-    SHA512 b2934affb2547d38b557f7f7e74ebdd33fbca0d0537c12e050350ecd0c8ae067ad82e8299c1adb9627db77b3d6e4124d983deb14166505084bd5c477b81c5f8d
+    REF v4.4.99
+    SHA512 5224b3c48979b42a93e1ad44d57263729ae202a9f710dfb6ede1c981305bb98078e6b576f685f69f81583261dd35f32cc071814fbed18c8498c642fe83edd4d9
     HEAD_REF master
 )
 
