@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2a4f8e2_db94a5c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:38:13Z",
+      "side": 1,
+      "message": "Reviewed #2142\u0027s SIP/TLS enablement and repeated-startup repro. It reaches the same SIP TLS configuration path, so this is a possible match, but the report alone does not establish that the cipher-list limit is the cause. The linked note returns 401 here. I have not reproduced #2142 or run comparisons with other apps, Android, or iOS. This patch stays limited to separator accounting and a regression on the production trimming operation. #2142 remains open; those broader runtime checks are outside this patch and are not claimed as completed.",
+      "parentUuid": "4f99dde8_ad4da4e6",
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "db84734e_1f5af975",
@@ -59,6 +77,48 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "139681f5_ccfd71e9",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:38:13Z",
+      "side": 1,
+      "message": "Removed the separate helper and its declaration. The fix is now separator accounting in trimCiphers\u0027 original loop, with no intermediate name vector.",
+      "parentUuid": "14cb88ca_44e5c8b1",
+      "range": {
+        "startLine": 92,
+        "startChar": 0,
+        "endLine": 92,
+        "endChar": 40
+      },
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b320130_8386718d",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:38:13Z",
+      "side": 1,
+      "message": "PS4 removes the overlong helper rather than renaming it. The existing trimCiphers operation handles names and separators directly.",
+      "parentUuid": "db84734e_1f5af975",
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bc3bca0c_2eefd3cd",
@@ -72,6 +132,30 @@
       "writtenOn": "2026-11-03T22:55:49Z",
       "side": 1,
       "message": "simplify logic. could be static for testing.",
+      "range": {
+        "startLine": 1016,
+        "startChar": 4,
+        "endLine": 1024,
+        "endChar": 106
+      },
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "243b6e4c_faddcae7",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1024,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:38:13Z",
+      "side": 1,
+      "message": "Made SIPAccount::trimCiphers(CipherArray\u0026) static and use it directly from SIP TLS setup and the regression. One loop, one resize, no name-vector conversion or configurable-length helper. The regression uses a real supported cipher and checks the serialized list at the 1000-character boundary; it fails without separator accounting and passes with it.",
+      "parentUuid": "bc3bca0c_2eefd3cd",
       "range": {
         "startLine": 1016,
         "startChar": 4,
