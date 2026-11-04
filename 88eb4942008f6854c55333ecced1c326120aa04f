@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4f99dde8_ad4da4e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2026-11-04T13:50:04Z",
+      "side": 1,
+      "message": "Could you also investigate and address this issue with SIP accounts?\n\nAdditionally, could you test whether the same issue occurs with other apps across different operating systems, including mobile platforms such as Android and iOS?\n\nReference: https://git.jami.net/savoirfairelinux/jami-client-qt/-/work_items/2142#note_57641\n\nIt would also be worth checking whether this issue is related to the existing issue mentioned above.",
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "db84734e_1f5af975",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 3
