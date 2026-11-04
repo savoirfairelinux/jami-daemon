@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe1b912b_051a3a74",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:55:00Z",
+      "side": 1,
+      "message": "I\u0027ll investigate https://git.jami.net/savoirfairelinux/jami-client-qt/-/work_items/2142#note_57641 further, separately.",
+      "parentUuid": "d2a4f8e2_db94a5c1",
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "db84734e_1f5af975",
