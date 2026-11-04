@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c4b69834_f9cd1d8f",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T22:02:42Z",
+      "side": 1,
+      "message": "PS6 restores sipaccount.h byte-for-byte to the parent revision. No friend declaration, test namespace, public static method, or test-only signature remains. The regression uses the existing SIP suite and the normal account TLS configuration API.",
+      "parentUuid": "08a205c3_fa0facae",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ca59ea7c_b76d7ae3",
@@ -66,6 +84,24 @@
       "writtenOn": "2026-11-04T21:40:22Z",
       "side": 1,
       "message": "PS5 checks successful enumeration, count \u003e 0, a non-null name, and a non-empty name before dividing. The regression still uses a real cipher from the active backend and exercises the production trimming loop.",
+      "parentUuid": "ca59ea7c_b76d7ae3",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35404e69_f63e2e9e",
+        "filename": "test/unitTest/sip_account/sipaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T22:02:42Z",
+      "side": 1,
+      "message": "PS6 removes this standalone test file and CMake target. The existing SIP suite now uses getSupportedTlsCiphers, checks that the returned list and selected name are non-empty before division, and exercises setAccountDetails/getTlsSetting instead of a private helper. Native red/green verified against the actual configuration path.",
       "parentUuid": "ca59ea7c_b76d7ae3",
       "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
