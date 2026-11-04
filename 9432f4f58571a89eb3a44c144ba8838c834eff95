@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea1960fe_07f9e9a8",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:40:22Z",
+      "side": 1,
+      "message": "PS5 keeps trimCiphers private and static. The regression fixture is a friend, following the existing SDP/SIPCall test-access pattern; no public TLS utility or configurable-limit helper is introduced.",
+      "parentUuid": "08a205c3_fa0facae",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ca59ea7c_b76d7ae3",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-11-04T21:38:08Z",
       "side": 1,
       "message": "[warning] Line 49: 🟡 The test assumes `pj_ssl_cipher_get_availables` returns at least one cipher with a non-empty name, then divides by `cipherName.size()`. Add explicit guards (`count \u003e 0` and `!cipherName.empty()`) before `1000 / cipherName.size()` to avoid environment-dependent UB/crash in edge configurations.",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ef708af_76ddc522",
+        "filename": "test/unitTest/sip_account/sipaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T21:40:22Z",
+      "side": 1,
+      "message": "PS5 checks successful enumeration, count \u003e 0, a non-null name, and a non-empty name before dividing. The regression still uses a real cipher from the active backend and exercises the production trimming loop.",
+      "parentUuid": "ca59ea7c_b76d7ae3",
       "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
