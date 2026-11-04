@@ -226,7 +226,7 @@ void
 ArchiveAccountManager::createAccount(AuthContext& ctx)
 {
     AccountArchive a;
-    auto ca = dht::crypto::generateIdentity("Jami CA");
+    auto ca = dht::crypto::generateEcIdentity("Jami CA");
     if (!ca.first || !ca.second) {
         throw std::runtime_error("Unable to generate CA for this account.");
     }

@@ -133,6 +133,15 @@ void
 AccountArchiveTest::testExportImportNoPassword()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const auto& deviceCertificate = aliceAccount->identity().second;
+    const auto& accountCertificate = deviceCertificate->issuer;
+    CPPUNIT_ASSERT(accountCertificate && accountCertificate->issuer);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(GNUTLS_PK_RSA),
+                         gnutls_x509_crt_get_pk_algorithm(deviceCertificate->cert, nullptr));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(GNUTLS_PK_RSA),
+                         gnutls_x509_crt_get_pk_algorithm(accountCertificate->cert, nullptr));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(GNUTLS_PK_EC),
+                         gnutls_x509_crt_get_pk_algorithm(accountCertificate->issuer->cert, nullptr));
 
     CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
 
@@ -143,6 +152,9 @@ AccountArchiveTest::testExportImportNoPassword()
     wait_for_announcement_of(accountId);
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(accountId);
     CPPUNIT_ASSERT(alice2Account->getUsername() == aliceAccount->getUsername());
+    const auto& importedAccountCertificate = alice2Account->identity().second->issuer;
+    CPPUNIT_ASSERT(importedAccountCertificate && importedAccountCertificate->issuer);
+    CPPUNIT_ASSERT(importedAccountCertificate->issuer->getId() == accountCertificate->issuer->getId());
     std::remove("test.gz");
     wait_for_removal_of(accountId);
 }
