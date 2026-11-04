@@ -182,6 +182,30 @@
       },
       "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "95e11d67_2aab8b6e",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1024,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-04T22:02:42Z",
+      "side": 1,
+      "message": "PS6 goes smaller: no header change or test-access seam. The existing SIP suite applies TLS settings through setAccountDetails and inspects getTlsSetting, so trimCiphers stays the original private member; a static refactor is no longer needed for testing. The same case fails with a 1034-character list without separator accounting and passes with 988 characters when separators are counted.",
+      "parentUuid": "bc3bca0c_2eefd3cd",
+      "range": {
+        "startLine": 1016,
+        "startChar": 4,
+        "endLine": 1024,
+        "endChar": 106
+      },
+      "revId": "88eb4942008f6854c55333ecced1c326120aa04f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
