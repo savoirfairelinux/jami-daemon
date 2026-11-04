@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08a205c3_fa0facae",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-04T21:38:08Z",
+      "side": 1,
+      "message": "[warning] Line 238: 🟡 `trimCiphers` was moved to the public API, but it is still an internal TLS-setup detail. This unnecessarily expands `SIPAccount`’s external surface/ABI and couples callers to a PJSIP-specific 1000-char constraint. Please keep it non-public (e.g., private static/member or internal helper) and keep unit coverage via an internal test seam rather than exposing it as public API.",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca59ea7c_b76d7ae3",
+        "filename": "test/unitTest/sip_account/sipaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-04T21:38:08Z",
+      "side": 1,
+      "message": "[warning] Line 49: 🟡 The test assumes `pj_ssl_cipher_get_availables` returns at least one cipher with a non-empty name, then divides by `cipherName.size()`. Add explicit guards (`count \u003e 0` and `!cipherName.empty()`) before `1000 / cipherName.size()` to avoid environment-dependent UB/crash in edge configurations.",
+      "revId": "9432f4f58571a89eb3a44c144ba8838c834eff95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
