@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48baa7ba_e45850a3",
+        "filename": "src/media/audio/audio-processing/drift_compensator.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T18:42:57Z",
+      "side": 1,
+      "message": "[error] Line 38: 🔴 `recorded()` and `played()` mutate shared state (`origin_`, both `Stream`s, `adjustment_`, `locked_`, `drift_`, `correction_`, etc.) with no synchronization. In typical audio stacks, capture and playback callbacks may run on different threads, so concurrent calls create data races and undefined behavior (including corrupted regression state and unstable correction). Fix by enforcing single-thread affinity explicitly (and asserting it), or by protecting all mutable estimator state with a mutex and making read accessors thread-safe (e.g., guarded read or atomics for published outputs).",
+      "revId": "7f0b43bf5fcc2cbeb6e3c3cc4c61232a2662b048",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
