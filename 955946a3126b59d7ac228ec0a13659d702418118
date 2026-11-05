@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b05d34ed_d9aa3f9f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T16:52:28Z",
+      "side": 1,
+      "message": "[warning] Line 250: 🟡 `Repository::~Repository()` can indirectly throw via `recycle()` (`std::vector::emplace_back` may allocate). Throwing from a destructor can terminate the process during stack unwinding. Make the return-to-pool path non-throwing (e.g., pre-reserve fixed capacity for idle repos or use a fixed-size container), and keep the destructor `noexcept` in practice.",
+      "revId": "955946a3126b59d7ac228ec0a13659d702418118",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb3a21a6_9391b3f1",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4557,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T16:52:28Z",
+      "side": 1,
+      "message": "[error] Line 4557: 🔴 `erase()` is not synchronized with ongoing/new operations: it only closes currently idle repos, then immediately deletes the directory. A concurrent operation can still hold (or newly open) a repository and race with `removeAll`, leading to failed deletion on some platforms or use-after-delete behavior in git operations. Guard `erase()` with the same conversation operation lock/lifecycle gate used by mutating operations (or mark the repo as closing and block `repository()`/new ops before deletion), then wait until all borrowed repos are returned before removing files.",
+      "revId": "955946a3126b59d7ac228ec0a13659d702418118",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
