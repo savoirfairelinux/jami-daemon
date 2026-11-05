@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8622d72_33208e5a",
+        "filename": "src/media/audio/audio-processing/audio_processor.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T18:44:17Z",
+      "side": 1,
+      "message": "[error] Line 64: 🔴 **Data race on drift state:** `putRecorded()` and `putPlayback()` can run on different audio threads, but both mutate/read shared state (`driftCompensator_` and `playbackInputSamples_`) without synchronization. This is undefined behavior and can corrupt compensation decisions under load. Protect all accesses with a dedicated mutex (or make the compensator explicitly thread-safe and use atomics for counters).",
+      "revId": "480bb99cf16676312599bca7fbdcad302d69fdb8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
