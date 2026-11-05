@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5885556_33c5d0f8",
+        "filename": "src/media/audio/resampler.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T18:40:23Z",
+      "side": 1,
+      "message": "[error] Line 167: 🔴 `swr_set_compensation()` return value is ignored during reinit, so compensation can fail silently while the new context is still accepted. That leaves drift correction disabled without any signal to callers. Capture the return code and fail reinit (or propagate an error) when applying cached compensation fails.",
+      "revId": "cd17130fbb5f88f3d4cef8534224031b771a96fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9da7722_6f2e9a9b",
+        "filename": "src/media/audio/resampler.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 291,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T18:40:23Z",
+      "side": 1,
+      "message": "[warning] Line 291: 🟡 `setCompensation()` enables `compensate_` unconditionally before validating inputs. With `distance \u003c\u003d 0`, the object remains in forced-resample mode (`SWR_FLAG_RESAMPLE`) but compensation is invalid/no-op, adding permanent overhead and inconsistent state. Validate `distance \u003e 0` (and reasonable `sampleDelta` bounds) before flipping state, and add an explicit disable/reset path.",
+      "revId": "cd17130fbb5f88f3d4cef8534224031b771a96fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a6b8fcc_2117f916",
+        "filename": "test/unitTest/media/audio/test_resampler.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-05T18:40:23Z",
+      "side": 1,
+      "message": "[warning] Line 142: 🟡 The hard-coded acceptance window (`44..50` and `-50..-44`) is tightly coupled to specific swresample rounding behavior and is likely platform/version brittle. Compute expected drift from ppm math and assert with a tolerance based on frame count (or relative error) to keep the test stable across toolchains.",
+      "revId": "cd17130fbb5f88f3d4cef8534224031b771a96fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
