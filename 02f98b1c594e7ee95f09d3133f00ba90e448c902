@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a74a1f7_87a24793",
+        "filename": "contrib/vcpkg/ports/dhtnet/vcpkg.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-06T16:08:21Z",
+      "side": 1,
+      "message": "[warning] Line 3: 🟡 `version-date` was left at `2026-10-09` while the upstream source ref changed (`DHTNET_REF`), which is an upstream version update rather than only a port tweak. Update `version-date` to the new upstream date and reset/remove `port-version` (instead of incrementing it) to keep vcpkg version semantics accurate and avoid misleading downstream version resolution.",
+      "revId": "02f98b1c594e7ee95f09d3133f00ba90e448c902",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
