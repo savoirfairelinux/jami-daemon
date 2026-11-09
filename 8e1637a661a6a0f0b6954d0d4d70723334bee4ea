@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c0befe4_f3c41faf",
+        "filename": "bin/nodejs/Jenkinsfile.publish",
+        "patchSetId": 1
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T13:20:37Z",
+      "side": 1,
+      "message": "[warning] Line 186: 🟡 The preflight check validates only platform/arch, but this change raises the deployment target to macOS 14.4. Add an explicit SDK/OS-version guard (for example, checking `xcrun --show-sdk-version` or the host macOS version) before invoking CMake so CI fails fast with a clear error instead of a later toolchain/build failure.",
+      "revId": "8e1637a661a6a0f0b6954d0d4d70723334bee4ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
