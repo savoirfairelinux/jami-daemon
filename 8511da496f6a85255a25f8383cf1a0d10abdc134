@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01c720ce_d58d062a",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 1196,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T15:49:55Z",
+      "side": 1,
+      "message": "[warning] Line 1196: 🟡 **Transport-CC feedback builder drops receive history on truncation.** `createRtcpTransportCcFeedback()` moves and clears all `receivedPackets` up-front, but caps the report to `MAX_TRANSPORT_CC_FEEDBACK_PACKETS` and `break`s when limit/gap is hit. Remaining packets are discarded instead of being sent in the next feedback packet, which can create artificial loss and destabilize bitrate control under bursty/high-rate traffic. **Fix:** keep unsent tail packets in state (or process in chunks) and only erase packets actually serialized into this RTCP feedback.",
+      "revId": "8511da496f6a85255a25f8383cf1a0d10abdc134",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bbd22d36_e006c817",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 845,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T15:49:55Z",
+      "side": 1,
+      "message": "[error] Line 845: 🔴 **Transport-CC URI mismatch in SDP answers can break negotiation.** In answer mode, `addMediaDescription()` resolves the remote extmap ID from `-01/-02/-03` URIs, but always advertises `TRANSPORT_CC_RTP_EXTENSION_URI` (hardcoded `-01`). If the offer used `-02`/`-03`, a strict peer may reject or ignore transport-cc because the answer does not echo the negotiated URI. **Fix:** when `sdpDirection_ \u003d\u003d ANSWER`, persist which URI variant was found and emit that exact URI in `addExtmapAttribute()` (both bundled and non-bundled cases).",
+      "revId": "8511da496f6a85255a25f8383cf1a0d10abdc134",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
