@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89af323a_d2cdee09",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:27:27Z",
+      "side": 1,
+      "message": "[error] Line 225: 🔴 DTLS negotiation mismatch is not rejected. When only one direction has `KeyExchangeProtocol::DTLS`, this path skips DTLS-SRTP setup and can continue without SRTP keys, creating a plaintext/downgrade risk. Add a hard check before transport setup (same in video): fail if `send_.key_exchange !\u003d receive_.key_exchange`, and fail unless both are DTLS or both are SDES with valid crypto.",
+      "revId": "cf02877a6125dc1c81ed33b8fe5b9f0f323cc360",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1401eeeb_a440d2cf",
+        "filename": "src/media/dtls_srtp.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:27:27Z",
+      "side": 1,
+      "message": "[warning] Line 135: 🟡 `parseDigest` only accepts SHA-1/SHA-256. Valid DTLS fingerprint algorithms like SHA-384/SHA-512 will be rejected, reducing interoperability. Extend supported mappings (or resolve digest IDs generically) so compliant peers are accepted.",
+      "revId": "cf02877a6125dc1c81ed33b8fe5b9f0f323cc360",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb94b3f5_cd721fb7",
+        "filename": "src/media/dtls_srtp.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:27:27Z",
+      "side": 1,
+      "message": "[error] Line 191: 🔴 `verifyRemoteFingerprint` can throw (e.g., certificate parsing/fingerprint formatting failures) from the certificate-verification callback path. A throw here can abort the process during a remote-triggerable handshake failure. Wrap verification internals in `try/catch` and return `GNUTLS_E_CERTIFICATE_ERROR` on all failures.",
+      "revId": "cf02877a6125dc1c81ed33b8fe5b9f0f323cc360",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ba7b63b_5217566b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:27:27Z",
+      "side": 1,
+      "message": "[error] Line 440: 🔴 Same downgrade gap as audio: if only one side advertises DTLS, code falls through and may run without SRTP material. Enforce symmetric key-exchange selection and reject mixed/partial DTLS negotiation instead of falling back.",
+      "revId": "cf02877a6125dc1c81ed33b8fe5b9f0f323cc360",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
