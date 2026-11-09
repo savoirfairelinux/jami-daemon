@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6df3e25_47c838f8",
+        "filename": "test/unitTest/sip_account/sip_srtp.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 684,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:30:16Z",
+      "side": 1,
+      "message": "[error] Line 684: 🔴 The new DTLS tests hard-depend on certificate/key files under `tools/asterisk/keys` via `__FILE__`-derived paths, but they never check that those fixtures exist before using them. When the files are missing in a given CI/layout, `fileutils::loadFile(...)`/account config fails as an exception/error path, which can abort the test run instead of producing a controlled test outcome. Add explicit `std::filesystem::exists` checks for all required fixtures and fail/skip with a clear message (or move these fixtures into test-managed assets copied by the build). This improves cross-platform reliability and likely addresses the observed multi-platform CI failures.",
+      "revId": "3bf69712fd07315832d31271653de1c938e4b258",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
