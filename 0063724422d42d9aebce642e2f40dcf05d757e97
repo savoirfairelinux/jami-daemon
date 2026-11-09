@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63f174c6_aa0542bf",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:34:42Z",
+      "side": 1,
+      "message": "[error] Line 201: 🔴 `dtlsAbort_-\u003estore(false)` happens before taking `mutex_`, so a concurrent second `start()` can clear the abort flag while a previous `start()` is still blocked in `negotiateDtlsSrtp()`. That reintroduces the original 40s stop/hangup stall because `stop()`\u0027s abort signal is lost. Move the reset under `mutex_` (or use a per-start generation token) so only the active handshake owner can clear/observe cancellation state.",
+      "revId": "0063724422d42d9aebce642e2f40dcf05d757e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4172afce_db40f83c",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 415,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:34:42Z",
+      "side": 1,
+      "message": "[error] Line 415: 🔴 Same race as audio: clearing `dtlsAbort_` before locking `mutex_` allows another `start()` call to overwrite a pending `stop()` cancellation for the in-flight handshake. Reset the flag only after acquiring `mutex_` (or replace the shared bool with an operation-scoped cancel handle/versioned token) to avoid lost-cancel behavior.",
+      "revId": "0063724422d42d9aebce642e2f40dcf05d757e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
