@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2eca68c6_93d3f480",
+        "filename": "src/media/transport_cc_controller.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:40:15Z",
+      "side": 1,
+      "message": "[error] Line 532: 🔴 `selectEstimatorState()` can get stuck in `Probing`: `successfulStartupProbes_` stops incrementing once it reaches `startupProbeCount`, but the state check uses `\u003c\u003d`, so it never transitions to `Normal` at the threshold. This keeps `useStartupProbe` true and repeatedly applies startup probe behavior/increase ratio. Make the transition condition strict (`\u003c`) or increment-before-compare so probing exits once the configured probe count is reached.",
+      "revId": "05d2309ff3aba7d88751a0e129621a5d7356cce4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afc88487_3ea3e500",
+        "filename": "test/unitTest/media/test_transport_cc_controller.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:40:15Z",
+      "side": 1,
+      "message": "[warning] Line 18: 🟡 `nextFeedbackPacketCount()` uses a static global counter shared across all test cases, creating order-dependent behavior and making sharded/reordered execution less deterministic. Keep the counter in fixture state (reset in `setUp`) or assign explicit `feedbackPacketCount` values per test/report.",
+      "revId": "05d2309ff3aba7d88751a0e129621a5d7356cce4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
