@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7a5dc64_bbe4d92c",
+        "filename": "test/unitTest/sip/srtp_hybrid.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:31:52Z",
+      "side": 1,
+      "message": "[warning] Line 80: 🟡 `parseSdp` casts away const (`const_cast\u003cchar*\u003e(rawSdp.c_str())`) and passes it to `pjmedia_sdp_parse`, which may mutate the buffer. If the parser writes into that memory, this is undefined behavior because the source is a const string object. Use a mutable copy (e.g., `std::string buffer \u003d rawSdp;` then pass `buffer.data()`) or a dedicated mutable byte buffer before parsing.",
+      "revId": "f033aa62ce91c88901c2dba9e92d1235ea9b5da2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
