@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ac77eb8_7e62755a",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T15:45:59Z",
+      "side": 1,
+      "message": "[error] Line 720: 🔴 Cached bundle DTLS state is returned without validating the caller’s expected fingerprint/hash/setup for that m-line. With BUNDLE, if SDP carries inconsistent DTLS fingerprints across bundled media, the first stream’s handshake is accepted and later streams silently bypass their fingerprint check, which can accept an invalid SDP security binding. Store the first stream’s expected fingerprint parameters in `BundleContext` and, on subsequent `ensureBundleDtlsContext` calls, hard-fail on any mismatch (or disable BUNDLE) before reusing the cached context.",
+      "revId": "0a789b9898b5e9e4865f5c9c050d57545fda9681",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
