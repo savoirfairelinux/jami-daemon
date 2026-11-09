@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8eced52_498dd878",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:05:22Z",
+      "side": 1,
+      "message": "[error] Line 347: 🔴 `applyCrop` reads `crop_`/`cropErrorLogged_` without synchronization, while `setCrop` now writes them under `mtx_` (see `setCrop` in the same file). That mixed synchronization can race when crop updates happen concurrently with frame processing, leading to undefined behavior and intermittent bad crops/drops. Make access consistent by taking a locked snapshot of crop state in `applyCrop` (or guard all reads/writes with the same lock/atomics).",
+      "revId": "5a72b220537bc5a72769885bb87ebc225251e845",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c7a27d6_68d960d5",
+        "filename": "test/unitTest/media/test_media_frame.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:05:22Z",
+      "side": 1,
+      "message": "[warning] Line 119: 🟡 The new test validates the successful scaled-crop path, but it does not cover the new invalid-crop rejection behavior. Add a test where crop exceeds reference bounds (or scales to an empty rect) and assert no frame is delivered, so the intended \"reject invalid region\" contract is protected.",
+      "revId": "5a72b220537bc5a72769885bb87ebc225251e845",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
