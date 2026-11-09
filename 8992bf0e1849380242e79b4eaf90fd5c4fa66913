@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b3e092f_fb67a434",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:26:03Z",
+      "side": 1,
+      "message": "[error] Line 186: 🔴 `generateSdesOfferAttributes()` always tries to emit `AES_256_CM_HMAC_SHA1_80` first, but `generateSdesAttribute()` now throws if the suite is absent from `CryptoSuites`. On builds where AES-256 SDES is not available, call setup will fail instead of falling back to AES-128. Build the offer list dynamically from `CryptoSuites` (prefer AES-256 when present, then AES-128), or skip unsupported suites instead of throwing in the offer-construction path.",
+      "revId": "8992bf0e1849380242e79b4eaf90fd5c4fa66913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69081ed3_7aed69f5",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:26:03Z",
+      "side": 1,
+      "message": "[warning] Line 629: 🟡 The new answer-side loop pairs local and remote media by compacted index (`localSession_-\u003emedia[i]` with `remoteSession_-\u003emedia[i]`). Because local media are appended only when `media.enabled_` is true, index alignment can drift when some remote sections are disabled/rejected, causing crypto negotiation to be applied to the wrong m-line or skipped. Track the original remote m-line index when creating local media, or negotiate SDES at media-creation time using the corresponding remote media object.",
+      "revId": "8992bf0e1849380242e79b4eaf90fd5c4fa66913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7144d346_099534e9",
+        "filename": "test/unitTest/sip_account/sip_srtp.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:26:03Z",
+      "side": 1,
+      "message": "[warning] Line 535: 🟡 The test name says “with fallback” but it validates only the AES-256 happy path. Add a case where the peer answers with AES-128 (or offers only AES-128) to verify the fallback behavior this change introduces and prevent regressions.",
+      "revId": "8992bf0e1849380242e79b4eaf90fd5c4fa66913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
