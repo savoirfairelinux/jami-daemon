@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c1b05cc_3b40eed8",
+        "filename": "src/media/dtls_srtp.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:33:47Z",
+      "side": 1,
+      "message": "[warning] Line 230: 🟡 This change hard-codes the assumption that finite-field DHE is never selected. Please add an explicit runtime guard (or equivalent fail-fast assertion near DTLS priority setup) that DHE ciphersuites cannot be negotiated when `DhParams` is empty; otherwise a future priority/policy change could silently re-enable DHE and cause handshake failures that are hard to diagnose.",
+      "revId": "56be1a06cdc1f930416edc618438e38aff914b89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
