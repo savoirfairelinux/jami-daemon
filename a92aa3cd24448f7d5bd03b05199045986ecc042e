@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51d82d62_cc0b5188",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T15:41:04Z",
+      "side": 1,
+      "message": "[warning] Line 118: 🟡 `getRemoteRtcpAddr()` / `getLocalRtcpPort()` compute `port + 1` without overflow checks. If port is 65535, this wraps to 0 and produces invalid destination/bind behavior. Add checked arithmetic and fail fast (or explicit fallback) when the base RTP port cannot derive a valid RTCP port.",
+      "revId": "a92aa3cd24448f7d5bd03b05199045986ecc042e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06cb93e0_8c487092",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T15:41:04Z",
+      "side": 1,
+      "message": "[error] Line 307: 🔴 RTCP demux relies on `RTP_PT_IS_RTCP(buf[1])` alone, which can misclassify valid RTP packets when marker bit is set (e.g., RTP PT 72–95 produces second-byte values overlapping RTCP types). In rtcp-mux mode this can route RTP into the RTCP path and break media/interoperability. Implement RFC5761-compliant demux (at minimum: RTCP type range 200–211 with robust validation) and/or enforce negotiated RTP payload types to avoid the collision range.",
+      "revId": "a92aa3cd24448f7d5bd03b05199045986ecc042e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
