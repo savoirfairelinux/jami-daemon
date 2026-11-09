@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e017456f_6c78407a",
+        "filename": "test/unitTest/sip/rtcp_mux.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:38:50Z",
+      "side": 1,
+      "message": "[error] Line 60: 🔴 `parseSdp` casts away constness (`const_cast\u003cchar*\u003e(rawSdp.c_str())`) and passes the buffer to `pjmedia_sdp_parse`, which may write into the buffer. Mutating a `const std::string` storage is undefined behavior and can cause platform-specific crashes/flaky tests. Make the input buffer explicitly mutable (e.g., accept a non-const `std::string\u0026` and pass `data()`, or build a mutable buffer with guaranteed lifetime for the parse duration) and avoid `const_cast` entirely.",
+      "revId": "5a9b916a414b4a95b70f45d87e8da015f0fb19a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
