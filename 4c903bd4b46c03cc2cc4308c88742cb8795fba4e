@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3b31924_db89e82f",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 516,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:37:42Z",
+      "side": 1,
+      "message": "[error] Line 516: 🔴 `a\u003drtcp-mux` is currently added whenever local mux is enabled, regardless of offer/answer context. In SDP offer/answer, an answer must only include `rtcp-mux` if it was present in the corresponding offer (RFC 5761 with RFC 3264 semantics). Advertising it unconditionally in answers can negotiate an invalid transport mode with strict peers. Gate `addRTCPMuxAttribute()` so it is sent in offers, and in answers only when the remote media offer contained `rtcp-mux`.",
+      "revId": "4c903bd4b46c03cc2cc4308c88742cb8795fba4e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
