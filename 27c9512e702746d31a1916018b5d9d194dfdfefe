@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "654c8d17_1c102d7d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:33:00Z",
+      "side": 1,
+      "message": "[warning] Line 118: 🟡 If ephemeral identity generation throws, this branch only logs and returns, leaving Jami-call SDP setup without a DTLS fingerprint/certificate path. That can silently disable or downgrade DTLS-SRTP negotiation. Please propagate this as a hard call-setup failure (or explicitly fail SDP generation) instead of continuing after logging.",
+      "revId": "27c9512e702746d31a1916018b5d9d194dfdfefe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
