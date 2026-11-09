@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "427bfa86_d88d9075",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1283,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:29:02Z",
+      "side": 1,
+      "message": "[warning] Line 1283: 🟡 DTLS media is treated as secure solely by transport + non-empty fingerprint, but malformed/incomplete DTLS attributes (notably missing/invalid `a\u003dsetup` and malformed fingerprint value) are still accepted as \u0027secure\u0027. Add strict validation for DTLS attributes before setting `secure_` (validate setup token and fingerprint syntax/hash token), so invalid SDP is rejected early instead of proceeding to handshake-time failure.",
+      "revId": "928ecfb120a77d6d585e0c6355aeb8951c2c6ae3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fec5cb0_f917d8a8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:29:02Z",
+      "side": 1,
+      "message": "[warning] Line 126: 🟡 DTLS remains selected even when identity loading fails; this defers failure to SDP generation/runtime and can produce hard-to-diagnose call setup errors. Make the failure explicit at configuration time (e.g., switch key exchange to NONE/SDES for this call, or fail call establishment immediately with a clear error) when certificate/private key cannot be loaded.",
+      "revId": "928ecfb120a77d6d585e0c6355aeb8951c2c6ae3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
