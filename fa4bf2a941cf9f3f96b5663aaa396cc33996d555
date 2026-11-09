@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dad3c906_4ec409bf",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 3207,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-09T16:09:17Z",
+      "side": 1,
+      "message": "[warning] Line 3207: 🟡 This change adds late-attach logic in SIP RTP startup, but there is no corresponding SIP-level regression test (only conference/manager-level coverage was added). Add a focused test that starts video reception after sinks already exist and asserts the sink is attached exactly once, so future refactors in `startRtpStreams` don’t silently regress this path.",
+      "revId": "fa4bf2a941cf9f3f96b5663aaa396cc33996d555",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
