@@ -87,24 +87,32 @@ MediaPlayer::configureMediaInputs()
     startTime_ = av_gettime();
     lastPausedTime_ = startTime_;
 
+    // Stream indexes are only published once the matching input is fully
+    // configured, so that hasAudio()/hasVideo() never refer to an input that
+    // failed to set up (e.g. unsupported codec).
+    auto audioStream = demuxer_->selectStream(AVMEDIA_TYPE_AUDIO);
     try {
-        audioStream_ = demuxer_->selectStream(AVMEDIA_TYPE_AUDIO);
-        if (hasAudio()) {
-            audioInput_->configureFilePlayback(path_, demuxer_, audioStream_);
+        if (audioStream >= 0) {
+            audioInput_->configureFilePlayback(path_, demuxer_, audioStream);
             audioInput_->updateStartTime(startTime_);
             audioInput_->start();
+            audioStream_ = audioStream;
         }
     } catch (const std::exception& e) {
+        // Drop the callback bound to the failed decoder
+        demuxer_->setStreamCallback(audioStream);
         JAMI_ERROR("MediaPlayer {} open audio input failed: {}", path_, e.what());
     }
 #ifdef ENABLE_VIDEO
+    auto videoStream = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
     try {
-        videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
-        if (hasVideo()) {
-            videoInput_->configureFilePlayback(path_, demuxer_, videoStream_);
+        if (videoStream >= 0) {
+            videoInput_->configureFilePlayback(path_, demuxer_, videoStream);
             videoInput_->updateStartTime(startTime_);
+            videoStream_ = videoStream;
         }
     } catch (const std::exception& e) {
+        demuxer_->setStreamCallback(videoStream);
         videoInput_ = nullptr;
         JAMI_ERROR("MediaPlayer {} open video input failed: {}", path_, e.what());
     }

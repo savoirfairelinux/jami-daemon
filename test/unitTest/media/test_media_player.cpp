@@ -19,6 +19,10 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <thread>
 
 #include "jami.h"
 #include "manager.h"
@@ -43,6 +47,7 @@ private:
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
+    void testUnsupportedVideoCodec();
 
     bool isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t margin);
 
@@ -53,6 +58,7 @@ private:
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
+    CPPUNIT_TEST(testUnsupportedVideoCodec);
     CPPUNIT_TEST_SUITE_END();
 
     std::string playerId1_ {};
@@ -222,6 +228,52 @@ MediaPlayerTest::testSeekWhilePlaying()
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_LOG("End testSeekWhilePlaying");
+}
+
+void
+MediaPlayerTest::testUnsupportedVideoCodec()
+{
+    JAMI_LOG("Start testUnsupportedVideoCodec");
+    // Copy the test file, replacing the video sample entry fourcc with an unknown
+    // one so that the video stream is found but no decoder can be opened for it.
+    const std::string source = "./media/data/test_video_file.mp4";
+    const std::string target = "./media/data/test_unsupported_video_codec.mp4";
+    std::string content;
+    {
+        std::ifstream in(source, std::ios::binary);
+        content.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    }
+    const auto pos = content.find("hev1");
+    CPPUNIT_ASSERT(pos != std::string::npos);
+    content.replace(pos, 4, "zzzz");
+    {
+        std::ofstream out(target, std::ios::binary | std::ios::trunc);
+        out.write(content.data(), static_cast<std::streamsize>(content.size()));
+    }
+
+    playerId1_ = jami::createMediaPlayer(target);
+    mediaPlayer = jami::getMediaPlayer(playerId1_);
+    CPPUNIT_ASSERT(mediaPlayer);
+    cv.wait_for(lk, 5s);
+    CPPUNIT_ASSERT(playerId1_ == playerId2_);
+    // The video input failed to set up, so no video stream must be advertised
+    CPPUNIT_ASSERT(video_stream_ == -1);
+    CPPUNIT_ASSERT(audio_stream_ != -1);
+
+    // Must not dereference the discarded video input
+    mediaPlayer->pause(false);
+    CPPUNIT_ASSERT(!mediaPlayer->isPaused());
+    std::this_thread::sleep_for(200ms);
+    mediaPlayer->pause(true);
+    CPPUNIT_ASSERT(mediaPlayer->isPaused());
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
+
+    jami::closeMediaPlayer(playerId1_);
+    mediaPlayer.reset();
+    playerId1_ = {};
+    std::error_code ec;
+    std::filesystem::remove(target, ec);
+    JAMI_LOG("End testUnsupportedVideoCodec");
 }
 
 } // namespace test
