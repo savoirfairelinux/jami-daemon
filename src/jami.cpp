@@ -34,6 +34,17 @@ static InitFlag initFlags = {};
 bool
 init(enum InitFlag flags) noexcept
 {
+#ifdef _WIN32
+    // On the first TLS 1.3 handshake, GnuTLS reads SSLKEYLOGFILE and, if it
+    // is set, opens that file to dump session secrets. With the MSVC GnuTLS
+    // build, crashes (invalid pointer read) are reported from this one-time
+    // keylog initialization (_gnutls_nss_keylog_func -> keylog_once_init).
+    // Jami never needs key logging, and writing session secrets to a file
+    // named by an inherited variable is undesirable, so drop it before any
+    // TLS session is created.
+    _putenv_s("SSLKEYLOGFILE", "");
+#endif
+
     initFlags = flags;
     jami::Logger::setDebugMode(LIBJAMI_FLAG_DEBUG == (flags & LIBJAMI_FLAG_DEBUG));
     jami::Logger::setSysLog(LIBJAMI_FLAG_SYSLOG == (flags & LIBJAMI_FLAG_SYSLOG));

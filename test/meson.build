@@ -86,6 +86,21 @@ test(
     timeout: 1800,
 )
 
+ut_init = executable(
+    'ut_init',
+    sources: files('unitTest/init/init.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'init',
+    ut_init,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_srtp = executable(
     'ut_srtp',
     sources: files('unitTest/media/test_srtp.cpp'),
