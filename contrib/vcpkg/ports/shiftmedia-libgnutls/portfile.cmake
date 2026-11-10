@@ -13,6 +13,23 @@ vcpkg_from_github(
 
 file(REMOVE_RECURSE "${SOURCE_PATH}/devel/perlasm")
 
+# config.h renames secure_getenv to _gnutls_secure_getenv, but the MSVC build has
+# no gnulib <stdlib.h> declaring it and C4013 is silenced. Callers would then use
+# an implicit int return, truncating the 64-bit pointer returned by getenv (e.g.
+# SSLKEYLOGFILE in keylog_once_init) and crashing when it is dereferenced.
+vcpkg_replace_string(
+    "${SOURCE_PATH}/SMP/gnutls_msvc_fixes.h"
+    [=[#endif /* _GNUTLS_MSVC_FIXES_H */]=]
+    [=[#if defined(_MSC_VER)
+# ifdef __cplusplus
+extern "C"
+# endif
+char *_gnutls_secure_getenv(char const *name);
+#endif
+
+#endif /* _GNUTLS_MSVC_FIXES_H */]=]
+)
+
 vcpkg_download_distfile(
     GNULIB_SNAPSHOT
     URLS "https://gitlab.com/libidn/gnulib-mirror/-/archive/${GNULIB_REF}/gnulib-mirror-${GNULIB_REF}.tar.gz"
