@@ -3444,9 +3444,14 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
         JAMI_ERROR("addContact: invalid contact URI");
         return;
     }
-    auto conversation = convModule()->getOneToOneConversation(uri);
+    auto* cm = convModule();
+    if (!cm) {
+        JAMI_WARNING("[Account {}] addContact: account not loaded", getAccountID());
+        return;
+    }
+    auto conversation = cm->getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
-        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
+        conversation = cm->startConversation(ConversationMode::ONE_TO_ONE, h);
     std::unique_lock lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(h, confirmed, conversation);
@@ -3803,9 +3808,14 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         JAMI_WARNING("Trust request is too big. Remove payload");
     }
 
-    auto conversation = convModule()->getOneToOneConversation(to);
+    auto* cm = convModule();
+    if (!cm) {
+        JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
+        return;
+    }
+    auto conversation = cm->getOneToOneConversation(to);
     if (conversation.empty())
-        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
+        conversation = cm->startConversation(ConversationMode::ONE_TO_ONE, h);
     if (not conversation.empty()) {
         std::lock_guard lock(configurationMutex_);
         if (accountManager_)

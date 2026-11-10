@@ -57,6 +57,7 @@ private:
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
     void testClear();
+    void testAddContactUninitializedAccount();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
     CPPUNIT_TEST(testAddRemoveSIPAccount);
@@ -64,6 +65,7 @@ private:
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
     CPPUNIT_TEST(testClear);
+    CPPUNIT_TEST(testAddContactUninitializedAccount);
     CPPUNIT_TEST_SUITE_END();
 
     const std::string SIP_ID = "SIP_ID";
@@ -242,6 +244,24 @@ Account_factoryTest::testClear()
 
     CPPUNIT_ASSERT(accountFactory.empty());
     CPPUNIT_ASSERT(accountFactory.accountCount() == 0);
+}
+
+void
+Account_factoryTest::testAddContactUninitializedAccount()
+{
+    AccountFactory accountFactory;
+    auto account = std::dynamic_pointer_cast<JamiAccount>(
+        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID + "_uninit"));
+    CPPUNIT_ASSERT(account);
+    // The account is not loaded: no account manager, thus no conversation module
+    CPPUNIT_ASSERT(!account->convModule());
+
+    const std::string uri = "f2c815f5554bcca22d2ce2e1e8a3d4dba8f3e7a3";
+    account->addContact(uri);
+    account->addContact(uri, true);
+    account->sendTrustRequest(uri, {});
+
+    accountFactory.clear();
 }
 
 } // namespace test
