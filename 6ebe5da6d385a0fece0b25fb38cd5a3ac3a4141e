@@ -33,6 +33,40 @@
       "message": "Addressed in this patchset.",
       "revId": "6ebe5da6d385a0fece0b25fb38cd5a3ac3a4141e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8d02725_b287dcc3",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 1078,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-10T18:39:57Z",
+      "side": 1,
+      "message": "[warning] Line 1078: 🟡 The new regression test is added inside `if(NOT MSVC)`, so it does not run in the primary Windows/MSVC CI path where this bug occurs. Add this test to a Windows-capable test target (or an equivalent Windows CI check) so the platform-specific fix is continuously validated.",
+      "revId": "6ebe5da6d385a0fece0b25fb38cd5a3ac3a4141e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c5fb183_e28597c1",
+        "filename": "src/jami.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-10T18:39:57Z",
+      "side": 1,
+      "message": "[error] Line 54: 🔴 The return value of `_putenv_s(\"SSLKEYLOGFILE\", \"\")` is ignored. If this call fails (e.g., CRT/environment mutation failure), the variable can remain set and the original crash path is still possible. Capture and check the return code, then emit an error-level log (and consider failing init or applying a hard fallback) so the mitigation is guaranteed or explicitly surfaced.",
+      "revId": "6ebe5da6d385a0fece0b25fb38cd5a3ac3a4141e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
