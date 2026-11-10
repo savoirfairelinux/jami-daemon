@@ -38,8 +38,6 @@ static constexpr size_t MAX_MOBILE_LEASE_IDENTIFIER_SIZE = 128;
 static constexpr size_t MAX_MOBILE_NODE_INFOS = 128;
 static constexpr std::chrono::days MAX_MOBILE_LEASE_DURATION {30};
 static constexpr std::chrono::days MOBILE_LEASE_RENEWAL_THRESHOLD {14};
-// 2026-10-01T00:00:00Z. A fixed cutoff cannot be extended by restart or gossip.
-static constexpr int64_t LEGACY_MOBILE_NODE_SUNSET {1'790'812'800};
 
 // Certificates are not gossiped: leases travel alone and the certificate needed
 // to verify one is resolved from the local store, from the peer that gossiped

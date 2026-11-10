@@ -83,7 +83,7 @@ public:
      * become visible once verified.
      * @param mobile_nodes
      */
-    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes, bool requireLease = false);
+    void setMobileNodes(const std::vector<MobileNodeInfo>& mobile_nodes);
 
     /**
      * Add channel to routing table
@@ -266,7 +266,6 @@ private:
     bool addMobileNodes(const NodeId& nodeId);
 
     bool setMobileNodeInfo(const MobileNodeInfo& mobile,
-                           bool requireLease = false,
                            const std::shared_ptr<dhtnet::ChannelSocketInterface>& source = {});
 
     /**
@@ -383,7 +382,6 @@ private:
     mutable std::mutex mutex;
     RoutingTable routing_table;
     std::map<NodeId, MobileLease> mobileNodeLeases_;
-    std::map<NodeId, int64_t> legacyMobileNodeExpiries_;
 
     /** Lease accepted by precheckLease() but not yet verified: certificate unknown. */
     struct PendingLease

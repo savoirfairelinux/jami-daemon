@@ -200,7 +200,7 @@ private:
     void testNotifyWithoutConnectedNodes();
     void testMobileProtocolCompatibility();
     void testBlockedResponseWriteDoesNotBlockMaintenance();
-    void testLegacyMobileAnnouncementLifecycle();
+    void testUnsignedMobileAnnouncementsAreIgnored();
     void testMobileLeaseCanonicalPayload();
     void testSignedMobileLeaseValidation();
     void testLeaseCertificateResolutionFromPeer();
@@ -230,7 +230,7 @@ private:
     CPPUNIT_TEST(testNotifyWithoutConnectedNodes);
     CPPUNIT_TEST(testMobileProtocolCompatibility);
     CPPUNIT_TEST(testBlockedResponseWriteDoesNotBlockMaintenance);
-    CPPUNIT_TEST(testLegacyMobileAnnouncementLifecycle);
+    CPPUNIT_TEST(testUnsignedMobileAnnouncementsAreIgnored);
     CPPUNIT_TEST(testMobileLeaseCanonicalPayload);
     CPPUNIT_TEST(testSignedMobileLeaseValidation);
     CPPUNIT_TEST(testLeaseCertificateResolutionFromPeer);
@@ -507,39 +507,11 @@ MobileWakeUpTest::testMobileProtocolCompatibility()
 
     auto scopedManager
         = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; }, "conversation");
-    scopedManager->setMobileNodes(decodedVersionTwo.mobile_node_infos, true);
+    scopedManager->setMobileNodes(decodedVersionTwo.mobile_node_infos);
+    CPPUNIT_ASSERT(scopedManager->getKnownMobileNodes().empty());
+    scopedManager->setMobileNodes(decodedLegacy.mobile_nodes);
     CPPUNIT_ASSERT(scopedManager->getKnownMobileNodes().empty());
     scopedManager->shutdown();
-}
-
-void
-MobileWakeUpTest::testLegacyMobileAnnouncementLifecycle()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-
-    auto desktop = std::make_shared<SwarmManager>(
-        nodeTestIds1.at(0), false, rd, [](auto) { return false; }, "legacy-conversation");
-    auto inbound = makeChannel(nodeTestIds1.at(2));
-    auto remote = makeChannel(nodeTestIds1.at(0));
-    dhtnet::ChannelSocketTest::link(inbound, remote);
-    desktop->addChannel(inbound);
-
-    Message legacyMessage;
-    legacyMessage.v = 1;
-    legacyMessage.is_mobile = true;
-    msgpack::sbuffer buffer;
-    msgpack::pack(buffer, legacyMessage);
-    std::error_code ec;
-    remote->write(reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size(), ec);
-    CPPUNIT_ASSERT(!ec);
-    CPPUNIT_ASSERT(waitFor([&] { return toSet(desktop->getKnownMobileNodes()).contains(inbound->deviceId()); },
-                           CONVERGENCE_TIMEOUT));
-
-    inbound->shutdown();
-    CPPUNIT_ASSERT(waitFor([&] { return toSet(desktop->getMobileNodesToNotify()).contains(inbound->deviceId()); },
-                           CONVERGENCE_TIMEOUT));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), desktop->getMobileNodeInfosToNotify().size());
-    desktop->shutdown();
 }
 
 void
@@ -773,6 +745,49 @@ hasVerifiedLease(const std::shared_ptr<SwarmManager>& manager, const NodeId& id)
 }
 
 } // namespace
+
+void
+MobileWakeUpTest::testUnsignedMobileAnnouncementsAreIgnored()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    for (const auto protocolVersion : {1, 2, swarm_protocol::version}) {
+        auto desktop = std::make_shared<SwarmManager>(
+            nodeTestIds1.at(0), false, rd, [](auto) { return false; }, TEST_CONVERSATION_ID);
+        auto inbound = makeChannel(nodeTestIds1.at(2));
+        auto remote = makeChannel(nodeTestIds1.at(0));
+        MessageSink sink;
+        sink.attach(remote);
+        dhtnet::ChannelSocketTest::link(inbound, remote);
+        desktop->addChannel(inbound);
+
+        Message announcement;
+        announcement.v = protocolVersion;
+        announcement.is_mobile = true;
+        if (protocolVersion == swarm_protocol::version)
+            announcement.self_mobile_info = MobileNodeInfo {inbound->deviceId(), std::nullopt};
+        announcement.response = Response {Query::FOUND,
+                                          {},
+                                          {inbound->deviceId()},
+                                          {{inbound->deviceId(), std::nullopt}}};
+        writeMessage(remote, announcement);
+
+        Message request;
+        request.request = Request {Query::FIND, 1, inbound->deviceId()};
+        writeMessage(remote, request);
+        CPPUNIT_ASSERT(waitFor(
+            [&] { return sink.find([](const Message& message) { return message.response.has_value(); }).has_value(); },
+            CONVERGENCE_TIMEOUT));
+        CPPUNIT_ASSERT(desktop->getKnownMobileNodes().empty());
+        CPPUNIT_ASSERT(desktop->getKnownMobileNodeInfos().empty());
+
+        inbound->shutdown();
+        CPPUNIT_ASSERT(waitFor([&] { return !desktop->isConnected(); }, CONVERGENCE_TIMEOUT));
+        CPPUNIT_ASSERT(desktop->getMobileNodesToNotify().empty());
+        CPPUNIT_ASSERT(desktop->getMobileNodeInfosToNotify().empty());
+        desktop->shutdown();
+    }
+}
 
 void
 MobileWakeUpTest::testLeaseCertificateResolutionFromPeer()
