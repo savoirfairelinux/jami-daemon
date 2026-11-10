@@ -418,5 +418,40 @@ sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sock
     host_port->port = pj_sockaddr_get_port(addr);
 }
 
+CachingPool::CachingPool()
+    : state_(std::make_shared<State>())
+{
+    pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
+}
+
+CachingPool::~CachingPool()
+{
+    destroy();
+}
+
+CachingPool::GuardedPoolPtr
+CachingPool::createPool(const char* name, pj_size_t initial, pj_size_t increment)
+{
+    std::lock_guard lk(state_->mutex);
+    if (state_->destroyed)
+        return GuardedPoolPtr(nullptr, [](pj_pool_t*) {});
+    return GuardedPoolPtr(pj_pool_create(&cp_.factory, name, initial, increment, nullptr),
+                          [state = state_](pj_pool_t* pool) {
+                              std::lock_guard lk(state->mutex);
+                              if (not state->destroyed)
+                                  pj_pool_release(pool);
+                          });
+}
+
+void
+CachingPool::destroy()
+{
+    std::lock_guard lk(state_->mutex);
+    if (state_->destroyed)
+        return;
+    pj_caching_pool_destroy(&cp_);
+    state_->destroyed = true;
+}
+
 } // namespace sip_utils
 } // namespace jami

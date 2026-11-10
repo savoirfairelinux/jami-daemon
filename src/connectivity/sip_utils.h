@@ -24,6 +24,9 @@
 #include <optional>
 #include <vector>
 #include <cstring> // strcmp
+#include <functional>
+#include <memory>
+#include <mutex>
 
 #include <dhtnet/ip_utils.h>
 
@@ -197,6 +200,38 @@ smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initia
         throw std::bad_alloc();
     return PoolPtr(pool);
 }
+
+// Owns a pj_caching_pool and hands out pools that may safely outlive it.
+// pj_caching_pool_destroy() frees every pool still in use, so releasing such
+// a pool afterwards would read freed memory. Pools created with createPool()
+// are only released if the caching pool has not been destroyed yet.
+class CachingPool
+{
+public:
+    using GuardedPoolPtr = std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>>;
+
+    CachingPool();
+    ~CachingPool();
+
+    pj_caching_pool* get() noexcept { return &cp_; }
+
+    GuardedPoolPtr createPool(const char* name, pj_size_t initial, pj_size_t increment);
+
+    // Idempotent: destroys the caching pool and all the pools it still owns.
+    void destroy();
+
+private:
+    NON_COPYABLE(CachingPool);
+
+    struct State
+    {
+        std::mutex mutex;
+        bool destroyed {false};
+    };
+
+    pj_caching_pool cp_;
+    std::shared_ptr<State> state_;
+};
 
 void sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr);
 

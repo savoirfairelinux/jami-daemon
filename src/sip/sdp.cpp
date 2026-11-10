@@ -52,17 +52,14 @@ static std::map<MediaDirection, const char*> DIRECTION_STR {{MediaDirection::SEN
                                                             {MediaDirection::INACTIVE, "inactive"}};
 
 Sdp::Sdp(const std::string& id)
-    : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
+    : memPool_(Manager::instance().sipVoIPLink().createGuardedPool(id.c_str(),
+                                                                   POOL_INITIAL_SIZE,
+                                                                   POOL_INCREMENT_SIZE))
     , publishedIpAddr_()
     , publishedIpAddrType_()
     , telephoneEventPayload_(101) // same as asterisk
     , sessionName_("Call ID " + id)
 {
-    memPool_.reset(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
-                                  id.c_str(),
-                                  POOL_INITIAL_SIZE,
-                                  POOL_INCREMENT_SIZE,
-                                  NULL));
     if (not memPool_)
         throw std::runtime_error("pj_pool_create() failed");
 }

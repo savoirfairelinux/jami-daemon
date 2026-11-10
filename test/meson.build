@@ -116,6 +116,21 @@ test(
     timeout: 1800,
 )
 
+ut_caching_pool = executable(
+    'ut_caching_pool',
+    sources: files('unitTest/sip/caching_pool.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'caching_pool',
+    ut_caching_pool,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),

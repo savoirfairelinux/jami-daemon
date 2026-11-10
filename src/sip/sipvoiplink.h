@@ -108,6 +108,13 @@ public:
     pjsip_module* getMod();
 
     pj_caching_pool* getCachingPool() noexcept;
+    /**
+     * Create a pool from the caching pool. Unlike pools created directly from
+     * getCachingPool(), it may still be released after shutdown().
+     */
+    sip_utils::CachingPool::GuardedPoolPtr createGuardedPool(const char* name,
+                                                             pj_size_t initial,
+                                                             pj_size_t increment);
     pj_pool_t* getPool() noexcept;
 
     /**
@@ -146,7 +153,7 @@ public:
 private:
     NON_COPYABLE(SIPVoIPLink);
 
-    mutable pj_caching_pool cp_;
+    mutable sip_utils::CachingPool cp_;
     sip_utils::PoolPtr pool_;
     std::atomic_bool running_ {true};
     std::thread sipThread_;
