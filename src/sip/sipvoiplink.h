@@ -108,6 +108,12 @@ public:
     pjsip_module* getMod();
 
     pj_caching_pool* getCachingPool() noexcept;
+
+    /**
+     * Get shared ownership of the caching pool. Objects whose pools may be
+     * released after this link is shut down (e.g. Sdp) must hold this.
+     */
+    std::shared_ptr<pj_caching_pool> getSharedCachingPool() const noexcept { return cp_; }
     pj_pool_t* getPool() noexcept;
 
     /**
@@ -146,7 +152,7 @@ public:
 private:
     NON_COPYABLE(SIPVoIPLink);
 
-    mutable pj_caching_pool cp_;
+    std::shared_ptr<pj_caching_pool> cp_;
     sip_utils::PoolPtr pool_;
     std::atomic_bool running_ {true};
     std::thread sipThread_;
