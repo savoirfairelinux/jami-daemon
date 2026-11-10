@@ -19,6 +19,8 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cmath>
+#include <cstdio>
+#include <fstream>
 
 #include "jami.h"
 #include "manager.h"
@@ -43,6 +45,7 @@ private:
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
+    void testPauseAfterVideoSetupFailure();
 
     bool isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t margin);
 
@@ -53,6 +56,7 @@ private:
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
+    CPPUNIT_TEST(testPauseAfterVideoSetupFailure);
     CPPUNIT_TEST_SUITE_END();
 
     std::string playerId1_ {};
@@ -222,6 +226,42 @@ MediaPlayerTest::testSeekWhilePlaying()
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_LOG("End testSeekWhilePlaying");
+}
+
+void
+MediaPlayerTest::testPauseAfterVideoSetupFailure()
+{
+    JAMI_LOG("Start testPauseAfterVideoSetupFailure");
+    // MPEG-1 elementary stream: the mpegvideo demuxer is enabled but the
+    // mpeg1video decoder is not, so the video input setup fails.
+    const std::string path = "media_player_unsupported_video.mpg";
+    {
+        static constexpr unsigned char seq[] = {0x00, 0x00, 0x01, 0xB3, 0x01, 0x00, 0x10, 0x13, 0xFF, 0xFF, 0xE0, 0x80};
+        static constexpr unsigned char pic[] = {0x00, 0x00, 0x01, 0x00, 0x00, 0x0F, 0xFF, 0xF8};
+        static constexpr unsigned char slice[] = {0x00, 0x00, 0x01, 0x01, 0x12, 0x34, 0x56, 0x78};
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        for (int i = 0; i < 4; ++i) {
+            out.write(reinterpret_cast<const char*>(seq), sizeof(seq));
+            out.write(reinterpret_cast<const char*>(pic), sizeof(pic));
+            out.write(reinterpret_cast<const char*>(slice), sizeof(slice));
+        }
+    }
+
+    playerId1_ = jami::createMediaPlayer(path);
+    mediaPlayer = jami::getMediaPlayer(playerId1_);
+    CPPUNIT_ASSERT(mediaPlayer);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return playerId2_ == playerId1_; }));
+
+    // Must not dereference the released video input.
+    mediaPlayer->pause(false);
+    CPPUNIT_ASSERT(!mediaPlayer->isPaused());
+    mediaPlayer->pause(true);
+    CPPUNIT_ASSERT(mediaPlayer->isPaused());
+
+    jami::closeMediaPlayer(playerId1_);
+    mediaPlayer.reset();
+    std::remove(path.c_str());
+    JAMI_LOG("End testPauseAfterVideoSetupFailure");
 }
 
 } // namespace test

@@ -105,6 +105,8 @@ MediaPlayer::configureMediaInputs()
             videoInput_->updateStartTime(startTime_);
         }
     } catch (const std::exception& e) {
+        // hasVideo() must not report a stream whose input was released.
+        videoStream_ = -1;
         videoInput_ = nullptr;
         JAMI_ERROR("MediaPlayer {} open video input failed: {}", path_, e.what());
     }
