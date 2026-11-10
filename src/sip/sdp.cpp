@@ -1664,6 +1664,12 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         descr.addr = std::string_view(conn->addr.ptr, conn->addr.slen);
         descr.addr.setPort(media->desc.port);
         descr.rtcp_mux = hasRtcpMuxAttribute(media);
+        const auto* counterpart = remote ? activeLocalSession_ : activeRemoteSession_;
+        if (session == (remote ? activeRemoteSession_ : activeLocalSession_) and counterpart) {
+            // PJSIP retains offered mux attributes when the answer declines mux.
+            descr.rtcp_mux = descr.rtcp_mux and i < counterpart->media_count
+                             and hasRtcpMuxAttribute(counterpart->media[i]);
+        }
 
         if (descr.rtcp_mux) {
             descr.rtcp_addr = descr.addr;
