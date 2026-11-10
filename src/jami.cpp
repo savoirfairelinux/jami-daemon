@@ -45,6 +45,17 @@ init(enum InitFlag flags) noexcept
         jami::Logger::setFileLog(log_file);
     }
 
+#ifdef _WIN32
+    // GnuTLS reads SSLKEYLOGFILE lazily, during the first TLS 1.3 handshake, to
+    // open an NSS key log file. Crash reports on Windows (jami-client-qt#2517)
+    // show invalid pointer reads inside this key log initialization, which only
+    // opens a file when the variable is set, so hide it from GnuTLS.
+    if (const char* keylog = getenv("SSLKEYLOGFILE"); keylog && *keylog) {
+        JAMI_WARNING("SSLKEYLOGFILE is not supported on Windows and will be ignored");
+        _putenv_s("SSLKEYLOGFILE", "");
+    }
+#endif
+
     // Following function create a local static variable inside
     // This var must have the same live as Manager.
     // So we call it now to create this var.
