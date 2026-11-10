@@ -17,6 +17,7 @@
 
 extern "C" {
 #include <pjmedia/sdp.h>
+#include <pjmedia/sdp_neg.h>
 }
 
 using namespace libjami::Account;
@@ -194,6 +195,10 @@ private:
     void answerSkipsBundleWhenOfferDoesNotAdvertiseIt();
     void answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt();
     void answerAdvertisesRtcpMuxWhenOfferDoes();
+    void negotiatedMediaFallsBackToSeparateRtcp();
+    void negotiatedMediaPreservesExplicitRtcpFallback();
+    void negotiatedMediaKeepsAcceptedRtcpMux();
+    void checkNegotiatedRtcp(bool muxAccepted, bool explicitRtcp);
     void remoteSdpFallsBackToRtcpNextPort();
     void remoteSdpKeepsMuxOnRtpPort();
     void remoteSdpParsesTransportCcFeedback();
@@ -222,6 +227,9 @@ private:
     CPPUNIT_TEST(answerSkipsBundleWhenOfferDoesNotAdvertiseIt);
     CPPUNIT_TEST(answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt);
     CPPUNIT_TEST(answerAdvertisesRtcpMuxWhenOfferDoes);
+    CPPUNIT_TEST(negotiatedMediaFallsBackToSeparateRtcp);
+    CPPUNIT_TEST(negotiatedMediaPreservesExplicitRtcpFallback);
+    CPPUNIT_TEST(negotiatedMediaKeepsAcceptedRtcpMux);
     CPPUNIT_TEST(remoteSdpFallsBackToRtcpNextPort);
     CPPUNIT_TEST(remoteSdpKeepsMuxOnRtpPort);
     CPPUNIT_TEST(remoteSdpParsesTransportCcFeedback);
@@ -1181,6 +1189,94 @@ RtcpMuxSdpTest::answerAdvertisesRtcpMuxWhenOfferDoes()
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
     CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(TEST_AUDIO_RTP_PORT), descriptions[0].rtcp_addr.getPort());
+}
+
+void
+RtcpMuxSdpTest::negotiatedMediaFallsBackToSeparateRtcp()
+{
+    checkNegotiatedRtcp(false, false);
+}
+
+void
+RtcpMuxSdpTest::negotiatedMediaPreservesExplicitRtcpFallback()
+{
+    checkNegotiatedRtcp(false, true);
+}
+
+void
+RtcpMuxSdpTest::negotiatedMediaKeepsAcceptedRtcpMux()
+{
+    checkNegotiatedRtcp(true, true);
+}
+
+void
+RtcpMuxSdpTest::checkNegotiatedRtcp(bool muxAccepted, bool explicitRtcp)
+{
+    for (const bool secure : {false, true}) {
+        Sdp caller("rtcp-mux-negotiated-caller");
+        Sdp peer("rtcp-mux-negotiated-peer");
+        for (auto* sdp : {&caller, &peer}) {
+            sdp->setPublishedIP("127.0.0.1", pj_AF_INET());
+            sdp->setLocalMediaCapabilities(MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+            sdp->setLocalMediaCapabilities(MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+            sdp->setSecureMediaKeyExchange(KeyExchangeProtocol::SDES);
+        }
+        caller.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, explicitRtcp ? 4100 : 0);
+        caller.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT + 2, explicitRtcp ? 4102 : 0);
+        caller.enableRtcpMux(true);
+        peer.setLocalPublishedAudioPorts(5004, explicitRtcp ? 5104 : 0);
+        peer.setLocalPublishedVideoPorts(5006, explicitRtcp ? 5106 : 0);
+        peer.enableRtcpMux(muxAccepted);
+
+        MediaAttribute audio(MEDIA_AUDIO);
+        audio.label_ = "audio_0";
+        audio.enabled_ = true;
+        audio.secure_ = secure;
+        MediaAttribute video(MEDIA_VIDEO);
+        video.label_ = "video_0";
+        video.enabled_ = true;
+        video.secure_ = secure;
+        const std::vector<MediaAttribute> media {audio, video};
+
+        CPPUNIT_ASSERT(caller.createOffer(media));
+        CPPUNIT_ASSERT(hasMediaAttribute(caller.getLocalSdpSession(), "rtcp-mux"));
+        peer.setReceivedOffer(caller.getLocalSdpSession());
+        CPPUNIT_ASSERT(peer.processIncomingOffer(media));
+        CPPUNIT_ASSERT_EQUAL(muxAccepted, hasMediaAttribute(peer.getLocalSdpSession(), "rtcp-mux"));
+        CPPUNIT_ASSERT(caller.getIceAttributes().ufrag.empty());
+        CPPUNIT_ASSERT(peer.getIceAttributes().ufrag.empty());
+
+        auto pool = makePool("rtcp-mux-negotiated");
+        CPPUNIT_ASSERT(pjmedia_sdp_neg_set_remote_answer(pool.get(),
+                                                         caller.saveLocalOfferState().negotiator,
+                                                         peer.getLocalSdpSession())
+                       == PJ_SUCCESS);
+        CPPUNIT_ASSERT(caller.startNegotiation());
+        CPPUNIT_ASSERT(peer.startNegotiation());
+
+        // PJSIP retains the offered mux attribute even when the answer rejects it.
+        CPPUNIT_ASSERT(hasMediaAttribute(caller.getActiveLocalSdpSession(), "rtcp-mux"));
+        for (const auto& slots : {caller.getMediaSlots(), peer.getMediaSlots()}) {
+            CPPUNIT_ASSERT_EQUAL(size_t(2), slots.size());
+            for (const auto& [local, remote] : slots) {
+                for (const auto* description : {&local, &remote}) {
+                    CPPUNIT_ASSERT(description->enabled);
+                    CPPUNIT_ASSERT_EQUAL(muxAccepted, description->rtcp_mux);
+                    const auto rtpPort = description->addr.getPort();
+                    const auto expectedRtcp = muxAccepted ? rtpPort
+                                                          : static_cast<uint16_t>(rtpPort + (explicitRtcp ? 100 : 1));
+                    CPPUNIT_ASSERT_EQUAL(expectedRtcp, description->rtcp_addr.getPort());
+                    CPPUNIT_ASSERT_EQUAL(secure ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE,
+                                         description->key_exchange);
+                }
+                if (secure) {
+                    CPPUNIT_ASSERT(local.crypto);
+                    CPPUNIT_ASSERT(remote.crypto);
+                    CPPUNIT_ASSERT_EQUAL(local.crypto.getCryptoSuite(), remote.crypto.getCryptoSuite());
+                }
+            }
+        }
+    }
 }
 
 void
