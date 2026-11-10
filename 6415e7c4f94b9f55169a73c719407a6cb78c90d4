@@ -16,6 +16,23 @@
       "message": "Addressed in this patchset.",
       "revId": "6415e7c4f94b9f55169a73c719407a6cb78c90d4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59efdd77_e3c721b6",
+        "filename": "test/unitTest/media/test_media_player.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-10T18:42:02Z",
+      "side": 1,
+      "message": "[warning] Line 278: 🟡 This test relies on an environment assumption (`MPEG-2` decoder unavailable) to exercise the failure path, so it can become a false-positive on builds where that decoder is present: `pause()` still won’t crash, but the `configureMediaInputs` error branch is never covered. Please make the precondition explicit (assert decoder absence and skip otherwise) or generate an input that deterministically fails decoder setup across platforms so the regression actually protects the fixed path.",
+      "revId": "6415e7c4f94b9f55169a73c719407a6cb78c90d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
