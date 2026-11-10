@@ -19,6 +19,12 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cmath>
+#include <cstring>
+#include <filesystem>
+
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 #include "jami.h"
 #include "manager.h"
@@ -43,6 +49,7 @@ private:
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
+    void testPauseWithUndecodableVideo();
 
     bool isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t margin);
 
@@ -53,6 +60,7 @@ private:
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
+    CPPUNIT_TEST(testPauseWithUndecodableVideo);
     CPPUNIT_TEST_SUITE_END();
 
     std::string playerId1_ {};
@@ -222,6 +230,71 @@ MediaPlayerTest::testSeekWhilePlaying()
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_LOG("End testSeekWhilePlaying");
+}
+
+// Write a Matroska file with a single MPEG-2 video stream; the daemon's
+// FFmpeg build has no MPEG-2 decoder, so video decoder setup fails.
+static bool
+writeUndecodableVideoFile(const std::string& path)
+{
+    AVFormatContext* ctx = nullptr;
+    if (avformat_alloc_output_context2(&ctx, nullptr, "matroska", path.c_str()) < 0 || !ctx)
+        return false;
+    bool ok = false;
+    if (auto* st = avformat_new_stream(ctx, nullptr)) {
+        st->time_base = {1, 1000};
+        st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+        st->codecpar->codec_id = AV_CODEC_ID_MPEG2VIDEO;
+        st->codecpar->width = 64;
+        st->codecpar->height = 64;
+        if (avio_open(&ctx->pb, path.c_str(), AVIO_FLAG_WRITE) >= 0) {
+            if (avformat_write_header(ctx, nullptr) >= 0) {
+                ok = true;
+                for (int i = 0; i < 10 && ok; ++i) {
+                    AVPacket* pkt = av_packet_alloc();
+                    ok = pkt && av_new_packet(pkt, 16) >= 0;
+                    if (ok) {
+                        std::memset(pkt->data, 0, pkt->size);
+                        pkt->stream_index = st->index;
+                        pkt->pts = pkt->dts = av_rescale_q(i * 100, {1, 1000}, st->time_base);
+                        pkt->duration = av_rescale_q(100, {1, 1000}, st->time_base);
+                        pkt->flags |= AV_PKT_FLAG_KEY;
+                        ok = av_interleaved_write_frame(ctx, pkt) >= 0;
+                    }
+                    av_packet_free(&pkt);
+                }
+                ok = av_write_trailer(ctx) >= 0 && ok;
+            }
+            avio_closep(&ctx->pb);
+        }
+    }
+    avformat_free_context(ctx);
+    return ok;
+}
+
+void
+MediaPlayerTest::testPauseWithUndecodableVideo()
+{
+    JAMI_LOG("Start testPauseWithUndecodableVideo");
+    const std::string path = "./media/data/undecodable_video.mkv";
+    CPPUNIT_ASSERT(writeUndecodableVideoFile(path));
+
+    playerId1_ = jami::createMediaPlayer(path);
+    mediaPlayer = jami::getMediaPlayer(playerId1_);
+    CPPUNIT_ASSERT(mediaPlayer);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return playerId2_ == playerId1_; }));
+
+    // Must not dereference a reset video input when its stream failed to open.
+    mediaPlayer->pause(false);
+    mediaPlayer->pause(true);
+    mediaPlayer->pause(false);
+
+    jami::closeMediaPlayer(playerId1_);
+    mediaPlayer.reset();
+    playerId1_ = {};
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+    JAMI_LOG("End testPauseWithUndecodableVideo");
 }
 
 } // namespace test

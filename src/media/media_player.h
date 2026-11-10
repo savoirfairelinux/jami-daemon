@@ -60,8 +60,9 @@ private:
 
     inline bool hasVideo() const { return videoStream_ >= 0; }
 
-    int audioStream_ = -1;
-    int videoStream_ = -1;
+    // Written by the player loop thread, read by API callers (pause, seek...).
+    std::atomic_int audioStream_ {-1};
+    std::atomic_int videoStream_ {-1};
     int64_t fileDuration_ = 0;
 
     void playFileFromBeginning();
