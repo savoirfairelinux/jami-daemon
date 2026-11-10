@@ -95,6 +95,7 @@ MediaPlayer::configureMediaInputs()
             audioInput_->start();
         }
     } catch (const std::exception& e) {
+        audioStream_ = -1;
         JAMI_ERROR("MediaPlayer {} open audio input failed: {}", path_, e.what());
     }
 #ifdef ENABLE_VIDEO
@@ -105,7 +106,8 @@ MediaPlayer::configureMediaInputs()
             videoInput_->updateStartTime(startTime_);
         }
     } catch (const std::exception& e) {
-        videoInput_ = nullptr;
+        // Keep videoInput_ alive: pause() may read it concurrently from another thread.
+        videoStream_ = -1;
         JAMI_ERROR("MediaPlayer {} open video input failed: {}", path_, e.what());
     }
 #endif
@@ -175,8 +177,8 @@ void
 MediaPlayer::emitInfo()
 {
     std::map<std::string, std::string> info {{"duration", std::to_string(fileDuration_)},
-                                             {"audio_stream", std::to_string(audioStream_)},
-                                             {"video_stream", std::to_string(videoStream_)}};
+                                             {"audio_stream", std::to_string(audioStream_.load())},
+                                             {"video_stream", std::to_string(videoStream_.load())}};
     emitSignal<libjami::MediaPlayerSignal::FileOpened>(path_, info);
 }
 
