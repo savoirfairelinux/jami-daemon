@@ -57,6 +57,7 @@ private:
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
     void testClear();
+    void testAddContactOnUnloadedAccount();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
     CPPUNIT_TEST(testAddRemoveSIPAccount);
@@ -64,6 +65,7 @@ private:
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
     CPPUNIT_TEST(testClear);
+    CPPUNIT_TEST(testAddContactOnUnloadedAccount);
     CPPUNIT_TEST_SUITE_END();
 
     const std::string SIP_ID = "SIP_ID";
@@ -242,6 +244,24 @@ Account_factoryTest::testClear()
 
     CPPUNIT_ASSERT(accountFactory.empty());
     CPPUNIT_ASSERT(accountFactory.accountCount() == 0);
+}
+
+void
+Account_factoryTest::testAddContactOnUnloadedAccount()
+{
+    // A never-loaded account has no account manager, so convModule() returns
+    // nullptr: addContact must not dereference it.
+    AccountFactory accountFactory;
+    auto account = std::dynamic_pointer_cast<JamiAccount>(
+        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID));
+    CPPUNIT_ASSERT(account);
+    CPPUNIT_ASSERT(!account->accountManager());
+
+    account->addContact("f2c815f5554bcc22689ce84d45aefdda1bce9146", false);
+    account->addContact("f2c815f5554bcc22689ce84d45aefdda1bce9146", true);
+    CPPUNIT_ASSERT(account->getContacts().empty());
+
+    accountFactory.clear();
 }
 
 } // namespace test
