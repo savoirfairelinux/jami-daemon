@@ -253,6 +253,9 @@ private:
     std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName, const unsigned clockrate = 0) const;
 
     // Data members
+    // Keeps the pool factory alive until memPool_ is released (declared first
+    // so it is destroyed after memPool_).
+    std::shared_ptr<pj_caching_pool> cachingPool_;
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> memPool_;
     pjmedia_sdp_neg* negotiator_ {nullptr};
     pjmedia_sdp_session* localSession_ {nullptr};

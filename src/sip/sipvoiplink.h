@@ -108,6 +108,13 @@ public:
     pjsip_module* getMod();
 
     pj_caching_pool* getCachingPool() noexcept;
+
+    /**
+     * Shared handle on the caching pool. Objects owning pools created from it
+     * (e.g. Sdp) must hold it so the factory outlives their pools, even when
+     * they are released after shutdown().
+     */
+    std::shared_ptr<pj_caching_pool> getSharedCachingPool() const noexcept;
     pj_pool_t* getPool() noexcept;
 
     /**
@@ -146,7 +153,7 @@ public:
 private:
     NON_COPYABLE(SIPVoIPLink);
 
-    mutable pj_caching_pool cp_;
+    std::shared_ptr<pj_caching_pool> cp_;
     sip_utils::PoolPtr pool_;
     std::atomic_bool running_ {true};
     std::thread sipThread_;

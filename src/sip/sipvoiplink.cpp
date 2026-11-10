@@ -576,7 +576,13 @@ SIPVoIPLink::getPool() noexcept
 pj_caching_pool*
 SIPVoIPLink::getCachingPool() noexcept
 {
-    return &cp_;
+    return cp_.get();
+}
+
+std::shared_ptr<pj_caching_pool>
+SIPVoIPLink::getSharedCachingPool() const noexcept
+{
+    return cp_;
 }
 
 SIPVoIPLink::SIPVoIPLink()
@@ -588,12 +594,16 @@ SIPVoIPLink::SIPVoIPLink()
             throw VoipLinkException(#ret " failed"); \
     } while (0)
 
-    pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
-    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, static_cast<long>(64) * 1024, 4096, nullptr));
+    cp_ = std::shared_ptr<pj_caching_pool>(new pj_caching_pool, [](pj_caching_pool* cp) {
+        pj_caching_pool_destroy(cp);
+        delete cp;
+    });
+    pj_caching_pool_init(cp_.get(), &pj_pool_factory_default_policy, 0);
+    pool_.reset(pj_pool_create(&cp_->factory, PACKAGE, static_cast<long>(64) * 1024, 4096, nullptr));
     if (!pool_)
         throw VoipLinkException("UserAgent: Unable to initialize memory pool");
 
-    TRY(pjsip_endpt_create(&cp_.factory, pj_gethostname()->ptr, &endpt_));
+    TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
 
     auto ns = dhtnet::ip_utils::getLocalNameservers();
     if (not ns.empty()) {
@@ -721,7 +731,9 @@ SIPVoIPLink::shutdown()
     sipThread_.join();
     pjsip_endpt_destroy(endpt_);
     pool_.reset();
-    pj_caching_pool_destroy(&cp_);
+    // Calls may still be released afterwards (e.g. by a pending main-thread
+    // task); their Sdp keeps the caching pool alive until its pool is freed.
+    cp_.reset();
     sipTransportBroker.reset();
 
     JAMI_LOG("SIPVoIPLink@{} shutdown successfully completed", fmt::ptr(this));
@@ -1656,7 +1668,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(
     pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, localIp.getFamily(), *stunServerName, stunPort, *stunServerName, stunPort};
-    pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory, &stunOpt, 1, &sipSocket, &mapped_addr);
+    pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_->factory, &stunOpt, 1, &sipSocket, &mapped_addr);
 
     switch (stunStatus) {
     case PJLIB_UTIL_ESTUNNOTRESPOND:

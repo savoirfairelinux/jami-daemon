@@ -116,6 +116,21 @@ test(
     timeout: 1800,
 )
 
+ut_sdp_lifetime = executable(
+    'ut_sdp_lifetime',
+    sources: files('unitTest/sip/sdp_lifetime.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'sdp_lifetime',
+    ut_sdp_lifetime,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_call = executable(
     'ut_call',
     sources: files('unitTest/call/call.cpp'),
