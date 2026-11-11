@@ -9,6 +9,7 @@ vcpkg_from_github(
     PATCHES
         external-libtasn1.patch
         pkgconfig.patch
+        declare-gnulib-functions.patch
 )
 
 file(REMOVE_RECURSE "${SOURCE_PATH}/devel/perlasm")
@@ -136,10 +137,17 @@ vcpkg_replace_string(
     "zlib"
     "${zlib_basename}"
 )
+# C4013 (undeclared function, assumed to return int) truncates returned
+# pointers on x64: make it an error instead of silencing it.
+vcpkg_replace_string(
+    "${VCXPROJ}"
+    ";4013;"
+    ";"
+)
 vcpkg_replace_string(
     "${VCXPROJ}"
     [=[</DisableSpecificWarnings>]=]
-    [=[</DisableSpecificWarnings><ForcedIncludeFiles>gnutls_msvc_fixes.h;%(ForcedIncludeFiles)</ForcedIncludeFiles><RuntimeLibrary>$(RuntimeLibrary)</RuntimeLibrary>]=]
+    [=[</DisableSpecificWarnings><TreatSpecificWarningsAsErrors>4013;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors><ForcedIncludeFiles>gnutls_msvc_fixes.h;%(ForcedIncludeFiles)</ForcedIncludeFiles><RuntimeLibrary>$(RuntimeLibrary)</RuntimeLibrary>]=]
 )
 endforeach()
 
