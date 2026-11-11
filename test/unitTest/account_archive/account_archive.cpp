@@ -19,6 +19,10 @@
 #include "jamidht/conversationrepository.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/accountarchive.h"
+#include "jamidht/archive_account_manager.h"
+#include "jamidht/sync_module.h"
+#include "json_utils.h"
 #include "../../test_runner.h"
 #include "archiver.h"
 #include "base64.h"
@@ -29,6 +33,7 @@
 #include "common.h"
 
 #include <dhtnet/connectionmanager.h>
+#include <dhtnet/channel_socket.h>
 
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
@@ -40,6 +45,7 @@
 #include <fstream>
 #include <streambuf>
 #include <filesystem>
+#include <thread>
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
@@ -74,6 +80,13 @@ public:
     bool aliceReady = false;
 
 private:
+    std::map<std::string, std::string> readMetadata(const std::string& accountId)
+    {
+        std::map<std::string, std::string> result;
+        CPPUNIT_ASSERT(libjami::getAccountMetadata(accountId, result));
+        return result;
+    }
+
     void testExportImportNoPassword();
     void testExportImportNoPasswordDoubleGunzip();
     void testExportImportPassword();
@@ -82,6 +95,12 @@ private:
     // void testExportDhtWrongPassword();
     void testChangePassword();
     void testChangeDhtPort();
+    void testAccountMetadataArchive();
+    void testAccountMetadataArchiveReadFailure();
+    void testAccountMetadataSync();
+    void testAccountMetadataOnlySync();
+    void testAccountMetadataFailureDoesNotBlockSync();
+    void testAccountMetadataUpdatesStayConnectedOnly();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
@@ -92,10 +111,236 @@ private:
     // CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST(testChangeDhtPort);
+    CPPUNIT_TEST(testAccountMetadataArchive);
+    CPPUNIT_TEST(testAccountMetadataArchiveReadFailure);
+    CPPUNIT_TEST(testAccountMetadataSync);
+    CPPUNIT_TEST(testAccountMetadataOnlySync);
+    CPPUNIT_TEST(testAccountMetadataFailureDoesNotBlockSync);
+    CPPUNIT_TEST(testAccountMetadataUpdatesStayConnectedOnly);
     CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountArchiveTest, AccountArchiveTest::name());
+
+void
+AccountArchiveTest::testAccountMetadataOnlySync()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto manager = alice->accountManager();
+    Metadata metadata;
+    metadata.entries["setting"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), "received"};
+    msgpack::sbuffer buffer;
+    msgpack::packer<msgpack::sbuffer> packer(buffer);
+    packer.pack_map(1);
+    packer.pack(std::string("metadata"));
+    packer.pack(metadata);
+    auto sync = msgpack::unpack(buffer.data(), buffer.size()).get().as<DeviceSync>();
+    CPPUNIT_ASSERT_EQUAL(uint64_t(0), sync.date);
+    CPPUNIT_ASSERT(manager->onSyncData(std::move(sync), DeviceId(std::string(64, 'a'))));
+    CPPUNIT_ASSERT(manager->accountMetadata().state() == metadata);
+    const auto snapshot = manager->getSyncData();
+    CPPUNIT_ASSERT(snapshot.metadata == metadata);
+    DeviceSync invalid;
+    invalid.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    CPPUNIT_ASSERT(!manager->onSyncData(std::move(invalid), DeviceId(std::string(64, 'a'))));
+    CPPUNIT_ASSERT(manager->accountMetadata().state() == metadata);
+    DeviceSync mixed;
+    mixed.date = 1;
+    mixed.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    const dht::InfoHash peer(std::string(40, 'b'));
+    Contact contact;
+    contact.removed = nowMs();
+    mixed.peers.emplace(peer, contact);
+    CPPUNIT_ASSERT(!manager->onSyncData(std::move(mixed), DeviceId(std::string(64, 'a'))));
+    const auto contacts = manager->getInfo()->contacts->getContacts();
+    CPPUNIT_ASSERT(contacts.count(peer));
+    CPPUNIT_ASSERT(contacts.at(peer).removed == contact.removed);
+    CPPUNIT_ASSERT(manager->accountMetadata().state() == metadata);
+}
+
+void
+AccountArchiveTest::testAccountMetadataFailureDoesNotBlockSync()
+{
+    class SyncSocket : public dhtnet::ChannelSocket
+    {
+    public:
+        SyncSocket()
+            : ChannelSocket({}, "sync", 1)
+        {}
+        void setOnRecv(RecvCb&& cb) override { receive = std::move(cb); }
+        std::size_t write(const ValueType*, std::size_t length, std::error_code& ec) override
+        {
+            ec.clear();
+            return length;
+        }
+        RecvCb receive;
+    };
+
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto socket = std::make_shared<SyncSocket>();
+    alice->syncModule()->cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>(socket),
+                                             alice->getUsername(),
+                                             DeviceId(std::string(64, 'a')));
+
+    SyncMsg mixed;
+    mixed.ds.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    ConversationRequest request;
+    request.conversationId = std::string(40, 'a');
+    request.from = bob->getUsername();
+    request.received = nowMs();
+    mixed.cr.emplace(request.conversationId, request);
+    SyncMsg following;
+    request.conversationId = std::string(40, 'b');
+    following.cr.emplace(request.conversationId, request);
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, mixed);
+    msgpack::pack(buffer, following);
+    const auto consumed = socket->receive(reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size());
+    const auto requests = ConversationModule::convRequests(aliceId);
+    CPPUNIT_ASSERT(requests.count(std::string(40, 'a')));
+    CPPUNIT_ASSERT(requests.count(std::string(40, 'b')));
+    CPPUNIT_ASSERT_EQUAL(static_cast<ssize_t>(buffer.size()), consumed);
+    CPPUNIT_ASSERT(readMetadata(aliceId).empty());
+}
+
+void
+AccountArchiveTest::testAccountMetadataUpdatesStayConnectedOnly()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto* sync = alice->syncModule();
+    cv.wait_for(lk, 2s, [] { return false; });
+    const auto version = sync->currentVersion();
+    const DeviceId disconnected(std::string(64, 'a'));
+    sync->markSynced(disconnected, version);
+    CPPUNIT_ASSERT(!sync->isConnected(disconnected));
+    CPPUNIT_ASSERT(!sync->needsSync(disconnected));
+    lk.unlock();
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", "changed"}}));
+    DeviceSync incoming;
+    incoming.metadata.entries["remote"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), "received"};
+    CPPUNIT_ASSERT(alice->accountManager()->onSyncData(std::move(incoming), disconnected));
+    lk.lock();
+    cv.wait_for(lk, 2s, [] { return false; });
+    CPPUNIT_ASSERT_EQUAL(version, sync->currentVersion());
+    CPPUNIT_ASSERT(!sync->needsSync(disconnected));
+    CPPUNIT_ASSERT(!sync->isConnected(disconnected));
+}
+
+void
+AccountArchiveTest::testAccountMetadataArchive()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    const std::map<std::string, std::string> metadata {{"jami.channels.v1/channel/name", "Équipe"},
+                                                       {"jami.channels.v1/channel/members/uri", "0"},
+                                                       {"jami.channels.v1/removed/deleted", "1"}};
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, metadata));
+    CPPUNIT_ASSERT(readMetadata(aliceId) == metadata);
+    CPPUNIT_ASSERT(readMetadata(bobId).empty());
+    CPPUNIT_ASSERT(!libjami::setAccountMetadata("missing-account", metadata));
+    CPPUNIT_ASSERT(alice->exportArchive("metadata-export.gz"));
+    AccountArchive exported {std::filesystem::path("metadata-export.gz")};
+    CPPUNIT_ASSERT(alice->accountManager()->accountMetadata().state() == exported.metadata);
+    const auto serialized = exported.serialize();
+    AccountArchive roundtrip {std::string_view(serialized)};
+    CPPUNIT_ASSERT(roundtrip.metadata == exported.metadata);
+    CPPUNIT_ASSERT(!roundtrip.config.count("accountMetadata"));
+    Json::Value json;
+    CPPUNIT_ASSERT(json::parse(serialized, json));
+    json.removeMember("accountMetadata");
+    AccountArchive oldArchive {std::string_view(json::toString(json))};
+    CPPUNIT_ASSERT(oldArchive.metadata.entries.empty());
+    for (const auto& invalid : {Json::Value("not valid packed metadata"),
+                               Json::Value(Json::objectValue),
+                               Json::Value(base64::encode(std::string_view("corrupt")))}) {
+        json["accountMetadata"] = invalid;
+        AccountArchive decoded {std::string_view(json::toString(json))};
+        CPPUNIT_ASSERT(decoded.metadata.entries.empty());
+        CPPUNIT_ASSERT(decoded.id.first && decoded.id.second);
+        CPPUNIT_ASSERT(decoded.id.second->getId() == exported.id.second->getId());
+    }
+
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PATH] = "metadata-export.gz";
+    auto importedId = Manager::instance().addAccount(details);
+    wait_for_announcement_of(importedId);
+    auto imported = Manager::instance().getAccount<JamiAccount>(importedId);
+    CPPUNIT_ASSERT(imported->currentDeviceId() != alice->currentDeviceId());
+    CPPUNIT_ASSERT(readMetadata(importedId) == metadata);
+    CPPUNIT_ASSERT(imported->accountManager()->accountMetadata().state() == exported.metadata);
+    std::remove("metadata-export.gz");
+    wait_for_removal_of(importedId);
+}
+
+void
+AccountArchiveTest::testAccountMetadataArchiveReadFailure()
+{
+    const std::filesystem::path root = "metadata-archive-read-failure";
+    CPPUNIT_ASSERT(std::filesystem::create_directory(root));
+    auto cleanup = std::shared_ptr<void>(nullptr, [root](void*) { std::filesystem::remove_all(root); });
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", "value"}}));
+    CPPUNIT_ASSERT(alice->exportArchive((root / "archive.gz").string()));
+    {
+        std::ofstream file(root / "accountMetadata", std::ios::binary);
+        file << "corrupt";
+    }
+    ArchiveAccountManager manager("metadata-archive-read-failure",
+                                  root,
+                                  [] { return std::map<std::string, std::string> {}; },
+                                  [](DeviceSync&&) {},
+                                  "archive.gz",
+                                  "");
+    CPPUNIT_ASSERT(manager.exportArchive((root / "export.gz").string(), "", ""));
+    AccountArchive exported {root / "export.gz"};
+    CPPUNIT_ASSERT(exported.metadata.entries.empty());
+    CPPUNIT_ASSERT_EQUAL(uintmax_t(7), std::filesystem::file_size(root / "accountMetadata"));
+}
+
+void
+AccountArchiveTest::testAccountMetadataSync()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(alice->exportArchive("metadata-sync.gz"));
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PATH] = "metadata-sync.gz";
+    auto importedId = Manager::instance().addAccount(details);
+    wait_for_announcement_of(importedId);
+    std::remove("metadata-sync.gz");
+    auto imported = Manager::instance().getAccount<JamiAccount>(importedId);
+    const DeviceId aliceDevice(alice->currentDeviceId());
+    const DeviceId importedDevice(imported->currentDeviceId());
+    auto connected = [&] {
+        return alice->syncModule()->isConnected(importedDevice) && imported->syncModule()->isConnected(aliceDevice);
+    };
+    lk.unlock();
+    const auto deadline = std::chrono::steady_clock::now() + 30s;
+    while (!connected() && std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(50ms);
+    lk.lock();
+    CPPUNIT_ASSERT(connected());
+
+    const std::string key = "jami.channels.v1/channel/name";
+    auto received = std::make_shared<bool>(false);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountMetadataChanged>(
+        [this, importedId, key, received](const std::string& id, const std::map<std::string, std::string>& values) {
+            std::lock_guard guard(mtx);
+            if (id == importedId && values.count(key) && values.at(key) == "Synchronized")
+                *received = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+    // Signals are synchronous for native handlers; do not hold the fixture mutex while updating.
+    lk.unlock();
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{key, "Synchronized"}}));
+    lk.lock();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return *received; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("Synchronized"), readMetadata(importedId).at(key));
+    CPPUNIT_ASSERT(readMetadata(bobId).empty());
+    libjami::unregisterSignalHandlers();
+    confHandlers.clear();
+    wait_for_removal_of(importedId);
+}
 
 void
 AccountArchiveTest::setUp()

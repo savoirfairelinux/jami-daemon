@@ -43,6 +43,27 @@ struct LIBJAMI_PUBLIC Message
 };
 
 LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
+
+/** Account-private scalar registers, synchronized only with this account's devices.
+ * Updates use existing sync connections without waking disconnected devices.
+ * The full state is also sent when a sync connection is established.
+ * Returns true on success, including an empty snapshot. Omitted keys are never deleted.
+ * Returns false for an unavailable account or corrupt/unreadable storage.
+ * The output is unchanged on failure.
+ */
+LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata);
+
+/** Atomically PATCH the supplied keys; unchanged values retain their stamps.
+ * Each changed key is stamped with max(Unix time in milliseconds, its previous stamp + 1).
+ * Sync merges prefer the higher timestamp, then the lexicographically higher device ID.
+ * Keys: 1..1024 UTF-8 bytes; values: 0..65536 UTF-8 bytes; neither may contain NUL.
+ * At most 16384 stored keys and 4 MiB total (key + value + writer + 64 bytes per entry).
+ * Exhausted timestamps are rejected without changing the stored state.
+ * Updates are saved before success; power-loss durability is not guaranteed.
+ * Returns false for an unavailable account, invalid input, or persistence failure.
+ * Successful no-ops return true without emitting AccountMetadataChanged.
+ */
+LIBJAMI_PUBLIC bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
@@ -379,6 +400,12 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         constexpr static const char* name = "AccountDetailsChanged";
         using cb_type = void(const std::string& /*account_id*/,
                              const std::map<std::string, std::string>& /* details */);
+    };
+    struct LIBJAMI_PUBLIC AccountMetadataChanged
+    {
+        constexpr static const char* name = "AccountMetadataChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::map<std::string, std::string>& /*full_snapshot*/);
     };
     struct LIBJAMI_PUBLIC StunStatusFailed
     {

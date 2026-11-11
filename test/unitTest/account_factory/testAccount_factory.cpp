@@ -20,6 +20,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <fstream>
 
 #include "account_factory.h"
 #include "../../test_runner.h"
@@ -57,6 +58,7 @@ private:
     void testDisableReenableRINGAccount();
     void testDisableReenableUpnp();
     void testClear();
+    void testAccountMetadataReadFailure();
 
     CPPUNIT_TEST_SUITE(Account_factoryTest);
     CPPUNIT_TEST(testAddRemoveSIPAccount);
@@ -64,6 +66,7 @@ private:
     CPPUNIT_TEST(testDisableReenableRINGAccount);
     CPPUNIT_TEST(testDisableReenableUpnp);
     CPPUNIT_TEST(testClear);
+    CPPUNIT_TEST(testAccountMetadataReadFailure);
     CPPUNIT_TEST_SUITE_END();
 
     const std::string SIP_ID = "SIP_ID";
@@ -77,6 +80,76 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest, Account_factoryTest::name());
+
+void
+Account_factoryTest::testAccountMetadataReadFailure()
+{
+    class MetadataManager : public AccountManager
+    {
+    public:
+        MetadataManager(const std::string& id, const std::filesystem::path& path, bool available)
+            : AccountManager(id, path, "")
+        {
+            if (available) {
+                info_ = std::make_unique<AccountInfo>();
+                info_->contacts = std::make_unique<ContactList>(id, nullptr, path, OnChangeCallback {});
+            }
+        }
+        void initAuthentication(std::string,
+                                std::unique_ptr<AccountCredentials>,
+                                AuthSuccessCallback,
+                                AuthFailureCallback,
+                                const OnChangeCallback&) override
+        {}
+        bool changePassword(const std::string&, const std::string&) override { return false; }
+        void syncDevices() override {}
+        void registerName(const std::string&, std::string_view, const std::string&, RegistrationCallback) override {}
+    };
+
+    const std::filesystem::path root = "account-metadata-public-read-test";
+    CPPUNIT_ASSERT(std::filesystem::create_directory(root));
+    auto& factory = Manager::instance().accountFactory;
+    std::shared_ptr<JamiAccount> account;
+    auto cleanup = std::shared_ptr<void>(nullptr, [&](void*) {
+        if (account) {
+            account->accountManager_.reset();
+            factory.removeAccount(*account);
+        }
+        std::filesystem::remove_all(root);
+    });
+    const std::string id = "metadata-read-failure";
+    account = std::dynamic_pointer_cast<JamiAccount>(factory.createAccount("RING", id));
+    CPPUNIT_ASSERT(account);
+    std::map<std::string, std::string> metadata {{"marker", "unchanged"}};
+    CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata)); // unavailable
+    {
+        std::ofstream file(root / "accountMetadata", std::ios::binary);
+        file << "corrupt";
+    }
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata));
+    CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata));
+    CPPUNIT_ASSERT_EQUAL(std::string("unchanged"), metadata.at("marker"));
+    const dht::InfoHash peer(std::string(40, 'b'));
+    Contact contact;
+    contact.removed = nowMs();
+    account->accountManager_->getInfo()->contacts->setContacts({{peer, contact}});
+    const auto snapshot = account->accountManager_->getSyncData();
+    CPPUNIT_ASSERT(snapshot.metadata.entries.empty());
+    CPPUNIT_ASSERT(snapshot.date != 0);
+    CPPUNIT_ASSERT(snapshot.peers.at(peer).removed == contact.removed);
+    CPPUNIT_ASSERT_EQUAL(uintmax_t(7), std::filesystem::file_size(root / "accountMetadata"));
+
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, false);
+    CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata)); // still initializing
+    std::filesystem::remove(root / "accountMetadata");
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT(libjami::getAccountMetadata(id, metadata)); // healthy empty storage
+    CPPUNIT_ASSERT(metadata.empty());
+    std::filesystem::create_directory(root / "accountMetadata");
+    account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
+    CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata));
+}
 
 void
 Account_factoryTest::setUp()
