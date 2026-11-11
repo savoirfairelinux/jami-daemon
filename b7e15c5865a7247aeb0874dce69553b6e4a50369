@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e7da6590_ffe82b7a",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-11T20:18:12Z",
+      "side": 1,
+      "message": "[error] Line 289: 🔴 Replacing the dedicated `buildSyncMsgReader` with `dhtnet::buildMsgpackReader\u003cSyncMsg\u003e` removes the explicit wire/object/depth preflight limits that previously rejected hostile msgpack headers before allocation/conversion. Because sync payloads come from remote devices, this reopens a DoS surface (oversized container declarations / deep nesting / large coalesced streams) and can fail late after substantial memory work. Please restore bounded decoding (either by reinstating the hardened reader or by configuring equivalent strict unpack limits in the new reader path) and keep negative malformed/oversize tests to lock this behavior.",
+      "revId": "b7e15c5865a7247aeb0874dce69553b6e4a50369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
