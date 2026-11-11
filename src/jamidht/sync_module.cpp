@@ -157,16 +157,15 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     auto acc = account_.lock();
     if (!acc)
         return false;
-    msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
+    // Initial capacity, not a message limit: ChannelSocket fragments large writes.
+    msgpack::sbuffer buffer(UINT16_MAX);
     std::error_code ec;
     if (!syncMsg) {
-        // Send contacts infos
-        // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
-        // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all information).
+        // Send account data
         if (auto info = acc->accountManager()->getInfo()) {
             if (info->contacts) {
                 SyncMsg msg;
-                msg.ds = info->contacts->getSyncData();
+                msg.ds = acc->accountManager()->getSyncData();
                 msgpack::pack(buffer, msg);
                 socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
                 if (ec) {

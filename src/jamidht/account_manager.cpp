@@ -36,6 +36,39 @@
 
 namespace jami {
 
+void
+AccountManager::notifyMetadataChanged(const Metadata::Change& change)
+{
+    if (change.changed && metadataChanged_)
+        metadataChanged_();
+    if (change.snapshot)
+        emitSignal<libjami::ConfigurationSignal::AccountMetadataChanged>(accountId_, *change.snapshot);
+}
+
+bool
+AccountManager::setAccountMetadata(const std::map<std::string, std::string>& updates)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    if (!info_)
+        return false;
+    const auto change = metadata_.update(info_->deviceId, updates);
+    if (!change)
+        return false;
+    notifyMetadataChanged(*change);
+    return true;
+}
+
+bool
+AccountManager::mergeAccountMetadata(const Metadata& remote)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    const auto change = metadata_.merge(remote);
+    if (!change)
+        return false;
+    notifyMetadataChanged(*change);
+    return true;
+}
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
@@ -56,11 +89,27 @@ AccountManager::~AccountManager()
         dht_->join();
 }
 
+DeviceSync
+AccountManager::getSyncData() const
+{
+    auto sync = info_->contacts->getSyncData();
+    if (auto metadata = accountMetadata().state())
+        sync.metadata = std::move(*metadata);
+    else
+        JAMI_WARNING("[Account {}] Cannot read account metadata; syncing remaining account data", accountId_);
+    return sync;
+}
+
 void
 AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
 {
     if (sync.date == 0)
         return;
+
+    if (!sync.metadata.entries.empty() && !mergeAccountMetadata(sync.metadata))
+        JAMI_WARNING("[Account {}] [device {}] Cannot merge account metadata; continuing sync",
+                     accountId_,
+                     device.to_view());
 
     // Sync known devices
     JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
