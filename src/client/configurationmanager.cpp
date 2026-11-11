@@ -84,6 +84,30 @@ getVolatileAccountDetails(const std::string& accountId)
     return jami::Manager::instance().getVolatileAccountDetails(accountId);
 }
 
+bool
+getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
+        if (auto manager = acc->accountManager(); manager && manager->getInfo()) {
+            auto values = manager->accountMetadata().values();
+            if (!values)
+                return false;
+            metadata = std::move(*values);
+            return true;
+        }
+    JAMI_WARNING("[Account {}] Cannot read metadata for an unavailable account", accountId);
+    return false;
+}
+
+bool
+setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
+        if (auto manager = acc->accountManager())
+            return manager->setAccountMetadata(updates);
+    return false;
+}
+
 std::map<std::string, std::string>
 validateCertificate(const std::string& accountId, const std::string& certificate)
 {
