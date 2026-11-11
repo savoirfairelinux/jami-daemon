@@ -36,6 +36,14 @@ ut_account_archive = executable(
     dependencies: ut_dependencies,
     link_with: ut_library,
 )
+ut_metadata = executable(
+    'ut_metadata',
+    sources: files('unitTest/metadata/metadata.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test('metadata', ut_metadata, workdir: ut_workdir, is_parallel: false, timeout: 120)
 test(
     'account_archive',
     ut_account_archive,
