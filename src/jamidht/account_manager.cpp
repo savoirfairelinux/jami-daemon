@@ -36,6 +36,41 @@
 
 namespace jami {
 
+void
+AccountManager::notifyMetadataChanged(const MetadataStore::Change& change)
+{
+    if (change.changed && metadataChanged_)
+        metadataChanged_();
+    if (change.valuesChanged)
+        emitSignal<libjami::ConfigurationSignal::AccountMetadataChanged>(accountId_, change.snapshot);
+}
+
+bool
+AccountManager::setAccountMetadata(const std::map<std::string, std::string>& updates)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    if (!info_)
+        return false;
+    try {
+        auto change = metadata_.update(info_->deviceId, updates);
+        notifyMetadataChanged(change);
+        return true;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[Account {}] Cannot update account metadata: {}", accountId_, e.what());
+        return false;
+    }
+}
+
+bool
+AccountManager::mergeAccountMetadata(const Metadata& remote)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    // Let import/sync callers handle failure. A failed merge must not be acknowledged.
+    auto change = metadata_.merge(remote);
+    notifyMetadataChanged(change);
+    return change.changed;
+}
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
@@ -56,9 +91,19 @@ AccountManager::~AccountManager()
         dht_->join();
 }
 
+DeviceSync
+AccountManager::getSyncData() const
+{
+    auto sync = info_->contacts->getSyncData();
+    sync.metadata = accountMetadataState();
+    return sync;
+}
+
 void
 AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
 {
+    if (!sync.metadata.entries.empty())
+        mergeAccountMetadata(sync.metadata);
     if (sync.date == 0)
         return;
 
@@ -345,31 +390,30 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                          JAMI_WARNING(
-                              "[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
-                              accountId_,
-                              v.owner->getLongId().toString(),
-                              v.confirm,
-                              peer_account.toString(),
-                              v.conversationId);
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  nowMs(),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload),
-                                                                  v.invitedMs > 0
-                                                                      ? timePointFromMilliseconds(v.invitedMs)
-                                                                      : TimePoint {})) {
-                                  if (v.confirm) // No need to send a confirmation as already accepted here
-                                      return;
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                             accountId_,
+                             v.owner->getLongId().toString(),
+                             v.confirm,
+                             peer_account.toString(),
+                             v.conversationId);
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        nowMs(),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload),
+                                                        v.invitedMs > 0 ? timePointFromMilliseconds(v.invitedMs)
+                                                                        : TimePoint {})) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
+                        sendTrustRequestConfirm(peer_account, v.conversationId);
+                    }
+            });
         return true;
     });
 }
