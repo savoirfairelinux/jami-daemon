@@ -25,9 +25,12 @@ allowing the daemon to restart decoding without calling private FFmpeg callbacks
 detection, so the daemon uses the standalone WebRTC VAD whose header upstream
 does not install.
 
-`ports/shiftmedia-libgnutls` is copied verbatim from savoirfairelinux/opendht
-`ports/` (the future shared registry home). `ports/opendht` follows the contrib
-version.
+`ports/shiftmedia-libgnutls` is copied from savoirfairelinux/opendht `ports/`
+(the future shared registry home), plus `declare-gnulib-functions.patch` and
+C4013 as an error: the MSVC build left `secure_getenv`, `stpcpy` and others
+undeclared, truncating their 64-bit results to `int` (crash when e.g.
+`SSLKEYLOGFILE` is set). To be upstreamed to the fork and to opendht.
+`ports/opendht` follows the contrib version.
 
 `ports/pjproject` builds the SFL fork's library projects with msbuild; Jami's
 Windows settings are `config_site.h` defines.
