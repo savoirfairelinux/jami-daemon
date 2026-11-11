@@ -74,6 +74,7 @@ public:
     void testAddInvalidUri();
     void testRemoveConversationNoMember();
     void testRemoveConversationWithMember();
+    void testFeedFollowerCanResubscribe();
     void testAddMember();
     void testMemberAddedNoBadFile();
     void testAddOfflineMemberThenConnects();
@@ -129,6 +130,7 @@ private:
     CPPUNIT_TEST(testAddInvalidUri);
     CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testRemoveConversationWithMember);
+    CPPUNIT_TEST(testFeedFollowerCanResubscribe);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testMemberAddedNoBadFile);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
@@ -501,6 +503,86 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     }));
     std::this_thread::sleep_for(3s);
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
+}
+
+void
+ConversationMembersEventTest::testFeedFollowerCanResubscribe()
+{
+    add_confirmed_contact(bobId, aliceId);
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobModule = bobAccount->convModule();
+    const auto bobUri = bobAccount->getUsername();
+    const auto convId = libjami::startFeedConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return bobData.conversationId == convId && aliceData.members[bobUri] == int(libjami::MemberEvent::JOIN);
+    }));
+
+    Manager::instance().sendRegister(aliceId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.stopped; }));
+    bobData.requestReceived = false;
+    bobData.conversationId.clear();
+    const auto repositoryPath = fileutils::get_data_dir() / bobId / "conversations" / convId;
+    const auto invitedFile = repositoryPath / "invited" / bobUri;
+    std::filesystem::create_directories(invitedFile);
+    std::ofstream(invitedFile / "blocker").close();
+    CPPUNIT_ASSERT(!libjami::removeConversation(bobId, convId));
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
+    CPPUNIT_ASSERT(!bobModule->getConversation(convId)->isRemoving());
+    std::filesystem::remove(invitedFile / "blocker");
+    std::filesystem::remove(invitedFile);
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, convId));
+    auto requests = libjami::getConversationRequests(bobId);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, requests.size());
+    CPPUNIT_ASSERT_EQUAL(convId, requests.front().at("id"));
+    CPPUNIT_ASSERT_EQUAL(aliceAccount->getUsername(), requests.front().at("from"));
+    CPPUNIT_ASSERT(bobData.removed && bobData.requestReceived);
+    auto leaving = bobModule->getConversation(convId);
+    CPPUNIT_ASSERT(leaving && leaving->isRemoving());
+    const auto leaveCommit = leaving->lastCommitId();
+
+    const auto memberFile = repositoryPath / "members" / (bobUri + ".crt");
+    std::filesystem::create_directories(memberFile);
+    std::ofstream(memberFile / "blocker").close();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    std::filesystem::remove(memberFile / "blocker");
+    std::filesystem::remove(memberFile);
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobData.conversationId == convId; }));
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
+    auto rejoined = bobModule->getConversation(convId);
+    CPPUNIT_ASSERT(rejoined && !rejoined->isRemoving() && rejoined->isMember(bobUri));
+    bobModule->setFetched(convId, std::string(aliceAccount->currentDeviceId()), leaveCommit);
+    CPPUNIT_ASSERT(bobModule->getConversation(convId) != nullptr);
+
+    aliceData.members.clear();
+    Manager::instance().sendRegister(aliceId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.members[bobUri] == int(libjami::MemberEvent::JOIN); }));
+    bobData.requestReceived = false;
+    bobData.conversationId.clear();
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, convId));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.members[bobUri] == int(libjami::MemberEvent::REMOVE); }));
+    // Complete cleanup deterministically instead of waiting for a transport acknowledgement.
+    bobModule->setFetched(convId,
+                          std::string(aliceAccount->currentDeviceId()),
+                          aliceAccount->convModule()->getConversation(convId)->lastCommitId());
+    CPPUNIT_ASSERT(bobModule->getConversation(convId) == nullptr);
+    bobModule->loadConversations();
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+
+    const auto previousMessages = aliceData.messages.size();
+    libjami::sendMessage(aliceId, convId, "While unsubscribed", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.messages.size() > previousMessages; }));
+    const auto post = aliceAccount->convModule()->getConversation(convId)->lastCommitId();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.conversationId == convId; }));
+    CPPUNIT_ASSERT(bobModule->getConversation(convId)->getCommit(post).has_value());
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
 }
 
 void

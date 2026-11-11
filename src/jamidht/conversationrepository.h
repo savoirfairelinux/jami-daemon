@@ -200,6 +200,8 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
         }
     case ConversationMode::FEED:
         switch (permission) {
+        case Permission::Leave:
+            return role == MemberRole::MEMBER;
         case Permission::Text:
         case Permission::File:
         case Permission::AddMember:

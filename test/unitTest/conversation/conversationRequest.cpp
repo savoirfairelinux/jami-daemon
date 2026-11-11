@@ -79,6 +79,7 @@ public:
     void testDeclineRequest();
     void testSyncDeclinedRequestTwiceDoesNotRetrigger();
     void testSyncDeclinedRequestPreservesNewerTrustRequest();
+    void testSyncLeftFeedInvitation();
     void testAddContact();
     void testIncomingTrustRequestArgumentOrder();
     void testDeclineConversationRequestRemoveTrustRequest();
@@ -125,6 +126,7 @@ private:
     CPPUNIT_TEST(testDeclineRequest);
     CPPUNIT_TEST(testSyncDeclinedRequestTwiceDoesNotRetrigger);
     CPPUNIT_TEST(testSyncDeclinedRequestPreservesNewerTrustRequest);
+    CPPUNIT_TEST(testSyncLeftFeedInvitation);
     CPPUNIT_TEST(testAddContact);
     CPPUNIT_TEST(testIncomingTrustRequestArgumentOrder);
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
@@ -569,9 +571,61 @@ ConversationRequestTest::testSyncDeclinedRequestPreservesNewerTrustRequest()
         bobAccount->convModule()->onSyncData(msg, bobUri, fakeDeviceId);
         auto requests = bobAccount->getTrustRequests();
         CPPUNIT_ASSERT_EQUAL(size_t {1}, requests.size());
-        CPPUNIT_ASSERT_EQUAL(request.conversationId, requests.front().at(libjami::Account::TrustRequest::CONVERSATIONID));
+        CPPUNIT_ASSERT_EQUAL(request.conversationId,
+                             requests.front().at(libjami::Account::TrustRequest::CONVERSATIONID));
         CPPUNIT_ASSERT(accountManager->discardTrustRequest(aliceUri));
     }
+}
+
+void
+ConversationRequestTest::testSyncLeftFeedInvitation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto module = bobAccount->convModule();
+    const auto bobUri = bobAccount->getUsername();
+    const auto aliceUri = aliceAccount->getUsername();
+    const auto now = nowMs();
+    ConvInfo left("1111111111111111111111111111111111111111"s);
+    left.created = now - 2s;
+    left.removed = now - 1s;
+    left.erased = left.removed;
+    left.mode = ConversationMode::FEED;
+    left.members = {aliceUri, bobUri};
+    ConversationRequest invitation;
+    invitation.conversationId = left.id;
+    invitation.from = aliceUri;
+    invitation.received = left.removed;
+    invitation.metadatas = {{"mode", std::to_string(int(ConversationMode::FEED))}, {"title", "Test feed"}};
+    SyncMsg msg;
+    msg.c[left.id] = left;
+    msg.cr[left.id] = invitation;
+
+    module->onSyncData(msg, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    module->onSyncData(msg, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    auto stale = msg;
+    stale.cr[left.id].received = left.created - 1s;
+    module->onSyncData(stale, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    stale.cr.clear();
+    stale.c[left.id].removed = {};
+    module->onSyncData(stale, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    module->loadConversations();
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    module->declineConversationRequest(left.id);
+    module->onSyncData(msg, bobUri, "");
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
+
+    auto active = left;
+    active.created = now + 1ms;
+    SyncMsg accepted;
+    accepted.c[left.id] = active;
+    module->onSyncData(accepted, bobUri, "");
+    module->onSyncData(msg, bobUri, "");
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
 }
 
 void

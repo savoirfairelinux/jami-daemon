@@ -59,6 +59,12 @@ LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
 LIBJAMI_PUBLIC std::string startFeedConversation(const std::string& accountId);
 LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
+/**
+ * Leave a conversation. A feed follower receives a new local invitation to the
+ * same feed, which can be accepted to subscribe again or declined to dismiss it.
+ * This requires peers supporting feed follower leave commits; admins and
+ * moderator removals retain their existing behavior.
+ */
 LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversations(const std::string& accountId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
