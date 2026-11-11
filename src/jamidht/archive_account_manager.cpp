@@ -1090,8 +1090,8 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                 // try and decompress archive for xfer
                 try {
                     JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
-                    ctx->addDeviceCtx->accData
-                        = this_->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, passwordIt->second).serialize();
+                    auto archive = this_->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, passwordIt->second);
+                    ctx->addDeviceCtx->accData = archive.serialize();
                     shouldSendArchive = true;
                     JAMI_DEBUG("[LinkDevice] Sending account archive.");
                 } catch (const std::exception& e) {
@@ -1216,6 +1216,10 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     dhtnet::fileutils::check_dir(path_, 0700);
+    if (!mergeAccountMetadata(a.metadata))
+        JAMI_WARNING("[Account {}] [Auth] Cannot merge archive metadata", accountId_);
+    if (auto metadata = accountMetadata().state())
+        a.metadata = std::move(*metadata);
 
     if (isLinkDevProtocol) {
         a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] = ctx.linkDevCtx->authScheme.empty()
@@ -1373,7 +1377,7 @@ void
 ArchiveAccountManager::syncDevices()
 {
     JAMI_LOG("[Account {}] Building device sync from {}", accountId_, info_->deviceId);
-    onSyncData_(info_->contacts->getSyncData());
+    onSyncData_(getSyncData());
 }
 
 AccountArchive
@@ -1426,6 +1430,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
             ++it;
     }
     archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
+    archive.metadata = accountMetadata().state().value_or(Metadata {});
 }
 
 void

@@ -27,6 +27,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
@@ -82,6 +83,8 @@ struct Message
 };
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
+bool getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata);
+bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
@@ -256,6 +259,7 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/) {}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
