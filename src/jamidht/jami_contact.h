@@ -18,6 +18,7 @@
 
 #include "string_utils.h"
 #include "timestamp.h"
+#include "metadata.h"
 
 #include <opendht/infohash.h>
 #include <opendht/value.h>
@@ -341,7 +342,8 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::PkId, KnownDeviceSync> devices;
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
-    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests)
+    Metadata metadata;
+    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata)
 };
 
 struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>
