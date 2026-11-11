@@ -45,6 +45,20 @@ init(enum InitFlag flags) noexcept
         jami::Logger::setFileLog(log_file);
     }
 
+#ifdef _WIN32
+    // GnuTLS reads SSLKEYLOGFILE lazily, on the first TLS 1.3 handshake, and
+    // then writes every session secret to that file. Crash reports from the
+    // Windows (MSVC) build show access violations inside that one-time
+    // keylog initialization (_gnutls_nss_keylog_func), past the getenv()
+    // call, i.e. on the path taken only when the variable is set. Jami must
+    // not export TLS secrets anyway, so remove the variable before any TLS
+    // session can be created.
+    if (const char* keylog = getenv("SSLKEYLOGFILE"); keylog && *keylog) {
+        JAMI_WARNING("Ignoring SSLKEYLOGFILE: exporting TLS secrets is not supported");
+        _putenv_s("SSLKEYLOGFILE", "");
+    }
+#endif
+
     // Following function create a local static variable inside
     // This var must have the same live as Manager.
     // So we call it now to create this var.
