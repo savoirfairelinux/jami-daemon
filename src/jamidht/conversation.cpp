@@ -2448,7 +2448,11 @@ Conversation::monitor()
 std::string
 Conversation::join()
 {
-    return pimpl_->repository_->join();
+    std::lock_guard lk(pimpl_->writeMtx_);
+    auto commit = pimpl_->repository_->join();
+    if (!commit.empty())
+        pimpl_->isRemoving_ = false;
+    return commit;
 }
 
 bool
@@ -2956,9 +2960,12 @@ Conversation::generateInvitation(TimePoint sent) const
 std::string
 Conversation::leave()
 {
-    setRemovingFlag();
     std::lock_guard lk(pimpl_->writeMtx_);
-    return pimpl_->repository_->leave();
+    const bool follower = mode() == ConversationMode::FEED && !pimpl_->isAdmin();
+    auto commit = pimpl_->repository_->leave();
+    if (!commit.empty() || !follower)
+        setRemovingFlag();
+    return commit;
 }
 
 void

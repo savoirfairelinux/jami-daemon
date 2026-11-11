@@ -1343,8 +1343,30 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
 bool
 ConversationModule::Impl::removeConversation(const std::string& conversationId, bool forceRemove)
 {
-    auto removed = withConv(conversationId,
-                            [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
+    ConversationRequest invitation;
+    auto removed = withConv(conversationId, [this, forceRemove, &invitation](auto& conv) {
+        if (!forceRemove && !conv.info.isRemoved() && conv.conversation
+            && conv.conversation->mode() == ConversationMode::FEED) {
+            bool follower = false;
+            for (const auto& member : conv.getMembers(false, false)) {
+                const auto& uri = member.at("uri");
+                const auto& role = member.at("role");
+                if (uri == username_ && role == "member")
+                    follower = true;
+                else if (uri != username_ && invitation.from.empty() && role == "admin")
+                    invitation.from = uri;
+            }
+            if (follower) {
+                invitation.conversationId = conv.info.id;
+                invitation.metadatas = conv.conversation->infos();
+            } else {
+                invitation.from.clear();
+            }
+        }
+        auto removed = removeConversationImpl(conv, forceRemove);
+        invitation.received = conv.info.removed;
+        return removed;
+    });
     if (removed)
         // Collect after marking the parent removed: no new child can register
         // past that point, including a clone without a repository yet.
@@ -1354,6 +1376,19 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId, 
             // A silent erasure instead would leave this device forever listed
             // as a member of a document it can no longer be reached for.
             withConv(documentId, [this](auto& conv) { return removeConversationImpl(conv, false); });
+    if (removed && !invitation.from.empty()) {
+        bool added;
+        {
+            std::lock_guard lk(conversationsRequestsMtx_);
+            added = addConversationRequest(conversationId, invitation);
+        }
+        if (added) {
+            emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(accountId_,
+                                                                                 conversationId,
+                                                                                 invitation.toMap());
+            needsSyncingCb_({});
+        }
+    }
     return removed;
 }
 
@@ -1404,13 +1439,22 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
 {
     auto members = conv.getMembers(false, false);
     auto isSyncing = !conv.conversation;
+    std::string commitId;
+    if (!isSyncing && conv.conversation->mode() == ConversationMode::FEED
+        && std::any_of(members.begin(), members.end(), [&](const auto& member) {
+               return member.at("uri") == username_ && member.at("role") == "member";
+           })) {
+        commitId = conv.conversation->leave();
+        if (commitId.empty())
+            return false;
+    }
     auto hasMembers = !isSyncing // If syncing there is no member to inform
                       && std::find_if(members.begin(),
                                       members.end(),
                                       [&](const auto& member) { return member.at("uri") == username_; })
                              != members.end() // We must be still a member
                       && members.size() != 1; // If there is only ourself
-    conv.info.removed = nowMs();
+    conv.info.removed = conv.info.mode == ConversationMode::FEED ? std::max(nowMs(), conv.info.created) : nowMs();
     if (isSyncing)
         conv.info.erased = nowMs();
     if (conv.fallbackClone)
@@ -1434,7 +1478,8 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
         return true;
     }
 
-    auto commitId = conv.conversation->leave();
+    if (commitId.empty())
+        commitId = conv.conversation->leave();
     if (hasMembers) {
         JAMI_LOG("Wait that someone sync that user left conversation {}", conv.info.id);
         // Commit that we left
@@ -1878,7 +1923,8 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         return;
     }
     auto conv = startConversation(request.conversationId);
-    std::lock_guard lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
+    std::string commitId;
     // Explicit (or auto-accepted) request: the peer just told us to clone, don't sit on a
     // backoff armed by earlier failures.
     conv->resetCloneRetry();
@@ -1890,10 +1936,35 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.mode = request.mode();
         addConvInfo(conv->info);
     } else if (conv->info.mode != ConversationMode::ONE_TO_ONE && conv->info.isRemoved()) {
+        if (conv->info.mode == ConversationMode::FEED && conv->conversation && conv->conversation->isRemoving()) {
+            // Reuse the repository so the leave commit still reaches peers.
+            commitId = conv->conversation->join();
+            if (commitId.empty()) {
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             request.conversationId,
+                                                                             ECOMMIT,
+                                                                             "Unable to rejoin feed");
+                return;
+            }
+        }
         // Re-invited to a group conversation we previously left.
-        conv->info.created = nowMs();
+        conv->info.created = conv->info.mode == ConversationMode::FEED ? std::max(nowMs(), conv->info.removed + 1ms)
+                                                                       : nowMs();
         conv->info.erased = TimePoint {};
         addConvInfo(conv->info);
+    }
+    if (!commitId.empty())
+        sendMessageNotification(*conv->conversation, false, commitId);
+    lk.unlock();
+    if (request.mode() == ConversationMode::FEED) {
+        std::lock_guard lkRequests(conversationsRequestsMtx_);
+        rmConversationRequest(request.conversationId);
+    }
+    if (!commitId.empty()) {
+        bootstrap(request.conversationId);
+        emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, request.conversationId);
+        needsSyncingCb_({});
+        return;
     }
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
         auto sthis = w.lock();
@@ -2559,7 +2630,8 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
                      deviceId);
         return;
     }
-    pimpl_->rmConversationRequest(conversationId);
+    if (request->mode() != ConversationMode::FEED)
+        pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     pimpl_->accountManager_->acceptTrustRequest(request->from, true);
     pimpl_->cloneConversationFrom(*request);
@@ -3076,21 +3148,20 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         const auto& convId = convInfo.id;
         if (!isConversationId(convId))
             continue;
-        {
-            std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
-            pimpl_->rmConversationRequest(convId);
-        }
-
         // Whether this conversation is new to our list. Used to decide if the
         // change must be relayed: a conversation we already know but have not
         // finished cloning yet must not be treated as a change, otherwise it
         // would re-trigger syncing on every received sync.
         bool isNewConv = not pimpl_->isConversation(convId);
         auto conv = pimpl_->startConversation(convInfo);
+        std::unique_lock lkRequests(pimpl_->conversationsRequestsMtx_);
         std::unique_lock lk(conv->mtx);
         // Skip outdated info
         if (std::max(convInfo.created, convInfo.removed) < std::max(conv->info.created, conv->info.removed))
             continue;
+        if (convInfo.mode != ConversationMode::FEED || !convInfo.isRemoved())
+            pimpl_->rmConversationRequest(convId);
+        lkRequests.unlock();
         if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
@@ -3103,6 +3174,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
             conv->info = convInfo;
+            if (convInfo.mode == ConversationMode::FEED && conv->conversation && conv->conversation->isRemoving())
+                pimpl_->removeRepositoryImpl(*conv, false, true);
             if (!conv->conversation) {
                 if (isNewConv)
                     listChanged = true;
@@ -3123,17 +3196,20 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
                 conv->conversation->setRemovingFlag();
             }
-            auto update = false;
-            if (conv->info.removed == TimePoint {}) {
+            const bool feed = convInfo.mode == ConversationMode::FEED;
+            auto update = feed && isNewConv;
+            if (update)
+                listChanged = true;
+            if (conv->info.removed == TimePoint {} || (feed && convInfo.removed > conv->info.removed)) {
                 update = true;
                 listChanged = true;
-                conv->info.removed = nowMs();
+                conv->info.removed = feed ? convInfo.removed : nowMs();
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased != TimePoint {} && conv->info.erased == TimePoint {}) {
                 update = true;
                 listChanged = true;
-                conv->info.erased = nowMs();
+                conv->info.erased = feed ? convInfo.erased : nowMs();
                 pimpl_->addConvInfo(conv->info);
                 pimpl_->removeRepositoryImpl(*conv, false);
             } else if (update) {
@@ -3194,10 +3270,18 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             continue;
         }
         std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
-        if (pimpl_->isConversation(convId)) {
-            // Already handled request
-            pimpl_->rmConversationRequest(convId);
-            continue;
+        if (auto conv = pimpl_->getConversation(convId)) {
+            bool leftFeed;
+            {
+                std::lock_guard lkConv(conv->mtx);
+                leftFeed = conv->info.mode == ConversationMode::FEED && conv->info.isRemoved();
+                if (leftFeed && (req.mode() != ConversationMode::FEED || req.received < conv->info.removed))
+                    continue;
+            }
+            if (!leftFeed) {
+                pimpl_->rmConversationRequest(convId);
+                continue;
+            }
         }
 
         // New request

@@ -107,6 +107,8 @@ private:
     void testJoinLeavePermissions();
     void testMemberPermissions();
     void testFeedMemberActions();
+    void testFeedFollowerCanRejoin();
+    void testFeedJoinStillRequiresAuthorization();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -149,6 +151,8 @@ private:
     CPPUNIT_TEST(testJoinLeavePermissions);
     CPPUNIT_TEST(testMemberPermissions);
     CPPUNIT_TEST(testFeedMemberActions);
+    CPPUNIT_TEST(testFeedFollowerCanRejoin);
+    CPPUNIT_TEST(testFeedJoinStillRequiresAuthorization);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1857,6 +1861,65 @@ ConversationRepositoryTest::testMemberPermissions()
     CPPUNIT_ASSERT(contains(feedMemberPermissions, "textReply"));
     CPPUNIT_ASSERT(contains(feedMemberPermissions, "fileReply"));
     CPPUNIT_ASSERT(contains(feedMemberPermissions, "reaction"));
+}
+
+void
+ConversationRepositoryTest::testFeedFollowerCanRejoin()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto feed = ConversationRepository::createConversation(aliceAccount, ConversationMode::FEED);
+    const auto bobUri = bobAccount->getUsername();
+    CPPUNIT_ASSERT(!feed->addMember(bobUri).empty());
+    const auto post = feed->commitMessage(CommitMessage::text("Before subscribing").toString());
+    CPPUNIT_ASSERT(!post.empty());
+
+    const auto alicePath = fileutils::get_data_dir() / aliceId / "conversations" / feed->id();
+    const auto bobPath = fileutils::get_data_dir() / bobId / "conversations" / feed->id();
+    std::filesystem::create_directories(bobPath.parent_path());
+    std::filesystem::copy(alicePath, bobPath, std::filesystem::copy_options::recursive);
+    ConversationRepository follower(bobAccount, feed->id());
+    CPPUNIT_ASSERT(!follower.join().empty());
+    CPPUNIT_ASSERT(!follower.leave().empty());
+    CPPUNIT_ASSERT(follower.validCommits(follower.log()));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobPath / "invited" / bobUri));
+    CPPUNIT_ASSERT(!std::filesystem::exists(bobPath / "members" / (bobUri + ".crt")));
+    CPPUNIT_ASSERT(follower.permissions(bobUri) == std::vector<std::string> {"join"});
+
+    CPPUNIT_ASSERT(!follower.join().empty());
+    CPPUNIT_ASSERT(follower.validCommits(follower.log()));
+    CPPUNIT_ASSERT(follower.getCommit(post).has_value());
+    CPPUNIT_ASSERT(!std::filesystem::exists(bobPath / "invited" / bobUri));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobPath / "members" / (bobUri + ".crt")));
+    CPPUNIT_ASSERT(!hasPermission(ConversationMode::FEED, MemberRole::ADMIN, Permission::Leave));
+}
+
+void
+ConversationRepositoryTest::testFeedJoinStillRequiresAuthorization()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    const auto bobUri = bobAccount->getUsername();
+    for (bool banned : {false, true}) {
+        auto feed = ConversationRepository::createConversation(aliceAccount, ConversationMode::FEED);
+        CPPUNIT_ASSERT(feed != nullptr);
+        if (banned) {
+            CPPUNIT_ASSERT(!feed->addMember(bobUri).empty());
+            CPPUNIT_ASSERT(!feed->voteKick(bobUri, "invited").empty());
+            CPPUNIT_ASSERT(!feed->resolveVote(bobUri, "invited", "ban").empty());
+        }
+        const auto alicePath = fileutils::get_data_dir() / aliceId / "conversations" / feed->id();
+        const auto bobPath = fileutils::get_data_dir() / bobId / "conversations" / feed->id();
+        std::filesystem::create_directories(bobPath.parent_path());
+        std::filesystem::copy(alicePath, bobPath, std::filesystem::copy_options::recursive);
+        ConversationRepository unauthorized(bobAccount, feed->id());
+        CPPUNIT_ASSERT(unauthorized.join().empty());
+        CPPUNIT_ASSERT(feed->validCommits(feed->log()));
+        Conversation owner(aliceAccount, feed->id());
+        CPPUNIT_ASSERT(!owner.isPeerAuthorized(bobUri, std::string(bobAccount->currentDeviceId()), true));
+        unauthorized.erase();
+        feed->erase();
+    }
 }
 
 void

@@ -4437,6 +4437,17 @@ ConversationRepository::leave()
     auto crlsPath = repoPath / "CRLs";
     std::error_code ec;
 
+    const bool keepInvitation = mode() == ConversationMode::FEED && std::filesystem::is_regular_file(memberFile, ec)
+                                && !std::filesystem::is_regular_file(adminFile, ec);
+    if (keepInvitation) {
+        auto invitedPath = repoPath / MemberPath::INVITED;
+        if (!dhtnet::fileutils::recursive_mkdir(invitedPath, 0700))
+            return {};
+        std::ofstream invitation(invitedPath / pimpl_->userId_);
+        if (!invitation.is_open())
+            return {};
+    }
+
     if (std::filesystem::is_regular_file(adminFile, ec)) {
         std::filesystem::remove(adminFile, ec);
     }
@@ -4472,17 +4483,23 @@ ConversationRepository::leave()
         return {};
     }
 
+    auto message = CommitMessage::member(CommitAction::REMOVE, pimpl_->userId_);
+    auto commitId = pimpl_->commit(message.toString(), false);
+    if (commitId.empty())
+        return {};
+
     {
         std::lock_guard lk(pimpl_->membersMtx_);
         pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(),
                                               pimpl_->members_.end(),
                                               [&](auto& member) { return member.uri == pimpl_->userId_; }),
                                pimpl_->members_.end());
+        if (keepInvitation)
+            pimpl_->members_.emplace_back(ConversationMember {pimpl_->userId_, MemberRole::INVITED});
         pimpl_->saveMembers();
     }
 
-    auto message = CommitMessage::member(CommitAction::REMOVE, pimpl_->userId_);
-    return pimpl_->commit(message.toString(), false);
+    return commitId;
 }
 
 void
