@@ -1585,6 +1585,15 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                                                                      conf.nameServer);
         }
 
+        accountManager_->setMetadataChangedCallback([this] {
+            auto msg = std::make_shared<SyncMsg>();
+            auto metadata = accountManager_->accountMetadata().state();
+            if (!metadata || metadata->entries.empty())
+                return;
+            msg->ds.date = AccountManager::clock::now().time_since_epoch().count();
+            msg->ds.metadata = std::move(*metadata);
+            conversationNeedsSyncing(std::move(msg));
+        });
         auto id = accountManager_->loadIdentity(conf.tlsCertificateFile, conf.tlsPrivateKeyFile, conf.tlsPassword);
 
         if (const auto* info
@@ -2605,9 +2614,9 @@ JamiAccount::conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg)
     // Decide from the message *content* whether it can require (re)opening sync
     // connections. A change to the contact/conversation list (or requests) must
     // reach devices that are not currently connected; a metadata-only update
-    // (read status, preferences) only rides the existing connections. Checking
-    // the content rather than merely "is syncMsg null" keeps this correct if
-    // list data is ever attached to a syncMsg in the future.
+    // (account registers, read status, preferences) only rides the existing
+    // connections. Checking the content rather than merely "is syncMsg null"
+    // keeps this correct if list data is ever attached to a syncMsg in the future.
     if (syncMsg && !syncMsg->affectsList()) {
         // Metadata-only update: ride the existing sync connections, never open
         // new ones.

@@ -37,6 +37,7 @@ constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
 constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
 constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
 constexpr const char* const RING_ACCOUNT_CONTACTS = "ringAccountContacts";
+constexpr const char* const ACCOUNT_METADATA_KEY = "accountMetadata";
 constexpr const char* const CONVERSATIONS_KEY = "conversations";
 constexpr const char* const CONVERSATIONS_REQUESTS_KEY = "conversationsRequests";
 constexpr const char* const PROXY_ENABLED_KEY = "proxyEnabled";
