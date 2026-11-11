@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "380d210b_b4c93778",
+        "filename": "src/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-11T21:35:06Z",
+      "side": 1,
+      "message": "[error] Line 22: 🔴 `src/meson.build` still references `jamidht/account_metadata.cpp`, but that file was moved to `src/metadata.cpp`. Meson builds will fail with a missing source file. Replace this entry with `metadata.cpp` to keep Meson and CMake source lists consistent.",
+      "revId": "52c5b138181910418027f251180fe25ec96b24a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec764e5c_cf535330",
+        "filename": "src/metadata.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-11T21:35:06Z",
+      "side": 1,
+      "message": "[warning] Line 192: 🟡 `MetadataStore::save` now uses `std::ofstream` on `path + \".new\"`, which follows symlinks and dropped the previous `O_NOFOLLOW` protection. If an attacker can pre-create the staging path as a symlink, this can redirect writes/truncation to an unintended file. Restore no-follow semantics (e.g., open with `O_NOFOLLOW|O_CREAT|O_TRUNC` + fd-based write) before writing.",
+      "revId": "52c5b138181910418027f251180fe25ec96b24a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2372729_89b51e08",
+        "filename": "test/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-11T21:35:06Z",
+      "side": 1,
+      "message": "[error] Line 24: 🔴 The Meson unit-test target `ut_account_metadata` points to `unitTest/account_archive/account_metadata.cpp`, which no longer exists after the rename to `unitTest/metadata/metadata.cpp`. This breaks Meson test builds. Update the source path (and ideally the target/test naming) to the new location.",
+      "revId": "52c5b138181910418027f251180fe25ec96b24a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
