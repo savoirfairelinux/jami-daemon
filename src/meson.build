@@ -112,6 +112,8 @@ libjami_sources = files(
     'conference_protocol.cpp',
     'data_transfer.cpp',
     'fileutils.cpp',
+    'metadata.cpp',
+    'metadata_store.cpp',
     'gittransport.cpp',
     'jami.cpp',
     'logger.cpp',
