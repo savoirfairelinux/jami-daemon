@@ -36,6 +36,39 @@
 
 namespace jami {
 
+void
+AccountManager::notifyMetadataChanged(const Metadata::Change& change)
+{
+    if (change.changed && metadataChanged_)
+        metadataChanged_();
+    if (change.snapshot)
+        emitSignal<libjami::ConfigurationSignal::AccountMetadataChanged>(accountId_, *change.snapshot);
+}
+
+bool
+AccountManager::setAccountMetadata(const std::map<std::string, std::string>& updates)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    if (!info_)
+        return false;
+    const auto change = metadata_.update(info_->deviceId, updates);
+    if (!change)
+        return false;
+    notifyMetadataChanged(*change);
+    return true;
+}
+
+bool
+AccountManager::mergeAccountMetadata(const Metadata& remote)
+{
+    std::lock_guard lock(metadataChangeMutex_);
+    const auto change = metadata_.merge(remote);
+    if (!change)
+        return false;
+    notifyMetadataChanged(*change);
+    return true;
+}
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
@@ -56,11 +89,27 @@ AccountManager::~AccountManager()
         dht_->join();
 }
 
+DeviceSync
+AccountManager::getSyncData() const
+{
+    auto sync = info_->contacts->getSyncData();
+    if (auto metadata = accountMetadata().state())
+        sync.metadata = std::move(*metadata);
+    else
+        JAMI_WARNING("[Account {}] Cannot read account metadata; syncing remaining account data", accountId_);
+    return sync;
+}
+
 void
 AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
 {
     if (sync.date == 0)
         return;
+
+    if (!sync.metadata.entries.empty() && !mergeAccountMetadata(sync.metadata))
+        JAMI_WARNING("[Account {}] [device {}] Cannot merge account metadata; continuing sync",
+                     accountId_,
+                     device.to_view());
 
     // Sync known devices
     JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
@@ -345,31 +394,30 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                          JAMI_WARNING(
-                              "[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
-                              accountId_,
-                              v.owner->getLongId().toString(),
-                              v.confirm,
-                              peer_account.toString(),
-                              v.conversationId);
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  nowMs(),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload),
-                                                                  v.invitedMs > 0
-                                                                      ? timePointFromMilliseconds(v.invitedMs)
-                                                                      : TimePoint {})) {
-                                  if (v.confirm) // No need to send a confirmation as already accepted here
-                                      return;
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                             accountId_,
+                             v.owner->getLongId().toString(),
+                             v.confirm,
+                             peer_account.toString(),
+                             v.conversationId);
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        nowMs(),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload),
+                                                        v.invitedMs > 0 ? timePointFromMilliseconds(v.invitedMs)
+                                                                        : TimePoint {})) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
+                        sendTrustRequestConfirm(peer_account, v.conversationId);
+                    }
+            });
         return true;
     });
 }

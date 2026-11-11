@@ -71,6 +71,11 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
                         if (h != dht::InfoHash {})
                             contacts.emplace(h, Contact {*citr});
                     }
+                } else if (key.compare(Conf::ACCOUNT_METADATA_KEY) == 0) {
+                    auto packed = base64::decode(itr->asString());
+                    if (auto decoded = Metadata::decode(
+                            std::string_view(reinterpret_cast<const char*>(packed.data()), packed.size())))
+                        metadata = std::move(*decoded);
                 } else if (key.compare(Conf::CONVERSATIONS_KEY) == 0) {
                     for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
                         auto ci = ConvInfo(*citr);
@@ -107,6 +112,10 @@ AccountArchive::serialize() const
 
     for (const auto& it : config)
         root[it.first] = it.second;
+
+    msgpack::sbuffer packed;
+    msgpack::pack(packed, metadata);
+    root[Conf::ACCOUNT_METADATA_KEY] = base64::encode(std::string_view(packed.data(), packed.size()));
 
     if (ca_key and *ca_key)
         root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
