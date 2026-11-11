@@ -17,6 +17,35 @@
             </arg>
         </method>
 
+        <method name="getAccountMetadata" tp:name-for-bindings="getAccountMetadata">
+            <tp:docstring>Get account-private scalar registers shared only by this account's devices.
+                Success is true for a successfully read snapshot, including an empty map.
+                Unavailable accounts and unreadable or corrupt storage return success false.</tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+            <arg type="a{ss}" name="metadata" direction="out"/>
+        </method>
+
+        <method name="setAccountMetadata" tp:name-for-bindings="setAccountMetadata">
+            <tp:docstring>PATCH supplied keys, never remove omitted keys.
+                Updates are saved before success; power-loss durability is not guaranteed.
+                Changed keys use per-key monotonic Unix millisecond timestamps.
+                Updates use existing sync connections without waking disconnected devices.
+                Returns false on invalid input or failure.</tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="updates" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
+        <signal name="accountMetadataChanged" tp:name-for-bindings="accountMetadataChanged">
+            <tp:docstring>Full scalar snapshot after a saved effective local update or remote merge.</tp:docstring>
+            <arg type="s" name="accountId"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+            <arg type="a{ss}" name="metadata"/>
+        </signal>
+
         <method name="getAccountDetails" tp:name-for-bindings="getAccountDetails">
             <tp:docstring>
                 Get all parameters of the specified account.

@@ -21,6 +21,7 @@
 #endif
 
 #include "contact_list.h"
+#include "metadata_store.h"
 #include "logger.h"
 #include "namedirectory.h"
 
@@ -82,7 +83,8 @@ public:
     AccountManager(const std::string& accountId, const std::filesystem::path& path, const std::string& nameServer)
         : accountId_(accountId)
         , path_(path)
-        , nameDir_(NameDirectory::instance(nameServer)) {};
+        , nameDir_(NameDirectory::instance(nameServer))
+        , metadata_(path / "accountMetadata") {};
 
     virtual ~AccountManager();
 
@@ -123,6 +125,7 @@ public:
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
     virtual void syncDevices() = 0;
+    DeviceSync getSyncData() const;
     virtual void onSyncData(DeviceSync&& sync, const DeviceId& device);
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
@@ -143,6 +146,11 @@ public:
     virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence = true);
 
     const AccountInfo* getInfo() const { return info_.get(); }
+
+    const MetadataStore& accountMetadata() const { return metadata_; }
+    bool setAccountMetadata(const std::map<std::string, std::string>& updates);
+    [[nodiscard]] bool mergeAccountMetadata(const Metadata& remote);
+    void setMetadataChangedCallback(std::function<void()> cb) { metadataChanged_ = std::move(cb); }
 
     void reloadContacts();
 
@@ -285,6 +293,12 @@ protected:
     std::unique_ptr<AccountInfo> info_;
     std::shared_ptr<dht::DhtRunner> dht_;
     std::reference_wrapper<NameDirectory> nameDir_;
+    MetadataStore metadata_;
+
+private:
+    void notifyMetadataChanged(const Metadata::Change& change);
+    std::recursive_mutex metadataChangeMutex_;
+    std::function<void()> metadataChanged_;
 };
 
 } // namespace jami
