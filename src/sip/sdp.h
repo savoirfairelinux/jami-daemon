@@ -219,6 +219,9 @@ public:
     static std::vector<MediaAttribute> getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession,
                                                                     bool ignoreDisabled = false);
 
+    // Validate effective DTLS attributes, including media-level overrides (RFC 8122/5763).
+    static bool validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection direction = SdpDirection::NONE);
+
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
 
