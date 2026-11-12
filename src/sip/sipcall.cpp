@@ -1641,7 +1641,11 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     // Create the SDP answer
     setRtcpMuxEnabled(account->isRtcpMuxEnabled() && remoteOfferSupportsRtcpMux());
     setBundleEnabled(accountSupportsBundle(account) && remoteOfferSupportsBundle());
-    sdp_->processIncomingOffer(mediaAttrList);
+    if (inviteSession_->neg && not sdp_->processIncomingOffer(mediaAttrList)) {
+        JAMI_WARNING("[call:{}] Unable to answer incoming SDP offer", getCallId());
+        hangup(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+        return;
+    }
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
         setupIceResponse();

@@ -19,8 +19,11 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <array>
 #include <condition_variable>
 #include <string>
+
+#include <pj/sock_select.h>
 
 #include "callmanager_interface.h"
 #include "manager.h"
@@ -97,6 +100,7 @@ private:
     void tls_cipher_list_with_separators();
     void audio_only_test();
     void audio_video_test();
+    void rejects_unsafe_rtcp_mux_offer();
     void peer_answer_with_all_media_disabled();
     void hold_resume_test();
     void blind_transfer_test();
@@ -105,6 +109,7 @@ private:
     CPPUNIT_TEST(tls_cipher_list_with_separators);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
+    CPPUNIT_TEST(rejects_unsafe_rtcp_mux_offer);
     // Test when the peer answers with all the media disabled (RTP port = 0)
     CPPUNIT_TEST(peer_answer_with_all_media_disabled);
     CPPUNIT_TEST(hold_resume_test);
@@ -432,6 +437,83 @@ SipBasicCallTest::configureTest()
         }));
 
     libjami::registerSignalHandlers(signalHandlers);
+}
+
+void
+SipBasicCallTest::rejects_unsafe_rtcp_mux_offer()
+{
+    configureTest();
+    auto& bob = callDataMap_.at("BOB");
+    const auto account = Manager::instance().getAccount<SIPAccount>(bob.accountId_);
+    CPPUNIT_ASSERT(account && account->isRtcpMuxEnabled());
+
+    struct PeerSocket {
+        pj_sock_t fd {PJ_INVALID_SOCKET};
+        ~PeerSocket()
+        {
+            if (fd != PJ_INVALID_SOCKET)
+                pj_sock_close(fd);
+        }
+    } peer;
+    CPPUNIT_ASSERT(pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &peer.fd) == PJ_SUCCESS);
+    char loopbackAddress[] = "127.0.0.1";
+    auto loopback = pj_str(loopbackAddress);
+    pj_sockaddr_in local {}, remote {};
+    CPPUNIT_ASSERT(pj_sockaddr_in_init(&local, &loopback, 0) == PJ_SUCCESS);
+    CPPUNIT_ASSERT(pj_sock_bind(peer.fd, &local, sizeof(local)) == PJ_SUCCESS);
+    CPPUNIT_ASSERT(pj_sockaddr_in_init(&remote, &loopback, bob.listeningPort_) == PJ_SUCCESS);
+    CPPUNIT_ASSERT(pj_sock_connect(peer.fd, &remote, sizeof(remote)) == PJ_SUCCESS);
+    int localSize = sizeof(local);
+    CPPUNIT_ASSERT(pj_sock_getsockname(peer.fd, &local, &localSize) == PJ_SUCCESS);
+
+    const auto peerPort = pj_ntohs(local.sin_port);
+    const auto target = fmt::format("sip:{}@127.0.0.1:{}", bob.userName_, bob.listeningPort_);
+    const auto sdp = fmt::format("v=0\r\n"
+                                 "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                 "s=-\r\n"
+                                 "c=IN IP4 127.0.0.1\r\n"
+                                 "t=0 0\r\n"
+                                 "m=audio {} RTP/AVP 77\r\n"
+                                 "a=rtpmap:77 opus/48000/2\r\n"
+                                 "a=rtcp-mux\r\n",
+                                 peerPort);
+    const auto invite = fmt::format("INVITE {} SIP/2.0\r\n"
+                                    "Via: SIP/2.0/UDP 127.0.0.1:{};branch=z9hG4bK-rtcp-mux;rport\r\n"
+                                    "From: <sip:peer@127.0.0.1>;tag=rtcp-mux\r\n"
+                                    "To: <{}>\r\n"
+                                    "Call-ID: rtcp-mux-rejection@localhost\r\n"
+                                    "CSeq: 1 INVITE\r\n"
+                                    "Max-Forwards: 70\r\n"
+                                    "Contact: <sip:peer@127.0.0.1:{}>\r\n"
+                                    "Content-Type: application/sdp\r\n"
+                                    "Content-Length: {}\r\n\r\n{}",
+                                    target, peerPort, target, peerPort, sdp.size(), sdp);
+    auto size = static_cast<pj_ssize_t>(invite.size());
+    CPPUNIT_ASSERT(pj_sock_send(peer.fd, invite.data(), &size, 0) == PJ_SUCCESS);
+    CPPUNIT_ASSERT(waitForSignal(bob, libjami::CallSignal::IncomingCall::name));
+    CPPUNIT_ASSERT(libjami::accept(bob.accountId_, bob.callId_));
+
+    std::string response;
+    for (unsigned i = 0; i < 4; ++i) {
+        pj_fd_set_t readable;
+        PJ_FD_ZERO(&readable);
+        PJ_FD_SET(peer.fd, &readable);
+        const pj_time_val timeout {2, 0};
+        CPPUNIT_ASSERT(pj_sock_select(static_cast<int>(peer.fd) + 1, &readable, nullptr, nullptr, &timeout) == 1);
+        std::array<char, 2048> packet {};
+        size = packet.size();
+        CPPUNIT_ASSERT(pj_sock_recv(peer.fd, packet.data(), &size, 0) == PJ_SUCCESS);
+        response.assign(packet.data(), size);
+        if (!response.starts_with("SIP/2.0 1"))
+            break;
+    }
+
+    CPPUNIT_ASSERT_MESSAGE(response, response.starts_with("SIP/2.0 488 "));
+    CPPUNIT_ASSERT(waitForSignal(bob, libjami::CallSignal::StateChange::name, StateEvent::OVER));
+    const std::lock_guard lock {bob.mtx_};
+    CPPUNIT_ASSERT(std::none_of(bob.signals_.begin(), bob.signals_.end(), [](const auto& signal) {
+        return signal.name_ == libjami::CallSignal::StateChange::name && signal.event_ == StateEvent::CURRENT;
+    }));
 }
 
 void

@@ -1157,7 +1157,9 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     auto& sdp = call->getSDP();
     if (not Sdp::validateDtlsAttributes(remoteSDP,
                                         sdp.getSdpDirection() == SdpDirection::OFFER ? SdpDirection::ANSWER
-                                                                                     : SdpDirection::OFFER)) {
+                                                                                     : SdpDirection::OFFER)
+        || not Sdp::validateRtcpMuxPayloadTypes(localSDP, remoteSDP)
+        || not Sdp::validateRtcpMuxPayloadTypes(remoteSDP, localSDP)) {
         call->hangup(PJSIP_SC_NOT_ACCEPTABLE_HERE);
         return;
     }

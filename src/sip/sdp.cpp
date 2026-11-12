@@ -645,6 +645,36 @@ hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
 } // namespace
 
 bool
+Sdp::validateRtcpMuxPayloadTypes(const pjmedia_sdp_session* session, const pjmedia_sdp_session* peer)
+{
+    if (not session)
+        return true;
+
+    const auto usesRtcpMux = [](const pjmedia_sdp_media* media) {
+        return hasRtcpMuxAttribute(media)
+               && (media->desc.port != 0
+                   || pjmedia_sdp_attr_find2(media->attr_count, media->attr, "bundle-only", nullptr));
+    };
+
+    for (unsigned i = 0; i < session->media_count; ++i) {
+        const auto* media = session->media[i];
+        if (pj_stricmp2(&media->desc.media, "audio") != 0 && pj_stricmp2(&media->desc.media, "video") != 0)
+            continue;
+        if (not usesRtcpMux(media) || (peer && (i >= peer->media_count || not usesRtcpMux(peer->media[i]))))
+            continue;
+
+        for (unsigned j = 0; j < media->desc.fmt_count; ++j) {
+            const auto payloadType = pj_strtoul(&media->desc.fmt[j]);
+            if (payloadType >= 64 && payloadType <= 95) {
+                JAMI_ERROR("Media#{} uses RTP payload type {} forbidden with rtcp-mux (RFC 5761)", i, payloadType);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool
 Sdp::validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection direction)
 {
     return validateDtlsAttributes(session, direction, nullptr);
@@ -1424,6 +1454,8 @@ Sdp::createLocalSession(SdpDirection direction)
 int
 Sdp::validateSession() const
 {
+    if (not validateRtcpMuxPayloadTypes(localSession_))
+        return PJ_EINVAL;
     return pjmedia_sdp_validate(localSession_);
 }
 
@@ -1497,7 +1529,7 @@ parseExternalSdp(pj_pool_t* pool, const std::string& sdp, SdpDirection direction
         JAMI_ERROR("Invalid external SDP session");
         return nullptr;
     }
-    if (not Sdp::validateDtlsAttributes(session, direction))
+    if (not Sdp::validateDtlsAttributes(session, direction) || not Sdp::validateRtcpMuxPayloadTypes(session))
         return nullptr;
     return session;
 }
@@ -1687,6 +1719,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 
     printSession(localSession_, "Local session:\n", sdpDirection_);
 
+    if (not validateRtcpMuxPayloadTypes(remoteSession_, localSession_))
+        return false;
+
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERROR("Failed to add medias");
         return false;
@@ -1711,8 +1746,8 @@ Sdp::startNegotiation()
         return false;
     }
 
-    const pjmedia_sdp_session* active_local;
-    const pjmedia_sdp_session* active_remote;
+    const pjmedia_sdp_session* active_local {};
+    const pjmedia_sdp_session* active_remote {};
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
         JAMI_WARNING("Negotiator not in right state for negotiation");
@@ -1724,13 +1759,9 @@ Sdp::startNegotiation()
         return false;
     }
 
-    if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
+    if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS or active_local == nullptr) {
         JAMI_ERROR("Unable to retrieve local active session");
-
-    setActiveLocalSdpSession(active_local);
-
-    if (active_local != nullptr) {
-        printSession(active_local, "Local active session:", sdpDirection_);
+        return false;
     }
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS or active_remote == nullptr) {
@@ -1740,11 +1771,15 @@ Sdp::startNegotiation()
 
     if (not validateDtlsAttributes(active_remote,
                                    sdpDirection_ == SdpDirection::OFFER ? SdpDirection::ANSWER : SdpDirection::OFFER,
-                                   sdpDirection_ == SdpDirection::OFFER ? active_remote : active_local))
+                                   sdpDirection_ == SdpDirection::OFFER ? active_remote : active_local)
+        || not validateRtcpMuxPayloadTypes(active_local, active_remote)
+        || not validateRtcpMuxPayloadTypes(active_remote, active_local))
         return false;
 
+    setActiveLocalSdpSession(active_local);
     setActiveRemoteSdpSession(active_remote);
 
+    printSession(active_local, "Local active session:", sdpDirection_);
     printSession(active_remote, "Remote active session:", sdpDirection_);
 
     return true;
