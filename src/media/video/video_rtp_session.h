@@ -95,9 +95,10 @@ public:
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
     void setLegacyRembEnabled(bool enabled) { legacyRembEnabled_.store(enabled); }
 
-    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+               std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+               std::stop_token stopToken = {}) override;
     void restartSender() override;
-    void stop() override;
     void setMuted(bool mute, Direction dir = Direction::SEND) override;
 
     // Later asynchronous decoder failures are reported by setStartupFailureCb.
@@ -140,6 +141,8 @@ public:
 
 private:
     friend class test::CongestionControlTest;
+
+    void stopSession() override;
 
     void enterConferenceLocked(Conference& conference, std::shared_ptr<Conference>& previousOwner);
     void exitConferenceLocked(std::shared_ptr<Conference>& previousOwner);
