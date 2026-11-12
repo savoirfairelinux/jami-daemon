@@ -27,10 +27,12 @@
 #include "media/transport_cc.h"
 
 #include <dhtnet/ice_socket.h>
+#include <opendht/thread_pool.h>
 
 #include <string>
 #include <algorithm>
 #include <chrono>
+#include <future>
 #include <optional>
 #include <string_view>
 #include <thread>
@@ -560,11 +562,13 @@ struct SocketPair::BundleContext
 {
     BundleContext(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
                   std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
-                  bool rtcpMux)
+                  bool rtcpMux,
+                  std::stop_token transportStop)
         : rtp_sock_(std::move(rtp_sock))
         , rtcp_sock_(std::move(rtcp_sock))
         , rtcpMux_(rtcpMux)
         , transportCcState_(std::make_shared<TransportCcState>())
+        , dtlsStopToken_(transportStop)
     {}
 
     ~BundleContext()
@@ -730,10 +734,13 @@ struct SocketPair::BundleContext
     std::mutex subscribersMutex_;
     std::vector<std::weak_ptr<PacketState>> subscribers_;
     std::shared_ptr<TransportCcState> transportCcState_;
-    // DTLS-SRTP keying material negotiated once on the shared bundle
-    // transport. dtlsMutex_ also serializes the handshake itself so a single
-    // DTLS association runs per transport.
+    // The transport owns negotiation; individual streams only wait for it.
     std::mutex dtlsMutex_;
+    std::condition_variable_any dtlsCv_;
+    const std::stop_token dtlsStopToken_;
+    bool dtlsStarted_ {false};
+    std::shared_future<void> dtlsDone_;
+    std::exception_ptr dtlsError_;
     std::optional<DtlsSrtpContext> dtlsSrtpContext_;
 };
 
@@ -808,9 +815,13 @@ std::shared_ptr<SocketPair::BundleContext>
 SocketPair::createBundleContext(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
                                 std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
                                 bool rtcpMux,
-                                bool installReceiveCallbacks)
+                                bool installReceiveCallbacks,
+                                std::stop_token transportStop)
 {
-    auto bundleContext = std::make_shared<BundleContext>(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux);
+    auto bundleContext = std::make_shared<BundleContext>(std::move(rtp_sock),
+                                                         std::move(rtcp_sock),
+                                                         rtcpMux,
+                                                         transportStop);
 
     JAMI_LOG("[{}] Creating shared ICE socket context for comp {} and {} (rtcp-mux={})",
              fmt::ptr(bundleContext.get()),
@@ -830,43 +841,103 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
                                     std::string_view remoteFingerprint,
                                     const std::shared_ptr<dht::crypto::Certificate>& certificate,
                                     const std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
-                                    const std::shared_ptr<std::atomic_bool>& abort)
+                                    std::stop_token stopToken)
 {
     if (!bundleContext)
         throw std::runtime_error("No bundle context for DTLS-SRTP");
 
-    std::lock_guard lk(bundleContext->dtlsMutex_);
-    if (bundleContext->dtlsSrtpContext_)
-        return *bundleContext->dtlsSrtpContext_;
+    std::stop_source cancelled;
+    std::stop_callback callerCancelled(stopToken, [&] { cancelled.request_stop(); });
+    std::stop_callback transportCancelled(bundleContext->dtlsStopToken_, [&] { cancelled.request_stop(); });
+    std::unique_lock lk(bundleContext->dtlsMutex_);
+    if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
+        throw DtlsCancelled {};
 
-    // The handshake owns the shared ICE socket receive callback; the bundle
-    // demultiplexer takes over once the handshake completed (RFC 5764
-    // requires a single DTLS association per transport).
-    auto dtlsContext = negotiateDtlsSrtp(*bundleContext->rtp_sock_,
-                                         localSetup,
-                                         remoteFingerprintType,
-                                         remoteFingerprint,
-                                         certificate,
-                                         privateKey,
-                                         abort);
-    bundleContext->installCallbacks(bundleContext);
-    bundleContext->dtlsSrtpContext_ = dtlsContext;
-    return dtlsContext;
+    if (!bundleContext->dtlsStarted_ && !bundleContext->dtlsSrtpContext_) {
+        bundleContext->dtlsStarted_ = true;
+        auto done = std::make_shared<std::promise<void>>();
+        bundleContext->dtlsDone_ = done->get_future().share();
+        dht::ThreadPool::io().run([bundleContext = bundleContext,
+                                   done,
+                                   localSetup,
+                                   hash = std::string(remoteFingerprintType),
+                                   fingerprint = std::string(remoteFingerprint),
+                                   certificate,
+                                   privateKey]() mutable {
+            try {
+                if (!bundleContext->rtp_sock_)
+                    throw std::runtime_error("No ICE socket for bundled DTLS-SRTP");
+                auto context = negotiateDtlsSrtp(*bundleContext->rtp_sock_,
+                                                 localSetup,
+                                                 hash,
+                                                 fingerprint,
+                                                 certificate,
+                                                 privateKey,
+                                                 bundleContext->dtlsStopToken_);
+                std::lock_guard lock(bundleContext->dtlsMutex_);
+                if (bundleContext->dtlsStopToken_.stop_requested())
+                    throw DtlsCancelled {};
+                bundleContext->installCallbacks(bundleContext);
+                bundleContext->dtlsSrtpContext_ = std::move(context);
+            } catch (...) {
+                std::lock_guard lock(bundleContext->dtlsMutex_);
+                bundleContext->dtlsError_ = std::current_exception();
+            }
+            bundleContext->dtlsCv_.notify_all();
+            bundleContext.reset();
+            done->set_value();
+        });
+    }
+
+    bundleContext->dtlsCv_.wait(lk, cancelled.get_token(), [&] {
+        return bundleContext->dtlsSrtpContext_.has_value() || bundleContext->dtlsError_;
+    });
+    if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
+        throw DtlsCancelled {};
+    if (bundleContext->dtlsError_)
+        std::rethrow_exception(bundleContext->dtlsError_);
+    return *bundleContext->dtlsSrtpContext_;
 }
 
 void
 SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
-                                 const DtlsSrtpContext& context)
+                                 const DtlsSrtpContext& context,
+                                 std::stop_token stopToken)
 {
     if (!bundleContext)
         throw std::runtime_error("No bundle context for DTLS-SRTP");
 
-    std::lock_guard lk(bundleContext->dtlsMutex_);
+    std::stop_source cancelled;
+    std::stop_callback callerCancelled(stopToken, [&] { cancelled.request_stop(); });
+    std::stop_callback transportCancelled(bundleContext->dtlsStopToken_, [&] { cancelled.request_stop(); });
+    std::unique_lock lk(bundleContext->dtlsMutex_);
+    bundleContext->dtlsCv_.wait(lk, cancelled.get_token(), [&] {
+        return !bundleContext->dtlsStarted_ || bundleContext->dtlsSrtpContext_ || bundleContext->dtlsError_;
+    });
+    if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
+        throw DtlsCancelled {};
+    if (bundleContext->dtlsError_)
+        std::rethrow_exception(bundleContext->dtlsError_);
     if (bundleContext->dtlsSrtpContext_)
         return;
 
     bundleContext->dtlsSrtpContext_ = context;
     bundleContext->installCallbacks(bundleContext);
+    bundleContext->dtlsCv_.notify_all();
+}
+
+void
+SocketPair::joinBundleDtls(const std::shared_ptr<BundleContext>& bundleContext)
+{
+    if (!bundleContext)
+        return;
+    std::shared_future<void> done;
+    {
+        std::lock_guard lock(bundleContext->dtlsMutex_);
+        done = bundleContext->dtlsDone_;
+    }
+    if (done.valid())
+        done.get();
 }
 
 SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
