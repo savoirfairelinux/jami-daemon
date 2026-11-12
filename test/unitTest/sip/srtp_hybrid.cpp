@@ -18,6 +18,9 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <tuple>
+#include <utility>
+
 #include "jami.h"
 #include "manager.h"
 #include "sip/sdp.h"
@@ -86,6 +89,20 @@ parseSdp(pj_pool_t* pool, const std::string& rawSdp)
     return session;
 }
 
+std::string
+dtlsSdp(std::string_view sessionAttributes, std::string_view mediaAttributes)
+{
+    return "v=0\r\n"
+           "o=- 0 0 IN IP4 127.0.0.1\r\n"
+           "s=-\r\n"
+           "c=IN IP4 127.0.0.1\r\n"
+           "t=0 0\r\n"
+           + std::string(sessionAttributes)
+           + "m=audio 5004 UDP/TLS/RTP/SAVPF 0\r\n"
+             "a=rtpmap:0 PCMU/8000\r\n"
+           + std::string(mediaAttributes);
+}
+
 } // namespace
 
 /**
@@ -137,6 +154,9 @@ private:
     void offererMatchesReleaseSelectedSdesSuite();
     void legacyFallbackOfferUsesReleaseCryptoTag();
     void offerAdvertisesSdesWithDefaultKeyExchange();
+    void rejectsMalformedDtlsAttributes();
+    void dtlsAttributesRespectMediaOverrides();
+    void validatesDtlsHashesAndAnswerRoles();
 
     CPPUNIT_TEST_SUITE(SrtpHybridSdpTest);
     CPPUNIT_TEST(offerAdvertisesHybridSdesAndDtls);
@@ -147,6 +167,9 @@ private:
     CPPUNIT_TEST(offererMatchesReleaseSelectedSdesSuite);
     CPPUNIT_TEST(legacyFallbackOfferUsesReleaseCryptoTag);
     CPPUNIT_TEST(offerAdvertisesSdesWithDefaultKeyExchange);
+    CPPUNIT_TEST(rejectsMalformedDtlsAttributes);
+    CPPUNIT_TEST(dtlsAttributesRespectMediaOverrides);
+    CPPUNIT_TEST(validatesDtlsHashesAndAnswerRoles);
     CPPUNIT_TEST_SUITE_END();
 
     void configureSdp(Sdp& sdp, bool withDtlsIdentity)
@@ -164,6 +187,109 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SrtpHybridSdpTest, SrtpHybridSdpTest::name());
+
+void
+SrtpHybridSdpTest::rejectsMalformedDtlsAttributes()
+{
+    const auto fingerprint = "a=fingerprint:SHA-256 " + std::string(TEST_FINGERPRINT) + "\r\n";
+    for (const auto& attributes : {
+             std::string("a=setup:actpass\r\n"),
+             fingerprint,
+             fingerprint + "a=setup:invalid\r\n",
+             fingerprint + "a=setup:holdconn\r\n",
+             fingerprint + "a=setup:active\r\na=setup:passive\r\n",
+             std::string("a=fingerprint:unknown AA:BB\r\na=setup:actpass\r\n"),
+             std::string("a=fingerprint:SHA-256\r\na=setup:actpass\r\n"),
+             std::string("a=fingerprint:SHA-256 AA:BB\r\na=setup:actpass\r\n"),
+             std::string("a=fingerprint:SHA-256 ZZ") + std::string(TEST_FINGERPRINT.substr(2))
+                 + "\r\na=setup:actpass\r\n",
+             std::string("a=fingerprint:SHA-256 ab") + std::string(TEST_FINGERPRINT.substr(2))
+                 + "\r\na=setup:actpass\r\n",
+             std::string("a=fingerprint:SHA-256 AB-") + std::string(TEST_FINGERPRINT.substr(3))
+                 + "\r\na=setup:actpass\r\n",
+             std::string("a=fingerprint:SHA-256 ") + std::string(TEST_FINGERPRINT) + ":\r\na=setup:actpass\r\n",
+             std::string("a=fingerprint:SHA-256  ") + std::string(TEST_FINGERPRINT) + "\r\na=setup:actpass\r\n",
+         }) {
+        Sdp sdp("invalid-dtls");
+        configureSdp(sdp, true);
+        auto pool = makePool("invalid-dtls");
+        const auto raw = dtlsSdp({}, attributes);
+        auto* session = parseSdp(pool.get(), raw);
+        CPPUNIT_ASSERT(session);
+        CPPUNIT_ASSERT(not Sdp::validateDtlsAttributes(session));
+        CPPUNIT_ASSERT(Sdp::getMediaAttributeListFromSdp(session).empty());
+        sdp.setReceivedOffer(session);
+        MediaAttribute audio(MediaType::MEDIA_AUDIO);
+        audio.enabled_ = true;
+        CPPUNIT_ASSERT(not sdp.processIncomingOffer({audio}));
+        CPPUNIT_ASSERT(not sdp.setReceivedOfferFromExternalSdp(raw));
+    }
+}
+
+void
+SrtpHybridSdpTest::dtlsAttributesRespectMediaOverrides()
+{
+    const auto fingerprint = "a=fingerprint:SHA-256 " + std::string(TEST_FINGERPRINT) + "\r\n";
+    const auto inherited = fingerprint + "a=setup:actpass\r\n";
+    auto pool = makePool("dtls-overrides");
+    for (const auto& [sessionAttributes, mediaAttributes, valid] : {
+             std::tuple {inherited, std::string {}, true},
+             std::tuple {inherited, std::string("a=setup:passive\r\n"), true},
+             std::tuple {std::string("a=fingerprint:invalid\r\na=setup:invalid\r\n"), inherited, true},
+             std::tuple {inherited, std::string("a=setup:invalid\r\n"), false},
+             std::tuple {inherited, std::string("a=setup:\r\n"), false},
+             std::tuple {inherited, std::string("a=fingerprint:SHA-256 AA:BB\r\n"), false},
+             std::tuple {inherited, std::string("a=fingerprint:\r\n"), false},
+         }) {
+        const auto raw = dtlsSdp(sessionAttributes, mediaAttributes);
+        auto* session = parseSdp(pool.get(), raw);
+        CPPUNIT_ASSERT(session);
+        CPPUNIT_ASSERT_EQUAL(valid, Sdp::validateDtlsAttributes(session));
+        const auto media = Sdp::getMediaAttributeListFromSdp(session);
+        CPPUNIT_ASSERT_EQUAL(valid, not media.empty());
+        if (valid)
+            CPPUNIT_ASSERT(media.front().secure_);
+    }
+}
+
+void
+SrtpHybridSdpTest::validatesDtlsHashesAndAnswerRoles()
+{
+    auto pool = makePool("dtls-hashes");
+    for (const auto& [hash, size] :
+         {std::pair {"sHa-1", 20u}, std::pair {"sha-256", 32u}, std::pair {"SHA-384", 48u}, std::pair {"SHA-512", 64u}}) {
+        std::string fingerprint = "AB";
+        for (unsigned i = 1; i < size; ++i)
+            fingerprint += ":CD";
+        for (const auto* role : {"active", "passive", "actpass", "ACTIVE", "PaSsIvE"}) {
+            const auto attributes = "a=fingerprint:" + std::string(hash) + " " + fingerprint + "\r\na=setup:" + role
+                                    + "\r\n";
+            const auto raw = dtlsSdp({}, attributes);
+            auto* session = parseSdp(pool.get(), raw);
+            CPPUNIT_ASSERT(session);
+            CPPUNIT_ASSERT(Sdp::validateDtlsAttributes(session, SdpDirection::OFFER));
+            CPPUNIT_ASSERT_EQUAL(std::string_view(role) != "actpass",
+                                 Sdp::validateDtlsAttributes(session, SdpDirection::ANSWER));
+            const auto media = Sdp::getMediaAttributeListFromSdp(session);
+            CPPUNIT_ASSERT_EQUAL(size_t(1), media.size());
+            CPPUNIT_ASSERT(media.front().secure_);
+        }
+    }
+
+    Sdp sdp("dtls-alternative-fingerprints");
+    configureSdp(sdp, true);
+    const auto fingerprint = std::string(TEST_FINGERPRINT) + ":" + std::string(TEST_FINGERPRINT);
+    const auto raw = dtlsSdp({},
+                             "a=fingerprint:unknown AA:BB\r\na=fingerprint:sha-256 " + std::string(TEST_FINGERPRINT)
+                                 + "\r\na=fingerprint:SHA-512 " + fingerprint + "\r\na=setup:actpass\r\n");
+    auto* session = parseSdp(pool.get(), raw);
+    CPPUNIT_ASSERT(session);
+    CPPUNIT_ASSERT(Sdp::validateDtlsAttributes(session));
+    const auto media = sdp.getMediaDescriptions(session, true);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), media.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("SHA-512"), media.front().dtls_fingerprint_type);
+    CPPUNIT_ASSERT_EQUAL(fingerprint, media.front().dtls_fingerprint);
+}
 
 void
 SrtpHybridSdpTest::offerAdvertisesHybridSdesAndDtls()

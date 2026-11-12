@@ -1,5 +1,7 @@
 #include "dtls_srtp.h"
 
+#include <gnutls/crypto.h>
+
 #include "base64.h"
 #include "fileutils.h"
 #include "logger.h"
@@ -305,6 +307,13 @@ getDtlsFingerprint(const dht::crypto::Certificate& certificate, std::string_view
     if (digest == GNUTLS_DIG_UNKNOWN)
         throw std::runtime_error("Unsupported DTLS fingerprint hash");
     return formatFingerprint(certificate.cert, digest);
+}
+
+size_t
+getDtlsFingerprintHashSize(std::string_view hash)
+{
+    const auto digest = parseDigest(hash);
+    return digest == GNUTLS_DIG_UNKNOWN ? 0 : gnutls_hash_get_len(digest);
 }
 
 bool
