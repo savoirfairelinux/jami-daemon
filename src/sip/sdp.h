@@ -224,6 +224,9 @@ public:
     static bool validateDtlsAttributes(const pjmedia_sdp_session* session,
                                        SdpDirection direction = SdpDirection::NONE);
 
+    // RFC 5761 section 4 forbids RTP payload types 64-95 with rtcp-mux.
+    static bool validateRtcpMuxPayloadTypes(const pjmedia_sdp_session* session);
+
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
 
