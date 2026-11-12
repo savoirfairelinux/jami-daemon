@@ -352,6 +352,44 @@ hasBundleGroup(const pjmedia_sdp_session* session)
     return false;
 }
 
+std::vector<std::string_view>
+getBundleMids(const pjmedia_sdp_session* session, std::string_view mid = {})
+{
+    if (not session)
+        return {};
+    for (unsigned i = 0; i < session->attr_count; ++i) {
+        const auto* attr = session->attr[i];
+        if (not attr || pj_stricmp2(&attr->name, "group") != 0)
+            continue;
+        const std::string_view value(attr->value.ptr, attr->value.slen);
+        if (not value.starts_with("BUNDLE "))
+            continue;
+        auto mids = split_string(value.substr(7));
+        if (mid.empty() || std::find(mids.begin(), mids.end(), mid) != mids.end())
+            return mids;
+    }
+    return {};
+}
+
+std::optional<unsigned>
+getBundleDtlsMediaIndex(const pjmedia_sdp_session* session,
+                        unsigned mediaIndex,
+                        const pjmedia_sdp_session* bundleSession = nullptr)
+{
+    const auto mid = getMidValue(session->media[mediaIndex]);
+    if (mid.empty())
+        return mediaIndex;
+    const auto mids = getBundleMids(bundleSession ? bundleSession : session, mid);
+    if (mids.empty())
+        return mediaIndex;
+    for (unsigned i = 0; i < session->media_count; ++i) {
+        if (getMidValue(session->media[i]) == mids.front() && session->media[i]->desc.port != 0)
+            return i;
+    }
+    JAMI_ERROR("BUNDLE tag {} does not identify an active media section", mids.front());
+    return std::nullopt;
+}
+
 unsigned
 findExtmapId(unsigned attrCount, pjmedia_sdp_attr* const* attrs, std::string_view uri)
 {
@@ -621,6 +659,14 @@ hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
 bool
 Sdp::validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection direction)
 {
+    return validateDtlsAttributes(session, direction, nullptr);
+}
+
+bool
+Sdp::validateDtlsAttributes(const pjmedia_sdp_session* session,
+                            SdpDirection direction,
+                            const pjmedia_sdp_session* negotiatedAnswer)
+{
     if (not session)
         return true;
 
@@ -631,20 +677,29 @@ Sdp::validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection dir
         if (media->desc.port == 0 && not pjmedia_sdp_attr_find2(media->attr_count, media->attr, "bundle-only", nullptr))
             continue;
 
-        const auto hasFingerprint = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fingerprint", nullptr)
-                                    || pjmedia_sdp_attr_find2(session->attr_count,
-                                                              session->attr,
-                                                              "fingerprint",
-                                                              nullptr);
+        auto securityIndex = getBundleDtlsMediaIndex(session, i, negotiatedAnswer);
+        if (not securityIndex)
+            return false;
+        // Initial offers may propose different transports (RFC 9143 7.1.3).
+        // Validate explicit alternatives without requiring them to match.
+        if (not negotiatedAnswer && direction == SdpDirection::OFFER
+            && not pjmedia_sdp_attr_find2(media->attr_count, media->attr, "bundle-only", nullptr)
+            && (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fingerprint", nullptr)
+                || pjmedia_sdp_attr_find2(media->attr_count, media->attr, "setup", nullptr)))
+            securityIndex = i;
+        const auto* securityMedia = session->media[*securityIndex];
+        const auto hasFingerprint
+            = pjmedia_sdp_attr_find2(securityMedia->attr_count, securityMedia->attr, "fingerprint", nullptr)
+              || pjmedia_sdp_attr_find2(session->attr_count, session->attr, "fingerprint", nullptr);
         if (not isDtlsTransport(getMediaTransport(media)) && not hasFingerprint)
             continue;
 
-        if (getDtlsFingerprint(session, i).second.empty()) {
+        if (getDtlsFingerprint(session, *securityIndex).second.empty()) {
             JAMI_ERROR("Media#{} has a missing, malformed or unsupported DTLS fingerprint", i);
             return false;
         }
 
-        const auto setup = getDtlsSetup(session, i);
+        const auto setup = getDtlsSetup(session, *securityIndex);
         if (setup == DtlsSetup::NONE || (direction == SdpDirection::ANSWER && setup == DtlsSetup::ACTPASS)) {
             JAMI_ERROR("Media#{} has a missing or invalid DTLS setup role", i);
             return false;
@@ -1164,16 +1219,27 @@ Sdp::addBundleGroupAttribute()
         return;
 
     std::string mids {"BUNDLE"};
-    for (unsigned i = 0; i < localSession_->media_count; ++i) {
-        auto* media = localSession_->media[i];
-        if (media->desc.port == 0)
-            continue;
-        auto* midAttr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "mid", nullptr);
-        if (!midAttr)
-            continue;
-
-        mids.append(" ");
-        mids.append(midAttr->value.ptr, midAttr->value.slen);
+    if (answerToBundle) {
+        // Select the first accepted offered tag, not the first SDP m-line.
+        for (const auto mid : getBundleMids(remoteSession_)) {
+            for (unsigned i = 0; i < localSession_->media_count; ++i) {
+                const auto* media = localSession_->media[i];
+                if (media->desc.port != 0 && getMidValue(media) == mid) {
+                    mids.append(" ");
+                    mids.append(mid);
+                    break;
+                }
+            }
+        }
+    } else {
+        for (unsigned i = 0; i < localSession_->media_count; ++i) {
+            const auto* media = localSession_->media[i];
+            const auto mid = getMidValue(media);
+            if (media->desc.port != 0 && not mid.empty()) {
+                mids.append(" ");
+                mids.append(mid);
+            }
+        }
     }
 
     if (mids == "BUNDLE")
@@ -1557,17 +1623,21 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 
         const auto localTransport = getMediaTransport(localMedia);
         const auto remoteTransport = getMediaTransport(remoteMedia);
+        const auto securityIndex = getBundleDtlsMediaIndex(remoteSession_, i, localSession_);
+        if (not securityIndex)
+            return false;
 
         if (localTransport == MediaTransport::RTP_SAVP) {
             // Prefer DTLS-SRTP when a hybrid offer (RFC 5764 4.1) carries a
             // fingerprint and we have a DTLS identity of our own.
-            const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
+            const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, *securityIndex);
             if (not localDtlsFingerprint_.empty() and not remoteFingerprint.second.empty()) {
                 // The answer must echo the offered transport (RFC 3264 6.),
                 // e.g. UDP/TLS/RTP/SAVPF when offered by a WebRTC endpoint.
                 pj_strdup(memPool_.get(), &localMedia->desc.transport, &remoteMedia->desc.transport);
                 addDtlsAttributes(localMedia,
-                                  negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
+                                  negotiateLocalDtlsSetup(DtlsSetup::ACTPASS,
+                                                          getDtlsSetup(remoteSession_, *securityIndex)));
                 continue;
             }
 
@@ -1582,11 +1652,25 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         if (not isDtlsTransport(localTransport) || not isDtlsTransport(remoteTransport))
             continue;
 
-        const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, i);
+        const auto remoteFingerprint = getDtlsFingerprint(remoteSession_, *securityIndex);
         if (remoteFingerprint.second.empty())
             continue;
 
-        addDtlsAttributes(localMedia, negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, i)));
+        addDtlsAttributes(localMedia,
+                          negotiateLocalDtlsSetup(DtlsSetup::ACTPASS, getDtlsSetup(remoteSession_, *securityIndex)));
+    }
+
+    // Answers carry DTLS transport attributes only on the selected tag.
+    for (unsigned i = 0; i < localSession_->media_count; ++i) {
+        if (localSession_->media[i]->desc.port == 0)
+            continue;
+        const auto securityIndex = getBundleDtlsMediaIndex(localSession_, i);
+        if (not securityIndex)
+            return false;
+        if (*securityIndex != i) {
+            pjmedia_sdp_media_remove_all_attr(localSession_->media[i], "fingerprint");
+            pjmedia_sdp_media_remove_all_attr(localSession_->media[i], "setup");
+        }
     }
 
     printSession(localSession_, "Local session:\n", sdpDirection_);
@@ -1643,7 +1727,8 @@ Sdp::startNegotiation()
     }
 
     if (not validateDtlsAttributes(active_remote,
-                                   sdpDirection_ == SdpDirection::OFFER ? SdpDirection::ANSWER : SdpDirection::OFFER))
+                                   sdpDirection_ == SdpDirection::OFFER ? SdpDirection::ANSWER : SdpDirection::OFFER,
+                                   sdpDirection_ == SdpDirection::OFFER ? active_remote : active_local))
         return false;
 
     setActiveRemoteSdpSession(active_remote);
@@ -1861,27 +1946,41 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
 
+        // The answer selects the offer's authoritative transport (RFC 9143).
+        const auto* bundleSession = session;
+        if (session == activeLocalSession_ || session == activeRemoteSession_)
+            bundleSession = sdpDirection_ == SdpDirection::OFFER ? activeRemoteSession_ : activeLocalSession_;
+        const auto securityIndex = getBundleDtlsMediaIndex(securitySession, i, bundleSession);
+        if (not securityIndex) {
+            descr.enabled = false;
+            continue;
+        }
         bool useDtls = isDtlsTransport(descr.transport);
-        if (not useDtls and not getDtlsFingerprint(securitySession, i).second.empty()) {
+        if (not useDtls and not getDtlsFingerprint(securitySession, *securityIndex).second.empty()) {
             // Hybrid SDES+DTLS m-line (RFC 5764 4.1): DTLS is in use when the
             // counterpart session also committed to it with a fingerprint.
             const auto* counterpart = remote ? (activeLocalSession_ ? activeLocalSession_ : localSession_)
                                              : activeRemoteSession_;
-            if (counterpart and i < counterpart->media_count)
-                useDtls = not getDtlsFingerprint(counterpart, i).second.empty();
-            else
+            if (counterpart and i < counterpart->media_count) {
+                const auto counterpartIndex = getBundleDtlsMediaIndex(counterpart, i, bundleSession);
+                useDtls = counterpartIndex && not getDtlsFingerprint(counterpart, *counterpartIndex).second.empty();
+            } else
                 useDtls = getCrypto(media).empty();
         }
 
         if (useDtls) {
             descr.key_exchange = KeyExchangeProtocol::DTLS;
-            auto [fingerprintType, fingerprint] = getDtlsFingerprint(securitySession, i);
+            auto [fingerprintType, fingerprint] = getDtlsFingerprint(securitySession, *securityIndex);
             descr.dtls_fingerprint_type = std::move(fingerprintType);
             descr.dtls_fingerprint = std::move(fingerprint);
-            descr.dtls_setup = getDtlsSetup(securitySession, i);
+            descr.dtls_setup = getDtlsSetup(securitySession, *securityIndex);
             if (not remote and session == activeLocalSession_ and activeRemoteSession_
                 and i < activeRemoteSession_->media_count) {
-                descr.dtls_setup = negotiateLocalDtlsSetup(descr.dtls_setup, getDtlsSetup(activeRemoteSession_, i));
+                const auto remoteIndex = getBundleDtlsMediaIndex(activeRemoteSession_, i, bundleSession);
+                descr.dtls_setup = remoteIndex
+                                       ? negotiateLocalDtlsSetup(descr.dtls_setup,
+                                                                 getDtlsSetup(activeRemoteSession_, *remoteIndex))
+                                       : DtlsSetup::NONE;
             }
             continue;
         }
@@ -2119,7 +2218,10 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
             JAMI_WARNING("Media#{} is unable to determine transport type!", idx);
         }
 
-        const auto dtlsFingerprint = getDtlsFingerprint(sdpSession, idx);
+        const auto securityIndex = getBundleDtlsMediaIndex(sdpSession, idx);
+        if (not securityIndex)
+            return {};
+        const auto dtlsFingerprint = getDtlsFingerprint(sdpSession, *securityIndex);
         mediaAttr.secure_ = (transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty())
                             || (isDtlsTransport(transp) and not dtlsFingerprint.second.empty());
 
