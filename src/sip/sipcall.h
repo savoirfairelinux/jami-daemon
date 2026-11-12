@@ -149,12 +149,12 @@ public:
     const std::string& externalSdp() const { return externalSdp_; }
 
     /**
-     * Report the raw remote SDP answer received on the wire for a call whose
-     * media is delegated to an external endpoint. This must be the verbatim
-     * peer answer: the pjmedia negotiator rewrites (and mangles) WebRTC codec
-     * lines, so the external endpoint must be given the untouched SDP.
+     * Report the first raw remote SDP answer in a provisional or successful
+     * final response to each external-media INVITE. Later SDP for the same
+     * CSeq is ignored (RFC 6337 section 3.1.1). The pjmedia negotiator rewrites
+     * WebRTC codec lines, so the endpoint must be given the untouched SDP.
      */
-    void reportExternalRemoteAnswer(std::string sdp);
+    void reportExternalRemoteAnswer(const pjsip_rx_data& rdata);
     bool promoteExternalMedia(const std::string& requestId, const std::shared_ptr<Conference>& conference = {});
     std::string getExternalMediaPromotionState() const;
     bool cancelExternalMediaPromotion(const std::string& requestId);
@@ -669,6 +669,7 @@ private:
     // Reported verbatim to the endpoint instead of the pjmedia-negotiated
     // session, which mangles WebRTC codec lines.
     std::string externalRemoteSdp_ {};
+    std::optional<int32_t> externalRemoteSdpCseq_ {};
     std::string promotionRequestId_ {};
     bool promotionNegotiated_ {false};
     bool promotionAccepted_ {false};
