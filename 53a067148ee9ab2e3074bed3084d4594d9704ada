@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a8f34f0_65f23318",
+        "filename": "src/jamidht/accountarchive.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T20:34:38Z",
+      "side": 1,
+      "message": "[error] Line 75: 🔴 `accountMetadata` decode failures are now silently ignored (`decode(...)` returning nullopt just leaves `metadata` empty), so a malformed/tampered archive is accepted as a successful import with metadata dropped. That is a silent data-loss/integrity regression for LWW tombstones and can reintroduce stale state after sync. Treat a present-but-undecodable `accountMetadata` field as an import error (fail deserialization), while still allowing archives where the field is absent for backward compatibility.",
+      "revId": "53a067148ee9ab2e3074bed3084d4594d9704ada",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
