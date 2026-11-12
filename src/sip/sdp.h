@@ -35,6 +35,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <optional>
 
 namespace jami {
 
@@ -98,6 +99,7 @@ public:
         pjmedia_sdp_neg* negotiator;
         pjmedia_sdp_session* localSession;
         SdpDirection direction;
+        std::vector<std::string> mediaLabels;
     };
 
     LocalOfferState saveLocalOfferState() const;
@@ -129,11 +131,17 @@ public:
     /*
      * On building an invite outside a dialog, build the local offer and create the
      * SDP negotiator instance with it.
+     * Re-offers match streams by their nonempty, unique labels, retaining the
+     * negotiated m-line order and rejecting removed streams with port zero.
      * @returns true if offer was created, false otherwise
      */
     bool createOffer(const std::vector<MediaAttribute>& mediaList,
                      const pjmedia_sdp_session* previousLocalSession = nullptr,
                      bool legacySdesOffer = false);
+
+    // SDP slots and native RTP streams have independent ordering.
+    const std::string& getMediaLabel(unsigned mediaIndex) const { return mediaLabels_.at(mediaIndex); }
+    std::optional<unsigned> getMediaIndex(const std::string& label) const;
 
     /**
      * Use an SDP session provided by an external media endpoint (e.g. a
@@ -271,6 +279,8 @@ private:
     pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr,
                                            const pjmedia_sdp_session* previousLocalSession = nullptr,
                                            bool legacySdesOffer = false);
+    pjmedia_sdp_media* rejectMediaDescription(const pjmedia_sdp_media* media);
+    void setExternalMediaLabels();
 
     // Determine media direction
     char const* mediaDirection(const MediaAttribute& mediaAttr);
@@ -331,6 +341,9 @@ private:
     pjmedia_sdp_neg* negotiator_ {nullptr};
     pjmedia_sdp_session* localSession_ {nullptr};
     pjmedia_sdp_session* remoteSession_ {nullptr};
+    std::vector<std::string> mediaLabels_;
+    // Keep negotiated identities even while clearIce() clears the active SDP.
+    std::vector<std::string> activeMediaLabels_;
 
     /**
      * The negotiated SDP remote session
