@@ -445,15 +445,21 @@ getExtmapId(const pjmedia_sdp_session* session, unsigned mediaIndex, std::string
     return findExtmapId(session->attr_count, session->attr, uri);
 }
 
-unsigned
-getExtmapId(const pjmedia_sdp_session* session, unsigned mediaIndex, const std::array<std::string_view, 3>& uris)
+struct Extmap
+{
+    unsigned id {};
+    std::string_view uri {};
+};
+
+Extmap
+getExtmap(const pjmedia_sdp_session* session, unsigned mediaIndex, const std::array<std::string_view, 3>& uris)
 {
     for (const auto uri : uris) {
         if (const auto extId = getExtmapId(session, mediaIndex, uri))
-            return extId;
+            return {extId, uri};
     }
 
-    return 0;
+    return {};
 }
 
 unsigned
@@ -475,37 +481,6 @@ getBundleExtmapId(const pjmedia_sdp_session* session, std::string_view uri)
 
         if (bundleExtId != extId) {
             JAMI_WARNING("Ignoring inconsistent extmap id {} for {} in BUNDLE group, using {}", extId, uri, bundleExtId);
-            return bundleExtId;
-        }
-    }
-
-    return bundleExtId;
-}
-
-unsigned
-getBundleExtmapId(const pjmedia_sdp_session* session,
-                  const std::array<std::string_view, 3>& uris,
-                  std::string_view label)
-{
-    if (not session)
-        return 0;
-
-    unsigned bundleExtId = 0;
-    for (unsigned mediaIndex = 0; mediaIndex < session->media_count; ++mediaIndex) {
-        const auto extId = getExtmapId(session, mediaIndex, uris);
-        if (extId == 0)
-            continue;
-
-        if (bundleExtId == 0) {
-            bundleExtId = extId;
-            continue;
-        }
-
-        if (bundleExtId != extId) {
-            JAMI_WARNING("Ignoring inconsistent extmap id {} for {} in BUNDLE group, using {}",
-                         extId,
-                         label,
-                         bundleExtId);
             return bundleExtId;
         }
     }
@@ -1034,24 +1009,21 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
     }
 
     if (mediaAttr.enabled_ and direction != DIRECTION_STR[MediaDirection::INACTIVE]) {
-        auto transportCcExtmapId = DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID;
+        Extmap transportCcExtmap {DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID, TRANSPORT_CC_RTP_EXTENSION_URI};
         auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
         auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
 
         const auto* feedbackSession = sdpDirection_ == SdpDirection::ANSWER ? remoteSession_ : previousLocalSession;
         if (feedbackSession) {
-            transportCcExtmapId = hasBundleGroup(feedbackSession)
-                                      ? getBundleExtmapId(feedbackSession,
-                                                          TRANSPORT_CC_RTP_EXTENSION_URIS,
-                                                          "transport-cc")
-                                      : getExtmapId(feedbackSession, mediaIndex, TRANSPORT_CC_RTP_EXTENSION_URIS);
-            transportCcFeedback = transportCcExtmapId != 0
+            // RFC 8285 section 7: bundled media may offer different extensions.
+            transportCcExtmap = getExtmap(feedbackSession, mediaIndex, TRANSPORT_CC_RTP_EXTENSION_URIS);
+            transportCcFeedback = transportCcExtmap.id != 0
                                   && hasAnyRtcpFeedback(feedbackSession, mediaIndex, "transport-cc");
             googRembFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "goog-remb");
         }
 
-        if (transportCcFeedback && transportCcExtmapId != 0) {
-            addExtmapAttribute(med, transportCcExtmapId, TRANSPORT_CC_RTP_EXTENSION_URI);
+        if (transportCcFeedback && transportCcExtmap.id != 0) {
+            addExtmapAttribute(med, transportCcExtmap.id, transportCcExtmap.uri);
             addRtcpFeedbackAttribute(med, "*", "transport-cc");
         }
         if (googRembFeedback)
@@ -1896,9 +1868,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         descr.mid = getMidValue(media);
         descr.mid_rtp_ext_id = hasBundleGroup(session) ? getBundleExtmapId(session, MID_RTP_EXTENSION_URI)
                                                        : getExtmapId(session, i, MID_RTP_EXTENSION_URI);
-        descr.transport_cc_rtp_ext_id = hasBundleGroup(session)
-                                            ? getBundleExtmapId(session, TRANSPORT_CC_RTP_EXTENSION_URIS, "transport-cc")
-                                            : getExtmapId(session, i, TRANSPORT_CC_RTP_EXTENSION_URIS);
+        descr.transport_cc_rtp_ext_id = getExtmap(session, i, TRANSPORT_CC_RTP_EXTENSION_URIS).id;
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
