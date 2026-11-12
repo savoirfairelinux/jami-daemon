@@ -2379,6 +2379,96 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
         });
 }
 
+void
+Conversation::changeMemberRole(const std::string& contactUri, bool promote, const OnDoneCb& cb)
+{
+    dht::ThreadPool::io().run([w = weak(), contactUri, promote, cb] {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        auto& repo = sthis->pimpl_->repository_;
+        if (!sthis->pimpl_->isAdmin()) {
+            JAMI_WARNING("You're not an admin of this repo. Unable to change the role of {}", contactUri);
+            if (cb)
+                cb(false, {});
+            return;
+        }
+
+        std::unique_lock lk(sthis->pimpl_->writeMtx_);
+        std::vector<std::string> commits;
+        if (!promote && contactUri == sthis->pimpl_->userId_) {
+            // Stepping down needs no vote
+            auto commit = repo->stepDown();
+            if (!commit.empty())
+                commits.emplace_back(std::move(commit));
+        } else {
+            std::string_view action = promote ? CommitAction::PROMOTE : CommitAction::DEMOTE;
+            auto voteCommit = repo->voteRoleChange(contactUri, action);
+            if (!voteCommit.empty()) {
+                commits.emplace_back(std::move(voteCommit));
+                auto resolveCommit = repo->resolveVote(contactUri, promote ? "members" : "admins", std::string(action));
+                if (!resolveCommit.empty()) {
+                    JAMI_WARNING("Vote solved for {}. Role of {} changed", action, contactUri);
+                    commits.emplace_back(std::move(resolveCommit));
+                }
+            }
+        }
+        if (commits.empty()) {
+            JAMI_WARNING("Changing the role of {} failed", contactUri);
+            lk.unlock();
+            if (cb)
+                cb(false, {});
+            return;
+        }
+        auto lastId = commits.back();
+        sthis->pimpl_->announce(commits, true);
+        lk.unlock();
+        if (cb)
+            cb(true, lastId);
+    });
+}
+
+void
+Conversation::setApprovalThreshold(const std::string& threshold, const OnDoneCb& cb)
+{
+    dht::ThreadPool::io().run([w = weak(), threshold, cb] {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        auto& repo = sthis->pimpl_->repository_;
+        std::unique_lock lk(sthis->pimpl_->writeMtx_);
+        std::vector<std::string> commits;
+        auto voteCommit = repo->voteApprovalThreshold(threshold);
+        if (voteCommit.empty()) {
+            JAMI_WARNING("Voting for the approval threshold {} failed", threshold);
+            lk.unlock();
+            if (cb)
+                cb(false, {});
+            return;
+        }
+        commits.emplace_back(std::move(voteCommit));
+        auto resolveCommit = repo->resolveApprovalThreshold(threshold);
+        auto applied = !resolveCommit.empty();
+        if (applied)
+            commits.emplace_back(std::move(resolveCommit));
+        auto lastId = commits.back();
+        sthis->pimpl_->announce(commits, true);
+        lk.unlock();
+        if (cb)
+            cb(true, lastId);
+        if (applied && repo->mode() != ConversationMode::DOCUMENT)
+            emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(sthis->pimpl_->accountId_,
+                                                                                repo->id(),
+                                                                                repo->infos());
+    });
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::votes() const
+{
+    return pimpl_->repository_->votes();
+}
+
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBanned) const
 {
@@ -2923,7 +3013,10 @@ Conversation::Impl::pull(const std::string& deviceId)
         if (!commits.empty()) {
             auto diffStats = repo->diffStats("HEAD", oldHead);
             auto changedFiles = repo->changedFiles(diffStats);
-            if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf") != changedFiles.end()) {
+            auto changed = [&](std::string_view file) {
+                return std::find(changedFiles.begin(), changedFiles.end(), file) != changedFiles.end();
+            };
+            if (changed("profile.vcf") || changed(ApprovalThreshold::FILE_PATH)) {
                 emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId_,
                                                                                     repo->id(),
                                                                                     repo->infos());

@@ -101,6 +101,33 @@ LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
 LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& contactUri);
+// Admin roles, decided by a vote of the admins (see doc/adr/ADR-014).
+// A promotion or demotion applies once the current approval threshold is met.
+// Demoting oneself steps down without a vote. Neither a voted demotion nor a
+// step-down can demote the last admin.
+LIBJAMI_PUBLIC void promoteConversationMember(const std::string& accountId,
+                                              const std::string& conversationId,
+                                              const std::string& contactUri);
+LIBJAMI_PUBLIC void demoteConversationMember(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& contactUri);
+// Vote to change the threshold for bans, unbans, role changes and threshold changes.
+// The change applies once enough admins vote under the current threshold.
+// threshold is "percent/<P>" (more than P percent of the admins, 1 <= P <= 100) or
+// "count/<k>" (k admins, 1 <= k <= 4294967295), both capped at all admins.
+// Numbers have no leading zero. The default is "percent/50", more than half.
+// conversationInfos returns the current threshold in its "approvalThreshold" key.
+LIBJAMI_PUBLIC void setConversationApprovalThreshold(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& threshold);
+// One map per pending vote target, with the following keys.
+// action is ban, unban, promote, demote or approval.
+// type is members, devices, admins or invited, and empty for approval.
+// target is a URI, device id or threshold token.
+// voters contains the comma-separated URIs of the admins who voted.
+// required is the number of admin votes needed under the current threshold.
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& accountId,
+                                                                                    const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
                                                                                       const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,
