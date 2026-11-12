@@ -428,9 +428,11 @@ BrowserConferenceMedia::onIceNegotiated(bool ok)
         }
 #endif
         armTimeout(MEDIA_TIMEOUT, "Browser RTP startup could not be positively verified");
-        dht::ThreadPool::io().run([w = weak_from_this()] {
+        dht::ThreadPool::io().run([w = weak_from_this(),
+                                   audioStart = audio_->prepareStart(),
+                                   videoStart = video_ ? video_->prepareStart() : std::stop_token {}] {
             if (auto self = w.lock())
-                self->startMedia();
+                self->startMedia(audioStart, videoStart);
         });
     } catch (const std::exception& e) {
         fail(e.what());
@@ -438,12 +440,13 @@ BrowserConferenceMedia::onIceNegotiated(bool ok)
 }
 
 void
-BrowserConferenceMedia::startMedia()
+BrowserConferenceMedia::startMedia(std::stop_token audioStart, std::stop_token videoStart)
 {
     std::lock_guard startLock(mediaStartMtx_);
     std::shared_ptr<AudioRtpSession> audio;
     std::shared_ptr<video::VideoRtpSession> video;
     std::shared_ptr<dhtnet::IceTransport> ice;
+    std::shared_ptr<SocketPair::BundleContext> bundle;
     {
         std::lock_guard lock(mutex_);
         if (state_ != State::STARTING)
@@ -453,7 +456,11 @@ BrowserConferenceMedia::startMedia()
         ice = ice_;
     }
     try {
-        auto bundle = SocketPair::createBundleContext(std::make_unique<dhtnet::IceSocket>(ice, 1), nullptr, true, false);
+        bundle = SocketPair::createBundleContext(std::make_unique<dhtnet::IceSocket>(ice, 1),
+                                                 nullptr,
+                                                 true,
+                                                 false,
+                                                 mediaStopSource_.get_token());
         const auto slots = sdp_->getMediaSlots();
         if (slots.empty())
             throw std::runtime_error("No negotiated browser media for DTLS-SRTP");
@@ -463,14 +470,14 @@ BrowserConferenceMedia::startMedia()
                                             slots[0].second.dtls_fingerprint,
                                             certificate_,
                                             privateKey_,
-                                            dtlsAbort_);
+                                            mediaStopSource_.get_token());
         {
             std::lock_guard lock(mutex_);
             if (state_ != State::STARTING)
                 return;
         }
         audio->setBundleSocketContext(bundle, audio->getSendPayloadType());
-        audio->start(nullptr, nullptr);
+        audio->start(nullptr, nullptr, audioStart);
         if (!audio->isRtpReady(slots[0].second.enabled && !slots[0].second.hold,
                                slots[0].first.enabled && !slots[0].first.hold))
             throw std::runtime_error("Browser audio RTP startup failed");
@@ -482,7 +489,7 @@ BrowserConferenceMedia::startMedia()
         if (video) {
 #ifdef ENABLE_VIDEO
             video->setBundleSocketContext(bundle, video->getSendPayloadType());
-            video->start(nullptr, nullptr);
+            video->start(nullptr, nullptr, videoStart);
             if (!video->isRtpReady(slots[1].second.enabled && !slots[1].second.hold,
                                    slots[1].first.enabled && !slots[1].first.hold))
                 throw std::runtime_error("Browser video RTP startup failed");
@@ -508,7 +515,11 @@ BrowserConferenceMedia::startMedia()
                 onReady();
             }
         });
+    } catch (const DtlsCancelled&) {
+        SocketPair::joinBundleDtls(bundle);
+        JAMI_DEBUG("Browser DTLS-SRTP startup cancelled");
     } catch (const std::exception& e) {
+        SocketPair::joinBundleDtls(bundle);
         runOnMainThread([w = weak_from_this(), reason = std::string(e.what())] {
             if (auto self = w.lock())
                 self->fail(reason);
@@ -534,6 +545,7 @@ void
 BrowserConferenceMedia::stop()
 {
     stopRequested_.store(true);
+    mediaStopSource_.request_stop();
     if (Manager::instance().ioContext()->get_executor().running_in_this_thread()) {
         close(false);
     } else if (auto self = weak_from_this().lock()) {
@@ -546,6 +558,7 @@ BrowserConferenceMedia::stop()
 void
 BrowserConferenceMedia::close(bool notify, std::string reason)
 {
+    mediaStopSource_.request_stop();
     std::shared_ptr<AudioRtpSession> audio;
     std::shared_ptr<video::VideoRtpSession> video;
     std::shared_ptr<dhtnet::IceTransport> ice;
@@ -557,7 +570,6 @@ BrowserConferenceMedia::close(bool notify, std::string reason)
         if (state_ == State::CLOSED)
             return;
         state_ = State::CLOSED;
-        dtlsAbort_->store(true);
         timeout_.cancel();
         audio = std::move(audio_);
         video = std::move(video_);
