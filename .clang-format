@@ -108,3 +108,8 @@ SpacesInSquareBrackets: false
 Standard:        c++17
 TabWidth:        4
 UseTab:          Never
+
+---
+# Node.js sources use Prettier (bin/nodejs/package.json).
+Language:        JavaScript
+DisableFormat:   true

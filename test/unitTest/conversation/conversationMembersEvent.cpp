@@ -60,7 +60,34 @@ struct UserData
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesUpdated;
     std::map<std::string, int> members;
+    std::map<std::string, std::string> profile;
 };
+
+namespace {
+std::size_t
+countCommits(const UserData& data, std::string_view type)
+{
+    return std::count_if(data.messages.begin(), data.messages.end(), [&](const auto& message) {
+        return message.type == type;
+    });
+}
+
+std::string
+roleOf(const std::string& accountId, const std::string& convId, const std::string& uri)
+{
+    for (const auto& member : libjami::getConversationMembers(accountId, convId))
+        if (member.at("uri") == uri)
+            return member.at("role");
+    return {};
+}
+
+bool
+hasPermission(const std::string& accountId, const std::string& convId, const std::string& permission)
+{
+    auto permissions = libjami::getConversationPermissions(accountId, convId);
+    return std::find(permissions.begin(), permissions.end(), permission) != permissions.end();
+}
+} // namespace
 
 class ConversationMembersEventTest : public CppUnit::TestFixture
 {
@@ -110,6 +137,26 @@ public:
     void testBanHostWhileHosting();
     void testAddContactTwice();
     void testBanFromNewDevice();
+    void testPromoteMember();
+    void testBanNeedsMajorityWithTwoAdmins();
+    void testDemoteWithThreeAdmins();
+    void testStepDown();
+    void testCannotDemoteLastAdmin();
+    void testMemberCannotPromote();
+    void testSetApprovalThreshold();
+    void testConcurrentApprovalChangesMerge();
+    void testFakeRoleChangeIsDetected();
+    void testFakeApprovalChangeIsDetected();
+
+    /**
+     * Alice creates a group with Bob and Carla as members, all three online
+     * @return the conversation id
+     */
+    std::string startGroupWithBobAndCarla();
+    /**
+     * Alice, the only admin, promotes Bob, and every member sees it
+     */
+    void promoteBob(const std::string& convId);
 
     std::string aliceId;
     UserData aliceData;
@@ -166,6 +213,16 @@ private:
     CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST(testAddContactTwice);
     CPPUNIT_TEST(testBanFromNewDevice);
+    CPPUNIT_TEST(testPromoteMember);
+    CPPUNIT_TEST(testBanNeedsMajorityWithTwoAdmins);
+    CPPUNIT_TEST(testDemoteWithThreeAdmins);
+    CPPUNIT_TEST(testStepDown);
+    CPPUNIT_TEST(testCannotDemoteLastAdmin);
+    CPPUNIT_TEST(testMemberCannotPromote);
+    CPPUNIT_TEST(testSetApprovalThreshold);
+    CPPUNIT_TEST(testConcurrentApprovalChangesMerge);
+    CPPUNIT_TEST(testFakeRoleChangeIsDetected);
+    CPPUNIT_TEST(testFakeApprovalChangeIsDetected);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -386,6 +443,18 @@ ConversationMembersEventTest::connectSignals()
             } else if (accountId == bob2Id) {
                 bob2Data.contactAdded = true;
             }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationProfileUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::map<std::string, std::string>& profile) {
+            if (accountId == aliceId)
+                aliceData.profile = profile;
+            else if (accountId == bobId)
+                bobData.profile = profile;
+            else if (accountId == carlaId)
+                carlaData.profile = profile;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
@@ -1983,6 +2052,275 @@ ConversationMembersEventTest::testBanFromNewDevice()
     Manager::instance().sendRegister(carlaId, true);
     // Should sync!
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.messages.size() > carlaMsgSize; }));
+}
+
+std::string
+ConversationMembersEventTest::startGroupWithBobAndCarla()
+{
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaData.deviceAnnounced; }));
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size();
+    }));
+    return convId;
+}
+
+void
+ConversationMembersEventTest::promoteBob(const std::string& convId)
+{
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    // One admin is all admins, so Alice's vote alone decides
+    libjami::promoteConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.members[bobUri] == 5 && bobData.members[bobUri] == 5 && carlaData.members[bobUri] == 5;
+    }));
+}
+
+void
+ConversationMembersEventTest::testPromoteMember()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    CPPUNIT_ASSERT(!hasPermission(bobId, convId, "changeMemberRole"));
+
+    promoteBob(convId);
+    CPPUNIT_ASSERT_EQUAL(std::string("admin"), roleOf(carlaId, convId, bobUri));
+    CPPUNIT_ASSERT_EQUAL(std::string("admin"), roleOf(bobId, convId, bobUri));
+    CPPUNIT_ASSERT(hasPermission(bobId, convId, "changeMemberRole"));
+    CPPUNIT_ASSERT(hasPermission(bobId, convId, "changeApprovalThreshold"));
+    CPPUNIT_ASSERT(libjami::getConversationVotes(aliceId, convId).empty());
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !bobData.errorDetected && !carlaData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testBanNeedsMajorityWithTwoAdmins()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+    promoteBob(convId);
+
+    // More than half of two admins is both of them, so Bob's vote stays pending
+    auto aliceVotes = countCommits(aliceData, "vote");
+    libjami::removeConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return countCommits(aliceData, "vote") == aliceVotes + 1; }));
+    auto votes = libjami::getConversationVotes(aliceId, convId);
+    CPPUNIT_ASSERT_EQUAL(std::size_t(1), votes.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("ban"), votes[0]["action"]);
+    CPPUNIT_ASSERT_EQUAL(std::string("members"), votes[0]["type"]);
+    CPPUNIT_ASSERT_EQUAL(carlaUri, votes[0]["target"]);
+    CPPUNIT_ASSERT_EQUAL(bobUri, votes[0]["voters"]);
+    CPPUNIT_ASSERT_EQUAL(std::string("2"), votes[0]["required"]);
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(aliceId, convId, carlaUri));
+
+    // Alice's vote completes it
+    libjami::removeConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData.members[carlaUri] == 3 && bobData.members[carlaUri] == 3; }));
+    CPPUNIT_ASSERT(libjami::getConversationVotes(aliceId, convId).empty());
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !bobData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testDemoteWithThreeAdmins()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+    promoteBob(convId);
+
+    // With two admins, Carla's promotion needs both votes
+    auto bobVotes = countCommits(bobData, "vote");
+    libjami::promoteConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return countCommits(bobData, "vote") == bobVotes + 1; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(bobId, convId, carlaUri));
+    libjami::promoteConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.members[carlaUri] == 5 && bobData.members[carlaUri] == 5 && carlaData.members[carlaUri] == 5;
+    }));
+
+    // With three admins, two votes demote Carla
+    bobVotes = countCommits(bobData, "vote");
+    libjami::demoteConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return countCommits(bobData, "vote") == bobVotes + 1; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("admin"), roleOf(bobId, convId, carlaUri));
+    libjami::demoteConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.members[carlaUri] == 6 && bobData.members[carlaUri] == 6 && carlaData.members[carlaUri] == 6;
+    }));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(carlaId, convId, carlaUri));
+    CPPUNIT_ASSERT(!hasPermission(carlaId, convId, "changeMemberRole"));
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !bobData.errorDetected && !carlaData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testStepDown()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    promoteBob(convId);
+
+    // Stepping down needs no vote, even with the threshold at both admins
+    libjami::demoteConversationMember(bobId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.members[bobUri] == 6 && bobData.members[bobUri] == 6 && carlaData.members[bobUri] == 6;
+    }));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(aliceId, convId, bobUri));
+    CPPUNIT_ASSERT(!hasPermission(bobId, convId, "changeMemberRole"));
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !carlaData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testCannotDemoteLastAdmin()
+{
+    connectSignals();
+
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::demoteConversationMember(aliceId, convId, aliceUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&]() { return aliceData.messages.size() > aliceMsgSize; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("admin"), roleOf(aliceId, convId, aliceUri));
+}
+
+void
+ConversationMembersEventTest::testMemberCannotPromote()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+
+    auto bobMsgSize = bobData.messages.size();
+    libjami::promoteConversationMember(bobId, convId, carlaUri);
+    libjami::promoteConversationMember(bobId, convId, bobUri);
+    libjami::setConversationApprovalThreshold(bobId, convId, "percent/1");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() > bobMsgSize; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(aliceId, convId, bobUri));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(aliceId, convId, carlaUri));
+    CPPUNIT_ASSERT(libjami::getConversationVotes(bobId, convId).empty());
+}
+
+void
+ConversationMembersEventTest::testSetApprovalThreshold()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/50"), libjami::conversationInfos(carlaId, convId)["approvalThreshold"]);
+    promoteBob(convId);
+
+    // Invalid tokens are refused before any vote
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::setConversationApprovalThreshold(aliceId, convId, "count/1");
+    libjami::setConversationApprovalThreshold(aliceId, convId, "percent/050");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&]() { return aliceData.messages.size() > aliceMsgSize; }));
+
+    // The current threshold, more than half of two admins, needs both votes
+    auto bobVotes = countCommits(bobData, "vote");
+    libjami::setConversationApprovalThreshold(aliceId, convId, "percent/1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return countCommits(bobData, "vote") == bobVotes + 1; }));
+    auto votes = libjami::getConversationVotes(bobId, convId);
+    CPPUNIT_ASSERT_EQUAL(std::size_t(1), votes.size());
+    CPPUNIT_ASSERT_EQUAL(std::string("approval"), votes[0]["action"]);
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/1"), votes[0]["target"]);
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/50"), libjami::conversationInfos(bobId, convId)["approvalThreshold"]);
+
+    libjami::setConversationApprovalThreshold(bobId, convId, "percent/1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.profile["approvalThreshold"] == "percent/1"
+               && bobData.profile["approvalThreshold"] == "percent/1"
+               && carlaData.profile["approvalThreshold"] == "percent/1";
+    }));
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/1"), libjami::conversationInfos(carlaId, convId)["approvalThreshold"]);
+    CPPUNIT_ASSERT(libjami::getConversationVotes(aliceId, convId).empty());
+
+    // Now one admin decides alone
+    libjami::removeConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData.members[carlaUri] == 3 && bobData.members[carlaUri] == 3; }));
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !bobData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testConcurrentApprovalChangesMerge()
+{
+    auto convId = startGroupWithBobAndCarla();
+    promoteBob(convId);
+
+    // Both admins agree on percent/1, so each can change the threshold alone afterwards
+    auto bobVotes = countCommits(bobData, "vote");
+    libjami::setConversationApprovalThreshold(aliceId, convId, "percent/1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return countCommits(bobData, "vote") == bobVotes + 1; }));
+    libjami::setConversationApprovalThreshold(bobId, convId, "percent/1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.profile["approvalThreshold"] == "percent/1"
+               && bobData.profile["approvalThreshold"] == "percent/1";
+    }));
+
+    // While Bob is offline, both set a different threshold
+    Manager::instance().sendRegister(bobId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.stopped; }));
+    libjami::setConversationApprovalThreshold(aliceId, convId, "percent/66");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.profile["approvalThreshold"] == "percent/66"; }));
+    libjami::setConversationApprovalThreshold(bobId, convId, "percent/100");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.profile["approvalThreshold"] == "percent/100"; }));
+
+    // Once Bob is back, the merge resolves the conflict the same way on both sides
+    bobData.deviceAnnounced = false;
+    Manager::instance().sendRegister(bobId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData.deviceAnnounced; }));
+    libjami::sendMessage(bobId, convId, "back"s, "");
+    std::string aliceThreshold, bobThreshold;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        aliceThreshold = libjami::conversationInfos(aliceId, convId)["approvalThreshold"];
+        bobThreshold = libjami::conversationInfos(bobId, convId)["approvalThreshold"];
+        return aliceThreshold == bobThreshold;
+    }));
+    CPPUNIT_ASSERT(aliceThreshold == "percent/66" || aliceThreshold == "percent/100");
+    CPPUNIT_ASSERT(!aliceData.errorDetected && !bobData.errorDetected);
+}
+
+void
+ConversationMembersEventTest::testFakeRoleChangeIsDetected()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto carlaUri = Manager::instance().getAccount<JamiAccount>(carlaId)->getUsername();
+
+    // Alice promotes Carla without a vote. Bob will not accept it
+    simulateRoleChange(aliceAccount, convId, carlaUri, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("member"), roleOf(bobId, convId, carlaUri));
+}
+
+void
+ConversationMembersEventTest::testFakeApprovalChangeIsDetected()
+{
+    auto convId = startGroupWithBobAndCarla();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    // Alice stores a threshold without a vote. Bob will not accept it
+    simulateApprovalChange(aliceAccount, convId, "percent/1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.errorDetected; }));
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/50"), libjami::conversationInfos(bobId, convId)["approvalThreshold"]);
 }
 
 } // namespace test

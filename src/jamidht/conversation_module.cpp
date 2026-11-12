@@ -3486,6 +3486,46 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
     }
 }
 
+void
+ConversationModule::changeConversationMemberRole(const std::string& conversationId,
+                                                 const dht::InfoHash& contactUri,
+                                                 bool promote)
+{
+    auto contactUriStr = contactUri.toString();
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation)
+            conv->conversation->changeMemberRole(contactUriStr,
+                                                 promote,
+                                                 [this, conversationId](bool ok, const std::string& commitId) {
+                                                     if (ok)
+                                                         pimpl_->sendMessageNotification(conversationId, true, commitId);
+                                                 });
+    }
+}
+
+void
+ConversationModule::setConversationApprovalThreshold(const std::string& conversationId, const std::string& threshold)
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation)
+            conv->conversation->setApprovalThreshold(threshold,
+                                                     [this, conversationId](bool ok, const std::string& commitId) {
+                                                         if (ok)
+                                                             pimpl_->sendMessageNotification(conversationId,
+                                                                                             true,
+                                                                                             commitId);
+                                                     });
+    }
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationModule::getConversationVotes(const std::string& conversationId) const
+{
+    return pimpl_->withConversation(conversationId, [](const auto& conv) { return conv.votes(); });
+}
+
 std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationMembers(const std::string& conversationId, bool includeBanned) const
 {

@@ -70,6 +70,10 @@ struct SwarmMessage
   // Member management
   void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void promoteConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void demoteConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void setConversationApprovalThreshold(const std::string& accountId, const std::string& conversationId, const std::string& threshold);
+  std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& accountId, const std::string& conversationId);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
   std::vector<std::string> getConversationPermissions(const std::string& accountId, const std::string& conversationId);
 

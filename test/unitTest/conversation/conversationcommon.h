@@ -29,6 +29,23 @@ void addVote(std::shared_ptr<JamiAccount> account,
 
 void simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId, const std::string& votedUri);
 
+/**
+ * Commit a promotion (members/ to admins/) or a demotion of uri without any vote, then
+ * send a message so that peers pull the forged commit
+ */
+void simulateRoleChange(std::shared_ptr<JamiAccount> account,
+                        const std::string& convId,
+                        const std::string& uri,
+                        bool promote);
+
+/**
+ * Commit a new approval threshold without any vote, then send a message so that peers
+ * pull the forged commit
+ */
+void simulateApprovalChange(std::shared_ptr<JamiAccount> account,
+                            const std::string& convId,
+                            const std::string& threshold);
+
 void addFile(std::shared_ptr<JamiAccount> account,
              const std::string& convId,
              const std::string& relativePath,
