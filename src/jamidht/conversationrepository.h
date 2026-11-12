@@ -24,6 +24,8 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <memory>
@@ -136,6 +138,8 @@ enum class Permission {
     AddMember,
     BanUnbanMember,
     UpdateProfile,
+    ChangeMemberRole,
+    ChangeApprovalThreshold,
     Count,
 };
 
@@ -194,6 +198,8 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
             return true;
         case Permission::BanUnbanMember:
         case Permission::UpdateProfile:
+        case Permission::ChangeMemberRole:
+        case Permission::ChangeApprovalThreshold:
             return role == MemberRole::ADMIN;
         default:
             return false;
@@ -207,6 +213,8 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
         case Permission::AddMember:
         case Permission::BanUnbanMember:
         case Permission::UpdateProfile:
+        case Permission::ChangeMemberRole:
+        case Permission::ChangeApprovalThreshold:
             return role == MemberRole::ADMIN;
         case Permission::TextReply:
         case Permission::FileReply:
@@ -227,6 +235,8 @@ hasPermission(ConversationMode mode, MemberRole role, Permission permission) noe
             return true;
         case Permission::BanUnbanMember:
         case Permission::UpdateProfile:
+        case Permission::ChangeMemberRole:
+        case Permission::ChangeApprovalThreshold:
             return role == MemberRole::ADMIN;
         default:
             return false;
@@ -256,6 +266,8 @@ constexpr auto PERMISSION_NAME_TABLE = std::to_array<std::pair<Permission, std::
     {Permission::AddMember, "addMember"},
     {Permission::BanUnbanMember, "banUnbanMember"},
     {Permission::UpdateProfile, "updateProfile"},
+    {Permission::ChangeMemberRole, "changeMemberRole"},
+    {Permission::ChangeApprovalThreshold, "changeApprovalThreshold"},
 });
 
 static_assert(PERMISSION_NAME_TABLE.size() == static_cast<size_t>(Permission::Count),
@@ -287,6 +299,78 @@ permissionNames(ConversationMode mode, MemberRole role)
     }
     return names;
 }
+
+/**
+ * How many admins must agree before an admin action applies: a ban, an unban, a promotion,
+ * a demotion or a change of this threshold itself. It is stored in the file "policy/approval"
+ * of a conversation as a canonical token, and a missing file means the default.
+ *
+ * - "percent/<P>", P from 1 to 100: more than P percent of the admins, capped at all admins.
+ *   "percent/50" is "more than half", the default, and "percent/100" is all admins.
+ * - "count/<k>", k from 1: k admins, capped at all admins.
+ *
+ * The cap keeps every conversation able to act, because all current admins together always
+ * approve. Numbers have no leading zero and no sign, so a token and a vote path compare byte
+ * for byte. See doc/adr/ADR-014-swarm-admin-roles-and-approval-threshold.md.
+ */
+struct ApprovalThreshold
+{
+    enum class Kind { Percent, Count };
+
+    Kind kind {Kind::Percent};
+    uint32_t value {50};
+
+    static constexpr std::string_view PERCENT_PREFIX {"percent/"};
+    static constexpr std::string_view COUNT_PREFIX {"count/"};
+    // Path of the file holding the token in a conversation repository
+    static constexpr std::string_view FILE_PATH {"policy/approval"};
+
+    static constexpr ApprovalThreshold defaultValue() noexcept { return {Kind::Percent, 50}; }
+
+    /**
+     * Parse a canonical token, or return nothing for any other string
+     */
+    static std::optional<ApprovalThreshold> parse(std::string_view token) noexcept
+    {
+        ApprovalThreshold threshold;
+        std::string_view number;
+        if (token.starts_with(PERCENT_PREFIX)) {
+            threshold.kind = Kind::Percent;
+            number = token.substr(PERCENT_PREFIX.size());
+        } else if (token.starts_with(COUNT_PREFIX)) {
+            threshold.kind = Kind::Count;
+            number = token.substr(COUNT_PREFIX.size());
+        } else {
+            return std::nullopt;
+        }
+        // Digits only and no leading zero, because from_chars alone accepts both
+        if (number.empty() || number.front() == '0'
+            || !std::all_of(number.begin(), number.end(), [](char c) { return c >= '0' && c <= '9'; }))
+            return std::nullopt;
+        auto [end, error] = std::from_chars(number.data(), number.data() + number.size(), threshold.value);
+        if (error != std::errc() || end != number.data() + number.size())
+            return std::nullopt;
+        if (threshold.kind == Kind::Percent && threshold.value > 100)
+            return std::nullopt;
+        return threshold;
+    }
+
+    std::string toString() const
+    {
+        return std::string(kind == Kind::Percent ? PERCENT_PREFIX : COUNT_PREFIX) + std::to_string(value);
+    }
+
+    /**
+     * Number of votes needed among `admins` admins, 0 when there is no admin
+     */
+    constexpr std::size_t required(std::size_t admins) const noexcept
+    {
+        uint64_t needed = kind == Kind::Percent ? static_cast<uint64_t>(admins) * value / 100 + 1 : value;
+        return static_cast<std::size_t>(std::min<uint64_t>(admins, needed));
+    }
+
+    constexpr bool operator==(const ApprovalThreshold&) const noexcept = default;
+};
 
 namespace MemberPath {
 
