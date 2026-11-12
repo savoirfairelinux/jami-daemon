@@ -59,9 +59,10 @@ public:
                     Mode mode = Mode::DEVICE);
     virtual ~AudioRtpSession();
 
-    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+               std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+               std::stop_token stopToken = {}) override;
     void restartSender() override;
-    void stop() override;
     void setMuted(bool muted, Direction dir = Direction::SEND) override;
 
     // Later asynchronous decoder failures are reported by setStartupFailureCb.
@@ -76,6 +77,7 @@ public:
     void setVoiceCallback(std::function<void(bool)> cb);
 
 private:
+    void stopSession() override;
     friend class test::BrowserHostAudioTest;
     friend class test::ExternalMediaCallTest;
 

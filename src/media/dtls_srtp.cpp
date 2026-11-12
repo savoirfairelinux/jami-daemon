@@ -329,8 +329,10 @@ negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
                   std::string_view remoteFingerprint,
                   const std::shared_ptr<dht::crypto::Certificate>& localCertificate,
                   const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey,
-                  const std::shared_ptr<std::atomic_bool>& abort)
+                  std::stop_token stopToken)
 {
+    if (stopToken.stop_requested())
+        throw DtlsCancelled {};
     if (!localCertificate || !localPrivateKey)
         throw std::runtime_error("Missing DTLS-SRTP local identity");
     if (remoteFingerprint.empty())
@@ -339,7 +341,7 @@ negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
         throw std::runtime_error("Invalid negotiated DTLS setup role");
 
     std::mutex stateMutex;
-    std::condition_variable stateCv;
+    std::condition_variable_any stateCv;
     dhtnet::tls::TlsSessionState finalState {dhtnet::tls::TlsSessionState::NONE};
     bool completed = false;
 
@@ -377,22 +379,14 @@ negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
     dhtnet::tls::TlsSession session(std::move(transport), params, callbacks, false);
 
     {
-        // Poll instead of waiting for the full timeout in one go, so that a
-        // teardown (hangup, ICE restart) can cut the handshake short instead of
-        // holding the media session lock for the whole DTLS_SRTP_TIMEOUT.
-        static constexpr auto ABORT_POLL_INTERVAL = std::chrono::milliseconds(200);
         const auto deadline = std::chrono::steady_clock::now() + DTLS_SRTP_TIMEOUT;
         std::unique_lock lk(stateMutex);
-        while (!completed) {
-            if (abort && abort->load()) {
-                lk.unlock();
-                session.shutdown();
-                throw std::runtime_error("DTLS-SRTP handshake aborted");
-            }
-            if (std::chrono::steady_clock::now() >= deadline)
-                throw std::runtime_error("DTLS-SRTP handshake timed out");
-            stateCv.wait_for(lk, ABORT_POLL_INTERVAL, [&] { return completed; });
-        }
+        const auto ready = stateCv.wait_until(lk, stopToken, deadline, [&] { return completed; });
+        lk.unlock();
+        if (stopToken.stop_requested())
+            throw DtlsCancelled {};
+        if (!ready)
+            throw std::runtime_error("DTLS-SRTP handshake timed out");
     }
 
     if (finalState != dhtnet::tls::TlsSessionState::ESTABLISHED)
