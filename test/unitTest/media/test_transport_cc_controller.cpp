@@ -143,7 +143,7 @@ private:
     void cleanNearCapacityFeedbackRampsUpOverTime();
     void delayTrendlineWindowExpiresOldDelaySamples();
     void acknowledgedBitrateUsesRollingWindowForSparseFeedback();
-    void cleanStartupFeedbackReportsStartupThenProbing();
+    void cleanStartupFeedbackTransitionsToNormal();
     void startupProbingUsesConfiguredProbeRatio();
     void startupProbeCreatesProbeCluster();
     void probeClusterWaitsForMinimumDuration();
@@ -196,7 +196,7 @@ private:
     CPPUNIT_TEST(cleanNearCapacityFeedbackRampsUpOverTime);
     CPPUNIT_TEST(delayTrendlineWindowExpiresOldDelaySamples);
     CPPUNIT_TEST(acknowledgedBitrateUsesRollingWindowForSparseFeedback);
-    CPPUNIT_TEST(cleanStartupFeedbackReportsStartupThenProbing);
+    CPPUNIT_TEST(cleanStartupFeedbackTransitionsToNormal);
     CPPUNIT_TEST(startupProbingUsesConfiguredProbeRatio);
     CPPUNIT_TEST(startupProbeCreatesProbeCluster);
     CPPUNIT_TEST(probeClusterWaitsForMinimumDuration);
@@ -553,22 +553,46 @@ TransportCcControllerTest::acknowledgedBitrateUsesRollingWindowForSparseFeedback
 }
 
 void
-TransportCcControllerTest::cleanStartupFeedbackReportsStartupThenProbing()
+TransportCcControllerTest::cleanStartupFeedbackTransitionsToNormal()
 {
-    TransportCcController controller;
+    TransportCcControllerConfig config;
+    config.startupProbeCount = 3;
+    TransportCcController controller(config);
     const auto firstEstimate = controller.update(600'000,
                                                  std::list<TransportCcReport> {
                                                      makeUtilizedCleanReport(18'000, 600'000, 0.95)});
+    CPPUNIT_ASSERT(firstEstimate);
+    CPPUNIT_ASSERT(firstEstimate->estimatorState == TransportCcEstimatorState::Startup);
+
     const auto secondEstimate = controller.update(firstEstimate->targetBitrateBps,
                                                   std::list<TransportCcReport> {
                                                       makeUtilizedCleanReport(18'100,
                                                                               firstEstimate->targetBitrateBps,
                                                                               0.95)});
-
-    CPPUNIT_ASSERT(firstEstimate);
     CPPUNIT_ASSERT(secondEstimate);
-    CPPUNIT_ASSERT(firstEstimate->estimatorState == TransportCcEstimatorState::Startup);
     CPPUNIT_ASSERT(secondEstimate->estimatorState == TransportCcEstimatorState::Probing);
+
+    const auto thirdEstimate = controller.update(secondEstimate->targetBitrateBps,
+                                                 std::list<TransportCcReport> {
+                                                     makeUtilizedCleanReport(18'200,
+                                                                             secondEstimate->targetBitrateBps,
+                                                                             0.95)});
+    CPPUNIT_ASSERT(thirdEstimate);
+    CPPUNIT_ASSERT(thirdEstimate->state == TransportCcBandwidthState::Increase);
+    CPPUNIT_ASSERT(thirdEstimate->estimatorState == TransportCcEstimatorState::Normal);
+
+    auto targetBitrateBps = thirdEstimate->targetBitrateBps;
+    for (auto step = 0; step < 2; ++step) {
+        const auto report = makeUtilizedCleanReport(static_cast<uint16_t>(18'300 + step * 100), targetBitrateBps, 0.95);
+        const auto estimate = controller.update(targetBitrateBps, std::list<TransportCcReport> {report});
+
+        CPPUNIT_ASSERT(estimate);
+        CPPUNIT_ASSERT(estimate->state == TransportCcBandwidthState::Increase);
+        CPPUNIT_ASSERT(estimate->estimatorState == TransportCcEstimatorState::Normal);
+        CPPUNIT_ASSERT_EQUAL(targetBitrateBps + config.steadyIncreaseStepBps, estimate->targetBitrateBps);
+        CPPUNIT_ASSERT_EQUAL(uint32_t(0), estimate->probeClusterId);
+        targetBitrateBps = estimate->targetBitrateBps;
+    }
 }
 
 void
