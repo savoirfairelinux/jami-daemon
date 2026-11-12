@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7de6668_e74258a8",
+        "filename": "src/metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 280,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T22:55:04Z",
+      "side": 1,
+      "message": "[warning] Line 280: 🟡 `save()` relies on write+close+rename but never `fsync`s the staging file (or parent directory) before/after rename. On crash/power-loss, this can acknowledge an update that is later missing or leave directory metadata not durably persisted. Please add durable sync steps (`fsync` file descriptor after write, then `fsync` parent dir after rename) to match the persistence guarantee implied by this store.",
+      "revId": "6bbd54ad677d584acb3a0f5e0754897241861260",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2274b106_6d8ad45f",
+        "filename": "test/unitTest/metadata/metadata.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T22:55:04Z",
+      "side": 1,
+      "message": "[warning] Line 17: 🟡 The test fixture uses a fixed relative directory (`metadata-test-state`) and asserts `create_directory` succeeds. If a prior interrupted run leaves the directory behind, the whole suite fails before exercising behavior. Use a unique per-run temp path (e.g., under `temp_directory_path()` with a random/unique suffix) or clean any pre-existing directory in `setUp()` to avoid flaky failures.",
+      "revId": "6bbd54ad677d584acb3a0f5e0754897241861260",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
