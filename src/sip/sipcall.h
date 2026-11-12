@@ -121,6 +121,7 @@ public:
      * @param id The call identifier
      * @param type The type of the call (incoming/outgoing)
      * @param mediaList A list of medias to include in the call
+     * @throws std::runtime_error if native media requires DTLS and its identity cannot be loaded
      */
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,

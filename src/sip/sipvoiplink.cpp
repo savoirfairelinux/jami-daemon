@@ -379,6 +379,11 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
+    if (not Sdp::validateDtlsAttributes(r_sdp, SdpDirection::OFFER)) {
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
+        return PJ_FALSE;
+    }
+
     // Build the initial media using the remote offer.
     auto localMediaList = Sdp::getMediaAttributeListFromSdp(r_sdp);
 
@@ -389,9 +394,16 @@ transaction_request_cb(pjsip_rx_data* rdata)
         }
     }
 
-    auto call = account->newIncomingCall(std::string(remote_user),
-                                         MediaAttribute::mediaAttributesToMediaMaps(localMediaList),
-                                         transport);
+    std::shared_ptr<SIPCall> call;
+    try {
+        call = account->newIncomingCall(std::string(remote_user),
+                                        MediaAttribute::mediaAttributesToMediaMaps(localMediaList),
+                                        transport);
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[account:{}] Unable to create incoming call: {}", account->getAccountID(), e.what());
+        try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
+        return PJ_FALSE;
+    }
     if (!call) {
         return PJ_FALSE;
     }
@@ -1143,6 +1155,12 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
 
     // Update our SDP manager
     auto& sdp = call->getSDP();
+    if (not Sdp::validateDtlsAttributes(remoteSDP,
+                                        sdp.getSdpDirection() == SdpDirection::OFFER ? SdpDirection::ANSWER
+                                                                                     : SdpDirection::OFFER)) {
+        call->hangup(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+        return;
+    }
     sdp.setActiveLocalSdpSession(localSDP);
     if (localSDP != nullptr) {
         Sdp::printSession(localSDP, "Local active session:", sdp.getSdpDirection());
