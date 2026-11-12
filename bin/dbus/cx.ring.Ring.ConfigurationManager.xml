@@ -2212,6 +2212,47 @@
             <arg type="s" name="contactUri" direction="in"/>
         </method>
 
+        <method name="promoteConversationMember" tp:name-for-bindings="promoteConversationMember">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote to promote a conversation member to admin
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="contactUri" direction="in"/>
+        </method>
+
+        <method name="demoteConversationMember" tp:name-for-bindings="demoteConversationMember">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote to demote a conversation admin, or step down
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="contactUri" direction="in"/>
+        </method>
+
+        <method name="setConversationApprovalThreshold" tp:name-for-bindings="setConversationApprovalThreshold">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote to change a conversation's admin approval threshold
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="threshold" direction="in"/>
+        </method>
+
+        <method name="getConversationVotes" tp:name-for-bindings="getConversationVotes">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the pending admin votes of a conversation
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="votes" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
         <method name="getConversationMembers" tp:name-for-bindings="getConversationMembers">
             <tp:added version="10.0.0"/>
             <tp:docstring>

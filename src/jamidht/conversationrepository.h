@@ -635,10 +635,7 @@ public:
     std::vector<std::string> attachmentIds() const;
 
     /**
-     * The voting system is divided in two parts. The voting phase where
-     * admins can decide an action (such as kicking someone)
-     * and the resolving phase, when > 50% of the admins voted, we can
-     * considered the vote as finished
+     * Admins first vote, then resolve the action under the current approval threshold.
      */
     /**
      * Add a vote to kick a device or a user
@@ -655,13 +652,52 @@ public:
      */
     std::string voteUnban(const std::string& uri, const std::string_view type);
     /**
-     * Validate if a vote is finished
+     * Apply a ban, unban or role change when the approval threshold is met.
      * @param uri       identified of the user/device
      * @param type      device, members, admins or invited
-     * @param voteType  "ban" or "unban"
+     * @param voteType  "ban", "unban", "promote" or "demote"
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri, const std::string_view type, const std::string& voteType);
+
+    /**
+     * Add a vote to change the role of a member
+     * @param uri       URI of the member
+     * @param action    "promote" (member to admin) or "demote" (admin to member)
+     * @return the commit id or empty if failed
+     * @note The decision is taken by resolveVote(uri, "members"|"admins", action)
+     */
+    std::string voteRoleChange(const std::string& uri, std::string_view action);
+    /**
+     * Demote the local user from admin to member, without a vote
+     * @return the commit id or empty if failed, e.g. for the last admin
+     */
+    std::string stepDown();
+    /**
+     * Add a vote to change the approval threshold of the conversation
+     * @param threshold     "percent/<1-100>", see ApprovalThreshold
+     * @return the commit id or empty if failed
+     */
+    std::string voteApprovalThreshold(const std::string& threshold);
+    /**
+     * Apply the approval threshold if enough admins voted for it under the current one
+     * @param threshold     the token voted with voteApprovalThreshold()
+     * @return the commit id or empty if not applied
+     */
+    std::string resolveApprovalThreshold(const std::string& threshold);
+    /**
+     * Current approval threshold, as stored at HEAD
+     * @return the threshold, or nullopt if the stored value is invalid
+     */
+    std::optional<ApprovalThreshold> approvalThreshold() const;
+    /**
+     * Pending votes of the working directory, one map per vote target:
+     * "action" (ban, unban, promote, demote, approval), "type" (members, devices, admins,
+     * invited; empty for approval), "target" (URI, device id or threshold), "voters"
+     * (comma-separated URIs of the admins who voted) and "required" (number of admin votes
+     * needed under the current threshold). Votes of former admins are not listed.
+     */
+    std::vector<std::map<std::string, std::string>> votes() const;
 
     /**
      * Validate a fetch with remote device
