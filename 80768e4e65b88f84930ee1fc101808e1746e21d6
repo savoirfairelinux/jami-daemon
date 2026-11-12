@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad773143_349bd84d",
+        "filename": "test/unitTest/media/audio/test_browser_host_audio.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T21:18:28Z",
+      "side": 1,
+      "message": "[error] Line 336: 🔴 `testStopInterruptsDtls` deadlocks: the async lambda acquires `session-\u003emutex_` and then calls `session-\u003estart(...)`, but `start()` also acquires the same non-recursive mutex. This blocks forever and can hang the test run. Remove the external lock and signal readiness via another synchronization point (or lock only around the readiness flag, not around `start()`).",
+      "revId": "80768e4e65b88f84930ee1fc101808e1746e21d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a418b06_fef62f73",
+        "filename": "test/unitTest/media/audio/test_browser_host_audio.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 388,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T21:18:28Z",
+      "side": 1,
+      "message": "[warning] Line 388: 🟡 The new timing assertions use hard `\u003c 100ms` bounds (`stopDuration \u003c 100ms` and similar), which is prone to CI flakiness under load and scheduler jitter. Prefer asserting eventual cancellation with a larger bound (or use deterministic synchronization primitives) so the test validates behavior, not machine speed.",
+      "revId": "80768e4e65b88f84930ee1fc101808e1746e21d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
