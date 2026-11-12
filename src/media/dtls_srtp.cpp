@@ -147,6 +147,10 @@ parseDigest(std::string_view hash)
 
     if (normalized == "SHA-256")
         return GNUTLS_DIG_SHA256;
+    if (normalized == "SHA-384")
+        return GNUTLS_DIG_SHA384;
+    if (normalized == "SHA-512")
+        return GNUTLS_DIG_SHA512;
     if (normalized == "SHA-1")
         return GNUTLS_DIG_SHA1;
     return GNUTLS_DIG_UNKNOWN;
@@ -189,24 +193,31 @@ formatFingerprint(gnutls_x509_crt_t certificate, gnutls_digest_algorithm_t diges
 int
 verifyRemoteFingerprint(gnutls_session_t session, std::string_view expectedHash, std::string_view expectedFingerprint)
 {
-    const auto digest = parseDigest(expectedHash);
-    if (digest == GNUTLS_DIG_UNKNOWN)
-        return GNUTLS_E_CERTIFICATE_ERROR;
+    try {
+        const auto digest = parseDigest(expectedHash);
+        if (digest == GNUTLS_DIG_UNKNOWN)
+            return GNUTLS_E_CERTIFICATE_ERROR;
 
-    unsigned int remoteCount = 0;
-    const auto* remote = gnutls_certificate_get_peers(session, &remoteCount);
-    if (!remote || remoteCount == 0)
-        return GNUTLS_E_CERTIFICATE_ERROR;
+        unsigned int remoteCount = 0;
+        const auto* remote = gnutls_certificate_get_peers(session, &remoteCount);
+        if (!remote || remoteCount == 0)
+            return GNUTLS_E_CERTIFICATE_ERROR;
 
-    std::vector<std::pair<uint8_t*, uint8_t*>> chain;
-    chain.reserve(remoteCount);
-    for (unsigned int i = 0; i < remoteCount; ++i)
-        chain.emplace_back(remote[i].data, remote[i].data + remote[i].size);
+        std::vector<std::pair<uint8_t*, uint8_t*>> chain;
+        chain.reserve(remoteCount);
+        for (unsigned int i = 0; i < remoteCount; ++i)
+            chain.emplace_back(remote[i].data, remote[i].data + remote[i].size);
 
-    dht::crypto::Certificate certificate {chain};
-    const auto actual = formatFingerprint(certificate.cert, digest);
-    return normalizeFingerprint(actual) == normalizeFingerprint(expectedFingerprint) ? GNUTLS_E_SUCCESS
-                                                                                     : GNUTLS_E_CERTIFICATE_ERROR;
+        dht::crypto::Certificate certificate {chain};
+        const auto actual = formatFingerprint(certificate.cert, digest);
+        return normalizeFingerprint(actual) == normalizeFingerprint(expectedFingerprint) ? GNUTLS_E_SUCCESS
+                                                                                         : GNUTLS_E_CERTIFICATE_ERROR;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("DTLS-SRTP fingerprint verification failed: {}", e.what());
+    } catch (...) {
+        JAMI_ERROR("DTLS-SRTP fingerprint verification failed: unknown exception");
+    }
+    return GNUTLS_E_CERTIFICATE_ERROR;
 }
 
 std::string
