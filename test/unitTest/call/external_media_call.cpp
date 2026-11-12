@@ -26,6 +26,7 @@
 #endif
 #include "media/media_attribute.h"
 #include "sip/sipcall.h"
+#include "connectivity/sip_utils.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "jami/callmanager_interface.h"
@@ -143,6 +144,7 @@ public:
 
 private:
     void testRejectUnmigratedExternalMedia();
+    void testExternalMediaInviteAnswers();
     void testOutgoingExternalMediaCall();
     void testPromoteExternalMediaCall();
     void testPromoteExternalVideoCall();
@@ -156,6 +158,7 @@ private:
 
     CPPUNIT_TEST_SUITE(ExternalMediaCallTest);
     CPPUNIT_TEST(testRejectUnmigratedExternalMedia);
+    CPPUNIT_TEST(testExternalMediaInviteAnswers);
     CPPUNIT_TEST(testOutgoingExternalMediaCall);
     CPPUNIT_TEST(testPromoteExternalMediaCall);
 #ifdef ENABLE_VIDEO
@@ -216,6 +219,85 @@ ExternalMediaCallTest::testRejectUnmigratedExternalMedia()
     CPPUNIT_ASSERT(call->getRtpSessionList().empty());
     CPPUNIT_ASSERT(not call->isConferenceParticipant());
     CPPUNIT_ASSERT(conf->getSubCalls().empty());
+}
+
+void
+ExternalMediaCallTest::testExternalMediaInviteAnswers()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    CPPUNIT_ASSERT(account);
+    auto call = std::make_shared<SIPCall>(
+        account,
+        "external-media-invite-answers",
+        Call::CallType::OUTGOING,
+        std::vector<libjami::MediaMap> {{{libjami::Media::MediaAttributeKey::EXTERNAL_SDP, kExternalOffer}}});
+
+    std::vector<std::string> answers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    handlers.insert(libjami::exportable_callback<libjami::CallSignal::RemoteSdpReceived>(
+        [&](const std::string& accountId, const std::string& callId, const std::string& sdp) {
+            if (accountId == aliceId and callId == call->getCallId())
+                answers.emplace_back(sdp);
+        }));
+    libjami::registerSignalHandlers(handlers);
+
+    auto answer = makeExternalAnswer(kExternalOffer);
+    pjsip_msg_body body {};
+    body.content_type.type = sip_utils::CONST_PJ_STR("application");
+    body.content_type.subtype = sip_utils::CONST_PJ_STR("sdp");
+    body.data = answer.data();
+    body.len = answer.size();
+    pjsip_msg response {};
+    response.type = PJSIP_RESPONSE_MSG;
+    response.body = &body;
+    pjsip_cseq_hdr cseq {};
+    cseq.cseq = 1;
+    pjsip_rx_data rdata {};
+    rdata.msg_info.msg = &response;
+    rdata.msg_info.cseq = &cseq;
+
+    // Neither 100 Trying nor failure SDP is an answer.
+    for (auto status : {100, 300, 488}) {
+        response.line.status.code = status;
+        call->reportExternalRemoteAnswer(rdata);
+    }
+    CPPUNIT_ASSERT(answers.empty());
+
+    // A provisional response without SDP must not consume the answer.
+    response.line.status.code = 180;
+    response.body = nullptr;
+    call->reportExternalRemoteAnswer(rdata);
+    CPPUNIT_ASSERT(answers.empty());
+
+    response.line.status.code = 183;
+    response.body = &body;
+    call->reportExternalRemoteAnswer(rdata);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), answers.size());
+    CPPUNIT_ASSERT_EQUAL(answer, answers.back());
+
+    // Retransmissions and a final response with or without SDP are ignored.
+    call->reportExternalRemoteAnswer(rdata);
+    auto laterAnswer = makeReturnOffer(answer);
+    body.data = laterAnswer.data();
+    body.len = laterAnswer.size();
+    response.line.status.code = 200;
+    response.body = nullptr;
+    call->reportExternalRemoteAnswer(rdata);
+    response.body = &body;
+    call->reportExternalRemoteAnswer(rdata);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), answers.size());
+
+    // A later INVITE must still report its answer, even when SDP is unchanged.
+    ++cseq.cseq;
+    body.data = answer.data();
+    body.len = answer.size();
+    call->reportExternalRemoteAnswer(rdata);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), answers.size());
+    CPPUNIT_ASSERT_EQUAL(answer, answers.back());
+    call->reportExternalRemoteAnswer(rdata);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), answers.size());
+
+    libjami::unregisterSignalHandlers();
 }
 
 void
