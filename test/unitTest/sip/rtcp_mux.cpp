@@ -195,6 +195,9 @@ private:
     void answerSkipsBundleWhenOfferDoesNotAdvertiseIt();
     void answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt();
     void answerAdvertisesRtcpMuxWhenOfferDoes();
+    void rejectsConflictingRtcpMuxPayloadTypes();
+    void acceptsSafeAndNonMuxPayloadTypes();
+    void rejectedMediaDoesNotRequireMuxSafePayloads();
     void negotiatedMediaFallsBackToSeparateRtcp();
     void negotiatedMediaPreservesExplicitRtcpFallback();
     void negotiatedMediaKeepsAcceptedRtcpMux();
@@ -227,6 +230,9 @@ private:
     CPPUNIT_TEST(answerSkipsBundleWhenOfferDoesNotAdvertiseIt);
     CPPUNIT_TEST(answerSkipsRtcpMuxWhenOfferDoesNotAdvertiseIt);
     CPPUNIT_TEST(answerAdvertisesRtcpMuxWhenOfferDoes);
+    CPPUNIT_TEST(rejectsConflictingRtcpMuxPayloadTypes);
+    CPPUNIT_TEST(acceptsSafeAndNonMuxPayloadTypes);
+    CPPUNIT_TEST(rejectedMediaDoesNotRequireMuxSafePayloads);
     CPPUNIT_TEST(negotiatedMediaFallsBackToSeparateRtcp);
     CPPUNIT_TEST(negotiatedMediaPreservesExplicitRtcpFallback);
     CPPUNIT_TEST(negotiatedMediaKeepsAcceptedRtcpMux);
@@ -1215,6 +1221,92 @@ RtcpMuxSdpTest::answerAdvertisesRtcpMuxWhenOfferDoes()
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
     CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
     CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(TEST_AUDIO_RTP_PORT), descriptions[0].rtcp_addr.getPort());
+}
+
+void
+RtcpMuxSdpTest::rejectsConflictingRtcpMuxPayloadTypes()
+{
+    auto pool = makePool("rtcp-mux-payloads");
+    MediaAttribute audio(MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+
+    for (unsigned payload = 64; payload <= 95; ++payload) {
+        Sdp sdp("rtcp-mux-conflicting-payload");
+        sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+        sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+        const auto codec = std::make_shared<SystemAudioCodecInfo>(
+            *std::static_pointer_cast<SystemAudioCodecInfo>(account_->getActiveAccountCodecInfoList(MEDIA_AUDIO).front()));
+        codec->payloadType = payload;
+        sdp.setLocalMediaCapabilities(MEDIA_AUDIO, {codec});
+        sdp.enableRtcpMux(true);
+        CPPUNIT_ASSERT(!sdp.createOffer({audio}));
+
+        const auto pt = std::to_string(payload);
+        const auto raw = "v=0\r\n"
+                         "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                         "s=-\r\n"
+                         "c=IN IP4 127.0.0.1\r\n"
+                         "t=0 0\r\n"
+                         "m=audio 5004 RTP/AVP " + pt + "\r\n"
+                         "a=rtpmap:" + pt + " opus/48000/2\r\n"
+                         "a=rtcp-mux\r\n";
+        CPPUNIT_ASSERT(!sdp.createOfferFromExternalSdp(raw));
+        CPPUNIT_ASSERT(!sdp.setReceivedOfferFromExternalSdp(raw));
+
+        auto* session = parseSdp(pool.get(), raw);
+        CPPUNIT_ASSERT(session);
+        sdp.setReceivedOffer(session);
+        CPPUNIT_ASSERT(!sdp.processIncomingOffer({audio}));
+        CPPUNIT_ASSERT(!sdp.setLocalAnswerFromExternalSdp(raw));
+    }
+}
+
+void
+RtcpMuxSdpTest::acceptsSafeAndNonMuxPayloadTypes()
+{
+    for (const bool mux : {false, true}) {
+        for (const unsigned payload : {0u, 63u, 64u, 77u, 95u, 96u, 127u}) {
+            if (mux && payload >= 64 && payload <= 95)
+                continue;
+
+            const auto pt = std::to_string(payload);
+            const auto raw = "v=0\r\n"
+                             "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                             "s=-\r\n"
+                             "c=IN IP4 127.0.0.1\r\n"
+                             "t=0 0\r\n"
+                             "m=audio 5004 RTP/AVP " + pt + "\r\n"
+                             "a=rtpmap:" + pt + (payload == 0 ? " PCMU/8000\r\n" : " opus/48000/2\r\n")
+                             + (mux ? "a=rtcp-mux\r\n" : "");
+            Sdp sdp("rtcp-mux-safe-payload");
+            CPPUNIT_ASSERT(sdp.createOfferFromExternalSdp(raw));
+            CPPUNIT_ASSERT(sdp.setReceivedOfferFromExternalSdp(raw));
+            CPPUNIT_ASSERT(sdp.setLocalAnswerFromExternalSdp(raw));
+        }
+    }
+}
+
+void
+RtcpMuxSdpTest::rejectedMediaDoesNotRequireMuxSafePayloads()
+{
+    auto pool = makePool("rtcp-mux-rejected-media");
+    const std::string raw = "v=0\r\n"
+                            "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                            "s=-\r\n"
+                            "c=IN IP4 127.0.0.1\r\n"
+                            "t=0 0\r\n"
+                            "m=audio 0 RTP/AVP 77\r\n"
+                            "a=rtpmap:77 opus/48000/2\r\n"
+                            "a=rtcp-mux\r\n";
+    auto* session = parseSdp(pool.get(), raw);
+    CPPUNIT_ASSERT(session);
+    CPPUNIT_ASSERT(Sdp::validateRtcpMuxPayloadTypes(session));
+
+    CPPUNIT_ASSERT(pjmedia_sdp_media_add_attr(session->media[0],
+                                              pjmedia_sdp_attr_create(pool.get(), "bundle-only", nullptr))
+                   == PJ_SUCCESS);
+    CPPUNIT_ASSERT(!Sdp::validateRtcpMuxPayloadTypes(session));
 }
 
 void
