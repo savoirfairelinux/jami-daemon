@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685b1572_d09a5d0f",
+        "filename": "src/media/dtls_srtp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T16:48:29Z",
+      "side": 1,
+      "message": "[error] Line 147: 🔴 `std::toupper(c)` is undefined behavior when `char` is signed and `c` is negative (possible with non-ASCII bytes from peer-controlled input). This can cause unpredictable behavior in fingerprint algorithm parsing at a security boundary. Cast to `unsigned char` before calling `toupper`, e.g. `std::toupper(static_cast\u003cunsigned char\u003e(c))`, then cast back to `char`.",
+      "revId": "0a5507bc1d0c0ac27f3e9168c16f269a9e544c88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
