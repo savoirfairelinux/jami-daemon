@@ -11,6 +11,7 @@ vcpkg_extract_source_archive(SOURCE_PATH
     PATCHES
         use-pkgconfig-with-vcpkg.patch
         msvc-no-unistd.patch
+        "${CMAKE_CURRENT_LIST_DIR}/../../../src/dhtnet/0001-interrupt-DTLS-handshake-on-shutdown.patch"
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
