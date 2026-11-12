@@ -109,6 +109,10 @@ private:
     void testFeedMemberActions();
     void testFeedFollowerCanRejoin();
     void testFeedJoinStillRequiresAuthorization();
+    void testVoteResolutionHalfRejected();
+    void testVoteResolutionMajorityAccepted();
+    void testVoteResolutionCountsParentTree();
+    bool validBanResolution(std::size_t voterCount, bool dropSecondAdminFromWorkdir);
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -153,6 +157,9 @@ private:
     CPPUNIT_TEST(testFeedMemberActions);
     CPPUNIT_TEST(testFeedFollowerCanRejoin);
     CPPUNIT_TEST(testFeedJoinStillRequiresAuthorization);
+    CPPUNIT_TEST(testVoteResolutionHalfRejected);
+    CPPUNIT_TEST(testVoteResolutionMajorityAccepted);
+    CPPUNIT_TEST(testVoteResolutionCountsParentTree);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1985,6 +1992,94 @@ ConversationRepositoryTest::testFeedMemberActions()
         CPPUNIT_ASSERT(!bobRepository.validCommits({*commit}));
         CPPUNIT_ASSERT_EQUAL(head, bobRepository.getHead());
     }
+}
+
+bool
+ConversationRepositoryTest::validBanResolution(std::size_t voterCount, bool dropSecondAdminFromWorkdir)
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    const std::string bannedUri(40, 'c');
+
+    // Call once per test: a second conversation created in the same second gets the same id
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / repository->id();
+    git_repository* repo = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    // Raw commits that are never validated: Bob becomes a second admin, and bannedUri a member.
+    // A valid history is unable to hold two admins yet.
+    auto aliceCertificate = repoPath / "admins" / (aliceUri + ".crt");
+    std::filesystem::copy_file(aliceCertificate, repoPath / "admins" / (bobUri + ".crt"));
+    std::filesystem::create_directories(repoPath / "members");
+    std::filesystem::copy_file(aliceCertificate, repoPath / "members" / (bannedUri + ".crt"));
+    addAll(repo);
+    CPPUNIT_ASSERT(!addCommit(repo, aliceAccount, "main", R"({"type":"text/plain","body":"setup"})").empty());
+
+    // The first voterCount admins vote to ban bannedUri
+    std::vector<std::string> voters {aliceUri, bobUri};
+    voters.resize(voterCount);
+    auto voteDirectory = repoPath / "votes" / "ban" / "members" / bannedUri;
+    std::filesystem::create_directories(voteDirectory);
+    for (const auto& voter : voters)
+        std::ofstream(voteDirectory / voter).close();
+    addAll(repo);
+    CPPUNIT_ASSERT(!addCommit(repo, aliceAccount, "main", CommitMessage::vote(bannedUri).toString()).empty());
+
+    // Resolution as resolveVote writes it: votes removed, member certificate moved to banned/
+    git_index* index_ptr = nullptr;
+    CPPUNIT_ASSERT(git_repository_index(&index_ptr, repo) == 0);
+    GitIndex index {index_ptr};
+    for (const auto& voter : voters) {
+        std::filesystem::remove(voteDirectory / voter);
+        auto votePath = fmt::format("votes/ban/members/{}/{}", bannedUri, voter);
+        CPPUNIT_ASSERT(git_index_remove_bypath(index.get(), votePath.c_str()) == 0);
+    }
+    std::filesystem::create_directories(repoPath / "banned" / "members");
+    std::filesystem::rename(repoPath / "members" / (bannedUri + ".crt"),
+                            repoPath / "banned" / "members" / (bannedUri + ".crt"));
+    auto memberPath = fmt::format("members/{}.crt", bannedUri);
+    CPPUNIT_ASSERT(git_index_remove_bypath(index.get(), memberPath.c_str()) == 0);
+    CPPUNIT_ASSERT(git_index_write(index.get()) == 0);
+    index.reset();
+    addAll(repo);
+    auto resolutionId = addCommit(repo,
+                                  aliceAccount,
+                                  "main",
+                                  CommitMessage::member(CommitAction::BAN, bannedUri).toString());
+    git_repository_free(repo);
+    CPPUNIT_ASSERT(!resolutionId.empty());
+
+    if (dropSecondAdminFromWorkdir)
+        std::filesystem::remove(repoPath / "admins" / (bobUri + ".crt"));
+
+    auto resolution = repository->getCommit(resolutionId);
+    CPPUNIT_ASSERT(resolution.has_value());
+    return repository->validCommits({*resolution});
+}
+
+void
+ConversationRepositoryTest::testVoteResolutionHalfRejected()
+{
+    // One vote of two admins is exactly half, which is no majority
+    CPPUNIT_ASSERT(!validBanResolution(1, false));
+}
+
+void
+ConversationRepositoryTest::testVoteResolutionMajorityAccepted()
+{
+    CPPUNIT_ASSERT(validBanResolution(2, false));
+}
+
+void
+ConversationRepositoryTest::testVoteResolutionCountsParentTree()
+{
+    // The working directory lists Alice alone as admin, while the parent commit lists Alice and
+    // Bob. One vote is then all admins of the working directory, but only half of the parent's
+    CPPUNIT_ASSERT(!validBanResolution(1, true));
 }
 
 } // namespace test
