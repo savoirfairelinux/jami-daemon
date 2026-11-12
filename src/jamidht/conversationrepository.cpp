@@ -273,7 +273,10 @@ public:
     bool checkValidCheckpoint(const std::string& userDevice,
                               const std::string& commitId,
                               const std::string& parentId) const;
-    bool checkVote(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const;
+    bool checkVote(const std::string& userDevice,
+                   const std::string& commitId,
+                   const std::string& parentId,
+                   const CommitMessage& message) const;
     bool isValidUserAtCommit(const std::string& userDevice,
                              const std::string& commitId,
                              const git_buf& sig,
@@ -298,6 +301,17 @@ public:
                                   const std::string& commitId,
                                   const std::string& parentId,
                                   const std::string& voteType) const;
+    // A member commit that promotes a member to admin or demotes an admin to member
+    bool checkValidRoleChange(const std::string& userDevice,
+                              const std::string& uriMember,
+                              const std::string& commitId,
+                              const std::string& parentId,
+                              const std::string& action) const;
+    // A policy commit that applies a new approval threshold
+    bool checkValidApprovalChange(const std::string& userDevice,
+                                  const std::string& commitId,
+                                  const std::string& parentId,
+                                  const std::string& token) const;
     bool checkValidProfileUpdate(const std::string& userDevice,
                                  const std::string& commitid,
                                  const std::string& parentId) const;
@@ -341,9 +355,14 @@ public:
      */
     std::set<std::string> adminUrisAtTree(const GitTree& tree) const;
     /**
-     * Whether a vote is approved: more than half of the admins in the tree are voters.
-     * Validation passes the parent commit's tree and local resolution the tree at HEAD,
-     * so both sides decide on the same set of admins
+     * Approval threshold stored in a tree; the default when the tree has none, and nothing
+     * when the stored token is invalid
+     */
+    std::optional<ApprovalThreshold> approvalThresholdAtTree(const GitTree& tree) const;
+    /**
+     * Whether a vote is approved: enough of the admins in the tree are voters, as the tree's
+     * approval threshold requires. Validation passes the parent commit's tree and local
+     * resolution the tree at HEAD, so both sides decide on the same admins and threshold
      */
     bool isApproved(const std::set<std::string>& voters, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deleted before repo
@@ -1317,7 +1336,8 @@ ConversationRepository::Impl::checkValidCheckpoint(const std::string& userDevice
 bool
 ConversationRepository::Impl::checkVote(const std::string& userDevice,
                                         const std::string& commitId,
-                                        const std::string& parentId) const
+                                        const std::string& parentId,
+                                        const CommitMessage& message) const
 {
     // Check that maximum deviceFile and a vote is added
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
@@ -1359,6 +1379,43 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     auto userUri = uriFromDevice(userDevice, commitId);
     if (userUri.empty())
         return false;
+
+    // Check that vote file is empty and wasn't modified
+    if (fileAtTree(votedFile, treeOld)) {
+        JAMI_ERROR("Invalid voted file modified: {:s}", votedFile);
+        return false;
+    }
+    auto vote = fileAtTree(votedFile, treeNew);
+    if (!vote) {
+        JAMI_ERROR("No vote file found for: {:s}", userUri);
+        return false;
+    }
+    auto voteContent = as_view(vote);
+    if (!voteContent.empty()) {
+        JAMI_ERROR("Vote file not empty: {:s}", votedFile);
+        return false;
+    }
+
+    // A vote for an approval threshold names the proposed token in its path and its message
+    if (message.action == CommitAction::APPROVAL) {
+        static const std::regex regex_approval("votes/approval/(percent|count)/([0-9]+)/(\\w+)");
+        std::smatch approval_match;
+        if (!std::regex_match(votedFile, approval_match, regex_approval)) {
+            JAMI_WARNING("Invalid approval vote path: {}", votedFile);
+            return false;
+        }
+        auto token = approval_match[1].str() + "/" + approval_match[2].str();
+        if (!ApprovalThreshold::parse(token) || token != message.threshold) {
+            JAMI_ERROR("Approval vote {} does not match its threshold {}", votedFile, message.threshold);
+            return false;
+        }
+        if (approval_match[3].str() != userUri) {
+            JAMI_ERROR("Admin voted for other user: {:s} vs {:s}", userUri, approval_match[3].str());
+            return false;
+        }
+        return true;
+    }
+
     // Check votedFile path
     static const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
     std::svmatch base_match;
@@ -1375,24 +1432,25 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     std::string_view votedUri = svsub_match_view(base_match[3]);
     std::string_view type = svsub_match_view(base_match[2]);
     std::string_view voteType = svsub_match_view(base_match[1]);
-    if (voteType != "ban" && voteType != "unban") {
-        JAMI_ERROR("Unrecognized vote {:s}", voteType);
-        return false;
-    }
-
-    // Check that vote file is empty and wasn't modified
-    if (fileAtTree(votedFile, treeOld)) {
-        JAMI_ERROR("Invalid voted file modified: {:s}", votedFile);
-        return false;
-    }
-    auto vote = fileAtTree(votedFile, treeNew);
-    if (!vote) {
-        JAMI_ERROR("No vote file found for: {:s}", userUri);
-        return false;
-    }
-    auto voteContent = as_view(vote);
-    if (!voteContent.empty()) {
-        JAMI_ERROR("Vote file not empty: {:s}", votedFile);
+    if (message.action.empty()) {
+        // Votes without an action predate role changes, and only ban or unban
+        if (voteType != "ban" && voteType != "unban") {
+            JAMI_ERROR("Unrecognized vote {:s}", voteType);
+            return false;
+        }
+    } else if (message.action == CommitAction::PROMOTE || message.action == CommitAction::DEMOTE) {
+        if (voteType != message.action || votedUri != message.uri) {
+            JAMI_ERROR("Vote path {} does not match its {} vote for {}", votedFile, message.action, message.uri);
+            return false;
+        }
+        // A promotion targets a member and a demotion an admin
+        std::string_view roleType = message.action == CommitAction::PROMOTE ? "members" : "admins";
+        if (type != roleType || !fileAtTree(fmt::format("{}/{}.crt", roleType, votedUri), treeOld)) {
+            JAMI_ERROR("No {} certificate found for {} vote: {:s}", roleType, message.action, votedUri);
+            return false;
+        }
+    } else {
+        JAMI_ERROR("Unrecognized vote action {:s}", message.action);
         return false;
     }
 
@@ -1747,6 +1805,152 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
 
     // If not for self check that member or device certificate is moved to banned/
     return !bannedFiles.empty();
+}
+
+bool
+ConversationRepository::Impl::checkValidRoleChange(const std::string& userDevice,
+                                                   const std::string& uriMember,
+                                                   const std::string& commitId,
+                                                   const std::string& parentId,
+                                                   const std::string& action) const
+{
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    if (not treeOld or not treeNew)
+        return false;
+
+    auto promote = action == CommitAction::PROMOTE;
+    std::string_view fromType = promote ? "members" : "admins";
+    std::string_view toType = promote ? "admins" : "members";
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+    auto fromFile = fmt::format("{}/{}.crt", fromType, uriMember);
+    auto toFile = fmt::format("{}/{}.crt", toType, uriMember);
+    auto deviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto votesPrefix = fmt::format("votes/{}/{}/{}/", action, fromType, uriMember);
+
+    // Only the certificate moves, the votes for it are consumed and the author's device may be added
+    std::set<std::string> voters;
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    for (const auto& f : changedFiles) {
+        if (f == fromFile || f == toFile) {
+            continue;
+        } else if (f == deviceFile) {
+            if (fileAtTree(f, treeOld)) {
+                JAMI_ERROR("Device certificate modified in role change: {}", f);
+                return false;
+            }
+        } else if (f.starts_with(votesPrefix)) {
+            auto voter = f.substr(votesPrefix.size());
+            if (voter.empty() || voter.find('/') != std::string::npos || !fileAtTree(f, treeOld)
+                || fileAtTree(f, treeNew)) {
+                JAMI_ERROR("Invalid vote file in role change: {}", f);
+                return false;
+            }
+            voters.emplace(std::move(voter));
+        } else {
+            JAMI_ERROR("Unwanted changed file detected: {}", f);
+            return false;
+        }
+    }
+
+    // The certificate moves unchanged from one role to the other
+    auto oldCertificate = fileAtTree(fromFile, treeOld);
+    auto newCertificate = fileAtTree(toFile, treeNew);
+    if (!oldCertificate || !newCertificate || fileAtTree(fromFile, treeNew) || fileAtTree(toFile, treeOld)) {
+        JAMI_ERROR("Role change does not move the certificate of {} from {} to {}", uriMember, fromType, toType);
+        return false;
+    }
+    if (git_oid_cmp(git_object_id(oldCertificate.get()), git_object_id(newCertificate.get())) != 0) {
+        JAMI_ERROR("Certificate of {} modified during role change", uriMember);
+        return false;
+    }
+
+    if (!promote) {
+        // A role change never removes the last admin
+        if (adminUrisAtTree(treeOld).size() < 2) {
+            JAMI_ERROR("Unable to demote the last admin {}", uriMember);
+            return false;
+        }
+        // Stepping down needs no vote, as leaving the conversation needs none
+        if (uriFromDevice(userDevice, commitId) == uriMember) {
+            if (!voters.empty()) {
+                JAMI_ERROR("Stepping down must not resolve votes (commit: {})", commitId);
+                return false;
+            }
+            return true;
+        }
+    }
+
+    // The admins and the threshold of the parent commit decide
+    if (!isApproved(voters, treeOld)) {
+        JAMI_ERROR("Incomplete vote detected (commit: {})", commitId);
+        return false;
+    }
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidApprovalChange(const std::string& userDevice,
+                                                       const std::string& commitId,
+                                                       const std::string& parentId,
+                                                       const std::string& token) const
+{
+    if (!ApprovalThreshold::parse(token)) {
+        JAMI_ERROR("Invalid approval threshold {} (commit: {})", token, commitId);
+        return false;
+    }
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    if (not treeOld or not treeNew)
+        return false;
+
+    std::string policyFile {ApprovalThreshold::FILE_PATH};
+    auto deviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto votesPrefix = fmt::format("votes/approval/{}/", token);
+
+    // Only the threshold changes, the votes for it are consumed and the author's device may be added
+    std::set<std::string> voters;
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    for (const auto& f : changedFiles) {
+        if (f == policyFile) {
+            continue;
+        } else if (f == deviceFile) {
+            if (fileAtTree(f, treeOld)) {
+                JAMI_ERROR("Device certificate modified in approval change: {}", f);
+                return false;
+            }
+        } else if (f.starts_with(votesPrefix)) {
+            auto voter = f.substr(votesPrefix.size());
+            if (voter.empty() || voter.find('/') != std::string::npos || !fileAtTree(f, treeOld)
+                || fileAtTree(f, treeNew)) {
+                JAMI_ERROR("Invalid vote file in approval change: {}", f);
+                return false;
+            }
+            voters.emplace(std::move(voter));
+        } else {
+            JAMI_ERROR("Unwanted changed file detected: {}", f);
+            return false;
+        }
+    }
+
+    auto policy = fileAtTree(policyFile, treeNew);
+    if (!policy || as_view(policy) != token) {
+        JAMI_ERROR("Approval change does not store {} in {} (commit: {})", token, policyFile, commitId);
+        return false;
+    }
+
+    // The threshold being replaced decides whether it may be replaced
+    if (!isApproved(voters, treeOld)) {
+        JAMI_ERROR("Incomplete vote detected (commit: {})", commitId);
+        return false;
+    }
+    return true;
 }
 
 bool
@@ -2645,16 +2849,34 @@ ConversationRepository::Impl::adminUrisAtTree(const GitTree& tree) const
     return uris;
 }
 
+std::optional<ApprovalThreshold>
+ConversationRepository::Impl::approvalThresholdAtTree(const GitTree& tree) const
+{
+    auto blob = fileAtTree(std::string(ApprovalThreshold::FILE_PATH), tree);
+    if (!blob)
+        return ApprovalThreshold::defaultValue();
+    auto threshold = ApprovalThreshold::parse(as_view(blob));
+    if (!threshold)
+        JAMI_ERROR("[Account {}] [Conversation {}] Invalid approval threshold in {}",
+                   accountId_,
+                   id_,
+                   ApprovalThreshold::FILE_PATH);
+    return threshold;
+}
+
 bool
 ConversationRepository::Impl::isApproved(const std::set<std::string>& voters, const GitTree& tree) const
 {
+    auto threshold = approvalThresholdAtTree(tree);
+    if (!threshold)
+        return false;
     auto admins = adminUrisAtTree(tree);
     std::size_t counted = 0;
     for (const auto& voter : voters) {
         if (admins.count(voter))
             counted += 1;
     }
-    return !admins.empty() && counted * 2 > admins.size();
+    return !admins.empty() && counted >= threshold->required(admins.size());
 }
 
 bool
@@ -2662,6 +2884,12 @@ ConversationRepository::Impl::hasPermissionAtTree(const std::string& uri,
                                                   const GitTree& tree,
                                                   Permission permission) const
 {
+    // A merge of a ban and a concurrent promotion may leave a URI banned and admin at once;
+    // the ban wins
+    if (fileAtTree(fmt::format("banned/members/{}.crt", uri), tree)
+        || fileAtTree(fmt::format("banned/admins/{}.crt", uri), tree)
+        || fileAtTree(fmt::format("banned/invited/{}", uri), tree))
+        return false;
     if (fileAtTree(fmt::format("admins/{}.crt", uri), tree))
         return hasPermission(mode(), MemberRole::ADMIN, permission);
     if (fileAtTree(fmt::format("members/{}.crt", uri), tree))
@@ -2693,10 +2921,21 @@ ConversationRepository::Impl::isAuthorizedCommit(const std::string& uri,
             return allowed(Permission::AddMember);
         if (message.action == CommitAction::BAN || message.action == CommitAction::UNBAN)
             return allowed(Permission::BanUnbanMember);
+        if (message.action == CommitAction::PROMOTE || message.action == CommitAction::DEMOTE)
+            return allowed(Permission::ChangeMemberRole);
         return false;
     }
-    if (message.type == CommitType::VOTE)
-        return allowed(Permission::BanUnbanMember);
+    if (message.type == CommitType::VOTE) {
+        if (message.action.empty())
+            return allowed(Permission::BanUnbanMember);
+        if (message.action == CommitAction::PROMOTE || message.action == CommitAction::DEMOTE)
+            return allowed(Permission::ChangeMemberRole);
+        if (message.action == CommitAction::APPROVAL)
+            return allowed(Permission::ChangeApprovalThreshold);
+        return false;
+    }
+    if (message.type == CommitType::POLICY)
+        return message.action == CommitAction::APPROVAL && allowed(Permission::ChangeApprovalThreshold);
     if (message.type == CommitType::UPDATE_PROFILE)
         return allowed(Permission::UpdateProfile);
     if (message.type == CommitType::CHECKPOINT) {
@@ -2822,9 +3061,20 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
         return false;
     auto useRemote = (other_id > commit_str); // Choose by commit version
 
-    // NOTE: for now, only authorize conflicts on "profile.vcf"
+    // NOTE: for now, only authorize conflicts on "profile.vcf" and on the approval threshold. Two
+    // branches may both set a first threshold, so that file conflicts without a common ancestor too.
     std::vector<git_index_entry> new_entries;
     while (git_index_conflict_next(&ancestor_out, &our_out, &their_out, ci.get()) != GIT_ITEROVER) {
+        if (our_out && our_out->path && their_out && their_out->path
+            && std::string_view(our_out->path) == ApprovalThreshold::FILE_PATH
+            && std::string_view(their_out->path) == ApprovalThreshold::FILE_PATH) {
+            git_index_entry resolution = useRemote ? *their_out : *our_out;
+            resolution.flags &= GIT_INDEX_STAGE_NORMAL;
+            if (!(resolution.flags & GIT_IDXENTRY_VALID))
+                resolution.flags |= GIT_IDXENTRY_VALID;
+            new_entries.push_back(resolution);
+            continue;
+        }
         if (ancestor_out && ancestor_out->path && our_out && our_out->path && their_out && their_out->path) {
             if (std::string_view(ancestor_out->path) == "profile.vcf"sv) {
                 // Checkout the wanted version. Copy the index_entry.
@@ -2879,13 +3129,15 @@ ConversationRepository::Impl::initMembers()
     members_.clear();
     path repoPath = git_repository_workdir(repo.get());
 
-    static const std::vector<std::pair<MemberRole, path>> paths = {{MemberRole::ADMIN, MemberPath::ADMINS},
-                                                                   {MemberRole::MEMBER, MemberPath::MEMBERS},
-                                                                   {MemberRole::INVITED, MemberPath::INVITED},
-                                                                   {MemberRole::BANNED,
-                                                                    MemberPath::BANNED / MemberPath::MEMBERS},
-                                                                   {MemberRole::BANNED,
-                                                                    MemberPath::BANNED / MemberPath::INVITED}};
+    // The first directory holding a URI decides its role. Banned comes first, because a merge of
+    // a ban and a concurrent promotion may leave a URI banned and admin at once, and the ban wins.
+    static const std::vector<std::pair<MemberRole, path>> paths
+        = {{MemberRole::BANNED, MemberPath::BANNED / MemberPath::MEMBERS},
+           {MemberRole::BANNED, MemberPath::BANNED / MemberPath::ADMINS},
+           {MemberRole::BANNED, MemberPath::BANNED / MemberPath::INVITED},
+           {MemberRole::ADMIN, MemberPath::ADMINS},
+           {MemberRole::MEMBER, MemberPath::MEMBERS},
+           {MemberRole::INVITED, MemberPath::INVITED}};
 
     std::error_code ec;
     for (const auto& [role, p] : paths) {
@@ -3398,7 +3650,7 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
 
             if (type == CommitType::VOTE) {
                 // Check that vote is valid
-                if (!checkVote(userDevice, commit.id, commit.parents[0])) {
+                if (!checkVote(userDevice, commit.id, commit.parents[0], commit.commitMsg)) {
                     JAMI_WARNING("[Account {}] [Conversation {}] Malformed vote commit {}. Please "
                                  "ensure that you are using the latest "
                                  "version of Jami, or that one of your contacts is not performing "
@@ -3500,6 +3752,22 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                                                                                      "Malformed ban member commit");
                         return false;
                     }
+                } else if (action == CommitAction::PROMOTE || action == CommitAction::DEMOTE) {
+                    if (!checkValidRoleChange(userDevice, uriMember, commit.id, commit.parents[0], action)) {
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed role change commit {}. "
+                                     "Please ensure that you are using the latest "
+                                     "version of Jami, or that one of your contacts is not "
+                                     "performing any unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                     id_,
+                                                                                     EVALIDFETCH,
+                                                                                     "Malformed role change commit");
+                        return false;
+                    }
                 } else {
                     JAMI_WARNING("[Account {}] [Conversation {}] Malformed member commit {} with "
                                  "action {}. Please ensure that you are using the latest "
@@ -3530,6 +3798,27 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                                                                                  id_,
                                                                                  EVALIDFETCH,
                                                                                  "Malformed profile updates commit");
+                    return false;
+                }
+            } else if (type == CommitType::POLICY) {
+                auto valid = commit.commitMsg.action == CommitAction::APPROVAL
+                             && checkValidApprovalChange(userDevice,
+                                                         commit.id,
+                                                         commit.parents[0],
+                                                         commit.commitMsg.threshold);
+                if (!valid) {
+                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed policy commit {}. "
+                                 "Please ensure that you are using the latest "
+                                 "version of Jami, or that one of your contacts is not performing "
+                                 "any unwanted actions.",
+                                 accountId_,
+                                 id_,
+                                 commit.id);
+
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                 id_,
+                                                                                 EVALIDFETCH,
+                                                                                 "Malformed policy commit");
                     return false;
                 }
             } else if (type == CommitType::CHECKPOINT) {
@@ -4860,7 +5149,7 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 
     // Same rule as the validation of the resolution commit, at the commit it will follow
     if (pimpl_->isApproved(voters, tree)) {
-        JAMI_WARNING("More than half of the admins voted to ban {}, applying the ban.", uri);
+        JAMI_WARNING("Enough admins voted to {} {}, applying it.", voteType, uri);
 
         // Remove vote directory
         dhtnet::fileutils::removeAll(voteDirectory, true);
