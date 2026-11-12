@@ -740,9 +740,10 @@ struct SocketPair::BundleContext
     std::condition_variable_any dtlsCv_;
     const std::stop_token dtlsStopToken_;
     bool dtlsStarted_ {false};
+    bool dtlsReady_ {false};
     std::shared_future<void> dtlsDone_;
     std::exception_ptr dtlsError_;
-    std::optional<DtlsSrtpContext> dtlsSrtpContext_;
+    std::optional<DtlsSrtpSession> dtlsSrtpSession_;
 };
 
 static int
@@ -854,11 +855,16 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
     if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
         throw DtlsCancelled {};
 
-    if (!bundleContext->dtlsStarted_ && !bundleContext->dtlsSrtpContext_) {
+    if (bundleContext->dtlsSrtpSession_
+        && !bundleContext->dtlsSrtpSession_->matches(localSetup, remoteFingerprintType, remoteFingerprint))
+        throw std::runtime_error("Bundled DTLS-SRTP identity or setup role mismatch");
+
+    if (!bundleContext->dtlsStarted_ && !bundleContext->dtlsReady_) {
+        DtlsSrtpSession session {localSetup, std::string(remoteFingerprintType), std::string(remoteFingerprint), {}};
         std::packaged_task<void()> handshake([bundleContext = bundleContext,
                                               localSetup,
-                                              hash = std::string(remoteFingerprintType),
-                                              fingerprint = std::string(remoteFingerprint),
+                                              hash = session.remoteFingerprintHash,
+                                              fingerprint = session.remoteFingerprint,
                                               certificate,
                                               privateKey]() mutable {
             try {
@@ -875,7 +881,8 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
                 if (bundleContext->dtlsStopToken_.stop_requested())
                     throw DtlsCancelled {};
                 bundleContext->installCallbacks(bundleContext);
-                bundleContext->dtlsSrtpContext_ = std::move(context);
+                bundleContext->dtlsSrtpSession_->context = std::move(context);
+                bundleContext->dtlsReady_ = true;
             } catch (...) {
                 std::lock_guard lock(bundleContext->dtlsMutex_);
                 bundleContext->dtlsError_ = std::current_exception();
@@ -887,24 +894,25 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
         // RTP startup and teardown can wait on IO workers even when the pool is full.
         // Keep negotiation independent of those workers.
         std::thread worker(std::move(handshake));
+        bundleContext->dtlsSrtpSession_.emplace(std::move(session));
         bundleContext->dtlsDone_ = std::move(done);
         bundleContext->dtlsStarted_ = true;
         worker.detach();
     }
 
     bundleContext->dtlsCv_.wait(lk, cancelled.get_token(), [&] {
-        return bundleContext->dtlsSrtpContext_.has_value() || bundleContext->dtlsError_;
+        return bundleContext->dtlsReady_ || bundleContext->dtlsError_;
     });
     if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
         throw DtlsCancelled {};
     if (bundleContext->dtlsError_)
         std::rethrow_exception(bundleContext->dtlsError_);
-    return *bundleContext->dtlsSrtpContext_;
+    return bundleContext->dtlsSrtpSession_->context;
 }
 
-void
+DtlsSrtpContext
 SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
-                                 const DtlsSrtpContext& context,
+                                 const DtlsSrtpSession& session,
                                  std::stop_token stopToken)
 {
     if (!bundleContext)
@@ -914,19 +922,27 @@ SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleCon
     std::stop_callback callerCancelled(stopToken, [&] { cancelled.request_stop(); });
     std::stop_callback transportCancelled(bundleContext->dtlsStopToken_, [&] { cancelled.request_stop(); });
     std::unique_lock lk(bundleContext->dtlsMutex_);
+    if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
+        throw DtlsCancelled {};
+    if (bundleContext->dtlsSrtpSession_
+        && !bundleContext->dtlsSrtpSession_->matches(session.localSetup,
+                                                     session.remoteFingerprintHash,
+                                                     session.remoteFingerprint))
+        throw std::runtime_error("Bundled DTLS-SRTP identity or setup role mismatch");
     bundleContext->dtlsCv_.wait(lk, cancelled.get_token(), [&] {
-        return !bundleContext->dtlsStarted_ || bundleContext->dtlsSrtpContext_ || bundleContext->dtlsError_;
+        return !bundleContext->dtlsStarted_ || bundleContext->dtlsReady_ || bundleContext->dtlsError_;
     });
     if (stopToken.stop_requested() || bundleContext->dtlsStopToken_.stop_requested())
         throw DtlsCancelled {};
     if (bundleContext->dtlsError_)
         std::rethrow_exception(bundleContext->dtlsError_);
-    if (bundleContext->dtlsSrtpContext_)
-        return;
-
-    bundleContext->dtlsSrtpContext_ = context;
-    bundleContext->installCallbacks(bundleContext);
-    bundleContext->dtlsCv_.notify_all();
+    if (!bundleContext->dtlsReady_) {
+        bundleContext->dtlsSrtpSession_ = session;
+        bundleContext->dtlsReady_ = true;
+        bundleContext->installCallbacks(bundleContext);
+        bundleContext->dtlsCv_.notify_all();
+    }
+    return bundleContext->dtlsSrtpSession_->context;
 }
 
 void
