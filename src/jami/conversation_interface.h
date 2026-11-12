@@ -101,6 +101,26 @@ LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
 LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& contactUri);
+// Vote to promote or demote a member under the current approval threshold.
+// Demoting oneself steps down without a vote. The last admin cannot be demoted.
+LIBJAMI_PUBLIC void promoteConversationMember(const std::string& accountId,
+                                              const std::string& conversationId,
+                                              const std::string& contactUri);
+LIBJAMI_PUBLIC void demoteConversationMember(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& contactUri);
+// Vote under the current threshold to change the rule for all admin votes.
+// threshold is "percent/<P>", more than P percent of the admins (1 <= P <= 100)
+// capped at all of them, without a leading zero.
+// The default is "percent/50". conversationInfos exposes "approvalThreshold".
+LIBJAMI_PUBLIC void setConversationApprovalThreshold(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& threshold);
+// Each pending target maps action (ban/unban/promote/demote/approval), type
+// (members/devices/admins/invited, empty for approval), target (URI/device id/token),
+// voters (comma-separated admin URIs) and required (votes under the current rule).
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& accountId,
+                                                                                    const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
                                                                                       const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,

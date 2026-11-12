@@ -354,6 +354,25 @@ public:
     void addMember(const std::string& contactUri, const OnDoneCb& cb = {});
     void removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb = {});
     /**
+     * Vote to promote a member to admin or to demote an admin, and apply the change once
+     * enough admins voted. Demoting oneself steps down without a vote.
+     * @param contactUri    Member whose role changes
+     * @param promote       true to promote, false to demote
+     * @param cb            On done cb, with the last commit (vote or role change)
+     */
+    void changeMemberRole(const std::string& contactUri, bool promote, const OnDoneCb& cb = {});
+    /**
+     * Vote for a new approval threshold, and store it once enough admins voted under the
+     * current one
+     * @param threshold     "percent/<1-100>"
+     * @param cb            On done cb, with the last commit (vote or threshold change)
+     */
+    void setApprovalThreshold(const std::string& threshold, const OnDoneCb& cb = {});
+    /**
+     * @return pending votes, see ConversationRepository::votes()
+     */
+    std::vector<std::map<std::string, std::string>> votes() const;
+    /**
      * @param includeInvited        If we want invited members
      * @param includeLeft           If we want left members
      * @param includeBanned         If we want banned members
