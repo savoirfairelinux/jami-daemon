@@ -36,6 +36,7 @@
 #include <optional>
 #include <string_view>
 #include <thread>
+#include <unordered_set>
 
 extern "C" {
 #include "srtp.h"
@@ -94,6 +95,7 @@ static constexpr uint8_t RTCP_PT_RTPFB = 205;
 static constexpr uint8_t RTCP_SDES_END = 0;
 static constexpr uint8_t RTCP_SDES_MID_ITEM = 15;
 static constexpr uint8_t RTCP_RTPFB_GENERIC_NACK = 1;
+static constexpr size_t MAX_NACK_PACKET_REQUESTS = 128;
 static constexpr size_t MAX_CACHED_RTP_PACKETS = 8192;
 static constexpr auto MAX_CACHED_RTP_PACKET_AGE = std::chrono::seconds(10);
 
@@ -1099,17 +1101,40 @@ SocketPair::cacheSentRtpPacket(const uint8_t* buf, size_t len)
 void
 SocketPair::retransmitNackPackets(const uint8_t* buf, size_t len)
 {
-    if (!buf || len < 16 || buf[1] != RTCP_PT_RTPFB
+    if (!buf || len < 12 || buf[1] != RTCP_PT_RTPFB
         || (buf[0] & 0x1f) != RTCP_RTPFB_GENERIC_NACK) {
+        return;
+    }
+
+    if (buf[0] & 0x20) {
+        const auto paddingBytes = static_cast<size_t>(buf[len - 1]);
+        if (paddingBytes == 0 || paddingBytes % 4 != 0 || paddingBytes > len - 12) {
+            JAMI_WARNING("Ignoring Generic NACK with invalid RTCP padding");
+            return;
+        }
+        len -= paddingBytes;
+    }
+    if (len < 16 || (len - 12) % 4 != 0) {
+        JAMI_WARNING("Ignoring Generic NACK with invalid FCI length");
         return;
     }
 
     const auto mediaSsrc = readUint32(buf + 8);
     size_t missedPackets = 0;
+    bool requestLimitExceeded = false;
+    std::unordered_set<uint16_t> requestedSequences;
+    requestedSequences.reserve(MAX_NACK_PACKET_REQUESTS + 1);
     std::vector<std::vector<uint8_t>> retransmissions;
     {
         std::lock_guard lock(sentRtpPacketsMutex_);
         const auto findPacket = [&](uint16_t sequence) {
+            if (!requestedSequences.insert(sequence).second)
+                return;
+            // Count cache misses too, so lookup work is bounded.
+            if (requestedSequences.size() > MAX_NACK_PACKET_REQUESTS) {
+                requestLimitExceeded = true;
+                return;
+            }
             const auto packet = std::find_if(
                 sentRtpPackets_.rbegin(),
                 sentRtpPackets_.rend(),
@@ -1122,16 +1147,19 @@ SocketPair::retransmitNackPackets(const uint8_t* buf, size_t len)
                 ++missedPackets;
         };
 
-        for (size_t offset = 12; offset + 4 <= len; offset += 4) {
+        for (size_t offset = 12; offset + 4 <= len && !requestLimitExceeded; offset += 4) {
             const auto packetId = static_cast<uint16_t>(buf[offset] << 8 | buf[offset + 1]);
             const auto lostPacketBitmask = static_cast<uint16_t>(buf[offset + 2] << 8 | buf[offset + 3]);
             findPacket(packetId);
-            for (unsigned bit = 0; bit < 16; ++bit) {
+            for (unsigned bit = 0; bit < 16 && !requestLimitExceeded; ++bit) {
                 if (lostPacketBitmask & (1u << bit))
                     findPacket(static_cast<uint16_t>(packetId + bit + 1));
             }
         }
     }
+
+    if (requestLimitExceeded)
+        JAMI_WARNING("Generic NACK exceeds {} unique packet requests; ignoring the rest", MAX_NACK_PACKET_REQUESTS);
 
     for (const auto& packet : retransmissions) {
         if (writeData(packet.data(), static_cast<int>(packet.size())) != static_cast<int>(packet.size()))
