@@ -381,6 +381,23 @@ BrowserHostAudioTest::testBundleWaitersCancelIndependently()
     auto firstWait = std::async(std::launch::async, wait, first.get_token());
     auto secondWait = std::async(std::launch::async, wait, second.get_token());
     const auto firstPending = firstWait.wait_for(50ms);
+    auto mismatch = std::async(std::launch::async, [&] {
+        try {
+            SocketPair::ensureBundleDtlsContext(bundle,
+                                                DtlsSetup::ACTIVE,
+                                                "SHA-256",
+                                                fingerprint,
+                                                identity.second,
+                                                identity.first,
+                                                {});
+            return false;
+        } catch (const std::runtime_error&) {
+            return true;
+        } catch (const DtlsCancelled&) {
+            return false;
+        }
+    });
+    const auto mismatchReady = mismatch.wait_for(100ms);
     first.request_stop();
     const auto firstStopped = firstWait.wait_for(100ms);
     const auto secondPending = secondWait.wait_for(0ms);
@@ -391,6 +408,8 @@ BrowserHostAudioTest::testBundleWaitersCancelIndependently()
     const auto stopDuration = std::chrono::steady_clock::now() - cancelledAt;
     CPPUNIT_ASSERT(firstWait.get());
     CPPUNIT_ASSERT(secondWait.get());
+    CPPUNIT_ASSERT(mismatch.get());
+    CPPUNIT_ASSERT(mismatchReady == std::future_status::ready);
     CPPUNIT_ASSERT(firstPending == std::future_status::timeout);
     CPPUNIT_ASSERT(firstStopped == std::future_status::ready);
     CPPUNIT_ASSERT(secondPending == std::future_status::timeout);
