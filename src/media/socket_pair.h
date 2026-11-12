@@ -141,6 +141,7 @@ typedef struct
 } TS_Frame;
 
 struct DtlsSrtpContext;
+struct DtlsSrtpSession;
 enum class DtlsSetup : uint8_t;
 
 class SocketPair
@@ -155,9 +156,11 @@ public:
                                                               std::stop_token transportStop = {});
 
     // Runs (once) the DTLS-SRTP handshake on the shared bundle transport
-    // (RFC 8843 + RFC 5764: a single DTLS association per transport) and then
+    // (RFC 9143 + RFC 5764: a single DTLS association per transport) and then
     // installs the bundle receive callbacks. Concurrent callers block until
-    // the first handshake completes and share its result. Throws on failure
+    // the first handshake completes and share its result. Callers must use
+    // the negotiated BUNDLE tag's DTLS parameters; mismatches throw even
+    // while negotiation is pending. Throws on failure
     // or when cancelled. Cancelling a caller only stops that caller's wait;
     // the token supplied to createBundleContext cancels the shared handshake.
     static DtlsSrtpContext ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
@@ -167,9 +170,11 @@ public:
                                                    const std::shared_ptr<dht::crypto::Certificate>& certificate,
                                                    const std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
                                                    std::stop_token stopToken);
-    static void setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
-                                     const DtlsSrtpContext& context,
-                                     std::stop_token stopToken = {});
+    // Installs restart keys with their binding, or returns the matching
+    // session already installed on this transport.
+    static DtlsSrtpContext setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
+                                                const DtlsSrtpSession& session,
+                                                std::stop_token stopToken = {});
     // After cancelling the transport, wait until negotiation releases its
     // receive callback and reference before reusing the underlying ICE socket.
     static void joinBundleDtls(const std::shared_ptr<BundleContext>& bundleContext);

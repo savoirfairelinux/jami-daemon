@@ -223,7 +223,9 @@ protected:
                                          send_.dtls_fingerprint)) {
             JAMI_DEBUG("Reusing DTLS-SRTP keys after ICE restart");
             if (bundleSocketContext_)
-                SocketPair::setBundleDtlsContext(bundleSocketContext_, dtlsSrtpSession_->context, stopToken);
+                dtlsSrtpSession_->context = SocketPair::setBundleDtlsContext(bundleSocketContext_,
+                                                                             *dtlsSrtpSession_,
+                                                                             stopToken);
             return dtlsSrtpSession_->context;
         }
 
