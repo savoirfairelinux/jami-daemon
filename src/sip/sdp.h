@@ -219,8 +219,10 @@ public:
     static std::vector<MediaAttribute> getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession,
                                                                     bool ignoreDisabled = false);
 
-    // Validate effective DTLS attributes, including media-level overrides (RFC 8122/5763).
-    static bool validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection direction = SdpDirection::NONE);
+    // Validate effective DTLS attributes, including media-level overrides
+    // (RFC 8122/5763) and BUNDLE tag inheritance (RFC 9143).
+    static bool validateDtlsAttributes(const pjmedia_sdp_session* session,
+                                       SdpDirection direction = SdpDirection::NONE);
 
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
@@ -311,6 +313,9 @@ private:
     void addExtmapAttribute(pjmedia_sdp_media* med, unsigned id, std::string_view uri);
     void addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view feedbackType);
     void addBundleGroupAttribute();
+    static bool validateDtlsAttributes(const pjmedia_sdp_session* session,
+                                       SdpDirection direction,
+                                       const pjmedia_sdp_session* negotiatedAnswer);
     bool shouldUseBundle() const;
     bool isBundlePayloadTypeUsed(unsigned payloadType) const;
     unsigned nextBundleDynamicPayloadType(unsigned startPayloadType = 96) const;
