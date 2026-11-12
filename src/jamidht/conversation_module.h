@@ -426,6 +426,27 @@ public:
                                   const dht::InfoHash& contactUri,
                                   bool isDevice = false);
     /**
+     * Vote to promote a member to admin or to demote an admin (this will trigger a member
+     * event + new message once enough admins voted). Demoting oneself steps down without a vote.
+     * @param conversationId
+     * @param contactUri
+     * @param promote       true to promote, false to demote
+     */
+    void changeConversationMemberRole(const std::string& conversationId, const dht::InfoHash& contactUri, bool promote);
+    /**
+     * Vote for a new approval threshold (this will trigger a profile update once enough
+     * admins voted under the current threshold)
+     * @param conversationId
+     * @param threshold     "percent/<1-100>" or "count/<k>"
+     */
+    void setConversationApprovalThreshold(const std::string& conversationId, const std::string& threshold);
+    /**
+     * Get the pending votes of a conversation
+     * @param conversationId
+     * @return one map per vote target, see ConversationRepository::votes()
+     */
+    std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& conversationId) const;
+    /**
      * Get members
      * @param conversationId
      * @param includeBanned

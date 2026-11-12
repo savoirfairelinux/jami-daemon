@@ -30,6 +30,7 @@
 #include "jamidht/jamiaccount.h"
 #include "jamidht/collaborative_editing.h"
 #include "jamidht/conversation_module.h"
+#include "jamidht/conversationrepository.h"
 
 namespace libjami {
 
@@ -167,6 +168,60 @@ removeConversationMember(const std::string& accountId, const std::string& conver
             }
             convModule->removeConversationMember(conversationId, h);
         }
+}
+
+namespace {
+void
+changeConversationMemberRole(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& contactUri,
+                             bool promote)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true)) {
+            dht::InfoHash h(contactUri);
+            if (not h) {
+                JAMI_ERROR("{}ConversationMember: invalid contact URI `{}`", promote ? "promote" : "demote", contactUri);
+                return;
+            }
+            convModule->changeConversationMemberRole(conversationId, h, promote);
+        }
+}
+} // namespace
+
+void
+promoteConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+{
+    changeConversationMemberRole(accountId, conversationId, contactUri, true);
+}
+
+void
+demoteConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+{
+    changeConversationMemberRole(accountId, conversationId, contactUri, false);
+}
+
+void
+setConversationApprovalThreshold(const std::string& accountId,
+                                 const std::string& conversationId,
+                                 const std::string& threshold)
+{
+    if (!jami::ApprovalThreshold::parse(threshold)) {
+        JAMI_ERROR("setConversationApprovalThreshold: invalid threshold `{}`", threshold);
+        return;
+    }
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true))
+            convModule->setConversationApprovalThreshold(conversationId, threshold);
+}
+
+std::vector<std::map<std::string, std::string>>
+getConversationVotes(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true))
+            return convModule->getConversationVotes(conversationId);
+    return {};
 }
 
 std::vector<std::map<std::string, std::string>>
