@@ -107,48 +107,43 @@ void
 initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
                            std::shared_ptr<dht::crypto::Certificate>& certificate,
                            std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
-                           Sdp& sdp)
+                           Sdp& sdp,
+                           bool required)
 {
     if (!account)
         return;
 
-    if (std::dynamic_pointer_cast<JamiAccount>(account)) {
-        try {
+    try {
+        if (std::dynamic_pointer_cast<JamiAccount>(account)) {
             auto identity = generateDtlsSrtpIdentity();
             privateKey = std::move(identity.first);
             certificate = std::move(identity.second);
-            sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
-        } catch (const std::exception& e) {
-            JAMI_ERROR("[account:{}] Unable to generate ephemeral DTLS-SRTP identity: {}",
-                       account->getAccountID(),
-                       e.what());
+        } else {
+            if (account->getSrtpKeyExchange() != KeyExchangeProtocol::DTLS)
+                return;
+
+            auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
+            if (!sipAccount)
+                throw std::runtime_error("DTLS-SRTP requires a SIP account identity");
+
+            const auto& config = sipAccount->config();
+            if (config.tlsCertificateFile.empty() || config.tlsPrivateKeyFile.empty())
+                throw std::runtime_error("DTLS-SRTP requires TLS.certificateFile and TLS.privateKeyFile");
+
+            certificate = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(config.tlsCertificateFile));
+            privateKey = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(config.tlsPrivateKeyFile),
+                                                                   config.tlsPassword);
         }
-        return;
-    }
-
-    if (account->getSrtpKeyExchange() != KeyExchangeProtocol::DTLS)
-        return;
-
-    auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
-    if (!sipAccount) {
-        JAMI_WARNING("[account:{}] DTLS-SRTP requires a SIP account identity", account->getAccountID());
-        return;
-    }
-
-    const auto& config = sipAccount->config();
-    if (config.tlsCertificateFile.empty() || config.tlsPrivateKeyFile.empty()) {
-        JAMI_WARNING("[account:{}] DTLS-SRTP requires TLS.certificateFile and TLS.privateKeyFile",
-                     sipAccount->getAccountID());
-        return;
-    }
-
-    try {
-        certificate = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(config.tlsCertificateFile));
-        privateKey = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(config.tlsPrivateKeyFile),
-                                                               config.tlsPassword);
         sdp.setLocalDtlsFingerprint("SHA-256", getDtlsFingerprint(*certificate));
     } catch (const std::exception& e) {
-        JAMI_ERROR("[account:{}] Unable to load DTLS-SRTP identity: {}", sipAccount->getAccountID(), e.what());
+        const auto error = fmt::format("[account:{}] Unable to initialize DTLS-SRTP identity: {}",
+                                       account->getAccountID(),
+                                       e.what());
+        if (required)
+            throw std::runtime_error(error);
+        JAMI_WARNING("{}", error);
+        certificate.reset();
+        privateKey.reset();
     }
 }
 
@@ -168,7 +163,6 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     sdp_->setSecureMediaKeyExchange(account->getSrtpKeyExchange());
     setRtcpMuxEnabled(type == Call::CallType::OUTGOING && account->isRtcpMuxEnabled());
     setBundleEnabled(accountSupportsBundle(account));
-    initializeDtlsSrtpIdentity(account, dtlsCertificate_, dtlsPrivateKey_, *sdp_);
 
     if (account->getUPnPActive())
         upnp_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
@@ -192,6 +186,12 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     } else {
         mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
     }
+
+    initializeDtlsSrtpIdentity(account,
+                               dtlsCertificate_,
+                               dtlsPrivateKey_,
+                               *sdp_,
+                               not hasExternalMedia() && account->getSrtpKeyExchange() == KeyExchangeProtocol::DTLS);
 
     if (mediaAttrList.size() == 0 and not hasExternalMedia()) {
         if (type_ == Call::CallType::INCOMING) {
@@ -4345,6 +4345,9 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
         return res;
     }
 
+    if (not Sdp::validateDtlsAttributes(offer, SdpDirection::OFFER))
+        return rejectOffer(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+
     // Note: For multistream, here we must ignore disabled remote medias, because
     // we will answer from our medias and remote enabled medias.
     // Example: if remote disables its camera and share its screen, the offer will
@@ -4498,6 +4501,11 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
     }
 
     JAMI_DEBUG("[call:{}] Received an offer in '200 OK' answer", getCallId());
+
+    if (not Sdp::validateDtlsAttributes(offer, SdpDirection::OFFER)) {
+        hangup(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+        return;
+    }
 
     auto mediaList = Sdp::getMediaAttributeListFromSdp(offer);
     // If this method is called, it means we are expecting an offer
