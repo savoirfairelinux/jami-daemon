@@ -585,16 +585,22 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
 }
 
 void
-VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
+VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                       std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                       std::stop_token stopToken)
 {
-    startupFailed_.store(false);
-    dtlsAbort_->store(false);
+    if (!stopToken.stop_possible())
+        stopToken = prepareStart();
     std::lock_guard lock(mutex_);
+    if (stopToken.stop_requested()) {
+        JAMI_DEBUG("Video RTP startup cancelled");
+        return;
+    }
+    startupFailed_.store(false);
     srtpInstalled_ = false;
-    dtlsAbort_->store(false);
 
     if (not send_.enabled and not receive_.enabled) {
-        stop();
+        stopSession();
         return;
     }
 
@@ -605,7 +611,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 
         if (bundleSocketContext_) {
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = getDtlsSrtpContext(nullptr);
+                dtlsSrtp = getDtlsSrtpContext(nullptr, stopToken);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(bundleSocketContext_, rtcpMux, bundleRtpPayloadType_));
@@ -621,7 +627,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             }
 
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = getDtlsSrtpContext(rtp_sock.get());
+                dtlsSrtp = getDtlsSrtpContext(rtp_sock.get(), stopToken);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock), rtcpMux));
@@ -655,12 +661,19 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                     send_.crypto.getSrtpKeyInfo().c_str());
             srtpInstalled_ = true;
         }
+    } catch (const DtlsCancelled&) {
+        JAMI_DEBUG("Video DTLS-SRTP startup cancelled");
+        return;
     } catch (const std::runtime_error& e) {
         JAMI_ERROR("[{}] Socket creation failed: {}", fmt::ptr(this), e.what());
         reportStartupFailure(fmt::format("Video transport setup failed: {}", e.what()));
         return;
     }
 
+    if (stopToken.stop_requested()) {
+        JAMI_DEBUG("Video RTP startup cancelled");
+        return;
+    }
     transportCcController_->reset();
 
     try {
@@ -693,12 +706,9 @@ VideoRtpSession::isRtpReady(bool expectSender, bool expectReceiver)
 }
 
 void
-VideoRtpSession::stop()
+VideoRtpSession::stopSession()
 {
     std::shared_ptr<Conference> previousOwner;
-    // Release a start() still blocked on a DTLS-SRTP handshake before asking for
-    // the mutex it holds, otherwise stopping waits out the handshake timeout.
-    dtlsAbort_->store(true);
     std::lock_guard lock(mutex_);
     srtpInstalled_ = false;
 

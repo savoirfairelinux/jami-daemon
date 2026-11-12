@@ -28,6 +28,7 @@
 #include "media/audio/ringbuffer.h"
 #include "media/audio/ringbufferpool.h"
 #include "media/media_buffer.h"
+#include "media/dtls_srtp.h"
 #include "observer.h"
 #ifdef ENABLE_VIDEO
 #include "media/video/video_receive_thread.h"
@@ -39,6 +40,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <future>
 #include <mutex>
 
 namespace jami::test {
@@ -64,6 +66,9 @@ public:
     void testAudioTransportFailureIsReported();
     void testDisabledAudioDoesNotReportFailure();
     void testAudioReceiverSetupFailureIsReported();
+    void testQueuedStartupRemainsCancelled();
+    void testStopInterruptsDtls();
+    void testBundleWaitersCancelIndependently();
 #ifdef ENABLE_VIDEO
     void testVideoTransportFailureIsReported();
     void testVideoReceiverSetupFailureCanStopFromCallback();
@@ -77,6 +82,9 @@ public:
     CPPUNIT_TEST(testAudioTransportFailureIsReported);
     CPPUNIT_TEST(testDisabledAudioDoesNotReportFailure);
     CPPUNIT_TEST(testAudioReceiverSetupFailureIsReported);
+    CPPUNIT_TEST(testQueuedStartupRemainsCancelled);
+    CPPUNIT_TEST(testStopInterruptsDtls);
+    CPPUNIT_TEST(testBundleWaitersCancelIndependently);
 #ifdef ENABLE_VIDEO
     CPPUNIT_TEST(testVideoTransportFailureIsReported);
     CPPUNIT_TEST(testVideoReceiverSetupFailureCanStopFromCallback);
@@ -275,6 +283,119 @@ BrowserHostAudioTest::testAudioReceiverSetupFailureIsReported()
         CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(3), [&] { return !reason.empty(); }));
     }
     CPPUNIT_ASSERT_EQUAL(std::string("Audio RTP input is not configured"), reason);
+}
+
+void
+BrowserHostAudioTest::testQueuedStartupRemainsCancelled()
+{
+    auto session = std::make_shared<AudioRtpSession>("cancel-test",
+                                                     "cancel-test-audio",
+                                                     nullptr,
+                                                     AudioRtpSession::Mode::CONFERENCE_HOST);
+    MediaDescription media;
+    media.enabled = true;
+    media.key_exchange = KeyExchangeProtocol::DTLS;
+    session->updateMedia(media, media);
+
+    const auto queued = session->prepareStart();
+    std::unique_lock lock(session->mutex_);
+    std::promise<void> cancelled;
+    std::stop_callback onCancel(queued, [&] { cancelled.set_value(); });
+    auto stopping = std::async(std::launch::async, [&] { session->stop(); });
+    cancelled.get_future().wait();
+    const auto duringStop = session->prepareStart();
+    lock.unlock();
+    stopping.get();
+    const auto next = session->prepareStart();
+    session->start(nullptr, nullptr, queued);
+    session->start(nullptr, nullptr, duringStop);
+    CPPUNIT_ASSERT(!session->startupFailed_.load());
+    CPPUNIT_ASSERT(!session->socketPair_);
+    CPPUNIT_ASSERT(!next.stop_requested());
+    session->stop();
+}
+
+void
+BrowserHostAudioTest::testStopInterruptsDtls()
+{
+    using namespace std::chrono_literals;
+    auto session = std::make_shared<AudioRtpSession>("dtls-stop-test",
+                                                     "dtls-stop-test-audio",
+                                                     nullptr,
+                                                     AudioRtpSession::Mode::CONFERENCE_HOST);
+    const auto identity = generateDtlsSrtpIdentity();
+    session->setDtlsSrtpIdentity(identity.second, identity.first);
+    MediaDescription media;
+    media.enabled = true;
+    media.key_exchange = KeyExchangeProtocol::DTLS;
+    media.dtls_setup = DtlsSetup::PASSIVE;
+    media.dtls_fingerprint_type = "SHA-256";
+    media.dtls_fingerprint = getDtlsFingerprint(*identity.second);
+    session->updateMedia(media, media);
+    const auto token = session->prepareStart();
+    std::promise<void> entered;
+    auto starting = std::async(std::launch::async, [&] {
+        std::lock_guard lock(session->mutex_);
+        entered.set_value();
+        session->start(std::make_unique<dhtnet::IceSocket>(nullptr, 1), nullptr, token);
+    });
+    entered.get_future().wait();
+    const auto wasWaiting = starting.wait_for(50ms);
+    const auto begin = std::chrono::steady_clock::now();
+    session->stop();
+    starting.get();
+    CPPUNIT_ASSERT(wasWaiting == std::future_status::timeout);
+    CPPUNIT_ASSERT(std::chrono::steady_clock::now() - begin < 100ms);
+    CPPUNIT_ASSERT(!session->startupFailed_.load());
+    CPPUNIT_ASSERT(!session->socketPair_);
+}
+
+void
+BrowserHostAudioTest::testBundleWaitersCancelIndependently()
+{
+    using namespace std::chrono_literals;
+    const auto identity = generateDtlsSrtpIdentity();
+    const auto fingerprint = getDtlsFingerprint(*identity.second);
+    std::stop_source transport;
+    auto bundle = SocketPair::createBundleContext(std::make_unique<dhtnet::IceSocket>(nullptr, 1),
+                                                  nullptr,
+                                                  true,
+                                                  false,
+                                                  transport.get_token());
+    std::stop_source first;
+    std::stop_source second;
+    const auto wait = [&](std::stop_token token) {
+        try {
+            SocketPair::ensureBundleDtlsContext(bundle,
+                                                DtlsSetup::PASSIVE,
+                                                "SHA-256",
+                                                fingerprint,
+                                                identity.second,
+                                                identity.first,
+                                                token);
+            return false;
+        } catch (const DtlsCancelled&) {
+            return true;
+        }
+    };
+    auto firstWait = std::async(std::launch::async, wait, first.get_token());
+    auto secondWait = std::async(std::launch::async, wait, second.get_token());
+    const auto firstPending = firstWait.wait_for(50ms);
+    first.request_stop();
+    const auto firstStopped = firstWait.wait_for(100ms);
+    const auto secondPending = secondWait.wait_for(0ms);
+    const auto cancelledAt = std::chrono::steady_clock::now();
+    transport.request_stop();
+    const auto secondStopped = secondWait.wait_for(100ms);
+    SocketPair::joinBundleDtls(bundle);
+    const auto stopDuration = std::chrono::steady_clock::now() - cancelledAt;
+    CPPUNIT_ASSERT(firstWait.get());
+    CPPUNIT_ASSERT(secondWait.get());
+    CPPUNIT_ASSERT(firstPending == std::future_status::timeout);
+    CPPUNIT_ASSERT(firstStopped == std::future_status::ready);
+    CPPUNIT_ASSERT(secondPending == std::future_status::timeout);
+    CPPUNIT_ASSERT(secondStopped == std::future_status::ready);
+    CPPUNIT_ASSERT(stopDuration < 100ms);
 }
 
 #ifdef ENABLE_VIDEO

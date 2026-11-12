@@ -12,6 +12,7 @@
 #include <optional>
 #include <functional>
 #include <string>
+#include <stop_token>
 #include <vector>
 
 namespace dhtnet {
@@ -61,14 +62,14 @@ private:
     void initialize(std::string offer);
     void onIceInitialized(bool ok);
     void onIceNegotiated(bool ok);
-    void startMedia();
+    void startMedia(std::stop_token audioStart, std::stop_token videoStart);
     void fail(std::string reason);
     void close(bool notify, std::string reason = {});
     void armTimeout(std::chrono::seconds duration, std::string reason);
 
     mutable std::mutex mutex_;
     std::mutex mediaStartMtx_;
-    const std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
+    std::stop_source mediaStopSource_;
     std::atomic_bool stopRequested_ {false};
     State state_ {State::IDLE};
     std::shared_ptr<JamiAccount> account_;
