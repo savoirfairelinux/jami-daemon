@@ -1,0 +1,185 @@
+From dfdb4862a8b0b96d458e26f9f5f0fe7418842702 Mon Sep 17 00:00:00 2001
+From: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
+Date: Thu, 12 Nov 2026 12:26:12 -0500
+Subject: [PATCH] tls: interrupt DTLS handshake waits on shutdown
+
+Latch shutdown requests under the wait mutexes so cancellation wakes
+cookie, handshake and established-session waits without lost signals.
+Keep shutdown notifications on the TLS worker and cover both DTLS roles
+with regression tests requiring shutdown within 100 ms.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+Change-Id: I34846e0ff345c53c00c3c2a1945b40f5edc38b33
+
+diff --git a/include/tls_session.h b/include/tls_session.h
+index 2cd8ff2..dd492a1 100644
+--- a/include/tls_session.h
++++ b/include/tls_session.h
+@@ -129,6 +129,7 @@ public:
+     ~TlsSession();
+ 
+     /// Request TLS thread to stop and quit.
++    /// May be called from another thread, including during a DTLS handshake.
+     /// \note IO operations return error after this call.
+     void shutdown() override;
+ 
+diff --git a/src/security/tls_session.cpp b/src/security/tls_session.cpp
+index 5d2fe5c..ba5e813 100644
+--- a/src/security/tls_session.cpp
++++ b/src/security/tls_session.cpp
+@@ -234,6 +234,7 @@ public:
+     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
+     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
+     std::atomic<TlsSessionState> newState_ {TlsSessionState::NONE};
++    std::atomic_bool shutdownRequested_ {false};
+     std::atomic<int> maxPayload_ {-1};
+ 
+     // IO GnuTLS ↔ ICE
+@@ -356,7 +357,11 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
+ 
+ TlsSession::TlsSessionImpl::~TlsSessionImpl()
+ {
+-    state_ = TlsSessionState::SHUTDOWN;
++    {
++        std::scoped_lock lock(stateMutex_, rxMutex_);
++        shutdownRequested_ = true;
++        state_ = TlsSessionState::SHUTDOWN;
++    }
+     stateCondition_.notify_all();
+     rxCv_.notify_all();
+     {
+@@ -973,7 +978,7 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
+         auto err = transport_->waitForData(timeout, ec);
+         if (err <= 0) {
+             // shutdown?
+-            if (state_ == TlsSessionState::SHUTDOWN) {
++            if (shutdownRequested_ || state_ == TlsSessionState::SHUTDOWN) {
+                 gnutls_transport_set_errno(session_, EINTR);
+                 return -1;
+             }
+@@ -988,8 +993,10 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
+ 
+     // unreliable uses callback installed with setOnRecv()
+     std::unique_lock lk {rxMutex_};
+-    rxCv_.wait_for(lk, timeout, [this] { return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
+-    if (state_ == TlsSessionState::SHUTDOWN) {
++    rxCv_.wait_for(lk, timeout, [this] {
++        return shutdownRequested_ || !rxQueue_.empty() || state_ == TlsSessionState::SHUTDOWN;
++    });
++    if (shutdownRequested_ || state_ == TlsSessionState::SHUTDOWN) {
+         gnutls_transport_set_errno(session_, EINTR);
+         return -1;
+     }
+@@ -1110,14 +1117,14 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
+         // block until rx packet or shutdown
+         std::unique_lock lk {rxMutex_};
+         if (!rxCv_.wait_for(lk, COOKIE_TIMEOUT, [this] {
+-                return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN;
++                return shutdownRequested_ || !rxQueue_.empty() || state_ == TlsSessionState::SHUTDOWN;
+             })) {
+             if (params_.logger)
+                 params_.logger->e("[TLS] SYN cookie failed: timeout");
+             return TlsSessionState::SHUTDOWN;
+         }
+         // Shutdown state?
+-        if (rxQueue_.empty())
++        if (shutdownRequested_ || rxQueue_.empty())
+             return TlsSessionState::SHUTDOWN;
+         count = rxQueue_.front().size();
+     }
+@@ -1159,7 +1166,9 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
+             if (params_.logger)
+                 params_.logger->warn("[TLS] Flood threshold reached (reattempt in {})", FLOOD_PAUSE);
+             dump_io_stats();
+-            std::this_thread::sleep_for(FLOOD_PAUSE); // flood attack protection
++            std::unique_lock lock(rxMutex_);
++            if (rxCv_.wait_for(lock, FLOOD_PAUSE, [this] { return shutdownRequested_.load(); }))
++                return TlsSessionState::SHUTDOWN;
+         }
+         return state;
+     }
+@@ -1180,14 +1189,14 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
+     do {
+         ret = gnutls_handshake(session_);
+     } while ((ret == GNUTLS_E_INTERRUPTED or ret == GNUTLS_E_AGAIN) and ++retry_count < HANDSHAKE_MAX_RETRY
+-             and state_.load() != TlsSessionState::SHUTDOWN);
++             and !shutdownRequested_ and state_.load() != TlsSessionState::SHUTDOWN);
+     if (retry_count > 0) {
+         if (params_.logger)
+             params_.logger->error("[TLS] Handshake reattempt count: {}", retry_count);
+     }
+ 
+     // Stop on fatal error
+-    if (gnutls_error_is_fatal(ret) || state_.load() == TlsSessionState::SHUTDOWN) {
++    if (shutdownRequested_ || gnutls_error_is_fatal(ret) || state_.load() == TlsSessionState::SHUTDOWN) {
+         if (params_.logger)
+             params_.logger->error("[TLS] Handshake failed: {:s}", gnutls_strerror(ret));
+         return TlsSessionState::SHUTDOWN;
+@@ -1351,8 +1360,8 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
+ 
+         do {
+             errno_send = gnutls_heartbeat_ping(session_, bytesToSend, HEARTBEAT_TRIES, GNUTLS_HEARTBEAT_WAIT);
+-        } while (errno_send == GNUTLS_E_AGAIN
+-                 || (errno_send == GNUTLS_E_INTERRUPTED && state_ != TlsSessionState::SHUTDOWN));
++        } while ((errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED) && !shutdownRequested_
++                 && state_ != TlsSessionState::SHUTDOWN);
+ 
+         if (errno_send != GNUTLS_E_SUCCESS) {
+             if (params_.logger)
+@@ -1490,10 +1499,13 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
+     // Nothing to do in reliable mode, so just wait for state change
+     if (transport_ and transport_->isReliable()) {
+         auto disconnected = [this]() -> bool {
+-            return state_.load() != TlsSessionState::ESTABLISHED or newState_.load() != TlsSessionState::NONE;
++            return shutdownRequested_ || state_.load() != TlsSessionState::ESTABLISHED
++                   || newState_.load() != TlsSessionState::NONE;
+         };
+         std::unique_lock lk(stateMutex_);
+         stateCondition_.wait(lk, disconnected);
++        if (shutdownRequested_)
++            return TlsSessionState::SHUTDOWN;
+         auto oldState = state_.load();
+         if (oldState == TlsSessionState::ESTABLISHED) {
+             auto newState = newState_.load();
+@@ -1510,12 +1522,15 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
+         std::unique_lock lk {rxMutex_};
+         if (nextFlush_.empty())
+             rxCv_.wait(lk, [this] {
+-                return state_ != TlsSessionState::ESTABLISHED or not rxQueue_.empty() or not nextFlush_.empty();
++                return shutdownRequested_ || state_ != TlsSessionState::ESTABLISHED || !rxQueue_.empty()
++                       || !nextFlush_.empty();
+             });
+         else
+             rxCv_.wait_until(lk, nextFlush_.front(), [this] {
+-                return state_ != TlsSessionState::ESTABLISHED or !rxQueue_.empty();
++                return shutdownRequested_ || state_ != TlsSessionState::ESTABLISHED || !rxQueue_.empty();
+             });
++        if (shutdownRequested_)
++            return TlsSessionState::SHUTDOWN;
+         state = state_.load();
+         if (state != TlsSessionState::ESTABLISHED)
+             return state;
+@@ -1598,7 +1613,10 @@ void
+ TlsSession::TlsSessionImpl::process()
+ {
+     auto old_state = state_.load();
+-    auto new_state = fsmHandlers_[old_state](old_state);
++    auto new_state = shutdownRequested_ && old_state != TlsSessionState::SHUTDOWN ? TlsSessionState::SHUTDOWN
++                                                                                  : fsmHandlers_[old_state](old_state);
++    if (shutdownRequested_)
++        new_state = TlsSessionState::SHUTDOWN;
+ 
+     // update state_ with taking care for external state change
+     if (not std::atomic_compare_exchange_strong(&state_, &old_state, new_state))
+@@ -1651,7 +1669,10 @@ TlsSession::maxPayload() const
+ void
+ TlsSession::shutdown()
+ {
+-    pimpl_->newState_ = TlsSessionState::SHUTDOWN;
++    {
++        std::scoped_lock lock(pimpl_->stateMutex_, pimpl_->rxMutex_);
++        pimpl_->shutdownRequested_ = true;
++    }
+     pimpl_->stateCondition_.notify_all();
+     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+ }
