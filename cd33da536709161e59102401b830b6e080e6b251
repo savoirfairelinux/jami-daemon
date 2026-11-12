@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "868f3b38_de0b9670",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 5340,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T21:50:15Z",
+      "side": 1,
+      "message": "[error] Line 5340: 🔴 `resolveApprovalThreshold` removes `votes/approval/\u003cthreshold\u003e` before ensuring the new threshold file is written and commitable. If writing `approvalThreshold` (or later git add/commit) fails, all collected votes are lost and the change is not applied, which can permanently discard consensus progress. Move vote-directory deletion after successful file write (and ideally in the same staged commit path), or restore votes on failure.",
+      "revId": "cd33da536709161e59102401b830b6e080e6b251",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
