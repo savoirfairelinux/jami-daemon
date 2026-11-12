@@ -4541,6 +4541,9 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 
     sdp_->setReceivedOffer(offer);
 
+    setRtcpMuxEnabled(acc->isRtcpMuxEnabled() && remoteOfferSupportsRtcpMux());
+    setBundleEnabled(accountSupportsBundle(acc) && remoteOfferSupportsBundle());
+
     // If we send an empty offer, video will be accepted only if locally
     // enabled by the user.
     for (auto& mediaAttr : mediaList) {
