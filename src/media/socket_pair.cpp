@@ -202,29 +202,6 @@ getRtcpMidMappings(const uint8_t* buf, size_t len)
     return mappings;
 }
 
-static int
-stripRtcpByePackets(uint8_t* buf, int len)
-{
-    size_t readOffset = 0;
-    size_t writeOffset = 0;
-
-    while (readOffset + 4 <= static_cast<size_t>(len)) {
-        const auto* packet = buf + readOffset;
-        const auto packetSize = 4u * (static_cast<size_t>((packet[2] << 8) | packet[3]) + 1u);
-        if ((packet[0] >> 6) != 2 || packetSize < 4 || readOffset + packetSize > static_cast<size_t>(len))
-            return len;
-
-        if (packet[1] != RTCP_PT_BYE) {
-            if (writeOffset != readOffset)
-                std::memmove(buf + writeOffset, packet, packetSize);
-            writeOffset += packetSize;
-        }
-        readOffset += packetSize;
-    }
-
-    return readOffset == static_cast<size_t>(len) ? static_cast<int>(writeOffset) : len;
-}
-
 static bool
 isCompleteRtcpCompoundPacket(const uint8_t* buf, int len)
 {
@@ -240,6 +217,31 @@ isCompleteRtcpCompoundPacket(const uint8_t* buf, int len)
     }
 
     return offset == static_cast<size_t>(len);
+}
+
+static int
+stripRtcpByePackets(uint8_t* buf, int len)
+{
+    // Validate the full datagram before compacting it in place.
+    if (!isCompleteRtcpCompoundPacket(buf, len))
+        return len;
+
+    size_t readOffset = 0;
+    size_t writeOffset = 0;
+
+    while (readOffset < static_cast<size_t>(len)) {
+        const auto* packet = buf + readOffset;
+        const auto packetSize = 4u * (static_cast<size_t>((packet[2] << 8) | packet[3]) + 1u);
+
+        if (packet[1] != RTCP_PT_BYE) {
+            if (writeOffset != readOffset)
+                std::memmove(buf + writeOffset, packet, packetSize);
+            writeOffset += packetSize;
+        }
+        readOffset += packetSize;
+    }
+
+    return static_cast<int>(writeOffset);
 }
 
 static int

@@ -200,6 +200,7 @@ private:
     void plaintextIncomingPliStillTriggersKeyframeCallback();
     void corruptedSrtcpDoesNotEndLiveStream();
     void rtcpByeDoesNotEndLiveStream();
+    void rtcpByeFilteringPreservesMalformedCompoundPackets();
     void replayedRtpDoesNotEndStream();
     void genericNackRetransmitsRtp();
     void missingNackPacketRequestsKeyframe();
@@ -214,6 +215,7 @@ private:
     CPPUNIT_TEST(plaintextIncomingPliStillTriggersKeyframeCallback);
     CPPUNIT_TEST(corruptedSrtcpDoesNotEndLiveStream);
     CPPUNIT_TEST(rtcpByeDoesNotEndLiveStream);
+    CPPUNIT_TEST(rtcpByeFilteringPreservesMalformedCompoundPackets);
     CPPUNIT_TEST(replayedRtpDoesNotEndStream);
     CPPUNIT_TEST(genericNackRetransmitsRtp);
     CPPUNIT_TEST(missingNackPacketRequestsKeyframe);
@@ -481,12 +483,65 @@ RtcpCryptoTest::rtcpByeDoesNotEndLiveStream()
                                            buffer.data(),
                                            static_cast<int>(buffer.size())));
 
+    const auto firstPli = SocketPair::createRtcpPli(0x11223344, 0x55667788);
+    const auto secondPli = SocketPair::createRtcpPli(0x55667788, 0x11223344);
+    auto compound = firstPli;
+    compound.insert(compound.end(), bye.begin(), bye.end());
+    compound.insert(compound.end(), secondPli.begin(), secondPli.end());
+    auto expected = firstPli;
+    expected.insert(expected.end(), secondPli.begin(), secondPli.end());
+    remoteRtcp.sendTo(localRtcpPort, compound);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(expected.size()),
+                         avio_read_partial(ioHandle->getContext(),
+                                           buffer.data(),
+                                           static_cast<int>(buffer.size())));
+    CPPUNIT_ASSERT(std::memcmp(buffer.data(), expected.data(), expected.size()) == 0);
+
     const auto packet = rtpPacket(42);
     remoteRtp.sendTo(localRtpPort, packet);
     CPPUNIT_ASSERT_EQUAL(static_cast<int>(packet.size()),
                          avio_read_partial(ioHandle->getContext(),
                                            buffer.data(),
                                            static_cast<int>(buffer.size())));
+}
+
+void
+RtcpCryptoTest::rtcpByeFilteringPreservesMalformedCompoundPackets()
+{
+    UdpSocket remote;
+    const auto localRtpPort = reserveEphemeralPort();
+    const auto localRtcpPort = reserveEphemeralPort();
+    const dhtnet::IpAddr destination {fmt::format("127.0.0.1:{}", remote.port())};
+    SocketPair socketPair(destination, destination, localRtpPort, localRtcpPort);
+    socketPair.setReadBlockingMode(true);
+    std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+    std::vector<uint8_t> buffer(2048);
+
+    const auto firstPli = SocketPair::createRtcpPli(0x11223344, 0x55667788);
+    const auto secondPli = SocketPair::createRtcpPli(0x55667788, 0x11223344);
+    const std::vector<uint8_t> bye {
+        0x81, 203, 0x00, 0x01,
+        0x11, 0x22, 0x33, 0x44,
+    };
+    auto prefix = firstPli;
+    prefix.insert(prefix.end(), bye.begin(), bye.end());
+    prefix.insert(prefix.end(), secondPli.begin(), secondPli.end());
+
+    const std::vector<std::vector<uint8_t>> malformedTails {
+        {0x80, 206, 0x00},       // Truncated header.
+        {0x81, 206, 0x00, 0x02}, // Packet extends past the datagram.
+        {0x41, 206, 0x00, 0x00}, // Invalid RTCP version.
+    };
+    for (const auto& tail : malformedTails) {
+        auto compound = prefix;
+        compound.insert(compound.end(), tail.begin(), tail.end());
+        remote.sendTo(localRtcpPort, compound);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(compound.size()),
+                             avio_read_partial(ioHandle->getContext(),
+                                               buffer.data(),
+                                               static_cast<int>(buffer.size())));
+        CPPUNIT_ASSERT(std::memcmp(buffer.data(), compound.data(), compound.size()) == 0);
+    }
 }
 
 void
