@@ -44,13 +44,13 @@ constexpr std::string_view TEST_FINGERPRINT {
     "AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89"};
 
 std::vector<std::string>
-getMediaAttributes(const pjmedia_sdp_session* session, std::string_view attributeName)
+getMediaAttributes(const pjmedia_sdp_session* session, std::string_view attributeName, unsigned mediaIndex = 0)
 {
     std::vector<std::string> attributes;
-    if (not session or session->media_count == 0)
+    if (not session or mediaIndex >= session->media_count)
         return attributes;
 
-    auto* media = session->media[0];
+    auto* media = session->media[mediaIndex];
     for (unsigned i = 0; i < media->attr_count; ++i) {
         auto* attribute = media->attr[i];
         if (attributeName == std::string_view(attribute->name.ptr, attribute->name.slen))
@@ -133,6 +133,7 @@ private:
     void offerStaysSdesWithoutDtlsIdentity();
     void answerPrefersDtlsForHybridOffer();
     void answerFallsBackToSdesWhenOfferHasNoFingerprint();
+    void answerPreservesRejectedMediaSections();
     void offererMatchesReleaseSelectedSdesSuite();
     void legacyFallbackOfferUsesReleaseCryptoTag();
     void offerAdvertisesSdesWithDefaultKeyExchange();
@@ -142,6 +143,7 @@ private:
     CPPUNIT_TEST(offerStaysSdesWithoutDtlsIdentity);
     CPPUNIT_TEST(answerPrefersDtlsForHybridOffer);
     CPPUNIT_TEST(answerFallsBackToSdesWhenOfferHasNoFingerprint);
+    CPPUNIT_TEST(answerPreservesRejectedMediaSections);
     CPPUNIT_TEST(offererMatchesReleaseSelectedSdesSuite);
     CPPUNIT_TEST(legacyFallbackOfferUsesReleaseCryptoTag);
     CPPUNIT_TEST(offerAdvertisesSdesWithDefaultKeyExchange);
@@ -307,6 +309,74 @@ SrtpHybridSdpTest::answerFallsBackToSdesWhenOfferHasNoFingerprint()
     CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, slots[0].second.key_exchange);
 }
 
+
+void
+SrtpHybridSdpTest::answerPreservesRejectedMediaSections()
+{
+    Sdp sdp("rejected-media-answer");
+    configureSdp(sdp, false);
+    sdp.enableBundle(true);
+
+    auto pool = makePool("rejected-media-answer");
+    const std::string remoteOffer = "v=0\r\n"
+                                   "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                   "s=-\r\n"
+                                   "c=IN IP4 127.0.0.1\r\n"
+                                   "t=0 0\r\n"
+                                   "a=group:BUNDLE video audio stopped\r\n"
+                                   "m=video 5006 RTP/SAVPF 120\r\n"
+                                   "a=mid:video\r\n"
+                                   "a=rtpmap:120 H264/90000\r\n"
+                                   "a=crypto:1 UNSUPPORTED inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
+                                   "m=audio 5004 RTP/SAVP 110\r\n"
+                                   "a=mid:audio\r\n"
+                                   "a=rtpmap:110 PCMU/8000\r\n"
+                                   "a=crypto:7 AES_CM_128_HMAC_SHA1_80 "
+                                   "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
+                                   "a=sendrecv\r\n"
+                                   "m=audio 0 RTP/SAVP 8\r\n"
+                                   "a=mid:stopped\r\n"
+                                   "a=rtpmap:8 PCMA/8000\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.enabled_ = false;
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({video, audio, audio}));
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(3u, localSession->media_count);
+    for (unsigned i : {0u, 2u}) {
+        CPPUNIT_ASSERT_EQUAL(0u, unsigned(localSession->media[i]->desc.port));
+        CPPUNIT_ASSERT(pj_strcmp(&session->media[i]->desc.media, &localSession->media[i]->desc.media) == 0);
+        CPPUNIT_ASSERT(pj_strcmp(&session->media[i]->desc.transport, &localSession->media[i]->desc.transport) == 0);
+        CPPUNIT_ASSERT(pj_strcmp(&session->media[i]->desc.fmt[0], &localSession->media[i]->desc.fmt[0]) == 0);
+        CPPUNIT_ASSERT(getMediaAttributes(localSession, "crypto", i).empty());
+        CPPUNIT_ASSERT(getMediaAttributes(localSession, "mid", i) == getMediaAttributes(session, "mid", i));
+    }
+
+    const auto crypto = getMediaAttributes(localSession, "crypto", 1);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), crypto.size());
+    CPPUNIT_ASSERT(crypto[0].rfind("7 AES_CM_128_HMAC_SHA1_80 inline:", 0) == 0);
+    CPPUNIT_ASSERT(getMediaAttributes(localSession, "mid", 1) == std::vector<std::string> {"audio"});
+    auto* group = pjmedia_sdp_attr_find2(localSession->attr_count, localSession->attr, "group", nullptr);
+    CPPUNIT_ASSERT(group);
+    CPPUNIT_ASSERT(pj_strcmp2(&group->value, "BUNDLE audio") == 0);
+
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+    const auto slots = sdp.getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(3), slots.size());
+    CPPUNIT_ASSERT(!slots[0].first.enabled);
+    CPPUNIT_ASSERT(slots[1].first.enabled);
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, slots[1].first.key_exchange);
+    CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, slots[1].second.key_exchange);
+    CPPUNIT_ASSERT(!slots[2].first.enabled);
+}
 
 void
 SrtpHybridSdpTest::offererMatchesReleaseSelectedSdesSuite()
