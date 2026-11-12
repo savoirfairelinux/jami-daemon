@@ -5,11 +5,13 @@
 #include <array>
 #include <cstdint>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 
 #include <fmt/format.h>
 
 #include "media/dtls_srtp.h"
+#include "media/socket_pair.h"
 #include "test_runner.h"
 
 namespace jami {
@@ -26,6 +28,7 @@ private:
     void dtlsContextIsReusableForIceRestart();
     void fingerprintsSupportSha384AndSha512();
     void unsupportedFingerprintHashIsRejected();
+    void bundleCacheChecksDtlsBinding();
 
     CPPUNIT_TEST_SUITE(DtlsDemuxTest);
     CPPUNIT_TEST(dtlsRecordsAreAccepted);
@@ -33,6 +36,7 @@ private:
     CPPUNIT_TEST(dtlsContextIsReusableForIceRestart);
     CPPUNIT_TEST(fingerprintsSupportSha384AndSha512);
     CPPUNIT_TEST(unsupportedFingerprintHashIsRejected);
+    CPPUNIT_TEST(bundleCacheChecksDtlsBinding);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -85,6 +89,39 @@ DtlsDemuxTest::dtlsContextIsReusableForIceRestart()
     CPPUNIT_ASSERT(session.matches(DtlsSetup::PASSIVE, "sha-256", "AA:BB:CC"));
     CPPUNIT_ASSERT(!session.matches(DtlsSetup::ACTIVE, "sha-256", "AA:BB:CC"));
     CPPUNIT_ASSERT(!session.matches(DtlsSetup::PASSIVE, "sha-256", "DD:EE:FF"));
+}
+
+void
+DtlsDemuxTest::bundleCacheChecksDtlsBinding()
+{
+    auto bundle = SocketPair::createBundleContext(nullptr, nullptr, true, false);
+    const DtlsSrtpSession session {
+        DtlsSetup::PASSIVE,
+        "SHA-256",
+        "AA:BB:CC",
+        {"SRTP_AES128_CM_SHA1_80", "outbound", "inbound"},
+    };
+    SocketPair::setBundleDtlsContext(bundle, session);
+    const auto context
+        = SocketPair::ensureBundleDtlsContext(bundle, DtlsSetup::PASSIVE, "sha-256", "aa:bb:cc", {}, {}, {});
+    CPPUNIT_ASSERT_EQUAL(session.context.outboundKeyInfo, context.outboundKeyInfo);
+    CPPUNIT_ASSERT_EQUAL(session.context.inboundKeyInfo, context.inboundKeyInfo);
+    auto restart = session;
+    restart.context.outboundKeyInfo = "different";
+    CPPUNIT_ASSERT_EQUAL(session.context.outboundKeyInfo,
+                         SocketPair::setBundleDtlsContext(bundle, restart).outboundKeyInfo);
+    for (const auto& [setup, hash, fingerprint] : {
+             std::tuple {DtlsSetup::ACTIVE, "SHA-256", "AA:BB:CC"},
+             std::tuple {DtlsSetup::PASSIVE, "SHA-384", "AA:BB:CC"},
+             std::tuple {DtlsSetup::PASSIVE, "SHA-256", "DD:EE:FF"},
+         }) {
+        CPPUNIT_ASSERT_THROW(SocketPair::ensureBundleDtlsContext(bundle, setup, hash, fingerprint, {}, {}, {}),
+                             std::runtime_error);
+        restart.localSetup = setup;
+        restart.remoteFingerprintHash = hash;
+        restart.remoteFingerprint = fingerprint;
+        CPPUNIT_ASSERT_THROW(SocketPair::setBundleDtlsContext(bundle, restart), std::runtime_error);
+    }
 }
 
 void
