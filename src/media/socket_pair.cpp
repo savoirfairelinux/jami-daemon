@@ -1483,6 +1483,7 @@ SocketPair::createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsr
 bool
 SocketPair::isRtcpPacket(const uint8_t* buf, size_t len)
 {
+    // SDP excludes RTP PT 64-95 (RFC 5761), making this marker-inclusive byte unambiguous.
     return len > 1 && RTP_PT_IS_RTCP(buf[1]);
 }
 
