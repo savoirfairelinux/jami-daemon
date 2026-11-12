@@ -1414,17 +1414,10 @@ SocketPair::createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsr
     if (!state)
         return {};
 
-    std::vector<TransportCcState::ReceivedPacket> receivedPackets;
-    uint8_t feedbackPacketCount = 0;
-    {
-        std::lock_guard l(state->mutex);
-        if (state->receivedPackets.empty())
-            return {};
-
-        receivedPackets = std::move(state->receivedPackets);
-        state->receivedPackets.clear();
-        feedbackPacketCount = state->feedbackPacketCount++;
-    }
+    std::lock_guard l(state->mutex);
+    auto& receivedPackets = state->receivedPackets;
+    if (receivedPackets.empty())
+        return {};
 
     const auto baseSequenceNumber = receivedPackets.front().sequenceNumber;
     std::sort(receivedPackets.begin(), receivedPackets.end(), [baseSequenceNumber](const auto& lhs, const auto& rhs) {
@@ -1442,32 +1435,33 @@ SocketPair::createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsr
     feedback.mediaSsrc = mediaSsrc;
     feedback.baseSequenceNumber = receivedPackets.front().sequenceNumber;
     feedback.referenceTime = static_cast<uint32_t>((firstReceiveTimeUs / 64000) & 0x00ffffff);
-    feedback.feedbackPacketCount = feedbackPacketCount;
+    feedback.feedbackPacketCount = state->feedbackPacketCount;
     feedback.packets.reserve(receivedPackets.size());
 
     static constexpr size_t MAX_TRANSPORT_CC_FEEDBACK_PACKETS = 512;
     auto expectedSequenceNumber = feedback.baseSequenceNumber;
     auto previousReceiveTimeUs = referenceTimeUs;
-    for (const auto& receivedPacket : receivedPackets) {
-        while (expectedSequenceNumber != receivedPacket.sequenceNumber
+    auto receivedPacket = receivedPackets.begin();
+    for (; receivedPacket != receivedPackets.end(); ++receivedPacket) {
+        while (expectedSequenceNumber != receivedPacket->sequenceNumber
                && feedback.packets.size() < MAX_TRANSPORT_CC_FEEDBACK_PACKETS) {
             feedback.packets.push_back({expectedSequenceNumber, TransportCcPacketStatus::NotReceived, 0});
             ++expectedSequenceNumber;
         }
-        if (expectedSequenceNumber != receivedPacket.sequenceNumber
+        if (expectedSequenceNumber != receivedPacket->sequenceNumber
             || feedback.packets.size() >= MAX_TRANSPORT_CC_FEEDBACK_PACKETS) {
             break;
         }
 
         const auto receiveTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
-                                       receivedPacket.receiveTime.time_since_epoch())
+                                       receivedPacket->receiveTime.time_since_epoch())
                                        .count();
         auto deltaTicks = (receiveTimeUs - previousReceiveTimeUs) / TRANSPORT_CC_DELTA_UNIT_US;
         deltaTicks = std::clamp<int64_t>(deltaTicks,
                                          std::numeric_limits<int16_t>::min(),
                                          std::numeric_limits<int16_t>::max());
 
-        feedback.packets.push_back({receivedPacket.sequenceNumber,
+        feedback.packets.push_back({receivedPacket->sequenceNumber,
                                     deltaTicks >= 0 && deltaTicks <= 255 ? TransportCcPacketStatus::SmallDelta
                                                                          : TransportCcPacketStatus::LargeDelta,
                                     static_cast<int16_t>(deltaTicks)});
@@ -1475,7 +1469,15 @@ SocketPair::createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsr
         ++expectedSequenceNumber;
     }
 
-    return jami::createTransportCcFeedbackPacket(feedback);
+    auto packet = jami::createTransportCcFeedbackPacket(feedback);
+    if (packet.empty()) {
+        JAMI_ERROR("Unable to serialize transport-cc feedback");
+        return {};
+    }
+
+    receivedPackets.erase(receivedPackets.begin(), receivedPacket);
+    ++state->feedbackPacketCount;
+    return packet;
 }
 
 bool
