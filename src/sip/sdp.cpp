@@ -1110,6 +1110,8 @@ Sdp::addBundleGroupAttribute()
     std::string mids {"BUNDLE"};
     for (unsigned i = 0; i < localSession_->media_count; ++i) {
         auto* media = localSession_->media[i];
+        if (media->desc.port == 0)
+            continue;
         auto* midAttr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "mid", nullptr);
         if (!midAttr)
             continue;
@@ -1117,6 +1119,9 @@ Sdp::addBundleGroupAttribute()
         mids.append(" ");
         mids.append(midAttr->value.ptr, midAttr->value.slen);
     }
+
+    if (mids == "BUNDLE")
+        return;
 
     const pj_str_t value = sip_utils::CONST_PJ_STR(mids);
     if (pjmedia_sdp_attr_add(&localSession_->attr_count,
@@ -1462,10 +1467,26 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 
     localSession_->media_count = 0;
 
-    for (auto const& media : mediaList) {
-        if (media.enabled_) {
-            localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+    // RFC 3264 section 6: retain every offered m-line in order, rejecting
+    // unwanted streams with port zero rather than removing them.
+    for (unsigned i = 0; i < remoteSession_->media_count; ++i) {
+        auto* remoteMedia = remoteSession_->media[i];
+        const auto bundleOnly = shouldUseBundle()
+                                and pjmedia_sdp_attr_find2(remoteMedia->attr_count,
+                                                          remoteMedia->attr,
+                                                          "bundle-only",
+                                                          nullptr);
+        pjmedia_sdp_media* localMedia;
+        if (i < mediaList.size() and mediaList[i].enabled_ and (remoteMedia->desc.port != 0 or bundleOnly)) {
+            localMedia = addMediaDescription(mediaList[i]);
+        } else {
+            localMedia = pjmedia_sdp_media_clone_deactivate(memPool_.get(), remoteMedia);
+            if (not localMedia)
+                throw SdpException("Unable to create rejected media description");
+            if (auto mid = getMidValue(remoteMedia); not mid.empty())
+                addMidAttribute(localMedia, mid);
         }
+        localSession_->media[localSession_->media_count++] = localMedia;
     }
 
     addBundleGroupAttribute();
@@ -1473,6 +1494,8 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     for (unsigned i = 0; i < localSession_->media_count and i < remoteSession_->media_count; ++i) {
         auto* localMedia = localSession_->media[i];
         auto* remoteMedia = remoteSession_->media[i];
+        if (localMedia->desc.port == 0)
+            continue;
 
         const auto localTransport = getMediaTransport(localMedia);
         const auto remoteTransport = getMediaTransport(remoteMedia);
