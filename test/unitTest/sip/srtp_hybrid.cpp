@@ -157,6 +157,7 @@ private:
     void rejectsMalformedDtlsAttributes();
     void dtlsAttributesRespectMediaOverrides();
     void validatesDtlsHashesAndAnswerRoles();
+    void bundleUsesNegotiatedTagDtlsParameters();
 
     CPPUNIT_TEST_SUITE(SrtpHybridSdpTest);
     CPPUNIT_TEST(offerAdvertisesHybridSdesAndDtls);
@@ -170,6 +171,7 @@ private:
     CPPUNIT_TEST(rejectsMalformedDtlsAttributes);
     CPPUNIT_TEST(dtlsAttributesRespectMediaOverrides);
     CPPUNIT_TEST(validatesDtlsHashesAndAnswerRoles);
+    CPPUNIT_TEST(bundleUsesNegotiatedTagDtlsParameters);
     CPPUNIT_TEST_SUITE_END();
 
     void configureSdp(Sdp& sdp, bool withDtlsIdentity)
@@ -223,6 +225,76 @@ SrtpHybridSdpTest::rejectsMalformedDtlsAttributes()
         audio.enabled_ = true;
         CPPUNIT_ASSERT(not sdp.processIncomingOffer({audio}));
         CPPUNIT_ASSERT(not sdp.setReceivedOfferFromExternalSdp(raw));
+    }
+}
+
+void
+SrtpHybridSdpTest::bundleUsesNegotiatedTagDtlsParameters()
+{
+    const auto fingerprint = std::string(TEST_FINGERPRINT) + ":" + std::string(TEST_FINGERPRINT);
+    for (const auto& [tagOnly, rejectFirst] :
+         {std::pair {false, false}, std::pair {true, false}, std::pair {false, true}}) {
+        Sdp sdp("bundle-dtls");
+        configureSdp(sdp, true);
+        sdp.enableRtcpMux(true);
+        sdp.enableBundle(true);
+        auto pool = makePool("bundle-dtls");
+        const auto group = rejectFirst ? "a=group:BUNDLE first second\r\n" : "a=group:BUNDLE second first\r\n";
+        const auto firstAttributes = tagOnly ? std::string {}
+                                             : "a=fingerprint:SHA-256 " + std::string(TEST_FINGERPRINT)
+                                                   + "\r\na=setup:actpass\r\n";
+        const auto raw = dtlsSdp(group, "a=mid:first\r\na=rtcp-mux\r\n" + firstAttributes)
+                         + "m=audio 5006 UDP/TLS/RTP/SAVPF 0\r\n"
+                           "a=rtpmap:0 PCMU/8000\r\n"
+                           "a=mid:second\r\n"
+                           "a=rtcp-mux\r\n"
+                           "a=fingerprint:SHA-512 "
+                         + fingerprint + "\r\na=setup:actpass\r\n";
+        auto* offer = parseSdp(pool.get(), raw);
+        CPPUNIT_ASSERT(offer);
+        CPPUNIT_ASSERT(Sdp::validateDtlsAttributes(offer, SdpDirection::OFFER));
+        sdp.setReceivedOffer(offer);
+        MediaAttribute first(MediaType::MEDIA_AUDIO);
+        first.enabled_ = not rejectFirst;
+        MediaAttribute second(MediaType::MEDIA_AUDIO);
+        second.enabled_ = true;
+        CPPUNIT_ASSERT(sdp.processIncomingOffer({first, second}));
+        CPPUNIT_ASSERT(sdp.startNegotiation());
+        const auto slots = sdp.getMediaSlots();
+        CPPUNIT_ASSERT_EQUAL(size_t(2), slots.size());
+        for (unsigned i = rejectFirst ? 1 : 0; i < slots.size(); ++i) {
+            const auto& [local, remote] = slots[i];
+            CPPUNIT_ASSERT(local.enabled && remote.enabled);
+            CPPUNIT_ASSERT_EQUAL(std::string("SHA-512"), remote.dtls_fingerprint_type);
+            CPPUNIT_ASSERT_EQUAL(fingerprint, remote.dtls_fingerprint);
+            CPPUNIT_ASSERT_EQUAL(DtlsSetup::ACTPASS, remote.dtls_setup);
+            CPPUNIT_ASSERT_EQUAL(DtlsSetup::ACTIVE, local.dtls_setup);
+            CPPUNIT_ASSERT_EQUAL(std::string(TEST_FINGERPRINT), local.dtls_fingerprint);
+        }
+        const auto* answer = sdp.getLocalSdpSession();
+        if (rejectFirst) {
+            CPPUNIT_ASSERT(not slots[0].first.enabled);
+        } else {
+            CPPUNIT_ASSERT(getMediaAttributes(answer, "fingerprint", 0).empty());
+            CPPUNIT_ASSERT(getMediaAttributes(answer, "setup", 0).empty());
+        }
+        CPPUNIT_ASSERT_EQUAL(size_t(1), getMediaAttributes(answer, "fingerprint", 1).size());
+        CPPUNIT_ASSERT_EQUAL(size_t(1), getMediaAttributes(answer, "setup", 1).size());
+
+        Sdp offerer("bundle-dtls-offerer");
+        configureSdp(offerer, true);
+        CPPUNIT_ASSERT(offerer.createOfferFromExternalSdp(raw));
+        offerer.setActiveLocalSdpSession(offerer.getLocalSdpSession());
+        offerer.setActiveRemoteSdpSession(answer);
+        const auto offeredSlots = offerer.getMediaSlots();
+        CPPUNIT_ASSERT_EQUAL(size_t(2), offeredSlots.size());
+        for (unsigned i = rejectFirst ? 1 : 0; i < offeredSlots.size(); ++i) {
+            const auto& [local, remote] = offeredSlots[i];
+            CPPUNIT_ASSERT_EQUAL(fingerprint, local.dtls_fingerprint);
+            CPPUNIT_ASSERT_EQUAL(DtlsSetup::PASSIVE, local.dtls_setup);
+            CPPUNIT_ASSERT_EQUAL(std::string(TEST_FINGERPRINT), remote.dtls_fingerprint);
+            CPPUNIT_ASSERT_EQUAL(DtlsSetup::ACTIVE, remote.dtls_setup);
+        }
     }
 }
 
