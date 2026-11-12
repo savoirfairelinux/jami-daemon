@@ -5,6 +5,8 @@
 #include <opendht/crypto.h>
 
 #include <memory>
+#include <exception>
+#include <stop_token>
 #include <string>
 #include <string_view>
 
@@ -13,6 +15,12 @@ class IceSocket;
 }
 
 namespace jami {
+
+class DtlsCancelled final : public std::exception
+{
+public:
+    const char* what() const noexcept override { return "DTLS-SRTP startup cancelled"; }
+};
 
 struct DtlsSrtpContext
 {
@@ -46,15 +54,14 @@ size_t getDtlsFingerprintHashSize(std::string_view hash);
 // DTLS stack (first byte in [20..63]) rather than SRTP/STUN.
 bool isDtlsPacket(const uint8_t* buf, size_t len);
 
-// Runs a blocking DTLS-SRTP handshake on the given ICE socket. The optional
-// abort flag makes the wait cancellable from another thread (e.g. call
-// teardown), in which case a runtime_error is thrown.
+// Runs a blocking DTLS-SRTP handshake on the given ICE socket.
+// Cancellation wakes the wait immediately and throws DtlsCancelled.
 DtlsSrtpContext negotiateDtlsSrtp(dhtnet::IceSocket& rtpSocket,
                                   DtlsSetup localSetup,
                                   std::string_view remoteFingerprintHash,
                                   std::string_view remoteFingerprint,
                                   const std::shared_ptr<dht::crypto::Certificate>& localCertificate,
                                   const std::shared_ptr<dht::crypto::PrivateKey>& localPrivateKey,
-                                  const std::shared_ptr<std::atomic_bool>& abort = {});
+                                  std::stop_token stopToken = {});
 
 } // namespace jami
