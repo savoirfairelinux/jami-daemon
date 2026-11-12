@@ -53,6 +53,7 @@
 #include <future>
 #include <json/json.h>
 #include <regex>
+#include <set>
 #include <exception>
 #include <optional>
 #include <memory>
@@ -335,6 +336,10 @@ public:
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     GitObject memberCertificate(std::string_view memberUri, const GitTree& tree) const;
+    // Read admin URIs from admins/<uri>.crt in the tree.
+    std::set<std::string> adminUrisAtTree(const GitTree& tree) const;
+    // Count admins at the parent tree for validation, or at HEAD for local resolution.
+    bool isApproved(const std::set<std::string>& voters, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deleted before repo
     GitTree treeAtCommit(git_repository* repo, const std::string& commitId) const;
 
@@ -1663,7 +1668,7 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     std::string memberFile = fmt::format("members/{}.crt", uriMember);
     std::string crlFile = fmt::format("CRLs/{}", uriMember);
     std::string invitedFile = fmt::format("invited/{}", uriMember);
-    std::vector<std::string> voters;
+    std::set<std::string> voters;
     std::vector<std::string> devicesRemoved;
     std::vector<std::string> bannedFiles;
     // Check that no weird file is added nor removed
@@ -1682,7 +1687,7 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
                 JAMI_ERROR("Invalid vote file detected: {}", f);
                 return false;
             }
-            voters.emplace_back(base_match[3]);
+            voters.emplace(base_match[3]);
             // Check that votes were not added here
             if (!fileAtTree(f, treeOld)) {
                 JAMI_ERROR("invalid vote added ({})", f);
@@ -1728,23 +1733,8 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
         }
     }
 
-    // If not for self check that vote is valid and not added
-    auto nbAdmins = 0;
-    auto nbVotes = 0;
-    std::string repoPath = git_repository_workdir(repo.get());
-    for (const auto& certificate : dhtnet::fileutils::readDirectory(repoPath + "admins")) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARNING("Incorrect file found: {}", certificate);
-            continue;
-        }
-        nbAdmins += 1;
-        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        if (std::find(voters.begin(), voters.end(), adminUri) != voters.end()) {
-            nbVotes += 1;
-        }
-    }
-
-    if (nbAdmins == 0 or (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) < .5) {
+    // The admins of the parent commit decide, whatever the working directory holds
+    if (!isApproved(voters, treeOld)) {
         JAMI_ERROR("Incomplete vote detected (commit: {})", commitId);
         return false;
     }
@@ -2621,6 +2611,44 @@ ConversationRepository::Impl::memberCertificate(std::string_view memberUri, cons
     if (not blob)
         blob = fileAtTree(fmt::format("admins/{}.crt", memberUri), tree);
     return blob;
+}
+
+std::set<std::string>
+ConversationRepository::Impl::adminUrisAtTree(const GitTree& tree) const
+{
+    std::set<std::string> uris;
+    git_object* admins_ptr = nullptr;
+    if (git_object_lookup_bypath(&admins_ptr, reinterpret_cast<git_object*>(tree.get()), "admins", GIT_OBJECT_TREE)
+        != 0) {
+        return uris;
+    }
+    GitTree admins {reinterpret_cast<git_tree*>(admins_ptr)};
+    constexpr std::string_view suffix = ".crt";
+    auto count = git_tree_entrycount(admins.get());
+    for (size_t i = 0; i < count; ++i) {
+        const auto* entry = git_tree_entry_byindex(admins.get(), i);
+        if (!entry || git_tree_entry_type(entry) != GIT_OBJECT_BLOB)
+            continue;
+        std::string_view name = git_tree_entry_name(entry);
+        if (name.size() <= suffix.size() || !name.ends_with(suffix)) {
+            JAMI_WARNING("Incorrect file found: admins/{}", name);
+            continue;
+        }
+        uris.emplace(name.substr(0, name.size() - suffix.size()));
+    }
+    return uris;
+}
+
+bool
+ConversationRepository::Impl::isApproved(const std::set<std::string>& voters, const GitTree& tree) const
+{
+    auto admins = adminUrisAtTree(tree);
+    std::size_t counted = 0;
+    for (const auto& voter : voters) {
+        if (admins.count(voter))
+            counted += 1;
+    }
+    return !admins.empty() && counted * 2 > admins.size();
 }
 
 bool
@@ -4829,27 +4857,20 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
     pimpl_->resetHard();
     if (!pimpl_->hasLocalPermission(Permission::BanUnbanMember))
         return {};
-    // Count ratio admin/votes
-    auto nbAdmins = 0, nbVotes = 0;
-    // For each admin, check if voted
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
-    auto adminsPath = repoPath / MemberPath::ADMINS;
     auto voteDirectory = repoPath / "votes" / voteType / type / uri;
-    for (const auto& certificate : dhtnet::fileutils::readDirectory(adminsPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARNING("Incorrect file found: {}/{}", adminsPath, certificate);
-            continue;
-        }
-        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        nbAdmins += 1;
-        if (std::filesystem::is_regular_file(fileutils::getFullPath(voteDirectory, adminUri)))
-            nbVotes += 1;
-    }
+    std::set<std::string> voters;
+    for (const auto& voter : dhtnet::fileutils::readDirectory(voteDirectory))
+        voters.emplace(voter);
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
 
-    if (nbAdmins > 0 && (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) > .5) {
+    // Same rule as the validation of the resolution commit, at the commit it will follow
+    if (pimpl_->isApproved(voters, tree)) {
         JAMI_WARNING("More than half of the admins voted to ban {}, applying the ban.", uri);
 
         // Remove vote directory
