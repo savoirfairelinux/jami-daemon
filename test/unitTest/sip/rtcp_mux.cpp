@@ -181,6 +181,7 @@ private:
     void offerAdvertisesRtcpMuxWhenEnabled();
     void offerAdvertisesBundleAndMid();
     void offerAdvertisesTransportCcAndRemb();
+    void reofferAdvertisesFeedbackForNewMedia();
     void offerAdvertisesTransportCcOnlyForActiveDirections();
     void offerAdvertisesPliAndFirForVideoOnly();
     void offerAdvertisesH264PacketizationMode1();
@@ -216,6 +217,7 @@ private:
     CPPUNIT_TEST(offerAdvertisesRtcpMuxWhenEnabled);
     CPPUNIT_TEST(offerAdvertisesBundleAndMid);
     CPPUNIT_TEST(offerAdvertisesTransportCcAndRemb);
+    CPPUNIT_TEST(reofferAdvertisesFeedbackForNewMedia);
     CPPUNIT_TEST(offerAdvertisesTransportCcOnlyForActiveDirections);
     CPPUNIT_TEST(offerAdvertisesPliAndFirForVideoOnly);
     CPPUNIT_TEST(offerAdvertisesH264PacketizationMode1);
@@ -436,6 +438,53 @@ RtcpMuxSdpTest::offerAdvertisesTransportCcAndRemb()
     CPPUNIT_ASSERT_EQUAL(3u, descriptions[0].transport_cc_rtp_ext_id);
     CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
     CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+}
+
+void
+RtcpMuxSdpTest::reofferAdvertisesFeedbackForNewMedia()
+{
+    for (const auto bundle : {false, true}) {
+        for (const auto previousFeedback : {false, true}) {
+            Sdp sdp("new-media-feedback-reoffer");
+            sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+            sdp.setLocalMediaCapabilities(MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+            sdp.setLocalMediaCapabilities(MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+            sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+            sdp.setLocalPublishedVideoPorts(bundle ? TEST_AUDIO_RTP_PORT : TEST_AUDIO_RTP_PORT + 2, 0);
+            sdp.enableRtcpMux(true);
+            sdp.enableBundle(bundle);
+
+            MediaAttribute audio(MEDIA_AUDIO, false, false, true, {}, "audio_0");
+            MediaAttribute video(MEDIA_VIDEO, false, false, true, {}, "video_0");
+            CPPUNIT_ASSERT(sdp.createOffer({audio}));
+            auto* previous = sdp.getLocalSdpSession();
+            CPPUNIT_ASSERT(previous);
+            CPPUNIT_ASSERT_EQUAL(1u, previous->media_count);
+            if (not previousFeedback) {
+                auto* media = previous->media[0];
+                pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "rtcp-fb");
+            }
+
+            CPPUNIT_ASSERT(sdp.createOffer({audio, video}, previous));
+            const auto* reoffer = sdp.getLocalSdpSession();
+            CPPUNIT_ASSERT(reoffer);
+            CPPUNIT_ASSERT_EQUAL(2u, reoffer->media_count);
+            CPPUNIT_ASSERT_EQUAL(previousFeedback,
+                                 hasMediaAttributeValue(reoffer->media[0], "rtcp-fb", "* transport-cc"));
+            CPPUNIT_ASSERT_EQUAL(previousFeedback,
+                                 hasMediaAttributeValue(reoffer->media[0], "rtcp-fb", "* goog-remb"));
+
+            const auto* newMedia = reoffer->media[1];
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia,
+                                                  "extmap",
+                                                  std::string("3 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia, "rtcp-fb", "* transport-cc"));
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia, "rtcp-fb", "* goog-remb"));
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia, "rtcp-fb", "* nack"));
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia, "rtcp-fb", "* nack pli"));
+            CPPUNIT_ASSERT(hasMediaAttributeValue(newMedia, "rtcp-fb", "* ccm fir"));
+        }
+    }
 }
 
 void
