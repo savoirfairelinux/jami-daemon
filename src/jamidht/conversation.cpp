@@ -514,14 +514,19 @@ public:
         for (const auto& commit : commits) {
             if (commit.at(CommitKey::TYPE) == CommitType::MEMBER) {
                 // Each commit of type MEMBER has an "action" field whose value can be one
-                // of the following: "add", "join", "remove", "ban", "unban"
+                // of the following: "add", "join", "remove", "ban", "unban", "promote", "demote"
                 // In the case of "remove" and "ban", we need to add the member's URI to
                 // invalidHostUris to ensure that any call they may have started in the past
                 // is no longer considered active.
-                // For the other actions, there's no harm in adding the member's URI anyway,
+                // For "add", "join" and "unban", there's no harm in adding the member's URI anyway,
                 // since it's not possible to start hosting a call before joining the swarm (or
                 // before getting unbanned in the case of previously banned members).
-                invalidHostUris.emplace(commit.at(CommitKey::URI));
+                // A role change keeps the member in the swarm, so their calls stay active.
+                auto action = commit.find(CommitKey::ACTION);
+                auto roleChange = action != commit.end()
+                                  && (action->second == CommitAction::PROMOTE || action->second == CommitAction::DEMOTE);
+                if (!roleChange)
+                    invalidHostUris.emplace(commit.at(CommitKey::URI));
             } else if (commit.find(CommitKey::CONF_ID) != commit.end() && commit.find(CommitKey::URI) != commit.end()
                        && commit.find(CommitKey::DEVICE) != commit.end()) {
                 // The commit indicates either the end or the beginning of a call
@@ -720,6 +725,10 @@ public:
                             event = libjami::MemberEvent::BAN;
                         else if (actionStr == CommitAction::UNBAN)
                             event = libjami::MemberEvent::UNBAN;
+                        else if (actionStr == CommitAction::PROMOTE)
+                            event = libjami::MemberEvent::PROMOTE;
+                        else if (actionStr == CommitAction::DEMOTE)
+                            event = libjami::MemberEvent::DEMOTE;
                         if (event == libjami::MemberEvent::BAN || event == libjami::MemberEvent::REMOVE) {
                             // In this case, a potential host was removed during a call.
                             updateActiveCalls(c);
