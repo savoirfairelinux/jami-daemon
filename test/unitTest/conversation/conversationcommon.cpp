@@ -100,6 +100,64 @@ simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId,
     libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
 }
 
+namespace {
+// git add -A, then commit message in the account's conversation repository, bypassing the
+// reset to HEAD so that the staged forgery is committed as it is
+void
+commitForged(const std::shared_ptr<JamiAccount>& account,
+             const std::string& convId,
+             const std::filesystem::path& repoPath,
+             const CommitMessage& message)
+{
+    git_repository* repo = nullptr;
+    if (git_repository_open(&repo, repoPath.c_str()) != 0)
+        return;
+    GitRepository rep = GitRepository(std::move(repo));
+
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, repo) < 0)
+        return;
+    GitIndex index {index_ptr};
+    git_strarray array = {nullptr, 0};
+    git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
+    git_index_write(index.get());
+    git_strarray_dispose(&array);
+
+    auto resetWasDisabled = ConversationRepository::DISABLE_RESET;
+    ConversationRepository::DISABLE_RESET = true;
+    ConversationRepository cr(account, convId);
+    cr.commitMessage(message.toString());
+    ConversationRepository::DISABLE_RESET = resetWasDisabled;
+}
+} // namespace
+
+void
+simulateRoleChange(std::shared_ptr<JamiAccount> account, const std::string& convId, const std::string& uri, bool promote)
+{
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
+    auto fromFile = repoPath / (promote ? "members" : "admins") / (uri + ".crt");
+    auto toFile = repoPath / (promote ? "admins" : "members") / (uri + ".crt");
+    std::filesystem::rename(fromFile, toFile);
+
+    auto action = promote ? CommitAction::PROMOTE : CommitAction::DEMOTE;
+    commitForged(account, convId, repoPath, CommitMessage::member(action, uri));
+    libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
+}
+
+void
+simulateApprovalChange(std::shared_ptr<JamiAccount> account, const std::string& convId, const std::string& threshold)
+{
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
+    auto policyFile = repoPath / ApprovalThreshold::FILE_PATH;
+    dhtnet::fileutils::recursive_mkdir(policyFile.parent_path());
+    std::ofstream file(policyFile, std::ios::trunc | std::ios::binary);
+    file << threshold;
+    file.close();
+
+    commitForged(account, convId, repoPath, CommitMessage::approvalChange(threshold));
+    libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
+}
+
 void
 addFile(std::shared_ptr<JamiAccount> account,
         const std::string& convId,

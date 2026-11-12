@@ -426,6 +426,24 @@ public:
                                   const dht::InfoHash& contactUri,
                                   bool isDevice = false);
     /**
+     * Vote for a role change or step down. Emit a member event and a message when applied.
+     * @see libjami::promoteConversationMember(), libjami::demoteConversationMember()
+     * @param promote       true to promote, false to demote
+     */
+    void changeConversationMemberRole(const std::string& conversationId, const dht::InfoHash& contactUri, bool promote);
+    /**
+     * Vote for a threshold and emit a profile update when applied.
+     * @param conversationId
+     * @param threshold     see libjami::setConversationApprovalThreshold()
+     */
+    void setConversationApprovalThreshold(const std::string& conversationId, const std::string& threshold);
+    /**
+     * Get the pending votes of a conversation
+     * @param conversationId
+     * @return one map per vote target, see ConversationRepository::votes()
+     */
+    std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& conversationId) const;
+    /**
      * Get members
      * @param conversationId
      * @param includeBanned
