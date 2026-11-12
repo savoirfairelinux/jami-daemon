@@ -547,8 +547,8 @@ TransportCcController::selectEstimatorState(const TransportCcControllerEstimate&
     if (estimate.state == TransportCcBandwidthState::Increase) {
         if (successfulStartupProbes_ < config_.startupProbeCount)
             ++successfulStartupProbes_;
-        estimatorState_ = successfulStartupProbes_ <= config_.startupProbeCount ? TransportCcEstimatorState::Probing
-                                                                                : TransportCcEstimatorState::Normal;
+        estimatorState_ = successfulStartupProbes_ < config_.startupProbeCount ? TransportCcEstimatorState::Probing
+                                                                               : TransportCcEstimatorState::Normal;
         return estimatorState_;
     }
 
