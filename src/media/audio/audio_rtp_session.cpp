@@ -242,16 +242,22 @@ AudioRtpSession::unbindReceivedAudio()
 }
 
 void
-AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
+AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                       std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                       std::stop_token stopToken)
 {
-    startupFailed_.store(false);
-    dtlsAbort_->store(false);
+    if (!stopToken.stop_possible())
+        stopToken = prepareStart();
     std::lock_guard lock(mutex_);
+    if (stopToken.stop_requested()) {
+        JAMI_DEBUG("Audio RTP startup cancelled");
+        return;
+    }
+    startupFailed_.store(false);
     srtpInstalled_ = false;
-    dtlsAbort_->store(false);
 
     if (not send_.enabled and not receive_.enabled) {
-        stop();
+        stopSession();
         return;
     }
 
@@ -262,7 +268,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 
         if (bundleSocketContext_) {
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = getDtlsSrtpContext(nullptr);
+                dtlsSrtp = getDtlsSrtpContext(nullptr, stopToken);
                 hasDtlsSrtp = true;
             }
             socketPair_.reset(new SocketPair(bundleSocketContext_, rtcpMux, bundleRtpPayloadType_));
@@ -278,7 +284,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
             }
 
             if (send_.key_exchange == KeyExchangeProtocol::DTLS && receive_.key_exchange == KeyExchangeProtocol::DTLS) {
-                dtlsSrtp = getDtlsSrtpContext(rtp_sock.get());
+                dtlsSrtp = getDtlsSrtpContext(rtp_sock.get(), stopToken);
                 hasDtlsSrtp = true;
             }
 
@@ -309,12 +315,19 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
                                     send_.crypto.getSrtpKeyInfo().c_str());
             srtpInstalled_ = true;
         }
+    } catch (const DtlsCancelled&) {
+        JAMI_DEBUG("Audio DTLS-SRTP startup cancelled");
+        return;
     } catch (const std::runtime_error& e) {
         JAMI_ERROR("Socket creation failed: {}", e.what());
         reportStartupFailure(fmt::format("Audio transport setup failed: {}", e.what()));
         return;
     }
 
+    if (stopToken.stop_requested()) {
+        JAMI_DEBUG("Audio RTP startup cancelled");
+        return;
+    }
     try {
         startSender();
         startReceiver();
@@ -333,11 +346,8 @@ AudioRtpSession::isRtpReady(bool expectSender, bool expectReceiver)
 }
 
 void
-AudioRtpSession::stop()
+AudioRtpSession::stopSession()
 {
-    // Release a start() still blocked on a DTLS-SRTP handshake before asking for
-    // the mutex it holds, otherwise stopping waits out the handshake timeout.
-    dtlsAbort_->store(true);
     std::lock_guard lock(mutex_);
     srtpInstalled_ = false;
 
