@@ -4,6 +4,10 @@
 
 #include <array>
 #include <cstdint>
+#include <stdexcept>
+#include <utility>
+
+#include <fmt/format.h>
 
 #include "media/dtls_srtp.h"
 #include "test_runner.h"
@@ -20,11 +24,15 @@ private:
     void dtlsRecordsAreAccepted();
     void srtpAndStunPacketsAreRejected();
     void dtlsContextIsReusableForIceRestart();
+    void fingerprintsSupportSha384AndSha512();
+    void unsupportedFingerprintHashIsRejected();
 
     CPPUNIT_TEST_SUITE(DtlsDemuxTest);
     CPPUNIT_TEST(dtlsRecordsAreAccepted);
     CPPUNIT_TEST(srtpAndStunPacketsAreRejected);
     CPPUNIT_TEST(dtlsContextIsReusableForIceRestart);
+    CPPUNIT_TEST(fingerprintsSupportSha384AndSha512);
+    CPPUNIT_TEST(unsupportedFingerprintHashIsRejected);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -77,6 +85,36 @@ DtlsDemuxTest::dtlsContextIsReusableForIceRestart()
     CPPUNIT_ASSERT(session.matches(DtlsSetup::PASSIVE, "sha-256", "AA:BB:CC"));
     CPPUNIT_ASSERT(!session.matches(DtlsSetup::ACTIVE, "sha-256", "AA:BB:CC"));
     CPPUNIT_ASSERT(!session.matches(DtlsSetup::PASSIVE, "sha-256", "DD:EE:FF"));
+}
+
+void
+DtlsDemuxTest::fingerprintsSupportSha384AndSha512()
+{
+    const auto identity = generateDtlsSrtpIdentity();
+    for (const auto& [hash, digest] : {std::pair {"sha-384", GNUTLS_DIG_SHA384},
+                                     std::pair {"sHa-512", GNUTLS_DIG_SHA512}}) {
+        std::array<unsigned char, 64> raw {};
+        size_t rawSize = raw.size();
+        CPPUNIT_ASSERT_EQUAL(GNUTLS_E_SUCCESS,
+                             gnutls_x509_crt_get_fingerprint(identity.second->cert,
+                                                             digest,
+                                                             raw.data(),
+                                                             &rawSize));
+        const auto fingerprint = getDtlsFingerprint(*identity.second, hash);
+        CPPUNIT_ASSERT_EQUAL(rawSize * 3 - 1, fingerprint.size());
+        for (size_t i = 0; i < rawSize; ++i) {
+            CPPUNIT_ASSERT_EQUAL(fmt::format("{:02X}", raw[i]), fingerprint.substr(i * 3, 2));
+            if (i != 0)
+                CPPUNIT_ASSERT_EQUAL(':', fingerprint[i * 3 - 1]);
+        }
+    }
+}
+
+void
+DtlsDemuxTest::unsupportedFingerprintHashIsRejected()
+{
+    const auto identity = generateDtlsSrtpIdentity();
+    CPPUNIT_ASSERT_THROW(getDtlsFingerprint(*identity.second, "unknown"), std::runtime_error);
 }
 
 } // namespace test
