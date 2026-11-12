@@ -480,6 +480,7 @@ public:
      */
     std::vector<std::string> commitsEndedCalls();
     bool isAdmin() const;
+    std::vector<std::string> changeMemberRole(const std::string& contactUri, bool promote);
 
     void announce(const std::string& commitId, bool commitFromSelf = false)
     {
@@ -2379,6 +2380,107 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
         });
 }
 
+std::vector<std::string>
+Conversation::Impl::changeMemberRole(const std::string& contactUri, bool promote)
+{
+    if (!promote && contactUri == userId_) {
+        auto commit = repository_->stepDown();
+        if (commit.empty())
+            return {};
+        return {std::move(commit)};
+    }
+    std::string_view action = promote ? CommitAction::PROMOTE : CommitAction::DEMOTE;
+    auto vote = repository_->voteRoleChange(contactUri, action);
+    if (vote.empty())
+        return {};
+    std::vector<std::string> commits {std::move(vote)};
+    auto resolution = repository_->resolveVote(contactUri, promote ? "members" : "admins", std::string(action));
+    if (!resolution.empty()) {
+        JAMI_WARNING("Vote solved for {}. Role of {} changed", action, contactUri);
+        commits.emplace_back(std::move(resolution));
+    }
+    return commits;
+}
+
+void
+Conversation::changeMemberRole(const std::string& contactUri, bool promote, const OnDoneCb& cb)
+{
+    dht::ThreadPool::io().run([w = weak(), contactUri, promote, cb] {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        if (!sthis->pimpl_->isAdmin()) {
+            JAMI_WARNING("You're not an admin of this repo. Unable to change the role of {}", contactUri);
+            if (cb)
+                cb(false, {});
+            return;
+        }
+
+        std::unique_lock lk(sthis->pimpl_->writeMtx_);
+        auto commits = sthis->pimpl_->changeMemberRole(contactUri, promote);
+        if (commits.empty()) {
+            JAMI_WARNING("Changing the role of {} failed", contactUri);
+            lk.unlock();
+            if (cb)
+                cb(false, {});
+            return;
+        }
+        auto lastId = commits.back();
+        sthis->pimpl_->announce(commits, true);
+        lk.unlock();
+        if (cb)
+            cb(true, lastId);
+    });
+}
+
+void
+Conversation::setApprovalThreshold(const std::string& threshold, const OnDoneCb& cb)
+{
+    dht::ThreadPool::io().run([w = weak(), threshold, cb] {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        if (!sthis->pimpl_->isAdmin()) {
+            JAMI_WARNING("You're not an admin of this repo. Unable to change the approval threshold");
+            if (cb)
+                cb(false, {});
+            return;
+        }
+
+        auto& repo = sthis->pimpl_->repository_;
+        std::unique_lock lk(sthis->pimpl_->writeMtx_);
+        std::vector<std::string> commits;
+        auto voteCommit = repo->voteApprovalThreshold(threshold);
+        if (voteCommit.empty()) {
+            JAMI_WARNING("Voting for the approval threshold {} failed", threshold);
+            lk.unlock();
+            if (cb)
+                cb(false, {});
+            return;
+        }
+        commits.emplace_back(std::move(voteCommit));
+        auto resolveCommit = repo->resolveApprovalThreshold(threshold);
+        auto applied = !resolveCommit.empty();
+        if (applied)
+            commits.emplace_back(std::move(resolveCommit));
+        auto lastId = commits.back();
+        sthis->pimpl_->announce(commits, true);
+        lk.unlock();
+        if (cb)
+            cb(true, lastId);
+        if (applied && repo->mode() != ConversationMode::DOCUMENT)
+            emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(sthis->pimpl_->accountId_,
+                                                                                repo->id(),
+                                                                                repo->infos());
+    });
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::votes() const
+{
+    return pimpl_->repository_->votes();
+}
+
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBanned) const
 {
@@ -2923,7 +3025,10 @@ Conversation::Impl::pull(const std::string& deviceId)
         if (!commits.empty()) {
             auto diffStats = repo->diffStats("HEAD", oldHead);
             auto changedFiles = repo->changedFiles(diffStats);
-            if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf") != changedFiles.end()) {
+            auto changed = [&](std::string_view file) {
+                return std::find(changedFiles.begin(), changedFiles.end(), file) != changedFiles.end();
+            };
+            if (changed("profile.vcf") || changed(ApprovalThreshold::FILE_PATH)) {
                 emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId_,
                                                                                     repo->id(),
                                                                                     repo->infos());

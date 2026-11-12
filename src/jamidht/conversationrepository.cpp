@@ -364,6 +364,9 @@ public:
 
     bool resolveBan(const std::string_view type, const std::string& uri);
     bool resolveUnban(const std::string_view type, const std::string& uri);
+    bool resolveRoleChange(std::string_view action, const std::string& uri, const GitTree& head);
+    std::string writeVote(const std::string& relativeVoteDirectory);
+    std::string applyApprovalThreshold(const std::string& threshold, const GitRepository& repo, const GitTree& parent);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -5138,7 +5141,8 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
-    if (!pimpl_->hasLocalPermission(Permission::BanUnbanMember))
+    auto roleChange = voteType == CommitAction::PROMOTE || voteType == CommitAction::DEMOTE;
+    if (!pimpl_->hasLocalPermission(roleChange ? Permission::ChangeMemberRole : Permission::BanUnbanMember))
         return {};
     auto repo = pimpl_->repository();
     if (!repo)
@@ -5165,6 +5169,11 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
         } else if (voteType == CommitAction::UNBAN) {
             if (!pimpl_->resolveUnban(type, uri))
                 return {};
+        } else if (roleChange) {
+            if (!pimpl_->resolveRoleChange(voteType, uri, tree))
+                return {};
+        } else {
+            return {};
         }
 
         // Commit
@@ -5177,6 +5186,338 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 
     // If vote nok
     return {};
+}
+
+std::string
+ConversationRepository::Impl::writeVote(const std::string& relativeVoteDirectory)
+{
+    auto repo = repository();
+    if (!repo)
+        return {};
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto voteDirectory = repoPath / relativeVoteDirectory;
+    if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
+        JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
+        return {};
+    }
+    auto votePath = voteDirectory / userId_;
+    std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
+    if (!voteFile.is_open()) {
+        JAMI_ERROR("Unable to write data to {}", votePath);
+        return {};
+    }
+    voteFile.close();
+
+    // NOTE: libgit2 uses / for files
+    auto relativeVotePath = fmt::format("{}/{}", relativeVoteDirectory, userId_);
+    if (!add(relativeVotePath))
+        return {};
+    return relativeVotePath;
+}
+
+bool
+ConversationRepository::Impl::resolveRoleChange(std::string_view action, const std::string& uri, const GitTree& head)
+{
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto promote = action == CommitAction::PROMOTE;
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto crtStr = uri + ".crt";
+    auto originFilePath = repoPath / (promote ? "members" : "admins") / crtStr;
+    auto destPath = repoPath / (promote ? "admins" : "members");
+    auto destFilePath = destPath / crtStr;
+
+    if (!promote && adminUrisAtTree(head).size() < 2) {
+        JAMI_ERROR("Unable to demote the last admin {}", uri);
+        return false;
+    }
+    if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
+        JAMI_ERROR("An error occurred while creating the {} destination path. Abort role change.", destPath);
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::rename(originFilePath, destFilePath, ec);
+    if (ec) {
+        JAMI_ERROR("Error when moving {} to {}. Abort role change.", originFilePath, destFilePath);
+        return false;
+    }
+
+    std::lock_guard lk(membersMtx_);
+    auto role = promote ? MemberRole::ADMIN : MemberRole::MEMBER;
+    auto updated = false;
+    for (auto& member : members_) {
+        if (member.uri == uri) {
+            updated = true;
+            member.role = role;
+            break;
+        }
+    }
+    if (!updated)
+        members_.emplace_back(ConversationMember {uri, role});
+    saveMembers();
+    return true;
+}
+
+std::string
+ConversationRepository::voteRoleChange(const std::string& uri, std::string_view action)
+{
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    if (action != CommitAction::PROMOTE && action != CommitAction::DEMOTE)
+        return {};
+    if (!pimpl_->hasLocalPermission(Permission::ChangeMemberRole))
+        return {};
+    if (uri == pimpl_->userId_) {
+        // Stepping down is done with stepDown() and nobody votes for themselves
+        JAMI_WARNING("Admin tried to vote on their own role");
+        return {};
+    }
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
+    std::string_view type = action == CommitAction::PROMOTE ? "members" : "admins";
+    if (!pimpl_->fileAtTree(fmt::format("{}/{}.crt", type, uri), tree)) {
+        JAMI_WARNING("Unable to {} {}: not found in {}", action, uri, type);
+        return {};
+    }
+    if (action == CommitAction::DEMOTE && pimpl_->adminUrisAtTree(tree).size() < 2) {
+        JAMI_WARNING("Unable to demote the last admin {}", uri);
+        return {};
+    }
+
+    if (pimpl_->writeVote(fmt::format("votes/{}/{}/{}", action, type, uri)).empty())
+        return {};
+    auto message = CommitMessage::vote(uri, std::string(action));
+    return pimpl_->commitMessage(message.toString());
+}
+
+std::string
+ConversationRepository::stepDown()
+{
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    if (!pimpl_->hasLocalPermission(Permission::ChangeMemberRole))
+        return {};
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
+    // Votes of the admin stepping down stay, they no longer count
+    if (!pimpl_->resolveRoleChange(CommitAction::DEMOTE, pimpl_->userId_, tree))
+        return {};
+    if (!git_add_all(repo.get()))
+        return {};
+    auto message = CommitMessage::member(std::string(CommitAction::DEMOTE), pimpl_->userId_);
+    return pimpl_->commitMessage(message.toString());
+}
+
+std::string
+ConversationRepository::voteApprovalThreshold(const std::string& threshold)
+{
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    auto requested = ApprovalThreshold::parse(threshold);
+    if (!requested) {
+        JAMI_WARNING("Invalid approval threshold {}", threshold);
+        return {};
+    }
+    if (!pimpl_->hasLocalPermission(Permission::ChangeApprovalThreshold))
+        return {};
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
+    if (pimpl_->approvalThresholdAtTree(tree) == requested) {
+        JAMI_WARNING("Approval threshold is already {}", threshold);
+        return {};
+    }
+
+    if (pimpl_->writeVote(fmt::format("votes/{}/{}", CommitAction::APPROVAL, threshold)).empty())
+        return {};
+    auto message = CommitMessage::approvalVote(threshold);
+    return pimpl_->commitMessage(message.toString());
+}
+
+std::string
+ConversationRepository::resolveApprovalThreshold(const std::string& threshold)
+{
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    if (!ApprovalThreshold::parse(threshold))
+        return {};
+    if (!pimpl_->hasLocalPermission(Permission::ChangeApprovalThreshold))
+        return {};
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto voteDirectory = repoPath / "votes" / CommitAction::APPROVAL / threshold;
+    std::set<std::string> voters;
+    for (const auto& voter : dhtnet::fileutils::readDirectory(voteDirectory))
+        voters.emplace(voter);
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return {};
+
+    // The threshold being replaced decides, as in checkValidApprovalChange()
+    if (!pimpl_->isApproved(voters, tree))
+        return {};
+    JAMI_WARNING("Enough admins voted to set the approval threshold to {}, applying it.", threshold);
+
+    return pimpl_->applyApprovalThreshold(threshold, repo, tree);
+}
+
+std::string
+ConversationRepository::Impl::applyApprovalThreshold(const std::string& threshold,
+                                                     const GitRepository& repo,
+                                                     const GitTree& parent)
+{
+    auto policyPath = std::filesystem::path(git_repository_workdir(repo.get())) / ApprovalThreshold::FILE_PATH;
+    auto hadPolicy = static_cast<bool>(fileAtTree(std::string(ApprovalThreshold::FILE_PATH), parent));
+    auto rollback = [&]() -> std::string {
+        resetHard();
+        // git reset --hard keeps untracked files, and a new policy file must not reach the next
+        // commit that stages everything
+        std::error_code ec;
+        if (!hadPolicy)
+            std::filesystem::remove(policyPath, ec);
+        return {};
+    };
+    if (!dhtnet::fileutils::recursive_mkdir(policyPath.parent_path(), 0700)) {
+        JAMI_ERROR("Error when creating {}. Abort approval change", policyPath.parent_path());
+        return {};
+    }
+    std::ofstream policyFile(policyPath, std::ios::trunc | std::ios::binary);
+    if (!policyFile.is_open()) {
+        JAMI_ERROR("Unable to write data to {}", policyPath);
+        return {};
+    }
+    policyFile << threshold;
+    policyFile.close();
+    if (!policyFile)
+        return rollback();
+
+    git_index* indexPtr = nullptr;
+    if (git_repository_index(&indexPtr, repo.get()) < 0)
+        return rollback();
+    GitIndex index {indexPtr};
+    auto relativeVotes = fmt::format("votes/{}/{}", CommitAction::APPROVAL, threshold);
+    if (git_index_add_bypath(index.get(), std::string(ApprovalThreshold::FILE_PATH).c_str()) < 0
+        || git_index_remove_directory(index.get(), relativeVotes.c_str(), 0) < 0 || git_index_write(index.get()) < 0)
+        return rollback();
+    // Keep the working files consistent with the commit across a process crash.
+    if (dhtnet::fileutils::removeAll(std::filesystem::path(git_repository_workdir(repo.get())) / relativeVotes, true)
+        < 0)
+        return rollback();
+    auto commit = commitMessage(CommitMessage::approvalChange(threshold).toString());
+    if (commit.empty())
+        return rollback();
+    return commit;
+}
+
+std::optional<ApprovalThreshold>
+ConversationRepository::approvalThreshold() const
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return std::nullopt;
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return std::nullopt;
+    return pimpl_->approvalThresholdAtTree(tree);
+}
+
+namespace {
+
+std::string
+pendingVoteVoters(const std::filesystem::path& directory, const std::set<std::string>& admins)
+{
+    std::set<std::string> voters;
+    for (const auto& voter : dhtnet::fileutils::readDirectory(directory))
+        if (admins.count(voter))
+            voters.emplace(voter);
+    std::string result;
+    for (const auto& voter : voters) {
+        if (!result.empty())
+            result += ',';
+        result += voter;
+    }
+    return result;
+}
+
+bool
+voteTargetExists(const std::filesystem::path& repository,
+                 std::string_view action,
+                 const std::string& type,
+                 const std::string& target)
+{
+    auto file = target + (type != "invited" ? ".crt" : "");
+    auto path = action == CommitAction::UNBAN ? repository / "banned" / type / file : repository / type / file;
+    std::error_code ec;
+    return std::filesystem::is_regular_file(path, ec);
+}
+
+} // namespace
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::votes() const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return result;
+    auto tree = pimpl_->treeAtCommit(repo.get(), getHead());
+    if (!tree)
+        return result;
+    auto threshold = pimpl_->approvalThresholdAtTree(tree);
+    auto admins = pimpl_->adminUrisAtTree(tree);
+    auto required = threshold ? std::to_string(threshold->required(admins.size())) : std::string();
+
+    std::filesystem::path votesPath = std::filesystem::path(git_repository_workdir(repo.get())) / "votes";
+    auto addVote = [&](std::string_view action,
+                       std::string_view type,
+                       std::string target,
+                       const std::filesystem::path& voteDirectory) {
+        auto votersStr = pendingVoteVoters(voteDirectory, admins);
+        if (votersStr.empty())
+            return;
+        result.emplace_back(std::map<std::string, std::string> {
+            {"action", std::string(action)},
+            {"type", std::string(type)},
+            {"target", std::move(target)},
+            {"voters", std::move(votersStr)},
+            {"required", required},
+        });
+    };
+
+    // votes/<action>/<type>/<target>/<voter>, listed while the target is where the vote expects
+    // it: banned for an unban, in <type>/ otherwise
+    auto repoPath = votesPath.parent_path();
+    for (std::string_view action :
+         {CommitAction::BAN, CommitAction::UNBAN, CommitAction::PROMOTE, CommitAction::DEMOTE}) {
+        for (const auto& type : dhtnet::fileutils::readDirectory(votesPath / action))
+            for (const auto& target : dhtnet::fileutils::readDirectory(votesPath / action / type)) {
+                if (voteTargetExists(repoPath, action, type, target))
+                    addVote(action, type, target, votesPath / action / type / target);
+            }
+    }
+    // votes/approval/<kind>/<value>/<voter>
+    auto approvalPath = votesPath / CommitAction::APPROVAL;
+    for (const auto& kind : dhtnet::fileutils::readDirectory(approvalPath))
+        for (const auto& value : dhtnet::fileutils::readDirectory(approvalPath / kind)) {
+            auto token = fmt::format("{}/{}", kind, value);
+            if (ApprovalThreshold::parse(token))
+                addVote(CommitAction::APPROVAL, "", token, approvalPath / kind / value);
+        }
+    return result;
 }
 
 std::pair<std::vector<ConversationCommit>, bool>
@@ -5395,6 +5736,8 @@ ConversationRepository::infos() const
                     vCard::utils::toMap(std::string_view {(const char*) content.data(), content.size()}));
             }
             result["mode"] = std::to_string(static_cast<int>(mode()));
+            if (auto threshold = approvalThreshold())
+                result["approvalThreshold"] = threshold->toString();
             return result;
         } catch (...) {
         }

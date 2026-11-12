@@ -39,12 +39,14 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <algorithm>
 #include <array>
 #include <string>
 #include <fstream>
 #include <streambuf>
 #include <filesystem>
 #include <thread>
+#include <tuple>
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
@@ -123,6 +125,10 @@ private:
     void testStepDown();
     void testDemoteLastAdminRejected();
     void testApprovalChange();
+    void testApprovalResolutionWriteFailure();
+    void testApprovalResolutionCommitFailure();
+    void testApprovalResolutionStagingFailure();
+    void testPendingVoteListing();
     void testStoredThresholdApplies();
     void testUnanimousThreshold();
     void testInvalidStoredThresholdRejectsVotes();
@@ -211,6 +217,10 @@ private:
     CPPUNIT_TEST(testStepDown);
     CPPUNIT_TEST(testDemoteLastAdminRejected);
     CPPUNIT_TEST(testApprovalChange);
+    CPPUNIT_TEST(testApprovalResolutionWriteFailure);
+    CPPUNIT_TEST(testApprovalResolutionCommitFailure);
+    CPPUNIT_TEST(testApprovalResolutionStagingFailure);
+    CPPUNIT_TEST(testPendingVoteListing);
     CPPUNIT_TEST(testStoredThresholdApplies);
     CPPUNIT_TEST(testUnanimousThreshold);
     CPPUNIT_TEST(testInvalidStoredThresholdRejectsVotes);
@@ -2556,6 +2566,121 @@ ConversationRepositoryTest::testApprovalChange()
     removeFile(swarm, votes + aliceUri);
     removeFile(swarm, votes + bobUri);
     CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+}
+
+void
+ConversationRepositoryTest::testApprovalResolutionWriteFailure()
+{
+    auto swarm = handBuiltSwarm({}, {});
+    CPPUNIT_ASSERT(!swarm.repository->voteApprovalThreshold("percent/1").empty());
+    auto head = swarm.repository->getHead();
+    auto pending = swarm.repository->votes();
+    CPPUNIT_ASSERT_EQUAL(std::size_t(1), pending.size());
+    auto policy = swarm.path / "policy";
+    std::filesystem::create_directories(policy / "approval");
+    auto resolution = swarm.repository->resolveApprovalThreshold("percent/1");
+    std::filesystem::remove(policy / "approval");
+    CPPUNIT_ASSERT(resolution.empty());
+    CPPUNIT_ASSERT_EQUAL(head, swarm.repository->getHead());
+    CPPUNIT_ASSERT(pending == swarm.repository->votes());
+    CPPUNIT_ASSERT(!std::filesystem::exists(policy / "approval"));
+    CPPUNIT_ASSERT(!swarm.repository->resolveApprovalThreshold("percent/1").empty());
+    CPPUNIT_ASSERT(swarm.repository->votes().empty());
+    CPPUNIT_ASSERT_EQUAL(std::string("percent/1"), swarm.repository->approvalThreshold()->toString());
+}
+
+void
+ConversationRepositoryTest::testApprovalResolutionCommitFailure()
+{
+    auto swarm = handBuiltSwarm({}, {});
+    auto lockPath = std::filesystem::path(git_repository_path(swarm.repo.get())) / "refs/heads/main.lock";
+    for (const auto& token : {"percent/1", "percent/66"}) {
+        auto policy = swarm.path / "policy/approval";
+        auto hadPolicy = std::filesystem::exists(policy);
+        auto original = hadPolicy ? fileContent(swarm, "policy/approval") : std::string();
+        CPPUNIT_ASSERT(!swarm.repository->voteApprovalThreshold(token).empty());
+        auto head = swarm.repository->getHead();
+        auto pending = swarm.repository->votes();
+        CPPUNIT_ASSERT_EQUAL(std::size_t(1), pending.size());
+        std::ofstream(lockPath).close();
+        auto resolution = swarm.repository->resolveApprovalThreshold(token);
+        std::filesystem::remove(lockPath);
+        CPPUNIT_ASSERT(resolution.empty());
+        CPPUNIT_ASSERT_EQUAL(head, swarm.repository->getHead());
+        CPPUNIT_ASSERT(pending == swarm.repository->votes());
+        CPPUNIT_ASSERT_EQUAL(hadPolicy, std::filesystem::exists(policy));
+        if (hadPolicy)
+            CPPUNIT_ASSERT_EQUAL(original, fileContent(swarm, "policy/approval"));
+        CPPUNIT_ASSERT(!swarm.repository->resolveApprovalThreshold(token).empty());
+        CPPUNIT_ASSERT(swarm.repository->votes().empty());
+        CPPUNIT_ASSERT_EQUAL(std::string(token), swarm.repository->approvalThreshold()->toString());
+    }
+}
+
+void
+ConversationRepositoryTest::testApprovalResolutionStagingFailure()
+{
+    auto swarm = handBuiltSwarm({}, {});
+    auto lockPath = std::filesystem::path(git_repository_path(swarm.repo.get())) / "index.lock";
+    for (const auto& token : {"percent/1", "percent/66"}) {
+        auto policy = swarm.path / "policy/approval";
+        auto hadPolicy = std::filesystem::exists(policy);
+        auto original = hadPolicy ? fileContent(swarm, "policy/approval") : std::string();
+        CPPUNIT_ASSERT(!swarm.repository->voteApprovalThreshold(token).empty());
+        auto head = swarm.repository->getHead();
+        auto pending = swarm.repository->votes();
+        std::ofstream(lockPath).close();
+        auto resolution = swarm.repository->resolveApprovalThreshold(token);
+        std::filesystem::remove(lockPath);
+        CPPUNIT_ASSERT(resolution.empty());
+        CPPUNIT_ASSERT_EQUAL(head, swarm.repository->getHead());
+        CPPUNIT_ASSERT(pending == swarm.repository->votes());
+        CPPUNIT_ASSERT_EQUAL(hadPolicy, std::filesystem::exists(policy));
+        if (hadPolicy)
+            CPPUNIT_ASSERT_EQUAL(original, fileContent(swarm, "policy/approval"));
+        CPPUNIT_ASSERT(!swarm.repository->resolveApprovalThreshold(token).empty());
+        CPPUNIT_ASSERT(swarm.repository->votes().empty());
+    }
+}
+
+void
+ConversationRepositoryTest::testPendingVoteListing()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    const std::string bob(40, 'b');
+    const std::string member(40, 'c');
+    const std::string invited(40, 'd');
+    const std::string banned(40, 'e');
+    const std::string formerAdmin(40, 'f');
+    auto swarm = handBuiltSwarm({bob}, {member});
+    writeFile(swarm, "invited/" + invited);
+    writeFile(swarm, "banned/members/" + banned + ".crt", fileContent(swarm, "members/" + member + ".crt"));
+    const std::vector<std::tuple<std::string, std::string, std::string>> targets {{"ban", "members", member},
+                                                                                  {"ban", "invited", invited},
+                                                                                  {"unban", "members", banned},
+                                                                                  {"promote", "members", member},
+                                                                                  {"demote", "admins", bob},
+                                                                                  {"approval", "", "percent/1"}};
+    for (const auto& [action, type, target] : targets) {
+        auto path = action == "approval" ? "votes/approval/" + target : "votes/" + action + "/" + type + "/" + target;
+        writeFile(swarm, path + "/" + alice);
+        writeFile(swarm, path + "/" + formerAdmin);
+    }
+    writeFile(swarm, "votes/promote/members/" + member + "/" + bob);
+    writeFile(swarm, "votes/ban/members/" + formerAdmin + "/" + alice);
+    writeFile(swarm, "votes/approval/percent/0/" + alice);
+    commitRaw(swarm, CommitMessage::text("pending votes"));
+    auto pending = swarm.repository->votes();
+    CPPUNIT_ASSERT_EQUAL(targets.size(), pending.size());
+    for (const auto& [action, type, target] : targets) {
+        auto vote = std::find_if(pending.begin(), pending.end(), [&](const auto& entry) {
+            return entry.at("action") == action && entry.at("type") == type && entry.at("target") == target;
+        });
+        CPPUNIT_ASSERT(vote != pending.end());
+        auto voters = action == "promote" ? std::min(alice, bob) + "," + std::max(alice, bob) : alice;
+        CPPUNIT_ASSERT_EQUAL(voters, vote->at("voters"));
+        CPPUNIT_ASSERT_EQUAL(std::string("2"), vote->at("required"));
+    }
 }
 
 void
