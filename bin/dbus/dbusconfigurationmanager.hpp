@@ -666,6 +666,33 @@ public:
         libjami::removeConversationMember(accountId, conversationId, contactUri);
     }
 
+    void promoteConversationMember(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& contactUri)
+    {
+        libjami::promoteConversationMember(accountId, conversationId, contactUri);
+    }
+
+    void demoteConversationMember(const std::string& accountId,
+                                  const std::string& conversationId,
+                                  const std::string& contactUri)
+    {
+        libjami::demoteConversationMember(accountId, conversationId, contactUri);
+    }
+
+    void setConversationApprovalThreshold(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::string& threshold)
+    {
+        libjami::setConversationApprovalThreshold(accountId, conversationId, threshold);
+    }
+
+    std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& accountId,
+                                                                         const std::string& conversationId)
+    {
+        return libjami::getConversationVotes(accountId, conversationId);
+    }
+
     std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
                                                                            const std::string& conversationId)
     {

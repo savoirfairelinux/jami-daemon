@@ -101,6 +101,22 @@ LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
 LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& contactUri);
+// Admin roles, decided by a vote of the admins (see doc/adr/ADR-014)
+// Demoting oneself steps down without a vote, but never as the last admin
+LIBJAMI_PUBLIC void promoteConversationMember(const std::string& accountId,
+                                              const std::string& conversationId,
+                                              const std::string& contactUri);
+LIBJAMI_PUBLIC void demoteConversationMember(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& contactUri);
+// threshold is "percent/<P>" (more than P percent of the admins, 1 <= P <= 100) or
+// "count/<k>" (k admins, k >= 1), both capped at all admins
+LIBJAMI_PUBLIC void setConversationApprovalThreshold(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::string& threshold);
+// One map per pending vote: action, type, target, voters (comma-separated), required
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationVotes(const std::string& accountId,
+                                                                                    const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
                                                                                       const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,
