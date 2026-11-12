@@ -219,6 +219,7 @@ private:
     void dtls_answer_accepts_werift_bundle_offer_test();
     void audio_dtls_srtp_enabled_test();
     void audio_video_dtls_bundle_uses_single_ice_component_test();
+    void dtls_identity_failure_aborts_call_creation_test();
 
     CPPUNIT_TEST_SUITE(SipSrtpTest);
     CPPUNIT_TEST(generates_ephemeral_self_signed_dtls_identity_test);
@@ -229,6 +230,7 @@ private:
     CPPUNIT_TEST(dtls_answer_accepts_werift_bundle_offer_test);
     CPPUNIT_TEST(audio_dtls_srtp_enabled_test);
     CPPUNIT_TEST(audio_video_dtls_bundle_uses_single_ice_component_test);
+    CPPUNIT_TEST(dtls_identity_failure_aborts_call_creation_test);
 
     CPPUNIT_TEST_SUITE_END();
 
@@ -774,6 +776,25 @@ SipSrtpTest::advertises_aes256_with_aes128_fallback_test()
 
     libjami::hangUp(bobData_.accountId_, bobData_.callId_);
     CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+}
+
+void
+SipSrtpTest::dtls_identity_failure_aborts_call_creation_test()
+{
+    for (const auto& [certificate, privateKey] : {
+             std::pair {std::filesystem::path {}, alicePrivateKeyPath()},
+             std::pair {aliceCertificatePath(), std::filesystem::path {}},
+             std::pair {std::filesystem::path(aliceCertificatePath().string() + ".missing"), alicePrivateKeyPath()},
+             std::pair {aliceCertificatePath(), std::filesystem::path(alicePrivateKeyPath().string() + ".missing")},
+             std::pair {alicePrivateKeyPath(), alicePrivateKeyPath()},
+             std::pair {aliceCertificatePath(), aliceCertificatePath()},
+         }) {
+        configureDtlsSrtpAccount(aliceData_.accountId_, certificate, privateKey);
+        const auto account = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+        for (auto type : {Call::CallType::INCOMING, Call::CallType::OUTGOING}) {
+            CPPUNIT_ASSERT_THROW(Manager::instance().callFactory.newSipCall(account, type, {}), std::runtime_error);
+        }
+    }
 }
 
 void
