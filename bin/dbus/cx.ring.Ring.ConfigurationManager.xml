@@ -2212,6 +2212,59 @@
             <arg type="s" name="contactUri" direction="in"/>
         </method>
 
+        <method name="promoteConversationMember" tp:name-for-bindings="promoteConversationMember">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote to make a member an admin of a conversation. The member becomes admin
+               once enough admins voted, see setConversationApprovalThreshold.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="contactUri" direction="in"/>
+        </method>
+
+        <method name="demoteConversationMember" tp:name-for-bindings="demoteConversationMember">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote to make an admin a plain member of a conversation. The admin is demoted
+               once enough admins voted. Demoting one's own URI steps down without a vote.
+               The last admin of a conversation can be demoted neither way.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="contactUri" direction="in"/>
+        </method>
+
+        <method name="setConversationApprovalThreshold" tp:name-for-bindings="setConversationApprovalThreshold">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Vote for the number of admin votes that a ban, an unban, a role change or a
+               new threshold needs. The new threshold applies once enough admins voted under
+               the current one. "percent/P" (1 &lt;= P &lt;= 100) needs more than P percent of
+               the admins, "count/k" (k &gt;= 1) needs k admins; both are capped at all admins.
+               Numbers have no leading zero. The default is "percent/50", more than half.
+               The current threshold is the "approvalThreshold" key of conversationInfos.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="threshold" direction="in"/>
+        </method>
+
+        <method name="getConversationVotes" tp:name-for-bindings="getConversationVotes">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get the pending votes of a conversation, one map per vote target with the keys
+               "action" (ban, unban, promote, demote or approval), "type" (members, devices,
+               admins or invited; empty for approval), "target" (URI, device id or threshold),
+               "voters" (comma-separated URIs of the admins who voted) and "required" (admin
+               votes needed under the current threshold).
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="votes" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
         <method name="getConversationMembers" tp:name-for-bindings="getConversationMembers">
             <tp:added version="10.0.0"/>
             <tp:docstring>
