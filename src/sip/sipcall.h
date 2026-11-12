@@ -435,7 +435,7 @@ private:
     bool remoteOfferSupportsBundle(const pjmedia_sdp_session* session = nullptr) const;
     unsigned getIceCompCountPerStream() const;
     unsigned getIceStreamsCount() const;
-    unsigned getRtpCompId(unsigned streamIdx) const;
+    unsigned getRtpCompId(unsigned mediaIndex) const;
 
     void openPortsUPnP();
 
@@ -558,6 +558,7 @@ private:
                              const MediaDescription& remoteMedia);
     // Find the stream index with the matching label
     int findRtpStreamIndex(const std::string& label) const;
+    int findRtpStreamIndex(unsigned mediaIndex) const;
 
     std::vector<IceCandidate> getAllRemoteCandidates(dhtnet::IceTransport& transport) const;
 
