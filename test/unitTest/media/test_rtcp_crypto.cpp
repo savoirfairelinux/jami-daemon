@@ -21,6 +21,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 #include <netinet/in.h>
@@ -37,6 +38,7 @@ extern "C" {
 
 #include "media/media_io_handle.h"
 #include "media/socket_pair.h"
+#include "media/transport_cc.h"
 #include "test_runner.h"
 
 namespace jami {
@@ -201,6 +203,7 @@ private:
     void replayedRtpDoesNotEndStream();
     void genericNackRetransmitsRtp();
     void missingNackPacketRequestsKeyframe();
+    void transportCcFeedbackPreservesUnreportedPackets();
     void stoppedReadIsCancelled();
 
     CPPUNIT_TEST_SUITE(RtcpCryptoTest);
@@ -214,11 +217,67 @@ private:
     CPPUNIT_TEST(replayedRtpDoesNotEndStream);
     CPPUNIT_TEST(genericNackRetransmitsRtp);
     CPPUNIT_TEST(missingNackPacketRequestsKeyframe);
+    CPPUNIT_TEST(transportCcFeedbackPreservesUnreportedPackets);
     CPPUNIT_TEST(stoppedReadIsCancelled);
     CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RtcpCryptoTest, RtcpCryptoTest::name());
+
+void
+RtcpCryptoTest::transportCcFeedbackPreservesUnreportedPackets()
+{
+    for (const auto [baseSequence, tailOffset] : {std::pair {uint16_t(100), 512},
+                                                std::pair {uint16_t(65500), 1024}}) {
+        UdpSocket remote;
+        const auto localRtpPort = reserveEphemeralPort();
+        const dhtnet::IpAddr destination {fmt::format("127.0.0.1:{}", remote.port())};
+        SocketPair socketPair(destination, destination, localRtpPort, reserveEphemeralPort());
+        socketPair.setTransportCcExtension(3, 3);
+        socketPair.setReadBlockingMode(true);
+        std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+
+        const auto receivePacket = [&](uint16_t sequence) {
+            auto packet = rtpPacket(sequence);
+            packet[0] |= 0x10;
+            packet.insert(packet.begin() + 12,
+                          {0xbe, 0xde, 0x00, 0x01, 0x31,
+                           static_cast<uint8_t>(sequence >> 8), static_cast<uint8_t>(sequence), 0x00});
+            remote.sendTo(localRtpPort, packet);
+            std::vector<uint8_t> buffer(2048);
+            CPPUNIT_ASSERT_EQUAL(static_cast<int>(packet.size()),
+                                 avio_read_partial(ioHandle->getContext(),
+                                                   buffer.data(),
+                                                   static_cast<int>(buffer.size())));
+        };
+        for (const auto offset : {0, 1, tailOffset, tailOffset + 1})
+            receivePacket(static_cast<uint16_t>(baseSequence + offset));
+
+        const auto firstPacket = socketPair.createRtcpTransportCcFeedback(1, 0x11223344);
+        const auto first = parseTransportCcFeedbackPacket(firstPacket.data(), firstPacket.size());
+        CPPUNIT_ASSERT(first);
+        CPPUNIT_ASSERT_EQUAL(baseSequence, first->baseSequenceNumber);
+        CPPUNIT_ASSERT_EQUAL(uint8_t(0), first->feedbackPacketCount);
+        CPPUNIT_ASSERT_EQUAL(size_t(512), first->packets.size());
+        for (size_t i = 0; i < first->packets.size(); ++i) {
+            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(baseSequence + i), first->packets[i].sequenceNumber);
+            CPPUNIT_ASSERT_EQUAL(i >= 2, first->packets[i].status == TransportCcPacketStatus::NotReceived);
+        }
+
+        receivePacket(static_cast<uint16_t>(baseSequence + tailOffset + 2));
+        const auto secondPacket = socketPair.createRtcpTransportCcFeedback(1, 0x11223344);
+        const auto second = parseTransportCcFeedbackPacket(secondPacket.data(), secondPacket.size());
+        CPPUNIT_ASSERT(second);
+        CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(baseSequence + tailOffset), second->baseSequenceNumber);
+        CPPUNIT_ASSERT_EQUAL(uint8_t(1), second->feedbackPacketCount);
+        CPPUNIT_ASSERT_EQUAL(size_t(3), second->packets.size());
+        for (size_t i = 0; i < second->packets.size(); ++i) {
+            CPPUNIT_ASSERT_EQUAL(static_cast<uint16_t>(baseSequence + tailOffset + i), second->packets[i].sequenceNumber);
+            CPPUNIT_ASSERT(second->packets[i].status != TransportCcPacketStatus::NotReceived);
+        }
+        CPPUNIT_ASSERT(socketPair.createRtcpTransportCcFeedback(1, 0x11223344).empty());
+    }
+}
 
 void
 RtcpCryptoTest::srtcpRoundTripProtectsRtcpPackets()

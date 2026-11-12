@@ -248,6 +248,7 @@ public:
     std::list<TransportCcFeedback> getRtcpTransportCc();
     std::list<TransportCcReport> getRtcpTransportCcReports();
     size_t getTransportCcSentPacketCount() const;
+    // Build one bounded report, retaining unreported receives for the next call.
     std::vector<uint8_t> createRtcpTransportCcFeedback(uint32_t senderSsrc, uint32_t mediaSsrc);
 
     /**
