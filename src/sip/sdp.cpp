@@ -31,6 +31,7 @@
 #include "libav_utils.h"
 
 #include "media_codec.h"
+#include "media/dtls_srtp.h"
 #include "sdes_negotiator.h"
 
 #include <opendht/rng.h>
@@ -202,11 +203,12 @@ isDtlsTransport(MediaTransport transport)
 DtlsSetup
 parseDtlsSetup(std::string_view value)
 {
-    if (value == "actpass")
+    const auto role = sip_utils::CONST_PJ_STR(value);
+    if (pj_stricmp2(&role, "actpass") == 0)
         return DtlsSetup::ACTPASS;
-    if (value == "active")
+    if (pj_stricmp2(&role, "active") == 0)
         return DtlsSetup::ACTIVE;
-    if (value == "passive")
+    if (pj_stricmp2(&role, "passive") == 0)
         return DtlsSetup::PASSIVE;
     return DtlsSetup::NONE;
 }
@@ -233,7 +235,7 @@ negotiateLocalDtlsSetup(DtlsSetup localSetup, DtlsSetup remoteSetup)
         return localSetup;
     if (remoteSetup == DtlsSetup::ACTIVE)
         return DtlsSetup::PASSIVE;
-    if (remoteSetup == DtlsSetup::PASSIVE || remoteSetup == DtlsSetup::ACTPASS || remoteSetup == DtlsSetup::NONE)
+    if (remoteSetup == DtlsSetup::PASSIVE || remoteSetup == DtlsSetup::ACTPASS)
         return DtlsSetup::ACTIVE;
     return DtlsSetup::NONE;
 }
@@ -244,32 +246,49 @@ getDtlsFingerprint(const pjmedia_sdp_session* session, unsigned mediaIndex)
     if (not session)
         return {};
 
-    const auto parseFingerprint = [](const pjmedia_sdp_attr* attribute) {
-        if (not attribute || pj_stricmp2(&attribute->name, "fingerprint") != 0)
-            return std::pair<std::string, std::string> {};
-
-        const std::string value(attribute->value.ptr, attribute->value.slen);
-        const auto separator = value.find(' ');
-        if (separator == std::string::npos)
-            return std::pair<std::string, std::string> {};
-
-        return std::pair<std::string, std::string> {value.substr(0, separator), value.substr(separator + 1)};
-    };
-
+    pjmedia_sdp_attr* const* attributes = session->attr;
+    auto attributeCount = session->attr_count;
     if (mediaIndex < session->media_count) {
         auto* media = session->media[mediaIndex];
-        for (unsigned i = 0; i < media->attr_count; ++i) {
-            if (auto parsed = parseFingerprint(media->attr[i]); not parsed.second.empty())
-                return parsed;
+        // A media-level fingerprint replaces the session-level fingerprints.
+        if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fingerprint", nullptr)) {
+            attributes = media->attr;
+            attributeCount = media->attr_count;
         }
     }
 
-    for (unsigned i = 0; i < session->attr_count; ++i) {
-        if (auto parsed = parseFingerprint(session->attr[i]); not parsed.second.empty())
-            return parsed;
-    }
+    std::pair<std::string, std::string> selected;
+    size_t selectedSize = 0;
+    for (unsigned i = 0; i < attributeCount; ++i) {
+        const auto* attribute = attributes[i];
+        if (not attribute || pj_stricmp2(&attribute->name, "fingerprint") != 0)
+            continue;
 
-    return {};
+        const std::string_view value(attribute->value.ptr, attribute->value.slen);
+        const auto separator = value.find(' ');
+        if (separator == std::string_view::npos || separator == 0)
+            return {};
+
+        const auto hash = value.substr(0, separator);
+        const auto size = getDtlsFingerprintHashSize(hash);
+        if (size == 0)
+            continue;
+
+        const auto fingerprint = value.substr(separator + 1);
+        if (fingerprint.size() != size * 3 - 1)
+            return {};
+        for (size_t j = 0; j < fingerprint.size(); ++j) {
+            const auto c = fingerprint[j];
+            if (j % 3 == 2 ? c != ':' : not((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F')))
+                return {};
+        }
+
+        if (size > selectedSize) {
+            selected = {std::string(hash), std::string(fingerprint)};
+            selectedSize = size;
+        }
+    }
+    return selected;
 }
 
 DtlsSetup
@@ -278,26 +297,28 @@ getDtlsSetup(const pjmedia_sdp_session* session, unsigned mediaIndex)
     if (not session)
         return DtlsSetup::NONE;
 
-    const auto parseSetupAttribute = [](const pjmedia_sdp_attr* attribute) {
-        if (not attribute || pj_stricmp2(&attribute->name, "setup") != 0)
-            return DtlsSetup::NONE;
-        return parseDtlsSetup(std::string_view(attribute->value.ptr, attribute->value.slen));
-    };
-
+    pjmedia_sdp_attr* const* attributes = session->attr;
+    auto attributeCount = session->attr_count;
     if (mediaIndex < session->media_count) {
         auto* media = session->media[mediaIndex];
-        for (unsigned i = 0; i < media->attr_count; ++i) {
-            if (const auto setup = parseSetupAttribute(media->attr[i]); setup != DtlsSetup::NONE)
-                return setup;
+        if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "setup", nullptr)) {
+            attributes = media->attr;
+            attributeCount = media->attr_count;
         }
     }
 
-    for (unsigned i = 0; i < session->attr_count; ++i) {
-        if (const auto setup = parseSetupAttribute(session->attr[i]); setup != DtlsSetup::NONE)
+    DtlsSetup setup = DtlsSetup::NONE;
+    for (unsigned i = 0; i < attributeCount; ++i) {
+        const auto* attribute = attributes[i];
+        if (not attribute || pj_stricmp2(&attribute->name, "setup") != 0)
+            continue;
+        if (setup != DtlsSetup::NONE)
+            return DtlsSetup::NONE;
+        setup = parseDtlsSetup(std::string_view(attribute->value.ptr, attribute->value.slen));
+        if (setup == DtlsSetup::NONE)
             return setup;
     }
-
-    return DtlsSetup::NONE;
+    return setup;
 }
 
 std::string
@@ -596,6 +617,41 @@ hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
 }
 
 } // namespace
+
+bool
+Sdp::validateDtlsAttributes(const pjmedia_sdp_session* session, SdpDirection direction)
+{
+    if (not session)
+        return true;
+
+    for (unsigned i = 0; i < session->media_count; ++i) {
+        const auto* media = session->media[i];
+        if (pj_stricmp2(&media->desc.media, "audio") != 0 && pj_stricmp2(&media->desc.media, "video") != 0)
+            continue;
+        if (media->desc.port == 0 && not pjmedia_sdp_attr_find2(media->attr_count, media->attr, "bundle-only", nullptr))
+            continue;
+
+        const auto hasFingerprint = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fingerprint", nullptr)
+                                    || pjmedia_sdp_attr_find2(session->attr_count,
+                                                              session->attr,
+                                                              "fingerprint",
+                                                              nullptr);
+        if (not isDtlsTransport(getMediaTransport(media)) && not hasFingerprint)
+            continue;
+
+        if (getDtlsFingerprint(session, i).second.empty()) {
+            JAMI_ERROR("Media#{} has a missing, malformed or unsupported DTLS fingerprint", i);
+            return false;
+        }
+
+        const auto setup = getDtlsSetup(session, i);
+        if (setup == DtlsSetup::NONE || (direction == SdpDirection::ANSWER && setup == DtlsSetup::ACTPASS)) {
+            JAMI_ERROR("Media#{} has a missing or invalid DTLS setup role", i);
+            return false;
+        }
+    }
+    return true;
+}
 
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
@@ -1348,7 +1404,7 @@ Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
 }
 
 static pjmedia_sdp_session*
-parseExternalSdp(pj_pool_t* pool, const std::string& sdp)
+parseExternalSdp(pj_pool_t* pool, const std::string& sdp, SdpDirection direction)
 {
     pjmedia_sdp_session* session = nullptr;
     // The parsed session keeps pointers into the buffer, so it must
@@ -1363,13 +1419,15 @@ parseExternalSdp(pj_pool_t* pool, const std::string& sdp)
         JAMI_ERROR("Invalid external SDP session");
         return nullptr;
     }
+    if (not Sdp::validateDtlsAttributes(session, direction))
+        return nullptr;
     return session;
 }
 
 bool
 Sdp::setReceivedOfferFromExternalSdp(const std::string& sdp)
 {
-    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    auto* session = parseExternalSdp(memPool_.get(), sdp, SdpDirection::OFFER);
     if (not session)
         return false;
     remoteSession_ = session;
@@ -1379,7 +1437,7 @@ Sdp::setReceivedOfferFromExternalSdp(const std::string& sdp)
 bool
 Sdp::createOfferFromExternalSdp(const std::string& sdp)
 {
-    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    auto* session = parseExternalSdp(memPool_.get(), sdp, SdpDirection::OFFER);
     if (not session)
         return false;
 
@@ -1417,7 +1475,7 @@ Sdp::setLocalAnswerFromExternalSdp(const std::string& sdp)
         return false;
     }
 
-    auto* session = parseExternalSdp(memPool_.get(), sdp);
+    auto* session = parseExternalSdp(memPool_.get(), sdp, SdpDirection::ANSWER);
     if (not session)
         return false;
 
@@ -1452,7 +1510,7 @@ Sdp::toString(const pjmedia_sdp_session* session)
 bool
 Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 {
-    if (not remoteSession_)
+    if (not remoteSession_ || not validateDtlsAttributes(remoteSession_, SdpDirection::OFFER))
         return false;
 
     JAMI_DEBUG("Processing received offer for [{:s}] with {:d} media", sessionName_, mediaList.size());
@@ -1583,6 +1641,10 @@ Sdp::startNegotiation()
         JAMI_ERROR("Unable to retrieve remote active session");
         return false;
     }
+
+    if (not validateDtlsAttributes(active_remote,
+                                   sdpDirection_ == SdpDirection::OFFER ? SdpDirection::ANSWER : SdpDirection::OFFER))
+        return false;
 
     setActiveRemoteSdpSession(active_remote);
 
@@ -2014,7 +2076,7 @@ Sdp::clearIce(pjmedia_sdp_session* session)
 std::vector<MediaAttribute>
 Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ignoreDisabled)
 {
-    if (sdpSession == nullptr) {
+    if (sdpSession == nullptr || not validateDtlsAttributes(sdpSession)) {
         return {};
     }
 

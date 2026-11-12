@@ -39,6 +39,9 @@ dht::crypto::Identity generateDtlsSrtpIdentity();
 std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate,
                                std::string_view hash = "SHA-256");
 
+// Digest size in bytes, or zero for unsupported fingerprint hash functions.
+size_t getDtlsFingerprintHashSize(std::string_view hash);
+
 // RFC 5764 §5.1.2: returns true if the packet must be demultiplexed to the
 // DTLS stack (first byte in [20..63]) rather than SRTP/STUN.
 bool isDtlsPacket(const uint8_t* buf, size_t len);
