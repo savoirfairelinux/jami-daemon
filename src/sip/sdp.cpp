@@ -1036,10 +1036,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
 
     if (mediaAttr.enabled_ and direction != DIRECTION_STR[MediaDirection::INACTIVE]) {
         Extmap transportCcExtmap {DEFAULT_TRANSPORT_CC_RTP_EXTENSION_ID, TRANSPORT_CC_RTP_EXTENSION_URI};
-        auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
-        auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
+        auto transportCcFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
+        auto googRembFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
 
-        const auto* feedbackSession = sdpDirection_ == SdpDirection::ANSWER ? remoteSession_ : previousLocalSession;
+        const auto* feedbackSession = sdpDirection_ == SdpDirection::ANSWER
+                                          ? remoteSession_
+                                          : (previousLocalMedia ? previousLocalSession : nullptr);
         if (feedbackSession) {
             // RFC 8285 section 7: bundled media may offer different extensions.
             transportCcExtmap = getExtmap(feedbackSession, mediaIndex, TRANSPORT_CC_RTP_EXTENSION_URIS);
@@ -1056,9 +1058,9 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
             addRtcpFeedbackAttribute(med, "*", "goog-remb");
 
         if (type == MediaType::MEDIA_VIDEO) {
-            auto nackFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
-            auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
-            auto firFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalSession;
+            auto nackFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
+            auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
+            auto firFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
             if (feedbackSession) {
                 nackFeedback = hasAnyExactRtcpFeedback(feedbackSession, mediaIndex, "nack");
                 pliFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "nack pli");
