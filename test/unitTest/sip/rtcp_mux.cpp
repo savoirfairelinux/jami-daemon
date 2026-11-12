@@ -787,50 +787,76 @@ RtcpMuxSdpTest::answerNegotiatesTransportCcAndRemb()
 {
     CPPUNIT_ASSERT(account_);
 
-    Sdp sdp("transport-cc-answer");
-    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
-    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
-    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
-    sdp.enableRtcpMux(true);
+    for (const auto uri : {
+             TRANSPORT_CC_RTP_EXTENSION_URI,
+             std::string_view {"http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-02"},
+             std::string_view {"http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-03"},
+         }) {
+        for (const auto bundle : {false, true}) {
+            for (const auto sessionLevel : {false, true}) {
+                Sdp sdp("transport-cc-answer");
+                sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+                sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO,
+                                              account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+                sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+                sdp.enableRtcpMux(true);
+                sdp.enableBundle(bundle);
 
-    auto pool = makePool("transport-cc-answer");
-    const std::string remoteOffer = "v=0\r\n"
-                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
-                                    "s=-\r\n"
-                                    "c=IN IP4 127.0.0.1\r\n"
-                                    "t=0 0\r\n"
-                                    "m=audio 5004 UDP/TLS/RTP/SAVPF 0\r\n"
-                                    "a=rtpmap:0 PCMU/8000\r\n"
-                                    "a=rtcp-mux\r\n"
-                                    "a=extmap:7 "
-                                    + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)
-                                    + "\r\n"
-                                      "a=rtcp-fb:0 transport-cc\r\n"
-                                      "a=rtcp-fb:0 goog-remb\r\n";
+                const std::array mediaUris {uri, sessionLevel ? uri : TRANSPORT_CC_RTP_EXTENSION_URI};
+                const std::array extmapIds {7u, mediaUris[0] == mediaUris[1] ? 7u : 8u};
+                const auto extmap = std::string("a=extmap:7 ") + std::string(uri) + "\r\n";
+                std::string remoteOffer = "v=0\r\n"
+                                          "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                          "s=-\r\n"
+                                          "c=IN IP4 127.0.0.1\r\n"
+                                          "t=0 0\r\n";
+                if (bundle)
+                    remoteOffer += "a=group:BUNDLE audio_0 audio_1\r\n";
+                if (sessionLevel)
+                    remoteOffer += extmap;
+                std::vector<MediaAttribute> mediaList;
+                for (unsigned i = 0; i < (bundle ? 2u : 1u); ++i) {
+                    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+                    audio.label_ = "audio_" + std::to_string(i);
+                    audio.enabled_ = true;
+                    remoteOffer += "m=audio 5004 RTP/AVPF 0\r\n"
+                                   "a=rtpmap:0 PCMU/8000\r\n"
+                                   "a=rtcp-mux\r\n"
+                                   "a=mid:" + audio.label_ + "\r\n";
+                    if (not sessionLevel)
+                        remoteOffer += "a=extmap:" + std::to_string(extmapIds[i]) + " "
+                                       + std::string(mediaUris[i]) + "\r\n";
+                    remoteOffer += "a=rtcp-fb:0 transport-cc\r\n"
+                                   "a=rtcp-fb:0 goog-remb\r\n";
+                    mediaList.push_back(audio);
+                }
 
-    auto* session = parseSdp(pool.get(), remoteOffer);
-    CPPUNIT_ASSERT(session);
-    sdp.setReceivedOffer(session);
-
-    MediaAttribute audio(MediaType::MEDIA_AUDIO);
-    audio.label_ = "audio_0";
-    audio.enabled_ = true;
-
-    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio}));
-    auto* localSession = sdp.getLocalSdpSession();
-    CPPUNIT_ASSERT(localSession);
-    CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
-    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0],
-                                          "extmap",
-                                          std::string("7 ") + std::string(TRANSPORT_CC_RTP_EXTENSION_URI)));
-    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* transport-cc"));
-    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[0], "rtcp-fb", "* goog-remb"));
-
-    const auto descriptions = sdp.getMediaDescriptions(localSession, false);
-    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), descriptions.size());
-    CPPUNIT_ASSERT_EQUAL(7u, descriptions[0].transport_cc_rtp_ext_id);
-    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_transport_cc);
-    CPPUNIT_ASSERT(descriptions[0].rtcp_fb_goog_remb);
+                auto pool = makePool("transport-cc-answer");
+                auto* session = parseSdp(pool.get(), remoteOffer);
+                CPPUNIT_ASSERT(session);
+                sdp.setReceivedOffer(session);
+                CPPUNIT_ASSERT(sdp.processIncomingOffer(mediaList));
+                auto* localSession = sdp.getLocalSdpSession();
+                CPPUNIT_ASSERT(localSession);
+                CPPUNIT_ASSERT_EQUAL(mediaList.size(), static_cast<size_t>(localSession->media_count));
+                if (bundle)
+                    CPPUNIT_ASSERT(hasSessionAttribute(localSession, "group", "BUNDLE audio_0 audio_1"));
+                const auto descriptions = sdp.getMediaDescriptions(localSession, false);
+                CPPUNIT_ASSERT_EQUAL(mediaList.size(), descriptions.size());
+                for (unsigned i = 0; i < localSession->media_count; ++i) {
+                    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[i],
+                                                          "extmap",
+                                                          std::to_string(extmapIds[i]) + " "
+                                                              + std::string(mediaUris[i])));
+                    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[i], "rtcp-fb", "* transport-cc"));
+                    CPPUNIT_ASSERT(hasMediaAttributeValue(localSession->media[i], "rtcp-fb", "* goog-remb"));
+                    CPPUNIT_ASSERT_EQUAL(extmapIds[i], descriptions[i].transport_cc_rtp_ext_id);
+                    CPPUNIT_ASSERT(descriptions[i].rtcp_fb_transport_cc);
+                    CPPUNIT_ASSERT(descriptions[i].rtcp_fb_goog_remb);
+                }
+            }
+        }
+    }
 }
 
 void
