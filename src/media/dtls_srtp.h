@@ -35,6 +35,7 @@ struct DtlsSrtpSession
 
 dht::crypto::Identity generateDtlsSrtpIdentity();
 
+// Supports SHA-1, SHA-256, SHA-384 and SHA-512 (case-insensitive).
 std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate,
                                std::string_view hash = "SHA-256");
 
