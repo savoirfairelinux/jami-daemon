@@ -259,6 +259,10 @@ export interface JamiSwig {
   // Conversation members
   addConversationMember(accountId: string, conversationId: string, uri: string): void
   removeConversationMember(accountId: string, conversationId: string, uri: string): void
+  promoteConversationMember(accountId: string, conversationId: string, uri: string): void
+  demoteConversationMember(accountId: string, conversationId: string, uri: string): void
+  setConversationApprovalThreshold(accountId: string, conversationId: string, threshold: string): void
+  getConversationVotes(accountId: string, conversationId: string): VectMap
 
   // Conversation preferences
   getConversationPreferences(accountId: string, conversationId: string): StringMap
