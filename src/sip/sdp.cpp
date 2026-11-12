@@ -715,6 +715,24 @@ Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
     if (activeLocalSession_ != sdp)
         JAMI_LOG("Set active local session to [{}]. Was [{}]", fmt::ptr(sdp), fmt::ptr(activeLocalSession_));
     activeLocalSession_ = sdp;
+    if (sdp) {
+        activeMediaLabels_ = mediaLabels_;
+        // pjmedia strips rejected media attributes, but their MID still
+        // identifies the negotiated slot in subsequent offers.
+        if (localSession_)
+            for (unsigned i = 0; i < sdp->media_count && i < localSession_->media_count; ++i)
+                if (auto mid = getMidValue(localSession_->media[i]); !mid.empty() && getMidValue(sdp->media[i]).empty())
+                    addMidAttribute(sdp->media[i], mid);
+    }
+}
+
+std::optional<unsigned>
+Sdp::getMediaIndex(const std::string& label) const
+{
+    const auto it = std::find(mediaLabels_.begin(), mediaLabels_.end(), label);
+    if (it == mediaLabels_.end())
+        return std::nullopt;
+    return static_cast<unsigned>(std::distance(mediaLabels_.begin(), it));
 }
 
 void
@@ -1011,7 +1029,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
-    if (useBundle && mediaAttr.enabled_) {
+    if (mediaAttr.enabled_ && (useBundle || (previousLocalMedia && !getMidValue(previousLocalMedia).empty()))) {
         auto mid = !mediaAttr.label_.empty() ? mediaAttr.label_ : std::to_string(mediaIndex);
         if (previousLocalMedia) {
             if (auto previousMid = getMidValue(previousLocalMedia); not previousMid.empty())
@@ -1019,6 +1037,21 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
         } else if (sdpDirection_ == SdpDirection::ANSWER && remoteSession_ && mediaIndex < remoteSession_->media_count) {
             if (auto remoteMid = getMidValue(remoteSession_->media[mediaIndex]); not remoteMid.empty())
                 mid = std::move(remoteMid);
+        }
+
+        if (sdpDirection_ == SdpDirection::OFFER && !previousLocalMedia) {
+            const auto used = [&](const std::string& candidate) {
+                for (unsigned i = 0; i < localSession_->media_count; ++i)
+                    if (getMidValue(localSession_->media[i]) == candidate)
+                        return true;
+                if (previousLocalSession)
+                    for (unsigned i = 0; i < previousLocalSession->media_count; ++i)
+                        if (getMidValue(previousLocalSession->media[i]) == candidate)
+                            return true;
+                return false;
+            };
+            for (unsigned suffix = mediaIndex; used(mid); ++suffix)
+                mid = std::to_string(suffix);
         }
 
         addMidAttribute(med, mid);
@@ -1104,6 +1137,17 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
     }
 
     return med;
+}
+
+pjmedia_sdp_media*
+Sdp::rejectMediaDescription(const pjmedia_sdp_media* media)
+{
+    auto* rejected = pjmedia_sdp_media_clone_deactivate(memPool_.get(), media);
+    if (not rejected)
+        throw SdpException("Unable to create rejected media description");
+    if (auto mid = getMidValue(media); not mid.empty())
+        addMidAttribute(rejected, mid);
+    return rejected;
 }
 
 bool
@@ -1376,6 +1420,7 @@ void
 Sdp::createLocalSession(SdpDirection direction)
 {
     sdpDirection_ = direction;
+    mediaLabels_.clear();
     localSession_ = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_session);
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_conn);
 
@@ -1427,7 +1472,60 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList,
     }
     JAMI_DEBUG("Creating SDP offer with {} media", mediaList.size());
 
+    const auto previousLabels = previousLocalSession == localSession_ ? mediaLabels_ : activeMediaLabels_;
+    if (previousLocalSession && previousLabels.size() != previousLocalSession->media_count) {
+        JAMI_ERROR("Missing stream identities for the previous SDP");
+        return false;
+    }
+
+    std::map<std::string, const MediaAttribute*> requestedMedia;
+    for (const auto& media : mediaList) {
+        if (media.label_.empty()) {
+            if (previousLocalSession) {
+                JAMI_ERROR("Re-offer requires stable media labels");
+                return false;
+            }
+        } else if (!requestedMedia.emplace(media.label_, &media).second) {
+            JAMI_ERROR("Duplicate media label in offer: {}", media.label_);
+            return false;
+        }
+    }
+
+    unsigned mediaCount = previousLocalSession ? previousLocalSession->media_count : 0;
+    for (const auto& media : mediaList)
+        if (media.enabled_
+            && (!previousLocalSession
+                || std::find(previousLabels.begin(), previousLabels.end(), media.label_) == previousLabels.end()))
+            ++mediaCount;
+    if (mediaCount >= PJMEDIA_MAX_SDP_MEDIA) {
+        JAMI_ERROR("Re-offer exceeds SDP media maximum size");
+        return false;
+    }
+
+    if (previousLocalSession) {
+        for (unsigned i = 0; i < previousLocalSession->media_count; ++i) {
+            const auto it = requestedMedia.find(previousLabels[i]);
+            if (it != requestedMedia.end()
+                && !((it->second->type_ == MEDIA_AUDIO
+                      && pj_stricmp2(&previousLocalSession->media[i]->desc.media, "audio") == 0)
+                     || (it->second->type_ == MEDIA_VIDEO
+                         && pj_stricmp2(&previousLocalSession->media[i]->desc.media, "video") == 0))) {
+                JAMI_ERROR("Cannot change the media type of stream {}", previousLabels[i]);
+                return false;
+            }
+        }
+    }
+
     createLocalSession(SdpDirection::OFFER);
+
+    if (previousLocalSession) {
+        localSession_->origin.id = previousLocalSession->origin.id;
+        localSession_->origin.version = previousLocalSession->origin.version + 1;
+        pj_strdup(memPool_.get(), &localSession_->origin.user, &previousLocalSession->origin.user);
+        pj_strdup(memPool_.get(), &localSession_->origin.net_type, &previousLocalSession->origin.net_type);
+        pj_strdup(memPool_.get(), &localSession_->origin.addr_type, &previousLocalSession->origin.addr_type);
+        pj_strdup(memPool_.get(), &localSession_->origin.addr, &previousLocalSession->origin.addr);
+    }
 
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERROR("Failed to create initial offer");
@@ -1436,11 +1534,26 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList,
 
     localSession_->media_count = 0;
 
+    // RFC 3264 section 8: existing slots never move or disappear.
+    if (previousLocalSession) {
+        for (unsigned i = 0; i < previousLocalSession->media_count; ++i) {
+            const auto it = requestedMedia.find(previousLabels[i]);
+            auto* media = it != requestedMedia.end() && it->second->enabled_
+                              ? addMediaDescription(*it->second, previousLocalSession, legacySdesOffer)
+                              : rejectMediaDescription(previousLocalSession->media[i]);
+            localSession_->media[localSession_->media_count++] = media;
+            mediaLabels_.push_back(previousLabels[i]);
+        }
+    }
+
     for (auto const& media : mediaList) {
-        if (media.enabled_) {
+        if (media.enabled_
+            && (!previousLocalSession
+                || std::find(previousLabels.begin(), previousLabels.end(), media.label_) == previousLabels.end())) {
             localSession_->media[localSession_->media_count++] = addMediaDescription(media,
                                                                                      previousLocalSession,
                                                                                      legacySdesOffer);
+            mediaLabels_.push_back(media.label_);
         }
     }
 
@@ -1511,6 +1624,7 @@ Sdp::createOfferFromExternalSdp(const std::string& sdp)
 
     sdpDirection_ = SdpDirection::OFFER;
     localSession_ = session;
+    setExternalMediaLabels();
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
         JAMI_ERROR("Failed to create an initial SDP negotiator");
@@ -1524,7 +1638,7 @@ Sdp::createOfferFromExternalSdp(const std::string& sdp)
 Sdp::LocalOfferState
 Sdp::saveLocalOfferState() const
 {
-    return {negotiator_, localSession_, sdpDirection_};
+    return {negotiator_, localSession_, sdpDirection_, mediaLabels_};
 }
 
 void
@@ -1533,6 +1647,15 @@ Sdp::restoreLocalOfferState(const LocalOfferState& state)
     negotiator_ = state.negotiator;
     localSession_ = state.localSession;
     sdpDirection_ = state.direction;
+    mediaLabels_ = state.mediaLabels;
+}
+
+void
+Sdp::setExternalMediaLabels()
+{
+    mediaLabels_.clear();
+    for (const auto& media : getMediaAttributeListFromSdp(localSession_))
+        mediaLabels_.push_back(media.label_);
 }
 
 bool
@@ -1549,6 +1672,7 @@ Sdp::setLocalAnswerFromExternalSdp(const std::string& sdp)
 
     sdpDirection_ = SdpDirection::ANSWER;
     localSession_ = session;
+    setExternalMediaLabels();
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_, remoteSession_, &negotiator_)
         != PJ_SUCCESS) {
@@ -1607,13 +1731,10 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         if (i < mediaList.size() and mediaList[i].enabled_ and (remoteMedia->desc.port != 0 or bundleOnly)) {
             localMedia = addMediaDescription(mediaList[i]);
         } else {
-            localMedia = pjmedia_sdp_media_clone_deactivate(memPool_.get(), remoteMedia);
-            if (not localMedia)
-                throw SdpException("Unable to create rejected media description");
-            if (auto mid = getMidValue(remoteMedia); not mid.empty())
-                addMidAttribute(localMedia, mid);
+            localMedia = rejectMediaDescription(remoteMedia);
         }
         localSession_->media[localSession_->media_count++] = localMedia;
+        mediaLabels_.push_back(i < mediaList.size() ? mediaList[i].label_ : std::string {});
     }
 
     addBundleGroupAttribute();

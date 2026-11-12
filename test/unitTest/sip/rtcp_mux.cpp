@@ -180,6 +180,11 @@ private:
     void offerSkipsRtcpMuxWhenDisabled();
     void offerAdvertisesRtcpMuxWhenEnabled();
     void offerAdvertisesBundleAndMid();
+    void reofferPreservesStreamIdentityAndSlots();
+    void reofferPreservesImportedMidsAndSkippedSlots();
+    void reofferRejectsAmbiguousStreamIdentity();
+    void mediaChangeRemovesStreamsByIdentity();
+    void configureBundleSdp(Sdp& sdp);
     void offerAdvertisesTransportCcAndRemb();
     void reofferAdvertisesFeedbackForNewMedia();
     void offerAdvertisesTransportCcOnlyForActiveDirections();
@@ -216,6 +221,10 @@ private:
     CPPUNIT_TEST(offerSkipsRtcpMuxWhenDisabled);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxWhenEnabled);
     CPPUNIT_TEST(offerAdvertisesBundleAndMid);
+    CPPUNIT_TEST(reofferPreservesStreamIdentityAndSlots);
+    CPPUNIT_TEST(reofferPreservesImportedMidsAndSkippedSlots);
+    CPPUNIT_TEST(reofferRejectsAmbiguousStreamIdentity);
+    CPPUNIT_TEST(mediaChangeRemovesStreamsByIdentity);
     CPPUNIT_TEST(offerAdvertisesTransportCcAndRemb);
     CPPUNIT_TEST(reofferAdvertisesFeedbackForNewMedia);
     CPPUNIT_TEST(offerAdvertisesTransportCcOnlyForActiveDirections);
@@ -407,6 +416,160 @@ RtcpMuxSdpTest::offerAdvertisesBundleAndMid()
     CPPUNIT_ASSERT(descriptions[0].payload_type != descriptions[1].payload_type);
     CPPUNIT_ASSERT(descriptions[0].rtcp_mux);
     CPPUNIT_ASSERT(descriptions[1].rtcp_mux);
+}
+
+void
+RtcpMuxSdpTest::configureBundleSdp(Sdp& sdp)
+{
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalMediaCapabilities(MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+    sdp.enableBundle(true);
+}
+
+void
+RtcpMuxSdpTest::reofferPreservesStreamIdentityAndSlots()
+{
+    Sdp sdp("bundle-reoffer-slots");
+    configureBundleSdp(sdp);
+    MediaAttribute audio(MEDIA_AUDIO, false, false, true, {}, "mic");
+    MediaAttribute camera(MEDIA_VIDEO, false, false, true, {}, "camera");
+    MediaAttribute screen(MEDIA_VIDEO, false, false, true, {}, "screen");
+    CPPUNIT_ASSERT(sdp.createOffer({audio, camera, screen}));
+    auto* previous = sdp.getLocalSdpSession();
+
+    const auto saved = sdp.saveLocalOfferState();
+    CPPUNIT_ASSERT(sdp.createOfferFromExternalSdp(printSdp(previous)));
+    sdp.restoreLocalOfferState(saved);
+
+    camera.hold_ = true;
+    CPPUNIT_ASSERT(sdp.createOffer({screen, audio, camera}, previous));
+    auto* reordered = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT_EQUAL(3u, reordered->media_count);
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reordered->media[0], "mid", "mic"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reordered->media[1], "mid", "camera"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reordered->media[2], "mid", "screen"));
+    CPPUNIT_ASSERT(hasMediaAttributeName(reordered->media[1], "sendonly"));
+    CPPUNIT_ASSERT(hasMediaAttributeName(reordered->media[2], "sendrecv"));
+    CPPUNIT_ASSERT_EQUAL(previous->origin.id, reordered->origin.id);
+    CPPUNIT_ASSERT_EQUAL(previous->origin.version + 1, reordered->origin.version);
+
+    CPPUNIT_ASSERT(sdp.createOffer({screen, audio}, reordered));
+    auto* removed = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT_EQUAL(3u, removed->media_count);
+    CPPUNIT_ASSERT_EQUAL(0u, unsigned(removed->media[1]->desc.port));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(removed->media[1], "mid", "camera"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(removed->media[2], "mid", "screen"));
+    CPPUNIT_ASSERT(hasSessionAttribute(removed, "group", "BUNDLE mic screen"));
+    CPPUNIT_ASSERT_EQUAL(2u, sdp.getMediaIndex("screen").value());
+
+    audio.enabled_ = false;
+    MediaAttribute extra(MEDIA_VIDEO, false, false, true, {}, "extra");
+    CPPUNIT_ASSERT(sdp.createOffer({extra, screen, audio}, removed));
+    auto* appended = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT_EQUAL(4u, appended->media_count);
+    CPPUNIT_ASSERT_EQUAL(0u, unsigned(appended->media[0]->desc.port));
+    CPPUNIT_ASSERT_EQUAL(0u, unsigned(appended->media[1]->desc.port));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(appended->media[0], "mid", "mic"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(appended->media[2], "mid", "screen"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(appended->media[3], "mid", "extra"));
+    CPPUNIT_ASSERT(hasSessionAttribute(appended, "group", "BUNDLE screen extra"));
+    CPPUNIT_ASSERT(pjmedia_sdp_validate(appended) == PJ_SUCCESS);
+}
+
+void
+RtcpMuxSdpTest::reofferPreservesImportedMidsAndSkippedSlots()
+{
+    Sdp sdp("bundle-reoffer-imported-mids");
+    configureBundleSdp(sdp);
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 123 7 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "a=group:BUNDLE audio_2 track\r\n"
+                                    "m=audio 5004 RTP/AVP 0\r\n"
+                                    "a=mid:audio_2\r\n"
+                                    "a=rtpmap:0 PCMU/8000\r\n"
+                                    "a=rtcp-mux\r\n"
+                                    "m=audio 0 RTP/AVP 8\r\n"
+                                    "a=mid:stopped\r\n"
+                                    "a=rtpmap:8 PCMA/8000\r\n"
+                                    "m=video 5004 RTP/AVP 120\r\n"
+                                    "a=mid:track\r\n"
+                                    "a=rtpmap:120 VP8/90000\r\n"
+                                    "a=rtcp-mux\r\n";
+    CPPUNIT_ASSERT(sdp.setReceivedOfferFromExternalSdp(remoteOffer));
+    MediaAttribute audio(MEDIA_AUDIO, false, false, true, {}, "audio_0");
+    MediaAttribute stopped(MEDIA_AUDIO, false, false, false, {}, "audio_1");
+    MediaAttribute video(MEDIA_VIDEO, false, false, true, {}, "video_0");
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio, stopped, video}));
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+    const auto* previous = sdp.getActiveLocalSdpSession();
+    CPPUNIT_ASSERT(previous);
+
+    sdp.clearIce();
+    MediaAttribute extra(MEDIA_AUDIO, false, false, true, {}, "audio_2");
+    CPPUNIT_ASSERT(sdp.createOffer({video, extra, audio}, previous));
+    auto* reoffer = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT_EQUAL(4u, reoffer->media_count);
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reoffer->media[0], "mid", "audio_2"));
+    CPPUNIT_ASSERT_EQUAL(0u, unsigned(reoffer->media[1]->desc.port));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reoffer->media[1], "mid", "stopped"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reoffer->media[2], "mid", "track"));
+    CPPUNIT_ASSERT(hasMediaAttributeValue(reoffer->media[2], "rtpmap", "120 VP8/90000"));
+    CPPUNIT_ASSERT(!hasMediaAttributeValue(reoffer->media[3], "mid", "audio_2"));
+    CPPUNIT_ASSERT(hasMediaAttributeName(reoffer->media[3], "mid"));
+    CPPUNIT_ASSERT_EQUAL(0u, sdp.getMediaIndex("audio_0").value());
+    CPPUNIT_ASSERT_EQUAL(2u, sdp.getMediaIndex("video_0").value());
+    CPPUNIT_ASSERT_EQUAL(3u, sdp.getMediaIndex("audio_2").value());
+    CPPUNIT_ASSERT(pjmedia_sdp_validate(reoffer) == PJ_SUCCESS);
+}
+
+void
+RtcpMuxSdpTest::reofferRejectsAmbiguousStreamIdentity()
+{
+    Sdp sdp("bundle-reoffer-invalid-identity");
+    configureBundleSdp(sdp);
+    MediaAttribute audio(MEDIA_AUDIO, false, false, true, {}, "audio_0");
+    CPPUNIT_ASSERT(sdp.createOffer({audio}));
+    auto* previous = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(!sdp.createOffer({audio, audio}, previous));
+    auto invalid = audio;
+    invalid.type_ = MEDIA_VIDEO;
+    CPPUNIT_ASSERT(!sdp.createOffer({invalid}, previous));
+    invalid = audio;
+    invalid.label_.clear();
+    CPPUNIT_ASSERT(!sdp.createOffer({invalid}, previous));
+    CPPUNIT_ASSERT(previous == sdp.getLocalSdpSession());
+}
+
+void
+RtcpMuxSdpTest::mediaChangeRemovesStreamsByIdentity()
+{
+    MediaAttribute first(MEDIA_AUDIO, false, false, true, {}, "audio_0");
+    MediaAttribute middle(MEDIA_AUDIO, false, false, true, {}, "audio_1");
+    MediaAttribute last(MEDIA_AUDIO, false, false, true, {}, "audio_2");
+    auto call = std::make_shared<SIPCall>(account_,
+                                          "media-stream-identity",
+                                          Call::CallType::OUTGOING,
+                                          MediaAttribute::mediaAttributesToMediaMaps({first, middle, last}));
+    call->setPeerUaVersion("Jami Daemon 99.0.0 (test)");
+    const auto firstSession = call->getRtpStreams()[0].rtpSession_;
+    const auto lastSession = call->getRtpStreams()[2].rtpSession_;
+    CPPUNIT_ASSERT(call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps({last, first})));
+    const auto& streams = call->getRtpStreams();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), streams.size());
+    CPPUNIT_ASSERT(streams[0].rtpSession_ == firstSession);
+    CPPUNIT_ASSERT(streams[1].rtpSession_ == lastSession);
+    CPPUNIT_ASSERT(!call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps({first, first})));
+    CPPUNIT_ASSERT_EQUAL(size_t(2), streams.size());
+    last.enabled_ = false;
+    CPPUNIT_ASSERT(call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps({last, first})));
+    CPPUNIT_ASSERT(!streams[1].mediaAttribute_->enabled_);
 }
 
 void
