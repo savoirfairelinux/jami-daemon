@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a67b1c48_9a66ddad",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T21:52:29Z",
+      "side": 1,
+      "message": "[error] Line 345: 🔴 `sdp_-\u003egetMediaIndex(mediaAttr-\u003elabel_).value()` assumes labels are always present and unique. That is not guaranteed on initial offers (empty/duplicate labels are still possible), so this can either route keyframe requests to the wrong stream or throw `bad_optional_access`. Pass the SDP media index directly into this path (instead of re-looking up by label), or explicitly reject/normalize ambiguous labels before dereferencing.",
+      "revId": "6fa8008a4814b3bfc849cfad63f6248aa816c9d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ef25a3e_aed80bc4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4174,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-12T21:52:29Z",
+      "side": 1,
+      "message": "[error] Line 4174: 🔴 `sdp_-\u003egetMediaIndex(rtpStream.mediaAttribute_-\u003elabel_).value()` has the same unchecked optional dereference and can crash when a stream label is missing/unmapped. Handle `std::nullopt` explicitly and fail the negotiation path cleanly (or use a guaranteed slot index already known by the negotiation flow).",
+      "revId": "6fa8008a4814b3bfc849cfad63f6248aa816c9d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
