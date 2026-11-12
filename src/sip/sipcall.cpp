@@ -1776,10 +1776,30 @@ SIPCall::answerWithExternalSdp(const std::string& sdp)
 }
 
 void
-SIPCall::reportExternalRemoteAnswer(std::string sdp)
+SIPCall::reportExternalRemoteAnswer(const pjsip_rx_data& rdata)
 {
+    const auto* response = rdata.msg_info.msg;
+    if (not response or response->type != PJSIP_RESPONSE_MSG
+        or response->line.status.code <= PJSIP_SC_TRYING or response->line.status.code >= 300)
+        return;
+
+    const auto* body = response->body;
+    if (not body or not body->data or body->len == 0
+        or pj_stricmp2(&body->content_type.type, "application") != 0
+        or pj_stricmp2(&body->content_type.subtype, "sdp") != 0)
+        return;
+
+    if (not rdata.msg_info.cseq) {
+        JAMI_ERROR("[call:{}] INVITE response with SDP has no CSeq", getCallId());
+        return;
+    }
+
     std::lock_guard lk {callMutex_};
-    externalRemoteSdp_ = std::move(sdp);
+    const auto cseq = rdata.msg_info.cseq->cseq;
+    if (externalRemoteSdpCseq_ == cseq)
+        return;
+    externalRemoteSdpCseq_ = cseq;
+    externalRemoteSdp_.assign(static_cast<const char*>(body->data), body->len);
     if (!demotionRequestId_.empty() && !demotionAnswerReceived_) {
         demotionAnswerReceived_ = true;
         emitSignal<libjami::CallSignal::ExternalMediaDemotionAccepted>(
@@ -5073,6 +5093,8 @@ SIPCall::merge(Call& call)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setSipTransport(std::move(subcall.sipTransport_), std::move(subcall.contactHeader_));
     sdp_ = std::move(subcall.sdp_);
+    externalRemoteSdp_ = std::move(subcall.externalRemoteSdp_);
+    externalRemoteSdpCseq_ = subcall.externalRemoteSdpCseq_;
     dtlsCertificate_ = std::move(subcall.dtlsCertificate_);
     dtlsPrivateKey_ = std::move(subcall.dtlsPrivateKey_);
     peerHold_ = subcall.peerHold_;
