@@ -83,6 +83,9 @@ CommitMessage::toJson() const
     if (!parent.empty()) {
         value[CommitKey::PARENT] = parent;
     }
+    if (!threshold.empty()) {
+        value[CommitKey::THRESHOLD] = threshold;
+    }
     return value;
 }
 
@@ -131,6 +134,7 @@ CommitMessage::fromString(const std::string& str)
         msg.invited = value.get(CommitKey::INVITED, "").asString();
         msg.mimeType = value.get(CommitKey::MIME_TYPE, "").asString();
         msg.parent = value.get(CommitKey::PARENT, "").asString();
+        msg.threshold = value.get(CommitKey::THRESHOLD, "").asString();
     } catch (const std::exception& e) {
         JAMI_ERROR("Exception while parsing commit message '{}': {}", str, e.what());
         return std::nullopt;

@@ -112,7 +112,47 @@ private:
     void testVoteResolutionHalfRejected();
     void testVoteResolutionMajorityAccepted();
     void testVoteResolutionCountsParentTree();
+    void testApprovalThresholdParse();
+    void testApprovalThresholdRequired();
+    void testRoleChangePermissions();
+    void testAdminVotesAccepted();
+    void testInvalidVotesRejected();
+    void testRoleActionsByMemberRejected();
+    void testPromoteResolution();
+    void testDemoteResolution();
+    void testStepDown();
+    void testDemoteLastAdminRejected();
+    void testApprovalChange();
+    void testStoredThresholdApplies();
+    void testUnanimousThreshold();
+    void testInvalidStoredThresholdRejectsVotes();
+    void testBannedWinsOverAdmin();
+    void testBannedWinsOverMember();
+    void testMergeApprovalWithConflict();
     bool validBanResolution(std::size_t voterCount, bool dropSecondAdminFromWorkdir);
+    // A conversation whose history is written by hand, with commits validated one at a time
+    struct HandBuiltSwarm
+    {
+        std::shared_ptr<ConversationRepository> repository;
+        std::filesystem::path path;
+        GitRepository repo;
+    };
+    // Alice's conversation with more admins, members and a stored approval threshold
+    HandBuiltSwarm handBuiltSwarm(const std::vector<std::string>& extraAdmins,
+                                  const std::vector<std::string>& members,
+                                  const std::string& approvalThreshold = "");
+    std::string fileContent(const HandBuiltSwarm& swarm, const std::string& path);
+    // Write and stage a file of the working directory
+    void writeFile(HandBuiltSwarm& swarm, const std::string& path, const std::string& content = "");
+    // Delete and unstage a file of the working directory
+    void removeFile(HandBuiltSwarm& swarm, const std::string& path);
+    void moveFile(HandBuiltSwarm& swarm, const std::string& from, const std::string& to);
+    // Commit what is staged on main without validating it
+    std::string commitRaw(HandBuiltSwarm& swarm, const CommitMessage& message);
+    // Commit what is staged by Alice and validate that commit alone. Unless keepOnMain, the commit
+    // goes to a side branch and the index and the working directory return to main
+    bool commitValidates(HandBuiltSwarm& swarm, const CommitMessage& message, bool keepOnMain);
+    MemberRole roleOf(const HandBuiltSwarm& swarm, const std::string& uri);
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -160,6 +200,23 @@ private:
     CPPUNIT_TEST(testVoteResolutionHalfRejected);
     CPPUNIT_TEST(testVoteResolutionMajorityAccepted);
     CPPUNIT_TEST(testVoteResolutionCountsParentTree);
+    CPPUNIT_TEST(testApprovalThresholdParse);
+    CPPUNIT_TEST(testApprovalThresholdRequired);
+    CPPUNIT_TEST(testRoleChangePermissions);
+    CPPUNIT_TEST(testAdminVotesAccepted);
+    CPPUNIT_TEST(testInvalidVotesRejected);
+    CPPUNIT_TEST(testRoleActionsByMemberRejected);
+    CPPUNIT_TEST(testPromoteResolution);
+    CPPUNIT_TEST(testDemoteResolution);
+    CPPUNIT_TEST(testStepDown);
+    CPPUNIT_TEST(testDemoteLastAdminRejected);
+    CPPUNIT_TEST(testApprovalChange);
+    CPPUNIT_TEST(testStoredThresholdApplies);
+    CPPUNIT_TEST(testUnanimousThreshold);
+    CPPUNIT_TEST(testInvalidStoredThresholdRejectsVotes);
+    CPPUNIT_TEST(testBannedWinsOverAdmin);
+    CPPUNIT_TEST(testBannedWinsOverMember);
+    CPPUNIT_TEST(testMergeApprovalWithConflict);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2080,6 +2137,584 @@ ConversationRepositoryTest::testVoteResolutionCountsParentTree()
     // The working directory lists Alice alone as admin, while the parent commit lists Alice and
     // Bob. One vote is then all admins of the working directory, but only half of the parent's
     CPPUNIT_ASSERT(!validBanResolution(1, true));
+}
+
+ConversationRepositoryTest::HandBuiltSwarm
+ConversationRepositoryTest::handBuiltSwarm(const std::vector<std::string>& extraAdmins,
+                                           const std::vector<std::string>& members,
+                                           const std::string& approvalThreshold)
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    HandBuiltSwarm swarm;
+    // Call once per test: a second conversation created in the same second gets the same id
+    swarm.repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(swarm.repository != nullptr);
+    swarm.path = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations" / swarm.repository->id();
+    git_repository* repoPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repoPtr, swarm.path.c_str()));
+    swarm.repo.reset(repoPtr);
+
+    // Raw commit that is never validated, because a valid history is unable to hold two admins
+    // before role changes exist. Every certificate is a copy of Alice's, and only the URI in the
+    // file name tells them apart, which is all that the validation of votes looks at.
+    auto certificate = fileContent(swarm, fmt::format("admins/{}.crt", aliceAccount->getUsername()));
+    for (const auto& uri : extraAdmins)
+        writeFile(swarm, fmt::format("admins/{}.crt", uri), certificate);
+    for (const auto& uri : members)
+        writeFile(swarm, fmt::format("members/{}.crt", uri), certificate);
+    if (!approvalThreshold.empty())
+        writeFile(swarm, std::string(ApprovalThreshold::FILE_PATH), approvalThreshold);
+    commitRaw(swarm, CommitMessage::text("setup"));
+    return swarm;
+}
+
+std::string
+ConversationRepositoryTest::fileContent(const HandBuiltSwarm& swarm, const std::string& path)
+{
+    std::ifstream file(swarm.path / path, std::ios::binary);
+    CPPUNIT_ASSERT(file.is_open());
+    return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+}
+
+void
+ConversationRepositoryTest::writeFile(HandBuiltSwarm& swarm, const std::string& path, const std::string& content)
+{
+    auto fullPath = swarm.path / path;
+    std::filesystem::create_directories(fullPath.parent_path());
+    std::ofstream file(fullPath, std::ios::binary | std::ios::trunc);
+    file << content;
+    file.close();
+
+    git_index* indexPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_index(&indexPtr, swarm.repo.get()));
+    GitIndex index {indexPtr};
+    CPPUNIT_ASSERT_EQUAL(0, git_index_add_bypath(index.get(), path.c_str()));
+    CPPUNIT_ASSERT_EQUAL(0, git_index_write(index.get()));
+}
+
+void
+ConversationRepositoryTest::removeFile(HandBuiltSwarm& swarm, const std::string& path)
+{
+    CPPUNIT_ASSERT(std::filesystem::remove(swarm.path / path));
+
+    git_index* indexPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_index(&indexPtr, swarm.repo.get()));
+    GitIndex index {indexPtr};
+    CPPUNIT_ASSERT_EQUAL(0, git_index_remove_bypath(index.get(), path.c_str()));
+    CPPUNIT_ASSERT_EQUAL(0, git_index_write(index.get()));
+}
+
+void
+ConversationRepositoryTest::moveFile(HandBuiltSwarm& swarm, const std::string& from, const std::string& to)
+{
+    auto content = fileContent(swarm, from);
+    removeFile(swarm, from);
+    writeFile(swarm, to, content);
+}
+
+std::string
+ConversationRepositoryTest::commitRaw(HandBuiltSwarm& swarm, const CommitMessage& message)
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto commitId = addCommit(swarm.repo.get(), aliceAccount, "main", message.toString());
+    CPPUNIT_ASSERT(!commitId.empty());
+    return commitId;
+}
+
+bool
+ConversationRepositoryTest::commitValidates(HandBuiltSwarm& swarm, const CommitMessage& message, bool keepOnMain)
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto commitId = addCommit(swarm.repo.get(), aliceAccount, keepOnMain ? "main" : "rejected", message.toString());
+    CPPUNIT_ASSERT(!commitId.empty());
+    if (!keepOnMain) {
+        // The commit stays on a side branch, and the index and the working directory return to main
+        git_object* mainPtr = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, git_revparse_single(&mainPtr, swarm.repo.get(), "refs/heads/main"));
+        GitObject mainCommit {mainPtr};
+        CPPUNIT_ASSERT_EQUAL(0, git_reset(swarm.repo.get(), mainCommit.get(), GIT_RESET_HARD, nullptr));
+    }
+    auto commit = swarm.repository->getCommit(commitId);
+    CPPUNIT_ASSERT(commit.has_value());
+    return swarm.repository->validCommits({*commit});
+}
+
+MemberRole
+ConversationRepositoryTest::roleOf(const HandBuiltSwarm& swarm, const std::string& uri)
+{
+    swarm.repository->refreshMembers();
+    for (const auto& member : swarm.repository->members()) {
+        if (member.uri == uri)
+            return member.role;
+    }
+    CPPUNIT_FAIL("No member " + uri);
+    return MemberRole::LEFT;
+}
+
+void
+ConversationRepositoryTest::testApprovalThresholdParse()
+{
+    for (std::string_view token : {"percent/1", "percent/50", "percent/100"}) {
+        auto threshold = ApprovalThreshold::parse(token);
+        CPPUNIT_ASSERT_MESSAGE(std::string(token), threshold.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(token), threshold->toString());
+    }
+    for (std::string_view token : {"",
+                                   "percent/0",
+                                   "percent/101",
+                                   "percent/050",
+                                   "percent/+5",
+                                   "percent/-1",
+                                   "percent/5/",
+                                   "percent/5 ",
+                                   "percent/",
+                                   "percent/4294967296",
+                                   " percent/50",
+                                   "Percent/50",
+                                   "count/1",
+                                   "count/2",
+                                   "ratio/1"}) {
+        CPPUNIT_ASSERT_MESSAGE(std::string(token), !ApprovalThreshold::parse(token).has_value());
+    }
+    CPPUNIT_ASSERT(ApprovalThreshold::parse("percent/50") == ApprovalThreshold::defaultValue());
+}
+
+void
+ConversationRepositoryTest::testApprovalThresholdRequired()
+{
+    auto required = [](std::string_view token, std::size_t admins) {
+        return ApprovalThreshold::parse(token)->required(admins);
+    };
+    // The default is more than half of the admins, as before thresholds existed
+    const std::array<std::size_t, 6> byDefault {0, 1, 2, 2, 3, 3};
+    for (std::size_t admins = 0; admins < byDefault.size(); ++admins)
+        CPPUNIT_ASSERT_EQUAL(byDefault[admins], ApprovalThreshold::defaultValue().required(admins));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(2), required("percent/66", 3));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(4), required("percent/66", 6));
+    // "percent/66" equals "at least two thirds" up to 52 admins, and needs one vote less from 53
+    CPPUNIT_ASSERT_EQUAL(std::size_t(35), required("percent/66", 52));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(35), required("percent/66", 53));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(1), required("percent/1", 1));
+    CPPUNIT_ASSERT_EQUAL(std::size_t(2), required("percent/1", 100));
+    // Every threshold is capped at all admins
+    CPPUNIT_ASSERT_EQUAL(std::size_t(4), required("percent/100", 4));
+}
+
+void
+ConversationRepositoryTest::testRoleChangePermissions()
+{
+    const std::array<Permission, 2> adminOnly {Permission::ChangeMemberRole, Permission::ChangeApprovalThreshold};
+    for (auto mode : {ConversationMode::INVITES_ONLY, ConversationMode::FEED, ConversationMode::DOCUMENT}) {
+        for (auto permission : adminOnly) {
+            CPPUNIT_ASSERT(hasPermission(mode, MemberRole::ADMIN, permission));
+            CPPUNIT_ASSERT(!hasPermission(mode, MemberRole::MEMBER, permission));
+            CPPUNIT_ASSERT(!hasPermission(mode, MemberRole::INVITED, permission));
+            CPPUNIT_ASSERT(!hasPermission(mode, MemberRole::BANNED, permission));
+        }
+    }
+    // A one-to-one conversation has no roles to change
+    for (auto permission : adminOnly) {
+        CPPUNIT_ASSERT(!hasPermission(ConversationMode::ONE_TO_ONE, MemberRole::ADMIN, permission));
+        CPPUNIT_ASSERT(!hasPermission(ConversationMode::ONE_TO_ONE, MemberRole::MEMBER, permission));
+    }
+    CPPUNIT_ASSERT(permissionName(Permission::ChangeMemberRole) == "changeMemberRole");
+    CPPUNIT_ASSERT(permissionName(Permission::ChangeApprovalThreshold) == "changeApprovalThreshold");
+}
+
+void
+ConversationRepositoryTest::testAdminVotesAccepted()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string memberUri(40, 'c');
+    auto swarm = handBuiltSwarm({bobUri}, {memberUri});
+
+    // A ban vote keeps its format without an action
+    writeFile(swarm, fmt::format("votes/ban/members/{}/{}", memberUri, aliceUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::vote(memberUri), true));
+    writeFile(swarm, fmt::format("votes/promote/members/{}/{}", memberUri, aliceUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::vote(memberUri, CommitAction::PROMOTE), true));
+    writeFile(swarm, fmt::format("votes/demote/admins/{}/{}", bobUri, aliceUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::vote(bobUri, CommitAction::DEMOTE), true));
+    writeFile(swarm, fmt::format("votes/approval/percent/66/{}", aliceUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::approvalVote("percent/66"), true));
+}
+
+void
+ConversationRepositoryTest::testInvalidVotesRejected()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string memberUri(40, 'c');
+    const std::string otherUri(40, 'd');
+    auto swarm = handBuiltSwarm({bobUri}, {memberUri});
+
+    const std::vector<std::pair<std::string, CommitMessage>> cases {
+        // A promotion targets a member, and a demotion an admin
+        {fmt::format("votes/promote/admins/{}/{}", bobUri, aliceUri),
+         CommitMessage::vote(bobUri, CommitAction::PROMOTE)},
+        {fmt::format("votes/demote/members/{}/{}", memberUri, aliceUri),
+         CommitMessage::vote(memberUri, CommitAction::DEMOTE)},
+        // The path and the message name the same action and the same URI
+        {fmt::format("votes/promote/members/{}/{}", memberUri, aliceUri),
+         CommitMessage::vote(memberUri, CommitAction::DEMOTE)},
+        {fmt::format("votes/promote/members/{}/{}", memberUri, aliceUri),
+         CommitMessage::vote(otherUri, CommitAction::PROMOTE)},
+        // A vote without an action is a ban or unban vote
+        {fmt::format("votes/promote/members/{}/{}", memberUri, aliceUri), CommitMessage::vote(memberUri)},
+        {fmt::format("votes/crown/members/{}/{}", memberUri, aliceUri), CommitMessage::vote(memberUri, "crown")},
+        // Nobody votes on their own role or ban
+        {fmt::format("votes/demote/admins/{}/{}", aliceUri, aliceUri),
+         CommitMessage::vote(aliceUri, CommitAction::DEMOTE)},
+        {fmt::format("votes/ban/admins/{}/{}", aliceUri, aliceUri), CommitMessage::vote(aliceUri)},
+        // An approval vote names one canonical token in its path and its message, and its own voter
+        {fmt::format("votes/approval/percent/66/{}", aliceUri), CommitMessage::approvalVote("percent/1")},
+        {fmt::format("votes/approval/percent/050/{}", aliceUri), CommitMessage::approvalVote("percent/050")},
+        {fmt::format("votes/approval/percent/66/{}", bobUri), CommitMessage::approvalVote("percent/66")},
+    };
+    for (const auto& [path, message] : cases) {
+        writeFile(swarm, path);
+        CPPUNIT_ASSERT_MESSAGE(path + " " + message.toString(), !commitValidates(swarm, message, false));
+    }
+}
+
+void
+ConversationRepositoryTest::testRoleActionsByMemberRejected()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string memberUri(40, 'c');
+    auto swarm = handBuiltSwarm({bobUri}, {memberUri});
+    // Alice is a plain member from here on, and Bob the only admin
+    moveFile(swarm, fmt::format("admins/{}.crt", aliceUri), fmt::format("members/{}.crt", aliceUri));
+    commitRaw(swarm, CommitMessage::text("Alice is a member"));
+
+    writeFile(swarm, fmt::format("votes/promote/members/{}/{}", memberUri, aliceUri));
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::vote(memberUri, CommitAction::PROMOTE), false));
+    writeFile(swarm, fmt::format("votes/approval/percent/1/{}", aliceUri));
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalVote("percent/1"), false));
+    moveFile(swarm, fmt::format("members/{}.crt", memberUri), fmt::format("admins/{}.crt", memberUri));
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::member(CommitAction::PROMOTE, memberUri), false));
+    writeFile(swarm, std::string(ApprovalThreshold::FILE_PATH), "percent/1");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+}
+
+void
+ConversationRepositoryTest::testPromoteResolution()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string memberUri(40, 'c');
+    auto swarm = handBuiltSwarm({bobUri}, {memberUri});
+    auto votes = fmt::format("votes/promote/members/{}/", memberUri);
+    writeFile(swarm, votes + aliceUri);
+    writeFile(swarm, votes + bobUri);
+    commitRaw(swarm, CommitMessage::vote(memberUri, CommitAction::PROMOTE));
+
+    auto memberFile = fmt::format("members/{}.crt", memberUri);
+    auto adminFile = fmt::format("admins/{}.crt", memberUri);
+    auto promotion = CommitMessage::member(CommitAction::PROMOTE, memberUri);
+
+    // One vote of two admins is not more than half
+    removeFile(swarm, votes + aliceUri);
+    moveFile(swarm, memberFile, adminFile);
+    CPPUNIT_ASSERT(!commitValidates(swarm, promotion, false));
+
+    // Another file changes along
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    moveFile(swarm, memberFile, adminFile);
+    writeFile(swarm, "profile.vcf", "TITLE: Promoted\n");
+    CPPUNIT_ASSERT(!commitValidates(swarm, promotion, false));
+
+    // The certificate changes on the way
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    removeFile(swarm, memberFile);
+    writeFile(swarm, adminFile, "not the member's certificate");
+    CPPUNIT_ASSERT(!commitValidates(swarm, promotion, false));
+
+    // Both admins voted and the certificate moved unchanged
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    moveFile(swarm, memberFile, adminFile);
+    CPPUNIT_ASSERT(commitValidates(swarm, promotion, true));
+    CPPUNIT_ASSERT(roleOf(swarm, memberUri) == MemberRole::ADMIN);
+}
+
+void
+ConversationRepositoryTest::testDemoteResolution()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string carlUri(40, 'e');
+    auto swarm = handBuiltSwarm({bobUri, carlUri}, {});
+    auto votes = fmt::format("votes/demote/admins/{}/", carlUri);
+    writeFile(swarm, votes + aliceUri);
+    writeFile(swarm, votes + bobUri);
+    commitRaw(swarm, CommitMessage::vote(carlUri, CommitAction::DEMOTE));
+
+    auto adminFile = fmt::format("admins/{}.crt", carlUri);
+    auto memberFile = fmt::format("members/{}.crt", carlUri);
+    auto demotion = CommitMessage::member(CommitAction::DEMOTE, carlUri);
+
+    // One vote of three admins
+    removeFile(swarm, votes + aliceUri);
+    moveFile(swarm, adminFile, memberFile);
+    CPPUNIT_ASSERT(!commitValidates(swarm, demotion, false));
+
+    // Two votes of three admins, the targeted admin counted in the electorate
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    moveFile(swarm, adminFile, memberFile);
+    CPPUNIT_ASSERT(commitValidates(swarm, demotion, true));
+    CPPUNIT_ASSERT(roleOf(swarm, carlUri) == MemberRole::MEMBER);
+}
+
+void
+ConversationRepositoryTest::testStepDown()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto swarm = handBuiltSwarm({bobUri}, {});
+    // Bob's pending vote on Alice, which stepping down must leave alone
+    auto bobVote = fmt::format("votes/demote/admins/{}/{}", aliceUri, bobUri);
+    writeFile(swarm, bobVote);
+    commitRaw(swarm, CommitMessage::vote(aliceUri, CommitAction::DEMOTE));
+
+    auto adminFile = fmt::format("admins/{}.crt", aliceUri);
+    auto memberFile = fmt::format("members/{}.crt", aliceUri);
+    auto stepDown = CommitMessage::member(CommitAction::DEMOTE, aliceUri);
+
+    removeFile(swarm, bobVote);
+    moveFile(swarm, adminFile, memberFile);
+    CPPUNIT_ASSERT(!commitValidates(swarm, stepDown, false));
+
+    // Alone and without a vote, like leaving
+    moveFile(swarm, adminFile, memberFile);
+    CPPUNIT_ASSERT(commitValidates(swarm, stepDown, true));
+    CPPUNIT_ASSERT(roleOf(swarm, aliceUri) == MemberRole::MEMBER);
+}
+
+void
+ConversationRepositoryTest::testDemoteLastAdminRejected()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto swarm = handBuiltSwarm({}, {std::string(40, 'c')});
+    moveFile(swarm, fmt::format("admins/{}.crt", aliceUri), fmt::format("members/{}.crt", aliceUri));
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::member(CommitAction::DEMOTE, aliceUri), false));
+}
+
+void
+ConversationRepositoryTest::testApprovalChange()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string carlUri(40, 'e');
+    auto swarm = handBuiltSwarm({bobUri, carlUri}, {});
+    const std::string policyFile {ApprovalThreshold::FILE_PATH};
+
+    // Materializing the implicit default must not consume votes without changing the threshold
+    auto defaultVotes = std::string("votes/approval/percent/50/");
+    writeFile(swarm, defaultVotes + aliceUri);
+    writeFile(swarm, defaultVotes + bobUri);
+    commitRaw(swarm, CommitMessage::approvalVote("percent/50"));
+    removeFile(swarm, defaultVotes + aliceUri);
+    removeFile(swarm, defaultVotes + bobUri);
+    writeFile(swarm, policyFile, "percent/50");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/50"), false));
+
+    auto votes = std::string("votes/approval/percent/1/");
+    writeFile(swarm, votes + aliceUri);
+    writeFile(swarm, votes + bobUri);
+    commitRaw(swarm, CommitMessage::approvalVote("percent/1"));
+
+    // One vote of three admins under the default threshold
+    removeFile(swarm, votes + aliceUri);
+    writeFile(swarm, policyFile, "percent/1");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+
+    // The stored token differs from the commit's
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    writeFile(swarm, policyFile, "percent/66");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+
+    // A stored token with a trailing newline is not canonical
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    writeFile(swarm, policyFile, "percent/1\n");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+
+    // A policy commit without a known action
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    writeFile(swarm, policyFile, "percent/1");
+    auto unknownPolicy = CommitMessage::approvalChange("percent/1");
+    unknownPolicy.action = "other";
+    CPPUNIT_ASSERT(!commitValidates(swarm, unknownPolicy, false));
+
+    // Two votes of three admins
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    writeFile(swarm, policyFile, "percent/1");
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::approvalChange("percent/1"), true));
+
+    // Consuming votes must change the stored policy, even when the token already matches
+    writeFile(swarm, votes + aliceUri);
+    writeFile(swarm, votes + bobUri);
+    commitRaw(swarm, CommitMessage::approvalVote("percent/1"));
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::approvalChange("percent/1"), false));
+}
+
+void
+ConversationRepositoryTest::testStoredThresholdApplies()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string carlUri(40, 'e');
+    const std::string bannedUri(40, 'c');
+    const std::string promotedUri(40, 'd');
+    auto swarm = handBuiltSwarm({bobUri, carlUri}, {bannedUri, promotedUri}, "percent/1");
+
+    // With "percent/1", one vote of three admins bans
+    auto banVote = fmt::format("votes/ban/members/{}/{}", bannedUri, aliceUri);
+    writeFile(swarm, banVote);
+    commitRaw(swarm, CommitMessage::vote(bannedUri));
+    removeFile(swarm, banVote);
+    moveFile(swarm, fmt::format("members/{}.crt", bannedUri), fmt::format("banned/members/{}.crt", bannedUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::member(CommitAction::BAN, bannedUri), true));
+
+    // and promotes
+    auto promoteVote = fmt::format("votes/promote/members/{}/{}", promotedUri, aliceUri);
+    writeFile(swarm, promoteVote);
+    commitRaw(swarm, CommitMessage::vote(promotedUri, CommitAction::PROMOTE));
+    removeFile(swarm, promoteVote);
+    moveFile(swarm, fmt::format("members/{}.crt", promotedUri), fmt::format("admins/{}.crt", promotedUri));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::member(CommitAction::PROMOTE, promotedUri), true));
+}
+
+void
+ConversationRepositoryTest::testUnanimousThreshold()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    const std::string carlUri(40, 'e');
+    const std::string memberUri(40, 'c');
+    auto swarm = handBuiltSwarm({bobUri, carlUri}, {memberUri}, "percent/100");
+    auto votes = fmt::format("votes/promote/members/{}/", memberUri);
+    for (const auto& voter : {aliceUri, bobUri, carlUri})
+        writeFile(swarm, votes + voter);
+    commitRaw(swarm, CommitMessage::vote(memberUri, CommitAction::PROMOTE));
+    auto memberFile = fmt::format("members/{}.crt", memberUri);
+    auto adminFile = fmt::format("admins/{}.crt", memberUri);
+    auto promotion = CommitMessage::member(CommitAction::PROMOTE, memberUri);
+
+    // Two votes of three admins
+    removeFile(swarm, votes + aliceUri);
+    removeFile(swarm, votes + bobUri);
+    moveFile(swarm, memberFile, adminFile);
+    CPPUNIT_ASSERT(!commitValidates(swarm, promotion, false));
+
+    for (const auto& voter : {aliceUri, bobUri, carlUri})
+        removeFile(swarm, votes + voter);
+    moveFile(swarm, memberFile, adminFile);
+    CPPUNIT_ASSERT(commitValidates(swarm, promotion, true));
+}
+
+void
+ConversationRepositoryTest::testInvalidStoredThresholdRejectsVotes()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    const std::string memberUri(40, 'c');
+    // Alice alone would ban under any valid threshold
+    auto swarm = handBuiltSwarm({}, {memberUri}, "percent/0");
+    auto vote = fmt::format("votes/ban/members/{}/{}", memberUri, aliceUri);
+    writeFile(swarm, vote);
+    commitRaw(swarm, CommitMessage::vote(memberUri));
+    removeFile(swarm, vote);
+    moveFile(swarm, fmt::format("members/{}.crt", memberUri), fmt::format("banned/members/{}.crt", memberUri));
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::member(CommitAction::BAN, memberUri), false));
+}
+
+void
+ConversationRepositoryTest::testBannedWinsOverAdmin()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto swarm = handBuiltSwarm({bobUri}, {});
+    // What a merge of a ban and a concurrent promotion may leave: Alice is banned and admin
+    auto adminFile = fmt::format("admins/{}.crt", aliceUri);
+    writeFile(swarm, fmt::format("banned/members/{}.crt", aliceUri), fileContent(swarm, adminFile));
+    commitRaw(swarm, CommitMessage::text("Alice banned"));
+
+    writeFile(swarm, "profile.vcf", "TITLE: Banned admin\n");
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::updateProfile(), false));
+    CPPUNIT_ASSERT(roleOf(swarm, aliceUri) == MemberRole::BANNED);
+}
+
+void
+ConversationRepositoryTest::testBannedWinsOverMember()
+{
+    auto aliceUri = Manager::instance().getAccount<JamiAccount>(aliceId)->getUsername();
+    auto bobUri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
+    auto swarm = handBuiltSwarm({bobUri}, {});
+    auto memberFile = fmt::format("members/{}.crt", aliceUri);
+    moveFile(swarm, fmt::format("admins/{}.crt", aliceUri), memberFile);
+    commitRaw(swarm, CommitMessage::text("Alice demoted"));
+    CPPUNIT_ASSERT(commitValidates(swarm, CommitMessage::text("hello"), false));
+
+    // What a merge of a ban and a concurrent demotion may leave: Alice is banned and member
+    writeFile(swarm, fmt::format("banned/admins/{}.crt", aliceUri), fileContent(swarm, memberFile));
+    commitRaw(swarm, CommitMessage::text("Alice banned"));
+
+    CPPUNIT_ASSERT(!commitValidates(swarm, CommitMessage::text("hello"), false));
+    CPPUNIT_ASSERT(roleOf(swarm, aliceUri) == MemberRole::BANNED);
+}
+
+void
+ConversationRepositoryTest::testMergeApprovalWithConflict()
+{
+    auto swarm = handBuiltSwarm({}, {});
+    const std::string policyFile {ApprovalThreshold::FILE_PATH};
+    git_object* basePtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_revparse_single(&basePtr, swarm.repo.get(), "refs/heads/main"));
+    GitObject base {basePtr};
+
+    // Both branches set a first threshold, so the file has no common ancestor
+    writeFile(swarm, policyFile, "percent/1");
+    auto mainId = commitRaw(swarm, CommitMessage::approvalChange("percent/1"));
+
+    git_reference* branchPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0,
+                         git_branch_create(&branchPtr,
+                                           swarm.repo.get(),
+                                           "to_merge",
+                                           reinterpret_cast<git_commit*>(base.get()),
+                                           false));
+    git_reference_free(branchPtr);
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_set_head(swarm.repo.get(), "refs/heads/to_merge"));
+    CPPUNIT_ASSERT_EQUAL(0, git_reset(swarm.repo.get(), base.get(), GIT_RESET_HARD, nullptr));
+    writeFile(swarm, policyFile, "percent/66");
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto branchId = addCommit(swarm.repo.get(),
+                              aliceAccount,
+                              "to_merge",
+                              CommitMessage::approvalChange("percent/66").toString());
+    CPPUNIT_ASSERT(!branchId.empty());
+
+    git_object* mainPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_set_head(swarm.repo.get(), "refs/heads/main"));
+    CPPUNIT_ASSERT_EQUAL(0, git_revparse_single(&mainPtr, swarm.repo.get(), "refs/heads/main"));
+    GitObject mainCommit {mainPtr};
+    CPPUNIT_ASSERT_EQUAL(0, git_reset(swarm.repo.get(), mainCommit.get(), GIT_RESET_HARD, nullptr));
+
+    // Like a profile conflict, the higher commit id wins
+    CPPUNIT_ASSERT(swarm.repository->merge(branchId).first);
+    CPPUNIT_ASSERT_EQUAL(branchId > mainId ? std::string("percent/66") : std::string("percent/1"),
+                         fileContent(swarm, policyFile));
 }
 
 } // namespace test

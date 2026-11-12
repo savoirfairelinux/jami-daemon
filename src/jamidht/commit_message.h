@@ -45,6 +45,7 @@ constexpr const char* const MODE {"mode"};
 constexpr const char* const INVITED {"invited"};
 constexpr const char* const MIME_TYPE {"mimeType"};
 constexpr const char* const PARENT {"parent"};
+constexpr const char* const THRESHOLD {"threshold"};
 } // namespace CommitKey
 
 namespace CommitType {
@@ -56,6 +57,8 @@ constexpr const char* const INITIAL {"initial"};
 constexpr const char* const VOTE {"vote"};
 constexpr const char* const UPDATE_PROFILE {"application/update-profile"};
 constexpr const char* const MERGE {"merge"};
+// Changes a rule of the conversation that admins vote on, such as the approval threshold
+constexpr const char* const POLICY {"policy"};
 // Announces a collaborative document. The document's content does not live in
 // the conversation: it has its own repository, synchronized separately. This
 // commit only makes the document appear in the history and binds its id to this
@@ -79,6 +82,9 @@ constexpr const char* const JOIN {"join"};
 constexpr const char* const REMOVE {"remove"};
 constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
+constexpr const char* const PROMOTE {"promote"};
+constexpr const char* const DEMOTE {"demote"};
+constexpr const char* const APPROVAL {"approval"};
 } // namespace CommitAction
 
 // Values are persisted in initial commits; keep them stable.
@@ -120,6 +126,7 @@ struct CommitMessage
     std::string invited {};
     std::string mimeType {};
     std::string parent {};
+    std::string threshold {};
 
     // User messages are stored as commits of type "text/plain". The message text is in the "body"
     // field. For example:
@@ -191,6 +198,8 @@ struct CommitMessage
     // - "remove": the user left the conversation
     // - "ban": the user was banned from the conversation
     // - "unban": the user was unbanned from the conversation
+    // - "promote": the member became an admin
+    // - "demote": the admin became a member
     // For example:
     //
     //     {"action":"join","type":"member","uri":"f32701058c69f8ad6a095c6d14650294a4ba39a3"}
@@ -391,15 +400,46 @@ struct CommitMessage
         return msg;
     }
 
-    // Commits of type "vote" are created by admins when voting to ban or unban a user from a
-    // conversation. They have a "uri" field with the Jami ID of the user being voted on, e.g.:
+    // Commits of type "vote" are created by admins when voting on a user of a conversation. They
+    // have a "uri" field with the Jami ID of the user being voted on. A vote to ban or unban has
+    // no "action" field, e.g.:
     //
     //     {"type":"vote","uri":"f32701048c59f9ad6a095c6d14650294b4cf30a4"}
-    static CommitMessage vote(const std::string& userId)
+    //
+    // A vote to promote a member to admin or to demote an admin to member names its action:
+    //
+    //     {"action":"promote","type":"vote","uri":"f32701048c59f9ad6a095c6d14650294b4cf30a4"}
+    static CommitMessage vote(const std::string& userId, const std::string& action = "")
     {
         CommitMessage msg;
         msg.type = CommitType::VOTE;
         msg.uri = userId;
+        msg.action = action;
+        return msg;
+    }
+
+    // A vote to change the approval threshold, i.e. how many admins must agree on an admin
+    // action, carries the proposed threshold token ("percent/<P>"):
+    //
+    //     {"action":"approval","threshold":"percent/66","type":"vote"}
+    static CommitMessage approvalVote(const std::string& token)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::VOTE;
+        msg.action = CommitAction::APPROVAL;
+        msg.threshold = token;
+        return msg;
+    }
+
+    // Once enough admins voted for a threshold, a commit of type "policy" applies it:
+    //
+    //     {"action":"approval","threshold":"percent/66","type":"policy"}
+    static CommitMessage approvalChange(const std::string& token)
+    {
+        CommitMessage msg;
+        msg.type = CommitType::POLICY;
+        msg.action = CommitAction::APPROVAL;
+        msg.threshold = token;
         return msg;
     }
 
