@@ -3194,6 +3194,10 @@ SIPCall::startAllMedia()
         JAMI_WARNING("[call:{}] Crypto (SRTP) is negotiated over an insecure signaling transport", getCallId());
     }
 
+    bundleStopSource_.request_stop();
+    SocketPair::joinBundleDtls(activeBundleContext_);
+    bundleStopSource_ = std::stop_source {};
+
     // reset
     readyToRecord_ = false;
 
@@ -3252,8 +3256,10 @@ SIPCall::startAllMedia()
             bundleSocketContext = SocketPair::createBundleContext(std::move(bundleRtpSocket),
                                                                   std::move(bundleRtcpSocket),
                                                                   rtcpMuxEnabled_,
-                                                                  /*installReceiveCallbacks=*/!bundleDtls);
+                                                                  /*installReceiveCallbacks=*/!bundleDtls,
+                                                                  bundleStopSource_.get_token());
         }
+        activeBundleContext_ = bundleSocketContext;
         startRtpStreams(bundleSocketContext, iceRunning, remoteMediaList);
     }
 
@@ -3346,13 +3352,18 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                                    isVideo = rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO,
                                    iceRunning,
                                    rtpSession = rtpStream.rtpSession_,
+                                   stopToken = rtpStream.rtpSession_->prepareStart(),
                                    rtpSocketPair = std::move(rtpSocketPair)]() mutable {
             try {
+                if (stopToken.stop_requested())
+                    return;
                 if (iceRunning) {
-                    rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second));
+                    rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second), stopToken);
                 } else {
-                    rtpSession->start(nullptr, nullptr);
+                    rtpSession->start(nullptr, nullptr, stopToken);
                 }
+                if (stopToken.stop_requested())
+                    return;
                 if (isVideo) {
                     if (auto call = w.lock()) {
 #ifdef ENABLE_VIDEO
@@ -3372,7 +3383,9 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                     call->createCallAVStreams();
                 }
 #endif
-                runOnMainThread([w, rtpSession, idx] {
+                runOnMainThread([w, rtpSession, idx, stopToken] {
+                    if (stopToken.stop_requested())
+                        return;
                     if (auto call = w.lock()) {
                         std::string requestId;
                         {
@@ -3421,6 +3434,8 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DEBUG("[call:{}] Stopping all media", getCallId());
+    bundleStopSource_.request_stop();
+    SocketPair::joinBundleDtls(activeBundleContext_);
 
 #ifdef ENABLE_VIDEO
     {
@@ -3461,6 +3476,9 @@ SIPCall::stopAllMedia()
     // Wait for all streams to be stopped
     std::unique_lock lk(mtx);
     cv.wait(lk, [&] { return stoppedCount == totalStreams; });
+    for (const auto& rtpSession : getRtpSessionList())
+        rtpSession->clearBundleSocketContext();
+    activeBundleContext_.reset();
 
 #ifdef ENABLE_PLUGIN
     {

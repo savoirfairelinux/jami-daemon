@@ -654,6 +654,8 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
     bool bundleEnabled_ {false};
+    std::stop_source bundleStopSource_;
+    std::shared_ptr<SocketPair::BundleContext> activeBundleContext_;
     bool transportFallbackPending_ {false};
     bool legacySdesFallback_ {false};
 
