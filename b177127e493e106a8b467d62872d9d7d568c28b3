@@ -16,6 +16,24 @@
       "message": "[error] Line 33: 🔴 `--enable-dtls-srtp-support` is forced on unconditionally, which can make GnuTLS configure fail on toolchains where SRTP prerequisites are unavailable (consistent with the multi-platform CI failures on this patch). Gate this option behind a contrib dependency/platform check, or ensure the required SRTP dependency is provided for every supported target before forcing it.",
       "revId": "b177127e493e106a8b467d62872d9d7d568c28b3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ca9b493d_596150bd",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 21
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-11-12T16:43:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "078c6a10_8a9086d0",
+      "revId": "b177127e493e106a8b467d62872d9d7d568c28b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
