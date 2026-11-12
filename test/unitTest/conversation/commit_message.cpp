@@ -71,7 +71,7 @@ messagesEqual(const CommitMessage& a, const CommitMessage& b)
            && a.editedId == b.editedId && a.action == b.action && a.uri == b.uri && a.device == b.device
            && a.confId == b.confId && a.to == b.to && a.reason == b.reason && a.duration == b.duration && a.tid == b.tid
            && a.displayName == b.displayName && a.totalSize == b.totalSize && a.sha3sum == b.sha3sum && a.mode == b.mode
-           && a.invited == b.invited && a.mimeType == b.mimeType && a.parent == b.parent;
+           && a.invited == b.invited && a.mimeType == b.mimeType && a.parent == b.parent && a.threshold == b.threshold;
 }
 
 void
@@ -98,6 +98,7 @@ CommitMessageTest::testDefaultValues()
     CPPUNIT_ASSERT(msg.invited.empty());
     CPPUNIT_ASSERT(msg.mimeType.empty());
     CPPUNIT_ASSERT(msg.parent.empty());
+    CPPUNIT_ASSERT(msg.threshold.empty());
 }
 
 void
@@ -257,7 +258,14 @@ CommitMessageTest::testToStringFromStringRoundtrip()
 
         // CommitMessage::vote(userId)
         assertRoundtrip(CommitMessage::vote(randomHex(40)));
+
+        // CommitMessage::vote(userId, action)
+        assertRoundtrip(CommitMessage::vote(randomHex(40), CommitAction::PROMOTE));
+        assertRoundtrip(CommitMessage::vote(randomHex(40), CommitAction::DEMOTE));
     }
+
+    assertRoundtrip(CommitMessage::approvalVote("percent/66"));
+    assertRoundtrip(CommitMessage::approvalChange("percent/66"));
 
     assertRoundtrip(CommitMessage::initial(ConversationMode::ADMIN_INVITES_ONLY));
     assertRoundtrip(CommitMessage::initial(ConversationMode::INVITES_ONLY));
@@ -305,6 +313,12 @@ CommitMessageTest::testFromStringToStringRoundtrip()
         R"({"mimeType":"text/html","mode":4,"parent":"f32701048c59f9ad6a095c6d14650294b4cf30a4","type":"initial"})",
         R"({"type":"application/update-profile"})",
         R"({"type":"vote","uri":"f32701058c8888ad6a095c6d14650cd5b3ab40a3"})",
+        R"({"action":"promote","type":"vote","uri":"f32701058c8888ad6a095c6d14650cd5b3ab40a3"})",
+        R"({"action":"demote","type":"vote","uri":"f32701058c8888ad6a095c6d14650cd5b3ab40a3"})",
+        R"({"action":"approval","threshold":"percent/66","type":"vote"})",
+        R"({"action":"approval","threshold":"percent/66","type":"policy"})",
+        R"({"action":"promote","type":"member","uri":"0128010bf797ed519b72d2718283141598b139bc"})",
+        R"({"action":"demote","type":"member","uri":"0128010bf797ed519b72d2718283141598b139bc"})",
         R"({"body":"deprecated edit type","edit":"e59e317cdcd7d92a8033538a08110ec7833fc017","type":"application/edited-message"})",
         R"({"body":"","edit":"3927511d7d0f4bb93a1733ed16a4be91f807a073","type":"application/edited-message"})",
     };
@@ -636,6 +650,37 @@ CommitMessageTest::testExampleMessages()
         CPPUNIT_ASSERT(msg.has_value());
         CPPUNIT_ASSERT_EQUAL(std::string(CommitType::VOTE), msg->type);
         CPPUNIT_ASSERT_EQUAL(std::string("f32701048c59f9ad6a095c6d14650294b4cf30a4"), msg->uri);
+        // A ban or unban vote names no action, and serialises exactly as before role votes existed
+        CPPUNIT_ASSERT(msg->action.empty());
+        CPPUNIT_ASSERT(msg->threshold.empty());
+        CPPUNIT_ASSERT_EQUAL(std::string(R"({"type":"vote","uri":"f32701048c59f9ad6a095c6d14650294b4cf30a4"})"),
+                             CommitMessage::vote("f32701048c59f9ad6a095c6d14650294b4cf30a4").toString());
+    }
+
+    // --- Role vote ---
+    {
+        auto msg = CommitMessage::fromString(
+            R"({"action":"promote","type":"vote","uri":"f32701048c59f9ad6a095c6d14650294b4cf30a4"})");
+        CPPUNIT_ASSERT(msg.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::VOTE), msg->type);
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitAction::PROMOTE), msg->action);
+        CPPUNIT_ASSERT_EQUAL(std::string("f32701048c59f9ad6a095c6d14650294b4cf30a4"), msg->uri);
+    }
+
+    // --- Approval threshold vote and change ---
+    {
+        auto vote = CommitMessage::fromString(R"({"action":"approval","threshold":"percent/66","type":"vote"})");
+        CPPUNIT_ASSERT(vote.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::VOTE), vote->type);
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitAction::APPROVAL), vote->action);
+        CPPUNIT_ASSERT_EQUAL(std::string("percent/66"), vote->threshold);
+        CPPUNIT_ASSERT(vote->uri.empty());
+
+        auto change = CommitMessage::fromString(R"({"action":"approval","threshold":"percent/66","type":"policy"})");
+        CPPUNIT_ASSERT(change.has_value());
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitType::POLICY), change->type);
+        CPPUNIT_ASSERT_EQUAL(std::string(CommitAction::APPROVAL), change->action);
+        CPPUNIT_ASSERT_EQUAL(std::string("percent/66"), change->threshold);
     }
 
     // --- Update profile ---

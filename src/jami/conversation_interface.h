@@ -51,7 +51,16 @@ struct SwarmMessage
     }
 };
 
-enum class MemberEvent : int { INVALID = -1, ADD = 0, JOIN = 1, REMOVE = 2, BAN = 3, UNBAN = 4 };
+enum class MemberEvent : int {
+    INVALID = -1,
+    ADD = 0,
+    JOIN = 1,
+    REMOVE = 2,
+    BAN = 3,
+    UNBAN = 4,
+    PROMOTE = 5,
+    DEMOTE = 6
+};
 
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
@@ -495,10 +504,11 @@ struct LIBJAMI_PUBLIC ConversationSignal
     struct LIBJAMI_PUBLIC ConversationMemberEvent
     {
         constexpr static const char* name = "ConversationMemberEvent";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /* conversationId */,
-                             const std::string& /* memberUri */,
-                             int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned */);
+        using cb_type = void(
+            const std::string& /*accountId*/,
+            const std::string& /* conversationId */,
+            const std::string& /* memberUri */,
+            int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned, 4 = unbanned, 5 = promoted, 6 = demoted */);
     };
 
     struct LIBJAMI_PUBLIC ConversationSyncFinished
