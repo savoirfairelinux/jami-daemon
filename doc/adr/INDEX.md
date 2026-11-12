@@ -22,3 +22,4 @@ Open only the records relevant to your task. Authoring rules:
 | [ADR-011](ADR-011-sip-call-handover.md) | Keep Jami Calls Alive across Network Changes | Accepted | Retrospective | 2026-09 |
 | [ADR-012](ADR-012-explicit-swarm-permissions.md) | Make Swarm Permissions Explicit | Accepted | Contemporary | 2026-10 |
 | [ADR-013](ADR-013-retain-feed-invitations-after-leaving.md) | Retain Feed Invitations after Leaving | Accepted | Contemporary | 2026-11-11 |
+| [ADR-014](ADR-014-swarm-admin-roles-and-approval-threshold.md) | Swarm Admin Roles and a Configurable Approval Threshold | Proposed | Contemporary | 2026-11 |
