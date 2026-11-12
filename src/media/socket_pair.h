@@ -50,6 +50,7 @@ using socklen_t = int;
 #include <optional>
 #include <string>
 #include <string_view>
+#include <stop_token>
 
 namespace dht {
 namespace crypto {
@@ -150,22 +151,28 @@ public:
     static std::shared_ptr<BundleContext> createBundleContext(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
                                                               std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
                                                               bool rtcpMux = false,
-                                                              bool installReceiveCallbacks = true);
+                                                              bool installReceiveCallbacks = true,
+                                                              std::stop_token transportStop = {});
 
     // Runs (once) the DTLS-SRTP handshake on the shared bundle transport
     // (RFC 8843 + RFC 5764: a single DTLS association per transport) and then
     // installs the bundle receive callbacks. Concurrent callers block until
     // the first handshake completes and share its result. Throws on failure
-    // or when aborted.
+    // or when cancelled. Cancelling a caller only stops that caller's wait;
+    // the token supplied to createBundleContext cancels the shared handshake.
     static DtlsSrtpContext ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
                                                    DtlsSetup localSetup,
                                                    std::string_view remoteFingerprintType,
                                                    std::string_view remoteFingerprint,
                                                    const std::shared_ptr<dht::crypto::Certificate>& certificate,
                                                    const std::shared_ptr<dht::crypto::PrivateKey>& privateKey,
-                                                   const std::shared_ptr<std::atomic_bool>& abort);
+                                                   std::stop_token stopToken);
     static void setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
-                                     const DtlsSrtpContext& context);
+                                     const DtlsSrtpContext& context,
+                                     std::stop_token stopToken = {});
+    // After cancelling the transport, wait until negotiation releases its
+    // receive callback and reference before reusing the underlying ICE socket.
+    static void joinBundleDtls(const std::shared_ptr<BundleContext>& bundleContext);
 
     SocketPair(const dhtnet::IpAddr& rtpDestAddr,
                const dhtnet::IpAddr& rtcpDestAddr,

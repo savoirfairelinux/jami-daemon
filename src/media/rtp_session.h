@@ -27,11 +27,11 @@
 #include <functional>
 #include <string>
 #include <memory>
-#include <atomic>
 #include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 namespace dht {
 namespace crypto {
@@ -58,9 +58,48 @@ public:
     {}
     virtual ~RtpSession() {};
 
-    virtual void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) = 0;
+    virtual void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock,
+                       std::unique_ptr<dhtnet::IceSocket> rtcp_sock,
+                       std::stop_token stopToken = {}) = 0;
     virtual void restartSender() = 0;
-    virtual void stop() = 0;
+    // Cancel the previous attempt and capture before queuing start().
+    // During stop(), new attempts are returned already cancelled.
+    std::stop_token prepareStart()
+    {
+        std::stop_source next;
+        std::stop_source previous(std::nostopstate);
+        {
+            std::lock_guard lock(startMutex_);
+            if (stopsInProgress_) {
+                next.request_stop();
+                return next.get_token();
+            }
+            previous = std::exchange(startSource_, next);
+        }
+        previous.request_stop();
+        return next.get_token();
+    }
+
+    void stop()
+    {
+        std::stop_source source(std::nostopstate);
+        {
+            std::lock_guard lock(startMutex_);
+            ++stopsInProgress_;
+            source = startSource_;
+        }
+        struct FinishStop
+        {
+            RtpSession& session;
+            ~FinishStop()
+            {
+                std::lock_guard lock(session.startMutex_);
+                --session.stopsInProgress_;
+            }
+        } finish {*this};
+        source.request_stop();
+        stopSession();
+    }
     void setMediaSource(const std::string& resource) { input_ = resource; }
     const std::string& getInput() const { return input_; }
     MediaType getMediaType() const { return mediaType_; };
@@ -135,6 +174,8 @@ public:
     inline std::string streamId() const { return streamId_; }
 
 protected:
+    virtual void stopSession() = 0;
+
     void reportStartupFailure(std::string reason)
     {
         startupFailed_.store(true);
@@ -166,43 +207,43 @@ protected:
     std::shared_ptr<dht::crypto::Certificate> dtlsCertificate_ {};
     std::shared_ptr<dht::crypto::PrivateKey> dtlsPrivateKey_ {};
     std::optional<DtlsSrtpSession> dtlsSrtpSession_ {};
-    // Set by stop() (without taking mutex_) to abort an in-progress
-    // DTLS-SRTP handshake blocking start() so teardown stays responsive.
-    const std::shared_ptr<std::atomic_bool> dtlsAbort_ {std::make_shared<std::atomic_bool>(false)};
+    std::mutex startMutex_;
+    std::stop_source startSource_ {std::nostopstate};
+    unsigned stopsInProgress_ {0};
     std::shared_ptr<SocketPair::BundleContext> bundleSocketContext_ {};
     std::optional<unsigned> bundleRtpPayloadType_ {};
 
-    DtlsSrtpContext getDtlsSrtpContext(dhtnet::IceSocket* rtpSocket)
+    DtlsSrtpContext getDtlsSrtpContext(dhtnet::IceSocket* rtpSocket, std::stop_token stopToken)
     {
+        if (stopToken.stop_requested())
+            throw DtlsCancelled {};
         if (dtlsSrtpSession_
             && dtlsSrtpSession_->matches(receive_.dtls_setup,
                                          send_.dtls_fingerprint_type,
                                          send_.dtls_fingerprint)) {
             JAMI_DEBUG("Reusing DTLS-SRTP keys after ICE restart");
             if (bundleSocketContext_)
-                SocketPair::setBundleDtlsContext(bundleSocketContext_, dtlsSrtpSession_->context);
+                SocketPair::setBundleDtlsContext(bundleSocketContext_, dtlsSrtpSession_->context, stopToken);
             return dtlsSrtpSession_->context;
         }
 
         if (!bundleSocketContext_ && !rtpSocket)
             throw std::runtime_error("No ICE socket for DTLS-SRTP");
 
-        auto context
-            = bundleSocketContext_
-                  ? SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
-                                                       receive_.dtls_setup,
-                                                       send_.dtls_fingerprint_type,
-                                                       send_.dtls_fingerprint,
-                                                       dtlsCertificate_,
-                                                       dtlsPrivateKey_,
-                                                       dtlsAbort_)
-                  : negotiateDtlsSrtp(*rtpSocket,
-                                     receive_.dtls_setup,
-                                     send_.dtls_fingerprint_type,
-                                     send_.dtls_fingerprint,
-                                     dtlsCertificate_,
-                                     dtlsPrivateKey_,
-                                     dtlsAbort_);
+        auto context = bundleSocketContext_ ? SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
+                                                                                  receive_.dtls_setup,
+                                                                                  send_.dtls_fingerprint_type,
+                                                                                  send_.dtls_fingerprint,
+                                                                                  dtlsCertificate_,
+                                                                                  dtlsPrivateKey_,
+                                                                                  stopToken)
+                                            : negotiateDtlsSrtp(*rtpSocket,
+                                                                receive_.dtls_setup,
+                                                                send_.dtls_fingerprint_type,
+                                                                send_.dtls_fingerprint,
+                                                                dtlsCertificate_,
+                                                                dtlsPrivateKey_,
+                                                                stopToken);
         dtlsSrtpSession_ = {
             receive_.dtls_setup,
             send_.dtls_fingerprint_type,
