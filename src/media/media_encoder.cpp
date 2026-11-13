@@ -57,6 +57,8 @@ constexpr double LOGREG_PARAM_A_HEVC {96};
 constexpr double LOGREG_PARAM_B_HEVC {-5.};
 constexpr int64_t NVENC_CQ {23};
 constexpr double VIDEO_CONFERENCE_TARGET_BPP {0.06};
+constexpr double NON_DYN_BITRATE_HYSTERESIS {0.10};
+constexpr auto MIN_CODEC_REOPEN_INTERVAL {std::chrono::seconds(1)};
 constexpr int VIDEO_DIMENSION_ALIGNMENT {2};
 constexpr int VIDEO_MIN_WIDTH {160};
 constexpr int VIDEO_MIN_HEIGHT {90};
@@ -90,6 +92,27 @@ static int
 alignVideoDimension(int value)
 {
     return std::max(VIDEO_DIMENSION_ALIGNMENT, (value / VIDEO_DIMENSION_ALIGNMENT) * VIDEO_DIMENSION_ALIGNMENT);
+}
+
+static uint64_t
+clampVideoBitrate(uint64_t br)
+{
+    if (br == 0)
+        return 0;
+    return std::clamp<uint64_t>(br, SystemCodecInfo::DEFAULT_MIN_BITRATE, SystemCodecInfo::DEFAULT_MAX_BITRATE);
+}
+
+static bool
+shouldReopenForBitrate(uint64_t currentBr, uint64_t targetBr)
+{
+    if (targetBr == currentBr)
+        return false;
+    if (currentBr == 0)
+        return targetBr > 0;
+    if (targetBr == SystemCodecInfo::DEFAULT_MIN_BITRATE || targetBr == SystemCodecInfo::DEFAULT_MAX_BITRATE)
+        return true;
+    const auto diff = targetBr > currentBr ? (targetBr - currentBr) : (currentBr - targetBr);
+    return static_cast<double>(diff) >= static_cast<double>(currentBr) * NON_DYN_BITRATE_HYSTERESIS;
 }
 
 static int
@@ -151,7 +174,11 @@ MediaEncoder::setOptions(const MediaStream& opts)
         }
         sourceVideoWidth_ = videoOpts_.width;
         sourceVideoHeight_ = videoOpts_.height;
-        applyVideoBitrateTarget(videoOpts_.bitrate);
+        sizingBitrate_ = videoOpts_.bitrate;
+        appliedVideoBitrate_ = 0;
+        pendingCodecReopen_.store(false, std::memory_order_relaxed);
+        lastCodecReopen_ = std::chrono::steady_clock::time_point::min();
+        applyVideoBitrateTarget(sizingBitrate_);
     } else {
         audioOpts_ = opts;
     }
@@ -192,6 +219,13 @@ MediaEncoder::setInitSeqVal(uint16_t seqVal)
     // only set not default value (!=0)
     if (seqVal != 0)
         av_opt_set_int(outputCtx_, "seq", seqVal, AV_OPT_SEARCH_CHILDREN);
+}
+
+void
+MediaEncoder::setInitSsrc(uint32_t ssrc)
+{
+    if (ssrc != 0)
+        av_opt_set_int(outputCtx_, "ssrc", static_cast<int64_t>(ssrc), AV_OPT_SEARCH_CHILDREN);
 }
 
 uint16_t
@@ -307,6 +341,12 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         throw MediaEncoderException("Unable to allocate stream");
     }
 
+    const auto storeEncoderContext = [&](AVCodecContext* ctx) {
+        if (static_cast<size_t>(stream->index) >= encoders_.size())
+            encoders_.resize(static_cast<size_t>(stream->index) + 1, nullptr);
+        encoders_[stream->index] = ctx;
+    };
+
     currentStreamIdx_ = stream->index;
 #ifdef ENABLE_HWACCEL
     // Get compatible list of Hardware API
@@ -340,7 +380,11 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
                 continue;
             }
             accel_->setDetails(encoderCtx);
-            if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
+            AVDictionary* openOpts = nullptr;
+            av_dict_copy(&openOpts, options_, 0);
+            const auto openRet = avcodec_open2(encoderCtx, outputCodec_, &openOpts);
+            av_dict_free(&openOpts);
+            if (openRet < 0) {
                 // Failed to open codec
                 JAMI_WARNING("Fail to open hardware encoder {} with {} ",
                              avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
@@ -354,7 +398,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
                 JAMI_WARNING("Using hardware encoding for {} with {} ",
                              avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)),
                              it.getName());
-                encoders_.emplace_back(encoderCtx);
+                storeEncoderContext(encoderCtx);
                 break;
             }
         }
@@ -366,10 +410,19 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
                      avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
         encoderCtx = initCodec(mediaType, systemCodecInfo, videoOpts_.bitrate);
         readConfig(encoderCtx);
-        encoders_.emplace_back(encoderCtx);
-        if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
+        AVDictionary* openOpts = nullptr;
+        av_dict_copy(&openOpts, options_, 0);
+        const auto openRet = avcodec_open2(encoderCtx, outputCodec_, &openOpts);
+        av_dict_free(&openOpts);
+        if (openRet < 0) {
+            avcodec_free_context(&encoderCtx);
             throw MediaEncoderException("Unable to open encoder");
+        }
+        storeEncoderContext(encoderCtx);
     }
+
+    if (mediaType == AVMEDIA_TYPE_VIDEO)
+        appliedVideoBitrate_ = clampVideoBitrate(videoOpts_.bitrate);
 
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
 
@@ -464,13 +517,15 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     if (sourceVideoWidth_ != width || sourceVideoHeight_ != height) {
         sourceVideoWidth_ = width;
         sourceVideoHeight_ = height;
-        applyVideoBitrateTarget(videoOpts_.bitrate);
+        applyVideoBitrateTarget(sizingBitrate_ ? sizingBitrate_ : videoOpts_.bitrate);
         is_keyframe = true;
     }
 
     if (!initialized_) {
         initVideoStream(input->pointer()->hw_frames_ctx);
         startIO();
+    } else if (maybeReopenVideoCodec(input->pointer()->hw_frames_ctx)) {
+        is_keyframe = true;
     }
 
     std::shared_ptr<VideoFrame> output;
@@ -489,6 +544,9 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     }
     auto* avframe = output->pointer();
 
+    if (currentStreamIdx_ < 0 || static_cast<size_t>(currentStreamIdx_) >= encoders_.size()
+        || !encoders_[currentStreamIdx_])
+        return -1;
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     avframe->pts = frame_number;
     if (enc->framerate.num != enc->time_base.den || enc->framerate.den != enc->time_base.num)
@@ -538,6 +596,11 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         } else {
             return 0;
         }
+    } else if (initialized_ && frame && frame->width > 0 && frame->height > 0) {
+        if (maybeReopenVideoCodec(frame->hw_frames_ctx)) {
+            frame->pict_type = AV_PICTURE_TYPE_I;
+            frame->flags |= AV_FRAME_FLAG_KEY;
+        }
     }
     int ret = 0;
     if (static_cast<size_t>(streamIdx) >= encoders_.size())
@@ -557,20 +620,20 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
 
     while (ret >= 0) {
         ret = avcodec_receive_packet(encoderCtx, &pkt);
-        if (ret == AVERROR(EAGAIN))
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
-        if (ret < 0 && ret != AVERROR_EOF) { // we still want to write our frame on EOF
+        if (ret < 0) {
             JAMI_ERROR("Failed to encode frame: {}", libav_utils::getError(ret));
             return ret;
         }
 
-        if (pkt.size) {
-            if (send(pkt, streamIdx))
-                break;
+        if (pkt.size && !send(pkt, streamIdx)) {
+            av_packet_unref(&pkt);
+            break;
         }
+        av_packet_unref(&pkt);
     }
 
-    av_packet_unref(&pkt);
     return 0;
 }
 
@@ -804,8 +867,10 @@ MediaEncoder::enableAccel(bool enableAccel)
     emitSignal<libjami::ConfigurationSignal::HardwareEncodingChanged>(enableAccel_);
     if (!enableAccel_) {
         accel_.reset();
-        for (auto* enc : encoders_)
-            enc->opaque = nullptr;
+        for (auto* enc : encoders_) {
+            if (enc)
+                enc->opaque = nullptr;
+        }
     }
 }
 #endif
@@ -826,6 +891,8 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     if (getStreamCount() <= 0 || streamIdx < 0 || encoders_.size() < (unsigned) (streamIdx + 1))
         return {};
     auto* enc = encoders_[streamIdx];
+    if (!enc)
+        return {};
     // TODO set firstTimestamp
     auto ms = MediaStream(name, enc);
 #ifdef ENABLE_HWACCEL
@@ -935,28 +1002,22 @@ int
 MediaEncoder::setBitrate(uint64_t br)
 {
     std::lock_guard lk(encMutex_);
-    AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
-    if (not encoderCtx) {
-        if (videoOpts_.isValid()) {
-            videoOpts_.bitrate = br;
-            applyVideoBitrateTarget(br);
-        }
-        return videoOpts_.isValid() ? 1 : -1;
-    }
-
-    AVCodecID codecId = encoderCtx->codec_id;
-
-    if (not isDynBitrateSupported(codecId))
-        return 0; // Restart needed
-
     if (videoOpts_.isValid())
         videoOpts_.bitrate = br;
 
+    AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
     if (not encoderCtx)
-        return 1;
+        return videoOpts_.isValid() ? 1 : -1;
+
+    AVCodecID codecId = encoderCtx->codec_id;
 
     // Keep active RTP dimensions stable when congestion feedback changes the bitrate;
-    // resetting the encoder here can leave remote decoders with stale codec parameters.
+    // resetting the RTP stream here can leave remote decoders with stale codec parameters.
+    if (not isDynBitrateSupported(codecId)) {
+        pendingCodecReopen_.store(true, std::memory_order_release);
+        return 1;
+    }
+
     // No need to restart encoder for h264, h263 and MPEG4
     // Change parameters on the fly
     if (codecId == AV_CODEC_ID_H264)
@@ -1190,7 +1251,7 @@ AVCodecContext*
 MediaEncoder::getCurrentVideoAVCtx()
 {
     for (auto* it : encoders_) {
-        if (it->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (it && it->codec_type == AVMEDIA_TYPE_VIDEO)
             return it;
     }
     return nullptr;
@@ -1200,7 +1261,7 @@ AVCodecContext*
 MediaEncoder::getCurrentAudioAVCtx()
 {
     for (auto* it : encoders_) {
-        if (it->codec_type == AVMEDIA_TYPE_AUDIO)
+        if (it && it->codec_type == AVMEDIA_TYPE_AUDIO)
             return it;
     }
     return nullptr;
@@ -1211,7 +1272,7 @@ MediaEncoder::stopEncoder()
 {
     flush();
     for (auto it = encoders_.begin(); it != encoders_.end(); it++) {
-        if ((*it)->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (*it && (*it)->codec_type == AVMEDIA_TYPE_VIDEO) {
             auto* encoderCtx = *it;
             encoders_.erase(it);
             avcodec_free_context(&encoderCtx);
@@ -1220,8 +1281,94 @@ MediaEncoder::stopEncoder()
     }
 }
 
+void
+MediaEncoder::drainVideoEncoder(int streamIdx)
+{
+    if (streamIdx < 0 || static_cast<size_t>(streamIdx) >= encoders_.size())
+        return;
+    AVCodecContext* encoderCtx = encoders_[streamIdx];
+    if (!encoderCtx)
+        return;
+
+    if (avcodec_send_frame(encoderCtx, nullptr) < 0)
+        return;
+
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.data = nullptr;
+    pkt.size = 0;
+    while (avcodec_receive_packet(encoderCtx, &pkt) == 0) {
+        if (pkt.size)
+            send(pkt, streamIdx);
+        av_packet_unref(&pkt);
+    }
+}
+
 bool
-MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
+MediaEncoder::maybeReopenVideoCodec(AVBufferRef* framesCtx)
+{
+    if (!pendingCodecReopen_.load(std::memory_order_acquire))
+        return false;
+
+    int videoStreamIdx = -1;
+    const auto now = std::chrono::steady_clock::now();
+    {
+        std::lock_guard lk(encMutex_);
+        if (!pendingCodecReopen_.load(std::memory_order_relaxed))
+            return false;
+        if (!initialized_ || !outputCtx_ || !videoOpts_.isValid() || !videoCodecInfo_) {
+            pendingCodecReopen_.store(false, std::memory_order_relaxed);
+            return false;
+        }
+
+        const auto targetBr = clampVideoBitrate(videoOpts_.bitrate);
+        if (!shouldReopenForBitrate(appliedVideoBitrate_, targetBr)) {
+            pendingCodecReopen_.store(false, std::memory_order_relaxed);
+            return false;
+        }
+
+        if (lastCodecReopen_ != std::chrono::steady_clock::time_point::min()
+            && now - lastCodecReopen_ < MIN_CODEC_REOPEN_INTERVAL) {
+            return false;
+        }
+
+        for (unsigned i = 0; i < outputCtx_->nb_streams; ++i) {
+            if (outputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+                videoStreamIdx = static_cast<int>(i);
+                break;
+            }
+        }
+        if (videoStreamIdx < 0 || static_cast<size_t>(videoStreamIdx) >= encoders_.size()
+            || !encoders_[videoStreamIdx]) {
+            pendingCodecReopen_.store(false, std::memory_order_relaxed);
+            return false;
+        }
+        pendingCodecReopen_.store(false, std::memory_order_relaxed);
+    }
+
+    drainVideoEncoder(videoStreamIdx);
+
+    {
+        std::lock_guard lk(encMutex_);
+        if (static_cast<size_t>(videoStreamIdx) < encoders_.size() && encoders_[videoStreamIdx])
+            avcodec_free_context(&encoders_[videoStreamIdx]);
+#ifdef ENABLE_HWACCEL
+        accel_.reset();
+#endif
+        lastCodecReopen_ = std::chrono::steady_clock::now();
+    }
+
+    try {
+        initVideoStream(framesCtx);
+        return true;
+    } catch (const MediaEncoderException& e) {
+        JAMI_ERROR("Failed to reopen video encoder for bitrate update: {}", e.what());
+        return false;
+    }
+}
+
+bool
+MediaEncoder::isDynBitrateSupported([[maybe_unused]] AVCodecID codecid)
 {
 #ifdef ENABLE_HWACCEL
     if (accel_) {
@@ -1521,6 +1668,9 @@ MediaEncoder::resetStreams(int width, int height)
     try {
         flush();
         initialized_ = false;
+        appliedVideoBitrate_ = 0;
+        pendingCodecReopen_.store(false, std::memory_order_relaxed);
+        lastCodecReopen_ = std::chrono::steady_clock::time_point::min();
         if (outputCtx_) {
             for (auto* encoderCtx : encoders_) {
                 if (encoderCtx) {
