@@ -2605,7 +2605,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
-    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
+    peerSupportMultiStream_ = meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
     if (not peerSupportMultiStream_) {
         JAMI_DEBUG("Peer's version [{}] does not support multi-stream. "
                    "Min required version: [{}]",
@@ -2614,7 +2614,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 13.11.0 to enable multi-audio-stream.
-    peerSupportMultiAudioStream_ = Account::meetMinimumRequiredVersion(peerVersion, MULTIAUDIO_REQUIRED_VERSION);
+    peerSupportMultiAudioStream_ = meetMinimumRequiredVersion(peerVersion, MULTIAUDIO_REQUIRED_VERSION);
     if (not peerSupportMultiAudioStream_) {
         JAMI_DEBUG("Peer's version [{}] does not support multi-audio-stream. "
                    "Min required version: [{}]",
@@ -2623,7 +2623,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 13.3.0 to enable multi-ICE.
-    peerSupportMultiIce_ = Account::meetMinimumRequiredVersion(peerVersion, MULTIICE_REQUIRED_VERSION);
+    peerSupportMultiIce_ = meetMinimumRequiredVersion(peerVersion, MULTIICE_REQUIRED_VERSION);
     if (not peerSupportMultiIce_) {
         JAMI_DEBUG("Peer's version [{}] does not support more than 2 ICE media streams. "
                    "Min required version: [{}]",
@@ -2632,8 +2632,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version supports re-invite without ICE renegotiation.
-    peerSupportReuseIceInReinv_ = Account::meetMinimumRequiredVersion(peerVersion,
-                                                                      REUSE_ICE_IN_REINVITE_REQUIRED_VERSION);
+    peerSupportReuseIceInReinv_ = meetMinimumRequiredVersion(peerVersion, REUSE_ICE_IN_REINVITE_REQUIRED_VERSION);
     if (not peerSupportReuseIceInReinv_) {
         JAMI_LOG("Peer's version [{:s}] does not support re-invite without ICE renegotiation. "
                  "Min required version: [{:s}]",

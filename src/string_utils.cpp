@@ -157,6 +157,18 @@ split_string_to_unsigned(std::string_view str, char delim)
     return output;
 }
 
+bool
+meetMinimumRequiredVersion(const std::vector<unsigned>& version, const std::vector<unsigned>& minRequiredVersion)
+{
+    for (size_t i = 0; i < minRequiredVersion.size(); i++) {
+        if (i == version.size() or version[i] < minRequiredVersion[i])
+            return false;
+        if (version[i] > minRequiredVersion[i])
+            return true;
+    }
+    return true;
+}
+
 void
 string_replace(std::string& str, const std::string& from, const std::string& to)
 {

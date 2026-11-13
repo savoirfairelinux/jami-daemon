@@ -373,12 +373,6 @@ public:
     // Enable/disable generation of empty offers
     bool isEmptyOffersEnabled() const { return false; }
 
-    // Check if a Daemon version (typically peer's version) satisfies the
-    // minimum required version. This check is typically used to disable a
-    // feature if it's not backward compatible with the peer's version.
-    static bool meetMinimumRequiredVersion(const std::vector<unsigned>& jamiVersion,
-                                           const std::vector<unsigned>& minRequiredVersion);
-
     // Enable/disable compliancy with RFC-5245 for component IDs format.
     // The ICE component IDs are enumerated relative to the SDP session,
     // i.e., starts from 1 and incremented for each component.

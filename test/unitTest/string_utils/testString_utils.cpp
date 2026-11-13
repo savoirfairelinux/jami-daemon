@@ -20,7 +20,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string_utils.h"
-#include "account.h"
 
 #include <string>
 #include <string_view>
@@ -110,20 +109,20 @@ StringUtilsTest::split_string_test()
 void
 StringUtilsTest::version_test()
 {
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({}, {}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3}, {}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3, 4}, {1, 2, 3}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({2}, {1, 2, 3}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.5", '.'),
-                                                       split_string_to_unsigned("1.2.3.4", '.')));
+    CPPUNIT_ASSERT(meetMinimumRequiredVersion({}, {}));
+    CPPUNIT_ASSERT(meetMinimumRequiredVersion({1, 2, 3}, {}));
+    CPPUNIT_ASSERT(meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3}));
+    CPPUNIT_ASSERT(meetMinimumRequiredVersion({1, 2, 3, 4}, {1, 2, 3}));
+    CPPUNIT_ASSERT(meetMinimumRequiredVersion({2}, {1, 2, 3}));
+    CPPUNIT_ASSERT(
+        meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.5", '.'), split_string_to_unsigned("1.2.3.4", '.')));
 
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({}, {1, 2, 3}));
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 2}, {1, 2, 3}));
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3, 4}));
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {2}));
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.4", '.'),
-                                                        split_string_to_unsigned("1.2.3.5", '.')));
+    CPPUNIT_ASSERT(!meetMinimumRequiredVersion({}, {1, 2, 3}));
+    CPPUNIT_ASSERT(!meetMinimumRequiredVersion({1, 2, 2}, {1, 2, 3}));
+    CPPUNIT_ASSERT(!meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3, 4}));
+    CPPUNIT_ASSERT(!meetMinimumRequiredVersion({1, 2, 3}, {2}));
+    CPPUNIT_ASSERT(!meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.4", '.'),
+                                               split_string_to_unsigned("1.2.3.5", '.')));
 }
 
 void

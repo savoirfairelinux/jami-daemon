@@ -443,19 +443,6 @@ Account::removeDefaultModerator(const std::string& uri)
 }
 
 bool
-Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
-                                    const std::vector<unsigned>& minRequiredVersion)
-{
-    for (size_t i = 0; i < minRequiredVersion.size(); i++) {
-        if (i == version.size() or version[i] < minRequiredVersion[i])
-            return false;
-        if (version[i] > minRequiredVersion[i])
-            return true;
-    }
-    return true;
-}
-
-bool
 Account::setPushNotificationConfig(const std::map<std::string, std::string>& data)
 {
     std::lock_guard lock(configurationMutex_);

@@ -215,6 +215,11 @@ split_string(std::string_view str, std::string_view delims = " ")
 
 std::vector<unsigned> split_string_to_unsigned(std::string_view s, char sep);
 
+// Check if a Daemon version (typically peer's version) satisfies the
+// minimum required version. This check is typically used to disable a
+// feature if it's not backward compatible with the peer's version.
+bool meetMinimumRequiredVersion(const std::vector<unsigned>& version, const std::vector<unsigned>& minRequiredVersion);
+
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 
 std::string_view string_remove_suffix(std::string_view str, char separator);
