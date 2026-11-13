@@ -144,7 +144,7 @@ public:
 
     static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
     int initAPI(bool linkable, AVBufferRef* framesCtx);
-    bool dynBitrate() { return dynBitrate_; }
+    bool dynBitrate() const { return dynBitrate_; }
 
 private:
     bool initDevice(const std::string& device);
