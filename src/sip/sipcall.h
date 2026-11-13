@@ -511,7 +511,10 @@ private:
     void startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundleSocketContext,
                          bool iceRunning,
                          const std::vector<MediaAttribute>& remoteMediaList);
-    void stopAllMedia();
+    // Capture/cancel under callMutex_, stop on the I/O pool, then complete on
+    // the main thread without the lock. A later stop invalidates older restarts.
+    // Ending a call also detaches conference audio and prevents later starts.
+    void stopAllMedia(std::function<void()> onStopped = {}, bool endCall = false);
 
     /**
      * Transfer method used for both type of transfer
@@ -659,6 +662,10 @@ private:
     bool bundleEnabled_ {false};
     std::stop_source bundleStopSource_;
     std::shared_ptr<SocketPair::BundleContext> activeBundleContext_;
+    bool mediaStopping_ {false};
+    bool mediaEnding_ {false};
+    std::function<void()> pendingMediaRestart_;
+    std::vector<std::function<void()>> mediaStoppedCallbacks_;
     bool transportFallbackPending_ {false};
     bool legacySdesFallback_ {false};
 
@@ -706,8 +713,6 @@ private:
     OnReadyCb resumeCb_ {};
 
     std::atomic_bool waitForIceInit_ {false};
-
-    void detachAudioFromConference();
 
     std::mutex mediaStateMutex_;
 #ifdef ENABLE_VIDEO
