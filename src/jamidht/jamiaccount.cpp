@@ -1233,28 +1233,19 @@ JamiAccount::scheduleAccountReady() const
 AccountManager::OnChangeCallback
 JamiAccount::setupAccountCallbacks()
 {
-    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
-                                                 onContactAdded(uri, confirmed);
-                                             },
-                                             [this](const std::string& uri, bool banned) {
-                                                 onContactRemoved(uri, banned);
-                                             },
-                                             [this](const std::string& uri,
-                                                    const std::string& conversationId,
-                                                    const std::vector<uint8_t>& payload,
-                                                    TimePoint received,
-                                                    TimePoint invited) {
-                                                 onIncomingTrustRequest(uri, conversationId, payload, received, invited);
-                                             },
-                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
-                                                 onKnownDevicesChanged(devices);
-                                             },
-                                             [this](const std::string& conversationId, const std::string& deviceId) {
-                                                 onConversationRequestAccepted(conversationId, deviceId);
-                                             },
-                                             [this](const std::string& uri, const std::string& convFromReq) {
-                                                 onContactConfirmed(uri, convFromReq);
-                                             }};
+    return AccountManager::OnChangeCallback {
+        [this](const std::string& uri, bool confirmed) { onContactAdded(uri, confirmed); },
+        [this](const std::string& uri, bool banned) { onContactRemoved(uri, banned); },
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               TimePoint received,
+               TimePoint invited) { onIncomingTrustRequest(uri, conversationId, payload, received, invited); },
+        [this](const std::map<DeviceId, KnownDevice>& devices) { onKnownDevicesChanged(devices); },
+        [this](const std::string& conversationId, const std::string& deviceId) {
+            onConversationRequestAccepted(conversationId, deviceId);
+        },
+        [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); }};
 }
 
 void
@@ -3058,8 +3049,8 @@ JamiAccount::requestCallRecovery(const std::shared_ptr<SIPCall>& call, bool newN
     };
     requestRecoverySIPConnection(deviceId,
                                  call->hasVideo() ? "videoCall" : "audioCall",
-                                 [w = weak(), wcall = std::weak_ptr(call), peerId, deviceId, attempt = *attempt,
-                                  retry](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+                                 [w = weak(), wcall = std::weak_ptr(call), peerId, deviceId, attempt = *attempt, retry](
+                                     const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
                                      if (not socket) {
                                          retry();
                                          return;
