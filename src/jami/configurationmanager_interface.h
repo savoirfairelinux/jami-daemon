@@ -64,6 +64,25 @@ LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, std::map<st
  * Successful no-ops return true without emitting AccountMetadataChanged.
  */
 LIBJAMI_PUBLIC bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates);
+
+/** Account-private registers attached to an existing contact (including removed/banned contacts).
+ * Synchronized only with this account's devices, never shared with the contact.
+ * Metadata survives removal and re-addition. Full device syncs and account archives include it.
+ * Returns false for unavailable accounts, invalid IDs or unknown contacts; output is unchanged.
+ */
+LIBJAMI_PUBLIC bool getContactMetadata(const std::string& accountId,
+                                       const std::string& uri,
+                                       std::map<std::string, std::string>& metadata);
+
+/** PATCH contact registers with the same stamps, limits and merge rules as setAccountMetadata.
+ * Saved before success; power-loss durability is not guaranteed.
+ * Uses existing sync connections without waking disconnected devices.
+ * Returns false for unknown contacts, invalid input or persistence failure.
+ * No-ops do not emit ContactMetadataChanged; effective changes emit the full contact snapshot.
+ */
+LIBJAMI_PUBLIC bool setContactMetadata(const std::string& accountId,
+                                       const std::string& uri,
+                                       const std::map<std::string, std::string>& updates);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
@@ -405,6 +424,13 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "AccountMetadataChanged";
         using cb_type = void(const std::string& /*account_id*/,
+                             const std::map<std::string, std::string>& /*full_snapshot*/);
+    };
+    struct LIBJAMI_PUBLIC ContactMetadataChanged
+    {
+        constexpr static const char* name = "ContactMetadataChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*uri*/,
                              const std::map<std::string, std::string>& /*full_snapshot*/);
     };
     struct LIBJAMI_PUBLIC StunStatusFailed
