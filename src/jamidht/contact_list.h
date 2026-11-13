@@ -52,6 +52,7 @@ public:
         OnDevicesChanged devicesChanged;
         OnAcceptConversation acceptConversation;
         OnConfirmation onConfirmation;
+        std::function<void(const dht::InfoHash&, const Metadata&)> metadataChanged;
     };
 
     ContactList(const std::string& accountId,
@@ -73,6 +74,10 @@ public:
     bool removeContactConversation(const dht::InfoHash&);
     bool addContact(const dht::InfoHash&, bool confirmed = false, const std::string& conversationId = "");
     bool updateConversation(const dht::InfoHash& h, const std::string& conversationId);
+    std::optional<Metadata::Change> setContactMetadata(const dht::InfoHash& h,
+                                                       const std::string& writer,
+                                                       const Metadata::Values& updates);
+    std::optional<Metadata::Change> mergeContactMetadata(const dht::InfoHash& h, const Metadata& remote);
 
     bool setCertificateStatus(const std::string& cert_id, const dhtnet::tls::TrustStore::PermissionStatus status);
 
@@ -145,6 +150,7 @@ private:
     const std::string accountId_;
     const std::filesystem::path path_;
     mutable std::mutex mutex_;
+    std::recursive_mutex metadataChangeMutex_;
     std::map<dht::InfoHash, Contact> contacts_;
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
     std::map<dht::InfoHash, KnownDevice> knownDevicesLegacy_;
@@ -161,6 +167,9 @@ private:
     OnChangeCallback callbacks_;
 
     void loadContacts();
+    bool commitMetadata(const dht::InfoHash& h, Metadata&& next, const Metadata::Change& change);
+    void notifyMetadataChanged(const dht::InfoHash& h, const Metadata& metadata, const Metadata::Change& change);
+    bool saveContactMetadata() const;
     void loadTrustRequests();
 
     void loadKnownDevices();

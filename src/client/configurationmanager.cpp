@@ -108,6 +108,28 @@ setAccountMetadata(const std::string& accountId, const std::map<std::string, std
     return false;
 }
 
+bool
+getContactMetadata(const std::string& accountId, const std::string& uri, std::map<std::string, std::string>& metadata)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
+        if (auto manager = acc->accountManager())
+            return manager->getContactMetadata(uri, metadata);
+    JAMI_WARNING("[Account {}] Cannot read contact metadata for an unavailable account", accountId);
+    return false;
+}
+
+bool
+setContactMetadata(const std::string& accountId,
+                   const std::string& uri,
+                   const std::map<std::string, std::string>& updates)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
+        if (auto manager = acc->accountManager())
+            return manager->setContactMetadata(uri, updates);
+    JAMI_WARNING("[Account {}] Cannot update contact metadata for an unavailable account", accountId);
+    return false;
+}
+
 std::map<std::string, std::string>
 validateCertificate(const std::string& accountId, const std::string& certificate)
 {

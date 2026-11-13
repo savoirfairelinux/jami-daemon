@@ -19,6 +19,8 @@
 #include "string_utils.h"
 #include "timestamp.h"
 #include "metadata.h"
+#include "base64.h"
+#include "logger.h"
 
 #include <opendht/infohash.h>
 #include <opendht/value.h>
@@ -41,6 +43,7 @@ static constexpr const char* REMOVED {"removed"};
 static constexpr const char* CONFIRMED {"confirmed"};
 static constexpr const char* BANNED {"banned"};
 static constexpr const char* CONVERSATIONID {"conversationId"};
+static constexpr const char* METADATA {"metadata"};
 static constexpr const char* DEVICE {"device"};
 static constexpr const char* RECEIVED {"received"};
 static constexpr const char* PAYLOAD {"payload"};
@@ -72,6 +75,8 @@ struct Contact
     /** Non empty if a swarm is linked */
     std::string conversationId {};
 
+    Metadata metadata;
+
     /** True if the contact is an active contact (not banned nor removed) */
     bool isActive() const { return added > removed; }
     bool isBanned() const { return not isActive() and banned; }
@@ -92,6 +97,11 @@ struct Contact
         confirmed = json[ContactMapKeys::CONFIRMED].asBool();
         banned = json[ContactMapKeys::BANNED].asBool();
         conversationId = json[ContactMapKeys::CONVERSATIONID].asString();
+        if (json.isMember(ContactMapKeys::METADATA)) {
+            auto packed = base64::decode(json[ContactMapKeys::METADATA].asString());
+            if (auto decoded = Metadata::decode({reinterpret_cast<const char*>(packed.data()), packed.size()}))
+                metadata = std::move(*decoded);
+        }
     }
 
     /**
@@ -101,6 +111,8 @@ struct Contact
     bool update(const Contact& c)
     {
         const auto copy = *this;
+        if (!metadata.merge(c.metadata))
+            JAMI_WARNING("Cannot merge contact metadata; retaining local registers");
         auto isMoreRecent = std::max(c.added, c.removed) > std::max(added, removed);
         if (isMoreRecent) {
             added = c.added;
@@ -133,6 +145,11 @@ struct Contact
         if (banned)
             json[ContactMapKeys::BANNED] = banned;
         json[ContactMapKeys::CONVERSATIONID] = conversationId;
+        if (!metadata.entries.empty()) {
+            msgpack::sbuffer packed;
+            msgpack::pack(packed, metadata);
+            json[ContactMapKeys::METADATA] = base64::encode({packed.data(), packed.size()});
+        }
         return json;
     }
 
@@ -174,7 +191,9 @@ struct Contact
                                        ContactMapKeys::ADDED_MS,
                                        addedMs,
                                        ContactMapKeys::REMOVED_MS,
-                                       removedMs)
+                                       removedMs,
+                                       ContactMapKeys::METADATA,
+                                       metadata)
             .msgpack_pack(pk);
     }
 
@@ -203,6 +222,12 @@ struct Contact
                 kv.val.convert(banned);
             else if (key == ContactMapKeys::CONVERSATIONID)
                 kv.val.convert(conversationId);
+            else if (key == ContactMapKeys::METADATA) {
+                msgpack::sbuffer packed;
+                msgpack::pack(packed, kv.val);
+                if (auto decoded = Metadata::decode({packed.data(), packed.size()}))
+                    metadata = std::move(*decoded);
+            }
         }
         added = addedMs ? timePointFromMilliseconds(*addedMs) : timePointFromSeconds(addedSec);
         removed = removedMs ? timePointFromMilliseconds(*removedMs) : timePointFromSeconds(removedSec);
@@ -228,7 +253,9 @@ struct Contact
                                        ContactMapKeys::ADDED_MS,
                                        addedMs,
                                        ContactMapKeys::REMOVED_MS,
-                                       removedMs)
+                                       removedMs,
+                                       ContactMapKeys::METADATA,
+                                       metadata)
             .msgpack_object(o, z);
     }
 };
@@ -343,7 +370,9 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     Metadata metadata;
-    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata)
+    // Incremental registers only; full syncs carry metadata in peers.
+    std::map<dht::InfoHash, Metadata> contact_metadata;
+    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata, contact_metadata)
 };
 
 struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>

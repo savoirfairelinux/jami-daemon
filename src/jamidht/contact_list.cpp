@@ -185,12 +185,77 @@ ContactList::getContactDetails(const dht::InfoHash& h) const
 std::optional<Contact>
 ContactList::getContactInfo(const dht::InfoHash& h) const
 {
+    std::lock_guard lk(mutex_);
     const auto c = contacts_.find(h);
     if (c == std::end(contacts_)) {
         JAMI_WARNING("[Account {}] [Contacts] Contact '{}' not found", accountId_, h.to_view());
         return {};
     }
     return c->second;
+}
+
+std::optional<Metadata::Change>
+ContactList::setContactMetadata(const dht::InfoHash& h, const std::string& writer, const Metadata::Values& updates)
+{
+    std::lock_guard changeLock(metadataChangeMutex_);
+    std::unique_lock lk(mutex_);
+    const auto c = contacts_.find(h);
+    if (c == contacts_.end()) {
+        JAMI_WARNING("[Account {}] Cannot update metadata for unknown contact {}", accountId_, h);
+        return std::nullopt;
+    }
+    auto next = c->second.metadata;
+    auto change = next.update(writer, updates);
+    if (!change || !commitMetadata(h, std::move(next), *change))
+        return std::nullopt;
+    auto metadata = c->second.metadata;
+    lk.unlock();
+    notifyMetadataChanged(h, metadata, *change);
+    return change;
+}
+
+std::optional<Metadata::Change>
+ContactList::mergeContactMetadata(const dht::InfoHash& h, const Metadata& remote)
+{
+    std::lock_guard changeLock(metadataChangeMutex_);
+    std::unique_lock lk(mutex_);
+    const auto c = contacts_.find(h);
+    if (c == contacts_.end()) {
+        JAMI_WARNING("[Account {}] Cannot merge metadata for unknown contact {}", accountId_, h);
+        return std::nullopt;
+    }
+    auto next = c->second.metadata;
+    auto change = next.merge(remote);
+    if (!change || !commitMetadata(h, std::move(next), *change))
+        return std::nullopt;
+    auto metadata = c->second.metadata;
+    lk.unlock();
+    notifyMetadataChanged(h, metadata, *change);
+    return change;
+}
+
+bool
+ContactList::commitMetadata(const dht::InfoHash& h, Metadata&& next, const Metadata::Change& change)
+{
+    if (!change.changed)
+        return true;
+    auto& metadata = contacts_.at(h).metadata;
+    auto previous = std::move(metadata);
+    metadata = std::move(next);
+    if (!saveContactMetadata()) {
+        metadata = std::move(previous);
+        return false;
+    }
+    return true;
+}
+
+void
+ContactList::notifyMetadataChanged(const dht::InfoHash& h, const Metadata& metadata, const Metadata::Change& change)
+{
+    if (change.changed && callbacks_.metadataChanged)
+        callbacks_.metadataChanged(h, metadata);
+    if (change.snapshot)
+        emitSignal<libjami::ConfigurationSignal::ContactMetadataChanged>(accountId_, h.toString(), *change.snapshot);
 }
 
 std::map<dht::InfoHash, Contact>
@@ -218,35 +283,55 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
 void
 ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool emit)
 {
+    std::lock_guard changeLock(metadataChangeMutex_);
     if (not id) {
         JAMI_ERROR("[Account {}] [Contacts] updateContact: invalid contact ID", accountId_);
         return;
     }
+    std::unique_lock lk(mutex_);
     bool stateChanged {false};
     auto c = contacts_.find(id);
+    const auto previousMetadata = c == contacts_.end() ? Metadata {} : c->second.metadata;
     if (c == contacts_.end()) {
         // JAMI_LOG("[Contacts] New contact: {}", id);
         c = contacts_.emplace(id, contact).first;
+        if (!c->second.metadata.validate())
+            c->second.metadata = {};
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
         // JAMI_LOG("[Contacts] Updated contact: {}", id);
         stateChanged = c->second.update(contact);
     }
-    if (stateChanged) {
-        {
-            std::lock_guard lk(mutex_);
-            if (trustRequests_.erase(id) > 0)
-                saveTrustRequests();
+    Metadata::Change change;
+    change.changed = c->second.metadata != previousMetadata;
+    if (change.changed && emit) {
+        if (saveContactMetadata()) {
+            auto values = c->second.metadata.values();
+            if (values != previousMetadata.values())
+                change.snapshot = std::move(values);
+        } else {
+            c->second.metadata = previousMetadata;
+            change.changed = false;
         }
-        if (c->second.isActive()) {
+    }
+    const auto updated = c->second;
+    if (stateChanged) {
+        if (trustRequests_.erase(id) > 0)
+            saveTrustRequests();
+    }
+    lk.unlock();
+    if (emit)
+        notifyMetadataChanged(id, updated.metadata, change);
+    if (stateChanged) {
+        if (updated.isActive()) {
             trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
             if (emit)
-                callbacks_.contactAdded(id.toString(), c->second.confirmed);
+                callbacks_.contactAdded(id.toString(), updated.confirmed);
         } else {
-            if (c->second.banned)
+            if (updated.banned)
                 trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::BANNED);
             if (emit)
-                callbacks_.contactRemoved(id.toString(), c->second.banned);
+                callbacks_.contactRemoved(id.toString(), updated.banned);
         }
     }
 }
@@ -282,6 +367,35 @@ ContactList::saveContacts() const
     std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
     std::ofstream file(path_ / "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
+}
+
+bool
+ContactList::saveContactMetadata() const
+{
+    JAMI_LOG("[Account {}] [Contacts] saving {} contacts", accountId_, contacts_.size());
+    std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
+    const auto staging = path_ / "contacts.new";
+    std::ofstream file(staging, std::ios::trunc | std::ios::binary);
+    if (!file) {
+        JAMI_ERROR("[Account {}] Cannot open contact staging file {}", accountId_, staging);
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::permissions(staging, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write, ec);
+    if (!ec)
+        msgpack::pack(file, contacts_);
+    file.close();
+    if (file && !ec)
+        std::filesystem::rename(staging, path_ / "contacts", ec);
+    if (!file || ec) {
+        JAMI_ERROR("[Account {}] Cannot save contacts: {}", accountId_, ec ? ec.message() : "write failed");
+        std::error_code cleanupError;
+        std::filesystem::remove(staging, cleanupError);
+        if (cleanupError)
+            JAMI_WARNING("Cannot remove contact staging file {}: {}", staging, cleanupError.message());
+        return false;
+    }
+    return true;
 }
 
 void
