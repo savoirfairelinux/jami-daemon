@@ -60,8 +60,7 @@ public:
     MediaStream getStream(const std::string& name) const;
 
 private:
-    static constexpr int KEYFRAMES_AT_START {1};    // Number of keyframes to enforce at stream startup
-    static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
+    static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
 
     NON_COPYABLE(VideoSender);
 
@@ -72,7 +71,6 @@ private:
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
-    int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
 
     int rotation_ = -1;
