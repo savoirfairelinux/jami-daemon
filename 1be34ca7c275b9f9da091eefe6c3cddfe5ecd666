@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c6d7a59_9f93992f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2142,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:55:16Z",
+      "side": 1,
+      "message": "[error] Line 2142: 🔴 `stopAllMedia()` now takes `callMutex_` internally, but it is called while `callMutex_` is already held in multiple paths (e.g., `refuse()`, `peerHungup()`, and also the locked negotiation path). With a non-recursive mutex this can deadlock the call teardown/reinvite flow. **Fix:** never invoke `stopAllMedia()` under `callMutex_`; capture required state while locked, release the lock, then call `stopAllMedia(...)`, or provide a clearly-separated internal variant that assumes the lock is already held and does not re-lock.",
+      "revId": "1be34ca7c275b9f9da091eefe6c3cddfe5ecd666",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f82d993_e76f998c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3472,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:55:16Z",
+      "side": 1,
+      "message": "[warning] Line 3472: 🟡 `stopAllMedia()` schedules a task on `ThreadPool::io()` that then schedules additional work back onto the same pool and blocks on a condition variable until those tasks complete. This creates head-of-line blocking and can deadlock if the pool is configured with a single worker. **Fix:** either stop sessions directly in that one I/O task, or use a non-blocking completion aggregation that does not wait inside an I/O worker.",
+      "revId": "1be34ca7c275b9f9da091eefe6c3cddfe5ecd666",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f7fb3d5_1cf94f25",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:55:16Z",
+      "side": 1,
+      "message": "[error] Line 154: 🔴 `completeExternalMediaDemotion()` calls `stopAllMedia(...)` while still under `callMutex_`. Since `stopAllMedia()` acquires the same mutex, this introduces a self-deadlock in the demotion completion path. **Fix:** move the `stopAllMedia(...)` call out of the locked region (keep only precondition checks/state capture under the lock).",
+      "revId": "1be34ca7c275b9f9da091eefe6c3cddfe5ecd666",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
