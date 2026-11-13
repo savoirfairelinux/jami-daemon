@@ -141,6 +141,7 @@ public:
 
     // SDP slots and native RTP streams have independent ordering.
     const std::string& getMediaLabel(unsigned mediaIndex) const { return mediaLabels_.at(mediaIndex); }
+    // Return the SDP slot only when the label identifies exactly one section.
     std::optional<unsigned> getMediaIndex(const std::string& label) const;
 
     /**
