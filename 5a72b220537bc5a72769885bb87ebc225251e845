@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ca062e8_4a3a7773",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 347,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-11-13T03:24:36Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "b8eced52_498dd878",
+      "revId": "5a72b220537bc5a72769885bb87ebc225251e845",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c7a27d6_68d960d5",
