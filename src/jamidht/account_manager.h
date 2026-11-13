@@ -149,6 +149,8 @@ public:
 
     const MetadataStore& accountMetadata() const { return metadata_; }
     bool setAccountMetadata(const std::map<std::string, std::string>& updates);
+    bool getContactMetadata(const std::string& uri, Metadata::Values& metadata) const;
+    bool setContactMetadata(const std::string& uri, const Metadata::Values& updates);
     [[nodiscard]] bool mergeAccountMetadata(const Metadata& remote);
     void setMetadataChangedCallback(std::function<void()> cb) { metadataChanged_ = std::move(cb); }
 

@@ -93,6 +93,8 @@ private:
     void testContactToMapStaysSeconds();
     // isActive() distinguishes events within the same second
     void testContactIsActiveMsResolution();
+    void testContactMetadata();
+    void testContactMetadataMerge();
     // Same backward-compatibility checks for TrustRequest
     void testTrustRequestLegacyToNew();
     void testTrustRequestNewToLegacy();
@@ -116,6 +118,8 @@ private:
     CPPUNIT_TEST(testContactJson);
     CPPUNIT_TEST(testContactToMapStaysSeconds);
     CPPUNIT_TEST(testContactIsActiveMsResolution);
+    CPPUNIT_TEST(testContactMetadata);
+    CPPUNIT_TEST(testContactMetadataMerge);
     CPPUNIT_TEST(testTrustRequestLegacyToNew);
     CPPUNIT_TEST(testTrustRequestNewToLegacy);
     CPPUNIT_TEST(testTrustRequestMsgpackRoundtrip);
@@ -247,6 +251,49 @@ ContactSerializationTest::testContactIsActiveMsResolution()
     // Re-added 1 ms after removal
     contact.added = timePointFromMilliseconds(1700000001502);
     CPPUNIT_ASSERT(contact.isActive());
+}
+
+void
+ContactSerializationTest::testContactMetadata()
+{
+    Contact contact;
+    contact.added = timePointFromMilliseconds(2000);
+    contact.metadata.entries = {{"label", {1000, std::string(64, 'a'), "Alice"}},
+                                {"empty", {1000, std::string(64, 'a'), ""}}};
+    CPPUNIT_ASSERT(repack<Contact>(contact).metadata == contact.metadata);
+    msgpack::zone zone;
+    msgpack::object object(contact, zone);
+    CPPUNIT_ASSERT(object.as<Contact>().metadata == contact.metadata);
+    CPPUNIT_ASSERT(Contact(contact.toJson()).metadata == contact.metadata);
+    CPPUNIT_ASSERT(repack<Contact>(LegacyContact {}).metadata.entries.empty());
+    CPPUNIT_ASSERT(Contact(Json::Value {}).metadata.entries.empty());
+    CPPUNIT_ASSERT_EQUAL(time_t(2), repack<LegacyContact>(contact).added);
+    CPPUNIT_ASSERT(!contact.toMap().contains("metadata"));
+}
+
+void
+ContactSerializationTest::testContactMetadataMerge()
+{
+    Contact a, b;
+    a.added = timePointFromMilliseconds(2000);
+    b.added = timePointFromMilliseconds(1000);
+    a.metadata.entries = {{"label", {1000, std::string(64, 'a'), "Alice"}}};
+    b.metadata.entries = {{"label", {1000, std::string(64, 'b'), "Bob"}},
+                          {"other", {1000, std::string(64, 'b'), "kept"}}};
+    CPPUNIT_ASSERT(!a.update(b)); // Metadata alone is not a contact-state change.
+    CPPUNIT_ASSERT(!b.update(a));
+    CPPUNIT_ASSERT(b.added == a.added);
+    CPPUNIT_ASSERT(a.metadata == b.metadata);
+    CPPUNIT_ASSERT_EQUAL(std::string("Bob"), a.metadata.entries.at("label").value);
+    Contact removed;
+    removed.removed = timePointFromMilliseconds(3000);
+    CPPUNIT_ASSERT(a.update(removed));
+    CPPUNIT_ASSERT(a.metadata == b.metadata); // Legacy removal cannot erase metadata.
+    CPPUNIT_ASSERT(!a.isActive());
+    auto invalid = b;
+    invalid.metadata.entries.at("label").timestampMs = 0;
+    CPPUNIT_ASSERT(!a.update(invalid));
+    CPPUNIT_ASSERT(a.metadata == b.metadata);
 }
 
 void
