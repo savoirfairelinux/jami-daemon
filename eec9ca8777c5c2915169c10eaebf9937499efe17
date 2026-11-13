@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c057f17_397e3f48",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1201
+      },
+      "writtenOn": "2026-11-13T10:50:42Z",
+      "side": 1,
+      "message": "Patch sets 10 and 11 only rebase this change onto the updated parent change 37097, and Jenkins started no build for either of them. Could a maintainer please re-run CI on patch set 11? Locally, the commit_message and conversationRepository unit tests pass on this stack.",
+      "revId": "eec9ca8777c5c2915169c10eaebf9937499efe17",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
