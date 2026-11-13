@@ -40,6 +40,7 @@
 #include <array>
 #include <cassert>
 #include <cctype>
+#include <iterator>
 #include <optional>
 
 namespace jami {
@@ -730,7 +731,7 @@ std::optional<unsigned>
 Sdp::getMediaIndex(const std::string& label) const
 {
     const auto it = std::find(mediaLabels_.begin(), mediaLabels_.end(), label);
-    if (it == mediaLabels_.end())
+    if (it == mediaLabels_.end() || std::find(std::next(it), mediaLabels_.end(), label) != mediaLabels_.end())
         return std::nullopt;
     return static_cast<unsigned>(std::distance(mediaLabels_.begin(), it));
 }

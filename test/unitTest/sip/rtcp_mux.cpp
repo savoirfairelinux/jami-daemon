@@ -183,6 +183,7 @@ private:
     void reofferPreservesStreamIdentityAndSlots();
     void reofferPreservesImportedMidsAndSkippedSlots();
     void reofferRejectsAmbiguousStreamIdentity();
+    void mediaLookupRejectsAmbiguousIdentity();
     void mediaChangeRemovesStreamsByIdentity();
     void configureBundleSdp(Sdp& sdp);
     void offerAdvertisesTransportCcAndRemb();
@@ -224,6 +225,7 @@ private:
     CPPUNIT_TEST(reofferPreservesStreamIdentityAndSlots);
     CPPUNIT_TEST(reofferPreservesImportedMidsAndSkippedSlots);
     CPPUNIT_TEST(reofferRejectsAmbiguousStreamIdentity);
+    CPPUNIT_TEST(mediaLookupRejectsAmbiguousIdentity);
     CPPUNIT_TEST(mediaChangeRemovesStreamsByIdentity);
     CPPUNIT_TEST(offerAdvertisesTransportCcAndRemb);
     CPPUNIT_TEST(reofferAdvertisesFeedbackForNewMedia);
@@ -545,6 +547,27 @@ RtcpMuxSdpTest::reofferRejectsAmbiguousStreamIdentity()
     invalid.label_.clear();
     CPPUNIT_ASSERT(!sdp.createOffer({invalid}, previous));
     CPPUNIT_ASSERT(previous == sdp.getLocalSdpSession());
+}
+
+void
+RtcpMuxSdpTest::mediaLookupRejectsAmbiguousIdentity()
+{
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    auto secondAudio = audio;
+    secondAudio.label_ = "audio_1";
+
+    Sdp unique("unique-media-label");
+    configureBundleSdp(unique);
+    CPPUNIT_ASSERT(unique.createOffer({audio, secondAudio}));
+    CPPUNIT_ASSERT_EQUAL(0u, unique.getMediaIndex("").value());
+    CPPUNIT_ASSERT_EQUAL(1u, unique.getMediaIndex("audio_1").value());
+    CPPUNIT_ASSERT(!unique.getMediaIndex("missing"));
+
+    Sdp ambiguous("ambiguous-media-label");
+    configureBundleSdp(ambiguous);
+    CPPUNIT_ASSERT(ambiguous.createOffer({audio, audio}));
+    CPPUNIT_ASSERT(!ambiguous.getMediaIndex(""));
 }
 
 void
