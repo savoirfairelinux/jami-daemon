@@ -272,14 +272,15 @@ RtcpMuxSdpTest::peerVersionControlsLegacyRemb()
         call.setPeerUaVersion(ua);
         CPPUNIT_ASSERT(call.peerUsesLegacyRemb_);
     }
-    for (const auto ua : {"Jami Daemon 17.0.0",
-                          "Jami Daemon 17.0.0-test Linux",
-                          "Jami Daemon 18.0.0 Linux",
-                          "Other SIP endpoint 16.0.0",
-                          "Jami Daemon invalid Linux",
-                          "Jami Daemon 17 Linux",
-                          "Jami Daemon 16.bad.0 Linux",
-                          "Jami Daemon 16..0 Linux"}) {
+    for (const auto& ua : {account_->getUserAgentName(),
+                           std::string("Jami Daemon 17.0.0"),
+                           std::string("Jami Daemon 17.0.0-test Linux"),
+                           std::string("Jami Daemon 18.0.0 Linux"),
+                           std::string("Other SIP endpoint 16.0.0"),
+                           std::string("Jami Daemon invalid Linux"),
+                           std::string("Jami Daemon 17 Linux"),
+                           std::string("Jami Daemon 16.bad.0 Linux"),
+                           std::string("Jami Daemon 16..0 Linux")}) {
         call.setPeerUaVersion("Jami Daemon 16.0.0");
         CPPUNIT_ASSERT(call.peerUsesLegacyRemb_);
         call.setPeerUaVersion(ua);
