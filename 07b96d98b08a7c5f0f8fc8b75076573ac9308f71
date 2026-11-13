@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bcbb5f9_92c7a597",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T02:17:56Z",
+      "side": 1,
+      "message": "[warning] Line 107: 🟡 Several mutating paths (`addContact`, `updateConversation`, `removeContact`, `removeContactConversation`, `onTrustRequest`, and `setContacts`) now call `saveContactsLocked()` but ignore its boolean result. When persistence fails, in-memory state and emitted signals proceed as success, causing divergence after restart. **Fix:** propagate/handle save failure consistently (rollback or return false) and avoid emitting success-side callbacks/signals when the save did not persist.",
+      "revId": "07b96d98b08a7c5f0f8fc8b75076573ac9308f71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8e3d4a9_5dde4258",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T02:17:56Z",
+      "side": 1,
+      "message": "[error] Line 375: 🔴 `saveContactsLocked()` treats `std::filesystem::permissions(...)` failure as fatal and skips writing entirely (`if (!ec) msgpack::pack(...)`). On platforms/filesystems where chmod-like permission updates are unsupported or restricted, every contact save will fail even though writing/rename would succeed. This can silently break contact metadata sync/persistence. **Fix:** always serialize/write regardless of permission-setting result; either ignore permission errors (log warning) or gate permission changes by platform/feature and keep save path best-effort.",
+      "revId": "07b96d98b08a7c5f0f8fc8b75076573ac9308f71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
