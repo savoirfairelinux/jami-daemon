@@ -120,6 +120,7 @@ public:
     OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                  const std::string& fileId,
                  const std::string& interactionId,
+                 const std::string& transferId,
                  const libjami::DataTransferInfo& info,
                  size_t start = 0,
                  size_t end = 0);
@@ -128,6 +129,10 @@ public:
     void cancel() override;
 
 private:
+    void emitOutgoingFileTransferEvent(libjami::DataTransferEventCode code);
+    void finish(libjami::DataTransferEventCode code);
+    std::string transferId_;
+    std::atomic_bool ended_ {false};
     std::ifstream stream_;
     size_t start_ {0};
     size_t end_ {0};

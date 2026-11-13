@@ -160,6 +160,22 @@ LIBJAMI_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
 // Signals
 struct LIBJAMI_PUBLIC DataTransferSignal
 {
+    /**
+     * Lifetime of one conversation-file upload, independent of message status:
+     * ongoing, then exactly one terminal code, both with the same transferId.
+     * Profile transfers are excluded.
+     * Used by the iOS notification extension to stay alive while serving a file.
+     */
+    struct LIBJAMI_PUBLIC OutgoingFileTransferEvent
+    {
+        constexpr static const char* name = "OutgoingFileTransferEvent";
+        using cb_type = void(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& fileId,
+                             const std::string& transferId,
+                             int eventCode);
+    };
+
     struct LIBJAMI_PUBLIC DataTransferEvent
     {
         constexpr static const char* name = "DataTransferEvent";

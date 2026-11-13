@@ -109,6 +109,7 @@ export enum JamiSignal {
 
   // libjami::DataTransferSignal
   DataTransferEvent = 'DataTransferEvent',
+  OutgoingFileTransferEvent = 'OutgoingFileTransferEvent',
 
   // libjami::PresenceSignal
   SubscriptionStateChanged = 'SubscriptionStateChanged',

@@ -3275,6 +3275,7 @@ Conversation::downloadFile(const std::string& interactionId,
     auto tid = commit->commitMsg.tid;
     auto sha3sum = commit->commitMsg.sha3sum;
     auto totalSize = commit->commitMsg.totalSize;
+    auto fileAuthorDevice = DeviceId(commit->author.email); // The device that shared the file
 
     if (tid.empty() || sha3sum.empty() || totalSize < 0) {
         JAMI_ERROR("Invalid file transfer commit (missing tid, size or sha3)");
@@ -3290,7 +3291,7 @@ Conversation::downloadFile(const std::string& interactionId,
     }
 
     // Be sure to not lock conversation
-    dht::ThreadPool::io().run([w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize] {
+    dht::ThreadPool::io().run([w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize, fileAuthorDevice] {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -3326,7 +3327,7 @@ Conversation::downloadFile(const std::string& interactionId,
         if (ec || start == static_cast<decltype(start)>(-1))
             start = 0;
         size_t end = 0;
-        acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
+        acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, fileAuthorDevice, start, end);
     });
     return true;
 }

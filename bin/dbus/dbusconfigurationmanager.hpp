@@ -1016,6 +1016,8 @@ private:
         const std::map<std::string, SharedCallback> dataXferEvHandlers = {
             exportable_serialized_callback<DataTransferSignal::DataTransferEvent>(
                 std::bind(&DBusConfigurationManager::emitDataTransferEvent, this, _1, _2, _3, _4, _5)),
+            exportable_serialized_callback<DataTransferSignal::OutgoingFileTransferEvent>(
+                std::bind(&DBusConfigurationManager::emitOutgoingFileTransferEvent, this, _1, _2, _3, _4, _5)),
         };
 
         const std::map<std::string, SharedCallback> convEvHandlers = {
