@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "568ca2ea_df435f34",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1328,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T05:34:44Z",
+      "side": 1,
+      "message": "[error] Line 1328: 🔴 `maybeReopenVideoCodec` frees the active video encoder (`avcodec_free_context`) before confirming that `initVideoStream(framesCtx)` succeeds. If reopen fails (e.g., transient HW init/open failure), the session is left without a usable encoder and subsequent `encode()` calls return errors, effectively dropping video permanently. Build the replacement encoder first (or keep a backup pointer), and only swap/free the old context after successful initialization; otherwise restore the previous context and keep `pendingCodecReopen_` set for retry.",
+      "revId": "7bff9db28cd403d9d510a9cde391b7d201cdd093",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91d20ad6_be4679b6",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T05:34:44Z",
+      "side": 1,
+      "message": "[warning] Line 411: 🟡 The result of `sender_-\u003esetBitrate(send_.bitrate)` is ignored during sender restart. A failure (`-1`) is silently dropped, which can leave sender state inconsistent with congestion-control expectations. Handle and log failure explicitly (and consider retry/restart path on failure) so bitrate adaptation does not fail silently.",
+      "revId": "7bff9db28cd403d9d510a9cde391b7d201cdd093",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
