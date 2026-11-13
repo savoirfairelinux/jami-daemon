@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2cfa65e_8196bf0c",
+        "filename": "src/meson.build",
+        "patchSetId": 2
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T02:15:11Z",
+      "side": 1,
+      "message": "[error] Line 122: 🔴 `metadata.cpp` is listed twice in `libjami_sources` (once near `fileutils.cpp` and again after `manager.cpp`). In Meson, compiling/linking the same translation unit twice can break builds with duplicate symbol/object conflicts or toolchain-dependent behavior. Remove the duplicate entry and keep a single `metadata.cpp` in the source list.",
+      "revId": "7fa702742ffa44507a39d49949f770518db1237b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
