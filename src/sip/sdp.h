@@ -326,6 +326,7 @@ private:
     void addMidAttribute(pjmedia_sdp_media* med, std::string_view mid);
     void addExtmapAttribute(pjmedia_sdp_media* med, unsigned id, std::string_view uri);
     void addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view feedbackType);
+    void addImageAttrAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view attrList);
     void addBundleGroupAttribute();
     static bool validateDtlsAttributes(const pjmedia_sdp_session* session,
                                        SdpDirection direction,
