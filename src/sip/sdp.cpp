@@ -630,6 +630,205 @@ hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
     return false;
 }
 
+// RFC 6236 generic image attribute negotiation (a=imageattr).
+constexpr std::string_view IMAGEATTR_SEND_RECV_RANGE {
+    "send [x=[160:2:3840],y=[90:2:2160]] recv [x=[160:2:3840],y=[90:2:2160]]"};
+
+enum class ImageAttrSupport : uint8_t {
+    Absent,
+    FixedOnly,
+    Dynamic,
+};
+
+std::string_view
+trimSdpSpaces(std::string_view text)
+{
+    const auto start = text.find_first_not_of(" \t");
+    if (start == std::string_view::npos)
+        return {};
+    const auto end = text.find_last_not_of(" \t");
+    return text.substr(start, end - start + 1);
+}
+
+bool
+hasDynamicImageAxisRange(std::string_view setContent)
+{
+    for (size_t pos = 0; pos < setContent.size(); ++pos) {
+        if ((setContent[pos] != 'x' && setContent[pos] != 'y') || pos + 2 >= setContent.size()
+            || setContent[pos + 1] != '=' || setContent[pos + 2] != '[')
+            continue;
+        if (pos > 0 && setContent[pos - 1] != ',' && setContent[pos - 1] != ' ' && setContent[pos - 1] != '\t')
+            continue;
+
+        const auto close = setContent.find(']', pos + 3);
+        if (close == std::string_view::npos)
+            return false;
+        const auto range = setContent.substr(pos + 3, close - (pos + 3));
+        const auto firstColon = range.find(':');
+        const auto lastColon = range.rfind(':');
+        if (firstColon != std::string_view::npos) {
+            const auto minStr = range.substr(0, firstColon);
+            const auto maxStr = range.substr(lastColon + 1);
+            if (!minStr.empty() && !maxStr.empty()) {
+                try {
+                    const auto minVal = std::stod(std::string(minStr));
+                    const auto maxVal = std::stod(std::string(maxStr));
+                    if (minVal > 0.0 && maxVal > minVal)
+                        return true;
+                } catch (...) {
+                }
+            }
+        }
+        pos = close;
+    }
+    return false;
+}
+
+ImageAttrSupport
+parseImageAttrListSupport(std::string_view attrList)
+{
+    attrList = trimSdpSpaces(attrList);
+    if (attrList.empty())
+        return ImageAttrSupport::Absent;
+    if (attrList == "*")
+        return ImageAttrSupport::Dynamic;
+
+    int depth = 0;
+    size_t setStart = 0;
+    unsigned setCount = 0;
+    bool dynamicAxis = false;
+
+    for (size_t i = 0; i < attrList.size(); ++i) {
+        if (attrList[i] == '[') {
+            if (depth == 0)
+                setStart = i + 1;
+            ++depth;
+        } else if (attrList[i] == ']') {
+            --depth;
+            if (depth < 0)
+                return ImageAttrSupport::Absent;
+            if (depth == 0) {
+                ++setCount;
+                if (hasDynamicImageAxisRange(attrList.substr(setStart, i - setStart)))
+                    dynamicAxis = true;
+            }
+        }
+    }
+
+    if (depth != 0 || setCount == 0)
+        return ImageAttrSupport::Absent;
+
+    return (setCount >= 2 || dynamicAxis) ? ImageAttrSupport::Dynamic : ImageAttrSupport::FixedOnly;
+}
+
+ImageAttrSupport
+parseImageAttrRecv(std::string_view value)
+{
+    int depth = 0;
+    size_t recvListStart = std::string_view::npos;
+    size_t recvListEnd = value.size();
+
+    for (size_t i = 0; i < value.size();) {
+        if (value[i] == '[') {
+            ++depth;
+            ++i;
+            continue;
+        }
+        if (value[i] == ']') {
+            if (depth > 0)
+                --depth;
+            ++i;
+            continue;
+        }
+        if (depth == 0 && (value[i] == ' ' || value[i] == '\t')) {
+            ++i;
+            continue;
+        }
+        if (depth == 0) {
+            size_t tokenEnd = i;
+            while (tokenEnd < value.size() && value[tokenEnd] != ' ' && value[tokenEnd] != '\t'
+                   && value[tokenEnd] != '[' && value[tokenEnd] != ']')
+                ++tokenEnd;
+            const auto token = value.substr(i, tokenEnd - i);
+            if (token == "recv") {
+                recvListStart = tokenEnd;
+            } else if (token == "send" && recvListStart != std::string_view::npos) {
+                recvListEnd = i;
+                break;
+            }
+            i = tokenEnd;
+            continue;
+        }
+        ++i;
+    }
+
+    if (recvListStart == std::string_view::npos || recvListStart >= recvListEnd)
+        return ImageAttrSupport::Absent;
+
+    return parseImageAttrListSupport(value.substr(recvListStart, recvListEnd - recvListStart));
+}
+
+ImageAttrSupport
+findImageAttrRecvSupport(unsigned attrCount, pjmedia_sdp_attr* const* attrs, unsigned payloadType, bool wildcardPass)
+{
+    unsigned fixedMatches = 0;
+    for (unsigned attrIndex = 0; attrIndex < attrCount; ++attrIndex) {
+        auto* attr = attrs[attrIndex];
+        if (not attr || pj_stricmp2(&attr->name, "imageattr") != 0 || !attr->value.ptr || attr->value.slen <= 0)
+            continue;
+
+        const auto value = trimSdpSpaces(std::string_view(attr->value.ptr, static_cast<size_t>(attr->value.slen)));
+        const auto separator = value.find_first_of(" \t");
+        if (separator == std::string_view::npos)
+            continue;
+
+        const auto ptToken = value.substr(0, separator);
+        const bool isWildcard = (ptToken == "*");
+        if (isWildcard != wildcardPass || !parsePayloadTypeToken(ptToken, payloadType))
+            continue;
+
+        const auto support = parseImageAttrRecv(value.substr(separator + 1));
+        if (support == ImageAttrSupport::Dynamic)
+            return ImageAttrSupport::Dynamic;
+        if (support == ImageAttrSupport::FixedOnly)
+            ++fixedMatches;
+    }
+
+    if (fixedMatches >= 2)
+        return ImageAttrSupport::Dynamic;
+    return fixedMatches == 1 ? ImageAttrSupport::FixedOnly : ImageAttrSupport::Absent;
+}
+
+ImageAttrSupport
+getImageAttrRecvSupport(const pjmedia_sdp_session* session, unsigned mediaIndex, unsigned payloadType)
+{
+    if (not session || mediaIndex >= session->media_count)
+        return ImageAttrSupport::Absent;
+
+    const auto* media = session->media[mediaIndex];
+    // RFC 6236 §3.1.1.2: payload-specific imageattr overrides wildcard '*'.
+    if (const auto exact = findImageAttrRecvSupport(media->attr_count, media->attr, payloadType, false);
+        exact != ImageAttrSupport::Absent)
+        return exact;
+
+    return findImageAttrRecvSupport(media->attr_count, media->attr, payloadType, true);
+}
+
+bool
+hasAnyImageAttr(const pjmedia_sdp_session* session, unsigned mediaIndex)
+{
+    if (not session || mediaIndex >= session->media_count)
+        return false;
+
+    const auto* media = session->media[mediaIndex];
+    for (unsigned attrIndex = 0; attrIndex < media->attr_count; ++attrIndex) {
+        const auto* attr = media->attr[attrIndex];
+        if (attr && pj_stricmp2(&attr->name, "imageattr") == 0)
+            return true;
+    }
+    return false;
+}
+
 } // namespace
 
 bool
@@ -1095,10 +1294,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
             auto nackFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
             auto pliFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
             auto firFeedback = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
+            auto imageAttr = sdpDirection_ != SdpDirection::ANSWER and not previousLocalMedia;
             if (feedbackSession) {
                 nackFeedback = hasAnyExactRtcpFeedback(feedbackSession, mediaIndex, "nack");
                 pliFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "nack pli");
                 firFeedback = hasAnyRtcpFeedback(feedbackSession, mediaIndex, "ccm fir");
+                imageAttr = hasAnyImageAttr(feedbackSession, mediaIndex);
             }
             if (nackFeedback)
                 addRtcpFeedbackAttribute(med, "*", "nack");
@@ -1106,6 +1307,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
                 addRtcpFeedbackAttribute(med, "*", "nack pli");
             if (firFeedback)
                 addRtcpFeedbackAttribute(med, "*", "ccm fir");
+            if (imageAttr)
+                addImageAttrAttribute(med, "*", IMAGEATTR_SEND_RECV_RANGE);
         }
     }
 
@@ -1248,6 +1451,16 @@ Sdp::addRtcpFeedbackAttribute(pjmedia_sdp_media* med, std::string_view payloadTy
     const pj_str_t pjValue = sip_utils::CONST_PJ_STR(value);
     if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "rtcp-fb", &pjValue)) != PJ_SUCCESS) {
         throw SdpException("Unable to add rtcp-fb attribute to media");
+    }
+}
+
+void
+Sdp::addImageAttrAttribute(pjmedia_sdp_media* med, std::string_view payloadType, std::string_view attrList)
+{
+    const auto value = fmt::format("{} {}", payloadType, attrList);
+    const pj_str_t pjValue = sip_utils::CONST_PJ_STR(value);
+    if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "imageattr", &pjValue)) != PJ_SUCCESS) {
+        throw SdpException("Unable to add imageattr attribute to media");
     }
 }
 
@@ -2088,6 +2301,24 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                 useDtls = counterpartIndex && not getDtlsFingerprint(counterpart, *counterpartIndex).second.empty();
             } else
                 useDtls = getCrypto(media).empty();
+        }
+
+        if (descr.enabled && descr.type == MEDIA_VIDEO) {
+            const auto webRtcDynamic = descr.transport == MediaTransport::UDP_TLS_RTP_SAVPF && useDtls;
+            const auto imageAttrRecv = getImageAttrRecvSupport(session, i, descr.payload_type);
+            if (imageAttrRecv == ImageAttrSupport::Dynamic) {
+                const auto* peerSession = session == activeRemoteSession_
+                                              ? (activeLocalSession_ ? activeLocalSession_ : localSession_)
+                                              : (session == activeLocalSession_ ? activeRemoteSession_ : nullptr);
+                descr.dynamic_resolution = webRtcDynamic || !peerSession
+                                           || (i < peerSession->media_count && hasAnyImageAttr(peerSession, i));
+            } else if (imageAttrRecv == ImageAttrSupport::FixedOnly) {
+                descr.dynamic_resolution = false;
+            } else {
+                // RFC 7742 §5 / §6.2: WebRTC endpoints (UDP/TLS/RTP/SAVPF + DTLS)
+                // mandate in-band dynamic resolution support without a=imageattr.
+                descr.dynamic_resolution = webRtcDynamic;
+            }
         }
 
         if (useDtls) {
