@@ -57,6 +57,7 @@ constexpr double LOGREG_PARAM_A_HEVC {96};
 constexpr double LOGREG_PARAM_B_HEVC {-5.};
 constexpr int64_t NVENC_CQ {23};
 constexpr double VIDEO_CONFERENCE_TARGET_BPP {0.06};
+constexpr double DYNAMIC_UPSCALE_HYSTERESIS {1.15};
 constexpr double NON_DYN_BITRATE_HYSTERESIS {0.10};
 constexpr auto MIN_CODEC_REOPEN_INTERVAL {std::chrono::seconds(1)};
 constexpr int VIDEO_DIMENSION_ALIGNMENT {2};
@@ -202,6 +203,7 @@ MediaEncoder::setOptions(const MediaDescription& args)
     mode_ = args.mode;
     linkableHW_ = args.linkableHW;
     fecEnabled_ = args.fecEnabled;
+    dynResolution_ = args.dynamic_resolution;
 }
 
 void
@@ -517,7 +519,8 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     if (sourceVideoWidth_ != width || sourceVideoHeight_ != height) {
         sourceVideoWidth_ = width;
         sourceVideoHeight_ = height;
-        applyVideoBitrateTarget(sizingBitrate_ ? sizingBitrate_ : videoOpts_.bitrate);
+        applyVideoBitrateTarget(dynResolution_ ? videoOpts_.bitrate
+                                               : (sizingBitrate_ ? sizingBitrate_ : videoOpts_.bitrate));
         is_keyframe = true;
     }
 
@@ -1006,13 +1009,25 @@ MediaEncoder::setBitrate(uint64_t br)
         videoOpts_.bitrate = br;
 
     AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
-    if (not encoderCtx)
+    if (not encoderCtx) {
+        if (videoOpts_.isValid() && !initialized_ && dynResolution_ && !passthrough_) {
+            const auto [width, height] = desiredDynamicVideoSize(br);
+            videoOpts_.width = width;
+            videoOpts_.height = height;
+        }
         return videoOpts_.isValid() ? 1 : -1;
+    }
 
     AVCodecID codecId = encoderCtx->codec_id;
 
-    // Keep active RTP dimensions stable when congestion feedback changes the bitrate;
-    // resetting the RTP stream here can leave remote decoders with stale codec parameters.
+    // Only adapt RTP dimensions mid-stream when negotiated (RFC 6236 imageattr
+    // or WebRTC); legacy SIP peers keep fixed dimensions.
+    if (dynResolution_ && !passthrough_) {
+        const auto [nextWidth, nextHeight] = desiredDynamicVideoSize(br);
+        if (nextWidth != videoOpts_.width || nextHeight != videoOpts_.height)
+            pendingCodecReopen_.store(true, std::memory_order_release);
+    }
+
     if (not isDynBitrateSupported(codecId)) {
         pendingCodecReopen_.store(true, std::memory_order_release);
         return 1;
@@ -1321,17 +1336,6 @@ MediaEncoder::maybeReopenVideoCodec(AVBufferRef* framesCtx)
             return false;
         }
 
-        const auto targetBr = clampVideoBitrate(videoOpts_.bitrate);
-        if (!shouldReopenForBitrate(appliedVideoBitrate_, targetBr)) {
-            pendingCodecReopen_.store(false, std::memory_order_relaxed);
-            return false;
-        }
-
-        if (lastCodecReopen_ != std::chrono::steady_clock::time_point::min()
-            && now - lastCodecReopen_ < MIN_CODEC_REOPEN_INTERVAL) {
-            return false;
-        }
-
         for (unsigned i = 0; i < outputCtx_->nb_streams; ++i) {
             if (outputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
                 videoStreamIdx = static_cast<int>(i);
@@ -1343,6 +1347,27 @@ MediaEncoder::maybeReopenVideoCodec(AVBufferRef* framesCtx)
             pendingCodecReopen_.store(false, std::memory_order_relaxed);
             return false;
         }
+
+        bool needResolutionReopen = false;
+        if (dynResolution_ && !passthrough_) {
+            const auto [nextWidth, nextHeight] = desiredDynamicVideoSize(videoOpts_.bitrate);
+            needResolutionReopen = (nextWidth != videoOpts_.width || nextHeight != videoOpts_.height);
+        }
+
+        const auto targetBr = clampVideoBitrate(videoOpts_.bitrate);
+        const bool needBitrateReopen = !isDynBitrateSupported(encoders_[videoStreamIdx]->codec_id)
+                                       && shouldReopenForBitrate(appliedVideoBitrate_, targetBr);
+
+        if (!needResolutionReopen && !needBitrateReopen) {
+            pendingCodecReopen_.store(false, std::memory_order_relaxed);
+            return false;
+        }
+
+        if (lastCodecReopen_ != std::chrono::steady_clock::time_point::min()
+            && now - lastCodecReopen_ < MIN_CODEC_REOPEN_INTERVAL) {
+            return false;
+        }
+
         pendingCodecReopen_.store(false, std::memory_order_relaxed);
     }
 
@@ -1350,6 +1375,11 @@ MediaEncoder::maybeReopenVideoCodec(AVBufferRef* framesCtx)
 
     {
         std::lock_guard lk(encMutex_);
+        if (dynResolution_ && !passthrough_) {
+            const auto [nextWidth, nextHeight] = desiredDynamicVideoSize(videoOpts_.bitrate);
+            videoOpts_.width = nextWidth;
+            videoOpts_.height = nextHeight;
+        }
         if (static_cast<size_t>(videoStreamIdx) < encoders_.size() && encoders_[videoStreamIdx])
             avcodec_free_context(&encoders_[videoStreamIdx]);
 #ifdef ENABLE_HWACCEL
@@ -1417,6 +1447,20 @@ MediaEncoder::targetVideoSize(uint64_t br) const
     const auto minWidth = std::min(sourceVideoWidth_, VIDEO_MIN_WIDTH);
     const auto minHeight = std::min(sourceVideoHeight_, VIDEO_MIN_HEIGHT);
     return {minWidth, minHeight};
+}
+
+std::pair<int, int>
+MediaEncoder::desiredDynamicVideoSize(uint64_t br) const
+{
+    uint64_t effectiveBr = br;
+    if (initialized_ && effectiveBr < SystemCodecInfo::DEFAULT_MAX_BITRATE) {
+        const auto [candidateW, candidateH] = targetVideoSize(effectiveBr);
+        if (static_cast<int64_t>(candidateW) * candidateH > static_cast<int64_t>(videoOpts_.width) * videoOpts_.height) {
+            effectiveBr = static_cast<uint64_t>(static_cast<double>(effectiveBr) / DYNAMIC_UPSCALE_HYSTERESIS);
+        }
+    }
+    const auto [targetWidth, targetHeight] = targetVideoSize(effectiveBr);
+    return {alignVideoDimension(targetWidth), alignVideoDimension(targetHeight)};
 }
 
 bool
