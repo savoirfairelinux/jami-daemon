@@ -97,6 +97,7 @@ public:
      * re-targeted from source sizing.
      */
     void setPassthrough(bool passthrough) { passthrough_ = passthrough; }
+    void setDynamicResolution(bool enable) { dynResolution_ = enable; }
 
 #ifdef ENABLE_VIDEO
     int encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe, int64_t frame_number);
@@ -137,6 +138,7 @@ public:
 private:
     NON_COPYABLE(MediaEncoder);
     bool passthrough_ {false};
+    bool dynResolution_ {false};
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
@@ -160,6 +162,7 @@ private:
     bool maybeReopenVideoCodec(AVBufferRef* framesCtx = {});
     void drainVideoEncoder(int streamIdx);
     std::pair<int, int> targetVideoSize(uint64_t br) const;
+    std::pair<int, int> desiredDynamicVideoSize(uint64_t br) const;
     bool applyVideoBitrateTarget(uint64_t br);
 #ifdef ENABLE_VIDEO
     int getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_ptr<VideoFrame>& output);
