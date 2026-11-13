@@ -50,6 +50,8 @@ VideoSender::VideoSender(const std::string& dest,
 #endif
     videoEncoder_->addStream(*args.codec);
     videoEncoder_->setInitSeqVal(seqVal);
+    if (const auto localSsrc = socketPair.getLocalSsrc())
+        videoEncoder_->setInitSsrc(*localSsrc);
     videoEncoder_->setIOContext(muxContext_->getContext());
 }
 
@@ -117,12 +119,25 @@ VideoSender::setBitrate(uint64_t br)
     if (!videoEncoder_)
         return -1; // NOK
 
-    const auto width = videoEncoder_->getWidth();
-    const auto height = videoEncoder_->getHeight();
-    const auto ret = videoEncoder_->setBitrate(br);
-    if (ret == 1 && (width != videoEncoder_->getWidth() || height != videoEncoder_->getHeight()))
-        forceKeyFrame();
-    return ret;
+    return videoEncoder_->setBitrate(br);
+}
+
+int
+VideoSender::getWidth() const
+{
+    return videoEncoder_ ? videoEncoder_->getWidth() : 0;
+}
+
+int
+VideoSender::getHeight() const
+{
+    return videoEncoder_ ? videoEncoder_->getHeight() : 0;
+}
+
+MediaStream
+VideoSender::getStream(const std::string& name) const
+{
+    return videoEncoder_ ? videoEncoder_->getStream(name) : MediaStream {};
 }
 
 } // namespace video
