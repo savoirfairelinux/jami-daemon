@@ -504,7 +504,7 @@ private:
     void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok,
                        std::optional<std::uint64_t> generation = std::nullopt);
     void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall = false);
-    void setupNegotiatedMedia();
+    bool setupNegotiatedMedia();
     void startAllMedia();
     // Start every negotiated RTP stream, optionally binding them to a shared
     // bundle transport (RFC 8843).
@@ -551,12 +551,13 @@ private:
     size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
     // Create a new stream from SDP description.
     void createRtpSession(RtpStream& rtpStream);
-    // Configure the RTP session from SDP description.
+    // Configure the RTP session for the given SDP slot.
     void configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
                              const std::shared_ptr<MediaAttribute>& mediaAttr,
                              const MediaDescription& localMedia,
-                             const MediaDescription& remoteMedia);
-    // Find the stream index with the matching label
+                             const MediaDescription& remoteMedia,
+                             unsigned mediaIndex);
+    // Find the unique stream index with the matching label.
     int findRtpStreamIndex(const std::string& label) const;
     int findRtpStreamIndex(unsigned mediaIndex) const;
 
