@@ -63,6 +63,21 @@ public:
         return libjami::setAccountMetadata(accountID, updates);
     }
 
+    std::tuple<bool, std::map<std::string, std::string>> getContactMetadata(const std::string& accountID,
+                                                                            const std::string& uri)
+    {
+        std::map<std::string, std::string> metadata;
+        const auto success = libjami::getContactMetadata(accountID, uri, metadata);
+        return {success, std::move(metadata)};
+    }
+
+    bool setContactMetadata(const std::string& accountID,
+                            const std::string& uri,
+                            const std::map<std::string, std::string>& updates)
+    {
+        return libjami::setContactMetadata(accountID, uri, updates);
+    }
+
     void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
     {
         libjami::setAccountDetails(accountID, details);
@@ -917,6 +932,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitAccountDetailsChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::AccountMetadataChanged>(
                 std::bind(&DBusConfigurationManager::emitAccountMetadataChanged, this, _1, _2)),
+            exportable_serialized_callback<ConfigurationSignal::ContactMetadataChanged>(
+                std::bind(&DBusConfigurationManager::emitContactMetadataChanged, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::StunStatusFailed>(
                 std::bind(&DBusConfigurationManager::emitStunStatusFailure, this, _1)),
             exportable_serialized_callback<ConfigurationSignal::RegistrationStateChanged>(
