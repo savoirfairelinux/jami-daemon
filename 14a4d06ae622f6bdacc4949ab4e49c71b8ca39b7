@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b376cb71_931c5e7c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1917,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:14:04Z",
+      "side": 1,
+      "message": "[error] Line 1917: 🔴 `checkValidApprovalChange` accepts a `policy` commit even when `policy/approval` is not actually changed from the parent tree (only vote files can be removed). This allows a no-op policy commit to consume approval votes without applying a new threshold. Require `policy/approval` to be present in the changed-files set and to differ from the parent value before accepting the commit.",
+      "revId": "14a4d06ae622f6bdacc4949ab4e49c71b8ca39b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
