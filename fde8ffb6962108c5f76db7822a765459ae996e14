@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "564ee08f_3da12753",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T05:36:49Z",
+      "side": 1,
+      "message": "[warning] Line 689: 🟡 `hasDynamicImageAxisRange` uses `catch (...)` around `std::stod`, which swallows every exception type and silently treats malformed `a\u003dimageattr` content as non-dynamic. Narrow this to `std::invalid_argument`/`std::out_of_range` (and avoid catching non-parse failures), then handle invalid tokens explicitly (e.g., return parse failure with a debug log). This keeps negotiation behavior deterministic and avoids masking real runtime faults.",
+      "revId": "fde8ffb6962108c5f76db7822a765459ae996e14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
