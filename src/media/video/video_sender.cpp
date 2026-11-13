@@ -41,7 +41,6 @@ VideoSender::VideoSender(const std::string& dest,
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
-    keyFrameFreq_ = static_cast<int>(opts.frameRate.numerator() * KEY_FRAME_PERIOD);
     videoEncoder_->openOutput(dest, "rtp");
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
@@ -72,10 +71,14 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
         videoEncoder_->send(*packet, -1, AVRational {1, 1'000'000});
     } else {
         videoEncoder_->setPassthrough(false);
-        bool is_keyframe = forceKeyFrame_ > 0 or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
-
-        if (is_keyframe)
-            --forceKeyFrame_;
+        int pendingKeyFrames = forceKeyFrame_.load(std::memory_order_relaxed);
+        while (pendingKeyFrames > 0
+               && !forceKeyFrame_.compare_exchange_weak(pendingKeyFrames,
+                                                        pendingKeyFrames - 1,
+                                                        std::memory_order_acq_rel,
+                                                        std::memory_order_relaxed)) {
+        }
+        const bool is_keyframe = pendingKeyFrames > 0;
 
         if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
             JAMI_ERROR("encoding failed");
