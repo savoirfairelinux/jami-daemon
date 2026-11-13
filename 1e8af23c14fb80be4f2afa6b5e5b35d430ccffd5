@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9def96ab_4a234502",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1201
+      },
+      "writtenOn": "2026-11-13T10:56:01Z",
+      "side": 1,
+      "message": "Patch set 12 rebases the series onto current master, which resolves the merge conflict. Jenkins again started no build for the rebased patch sets, so all four changes of the topic swarm-admin-roles (37095 to 37098) are now without a Verified vote. Could a maintainer please run CI on their current patch sets?",
+      "revId": "1e8af23c14fb80be4f2afa6b5e5b35d430ccffd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
