@@ -80,6 +80,16 @@ public:
         return next.get_token();
     }
 
+    void cancelStart()
+    {
+        std::stop_source source(std::nostopstate);
+        {
+            std::lock_guard lock(startMutex_);
+            source = startSource_;
+        }
+        source.request_stop();
+    }
+
     void stop()
     {
         std::stop_source source(std::nostopstate);

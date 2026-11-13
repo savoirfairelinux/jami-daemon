@@ -749,9 +749,7 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport, const s
                         return;
                     JAMI_WARNING("[call:{}] Ending call because underlying SIP transport was closed",
                                  this_->getCallId());
-                    this_->stopAllMedia();
-                    this_->detachAudioFromConference();
-                    this_->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
+                    this_->stopAllMedia([call = this_] { call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE); }, true);
                 }
             });
         });
@@ -1230,7 +1228,7 @@ void
 SIPCall::drainPendingRequests()
 {
     auto ready = [this] {
-        return getConnectionState() == ConnectionState::CONNECTED and inviteSession_
+        return !mediaStopping_ && !mediaEnding_ && getConnectionState() == ConnectionState::CONNECTED and inviteSession_
                and inviteSession_->state == PJSIP_INV_STATE_CONFIRMED and not isReinviteBusyLocked();
     };
     std::function<void()> reply;
@@ -1827,7 +1825,7 @@ SIPCall::isNativeMediaReady() const
 bool
 SIPCall::isNativeMediaReadyLocked() const
 {
-    if (hasExternalMedia() || isSubcall() || getState() != CallState::ACTIVE
+    if (mediaStopping_ || mediaEnding_ || hasExternalMedia() || isSubcall() || getState() != CallState::ACTIVE
         || getConnectionState() != ConnectionState::CONNECTED || !sdp_ || !sdp_->getActiveLocalSdpSession()
         || !sdp_->getActiveRemoteSdpSession() || !isIceRunning())
         return false;
@@ -2116,42 +2114,29 @@ SIPCall::hangup(int code)
     }
 
     // Stop all RTP streams
-    stopAllMedia();
-    detachAudioFromConference();
-    setState(Call::ConnectionState::DISCONNECTED, code);
-    dht::ThreadPool::io().run([w = weak(), code] {
-        if (auto shared = w.lock())
-            shared->removeCall(code);
-    });
-}
-
-void
-SIPCall::detachAudioFromConference()
-{
-#ifdef ENABLE_VIDEO
-    if (auto conf = getConference()) {
-        if (auto mixer = conf->getVideoMixer()) {
-            for (auto& stream : getRtpSessionList(MediaType::MEDIA_AUDIO)) {
-                mixer->removeAudioOnlySource(getCallId(), stream->streamId());
-            }
-        }
-    }
-#endif
+    stopAllMedia(
+        [call = shared(), code] {
+            call->setState(Call::ConnectionState::DISCONNECTED, code);
+            dht::ThreadPool::io().run([call, code] { call->removeCall(code); });
+        },
+        true);
 }
 
 void
 SIPCall::refuse()
 {
+    std::lock_guard lk {callMutex_};
     if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inviteSession_)
         return;
 
-    stopAllMedia();
-
     // Notify the peer
     terminateSipSession(PJSIP_SC_DECLINE);
-
-    setState(Call::ConnectionState::DISCONNECTED, PJSIP_SC_DECLINE);
-    removeCall();
+    stopAllMedia(
+        [call = shared()] {
+            call->setState(Call::ConnectionState::DISCONNECTED, PJSIP_SC_DECLINE);
+            call->removeCall();
+        },
+        true);
 }
 
 static void
@@ -2331,6 +2316,9 @@ SIPCall::hold(OnReadyCb&& cb)
 
     auto result = hold();
 
+    if (mediaStopping_ && cb) {
+        mediaStoppedCallbacks_.emplace_back([cb = std::exchange(cb, {}), result] { cb(result); });
+    }
     lk.unlock();
     if (cb)
         cb(result);
@@ -2492,14 +2480,11 @@ SIPCall::switchInput(const std::string& source)
 void
 SIPCall::peerHungup()
 {
+    std::lock_guard lk {callMutex_};
     pendingRecord_ = false;
-    // Stop all RTP streams
-    stopAllMedia();
-
     if (inviteSession_)
         terminateSipSession(PJSIP_SC_NOT_FOUND);
-    detachAudioFromConference();
-    Call::peerHungup();
+    stopAllMedia([call = shared()] { call->Call::peerHungup(); }, true);
 }
 
 void
@@ -2586,10 +2571,16 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
 void
 SIPCall::removeCall(int code)
 {
+    std::lock_guard lk {callMutex_};
+    mediaEnding_ = true;
+    pendingMediaRestart_ = {};
+    if (mediaStopping_) {
+        mediaStoppedCallbacks_.emplace_back([call = shared(), code] { call->removeCall(code); });
+        return;
+    }
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(getCallId());
 #endif
-    std::lock_guard lk {callMutex_};
     stopCallRecovery();
     promotionEnding_ = false;
     queuePromotionFailureLocked("Call removed before native media was ready");
@@ -3151,6 +3142,19 @@ SIPCall::setupNegotiatedMedia()
 void
 SIPCall::startAllMedia()
 {
+    std::lock_guard lk {callMutex_};
+    if (mediaEnding_ || hasExternalMedia() || !inviteSession_ || inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED) {
+        JAMI_DEBUG("[call:{}] Skipping media startup after call teardown", getCallId());
+        return;
+    }
+    if (mediaStopping_) {
+        if (!pendingMediaRestart_)
+            pendingMediaRestart_ = [w = weak()] {
+                if (auto call = w.lock())
+                    call->startAllMedia();
+            };
+        return;
+    }
     JAMI_DEBUG("[call:{}] Starting all media", getCallId());
 
     if (not sipTransport_ or not sdp_) {
@@ -3163,7 +3167,6 @@ SIPCall::startAllMedia()
     }
 
     bundleStopSource_.request_stop();
-    SocketPair::joinBundleDtls(activeBundleContext_);
     bundleStopSource_ = std::stop_source {};
 
     // reset
@@ -3274,6 +3277,8 @@ SIPCall::processRemainingRequest()
     default:
         break;
     }
+    if (mediaStopping_ && reply)
+        mediaStoppedCallbacks_.emplace_back(std::exchange(reply, {}));
     return reply;
 }
 
@@ -3282,6 +3287,13 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                          bool iceRunning,
                          const std::vector<MediaAttribute>& remoteMediaList)
 {
+#ifdef ENABLE_PLUGIN
+    // Plugin attachment inspects every session, so none may still be starting.
+    auto pendingStarts = std::make_shared<std::atomic_size_t>(
+        std::count_if(rtpStreams_.begin(), rtpStreams_.end(), [](const auto& stream) {
+            return stream.mediaAttribute_ && stream.mediaAttribute_->enabled_;
+        }));
+#endif
     size_t idx = 0;
     for (auto& rtpStream : rtpStreams_) {
         if (not rtpStream.mediaAttribute_) {
@@ -3313,6 +3325,9 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                 useBundleSocketContext ? std::unique_ptr<dhtnet::IceSocket> {} : std::move(rtpStream.rtpSocket_),
                 useBundleSocketContext ? std::unique_ptr<dhtnet::IceSocket> {} : std::move(rtpStream.rtcpSocket_));
         dht::ThreadPool::io().run([w = weak(),
+#ifdef ENABLE_PLUGIN
+                                   pendingStarts,
+#endif
                                    idx,
                                    mediaIdx = *mediaIdx,
                                    isVideo = rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO,
@@ -3330,25 +3345,33 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
                 }
                 if (stopToken.stop_requested())
                     return;
-                if (isVideo) {
-                    if (auto call = w.lock()) {
-#ifdef ENABLE_VIDEO
-                        auto& receive = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)->getVideoReceive();
-                        if (receive) {
-                            std::lock_guard lk(call->sinksMtx_);
-                            for (const auto& sink : call->callSinksMap_)
-                                receive->getSink()->attach(sink.second.get());
-                        }
-#endif
-                        call->requestKeyframe(static_cast<int>(mediaIdx));
-                    }
-                }
 #ifdef ENABLE_PLUGIN
-                if (auto call = w.lock()) {
-                    // Create AVStreams associated with the call
-                    call->createCallAVStreams();
-                }
+                const bool allStarted = pendingStarts->fetch_sub(1) == 1;
 #endif
+                if (auto call = w.lock()) {
+                    {
+                        std::lock_guard lk {call->callMutex_};
+                        if (stopToken.stop_requested() || call->mediaStopping_ || call->mediaEnding_)
+                            return;
+                        if (isVideo) {
+#ifdef ENABLE_VIDEO
+                            auto& receive = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)
+                                                ->getVideoReceive();
+                            if (receive) {
+                                std::lock_guard lk(call->sinksMtx_);
+                                for (const auto& sink : call->callSinksMap_)
+                                    receive->getSink()->attach(sink.second.get());
+                            }
+#endif
+                        }
+#ifdef ENABLE_PLUGIN
+                        if (allStarted)
+                            call->createCallAVStreams();
+#endif
+                    }
+                    if (isVideo)
+                        call->requestKeyframe(static_cast<int>(mediaIdx));
+                }
                 runOnMainThread([w, rtpSession, idx, stopToken] {
                     if (stopToken.stop_requested())
                         return;
@@ -3391,68 +3414,126 @@ SIPCall::startRtpStreams(const std::shared_ptr<SocketPair::BundleContext>& bundl
 void
 SIPCall::restartMediaSender()
 {
+    std::lock_guard lk {callMutex_};
+    if (mediaStopping_ || mediaEnding_)
+        return;
     JAMI_DEBUG("[call:{}] Restarting TX media streams", getCallId());
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->restartSender();
 }
 
 void
-SIPCall::stopAllMedia()
+SIPCall::stopAllMedia(std::function<void()> onStopped, bool endCall)
 {
+    std::lock_guard lk {callMutex_};
+    pendingMediaRestart_ = {};
+    mediaEnding_ |= endCall;
+#ifdef ENABLE_VIDEO
+    if (endCall) {
+        mediaStoppedCallbacks_.emplace_back(
+            [conference = getConference(), streams = getRtpSessionList(MediaType::MEDIA_AUDIO), callId = getCallId()] {
+                if (conference)
+                    if (auto mixer = conference->getVideoMixer())
+                        for (const auto& stream : streams)
+                            mixer->removeAudioOnlySource(callId, stream->streamId());
+            });
+    }
+#endif
+    if (onStopped)
+        mediaStoppedCallbacks_.emplace_back(std::move(onStopped));
+    if (mediaStopping_)
+        return;
+
+    mediaStopping_ = true;
     JAMI_DEBUG("[call:{}] Stopping all media", getCallId());
+    auto sessions = getRtpSessionList();
+    auto bundle = std::exchange(activeBundleContext_, {});
     bundleStopSource_.request_stop();
-    SocketPair::joinBundleDtls(activeBundleContext_);
+    for (const auto& session : sessions)
+        session->cancelStart();
 
 #ifdef ENABLE_VIDEO
+    decltype(callSinksMap_) sinks;
     {
         std::lock_guard lk(sinksMtx_);
-        for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
-            for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
-                auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
-                if (videoReceive) {
-                    auto& sink = videoReceive->getSink();
-                    sink->detach(it->second.get());
+        sinks = std::exchange(callSinksMap_, {});
+    }
+#endif
+    dht::ThreadPool::io().run([call = shared(),
+                               sessions = std::move(sessions),
+                               bundle = std::move(bundle)
+#ifdef ENABLE_VIDEO
+                                   ,
+                               sinks = std::move(sinks)
+#endif
+    ]() mutable {
+        SocketPair::joinBundleDtls(bundle);
+#ifdef ENABLE_VIDEO
+        for (const auto& [id, sink] : sinks) {
+            for (const auto& session : sessions) {
+                if (session->getMediaType() == MediaType::MEDIA_VIDEO) {
+                    auto& receive = std::static_pointer_cast<video::VideoRtpSession>(session)->getVideoReceive();
+                    if (receive)
+                        receive->getSink()->detach(sink.get());
                 }
             }
-            it->second->stop();
-            it = callSinksMap_.erase(it);
+            sink->stop();
         }
-    }
 #endif
-    // Stop all RTP sessions in parallel
-    std::mutex mtx;
-    std::condition_variable cv;
-    unsigned int stoppedCount = 0;
-    unsigned int totalStreams = rtpStreams_.size();
+        std::mutex mtx;
+        std::condition_variable cv;
+        size_t stoppedCount = 0;
+        for (const auto& session : sessions) {
+            dht::ThreadPool::io().run([&, session] {
+                try {
+                    session->stop();
+                    session->clearBundleSocketContext();
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Failed to stop RTP session: {}", e.what());
+                }
 
-    for (const auto& rtpSession : getRtpSessionList()) {
-        dht::ThreadPool::io().run([&, rtpSession]() {
-            try {
-                rtpSession->stop();
-            } catch (const std::exception& e) {
-                JAMI_ERROR("Failed to stop RTP session: {}", e.what());
-            }
-
-            std::lock_guard lk(mtx);
-            stoppedCount++;
-            cv.notify_one();
-        });
-    }
-
-    // Wait for all streams to be stopped
-    std::unique_lock lk(mtx);
-    cv.wait(lk, [&] { return stoppedCount == totalStreams; });
-    for (const auto& rtpSession : getRtpSessionList())
-        rtpSession->clearBundleSocketContext();
-    activeBundleContext_.reset();
+                std::lock_guard lk(mtx);
+                ++stoppedCount;
+                cv.notify_one();
+            });
+        }
+        {
+            std::unique_lock lk(mtx);
+            cv.wait(lk, [&] { return stoppedCount == sessions.size(); });
+        }
 
 #ifdef ENABLE_PLUGIN
-    {
-        clearCallAVStreams();
-        std::lock_guard lk(avStreamsMtx_);
-        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(getCallId());
-    }
+        call->clearCallAVStreams();
+        {
+            std::lock_guard lk(call->avStreamsMtx_);
+            Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(call->getCallId());
+        }
 #endif
+        sessions.clear();
+        bundle.reset();
+#ifdef ENABLE_VIDEO
+        sinks.clear();
+#endif
+        runOnMainThread([call] {
+            std::vector<std::function<void()>> callbacks;
+            {
+                std::lock_guard lk {call->callMutex_};
+                call->mediaStopping_ = false;
+                callbacks = std::exchange(call->mediaStoppedCallbacks_, {});
+            }
+            for (const auto& callback : callbacks)
+                callback();
+            {
+                std::lock_guard lk {call->callMutex_};
+                if (!call->mediaStopping_) {
+                    auto restart = std::exchange(call->pendingMediaRestart_, {});
+                    if (restart && !call->mediaEnding_)
+                        restart();
+                }
+            }
+            call->drainPendingRequests();
+        });
+    });
 }
 
 void
@@ -3529,8 +3610,10 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
         mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
 
     if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
-        rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
-        rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+        if (!mediaStopping_ && !mediaEnding_) {
+            rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
+            rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+        }
         sendMuteState(mediaAttr->muted_);
         if (not isSubcall())
             emitSignal<libjami::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
@@ -3539,8 +3622,10 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 
 #ifdef ENABLE_VIDEO
     if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
-        rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
-        rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+        if (!mediaStopping_ && !mediaEnding_) {
+            rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
+            rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+        }
 
         if (not isSubcall())
             emitSignal<libjami::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
@@ -3612,11 +3697,14 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
                 return media.label_ == stream.mediaAttribute_->label_;
             }))
             return false;
-#ifdef ENABLE_VIDEO
-        if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
-            std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->exitConference();
-#endif
-        stream.rtpSession_->stop();
+        stream.rtpSession_->cancelStart();
+        dht::ThreadPool::io().run([session = stream.rtpSession_] {
+            try {
+                session->stop();
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Failed to stop removed RTP session: {}", e.what());
+            }
+        });
         return true;
     });
     return true;
@@ -3957,15 +4045,28 @@ SIPCall::onMediaNegotiationComplete()
             } else {
                 // Update the negotiated media.
                 if (this_->mediaRestartRequired_) {
-                    if (!this_->setupNegotiatedMedia()) {
-                        this_->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
-                        return;
-                    }
                     // No ICE, start media now.
                     JAMI_WARNING("[call:{}] ICE media disabled, using default media ports", this_->getCallId());
                     // Start the media.
                     this_->stopAllMedia();
-                    this_->startAllMedia();
+                    this_->pendingMediaRestart_ = [w = this_->weak(), generation] {
+                        if (auto call = w.lock()) {
+                            std::lock_guard lk {call->callMutex_};
+                            if (call->mediaEnding_ || !call->inviteSession_ || call->hasExternalMedia()
+                                || call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+                                || (call->peerSupportsHandover()
+                                    && (call->mediaNegotiationGeneration_.load() != generation
+                                        || !call->isCurrentMediaNegotiation())))
+                                return;
+                            if (!call->setupNegotiatedMedia()) {
+                                call->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+                                return;
+                            }
+                            call->startAllMedia();
+                            call->reportMediaNegotiationStatus();
+                        }
+                    };
+                    return;
                 }
 
                 // this_->updateRemoteMedia();
@@ -4165,59 +4266,20 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
             return;
         generation = mediaNegotiationGeneration_.load();
 
-        // Update the negotiated media.
-        if (!setupNegotiatedMedia()) {
-            onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
-            return;
-        }
-
         // If this callback is for a re-invite session then update
         // the ICE media transport.
         if (isIceEnabled())
             switchToIceReinviteIfNeeded();
 
-        for (unsigned int idx = 0; idx < rtpStreams_.size(); idx++) {
-            // Create sockets for RTP and RTCP, and start the session.
-            auto& rtpStream = rtpStreams_[idx];
-            if (not rtpStream.mediaAttribute_ or not rtpStream.mediaAttribute_->enabled_) {
-                JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
-                continue;
-            }
-            const auto mediaIndex = sdp_->getMediaIndex(rtpStream.mediaAttribute_->label_);
-            if (!mediaIndex) {
-                JAMI_ERROR("[call:{}] Missing or ambiguous SDP slot for media {}",
-                           getCallId(),
-                           rtpStream.mediaAttribute_->label_);
-                onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
-                return;
-            }
-            const auto compId = getRtpCompId(*mediaIndex);
-            rtpStream.rtpSocket_ = newIceSocket(compId);
-
-            if (not rtcpMuxEnabled_) {
-                rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
-            }
-        }
-    }
-
-    dht::ThreadPool::io().run([w = weak(), negotiatedIce, fromSubcall, generation] {
-        if (auto call = w.lock()) {
-            {
-                std::lock_guard lk {call->callMutex_};
-                if (negotiatedIce != call->getIceMedia()
-                    or (call->peerSupportsHandover()
-                        and (call->mediaNegotiationGeneration_.load() != generation
-                             or not call->isCurrentMediaNegotiation())))
-                    return;
-                call->stopAllMedia();
-            }
-
-            runOnMainThread([w, negotiatedIce, fromSubcall, generation] {
+        stopAllMedia();
+        pendingMediaRestart_ =
+            [w = weak(), negotiatedIce, fromSubcall, generation] {
                 if (auto call = w.lock()) {
                     std::lock_guard lk {call->callMutex_};
 
-                    if (not call->inviteSession_ or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                        or not call->sdp_ or negotiatedIce != call->getIceMedia()
+                    if (call->mediaEnding_ || call->hasExternalMedia() || not call->inviteSession_
+                        or call->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not call->sdp_
+                        or negotiatedIce != call->getIceMedia()
                         or (call->peerSupportsHandover()
                             and (call->mediaNegotiationGeneration_.load() != generation
                                  or not call->isCurrentMediaNegotiation()))) {
@@ -4226,6 +4288,26 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
                         return;
                     }
 
+                    if (!call->setupNegotiatedMedia()) {
+                        call->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+                        return;
+                    }
+                    for (auto& stream : call->rtpStreams_) {
+                        if (!stream.mediaAttribute_ || !stream.mediaAttribute_->enabled_)
+                            continue;
+                        const auto mediaIndex = call->sdp_->getMediaIndex(stream.mediaAttribute_->label_);
+                        if (!mediaIndex) {
+                            JAMI_ERROR("[call:{}] Missing or ambiguous SDP slot for media {}",
+                                       call->getCallId(),
+                                       stream.mediaAttribute_->label_);
+                            call->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+                            return;
+                        }
+                        const auto compId = call->getRtpCompId(*mediaIndex);
+                        stream.rtpSocket_ = call->newIceSocket(compId);
+                        if (!call->rtcpMuxEnabled_)
+                            stream.rtcpSocket_ = call->newIceSocket(compId + 1);
+                    }
                     call->startAllMedia();
                     if (not fromSubcall and call->recoveryNegotiation_
                         and negotiatedIce == call->recoveryNegotiation_->ice) {
@@ -4234,9 +4316,8 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
                     }
                     call->reportMediaNegotiationStatus();
                 }
-            });
-        }
-    });
+            };
+    }
 }
 
 bool
@@ -5160,10 +5241,8 @@ SIPCall::failPendingTransportFallback()
     {
         std::lock_guard lk {callMutex_};
         transportFallbackPending_ = false;
-        stopAllMedia();
-        detachAudioFromConference();
     }
-    onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR);
+    stopAllMedia([call = shared()] { call->onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR); }, true);
 }
 
 bool
