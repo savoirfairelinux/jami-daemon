@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2990504b_6048082a",
+        "filename": "src/metadata.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:50:15Z",
+      "side": 1,
+      "message": "[error] Line 24: 🔴 `validValue()` now only checks size/emptiness and no longer rejects invalid UTF-8 or embedded NUL bytes for keys/values. This is a behavioral regression from the previous validation contract and permits malformed metadata that can break downstream string consumers/protocol boundaries (e.g., C-string truncation on `\\0`, inconsistent rendering/serialization for non-UTF-8). Restore strict content validation (UTF-8 + no NUL) for both key and value, and keep the current size limits.",
+      "revId": "165612cbbcdb5dad7dfb0ae2d9eaad61a499778f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
