@@ -488,6 +488,7 @@ public:
                            const std::string& deviceId,
                            const std::string& interactionId,
                            const std::string& fileId,
+                           const std::string& fileHostDevice,
                            size_t start = 0,
                            size_t end = 0);
 

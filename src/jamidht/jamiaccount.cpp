@@ -5057,6 +5057,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                                const std::string& deviceId,
                                const std::string& interactionId,
                                const std::string& fileId,
+                               const std::string& fileHostDevice,
                                size_t start,
                                size_t end)
 {
@@ -5069,8 +5070,12 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         if (start != 0 || end != 0) {
             channelName += fmt::format("?start={}&end={}", start, end);
         }
-        // We can avoid to negotiate new sessions, as the file notif
-        // probably came from an online device or last connected device.
+        // Only the file's host gets a typed request, so a backgrounded iOS host wakes
+        // and loads only this conversation. Other devices get an untyped request: they
+        // serve the file if connected, and a backgrounded iOS device ignores it.
+        dhtnet::ConnectDeviceOptions options;
+        if (!fileHostDevice.empty() && did.toString() == fileHostDevice)
+            options.connType = fmt::format("{}/{}", MIME_TYPE_FILE_REQUEST, conversationId);
         connectionManager_->connectDevice(
             did,
             channelName,
@@ -5094,15 +5099,15 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                         dt->onIncomingFileTransfer(fileId, channel, start);
                 });
             },
-            false);
+            options);
     };
 
     if (!deviceId.empty()) {
         // Only ask for device
         tryDevice(DeviceId(deviceId));
     } else {
-        // Only ask for connected devices. For others we will attempt
-        // with new peer online
+        // Ask every device of every member, negotiating a connection when needed.
+        // Devices that come online later are asked again when they sync.
         for (const auto& m : convModule()->getConversationMembers(conversationId)) {
             accountManager_->forEachDevice(dht::InfoHash(m.at("uri")),
                                            [tryDevice](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
