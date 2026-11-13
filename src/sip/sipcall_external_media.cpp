@@ -146,17 +146,26 @@ SIPCall::completeExternalMediaDemotion(const std::string& requestId)
     const auto participants = demotionConference_->getSubCalls();
     if (participants.size() != 1 || !participants.contains(getCallId()))
         return false;
-    auto conference = std::move(demotionConference_);
-    stopAllMedia();
-    rtpStreams_.clear();
-    conferenceMediaSource_.reset();
-    enableIce_ = false;
-    demotionRequestId_.clear();
-    demotionAnswerReceived_ = false;
-    demotionPriorOffer_.reset();
-    libjami::retireBrowserConferenceHost(getAccountId(), conference->getConfId());
-    Manager::instance().removeParticipant(*this);
-    emitSignal<libjami::CallSignal::ExternalMediaDemotionReady>(getAccountId(), getCallId(), requestId);
+    stopAllMedia([call = shared(), requestId] {
+        std::lock_guard lk {call->callMutex_};
+        if (call->demotionRequestId_ != requestId)
+            return;
+        if (call->mediaEnding_ || !call->demotionConference_ || call->getConference() != call->demotionConference_
+            || !call->inviteSession_ || call->inviteSession_->state != PJSIP_INV_STATE_CONFIRMED) {
+            call->failDemotion("Call changed before direct media teardown completed");
+            return;
+        }
+        auto conference = std::move(call->demotionConference_);
+        call->rtpStreams_.clear();
+        call->conferenceMediaSource_.reset();
+        call->enableIce_ = false;
+        call->demotionRequestId_.clear();
+        call->demotionAnswerReceived_ = false;
+        call->demotionPriorOffer_.reset();
+        libjami::retireBrowserConferenceHost(call->getAccountId(), conference->getConfId());
+        Manager::instance().removeParticipant(*call);
+        emitSignal<libjami::CallSignal::ExternalMediaDemotionReady>(call->getAccountId(), call->getCallId(), requestId);
+    });
     return true;
 }
 
@@ -189,8 +198,8 @@ SIPCall::getExternalMediaPromotionState() const
 std::string
 SIPCall::promotionStateLocked() const
 {
-    if (!hasExternalMedia() || !rtpStreams_.empty() || !promotionRequestId_.empty() || isSubcall()
-        || isConferenceParticipant())
+    if (mediaStopping_ || mediaEnding_ || !hasExternalMedia() || !rtpStreams_.empty() || !promotionRequestId_.empty()
+        || isSubcall() || isConferenceParticipant())
         return "UNAVAILABLE";
     if (getState() != CallState::ACTIVE || getConnectionState() != ConnectionState::CONNECTED || !inviteSession_
         || inviteSession_->state != PJSIP_INV_STATE_CONFIRMED || inviteSession_->invite_tsx || isWaitingForIceAndMedia_

@@ -166,6 +166,8 @@ LIBJAMI_PUBLIC bool requestExternalMediaDemotion(const std::string& accountId,
                                                  const std::string& conferenceId,
                                                  const std::string& requestId,
                                                  const std::string& sdpOffer);
+/* Begin native media teardown after direct browser ICE is ready. True means
+ * teardown was accepted; ExternalMediaDemotionReady signals its completion. */
 LIBJAMI_PUBLIC bool completeExternalMediaDemotion(const std::string& accountId,
                                                   const std::string& callId,
                                                   const std::string& requestId);
