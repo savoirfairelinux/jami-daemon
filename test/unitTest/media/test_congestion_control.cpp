@@ -11,6 +11,7 @@
 #include "test_runner.h"
 
 #ifdef ENABLE_VIDEO
+#include "media/system_codec_container.h"
 #include "media/video/video_rtp_session.h"
 #endif
 
@@ -39,6 +40,7 @@ private:
 #ifdef ENABLE_VIDEO
     void rembAdaptationUsesNegotiatedMode();
     void absoluteAdaptationNeverUsesLegacyCommands();
+    void senderRestartPreservesDimensionsAndSsrcAfterBitrateFeedback();
 #endif
     void transportCcEstimateReducesOnDelayAndLoss();
     void transportCcEstimateIncreasesOnCleanFeedback();
@@ -50,6 +52,7 @@ private:
 #ifdef ENABLE_VIDEO
     CPPUNIT_TEST(rembAdaptationUsesNegotiatedMode);
     CPPUNIT_TEST(absoluteAdaptationNeverUsesLegacyCommands);
+    CPPUNIT_TEST(senderRestartPreservesDimensionsAndSsrcAfterBitrateFeedback);
 #endif
     CPPUNIT_TEST(transportCcEstimateReducesOnDelayAndLoss);
     CPPUNIT_TEST(transportCcEstimateIncreasesOnCleanFeedback);
@@ -162,6 +165,42 @@ CongestionControlTest::absoluteAdaptationNeverUsesLegacyCommands()
     session.videoBitrateInfo_.videoBitrateMin = 100;
     session.applyAbsoluteBitrate(0x6803);
     CPPUNIT_ASSERT_EQUAL(100u, session.getVideoBitrateInfo().videoBitrateCurrent);
+}
+
+void
+CongestionControlTest::senderRestartPreservesDimensionsAndSsrcAfterBitrateFeedback()
+{
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<SystemVideoCodecInfo>(codecs->searchCodecByName("H264", MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    video::VideoRtpSession session("restart-dim-test", "video_0", DeviceParams {}, {});
+    MediaDescription send;
+    send.enabled = true;
+    send.codec = h264Codec;
+    MediaDescription receive;
+    receive.codec = h264Codec;
+    session.updateMedia(send, receive);
+
+    session.seedVideoBitrate(1280 * 720);
+    const auto initialSeeded = session.seededVideoBitrate_;
+    CPPUNIT_ASSERT(initialSeeded > 0);
+    CPPUNIT_ASSERT_EQUAL(initialSeeded, session.getVideoBitrateInfo().videoBitrateCurrent);
+
+    // Congestion feedback updates the live target bitrate without mutating the
+    // initial sizing budget used when a sender restarts for the same source.
+    session.setNewBitrate(300);
+    CPPUNIT_ASSERT_EQUAL(300u, session.getVideoBitrateInfo().videoBitrateCurrent);
+    CPPUNIT_ASSERT_EQUAL(initialSeeded, session.seededVideoBitrate_);
+
+    session.setNewBitrate(1300);
+    CPPUNIT_ASSERT_EQUAL(1300u, session.getVideoBitrateInfo().videoBitrateCurrent);
+    CPPUNIT_ASSERT_EQUAL(initialSeeded, session.seededVideoBitrate_);
+
+    // A genuine source resolution change re-seeds the sizing budget.
+    session.seedVideoBitrate(1920 * 1080);
+    CPPUNIT_ASSERT(session.seededVideoBitrate_ > initialSeeded);
 }
 #endif
 

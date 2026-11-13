@@ -30,6 +30,8 @@
 #include "media_codec.h"
 #include "media_stream.h"
 
+#include <atomic>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
@@ -91,9 +93,8 @@ public:
 
     /**
      * Signal that video packets are pre-encoded by an external encoder
-     * (hardware encoders on mobile). The internal encoder then must not
-     * re-target the output resolution on bitrate changes, as it does not
-     * control the source and resetting the stream breaks remote decoders.
+     * (hardware encoders on mobile), so output dimensions must not be
+     * re-targeted from source sizing.
      */
     void setPassthrough(bool passthrough) { passthrough_ = passthrough; }
 
@@ -116,6 +117,7 @@ public:
     int getHeight() const { return videoOpts_.height; };
 
     void setInitSeqVal(uint16_t seqVal);
+    void setInitSsrc(uint32_t ssrc);
     uint16_t getLastSeqValue();
 
     int setBitrate(uint64_t br);
@@ -155,6 +157,8 @@ private:
     bool isDynBitrateSupported(AVCodecID codecid);
     bool isDynPacketLossSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+    bool maybeReopenVideoCodec(AVBufferRef* framesCtx = {});
+    void drainVideoEncoder(int streamIdx);
     std::pair<int, int> targetVideoSize(uint64_t br) const;
     bool applyVideoBitrateTarget(uint64_t br);
 #ifdef ENABLE_VIDEO
@@ -198,6 +202,10 @@ protected:
     std::optional<SystemCodecInfo> videoCodecInfo_ {};
     int sourceVideoWidth_ {0};
     int sourceVideoHeight_ {0};
+    uint64_t sizingBitrate_ {0};
+    uint64_t appliedVideoBitrate_ {0};
+    std::atomic_bool pendingCodecReopen_ {false};
+    std::chrono::steady_clock::time_point lastCodecReopen_ {std::chrono::steady_clock::time_point::min()};
 };
 
 } // namespace jami
