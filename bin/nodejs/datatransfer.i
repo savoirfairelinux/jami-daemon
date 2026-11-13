@@ -29,6 +29,7 @@ class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
     virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& interactionId, const std::string& fileId, int eventCode){}
+    virtual void outgoingFileTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& fileId, const std::string& transferId, int eventCode){}
 };
 %}
 
@@ -83,4 +84,5 @@ class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
     virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& interactionId, const std::string& fileId, int eventCode){}
+    virtual void outgoingFileTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& fileId, const std::string& transferId, int eventCode){}
 };

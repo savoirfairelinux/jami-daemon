@@ -682,6 +682,25 @@ dataTransferEvent(const std::string& accountId,
     uv_async_send(&signalAsync);
 }
 
+void
+outgoingFileTransferEvent(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& fileId,
+                          const std::string& transferId,
+                          int eventCode)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, fileId, transferId, eventCode]() {
+        napi_value args[] = {napiString(accountId),
+                             napiString(conversationId),
+                             napiString(fileId),
+                             napiString(transferId),
+                             napiInt32(eventCode)};
+        callCallback("OutgoingFileTransferEvent", 5, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
 // Conversation signals
 
 void
@@ -1221,6 +1240,8 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
     const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
         exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
             bind(&dataTransferEvent, _1, _2, _3, _4, _5)),
+        exportable_callback<libjami::DataTransferSignal::OutgoingFileTransferEvent>(
+            bind(&outgoingFileTransferEvent, _1, _2, _3, _4, _5)),
     };
 
     const std::map<std::string, SharedCallback> conversationHandlers
