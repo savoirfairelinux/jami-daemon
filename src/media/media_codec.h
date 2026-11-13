@@ -254,6 +254,7 @@ struct MediaDescription
     bool rtcp_fb_goog_remb {false};
     bool rtcp_fb_nack_pli {false};
     bool rtcp_fb_ccm_fir {false};
+    bool dynamic_resolution {false};
     std::string receiving_sdp {};
     unsigned bitrate {};
     unsigned rtp_clockrate {8000};
