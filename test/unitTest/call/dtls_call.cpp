@@ -19,6 +19,7 @@
 #include "jamidht/jamiaccount.h"
 #include "media/dtls_srtp.h"
 #include "media/media_attribute.h"
+#include "media/audio/audio_rtp_session.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 #include "sip/sipvoiplink.h"
@@ -32,6 +33,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <future>
 #include <thread>
 #include <string>
 
@@ -45,6 +47,28 @@ namespace jami {
 namespace test {
 
 namespace {
+
+class TeardownRtpSession : public AudioRtpSession
+{
+public:
+    explicit TeardownRtpSession(const std::string& callId)
+        : AudioRtpSession(callId, callId + "-audio", nullptr, Mode::CONFERENCE_HOST)
+    {}
+
+    void restartSender() override { ++restarts; }
+    bool hasBundleContext() const { return bool(bundleSocketContext_); }
+    std::function<void()> onStop;
+    std::atomic_uint stops {0};
+    std::atomic_uint restarts {0};
+
+private:
+    void stopSession() override
+    {
+        ++stops;
+        if (onStop)
+            onStop();
+    }
+};
 
 bool
 hasSdpAttribute(const pjmedia_sdp_attr* const* attributes, unsigned attributeCount, std::string_view name)
@@ -84,6 +108,8 @@ private:
     void testTransportFallbackWaitsForConfirmedDialog();
     void testTransportFallbackFailureEndsCall();
     void testMediaSetupRejectsInvalidIdentity();
+    void testMediaStopReleasesCallMutex();
+    void testMediaStopPreservesNewerMedia();
     void testCallNegotiatesDtlsSrtp(bool withVideo,
                                     bool bobRtcpMuxEnabled = true,
                                     bool failTransportFallback = false,
@@ -97,6 +123,8 @@ private:
     CPPUNIT_TEST(testTransportFallbackWaitsForConfirmedDialog);
     CPPUNIT_TEST(testTransportFallbackFailureEndsCall);
     CPPUNIT_TEST(testMediaSetupRejectsInvalidIdentity);
+    CPPUNIT_TEST(testMediaStopReleasesCallMutex);
+    CPPUNIT_TEST(testMediaStopPreservesNewerMedia);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -238,6 +266,118 @@ DtlsCallTest::testTransportFallbackFailureEndsCall()
     if (bobAccount->getCall(bobCallId))
         Manager::instance().hangupCall(bobId, bobCallId);
     libjami::unregisterSignalHandlers();
+}
+
+void
+DtlsCallTest::testMediaStopReleasesCallMutex()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    auto call = std::make_shared<SIPCall>(account,
+                                          "teardown-lock-test",
+                                          Call::CallType::OUTGOING,
+                                          MediaAttribute::mediaAttributesToMediaMaps({audio}));
+    auto session = std::make_shared<TeardownRtpSession>(call->getCallId());
+    call->rtpStreams_.front().rtpSession_ = session;
+    auto acquired = std::make_shared<std::promise<bool>>();
+    auto acquiredFuture = acquired->get_future();
+    session->onStop = [w = std::weak_ptr(call), acquired] {
+        auto call = w.lock();
+        const auto deadline = std::chrono::steady_clock::now() + 1s;
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (call->callMutex_.try_lock()) {
+                call->callMutex_.unlock();
+                acquired->set_value(true);
+                return;
+            }
+            std::this_thread::yield();
+        }
+        acquired->set_value(false);
+    };
+    auto stopped = std::make_shared<std::promise<void>>();
+    auto stoppedFuture = stopped->get_future();
+    {
+        std::lock_guard lk {call->callMutex_};
+        const auto queued = session->prepareStart();
+        call->stopAllMedia([stopped] { stopped->set_value(); });
+        CPPUNIT_ASSERT(queued.stop_requested());
+        CPPUNIT_ASSERT(call->mediaStopping_);
+    }
+    CPPUNIT_ASSERT(stoppedFuture.wait_for(3s) == std::future_status::ready);
+    CPPUNIT_ASSERT(acquiredFuture.get());
+    CPPUNIT_ASSERT_EQUAL(1u, session->stops.load());
+}
+
+void
+DtlsCallTest::testMediaStopPreservesNewerMedia()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    auto call = std::make_shared<SIPCall>(account,
+                                          "teardown-restart-test",
+                                          Call::CallType::OUTGOING,
+                                          MediaAttribute::mediaAttributesToMediaMaps({audio}));
+    auto oldSession = std::make_shared<TeardownRtpSession>(call->getCallId());
+    call->rtpStreams_.front().rtpSession_ = oldSession;
+    auto oldBundle = SocketPair::createBundleContext(nullptr, nullptr, true, false);
+    oldSession->setBundleSocketContext(oldBundle);
+    call->activeBundleContext_ = oldBundle;
+    auto entered = std::make_shared<std::promise<void>>();
+    auto enteredFuture = entered->get_future();
+    auto release = std::make_shared<std::promise<void>>();
+    oldSession->onStop = [entered, released = release->get_future().share()] {
+        entered->set_value();
+        released.wait_for(3s);
+    };
+    call->stopAllMedia();
+    CPPUNIT_ASSERT(enteredFuture.wait_for(3s) == std::future_status::ready);
+
+    auto newSession = std::make_shared<TeardownRtpSession>(call->getCallId());
+    auto newBundle = SocketPair::createBundleContext(nullptr, nullptr, true, false);
+    newSession->setBundleSocketContext(newBundle);
+    auto stopped = std::make_shared<std::promise<void>>();
+    auto stoppedFuture = stopped->get_future();
+    auto obsoleteRestart = std::make_shared<std::atomic_bool>(false);
+    auto restarted = std::make_shared<std::promise<void>>();
+    auto restartedFuture = restarted->get_future();
+    {
+        std::lock_guard lk {call->callMutex_};
+        call->restartMediaSender();
+        call->pendingMediaRestart_ = [obsoleteRestart] {
+            obsoleteRestart->store(true);
+        };
+        call->stopAllMedia([stopped] { stopped->set_value(); });
+        call->pendingMediaRestart_ = [restarted] {
+            restarted->set_value();
+        };
+        call->rtpStreams_.front().rtpSession_ = newSession;
+        call->activeBundleContext_ = newBundle;
+    }
+    CPPUNIT_ASSERT(restartedFuture.wait_for(0s) == std::future_status::timeout);
+    release->set_value();
+    CPPUNIT_ASSERT(stoppedFuture.wait_for(3s) == std::future_status::ready);
+    CPPUNIT_ASSERT(restartedFuture.wait_for(3s) == std::future_status::ready);
+    CPPUNIT_ASSERT(!obsoleteRestart->load());
+    {
+        std::lock_guard lk {call->callMutex_};
+        CPPUNIT_ASSERT(!call->mediaStopping_);
+        CPPUNIT_ASSERT(call->activeBundleContext_ == newBundle);
+        CPPUNIT_ASSERT(newSession->hasBundleContext());
+    }
+    CPPUNIT_ASSERT_EQUAL(1u, oldSession->stops.load());
+    CPPUNIT_ASSERT(!oldSession->hasBundleContext());
+    CPPUNIT_ASSERT_EQUAL(0u, oldSession->restarts.load());
+    CPPUNIT_ASSERT_EQUAL(0u, newSession->stops.load());
+    CPPUNIT_ASSERT_EQUAL(0u, newSession->restarts.load());
+
+    auto cleaned = std::make_shared<std::promise<void>>();
+    auto cleanedFuture = cleaned->get_future();
+    call->stopAllMedia([cleaned] { cleaned->set_value(); });
+    CPPUNIT_ASSERT(cleanedFuture.wait_for(3s) == std::future_status::ready);
 }
 
 void
