@@ -20,6 +20,8 @@
 #include "media/dtls_srtp.h"
 #include "media/media_attribute.h"
 #include "sip/sipcall.h"
+#include "sip/siptransport.h"
+#include "sip/sipvoiplink.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "media_const.h"
@@ -81,6 +83,7 @@ private:
     void testAudioVideoCallFallsBackToLegacySdes();
     void testTransportFallbackWaitsForConfirmedDialog();
     void testTransportFallbackFailureEndsCall();
+    void testMediaSetupRejectsInvalidIdentity();
     void testCallNegotiatesDtlsSrtp(bool withVideo,
                                     bool bobRtcpMuxEnabled = true,
                                     bool failTransportFallback = false,
@@ -93,6 +96,7 @@ private:
     CPPUNIT_TEST(testAudioVideoCallFallsBackToLegacySdes);
     CPPUNIT_TEST(testTransportFallbackWaitsForConfirmedDialog);
     CPPUNIT_TEST(testTransportFallbackFailureEndsCall);
+    CPPUNIT_TEST(testMediaSetupRejectsInvalidIdentity);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -140,6 +144,39 @@ void
 DtlsCallTest::testTransportFallbackWaitsForConfirmedDialog()
 {
     testCallNegotiatesDtlsSrtp(false, true, true);
+}
+
+void
+DtlsCallTest::testMediaSetupRejectsInvalidIdentity()
+{
+    auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+    auto secondAudio = audio;
+    secondAudio.label_ = "audio_1";
+    auto call = std::make_shared<SIPCall>(account,
+                                          "invalid-media-identity",
+                                          Call::CallType::OUTGOING,
+                                          MediaAttribute::mediaAttributesToMediaMaps({audio, secondAudio}));
+    call->setSipTransport(
+        Manager::instance().sipVoIPLink().sipTransportBroker->getUdpTransport(dhtnet::IpAddr("127.0.0.1")));
+    auto& sdp = call->getSDP();
+    sdp.setPublishedIP("127.0.0.1");
+    CPPUNIT_ASSERT(sdp.createOffer({audio, secondAudio}));
+    sdp.setActiveLocalSdpSession(sdp.getLocalSdpSession());
+    sdp.setActiveRemoteSdpSession(sdp.getLocalSdpSession());
+    const auto slots = sdp.getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), slots.size());
+    CPPUNIT_ASSERT(slots[0].first.enabled && slots[1].first.enabled);
+    CPPUNIT_ASSERT(call->setupNegotiatedMedia());
+
+    call->rtpStreams_[0].mediaAttribute_->label_ = "missing";
+    CPPUNIT_ASSERT(!call->setupNegotiatedMedia());
+
+    call->rtpStreams_[0].mediaAttribute_->label_ = audio.label_;
+    call->rtpStreams_[1].mediaAttribute_->label_ = audio.label_;
+    CPPUNIT_ASSERT(!call->setupNegotiatedMedia());
 }
 
 void
