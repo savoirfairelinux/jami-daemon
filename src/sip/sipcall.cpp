@@ -58,6 +58,7 @@
 #include <opendht/thread_pool.h>
 #include <fmt/ranges.h>
 
+#include <iterator>
 #include <utility>
 
 #include "tracepoint.h"
@@ -230,16 +231,14 @@ SIPCall::~SIPCall()
 int
 SIPCall::findRtpStreamIndex(const std::string& label) const
 {
-    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), [&label](const RtpStream& rtp) {
+    const auto matches = [&label](const RtpStream& rtp) {
         return label == rtp.mediaAttribute_->label_;
-    });
+    };
+    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), matches);
+    if (iter == rtpStreams_.end() || std::find_if(std::next(iter), rtpStreams_.end(), matches) != rtpStreams_.end())
+        return -1;
 
-    // Return the index if there is a match.
-    if (iter != rtpStreams_.end())
-        return static_cast<int>(std::distance(rtpStreams_.begin(), iter));
-
-    // No match found.
-    return -1;
+    return static_cast<int>(std::distance(rtpStreams_.begin(), iter));
 }
 
 int
@@ -286,7 +285,8 @@ void
 SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
                              const std::shared_ptr<MediaAttribute>& mediaAttr,
                              const MediaDescription& localMedia,
-                             const MediaDescription& remoteMedia)
+                             const MediaDescription& remoteMedia,
+                             unsigned mediaIndex)
 {
     JAMI_DEBUG("[call:{}] Configuring [{}] RTP session",
                getCallId(),
@@ -350,19 +350,18 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     if (localMedia.type == MediaType::MEDIA_VIDEO) {
         auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(rtpSession);
         assert(videoRtp && mediaAttr);
-        const auto streamIdx = sdp_->getMediaIndex(mediaAttr->label_).value();
-        videoRtp->setRequestKeyFrameCallback([w = weak(), streamIdx] {
+        videoRtp->setRequestKeyFrameCallback([w = weak(), mediaIndex] {
             // This sends SIP messages on socket, so move to I/O
-            dht::ThreadPool::io().run([w = std::move(w), streamIdx] {
+            dht::ThreadPool::io().run([w = std::move(w), mediaIndex] {
                 if (auto thisPtr = w.lock())
-                    thisPtr->requestKeyframe(streamIdx);
+                    thisPtr->requestKeyframe(mediaIndex);
             });
         });
-        videoRtp->setChangeOrientationCallback([w = weak(), streamIdx](int angle) {
+        videoRtp->setChangeOrientationCallback([w = weak(), mediaIndex](int angle) {
             // This sends SIP messages on socket, so move to I/O
-            dht::ThreadPool::io().run([w, angle, streamIdx] {
+            dht::ThreadPool::io().run([w, angle, mediaIndex] {
                 if (auto thisPtr = w.lock())
-                    thisPtr->setVideoOrientation(streamIdx, angle);
+                    thisPtr->setVideoOrientation(mediaIndex, angle);
             });
         });
     }
@@ -3029,14 +3028,14 @@ SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
     return iter == rtpStreams_.end();
 }
 
-void
+bool
 SIPCall::setupNegotiatedMedia()
 {
     JAMI_DEBUG("[call:{}] Updating negotiated media", getCallId());
 
     if (not sipTransport_ or not sdp_) {
         JAMI_ERROR("[call:{}] Call is in an invalid state", getCallId());
-        return;
+        return false;
     }
 
     auto slots = sdp_->getMediaSlots();
@@ -3048,7 +3047,12 @@ SIPCall::setupNegotiatedMedia()
         const auto& local = slot.first;
         const auto& remote = slot.second;
 
-        const auto rtpStreamIdx = findRtpStreamIndex(sdp_->getMediaLabel(streamIdx));
+        const auto& label = sdp_->getMediaLabel(streamIdx);
+        const auto rtpStreamIdx = findRtpStreamIndex(label);
+        if (local.enabled && (rtpStreamIdx < 0 || !sdp_->getMediaIndex(label))) {
+            JAMI_ERROR("[call:{}] Missing or ambiguous media identity for SDP slot {}", getCallId(), streamIdx);
+            return false;
+        }
         if (rtpStreamIdx >= 0)
             rtpStreams_[rtpStreamIdx].mediaAttribute_->enabled_ = local.enabled and remote.enabled;
 
@@ -3056,9 +3060,6 @@ SIPCall::setupNegotiatedMedia()
             JAMI_DEBUG("[call:{}] [SDP:slot#{}] The media is disabled, skipping", getCallId(), streamIdx);
             continue;
         }
-
-        if (rtpStreamIdx < 0)
-            throw std::runtime_error("No RTP stream for negotiated media");
 
         auto const& rtpStream = rtpStreams_[rtpStreamIdx];
 
@@ -3132,7 +3133,11 @@ SIPCall::setupNegotiatedMedia()
         // Aggregate hold info over all remote streams
         peer_hold &= remote.hold;
 
-        configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
+        configureRtpSession(rtpStream.rtpSession_,
+                            rtpStream.mediaAttribute_,
+                            local,
+                            remote,
+                            static_cast<unsigned>(streamIdx));
     }
 
     // TODO. Do we really use this?
@@ -3140,6 +3145,7 @@ SIPCall::setupNegotiatedMedia()
         peerHold_ = peer_hold;
         emitSignal<libjami::CallSignal::PeerHold>(getCallId(), peerHold_);
     }
+    return true;
 }
 
 void
@@ -3951,7 +3957,10 @@ SIPCall::onMediaNegotiationComplete()
             } else {
                 // Update the negotiated media.
                 if (this_->mediaRestartRequired_) {
-                    this_->setupNegotiatedMedia();
+                    if (!this_->setupNegotiatedMedia()) {
+                        this_->onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+                        return;
+                    }
                     // No ICE, start media now.
                     JAMI_WARNING("[call:{}] ICE media disabled, using default media ports", this_->getCallId());
                     // Start the media.
@@ -4157,7 +4166,10 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
         generation = mediaNegotiationGeneration_.load();
 
         // Update the negotiated media.
-        setupNegotiatedMedia();
+        if (!setupNegotiatedMedia()) {
+            onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+            return;
+        }
 
         // If this callback is for a re-invite session then update
         // the ICE media transport.
@@ -4171,7 +4183,15 @@ SIPCall::onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiate
                 JAMI_DEBUG("[call:{}] Skipping ICE socket for disabled stream @{}", getCallId(), idx);
                 continue;
             }
-            const auto compId = getRtpCompId(sdp_->getMediaIndex(rtpStream.mediaAttribute_->label_).value());
+            const auto mediaIndex = sdp_->getMediaIndex(rtpStream.mediaAttribute_->label_);
+            if (!mediaIndex) {
+                JAMI_ERROR("[call:{}] Missing or ambiguous SDP slot for media {}",
+                           getCallId(),
+                           rtpStream.mediaAttribute_->label_);
+                onFailure(PJSIP_SC_NOT_ACCEPTABLE_HERE);
+                return;
+            }
+            const auto compId = getRtpCompId(*mediaIndex);
             rtpStream.rtpSocket_ = newIceSocket(compId);
 
             if (not rtcpMuxEnabled_) {
