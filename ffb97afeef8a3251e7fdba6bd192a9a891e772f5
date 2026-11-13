@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6639dfa0_f81abe49",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T04:29:27Z",
+      "side": 1,
+      "message": "[error] Line 286: 🔴 `setContacts()` now mutates and reads `contacts_` without holding `mutex_` (`contacts_.size()`, assignment, and subsequent save path). `ContactList` is accessed concurrently (e.g., sync updates, contact API calls), so this introduces a data race/undefined behavior and can also serialize an inconsistent snapshot. **Fix:** restore `mutex_` protection for the full state replacement and persistence step (lock around logging size, `contacts_ \u003d contacts`, and save), then release the lock before emitting callbacks.",
+      "revId": "ffb97afeef8a3251e7fdba6bd192a9a891e772f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
