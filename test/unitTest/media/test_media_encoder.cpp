@@ -27,7 +27,9 @@
 #include "media/media_decoder.h"
 #include "media/media_encoder.h"
 #include "media/media_io_handle.h"
+#include "media/socket_pair.h"
 #include "media/system_codec_container.h"
+#include "media/video/video_sender.h"
 #ifdef ENABLE_HWACCEL
 #include "media/video/accel.h"
 #endif
@@ -53,7 +55,8 @@ private:
     void testPassthroughBitrateChangeKeepsStream();
     void testVP8DynamicBitrate();
     void testVP8BitrateKeepsResolution();
-    void testVideoToolboxLiveBitrateAndResizeRequiresRestart();
+    void testNonDynamicHwBitrateKeepsStreamAndResolution();
+    void testVideoSenderRestartPreservesSsrcAndDimensions();
     void testVideoSizeSelection();
     void testSourceSizeChangesWithinEightPixels();
     void testHardwareEncodingResolution();
@@ -66,7 +69,8 @@ private:
     CPPUNIT_TEST(testPassthroughBitrateChangeKeepsStream);
     CPPUNIT_TEST(testVP8DynamicBitrate);
     CPPUNIT_TEST(testVP8BitrateKeepsResolution);
-    CPPUNIT_TEST(testVideoToolboxLiveBitrateAndResizeRequiresRestart);
+    CPPUNIT_TEST(testNonDynamicHwBitrateKeepsStreamAndResolution);
+    CPPUNIT_TEST(testVideoSenderRestartPreservesSsrcAndDimensions);
     CPPUNIT_TEST(testVideoSizeSelection);
     CPPUNIT_TEST(testSourceSizeChangesWithinEightPixels);
     CPPUNIT_TEST(testHardwareEncodingResolution);
@@ -324,6 +328,23 @@ MediaEncoderTest::testH264BitrateKeepsResolution()
         CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
         encodeVideoFrame(*encoder_, videoIdx, width, height, 2);
         CPPUNIT_ASSERT(encoder_->flush() >= 0);
+
+        // Bitrate feedback arriving before the first frame is encoded must also
+        // preserve the initial output dimensions while applying the new bitrate.
+        auto preStartEncoder = std::make_unique<MediaEncoder>();
+        size_t preStartBytes = 0;
+        MediaIOHandle preStartIo(4096, true, nullptr, countEncodedBytes, nullptr, &preStartBytes);
+        preStartEncoder->openOutput("rtp://127.0.0.1:5004", "rtp");
+        preStartEncoder->setIOContext(preStartIo.getContext());
+        preStartEncoder->setOptions(videoStream);
+        int preStartIdx = preStartEncoder->addStream(*h264Codec.get());
+        CPPUNIT_ASSERT(preStartIdx >= 0);
+        CPPUNIT_ASSERT_EQUAL(1, preStartEncoder->setBitrate(constrainedBitrate));
+        CPPUNIT_ASSERT_EQUAL(width, preStartEncoder->getWidth());
+        CPPUNIT_ASSERT_EQUAL(height, preStartEncoder->getHeight());
+        encodeVideoFrame(*preStartEncoder, preStartIdx, width, height, 0);
+        CPPUNIT_ASSERT_EQUAL(constrainedBitrate * 1000, preStartEncoder->getStream("v", preStartIdx).bitrate);
+        CPPUNIT_ASSERT(preStartEncoder->flush() >= 0);
     } catch (const MediaEncoderException& e) {
         CPPUNIT_FAIL(e.what());
     }
@@ -494,25 +515,46 @@ MediaEncoderTest::testVP8BitrateKeepsResolution()
     }
 }
 
+struct RtpPacketHeaderInfo
+{
+    uint16_t sequence;
+    uint32_t timestamp;
+    uint32_t ssrc;
+};
+
+static int
+collectRtpHeaders(void* opaque, const uint8_t* buf, int bufSize)
+{
+    auto* headers = static_cast<std::vector<RtpPacketHeaderInfo>*>(opaque);
+    if (bufSize >= 12 && (buf[0] >> 6) == 2 && (buf[1] < 192 || buf[1] > 223)) {
+        const uint16_t sequence = (uint16_t(buf[2]) << 8) | uint16_t(buf[3]);
+        const uint32_t timestamp = (uint32_t(buf[4]) << 24) | (uint32_t(buf[5]) << 16) | (uint32_t(buf[6]) << 8)
+                                   | uint32_t(buf[7]);
+        const uint32_t ssrc = (uint32_t(buf[8]) << 24) | (uint32_t(buf[9]) << 16) | (uint32_t(buf[10]) << 8)
+                              | uint32_t(buf[11]);
+        headers->push_back({sequence, timestamp, ssrc});
+    }
+    return bufSize;
+}
+
 void
-MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
+MediaEncoderTest::testNonDynamicHwBitrateKeepsStreamAndResolution()
 {
 #ifdef ENABLE_HWACCEL
     const constexpr int width = 1280;
     const constexpr int height = 720;
     const constexpr int initialBitrate = 2500;
     const constexpr int constrainedBitrate = 300;
+    const constexpr int jitterBitrate = 315;
     auto compatibleAccel = video::HardwareAccel::getCompatibleAccel(AV_CODEC_ID_H264, width, height, CODEC_ENCODER);
-    auto videoToolbox = std::find_if(compatibleAccel.begin(), compatibleAccel.end(), [](const auto& accel) {
-        return accel.getName() == "videotoolbox";
+    auto nonDynAccel = std::find_if(compatibleAccel.begin(), compatibleAccel.end(), [](const auto& accel) {
+        return !accel.dynBitrate() && (accel.getName() == "videotoolbox" || accel.getName() == "vaapi");
     });
-    if (videoToolbox == compatibleAccel.end())
+    if (nonDynAccel == compatibleAccel.end())
         return;
 
-    CPPUNIT_ASSERT_EQUAL(std::string("h264_videotoolbox"), videoToolbox->getCodecName());
-    CPPUNIT_ASSERT(!videoToolbox->dynBitrate());
-
-    if (!std::getenv("JAMI_TEST_HW_ENCODERS") || !avcodec_find_encoder_by_name("h264_videotoolbox"))
+    CPPUNIT_ASSERT(!nonDynAccel->dynBitrate());
+    if (!avcodec_find_encoder_by_name(nonDynAccel->getCodecName().c_str()))
         return;
 
     auto codecs = std::make_shared<SystemCodecContainer>();
@@ -522,26 +564,116 @@ MediaEncoderTest::testVideoToolboxLiveBitrateAndResizeRequiresRestart()
     auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
 
     try {
-        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, countEncodedBytes, nullptr, &encodedBytes_);
+        std::vector<RtpPacketHeaderInfo> rtpHeaders;
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, collectRtpHeaders, nullptr, &rtpHeaders);
         encoder_->enableAccel(true);
         encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
         encoder_->setIOContext(ioContext_->getContext());
         encoder_->setOptions(videoStream);
         int videoIdx = encoder_->addStream(*h264Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
-        encodeVideoFrame(*encoder_, videoIdx, width, height, 0);
 
+        auto sendFrame = [&](int frameIdx) {
+            auto input = std::make_shared<VideoFrame>();
+            input->reserve(AV_PIX_FMT_YUV420P, width, height);
+            libav_utils::fillWithBlack(input->pointer());
+            CPPUNIT_ASSERT(encoder_->encode(input, frameIdx == 0, frameIdx) >= 0);
+        };
+
+        sendFrame(0);
         if (encoder_->getStream("v", videoIdx).format != AV_PIX_FMT_NV12)
             return;
 
-        CPPUNIT_ASSERT_EQUAL(0, encoder_->setBitrate(constrainedBitrate));
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(initialBitrate * 1000 * 0.8f), encoder_->getStream("v", videoIdx).bitrate);
+
+        // Non-dynamic HW encoders must reopen only the codec context in-place:
+        // RTP dimensions, SSRC, sequence numbers, and 90 kHz clock stay continuous.
+        CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(constrainedBitrate));
         CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
         CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
-        encodeVideoFrame(*encoder_, videoIdx, width, height, 1);
+        sendFrame(1);
+        CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(constrainedBitrate * 1000 * 0.8f),
+                             encoder_->getStream("v", videoIdx).bitrate);
+
+        // Small Transport-CC jitter (<10%) must not trigger another HW codec reopen.
+        CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(jitterBitrate));
+        sendFrame(2);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(constrainedBitrate * 1000 * 0.8f),
+                             encoder_->getStream("v", videoIdx).bitrate);
+        CPPUNIT_ASSERT(encoder_->flush() >= 0);
+
+        CPPUNIT_ASSERT(!rtpHeaders.empty());
+        const auto ssrc = rtpHeaders.front().ssrc;
+        std::vector<uint32_t> frameTimestamps;
+        for (size_t i = 0; i < rtpHeaders.size(); ++i) {
+            CPPUNIT_ASSERT_EQUAL(ssrc, rtpHeaders[i].ssrc);
+            if (i > 0) {
+                CPPUNIT_ASSERT_EQUAL(uint16_t(rtpHeaders[i - 1].sequence + 1), rtpHeaders[i].sequence);
+            }
+            if (frameTimestamps.empty() || frameTimestamps.back() != rtpHeaders[i].timestamp)
+                frameTimestamps.push_back(rtpHeaders[i].timestamp);
+        }
+        CPPUNIT_ASSERT(frameTimestamps.size() >= 3);
+        CPPUNIT_ASSERT_EQUAL(uint32_t(3000), frameTimestamps[1] - frameTimestamps[0]);
+        CPPUNIT_ASSERT_EQUAL(uint32_t(3000), frameTimestamps[2] - frameTimestamps[1]);
     } catch (const MediaEncoderException& e) {
         CPPUNIT_FAIL(e.what());
     }
 #endif
+}
+
+void
+MediaEncoderTest::testVideoSenderRestartPreservesSsrcAndDimensions()
+{
+    const constexpr int width = 1280;
+    const constexpr int height = 720;
+    const constexpr int seededBitrate = 2211;
+    const constexpr int adaptedBitrate = 300;
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<SystemVideoCodecInfo>(codecs->searchCodecByName("H264", MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    SocketPair socketPair(dhtnet::IpAddr("127.0.0.1:50130"), dhtnet::IpAddr("127.0.0.1:50131"), 0, 0, true);
+    MediaDescription args;
+    args.enabled = true;
+    args.codec = h264Codec;
+    args.payload_type = h264Codec->payloadType;
+
+    auto initialOpts
+        = MediaStream("video sender", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, seededBitrate, 30);
+    auto frame = std::make_shared<VideoFrame>();
+    frame->reserve(AV_PIX_FMT_YUV420P, width, height);
+    libav_utils::fillWithBlack(frame->pointer());
+
+    auto sender
+        = std::make_unique<video::VideoSender>("rtp://127.0.0.1:50130", initialOpts, args, socketPair, 1, 1200, false);
+    CPPUNIT_ASSERT_EQUAL(width, sender->getWidth());
+    CPPUNIT_ASSERT_EQUAL(height, sender->getHeight());
+    sender->update(nullptr, frame);
+    CPPUNIT_ASSERT(socketPair.getLocalSsrc().has_value());
+    const auto initialSsrc = *socketPair.getLocalSsrc();
+    const auto nextSeq = sender->getLastSeqValue();
+
+    // Simulate a sender restart after congestion drops the target bitrate:
+    // initial sizing budget preserves 1280x720 and SocketPair preserves SSRC,
+    // while setBitrate applies the adapted 300 kbps rate before frame 0.
+    sender.reset();
+    sender = std::make_unique<video::VideoSender>("rtp://127.0.0.1:50130",
+                                                  initialOpts,
+                                                  args,
+                                                  socketPair,
+                                                  nextSeq,
+                                                  1200,
+                                                  false);
+    CPPUNIT_ASSERT_EQUAL(1, sender->setBitrate(adaptedBitrate));
+    CPPUNIT_ASSERT_EQUAL(width, sender->getWidth());
+    CPPUNIT_ASSERT_EQUAL(height, sender->getHeight());
+    sender->update(nullptr, frame);
+    CPPUNIT_ASSERT_EQUAL(initialSsrc, *socketPair.getLocalSsrc());
+    CPPUNIT_ASSERT_EQUAL(adaptedBitrate * 1000, sender->getStream("v").bitrate);
 }
 
 void

@@ -55,6 +55,9 @@ public:
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
     int setBitrate(uint64_t br);
+    int getWidth() const;
+    int getHeight() const;
+    MediaStream getStream(const std::string& name) const;
 
 private:
     static constexpr int KEYFRAMES_AT_START {1};    // Number of keyframes to enforce at stream startup
