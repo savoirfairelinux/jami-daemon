@@ -1279,7 +1279,7 @@ TransportCcControllerTest::simulatedQueueGrowthTriggersDecrease()
     bool sawDecrease = false;
     int64_t maxQueueDelayUs = 0;
     for (auto round = 0; round < 3; ++round) {
-        const auto capacityBps = 500'000ULL;
+        const uint64_t capacityBps = 500'000;
         const auto deliveredBitrateBps = std::min(targetBitrateBps, capacityBps);
         const auto report = makeCapacityReport(sequenceNumber, targetBitrateBps, capacityBps, receiveStartUs);
         sequenceNumber = static_cast<uint16_t>(sequenceNumber + 100);
