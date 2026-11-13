@@ -203,6 +203,7 @@ VideoRtpSession::seedVideoBitrate(unsigned pixels)
     seededPixels_ = pixels;
     seededCodecId_ = codecVideo->id;
     applyConferenceBitrateLimit();
+    seededVideoBitrate_ = videoBitrateInfo_.videoBitrateCurrent;
     JAMI_LOG("[{}] Initial video bitrate: {} Kbps for {} pixels",
              fmt::ptr(this),
              videoBitrateInfo_.videoBitrateCurrent,
@@ -220,6 +221,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
         bitrateSeeded_ = false;
         seededPixels_ = 0;
         seededCodecId_ = 0;
+        seededVideoBitrate_ = 0;
         uncappedVideoBitrateMax_ = 0;
         setupVideoBitrateInfo();
     }
@@ -375,6 +377,8 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
+            const auto initialSizingBitrate = (bitrateSeeded_ && seededVideoBitrate_) ? seededVideoBitrate_
+                                                                                      : send_.bitrate;
             MediaStream ms = !videoMixer_
                                  ? MediaStream("video sender",
                                                AV_PIX_FMT_YUV420P,
@@ -384,7 +388,7 @@ VideoRtpSession::startSender()
                                                localVideoParams_.height == 0
                                                    ? 720
                                                    : static_cast<int>(localVideoParams_.height),
-                                               static_cast<int>(send_.bitrate),
+                                               static_cast<int>(initialSizingBitrate),
                                                static_cast<rational<int>>(localVideoParams_.framerate))
                                  : videoMixer_->getStream("Video Sender");
             if (videoMixer_) {
@@ -397,10 +401,15 @@ VideoRtpSession::startSender()
                 const auto pixels = static_cast<unsigned>(ms.width) * static_cast<unsigned>(ms.height);
                 seedVideoBitrate(pixels);
                 send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
-                ms.bitrate = static_cast<int>(send_.bitrate);
+                socketPair_->setRtpPacingBitrate(uint64_t(send_.bitrate * PACING_RATE_MULTIPLIER) * BITS_PER_KILOBIT);
+                const auto mixerSizingBitrate = (bitrateSeeded_ && seededVideoBitrate_) ? seededVideoBitrate_
+                                                                                        : send_.bitrate;
+                ms.bitrate = static_cast<int>(mixerSizingBitrate);
             }
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
+            if (send_.bitrate != static_cast<unsigned>(ms.bitrate))
+                sender_->setBitrate(send_.bitrate);
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_) {
@@ -714,14 +723,15 @@ VideoRtpSession::stopSession()
 
     if (conferenceOwner_)
         exitConferenceLocked(previousOwner);
-    stopSender(true);
-    stopReceiver(true);
-    receiveThread_.reset();
 
     if (socketPair_)
         socketPair_->interrupt();
 
     rtcpCheckerThread_.join();
+
+    stopSender(true);
+    stopReceiver(true);
+    receiveThread_.reset();
 
     // reset default video quality if exist
     if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
@@ -731,6 +741,7 @@ VideoRtpSession::stopSession()
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    seededVideoBitrate_ = 0;
     uncappedVideoBitrateMax_ = 0;
 
     socketPair_.reset();
@@ -892,6 +903,7 @@ VideoRtpSession::enterConferenceLocked(Conference& conference, std::shared_ptr<C
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    seededVideoBitrate_ = 0;
     uncappedVideoBitrateMax_ = 0;
     JAMI_DEBUG("[conf:{}] Entering conference", conference.getConfId());
 
@@ -941,6 +953,7 @@ VideoRtpSession::exitConferenceLocked(std::shared_ptr<Conference>& previousOwner
     bitrateSeeded_ = false;
     seededPixels_ = 0;
     seededCodecId_ = 0;
+    seededVideoBitrate_ = 0;
     uncappedVideoBitrateMax_ = 0;
 }
 
@@ -1236,8 +1249,12 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
             auto ret = sender_->setBitrate(newBR);
             if (ret == -1)
                 JAMI_ERROR("Fail to access the encoder");
-            else if (ret == 0)
-                restartSender();
+            else if (ret == 0) {
+                asio::post(*Manager::instance().ioContext(), [w = weak_from_this()] {
+                    if (auto shared = w.lock())
+                        shared->restartSender();
+                });
+            }
         } else {
             JAMI_ERROR("Fail to access the sender");
         }
