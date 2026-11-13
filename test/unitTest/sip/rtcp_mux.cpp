@@ -215,6 +215,7 @@ private:
     void parsesBrowserOfferWithoutSipSession();
     void publishedIpAcceptsMediaLevelConnections();
     void publishedIpUpdatesSessionConnection();
+    void negotiatesDynamicResolutionViaImageAttrAndWebRtc();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
     CPPUNIT_TEST(peerVersionControlsLegacyRemb);
@@ -255,6 +256,7 @@ private:
     CPPUNIT_TEST(parsesBrowserOfferWithoutSipSession);
     CPPUNIT_TEST(publishedIpAcceptsMediaLevelConnections);
     CPPUNIT_TEST(publishedIpUpdatesSessionConnection);
+    CPPUNIT_TEST(negotiatesDynamicResolutionViaImageAttrAndWebRtc);
     CPPUNIT_TEST_SUITE_END();
 
     std::string accountId_ {};
@@ -1827,6 +1829,104 @@ RtcpMuxSdpTest::publishedIpUpdatesSessionConnection()
     CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.1"), sip_utils::as_view(session->origin.addr));
     CPPUNIT_ASSERT_EQUAL(std::string_view("192.0.2.1"), sip_utils::as_view(session->conn->addr));
     CPPUNIT_ASSERT(pjmedia_sdp_validate(session) == PJ_SUCCESS);
+}
+
+void
+RtcpMuxSdpTest::negotiatesDynamicResolutionViaImageAttrAndWebRtc()
+{
+    CPPUNIT_ASSERT(account_);
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = true;
+    video.secure_ = true;
+
+    // 1. Modern Jami <-> Modern Jami (RTP/SAVP + RFC 6236 a=imageattr): enabled.
+    Sdp offerer("imageattr-offerer");
+    offerer.setPublishedIP("127.0.0.1", pj_AF_INET());
+    offerer.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    offerer.setLocalPublishedVideoPorts(5004, 0);
+    CPPUNIT_ASSERT(offerer.createOffer({video}));
+    CPPUNIT_ASSERT(hasMediaAttributeName(offerer.getLocalSdpSession()->media[0], "imageattr"));
+
+    Sdp answerer("imageattr-answerer");
+    answerer.setPublishedIP("127.0.0.1", pj_AF_INET());
+    answerer.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    answerer.setLocalPublishedVideoPorts(5006, 0);
+    answerer.setReceivedOffer(offerer.getLocalSdpSession());
+    CPPUNIT_ASSERT(answerer.processIncomingOffer({video}));
+    CPPUNIT_ASSERT(hasMediaAttributeName(answerer.getLocalSdpSession()->media[0], "imageattr"));
+    CPPUNIT_ASSERT(answerer.startNegotiation());
+    const auto answererSlots = answerer.getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), answererSlots.size());
+    CPPUNIT_ASSERT(answererSlots[0].first.dynamic_resolution);
+    CPPUNIT_ASSERT(answererSlots[0].second.dynamic_resolution);
+
+    // 2. Legacy SIP / older Jami (RTP/SAVP without a=imageattr): omitted in answer and disabled.
+    auto pool = makePool("imageattr-legacy");
+    const std::string legacyOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=video 5004 RTP/SAVP 96\r\n"
+                                    "a=rtpmap:96 H264/90000\r\n"
+                                    "a=crypto:1 AES_CM_128_HMAC_SHA1_80 "
+                                    "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n";
+    auto* legacySession = parseSdp(pool.get(), legacyOffer);
+    CPPUNIT_ASSERT(legacySession);
+
+    Sdp legacyAnswerer("imageattr-legacy-answerer");
+    legacyAnswerer.setPublishedIP("127.0.0.1", pj_AF_INET());
+    legacyAnswerer.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                             account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    legacyAnswerer.setLocalPublishedVideoPorts(5008, 0);
+    legacyAnswerer.setReceivedOffer(legacySession);
+    CPPUNIT_ASSERT(legacyAnswerer.processIncomingOffer({video}));
+    CPPUNIT_ASSERT(!hasMediaAttributeName(legacyAnswerer.getLocalSdpSession()->media[0], "imageattr"));
+    CPPUNIT_ASSERT(legacyAnswerer.startNegotiation());
+    const auto legacySlots = legacyAnswerer.getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), legacySlots.size());
+    CPPUNIT_ASSERT(!legacySlots[0].first.dynamic_resolution);
+    CPPUNIT_ASSERT(!legacySlots[0].second.dynamic_resolution);
+
+    // 3. WebRTC endpoint (UDP/TLS/RTP/SAVPF + DTLS without a=imageattr): enabled per RFC 7742,
+    //    unless remote explicitly restricts recv to a single fixed size via a=imageattr.
+    static constexpr const char* TEST_FINGERPRINT
+        = "00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF";
+    const std::string webrtcOffer = std::string("v=0\r\n"
+                                                "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                                "s=-\r\n"
+                                                "c=IN IP4 127.0.0.1\r\n"
+                                                "t=0 0\r\n"
+                                                "m=video 5004 UDP/TLS/RTP/SAVPF 96\r\n"
+                                                "a=rtpmap:96 H264/90000\r\n"
+                                                "a=setup:actpass\r\n"
+                                                "a=fingerprint:sha-256 ")
+                                    + TEST_FINGERPRINT + "\r\n";
+    auto* webrtcSession = parseSdp(pool.get(), webrtcOffer);
+    CPPUNIT_ASSERT(webrtcSession);
+
+    Sdp webrtcAnswerer("imageattr-webrtc-answerer");
+    webrtcAnswerer.setPublishedIP("127.0.0.1", pj_AF_INET());
+    webrtcAnswerer.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                             account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    webrtcAnswerer.setLocalPublishedVideoPorts(5010, 0);
+    webrtcAnswerer.setLocalDtlsFingerprint("sha-256", TEST_FINGERPRINT);
+    webrtcAnswerer.setReceivedOffer(webrtcSession);
+    CPPUNIT_ASSERT(webrtcAnswerer.processIncomingOffer({video}));
+    CPPUNIT_ASSERT(!hasMediaAttributeName(webrtcAnswerer.getLocalSdpSession()->media[0], "imageattr"));
+    CPPUNIT_ASSERT(webrtcAnswerer.startNegotiation());
+    const auto webrtcSlots = webrtcAnswerer.getMediaSlots();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), webrtcSlots.size());
+    CPPUNIT_ASSERT(webrtcSlots[0].second.dynamic_resolution);
+
+    const std::string fixedOffer = webrtcOffer + "a=imageattr:96 recv [x=640,y=480]\r\n";
+    auto* fixedSession = parseSdp(pool.get(), fixedOffer);
+    CPPUNIT_ASSERT(fixedSession);
+    const auto fixedDescrs = webrtcAnswerer.getMediaDescriptions(fixedSession, true);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), fixedDescrs.size());
+    CPPUNIT_ASSERT(!fixedDescrs[0].dynamic_resolution);
 }
 
 } // namespace test
