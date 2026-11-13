@@ -133,7 +133,7 @@ encodeVideoFrame(MediaEncoder& encoder, int streamIdx, int width, int height, in
 }
 
 static int
-countEncodedBytes(void* opaque, const uint8_t*, int bufSize)
+countEncodedBytes(void* opaque, io_writebuffer*, int bufSize)
 {
     auto* byteCount = static_cast<size_t*>(opaque);
     *byteCount += static_cast<size_t>(bufSize);
@@ -141,7 +141,7 @@ countEncodedBytes(void* opaque, const uint8_t*, int bufSize)
 }
 
 static int
-collectRtpTimestamps(void* opaque, const uint8_t* buf, int bufSize)
+collectRtpTimestamps(void* opaque, io_writebuffer* buf, int bufSize)
 {
     auto* timestamps = static_cast<std::vector<uint32_t>*>(opaque);
     // RTP fixed header: V/P/X/CC, M/PT, sequence, then a 32-bit timestamp.
