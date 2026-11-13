@@ -56,6 +56,7 @@ private:
     void testVP8DynamicBitrate();
     void testVP8BitrateKeepsResolution();
     void testNonDynamicHwBitrateKeepsStreamAndResolution();
+    void testNegotiatedDynamicResolutionKeepsRtpStreamContinuous();
     void testVideoSenderRestartPreservesSsrcAndDimensions();
     void testVideoSizeSelection();
     void testSourceSizeChangesWithinEightPixels();
@@ -70,6 +71,7 @@ private:
     CPPUNIT_TEST(testVP8DynamicBitrate);
     CPPUNIT_TEST(testVP8BitrateKeepsResolution);
     CPPUNIT_TEST(testNonDynamicHwBitrateKeepsStreamAndResolution);
+    CPPUNIT_TEST(testNegotiatedDynamicResolutionKeepsRtpStreamContinuous);
     CPPUNIT_TEST(testVideoSenderRestartPreservesSsrcAndDimensions);
     CPPUNIT_TEST(testVideoSizeSelection);
     CPPUNIT_TEST(testSourceSizeChangesWithinEightPixels);
@@ -622,6 +624,80 @@ MediaEncoderTest::testNonDynamicHwBitrateKeepsStreamAndResolution()
         CPPUNIT_FAIL(e.what());
     }
 #endif
+}
+
+void
+MediaEncoderTest::testNegotiatedDynamicResolutionKeepsRtpStreamContinuous()
+{
+    const constexpr int width = 1280;
+    const constexpr int height = 720;
+    const constexpr int initialBitrate = 2211;
+    const constexpr int constrainedBitrate = 300;
+    const constexpr int borderlineBitrate = 1700;
+    auto codecs = std::make_shared<SystemCodecContainer>();
+    codecs->init(false);
+    auto h264Codec = std::static_pointer_cast<SystemVideoCodecInfo>(codecs->searchCodecByName("H264", MEDIA_VIDEO));
+    CPPUNIT_ASSERT(h264Codec);
+
+    auto videoStream = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, initialBitrate, 30);
+
+    try {
+        std::vector<RtpPacketHeaderInfo> rtpHeaders;
+        ioContext_ = std::make_unique<MediaIOHandle>(4096, true, nullptr, collectRtpHeaders, nullptr, &rtpHeaders);
+#ifdef ENABLE_HWACCEL
+        encoder_->enableAccel(false);
+#endif
+        encoder_->openOutput("rtp://127.0.0.1:5004", "rtp");
+        encoder_->setIOContext(ioContext_->getContext());
+        encoder_->setOptions(videoStream);
+        encoder_->setDynamicResolution(true);
+        int videoIdx = encoder_->addStream(*h264Codec);
+        CPPUNIT_ASSERT(videoIdx >= 0);
+
+        auto sendFrame = [&](int frameIdx) {
+            auto input = std::make_shared<VideoFrame>();
+            input->reserve(AV_PIX_FMT_YUV420P, width, height);
+            libav_utils::fillWithBlack(input->pointer());
+            CPPUNIT_ASSERT(encoder_->encode(input, frameIdx == 0, frameIdx) >= 0);
+        };
+
+        sendFrame(0);
+        CPPUNIT_ASSERT_EQUAL(width, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(height, encoder_->getHeight());
+
+        // With dynamic resolution negotiated, congestion feedback downscales
+        // in-place on the next frame without resetting the RTP muxer.
+        CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(constrainedBitrate));
+        sendFrame(1);
+        CPPUNIT_ASSERT_EQUAL(480, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(270, encoder_->getHeight());
+        CPPUNIT_ASSERT_EQUAL(constrainedBitrate * 1000, encoder_->getStream("v", videoIdx).bitrate);
+
+        // Cooldown prevents immediate resolution flapping while still updating
+        // the active encoder's rate control immediately.
+        CPPUNIT_ASSERT_EQUAL(1, encoder_->setBitrate(borderlineBitrate));
+        sendFrame(2);
+        CPPUNIT_ASSERT_EQUAL(480, encoder_->getWidth());
+        CPPUNIT_ASSERT_EQUAL(270, encoder_->getHeight());
+        CPPUNIT_ASSERT_EQUAL(borderlineBitrate * 1000, encoder_->getStream("v", videoIdx).bitrate);
+        CPPUNIT_ASSERT(encoder_->flush() >= 0);
+
+        CPPUNIT_ASSERT(!rtpHeaders.empty());
+        const auto ssrc = rtpHeaders.front().ssrc;
+        std::vector<uint32_t> frameTimestamps;
+        for (size_t i = 0; i < rtpHeaders.size(); ++i) {
+            CPPUNIT_ASSERT_EQUAL(ssrc, rtpHeaders[i].ssrc);
+            if (i > 0)
+                CPPUNIT_ASSERT_EQUAL(uint16_t(rtpHeaders[i - 1].sequence + 1), rtpHeaders[i].sequence);
+            if (frameTimestamps.empty() || frameTimestamps.back() != rtpHeaders[i].timestamp)
+                frameTimestamps.push_back(rtpHeaders[i].timestamp);
+        }
+        CPPUNIT_ASSERT_EQUAL(size_t(3), frameTimestamps.size());
+        CPPUNIT_ASSERT_EQUAL(uint32_t(3000), frameTimestamps[1] - frameTimestamps[0]);
+        CPPUNIT_ASSERT_EQUAL(uint32_t(3000), frameTimestamps[2] - frameTimestamps[1]);
+    } catch (const MediaEncoderException& e) {
+        CPPUNIT_FAIL(e.what());
+    }
 }
 
 void
