@@ -38,8 +38,7 @@ public:
     using OnContactAdded = std::function<void(const std::string&, bool)>;
     using OnContactRemoved = std::function<void(const std::string&, bool)>;
     using OnIncomingTrustRequest
-        = std::function<
-            void(const std::string&, const std::string&, const std::vector<uint8_t>&, TimePoint, TimePoint)>;
+        = std::function<void(const std::string&, const std::string&, const std::vector<uint8_t>&, TimePoint, TimePoint)>;
     using OnAcceptConversation = std::function<void(const std::string&, const std::string&)>;
     using OnConfirmation = std::function<void(const std::string&, const std::string&)>;
     using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;

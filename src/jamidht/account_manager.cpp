@@ -345,31 +345,30 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                          JAMI_WARNING(
-                              "[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
-                              accountId_,
-                              v.owner->getLongId().toString(),
-                              v.confirm,
-                              peer_account.toString(),
-                              v.conversationId);
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  nowMs(),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload),
-                                                                  v.invitedMs > 0
-                                                                      ? timePointFromMilliseconds(v.invitedMs)
-                                                                      : TimePoint {})) {
-                                  if (v.confirm) // No need to send a confirmation as already accepted here
-                                      return;
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                             accountId_,
+                             v.owner->getLongId().toString(),
+                             v.confirm,
+                             peer_account.toString(),
+                             v.conversationId);
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        nowMs(),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload),
+                                                        v.invitedMs > 0 ? timePointFromMilliseconds(v.invitedMs)
+                                                                        : TimePoint {})) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
+                        sendTrustRequestConfirm(peer_account, v.conversationId);
+                    }
+            });
         return true;
     });
 }
