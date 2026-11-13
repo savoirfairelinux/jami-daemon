@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53f348f8_87f73dee",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1924,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:41:18Z",
+      "side": 1,
+      "message": "[warning] Line 1924: 🟡 `checkValidApprovalChange` now rejects no-op policy commits only when `policy/approval` already exists with the same token. It still accepts the implicit-default no-op (`policy/approval` absent in parent, token `percent/50`), which consumes approval votes without changing the effective threshold. Compare against the **effective old threshold** (e.g., via `approvalThresholdAtTree(treeOld)-\u003etoString()`) rather than only the raw file content, and reject when the effective value is unchanged.",
+      "revId": "89f0ded8531d65df89b8c83972a3638d40646303",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
