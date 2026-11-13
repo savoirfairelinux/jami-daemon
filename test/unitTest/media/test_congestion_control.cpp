@@ -10,6 +10,10 @@
 #include "media/congestion_control.h"
 #include "test_runner.h"
 
+#ifdef ENABLE_VIDEO
+#include "media/video/video_rtp_session.h"
+#endif
+
 namespace jami {
 namespace test {
 namespace {
@@ -32,6 +36,10 @@ private:
     void createRembUsesStandardBitrateAndSsrcs();
     void createRembRejectsMissingFeedbackSsrc();
     void recognizesLegacyRembCommands();
+#ifdef ENABLE_VIDEO
+    void rembAdaptationUsesNegotiatedMode();
+    void absoluteAdaptationNeverUsesLegacyCommands();
+#endif
     void transportCcEstimateReducesOnDelayAndLoss();
     void transportCcEstimateIncreasesOnCleanFeedback();
 
@@ -39,6 +47,10 @@ private:
     CPPUNIT_TEST(createRembUsesStandardBitrateAndSsrcs);
     CPPUNIT_TEST(createRembRejectsMissingFeedbackSsrc);
     CPPUNIT_TEST(recognizesLegacyRembCommands);
+#ifdef ENABLE_VIDEO
+    CPPUNIT_TEST(rembAdaptationUsesNegotiatedMode);
+    CPPUNIT_TEST(absoluteAdaptationNeverUsesLegacyCommands);
+#endif
     CPPUNIT_TEST(transportCcEstimateReducesOnDelayAndLoss);
     CPPUNIT_TEST(transportCcEstimateIncreasesOnCleanFeedback);
     CPPUNIT_TEST_SUITE_END();
@@ -84,10 +96,74 @@ CongestionControlTest::createRembRejectsMissingFeedbackSsrc()
 void
 CongestionControlTest::recognizesLegacyRembCommands()
 {
-    CPPUNIT_ASSERT(legacyRembCommand(0x6803) == LegacyRembCommand::DECREASE);
-    CPPUNIT_ASSERT(legacyRembCommand(0x7378) == LegacyRembCommand::INCREASE);
-    CPPUNIT_ASSERT(legacyRembCommand(2'500'000) == LegacyRembCommand::NONE);
+    CPPUNIT_ASSERT(legacyRembCommand(0x6803, true) == LegacyRembCommand::DECREASE);
+    CPPUNIT_ASSERT(legacyRembCommand(0x7378, true) == LegacyRembCommand::INCREASE);
+    CPPUNIT_ASSERT(legacyRembCommand(2'500'000, true) == LegacyRembCommand::NONE);
+    CPPUNIT_ASSERT(legacyRembCommand(0x6803, false) == LegacyRembCommand::NONE);
+    CPPUNIT_ASSERT(legacyRembCommand(0x7378, false) == LegacyRembCommand::NONE);
 }
+
+#ifdef ENABLE_VIDEO
+void
+CongestionControlTest::rembAdaptationUsesNegotiatedMode()
+{
+    struct Context
+    {
+        bool legacyPeer;
+        bool localRemb;
+        bool remoteRemb;
+        bool relative;
+    };
+    constexpr Context contexts[] {
+        {false, false, false, false},
+        {false, true, true, false},
+        {true, false, false, true},
+        {true, true, false, true},
+        {true, false, true, true},
+        {true, true, true, false},
+    };
+    CongestionControl cc;
+    video::VideoRtpSession session("remb-test", "video_0", DeviceParams {}, {});
+    for (const auto& context : contexts) {
+        MediaDescription local;
+        MediaDescription remote;
+        local.rtcp_fb_goog_remb = context.localRemb;
+        remote.rtcp_fb_goog_remb = context.remoteRemb;
+        session.setLegacyRembEnabled(context.legacyPeer);
+        session.updateMedia(remote, local);
+        for (const auto bitrateBps : {uint64_t(0x6803), uint64_t(0x7378)}) {
+            const auto packet = cc.createREMB(bitrateBps, 0x12345678, {0x23456789});
+            rtcpREMBHeader header {};
+            std::memcpy(&header, packet.data(), sizeof(header));
+            session.videoBitrateInfo_.videoBitrateCurrent = 1000;
+            session.videoBitrateInfo_.videoBitrateMin = 1;
+            session.videoBitrateInfo_.videoBitrateMax = 2000;
+            session.lastBitrateDecrease = std::chrono::steady_clock::now() - std::chrono::minutes(1);
+            session.processRembFeedback(cc.parseREMB(header));
+            const unsigned expected = context.relative ? (bitrateBps == 0x6803 ? 850 : 1050)
+                                                       : (bitrateBps == 0x6803 ? 27 : 30);
+            CPPUNIT_ASSERT_EQUAL(expected, session.getVideoBitrateInfo().videoBitrateCurrent);
+        }
+    }
+}
+
+void
+CongestionControlTest::absoluteAdaptationNeverUsesLegacyCommands()
+{
+    video::VideoRtpSession session("absolute-bitrate-test", "video_0", DeviceParams {}, {});
+    session.setLegacyRembEnabled(true);
+    session.videoBitrateInfo_.videoBitrateMin = 1;
+    session.videoBitrateInfo_.videoBitrateMax = 2000;
+    for (const auto bitrateBps : {uint64_t(0x6803), uint64_t(0x7378)}) {
+        session.videoBitrateInfo_.videoBitrateCurrent = 1000;
+        session.applyAbsoluteBitrate(bitrateBps);
+        CPPUNIT_ASSERT_EQUAL(bitrateBps == 0x6803 ? 27u : 30u, session.getVideoBitrateInfo().videoBitrateCurrent);
+    }
+    session.videoBitrateInfo_.videoBitrateMin = 100;
+    session.applyAbsoluteBitrate(0x6803);
+    CPPUNIT_ASSERT_EQUAL(100u, session.getVideoBitrateInfo().videoBitrateCurrent);
+}
+#endif
 
 void
 CongestionControlTest::transportCcEstimateReducesOnDelayAndLoss()

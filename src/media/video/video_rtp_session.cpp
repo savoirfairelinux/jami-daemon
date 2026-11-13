@@ -990,12 +990,12 @@ VideoRtpSession::adaptQualityAndBitrate()
     uint64_t br;
     RTCPInfo rtcpi {};
     if (check_RTCP_Info_TCC(&br, rtcpi)) {
-        delayProcessing(br);
+        applyAbsoluteBitrate(br);
         return;
     }
 
     if (check_RCTP_Info_REMB(&br)) {
-        delayProcessing(br);
+        processRembFeedback(br);
     }
 
     if (check_RCTP_Info_RR(rtcpi)) {
@@ -1047,12 +1047,10 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 }
 
 void
-VideoRtpSession::delayProcessing(uint64_t bitrateBps)
+VideoRtpSession::processRembFeedback(uint64_t bitrateBps)
 {
-    if (bitrateBps == 0)
-        return;
-
-    const auto legacyCommand = legacyRembCommand(bitrateBps);
+    const auto legacyMode = legacyRembEnabled_.load() && !(send_.rtcp_fb_goog_remb && receive_.rtcp_fb_goog_remb);
+    const auto legacyCommand = legacyRembCommand(bitrateBps, legacyMode);
     if (legacyCommand != LegacyRembCommand::NONE) {
         auto newBitrate = videoBitrateInfo_.videoBitrateCurrent;
         if (legacyCommand == LegacyRembCommand::DECREASE) {
@@ -1066,6 +1064,15 @@ VideoRtpSession::delayProcessing(uint64_t bitrateBps)
         setNewBitrate(newBitrate);
         return;
     }
+
+    applyAbsoluteBitrate(bitrateBps);
+}
+
+void
+VideoRtpSession::applyAbsoluteBitrate(uint64_t bitrateBps)
+{
+    if (bitrateBps == 0)
+        return;
 
     const auto bitrateKbps = (bitrateBps + BITS_PER_KILOBIT - 1) / BITS_PER_KILOBIT;
     const auto newBitrate = static_cast<unsigned>(std::min<uint64_t>(bitrateKbps, std::numeric_limits<unsigned>::max()));

@@ -31,7 +31,7 @@ enum BandwidthUsage : uint8_t { bwNormal = 0, bwUnderusing = 1, bwOverusing = 2 
 
 enum class LegacyRembCommand : uint8_t { NONE, DECREASE, INCREASE };
 
-LegacyRembCommand legacyRembCommand(uint64_t bitrateBps);
+LegacyRembCommand legacyRembCommand(uint64_t bitrateBps, bool legacyMode);
 
 struct TransportCcBitrateEstimate
 {

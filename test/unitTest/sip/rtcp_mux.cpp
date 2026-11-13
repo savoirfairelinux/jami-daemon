@@ -7,6 +7,7 @@
 #include "manager.h"
 #include "sip/sdp.h"
 #include "sip/sipaccount.h"
+#include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
 #include "account_const.h"
 #include "jami/media_const.h"
@@ -172,6 +173,7 @@ public:
     }
 
 private:
+    void peerVersionControlsLegacyRemb();
     void offerAdvertisesRtcpMuxByDefault();
     void offerSkipsRtcpMuxWhenDisabled();
     void offerAdvertisesRtcpMuxWhenEnabled();
@@ -196,6 +198,7 @@ private:
     void remoteSdpParsesTransportCcFeedback();
 
     CPPUNIT_TEST_SUITE(RtcpMuxSdpTest);
+    CPPUNIT_TEST(peerVersionControlsLegacyRemb);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxByDefault);
     CPPUNIT_TEST(offerSkipsRtcpMuxWhenDisabled);
     CPPUNIT_TEST(offerAdvertisesRtcpMuxWhenEnabled);
@@ -225,6 +228,30 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RtcpMuxSdpTest, RtcpMuxSdpTest::name());
+
+void
+RtcpMuxSdpTest::peerVersionControlsLegacyRemb()
+{
+    SIPCall call(account_, "legacy-remb-version-test", Call::CallType::OUTGOING, {});
+    CPPUNIT_ASSERT(!call.peerUsesLegacyRemb_);
+    for (const auto ua : {"Jami Daemon 16.0.0", "Jami Daemon 16.9.9-test Linux", "Jami Daemon 16.0.0.1 Linux"}) {
+        call.setPeerUaVersion(ua);
+        CPPUNIT_ASSERT(call.peerUsesLegacyRemb_);
+    }
+    for (const auto ua : {"Jami Daemon 17.0.0",
+                          "Jami Daemon 17.0.0-test Linux",
+                          "Jami Daemon 18.0.0 Linux",
+                          "Other SIP endpoint 16.0.0",
+                          "Jami Daemon invalid Linux",
+                          "Jami Daemon 17 Linux",
+                          "Jami Daemon 16.bad.0 Linux",
+                          "Jami Daemon 16..0 Linux"}) {
+        call.setPeerUaVersion("Jami Daemon 16.0.0");
+        CPPUNIT_ASSERT(call.peerUsesLegacyRemb_);
+        call.setPeerUaVersion(ua);
+        CPPUNIT_ASSERT(!call.peerUsesLegacyRemb_);
+    }
+}
 
 void
 RtcpMuxSdpTest::offerAdvertisesRtcpMuxByDefault()

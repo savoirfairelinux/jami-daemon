@@ -21,6 +21,14 @@ Current non-goals:
 
 The bridge still supports the original SDP-only modes, but now also exposes live modes that create a real ICE transport, negotiate DTLS-SRTP, emit one encrypted RTP packet, and assert encrypted RTCP return traffic.
 
+## Bitrate feedback compatibility
+
+Negotiated `goog-remb` feedback always carries an absolute bitrate, including
+`0x6803` and `0x7378`. Those historical Jami relative commands are recognized only
+for an identified Jami daemon peer older than 17.0.0 without negotiated
+`goog-remb`. Unknown peers and Jami 17.0.0 or newer use absolute REMB semantics.
+Transport-CC bitrate targets are always absolute, independently of peer version.
+
 ## Prerequisites
 
 - A built `jami_webrtc_sdp_bridge` binary

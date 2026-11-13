@@ -70,6 +70,7 @@ namespace jami {
 
 namespace test {
 class DtlsCallTest;
+class RtcpMuxSdpTest;
 }
 
 class Sdp;
@@ -91,6 +92,7 @@ class SIPCall : public Call
 {
 private:
     friend class test::DtlsCallTest;
+    friend class test::RtcpMuxSdpTest;
 
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
@@ -554,6 +556,7 @@ private:
 
     // Peer's User-Agent.
     std::string peerUserAgent_ {};
+    bool peerUsesLegacyRemb_ {false};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
     // Flag to indicate if the peer's Daemon version supports multi-stream.

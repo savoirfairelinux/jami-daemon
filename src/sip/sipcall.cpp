@@ -98,6 +98,9 @@ static const std::vector<unsigned> REUSE_ICE_IN_REINVITE_REQUIRED_VERSION
 static constexpr auto MULTIAUDIO_REQUIRED_VERSION_STR = "13.11.0"sv;
 static const std::vector<unsigned> MULTIAUDIO_REQUIRED_VERSION
     = split_string_to_unsigned(MULTIAUDIO_REQUIRED_VERSION_STR, '.');
+static constexpr auto ABSOLUTE_REMB_REQUIRED_VERSION_STR = "17.0.0"sv;
+static const std::vector<unsigned> ABSOLUTE_REMB_REQUIRED_VERSION
+    = split_string_to_unsigned(ABSOLUTE_REMB_REQUIRED_VERSION_STR, '.');
 
 void
 initializeDtlsSrtpIdentity(const std::shared_ptr<SIPAccountBase>& account,
@@ -280,6 +283,10 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     auto new_mtu = sipTransport_->getTlsMtu();
     rtpSession->setMtu(new_mtu);
     rtpSession->setDtlsSrtpIdentity(dtlsCertificate_, dtlsPrivateKey_);
+#ifdef ENABLE_VIDEO
+    if (auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(rtpSession))
+        videoRtp->setLegacyRembEnabled(peerUsesLegacyRemb_);
+#endif
     rtpSession->updateMedia(remoteMedia, localMedia);
 
     // Mute/un-mute media
@@ -2566,6 +2573,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     peerUserAgent_ = ua;
+    peerUsesLegacyRemb_ = false;
 
     // User-agent parsing
     constexpr std::string_view PACK_NAME(PACKAGE_NAME " ");
@@ -2578,20 +2586,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
 
     ua = ua.substr(pos + PACK_NAME.length());
 
-    std::string_view version;
-    // Unstable (un-released) versions has a hyphen + commit ID after
-    // the version number. Find the commit ID if any, and ignore it.
-    pos = ua.find('-');
-    if (pos != std::string_view::npos) {
-        // Get the version and ignore the commit ID.
-        version = ua.substr(0, pos);
-    } else {
-        // Extract the version number.
-        pos = ua.find(' ');
-        if (pos != std::string_view::npos) {
-            version = ua.substr(0, pos);
-        }
-    }
+    const auto version = ua.substr(0, ua.find_first_of("- "));
 
     if (version.empty()) {
         JAMI_DEBUG("[call:{}] Unable to parse peer's version", getCallId());
@@ -2599,10 +2594,14 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     auto peerVersion = split_string_to_unsigned(version, '.');
-    if (peerVersion.size() > 4u) {
+    if (peerVersion.size() < 3u || peerVersion.size() > 4u
+        || version.find_first_not_of("0123456789.") != std::string_view::npos
+        || peerVersion.size() != static_cast<size_t>(std::count(version.begin(), version.end(), '.')) + 1) {
         JAMI_WARNING("[call:{}] Unable to parse peer's version", getCallId());
         return;
     }
+
+    peerUsesLegacyRemb_ = !meetMinimumRequiredVersion(peerVersion, ABSOLUTE_REMB_REQUIRED_VERSION);
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
     peerSupportMultiStream_ = meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
@@ -4810,6 +4809,7 @@ SIPCall::merge(Call& call)
     rtcpMuxEnabled_ = subcall.rtcpMuxEnabled_;
     bundleEnabled_ = subcall.bundleEnabled_;
     peerUserAgent_ = subcall.peerUserAgent_;
+    peerUsesLegacyRemb_ = subcall.peerUsesLegacyRemb_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
     peerSupportMultiAudioStream_ = subcall.peerSupportMultiAudioStream_;
     peerSupportMultiIce_ = subcall.peerSupportMultiIce_;

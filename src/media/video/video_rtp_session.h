@@ -26,6 +26,10 @@
 #include <memory>
 
 namespace jami {
+namespace test {
+class CongestionControlTest;
+}
+
 class CongestionControl;
 class Conference;
 class MediaRecorder;
@@ -89,6 +93,7 @@ public:
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
 
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
+    void setLegacyRembEnabled(bool enabled) { legacyRembEnabled_.store(enabled); }
 
     void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
     void restartSender() override;
@@ -124,6 +129,8 @@ public:
     std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
 private:
+    friend class test::CongestionControlTest;
+
     void setupConferenceVideoPipeline(Conference& conference, Direction dir);
     void setupVideoPipeline();
     void startSender();
@@ -168,7 +175,8 @@ private:
     float getPonderateLoss(float lastLoss);
     void delayMonitor(int gradient, int deltaT);
     void dropProcessing(RTCPInfo* rtcpi);
-    void delayProcessing(uint64_t bitrateBps);
+    void processRembFeedback(uint64_t bitrateBps);
+    void applyAbsoluteBitrate(uint64_t bitrateBps);
     void setNewBitrate(unsigned int newBR);
     uint64_t clampVideoBitrateBps(uint64_t bitrateBps) const;
     void sendReceiverEstimatedMaxBitrate(uint64_t bitrateBps);
@@ -204,6 +212,7 @@ private:
 
     uint64_t receiverEstimatedBitrateBps_ {0};
     unsigned remb_dec_cnt_ {0};
+    std::atomic_bool legacyRembEnabled_ {false};
 
     std::unique_ptr<CongestionControl> cc;
     std::unique_ptr<TransportCcController> transportCcController_;

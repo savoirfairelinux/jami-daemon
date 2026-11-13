@@ -38,8 +38,10 @@ static constexpr float kd = 0.002f;
 constexpr auto OVERUSE_THRESH = std::chrono::milliseconds(100);
 
 LegacyRembCommand
-legacyRembCommand(uint64_t bitrateBps)
+legacyRembCommand(uint64_t bitrateBps, bool legacyMode)
 {
+    if (!legacyMode)
+        return LegacyRembCommand::NONE;
     if (bitrateBps == 0x6803)
         return LegacyRembCommand::DECREASE;
     if (bitrateBps == 0x7378)
