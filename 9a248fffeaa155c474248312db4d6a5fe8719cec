@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b835652b_061d997c",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T04:28:10Z",
+      "side": 1,
+      "message": "[error] Line 304: 🔴 Catching `std::exception` and then returning success now swallows unexpected sync-processing failures as if the frame was handled. That can silently drop state updates while keeping the stream alive, masking protocol/data corruption and making convergence/debugging much harder. Keep recoverable metadata errors local (already done in `onSyncData`), but for this generic catch return an error (as before) so the sync channel is reset on unexpected exceptions.",
+      "revId": "9a248fffeaa155c474248312db4d6a5fe8719cec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
