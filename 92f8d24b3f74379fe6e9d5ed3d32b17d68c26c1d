@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "806bfc57_937f7a2c",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T04:48:41Z",
+      "side": 1,
+      "message": "[warning] Line 216: 🟡 `mergeContactMetadata()` persists each contact change immediately via `commitMetadata()-\u003esaveContactMetadata()`, and `saveContactMetadata()` rewrites the full contacts file. During syncs carrying many `ds.contact_metadata` entries, this becomes O(N * file_size) disk I/O and can significantly slow sync/apply paths. Prefer batching metadata merges under one lock and doing a single atomic save at the end (while still emitting per-contact notifications from the in-memory merged state).",
+      "revId": "92f8d24b3f74379fe6e9d5ed3d32b17d68c26c1d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
