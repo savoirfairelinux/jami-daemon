@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "626cb9d4_87342f99",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 568,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-13T03:45:43Z",
+      "side": 1,
+      "message": "[warning] Line 568: 🟡 `getNativeCallMediaState()` can report `WAITING` for calls that are already disconnected when their `CallState` is still `INACTIVE` (the current `DISCONNECTED` check is gated behind `ACTIVE`). This can make clients keep polling/retrying on ended calls. Treat `ConnectionState::DISCONNECTED` as `UNAVAILABLE` regardless of `CallState` to keep the API contract (`UNAVAILABLE` for ended calls) consistent.",
+      "revId": "5b88472e7b0f0e7a30eb7487a930cba0484dbaf2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
