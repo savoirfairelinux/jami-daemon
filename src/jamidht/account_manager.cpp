@@ -69,6 +69,32 @@ AccountManager::mergeAccountMetadata(const Metadata& remote)
     return true;
 }
 
+bool
+AccountManager::getContactMetadata(const std::string& uri, Metadata::Values& metadata) const
+{
+    const dht::InfoHash id(uri);
+    if (uri.size() != 40 || !id || !info_ || !info_->contacts) {
+        JAMI_WARNING("[Account {}] Cannot read contact metadata for {}", accountId_, uri);
+        return false;
+    }
+    const auto contact = info_->contacts->getContactInfo(id);
+    if (!contact || !contact->metadata.validate())
+        return false;
+    metadata = contact->metadata.values();
+    return true;
+}
+
+bool
+AccountManager::setContactMetadata(const std::string& uri, const Metadata::Values& updates)
+{
+    const dht::InfoHash id(uri);
+    if (uri.size() != 40 || !id || !info_ || !info_->contacts) {
+        JAMI_WARNING("[Account {}] Cannot update contact metadata for {}", accountId_, uri);
+        return false;
+    }
+    return info_->contacts->setContactMetadata(id, info_->deviceId, updates).has_value();
+}
+
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
@@ -132,6 +158,9 @@ AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
         }
         info_->contacts->saveContacts();
     }
+    for (const auto& [id, metadata] : sync.contact_metadata)
+        if (!info_->contacts->mergeContactMetadata(id, metadata))
+            JAMI_WARNING("[Account {}] Cannot merge contact metadata for {}; continuing sync", accountId_, id);
 
     // Sync trust requests
     // Pass through the sender-embedded invite timestamp (tr.second.invited) so a second device

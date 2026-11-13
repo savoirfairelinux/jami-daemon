@@ -1092,6 +1092,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                     JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
                     auto archive = this_->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, passwordIt->second);
                     archive.metadata = this_->accountMetadata().state().value_or(Metadata {});
+                    archive.contacts = this_->info_->contacts->getContacts();
                     ctx->addDeviceCtx->accData = archive.serialize();
                     shouldSendArchive = true;
                     JAMI_DEBUG("[LinkDevice] Sending account archive.");

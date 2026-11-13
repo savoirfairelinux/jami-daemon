@@ -48,6 +48,7 @@ export enum JamiSignal {
   AccountsChanged = 'AccountsChanged',
   AccountDetailsChanged = 'AccountDetailsChanged',
   AccountMetadataChanged = 'AccountMetadataChanged',
+  ContactMetadataChanged = 'ContactMetadataChanged',
   AccountProfileReceived = 'AccountProfileReceived',
   RegistrationStateChanged = 'RegistrationStateChanged',
   ComposingStatusChanged = 'ComposingStatusChanged',
@@ -187,6 +188,8 @@ export interface JamiSwig {
   getAccountDetails(accountId: string): StringMap
   getAccountMetadata(accountId: string, metadata: StringMap): boolean
   setAccountMetadata(accountId: string, updates: StringMap): boolean
+  getContactMetadata(accountId: string, contactId: string, metadata: StringMap): boolean
+  setContactMetadata(accountId: string, contactId: string, updates: StringMap): boolean
   getVolatileAccountDetails(accountId: string): StringMap
   setAccountDetails(accountId: string, details: StringMap): void
   addAccount(details: StringMap): string
