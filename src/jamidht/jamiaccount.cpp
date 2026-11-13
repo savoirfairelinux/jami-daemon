@@ -4995,8 +4995,10 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         if (start != 0 || end != 0) {
             channelName += fmt::format("?start={}&end={}", start, end);
         }
-        // We can avoid to negotiate new sessions, as the file notif
-        // probably came from an online device or last connected device.
+        // The type lets a backgrounded iOS host wake and load only this conversation.
+        dhtnet::ConnectDeviceOptions options;
+        if (!interactionId.empty())
+            options.connType = fmt::format("{}/{}", MIME_TYPE_FILE_REQUEST, conversationId);
         connectionManager_->connectDevice(
             did,
             channelName,
@@ -5020,7 +5022,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                         dt->onIncomingFileTransfer(fileId, channel, start);
                 });
             },
-            false);
+            options);
     };
 
     if (!deviceId.empty()) {

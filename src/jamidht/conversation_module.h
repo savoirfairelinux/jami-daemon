@@ -29,6 +29,7 @@
 namespace jami {
 static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
 static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
+static constexpr const char MIME_TYPE_FILE_REQUEST[] {"application/file-request"};
 
 class SIPCall;
 

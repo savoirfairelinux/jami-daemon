@@ -97,6 +97,7 @@ public:
     void connectSignals();
 
 private:
+    void testOutgoingTransferFailureLifecycle();
     void testConversationFileTransfer();
     void testFileTransferInConversation();
     void testVcfFileTransferInConversation();
@@ -118,6 +119,7 @@ private:
     void testForgedTransferIdIsRefused();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
+    CPPUNIT_TEST(testOutgoingTransferFailureLifecycle);
     CPPUNIT_TEST(testConversationFileTransfer);
     CPPUNIT_TEST(testFileTransferInConversation);
     CPPUNIT_TEST(testVcfFileTransferInConversation);
@@ -266,6 +268,39 @@ FileTransferTest::connectSignals()
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
+}
+
+void
+FileTransferTest::testOutgoingTransferFailureLifecycle()
+{
+    std::vector<int> events;
+    std::map<std::string, std::shared_ptr<CallbackWrapperBase>> handlers;
+    handlers.insert(exportable_callback<libjami::DataTransferSignal::OutgoingFileTransferEvent>(
+        [&](const std::string&, const std::string&, const std::string&, int code) {
+            std::lock_guard guard(mtx);
+            events.emplace_back(code);
+            cv.notify_all();
+        }));
+    libjami::registerSignalHandlers(handlers);
+    libjami::DataTransferInfo info;
+    info.accountId = aliceId;
+    info.conversationId = std::string(40, 'a');
+    info.path = (sendPath / "missing").string();
+    const auto file = std::string(40, 'b') + "_42.txt";
+    {
+        // An unavailable source still ends the upload once, even if cancelled afterwards.
+        OutgoingFile outgoing(nullptr, file, std::string(40, 'b'), info);
+        int completions = 0;
+        outgoing.onFinished([&](uint32_t) { ++completions; });
+        outgoing.process();
+        outgoing.cancel();
+        CPPUNIT_ASSERT_EQUAL(1, completions);
+    }
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return events.size() >= 2; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 500ms, [&] { return events.size() > 2; }));
+    CPPUNIT_ASSERT_EQUAL(int(libjami::DataTransferEventCode::ongoing), events[0]);
+    CPPUNIT_ASSERT_EQUAL(int(libjami::DataTransferEventCode::invalid_pathname), events[1]);
+    libjami::unregisterSignalHandlers();
 }
 
 void

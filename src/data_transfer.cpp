@@ -151,20 +151,21 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     , start_(start)
     , end_(end)
 {
+    notifyLifecycle(libjami::DataTransferEventCode::ongoing);
     std::filesystem::path fpath(info_.path);
     if (!std::filesystem::is_regular_file(fpath)) {
-        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
-        return;
+        return; // process() reports failure after the completion callback is installed.
     }
     stream_.open(fpath, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
-        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
-        return;
+        return; // process() reports failure after the completion callback is installed.
     }
 }
 
 OutgoingFile::~OutgoingFile()
 {
+    if (!terminal_.exchange(true))
+        notifyLifecycle(libjami::DataTransferEventCode::closed_by_peer);
     if (stream_ && stream_.is_open())
         stream_.close();
     if (channel_) {
@@ -175,8 +176,16 @@ OutgoingFile::~OutgoingFile()
 void
 OutgoingFile::process()
 {
-    if (!channel_ or !stream_ or !stream_.is_open())
+    if (terminal_)
         return;
+    if (!stream_ or !stream_.is_open()) {
+        finish(libjami::DataTransferEventCode::invalid_pathname);
+        return;
+    }
+    if (!channel_) {
+        finish(libjami::DataTransferEventCode::closed_by_peer);
+        return;
+    }
     auto correct = false;
     stream_.seekg(static_cast<long>(start_), std::ios::beg);
     try {
@@ -199,15 +208,35 @@ OutgoingFile::process()
     } catch (const std::exception& e) {
         JAMI_WARNING("Failed to read from stream: {}", e.what());
     }
-    if (!isUserCancelled_) {
-        // NOTE: emit(code) MUST be changed to improve handling of multiple destinations
-        // But for now, we can just avoid to emit errors to the client, because for outgoing
-        // transfer in a swarm, for outgoingFiles, we know that the file is ok. And the peer
-        // will retry the transfer if they need, so we don't need to show errors.
-        if (!interactionId_.empty() && !correct)
-            return;
-        auto code = correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_peer;
+    finish(correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_peer);
+}
+
+void
+OutgoingFile::notifyLifecycle(libjami::DataTransferEventCode code)
+{
+    if (interactionId_.empty())
+        return;
+    runOnMainThread([info = info_, file = fileId_, code] {
+        emitSignal<libjami::DataTransferSignal::OutgoingFileTransferEvent>(info.accountId,
+                                                                           info.conversationId,
+                                                                           file,
+                                                                           int(code));
+    });
+}
+
+void
+OutgoingFile::finish(libjami::DataTransferEventCode code)
+{
+    if (terminal_.exchange(true))
+        return;
+    notifyLifecycle(code);
+    // Preserve legacy message-status behavior: a failed upload to one swarm
+    // member must not mark the sender's available file as failed for everyone.
+    if (interactionId_.empty() || code == libjami::DataTransferEventCode::finished
+        || code == libjami::DataTransferEventCode::closed_by_host) {
         emit(code);
+    } else if (finishedCb_) {
+        finishedCb_(uint32_t(code));
     }
 }
 
@@ -219,7 +248,7 @@ OutgoingFile::cancel()
     if (std::filesystem::is_symlink(path))
         dhtnet::fileutils::remove(path);
     isUserCancelled_ = true;
-    emit(libjami::DataTransferEventCode::closed_by_host);
+    finish(libjami::DataTransferEventCode::closed_by_host);
 }
 
 IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,

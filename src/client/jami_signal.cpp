@@ -107,6 +107,7 @@ getSignalHandlers()
 
         /* DataTransfer */
         exported_callback<libjami::DataTransferSignal::DataTransferEvent>(),
+        exported_callback<libjami::DataTransferSignal::OutgoingFileTransferEvent>(),
 
 #ifdef ENABLE_VIDEO
         /* MediaPlayer */

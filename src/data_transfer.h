@@ -128,6 +128,9 @@ public:
     void cancel() override;
 
 private:
+    void notifyLifecycle(libjami::DataTransferEventCode code);
+    void finish(libjami::DataTransferEventCode code);
+    std::atomic_bool terminal_ {false};
     std::ifstream stream_;
     size_t start_ {0};
     size_t end_ {0};
