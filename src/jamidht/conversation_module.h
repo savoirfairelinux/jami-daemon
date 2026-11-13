@@ -61,7 +61,7 @@ struct SyncMsg
      * contacts, devices, trust requests, conversations or conversation
      * requests. Propagating such a change may require (re)connecting to
      * devices that are not currently connected. Metadata-only messages
-     * (account registers `ds.metadata`, preferences `p`, read/fetched status `ms`,
+     * (account/contact registers `ds.metadata`/`ds.contact_metadata`, preferences `p`, read/fetched status `ms`,
      * deprecated last-displayed `ld`) return false and only need to ride existing connections.
      */
     bool affectsList() const
