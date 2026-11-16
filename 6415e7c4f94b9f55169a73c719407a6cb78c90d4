@@ -51,6 +51,24 @@
       "message": "[warning] Line 278: 🟡 This test relies on an environment assumption (`MPEG-2` decoder unavailable) to exercise the failure path, so it can become a false-positive on builds where that decoder is present: `pause()` still won’t crash, but the `configureMediaInputs` error branch is never covered. Please make the precondition explicit (assert decoder absence and skip otherwise) or generate an input that deterministically fails decoder setup across platforms so the regression actually protects the fixed path.",
       "revId": "6415e7c4f94b9f55169a73c719407a6cb78c90d4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41a908da_ec971a1f",
+        "filename": "test/unitTest/media/test_media_player.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-16T17:52:09Z",
+      "side": 1,
+      "message": "The precondition holds for the builds we ship and test: contrib FFmpeg uses --disable-everything with a decoder allowlist that excludes mpeg2video. Against a system FFmpeg with that decoder the test still passes, it just exercises the normal path.",
+      "parentUuid": "59efdd77_e3c721b6",
+      "revId": "6415e7c4f94b9f55169a73c719407a6cb78c90d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
