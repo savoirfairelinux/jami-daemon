@@ -209,6 +209,7 @@ ExternalMediaCallTest::testRejectUnmigratedExternalMedia()
                          libjami::getExternalMediaPromotionState(aliceId, call->getCallId()));
     CPPUNIT_ASSERT(!call->isNativeMediaReady());
     CPPUNIT_ASSERT(call->getRtpSessionList().empty());
+    CPPUNIT_ASSERT_NO_THROW(call->setVideoOrientation(-1, 0));
     std::vector<libjami::MediaMap> media {
         {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
          {libjami::Media::MediaAttributeKey::ENABLED, "true"},
