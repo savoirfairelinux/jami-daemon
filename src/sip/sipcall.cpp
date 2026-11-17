@@ -2505,7 +2505,11 @@ SIPCall::setVideoOrientation(int streamIdx, int rotation)
 
     JAMI_DEBUG("[call:{}] Sending device orientation via SIP INFO {} for stream {}", getCallId(), rotation, streamIdx);
 
-    sendSIPInfo(sip_body, "media_control+xml");
+    try {
+        sendSIPInfo(sip_body, "media_control+xml");
+    } catch (const VoipLinkException& e) {
+        JAMI_ERROR("[call:{}] Error sending video orientation: {}", getCallId(), e.what());
+    }
 }
 
 void
