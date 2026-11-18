@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e396bfc_392d93cd",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3854,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-18T20:19:47Z",
+      "side": 1,
+      "message": "[error] Line 3854: 🔴 `inviteContactsToFeed()` can dereference a null `conv-\u003econversation` through `canInviteToFeed(*conv)`. `inviteNewContactToFeeds()` iterates all synced conversations, and some feed entries can exist as metadata-only (no loaded `Conversation` instance yet). In that state, a contact-add event can crash this path. Add an explicit `if (!conv-\u003econversation) return;` guard before calling `canInviteToFeed()` and before using `publisher-\u003egenerateInvitation(...)`.",
+      "revId": "86098591e7ddce4d4c97b1427708a4110a3c7d79",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
