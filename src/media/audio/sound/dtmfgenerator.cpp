@@ -17,6 +17,7 @@
 #include "dtmfgenerator.h"
 #include "libav_deps.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
 
@@ -92,14 +93,8 @@ DTMFGenerator::getSamples(AVFrame* frame, unsigned char code)
         }
     }
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = frame->nb_samples % sampleRate_;
+    state.offset = 0;
+    copyToneSamples(frame);
 }
 
 /*
@@ -112,14 +107,98 @@ DTMFGenerator::getNextSamples(AVFrame* frame)
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = (state.offset + frame->nb_samples) % sampleRate_;
+    copyToneSamples(frame);
+}
+
+namespace {
+
+double
+readSample(const AVFrame* src, size_t index)
+{
+    switch (src->format) {
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+        return reinterpret_cast<const int16_t*>(src->data[0])[index] / 32768.0;
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+        return reinterpret_cast<const float*>(src->data[0])[index];
+    default:
+        return 0.0;
+    }
+}
+
+int16_t
+toS16(double value)
+{
+    return static_cast<int16_t>(std::clamp(value * 32768.0, -32768.0, 32767.0));
+}
+
+bool
+writeSample(AVFrame* dst, int channel, int index, double value)
+{
+    const int nbChannels = dst->ch_layout.nb_channels;
+    switch (dst->format) {
+    case AV_SAMPLE_FMT_S16:
+        reinterpret_cast<int16_t*>(dst->extended_data[0])[index * nbChannels + channel] = toS16(value);
+        return true;
+    case AV_SAMPLE_FMT_S16P:
+        reinterpret_cast<int16_t*>(dst->extended_data[channel])[index] = toS16(value);
+        return true;
+    case AV_SAMPLE_FMT_FLT:
+        reinterpret_cast<float*>(dst->extended_data[0])[index * nbChannels + channel] = static_cast<float>(value);
+        return true;
+    case AV_SAMPLE_FMT_FLTP:
+        reinterpret_cast<float*>(dst->extended_data[channel])[index] = static_cast<float>(value);
+        return true;
+    default:
+        return false;
+    }
+}
+
+} // namespace
+
+/*
+ * Copy samples from the current (mono) tone buffer into the output frame,
+ * wrapping around the tone buffer and duplicating the tone on every output
+ * channel. The output frame may differ from the tone buffer in channel
+ * count, sample format or length.
+ */
+void
+DTMFGenerator::copyToneSamples(AVFrame* frame)
+{
+    if (!frame || frame->nb_samples <= 0)
+        return;
+
+    const int nbChannels = frame->ch_layout.nb_channels;
+    const auto format = (AVSampleFormat) frame->format;
+    if (!frame->extended_data || !frame->extended_data[0] || nbChannels <= 0)
+        throw DTMFException("Invalid output frame");
+    if (av_sample_fmt_is_planar(format)) {
+        for (int ch = 0; ch < nbChannels; ++ch)
+            if (!frame->extended_data[ch])
+                throw DTMFException("Invalid output frame");
+    }
+
+    const AVFrame* src = state.sample;
+    if (!src || !src->data[0] || src->nb_samples <= 0) {
+        av_samples_set_silence(frame->extended_data, 0, frame->nb_samples, nbChannels, format);
+        return;
+    }
+
+    const auto srcLen = static_cast<size_t>(src->nb_samples);
+    size_t pos = state.offset % srcLen;
+    for (int i = 0; i < frame->nb_samples; ++i) {
+        const double value = readSample(src, pos);
+        for (int ch = 0; ch < nbChannels; ++ch) {
+            if (!writeSample(frame, ch, i, value)) {
+                av_samples_set_silence(frame->extended_data, 0, frame->nb_samples, nbChannels, format);
+                return;
+            }
+        }
+        if (++pos == srcLen)
+            pos = 0;
+    }
+    state.offset = static_cast<unsigned>(pos);
 }
 
 libjami::FrameBuffer
@@ -131,7 +210,10 @@ DTMFGenerator::fillToneBuffer(unsigned index)
     ptr->format = tone_.getFormat().sampleFormat;
     ptr->sample_rate = sampleRate_;
     av_channel_layout_from_mask(&ptr->ch_layout, AV_CH_LAYOUT_MONO);
-    av_frame_get_buffer(ptr.get(), 0);
+    if (av_frame_get_buffer(ptr.get(), 0) < 0) {
+        ptr->nb_samples = 0;
+        return ptr;
+    }
     tone_.genSin(ptr.get(), 0, ptr->nb_samples, TONES[index].higher, TONES[index].lower);
     return ptr;
 }

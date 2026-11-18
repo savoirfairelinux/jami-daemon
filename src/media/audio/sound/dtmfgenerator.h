@@ -97,6 +97,8 @@ private:
      * @return AudioSample* The generated data
      */
     libjami::FrameBuffer fillToneBuffer(unsigned index);
+
+    void copyToneSamples(AVFrame* frame);
 };
 
 } // namespace jami
