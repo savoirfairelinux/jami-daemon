@@ -55,7 +55,7 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
             const auto deviceId = cert->getLongId().toString();
             // Opening the channel does not write an invitation. The serving
             // device stages one only when ready to serve a first clone.
-            return convModule->isPeerAuthorized(conversationId, issuerUri, deviceId, true)
+            return convModule->isPeerAuthorizedForGit(conversationId, issuerUri, deviceId)
                    || convModule->mayServeDocument(conversationId, issuerUri, deviceId)
                    || convModule->mayServeFeed(conversationId, issuerUri, deviceId);
         } else {

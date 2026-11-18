@@ -75,6 +75,7 @@ public:
     void testRemoveConversationNoMember();
     void testRemoveConversationWithMember();
     void testFeedInviteDoesNotAddMember();
+    void testFeedInvitesAllContacts();
     void testFeedFollowerCanResubscribe();
     void testAddMember();
     void testMemberAddedNoBadFile();
@@ -132,6 +133,7 @@ private:
     CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testRemoveConversationWithMember);
     CPPUNIT_TEST(testFeedInviteDoesNotAddMember);
+    CPPUNIT_TEST(testFeedInvitesAllContacts);
     CPPUNIT_TEST(testFeedFollowerCanResubscribe);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testMemberAddedNoBadFile);
@@ -570,6 +572,58 @@ ConversationMembersEventTest::testFeedInviteDoesNotAddMember()
     CPPUNIT_ASSERT(feed->isMember(bobUri));
     CPPUNIT_ASSERT(!feed->isMember(carlaUri, true));
     CPPUNIT_ASSERT_EQUAL(size_t {2}, libjami::getConversationMembers(aliceId, convId).size());
+}
+
+void
+ConversationMembersEventTest::testFeedInvitesAllContacts()
+{
+    add_confirmed_contact(bobId, aliceId);
+    Manager::instance().sendRegister(carlaId, true);
+    wait_for_announcement_of({carlaId});
+
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carla = Manager::instance().getAccount<JamiAccount>(carlaId);
+    libjami::addContact(carlaId, alice->getUsername());
+    connectSignals();
+    const auto bobUri = bob->getUsername();
+    const auto carlaUri = carla->getUsername();
+    const auto carlaDevice = std::string(carla->currentDeviceId());
+    auto module = alice->convModule();
+    const auto convId = libjami::startFeedConversation(aliceId, {{"title", "Contact updates"}}, true);
+    CPPUNIT_ASSERT(!convId.empty());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT_EQUAL("Contact updates"s, libjami::getConversationRequests(bobId).front().at("title"));
+    CPPUNIT_ASSERT(libjami::getConversationRequests(carlaId).empty());
+    CPPUNIT_ASSERT(!module->mayServeFeed(convId, carlaUri, carlaDevice));
+
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return bobData.conversationId == convId && aliceData.members[bobUri] == int(libjami::MemberEvent::JOIN);
+    }));
+
+    module->loadConversations();
+    const auto head = module->getConversation(convId)->lastCommitId();
+    libjami::addContact(aliceId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.requestReceived; }));
+    CPPUNIT_ASSERT_EQUAL(head, module->getConversation(convId)->lastCommitId());
+
+    // Simulate an interrupted clone, after the publisher staged the ADD.
+    std::optional<bool> authorized;
+    module->authorizeLazyPeer(convId, carlaUri, carlaDevice, [&](bool ok) {
+        std::lock_guard lock(mtx);
+        authorized = ok;
+        cv.notify_all();
+    });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return authorized.has_value(); }));
+    CPPUNIT_ASSERT(*authorized);
+    CPPUNIT_ASSERT(module->isPeerAuthorizedForGit(convId, carlaUri, carlaDevice));
+
+    libjami::removeContact(aliceId, carlaUri, false);
+    libjami::removeContact(aliceId, bobUri, false);
+    CPPUNIT_ASSERT(!module->mayServeFeed(convId, carlaUri, carlaDevice));
+    CPPUNIT_ASSERT(!module->isPeerAuthorizedForGit(convId, carlaUri, carlaDevice));
+    CPPUNIT_ASSERT(module->isPeerAuthorizedForGit(convId, bobUri, std::string(bob->currentDeviceId())));
 }
 
 void

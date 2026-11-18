@@ -68,6 +68,7 @@ static constexpr const char* ERASED_MS {"erasedMs"};
 static constexpr const char* RECEIVED_MS {"receivedMs"};
 static constexpr const char* DECLINED_MS {"declinedMs"};
 static constexpr const char* INVITED {"invited"};
+static constexpr const char* INVITE_ALL_CONTACTS {"inviteAllContacts"};
 } // namespace ConversationMapKeys
 
 namespace ConversationDirectories {
@@ -186,6 +187,7 @@ struct ConvInfo
     // sendTrustRequest()), keyed by peer URI. For feeds this also authorizes
     // staging a repository invitation when the peer first clones.
     std::map<std::string, TimePoint> invited {};
+    bool inviteAllContacts {false};
 
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
@@ -240,7 +242,9 @@ struct ConvInfo
                                        ConversationMapKeys::ERASED_MS,
                                        erasedMs,
                                        ConversationMapKeys::INVITED,
-                                       invitedMs)
+                                       invitedMs,
+                                       ConversationMapKeys::INVITE_ALL_CONTACTS,
+                                       inviteAllContacts)
             .msgpack_pack(pk);
     }
     void msgpack_unpack(const msgpack::object& o);
