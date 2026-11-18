@@ -542,8 +542,11 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
     try {
         transferPath = this->path(fileId);
         path = transferPath.string();
-    } catch (const std::filesystem::filesystem_error& e) {
+    } catch (const std::exception& e) {
+        // On Windows, path::string() may throw std::system_error (not a
+        // filesystem_error) when the path cannot be converted to narrow chars.
         JAMI_WARNING("Unable to resolve transfer path for {}: {}", fileId, e.what());
+        path.clear();
         progress = 0;
         return false;
     }
