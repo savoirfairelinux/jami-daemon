@@ -16,6 +16,23 @@
       "message": "Addressed in this patchset.",
       "revId": "be32ce2197c56416f15e52364ea6a6dee039e382",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e0a9d36_b2f3d84d",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-18T17:00:57Z",
+      "side": 1,
+      "message": "[warning] Line 65: 🟡 Unsupported audio sample formats are silently accepted: `readMonoSample` returns `0.0` for unknown formats and `writeSample` skips writes unless the packed format is S16/FLT. This can produce silent/corrupted DTMF without any explicit failure. Please validate frame/tone formats up front in `copyToneSamples` (or constructor) and throw `DTMFException` for unsupported formats, or extend conversion support accordingly.",
+      "revId": "be32ce2197c56416f15e52364ea6a6dee039e382",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
