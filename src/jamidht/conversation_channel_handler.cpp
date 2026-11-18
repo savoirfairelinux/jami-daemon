@@ -53,12 +53,11 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
         if (auto convModule = acc->convModule(true)) {
             const auto issuerUri = cert->issuer->getId().toString();
             const auto deviceId = cert->getLongId().toString();
-            // A collaborative document admits one more case: a peer that is no
-            // member yet, but that this holder could vouch for through the
-            // document's parent conversation. Accepting only opens the channel;
-            // the vouching itself happens when the clone is served.
+            // Opening the channel does not write an invitation. The serving
+            // device stages one only when ready to serve a first clone.
             return convModule->isPeerAuthorized(conversationId, issuerUri, deviceId, true)
-                   || convModule->mayServeDocument(conversationId, issuerUri, deviceId);
+                   || convModule->mayServeDocument(conversationId, issuerUri, deviceId)
+                   || convModule->mayServeFeed(conversationId, issuerUri, deviceId);
         } else {
             JAMI_ERROR("Received ConversationChannel request but conversation module is unavailable");
         }

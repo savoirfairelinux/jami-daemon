@@ -2150,7 +2150,7 @@ Conversation::id() const
 }
 
 void
-Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
+Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb, bool allowUnban)
 {
     try {
         if (mode() == ConversationMode::ONE_TO_ONE) {
@@ -2174,7 +2174,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         return;
     }
     if (isMemberBanned(contactUri)) {
-        if (pimpl_->isAdmin()) {
+        if (allowUnban && pimpl_->isAdmin()) {
             dht::ThreadPool::io().run([w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
                 if (auto sthis = w.lock()) {
                     auto members = sthis->pimpl_->repository_->members();
@@ -2193,16 +2193,20 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         return;
     }
 
-    dht::ThreadPool::io().run([w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
+    dht::ThreadPool::io().run([w = weak(), contactUri, cb, allowUnban] {
         if (auto sthis = w.lock()) {
             // Add member files and commit
             std::unique_lock lk(sthis->pimpl_->writeMtx_);
-            auto commit = sthis->pimpl_->repository_->addMember(contactUri);
+            std::string commit;
+            if (allowUnban || (!sthis->isRemoving() && !sthis->isMemberBanned(contactUri)))
+                commit = sthis->pimpl_->repository_->addMember(contactUri);
             if (not commit.empty())
                 sthis->pimpl_->announce(commit, true);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
+        } else if (cb) {
+            cb(false, {});
         }
     });
 }
@@ -3119,7 +3123,7 @@ Conversation::isInitialMember(const std::string& uri) const
 void
 Conversation::updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb)
 {
-    dht::ThreadPool::io().run([w = weak(), map = std::move(map), cb = std::move(cb)] {
+    auto update = [w = weak(), map, cb] {
         if (auto sthis = w.lock()) {
             auto& repo = sthis->pimpl_->repository_;
             std::unique_lock lk(sthis->pimpl_->writeMtx_);
@@ -3135,7 +3139,13 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
                                                                                 repo->id(),
                                                                                 repo->infos());
         }
-    });
+    };
+    // Feed creation sends invitations immediately after updating the profile.
+    // There is no intervening repository add to precede sending the metadata.
+    if (mode() == ConversationMode::FEED)
+        update();
+    else
+        dht::ThreadPool::io().run(std::move(update));
 }
 
 std::map<std::string, std::string>
