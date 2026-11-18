@@ -65,6 +65,7 @@ struct SwarmMessage
   // Conversation management
   std::string startConversation(const std::string& accountId);
   std::string startFeedConversation(const std::string& accountId);
+  std::string startFeedConversation(const std::string& accountId, const std::map<std::string, std::string>& profile, bool inviteAllContacts);
   void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
   void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
   bool removeConversation(const std::string& accountId, const std::string& conversationId);

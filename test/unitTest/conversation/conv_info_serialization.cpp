@@ -291,6 +291,7 @@ ConvInfoSerializationTest::testConvInfoLegacyToNew()
     CPPUNIT_ASSERT_EQUAL(std::string("commitId"), info.lastDisplayed);
     CPPUNIT_ASSERT(info.mode == ConversationMode::ONE_TO_ONE);
     CPPUNIT_ASSERT(info.parent.empty());
+    CPPUNIT_ASSERT(!info.inviteAllContacts);
 }
 
 void
@@ -322,6 +323,7 @@ ConvInfoSerializationTest::testConvInfoMsgpackRoundtrip()
     info.removed = timePointFromMilliseconds(1700000001124);
     info.members = {"alice", "bob"};
     info.parent = "parent-conversation";
+    info.inviteAllContacts = true;
 
     auto out = repack<ConvInfo>(info);
     CPPUNIT_ASSERT(out.created == info.created);
@@ -329,9 +331,11 @@ ConvInfoSerializationTest::testConvInfoMsgpackRoundtrip()
     CPPUNIT_ASSERT(out.erased == info.erased);
     CPPUNIT_ASSERT(out.members == info.members);
     CPPUNIT_ASSERT_EQUAL(info.parent, out.parent);
+    CPPUNIT_ASSERT(out.inviteAllContacts);
     msgpack::zone zone;
     msgpack::object object(info, zone);
     CPPUNIT_ASSERT_EQUAL(info.parent, object.as<ConvInfo>().parent);
+    CPPUNIT_ASSERT(object.as<ConvInfo>().inviteAllContacts);
 }
 
 void
@@ -342,12 +346,14 @@ ConvInfoSerializationTest::testConvInfoJson()
     info.removed = timePointFromMilliseconds(1700000002456);
     info.members = {"alice"};
     info.parent = "parent-conversation";
+    info.inviteAllContacts = true;
 
     // Round-trip via JSON preserves ms
     ConvInfo fromJson(info.toJson());
     CPPUNIT_ASSERT(fromJson.created == info.created);
     CPPUNIT_ASSERT(fromJson.removed == info.removed);
     CPPUNIT_ASSERT_EQUAL(info.parent, fromJson.parent);
+    CPPUNIT_ASSERT(fromJson.inviteAllContacts);
 
     // Legacy JSON (seconds only, e.g. an old account archive) still loads
     Json::Value legacy;

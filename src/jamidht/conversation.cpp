@@ -98,6 +98,7 @@ ConvInfo::ConvInfo(const Json::Value& json)
     parent = json[ConversationMapKeys::PARENT].asString();
     if (json.isMember(ConversationMapKeys::MODE))
         mode = static_cast<ConversationMode>(json[ConversationMapKeys::MODE].asInt());
+    inviteAllContacts = json[ConversationMapKeys::INVITE_ALL_CONTACTS].asBool();
     if (json.isMember(ConversationMapKeys::INVITED)) {
         const auto& invitedJson = json[ConversationMapKeys::INVITED];
         for (const auto& uri : invitedJson.getMemberNames())
@@ -127,6 +128,8 @@ ConvInfo::toJson() const
     }
     json[ConversationMapKeys::LAST_DISPLAYED] = lastDisplayed;
     json[ConversationMapKeys::MODE] = static_cast<int>(mode);
+    if (inviteAllContacts)
+        json[ConversationMapKeys::INVITE_ALL_CONTACTS] = true;
     if (!parent.empty())
         json[ConversationMapKeys::PARENT] = parent;
     if (!invited.empty()) {
@@ -146,6 +149,7 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
     int64_t createdSec = 0, removedSec = 0, erasedSec = 0;
     std::optional<int64_t> createdMs, removedMs, erasedMs;
     std::map<std::string, int64_t> invitedMs;
+    inviteAllContacts = false;
     for (uint32_t i = 0; i < o.via.map.size; ++i) {
         const auto& kv = o.via.map.ptr[i];
         if (kv.key.type != msgpack::type::STR)
@@ -175,6 +179,8 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
             kv.val.convert(parent);
         else if (key == ConversationMapKeys::INVITED)
             kv.val.convert(invitedMs);
+        else if (key == ConversationMapKeys::INVITE_ALL_CONTACTS)
+            kv.val.convert(inviteAllContacts);
     }
     created = resolveTimePoint(createdMs, createdSec);
     removed = resolveTimePoint(removedMs, removedSec);
@@ -219,7 +225,9 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
                                    ConversationMapKeys::ERASED_MS,
                                    erasedMs,
                                    ConversationMapKeys::INVITED,
-                                   invitedMs)
+                                   invitedMs,
+                                   ConversationMapKeys::INVITE_ALL_CONTACTS,
+                                   inviteAllContacts)
         .msgpack_object(o, z);
 }
 

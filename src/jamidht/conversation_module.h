@@ -214,7 +214,10 @@ public:
      * @return conversation's id
      */
     std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
-                                  const dht::InfoHash& otherMember = {});
+                                  const dht::InfoHash& otherMember = {},
+                                  const std::map<std::string, std::string>& feedProfile = {},
+                                  bool inviteAllContacts = false);
+    void inviteNewContactToFeeds(const std::string& uri);
 
     /**
      * Create a collaborative document: a swarm repository of its own (mode
@@ -504,6 +507,7 @@ public:
      */
     bool mayServeDocument(const std::string& documentId, const std::string& uri, const std::string& deviceId) const;
     bool mayServeFeed(const std::string& feedId, const std::string& uri, const std::string& deviceId) const;
+    bool isPeerAuthorizedForGit(const std::string& convId, const std::string& uri, const std::string& deviceId) const;
 
     /**
      * Stage the add commit before serving a first clone to a locally invited

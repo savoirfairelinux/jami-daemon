@@ -57,6 +57,10 @@ enum class MemberEvent : int { INVALID = -1, ADD = 0, JOIN = 1, REMOVE = 2, BAN 
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
 /** Starts a new FEED conversation for the account. */
 LIBJAMI_PUBLIC std::string startFeedConversation(const std::string& accountId);
+// Optionally invite current and future contacts without enrolling them until they subscribe.
+LIBJAMI_PUBLIC std::string startFeedConversation(const std::string& accountId,
+                                                 const std::map<std::string, std::string>& profile,
+                                                 bool inviteAllContacts);
 LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
 /**
