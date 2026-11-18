@@ -15,6 +15,14 @@ them, so no additional client state is needed.
 
 ## Decision
 
+- For a new follower, sending a feed invitation records it in the publisher's
+  account metadata, synchronized only to the publisher's own devices. It does
+  not write an `invited/<uri>` entry or show the contact as a feed member.
+- When the invitee subscribes and requests a clone, a publisher device with
+  the invitation checks the peer's identity and bans, then writes the usual
+  signed add commit before serving the repository. The invitee completes the
+  usual signed join. The first subscription therefore needs a reachable
+  publisher device that supports this flow and has the invitation record.
 - Grant feed followers, but not admins, the explicit `Leave` permission.
 - A follower's voluntary leave commit removes its membership and devices but
   retains `invited/<uri>`. The transition is `MEMBER -> INVITED -> MEMBER`,
