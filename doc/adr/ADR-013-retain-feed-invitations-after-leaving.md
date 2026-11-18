@@ -23,6 +23,12 @@ them, so no additional client state is needed.
   signed add commit before serving the repository. The invitee completes the
   usual signed join. The first subscription therefore needs a reachable
   publisher device that supports this flow and has the invitation record.
+- A publisher can choose **Invite all current and future contacts** when
+  creating a feed. The policy and delivery tracking sync only to the
+  publisher's devices. Only a publisher can serve a feed invitee; for this
+  option the invitee must still be a contact, even if an interrupted
+  subscription already wrote an `ADD`. Removing a contact does not remove
+  anyone who has already joined the feed.
 - Grant feed followers, but not admins, the explicit `Leave` permission.
 - A follower's voluntary leave commit removes its membership and devices but
   retains `invited/<uri>`. The transition is `MEMBER -> INVITED -> MEMBER`,

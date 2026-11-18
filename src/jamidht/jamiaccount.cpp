@@ -1266,6 +1266,7 @@ JamiAccount::onContactAdded(const std::string& uri, bool confirmed)
         dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
             if (auto shared = w.lock()) {
                 if (auto* cm = shared->convModule(true)) {
+                    cm->inviteNewContactToFeeds(uri);
                     auto activeConv = cm->getOneToOneConversation(uri);
                     if (!activeConv.empty())
                         cm->bootstrap(activeConv);
@@ -2560,7 +2561,7 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
                 });
             };
 
-            if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
+            if (!convModule()->isPeerAuthorizedForGit(conversationId, peerId, remoteDevice)) {
                 // Documents and feeds can stage an invitation when serving a first clone.
                 convModule()
                     ->authorizeLazyPeer(conversationId,
