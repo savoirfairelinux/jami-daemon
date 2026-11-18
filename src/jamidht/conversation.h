@@ -183,7 +183,8 @@ struct ConvInfo
     ConversationMode mode {0};
     std::string parent {};
     // Last time we explicitly (re-)invited a given peer (via addConversationMember()/
-    // sendTrustRequest()), keyed by peer URI.
+    // sendTrustRequest()), keyed by peer URI. For feeds this also authorizes
+    // staging a repository invitation when the peer first clones.
     std::map<std::string, TimePoint> invited {};
 
     ConvInfo() = default;
@@ -351,7 +352,7 @@ public:
      * @param uri   Member to add
      * @param cb    On done cb
      */
-    void addMember(const std::string& contactUri, const OnDoneCb& cb = {});
+    void addMember(const std::string& contactUri, const OnDoneCb& cb = {}, bool allowUnban = true);
     void removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb = {});
     /**
      * @param includeInvited        If we want invited members

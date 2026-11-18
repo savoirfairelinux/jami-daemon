@@ -74,6 +74,7 @@ public:
     void testAddInvalidUri();
     void testRemoveConversationNoMember();
     void testRemoveConversationWithMember();
+    void testFeedInviteDoesNotAddMember();
     void testFeedFollowerCanResubscribe();
     void testAddMember();
     void testMemberAddedNoBadFile();
@@ -130,6 +131,7 @@ private:
     CPPUNIT_TEST(testAddInvalidUri);
     CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testRemoveConversationWithMember);
+    CPPUNIT_TEST(testFeedInviteDoesNotAddMember);
     CPPUNIT_TEST(testFeedFollowerCanResubscribe);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testMemberAddedNoBadFile);
@@ -503,6 +505,71 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     }));
     std::this_thread::sleep_for(3s);
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
+}
+
+void
+ConversationMembersEventTest::testFeedInviteDoesNotAddMember()
+{
+    add_confirmed_contact(bobId, aliceId);
+    Manager::instance().sendRegister(carlaId, true);
+    lk.unlock();
+    wait_for_announcement_of({carlaId});
+    add_confirmed_contact(carlaId, aliceId);
+    lk.lock();
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    const auto bobUri = bobAccount->getUsername();
+    const auto carlaUri = carlaAccount->getUsername();
+    const auto convId = libjami::startFeedConversation(aliceId);
+    auto module = aliceAccount->convModule();
+    auto feed = module->getConversation(convId);
+    CPPUNIT_ASSERT(feed);
+    libjami::updateConversationInfos(aliceId, convId, {{"title", "Test feed"}});
+    const auto head = feed->lastCommitId();
+    const auto staleInfo = ConversationModule::convInfos(aliceId).at(convId);
+    const auto bobDevice = std::string(bobAccount->currentDeviceId());
+    CPPUNIT_ASSERT(!module->mayServeFeed(convId, bobUri, bobDevice));
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.requestReceived && carlaData.requestReceived; }));
+    auto requests = libjami::getConversationRequests(bobId);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, requests.size());
+    CPPUNIT_ASSERT_EQUAL("Test feed"s, requests.front().at("title"));
+    CPPUNIT_ASSERT_EQUAL(head, feed->lastCommitId());
+    const auto invited = fileutils::get_data_dir() / aliceId / "conversations" / convId / "invited";
+    CPPUNIT_ASSERT(!std::filesystem::exists(invited / bobUri));
+    CPPUNIT_ASSERT(!std::filesystem::exists(invited / carlaUri));
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationMembers(aliceId, convId).size());
+    CPPUNIT_ASSERT(module->mayServeFeed(convId, bobUri, bobDevice));
+    CPPUNIT_ASSERT_EQUAL(head, feed->lastCommitId());
+    using Status = dhtnet::tls::TrustStore::PermissionStatus;
+    const auto bobCert = bobAccount->identity().second;
+    CPPUNIT_ASSERT(aliceAccount->setCertificateStatus(bobCert, Status::BANNED, false));
+    CPPUNIT_ASSERT(!module->mayServeFeed(convId, bobUri, bobDevice));
+    CPPUNIT_ASSERT(aliceAccount->setCertificateStatus(bobCert, Status::UNDEFINED, false));
+
+    libjami::declineConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(libjami::getConversationRequests(carlaId).empty());
+    CPPUNIT_ASSERT_EQUAL(head, feed->lastCommitId());
+
+    SyncMsg staleSync;
+    staleSync.c.emplace(convId, staleInfo);
+    module->onSyncData(staleSync, aliceAccount->getUsername(), "");
+    feed.reset();
+    module->loadConversations();
+    feed = module->getConversation(convId);
+    CPPUNIT_ASSERT(feed);
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return bobData.conversationId == convId && aliceData.members[bobUri] == int(libjami::MemberEvent::JOIN);
+    }));
+    CPPUNIT_ASSERT(feed->isMember(bobUri));
+    CPPUNIT_ASSERT(!feed->isMember(carlaUri, true));
+    CPPUNIT_ASSERT_EQUAL(size_t {2}, libjami::getConversationMembers(aliceId, convId).size());
 }
 
 void
