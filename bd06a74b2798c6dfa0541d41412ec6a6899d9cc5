@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ce9539e_b9e0cbc2",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3141,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-18T20:18:16Z",
+      "side": 1,
+      "message": "[warning] Line 3141: 🟡 `Conversation::updateInfos` now executes inline for feeds (`if (mode() \u003d\u003d ConversationMode::FEED) update();`), while other modes stay async. This changes the threading/callback contract and can introduce re-entrancy or lock-order regressions for callers that previously relied on deferred execution. Keep repository writes on the IO queue and enforce feed ordering with explicit sequencing (e.g., queueing invite send after update completion) rather than switching execution thread.",
+      "revId": "bd06a74b2798c6dfa0541d41412ec6a6899d9cc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f616f287_4051320f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3867,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-18T20:18:16Z",
+      "side": 1,
+      "message": "[warning] Line 3867: 🟡 In `authorizeLazyPeer`, the document path calls `document-\u003eaddMember(uri, ...)` with default `allowUnban\u003dtrue`. If the peer is banned after `mayServeDocument()` but before `addMember()` runs, an admin holder can implicitly unban via clone-time authorization. Pass `allowUnban\u003dfalse` in this lazy path and require explicit re-add/unban flow to preserve the ban invariant.",
+      "revId": "bd06a74b2798c6dfa0541d41412ec6a6899d9cc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
