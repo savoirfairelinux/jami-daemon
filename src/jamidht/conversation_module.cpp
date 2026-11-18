@@ -306,6 +306,11 @@ public:
 
     // Requests
     std::optional<ConversationRequest> getRequest(const std::string& id) const;
+    bool canInviteToFeed(const SyncedConversation& conv) const;
+    bool isPeerBanned(const std::string& uri, const std::string& deviceId) const;
+    std::shared_ptr<Conversation> feedForPendingInvite(const std::string& feedId,
+                                                       const std::string& uri,
+                                                       const std::string& deviceId) const;
 
     // Conversations
     /**
@@ -1069,13 +1074,19 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             addConvInfo(conv->info);
         }
 
+        const auto removeRepo = conv->info.isRemoved();
+        const bool isFeed = conversation->mode() == ConversationMode::FEED;
+        std::string commitId;
+        if (isFeed && !removeRepo && !conversation->isMember(username_)) {
+            commitId = conversation->join();
+            if (commitId.empty()) {
+                conversation->erase();
+                lk.unlock();
+                throw std::runtime_error("Unable to write the feed join commit");
+            }
+        }
         if (conv->pending && conv->pending->socket)
             conversation->addGitSocket(DeviceId(deviceId), std::move(conv->pending->socket));
-        auto removeRepo = false;
-        // Note: a removeContact while cloning. In this case, the conversation
-        // must not be announced and removed.
-        if (conv->info.isRemoved())
-            removeRepo = true;
         std::map<std::string, std::string> preferences;
         std::map<std::string, std::map<std::string, std::string>> status;
         if (conv->pending) {
@@ -1092,7 +1103,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
 
-        auto commitId = conversation->join();
+        if (!isFeed)
+            commitId = conversation->join();
         if (!commitId.empty())
             sendMessageNotification(*conversation, false, commitId);
         erasePending(); // Will unlock
@@ -2587,7 +2599,9 @@ ConversationModule::onNeedConversationRequest(const std::string& from, const std
         JAMI_WARNING("{} is asking an invite for document {}", from, conversationId);
         return;
     }
-    if (!conv->conversation->isMember(from, true)) {
+    const auto recorded = conv->info.invited.contains(from);
+    if (!conv->conversation->isMember(from, true)
+        && !(recorded && pimpl_->canInviteToFeed(*conv) && !conv->conversation->isMemberBanned(from))) {
         JAMI_WARNING("{} is asking a new invite for {}, but not a member", from, conversationId);
         return;
     }
@@ -3174,7 +3188,26 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
-            conv->info = convInfo;
+            if (convInfo.mode == ConversationMode::FEED) {
+                // Other publisher devices may have invited different contacts,
+                // or sent their snapshot before this device's last invitation.
+                auto invites = std::move(conv->info.invited);
+                bool receivedInvite = false;
+                for (const auto& [uri, sent] : convInfo.invited) {
+                    if (auto& previous = invites[uri]; sent > previous) {
+                        previous = sent;
+                        receivedInvite = true;
+                    }
+                }
+                conv->info = convInfo;
+                conv->info.invited = std::move(invites);
+                if (receivedInvite) {
+                    pimpl_->addConvInfo(conv->info);
+                    listChanged = true;
+                }
+            } else {
+                conv->info = convInfo;
+            }
             if (convInfo.mode == ConversationMode::FEED && conv->conversation && conv->conversation->isRemoving())
                 pimpl_->removeRepositoryImpl(*conv, false, true);
             if (!conv->conversation) {
@@ -3186,7 +3219,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                     // In this case, information is from JAMS
                     // JAMS does not store the conversation itself, so we
                     // must use information to clone the conversation
-                    addConvInfo(convInfo);
+                    addConvInfo(conv->info);
                     toClone.emplace_back(convId);
                 }
             } else if (conv->info.mode == ConversationMode::ONE_TO_ONE) {
@@ -3415,13 +3448,34 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                           bool sendRequest)
 {
     auto conv = pimpl_->getConversation(conversationId);
-    if (not conv || not conv->conversation) {
+    if (!conv) {
         JAMI_ERROR("Conversation {:s} does not exist", conversationId);
         return;
     }
     std::unique_lock lk(conv->mtx);
+    if (!conv->conversation) {
+        JAMI_ERROR("Conversation {:s} has no repository", conversationId);
+        return;
+    }
 
     auto contactUriStr = contactUri.toString();
+    if (conv->conversation->mode() == ConversationMode::FEED && sendRequest) {
+        if (!pimpl_->canInviteToFeed(*conv) || contactUriStr == pimpl_->username_) {
+            JAMI_WARNING("Cannot invite {} to feed {}", contactUriStr, conversationId);
+            return;
+        }
+        // Explicit re-add of a banned peer still uses the normal unban flow.
+        if (!conv->conversation->isMemberBanned(contactUriStr)) {
+            auto sent = nowMs();
+            conv->info.invited[contactUriStr] = sent;
+            pimpl_->addConvInfo(conv->info);
+            auto invite = conv->conversation->generateInvitation(sent);
+            lk.unlock();
+            pimpl_->needsSyncingCb_({});
+            pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
+            return;
+        }
+    }
     if (conv->conversation->isMember(contactUriStr, true)) {
         JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUriStr, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't
@@ -3541,13 +3595,12 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             const std::map<std::string, std::string>& infos,
                                             bool sync)
 {
-    auto conv = pimpl_->getConversation(conversationId);
-    if (not conv or not conv->conversation) {
+    auto conversation = getConversation(conversationId);
+    if (!conversation) {
         JAMI_ERROR("Conversation {:s} does not exist", conversationId);
         return;
     }
-    std::lock_guard lk(conv->mtx);
-    conv->conversation->updateInfos(infos, [this, conversationId, sync](bool ok, const std::string& commitId) {
+    conversation->updateInfos(infos, [this, conversationId, sync](bool ok, const std::string& commitId) {
         if (ok && sync) {
             pimpl_->sendMessageNotification(conversationId, true, commitId);
         } else if (sync)
@@ -3695,22 +3748,22 @@ ConversationModule::isDeviceBanned(const std::string& convId, const std::string&
 }
 
 bool
+ConversationModule::Impl::isPeerBanned(const std::string& uri, const std::string& deviceId) const
+{
+    using Status = dhtnet::tls::TrustStore::PermissionStatus;
+    std::lock_guard lk(conversationsMtx_);
+    return accountManager_->getCertificateStatus(uri) == Status::BANNED
+           || accountManager_->getCertificateStatus(deviceId) == Status::BANNED;
+}
+
+bool
 ConversationModule::isPeerAuthorized(const std::string& convId,
                                      const std::string& uri,
                                      const std::string& deviceId,
                                      bool includeInvited) const
 {
-    dhtnet::tls::TrustStore::PermissionStatus memberStatus;
-    dhtnet::tls::TrustStore::PermissionStatus deviceStatus;
-    {
-        std::lock_guard lk(pimpl_->conversationsMtx_);
-        memberStatus = pimpl_->accountManager_->getCertificateStatus(uri);
-        deviceStatus = pimpl_->accountManager_->getCertificateStatus(deviceId);
-    }
-    if (memberStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED
-        || deviceStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+    if (pimpl_->isPeerBanned(uri, deviceId))
         return false;
-    }
     if (auto conv = pimpl_->getConversation(convId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
@@ -3756,29 +3809,67 @@ ConversationModule::mayServeDocument(const std::string& documentId,
     return isPeerAuthorized(conversation->parentConversationId(), uri, deviceId, false);
 }
 
-void
-ConversationModule::authorizeDocumentPeer(const std::string& documentId,
-                                          const std::string& uri,
-                                          const std::string& deviceId,
-                                          std::function<void(bool)>&& cb)
+bool
+ConversationModule::Impl::canInviteToFeed(const SyncedConversation& conv) const
 {
-    auto conv = pimpl_->getConversation(documentId);
-    if (!conv)
-        return cb(false); // We don't hold this document — nothing to vouch with
-    std::shared_ptr<Conversation> conversation;
-    {
-        std::lock_guard lk(conv->mtx);
-        conversation = conv->conversation;
+    if (!conv.conversation || conv.info.isRemoved() || conv.conversation->isRemoving()
+        || conv.conversation->mode() != ConversationMode::FEED)
+        return false;
+    const auto permissions = conv.conversation->permissions(username_);
+    return std::find(permissions.begin(), permissions.end(), permissionName(Permission::AddMember))
+           != permissions.end();
+}
+
+std::shared_ptr<Conversation>
+ConversationModule::Impl::feedForPendingInvite(const std::string& feedId,
+                                               const std::string& uri,
+                                               const std::string& deviceId) const
+{
+    auto conv = getConversation(feedId);
+    if (!conv || isPeerBanned(uri, deviceId))
+        return {};
+    std::lock_guard lk(conv->mtx);
+    if (!conv->info.invited.contains(uri) || !canInviteToFeed(*conv) || conv->conversation->isMemberBanned(uri)
+        || conv->conversation->isDeviceBanned(deviceId))
+        return {};
+    return conv->conversation;
+}
+
+bool
+ConversationModule::mayServeFeed(const std::string& feedId, const std::string& uri, const std::string& deviceId) const
+{
+    return bool(pimpl_->feedForPendingInvite(feedId, uri, deviceId));
+}
+
+void
+ConversationModule::authorizeLazyPeer(const std::string& convId,
+                                      const std::string& uri,
+                                      const std::string& deviceId,
+                                      std::function<void(bool)>&& cb)
+{
+    if (auto feed = pimpl_->feedForPendingInvite(convId, uri, deviceId)) {
+        feed->addMember(
+            uri,
+            [w = pimpl_->weak(), convId, uri, deviceId, cb = std::move(cb)](bool, const std::string& commit) {
+                if (auto impl = w.lock()) {
+                    // A concurrent clone may already have staged this peer's invitation.
+                    if (auto current = impl->feedForPendingInvite(convId, uri, deviceId);
+                        current && current->isPeerAuthorized(uri, deviceId, true)) {
+                        if (!commit.empty())
+                            impl->sendMessageNotification(*current, true, commit);
+                        return cb(true);
+                    }
+                }
+                cb(false);
+            },
+            false);
+        return;
     }
-    if (!conversation || conversation->mode() != ConversationMode::DOCUMENT)
+
+    auto document = getConversation(convId);
+    if (!document || !mayServeDocument(convId, uri, deviceId))
         return cb(false);
-    if (conversation->isMemberBanned(uri))
-        return cb(false); // Banned from the document: only an admin's re-add can undo that
-    if (!isPeerAuthorized(conversation->parentConversationId(), uri, deviceId, false))
-        return cb(false);
-    // The add commit is what makes the clone we are about to serve
-    // self-justifying: the peer's membership is part of what it receives.
-    conversation->addMember(uri, [cb = std::move(cb)](bool ok, const std::string&) { cb(ok); });
+    document->addMember(uri, [cb = std::move(cb)](bool ok, const std::string&) { cb(ok); });
 }
 
 void

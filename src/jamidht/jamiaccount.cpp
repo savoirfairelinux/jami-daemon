@@ -2561,29 +2561,27 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
             };
 
             if (!convModule()->isPeerAuthorized(conversationId, peerId, remoteDevice, true)) {
-                // Not a member — but if this is a collaborative document held
-                // here, a member of its parent conversation may still open it:
-                // the serving holder writes the add commit, then serves.
+                // Documents and feeds can stage an invitation when serving a first clone.
                 convModule()
-                    ->authorizeDocumentPeer(conversationId,
-                                            peerId,
-                                            remoteDevice,
-                                            [w = weak(), conversationId, peerId, remoteDevice, channel, startGitServer](
-                                                bool authorized) {
-                                                if (authorized) {
-                                                    startGitServer();
-                                                    return;
-                                                }
-                                                if (auto shared = w.lock())
-                                                    JAMI_WARNING("[Account {:s}] [Conversation {}] Git "
-                                                                 "server requested, but peer {}/{} is "
-                                                                 "not authorized",
-                                                                 shared->getAccountID(),
-                                                                 conversationId,
-                                                                 peerId,
-                                                                 remoteDevice);
-                                                channel->shutdown();
-                                            });
+                    ->authorizeLazyPeer(conversationId,
+                                        peerId,
+                                        remoteDevice,
+                                        [w = weak(), conversationId, peerId, remoteDevice, channel, startGitServer](
+                                            bool authorized) {
+                                            if (authorized) {
+                                                startGitServer();
+                                                return;
+                                            }
+                                            if (auto shared = w.lock())
+                                                JAMI_WARNING("[Account {:s}] [Conversation {}] Git "
+                                                             "server requested, but peer {}/{} is "
+                                                             "not authorized",
+                                                             shared->getAccountID(),
+                                                             conversationId,
+                                                             peerId,
+                                                             remoteDevice);
+                                            channel->shutdown();
+                                        });
                 return;
             }
 
