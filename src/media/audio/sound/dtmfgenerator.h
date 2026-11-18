@@ -92,6 +92,12 @@ public:
 
 private:
     /**
+     * Copy samples of the current tone into the frame, adapting to the
+     * frame's channel count, sample format and length.
+     */
+    void copyToneSamples(AVFrame* frame);
+
+    /**
      * Fill tone buffer for a given index of the array of tones.
      * @param index of the tone in the array tones_
      * @return AudioSample* The generated data
