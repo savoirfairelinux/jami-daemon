@@ -307,6 +307,9 @@ public:
     // Requests
     std::optional<ConversationRequest> getRequest(const std::string& id) const;
     bool canInviteToFeed(const SyncedConversation& conv) const;
+    bool canServeFeedInvite(const SyncedConversation& conv, const std::string& uri) const;
+    void inviteContactsToFeed(const std::shared_ptr<SyncedConversation>& conv,
+                              const std::map<dht::InfoHash, Contact>& contacts);
     bool isPeerBanned(const std::string& uri, const std::string& deviceId) const;
     std::shared_ptr<Conversation> feedForPendingInvite(const std::string& feedId,
                                                        const std::string& uri,
@@ -1147,6 +1150,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
 
         linkReplacementConversation(*conversation);
+        if (isFeed)
+            inviteContactsToFeed(conv, accountManager_->getContacts());
         acc->collaborativeEditing()->syncDocuments(conversationId);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -1901,6 +1906,9 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
     }
 
     for (const auto& conversation : conversations) {
+        if (conversation->mode() == ConversationMode::FEED)
+            if (auto conv = getConversation(conversation->id()))
+                inviteContactsToFeed(conv, accountManager_->getContacts());
         if (auto acc = account_.lock())
             acc->collaborativeEditing()->syncDocuments(conversation->id());
 #ifdef LIBJAMI_TEST
@@ -2599,9 +2607,10 @@ ConversationModule::onNeedConversationRequest(const std::string& from, const std
         JAMI_WARNING("{} is asking an invite for document {}", from, conversationId);
         return;
     }
-    const auto recorded = conv->info.invited.contains(from);
-    if (!conv->conversation->isMember(from, true)
-        && !(recorded && pimpl_->canInviteToFeed(*conv) && !conv->conversation->isMemberBanned(from))) {
+    const auto repoInvited = conv->conversation->isMember(from, true);
+    const auto feedInvite = conv->conversation->mode() == ConversationMode::FEED && !conv->conversation->isMember(from);
+    if (feedInvite ? (!pimpl_->canServeFeedInvite(*conv, from) || (!repoInvited && !conv->info.invited.contains(from)))
+                   : !repoInvited) {
         JAMI_WARNING("{} is asking a new invite for {}, but not a member", from, conversationId);
         return;
     }
@@ -2668,7 +2677,10 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
 }
 
 std::string
-ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash& otherMember)
+ConversationModule::startConversation(ConversationMode mode,
+                                      const dht::InfoHash& otherMember,
+                                      const std::map<std::string, std::string>& feedProfile,
+                                      bool inviteAllContacts)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
@@ -2677,6 +2689,8 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     std::shared_ptr<Conversation> conversation;
     try {
         conversation = std::make_shared<Conversation>(acc, mode, otherMember.toString());
+        if (mode == ConversationMode::FEED && !feedProfile.empty())
+            conversation->updateInfos(feedProfile);
         auto conversationId = conversation->id();
         conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
             auto msg = std::make_shared<SyncMsg>();
@@ -2712,6 +2726,7 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     std::unique_lock lk(conv->mtx);
     conv->info.created = nowMs();
     conv->info.mode = mode;
+    conv->info.inviteAllContacts = mode == ConversationMode::FEED && inviteAllContacts;
     conv->info.members.emplace(pimpl_->username_);
     if (otherMember)
         conv->info.members.emplace(otherMember.toString());
@@ -2721,6 +2736,8 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
 
     pimpl_->needsSyncingCb_({});
     emitSignal<libjami::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
+    if (mode == ConversationMode::FEED && inviteAllContacts)
+        pimpl_->inviteContactsToFeed(conv, pimpl_->accountManager_->getContacts());
     return convId;
 }
 
@@ -3159,6 +3176,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
     // can be re-propagated to our other devices (relay). Metadata-only updates
     // (preferences, message status) deliberately do not set it.
     bool listChanged = false;
+    std::vector<std::shared_ptr<SyncedConversation>> feedsToInvite;
     for (const auto& [key, convInfo] : msg.c) {
         const auto& convId = convInfo.id;
         if (!isConversationId(convId))
@@ -3192,6 +3210,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 // Other publisher devices may have invited different contacts,
                 // or sent their snapshot before this device's last invitation.
                 auto invites = std::move(conv->info.invited);
+                const bool newAudience = convInfo.inviteAllContacts && !conv->info.inviteAllContacts;
+                const bool inviteAllContacts = convInfo.inviteAllContacts || conv->info.inviteAllContacts;
                 bool receivedInvite = false;
                 for (const auto& [uri, sent] : convInfo.invited) {
                     if (auto& previous = invites[uri]; sent > previous) {
@@ -3201,10 +3221,13 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 }
                 conv->info = convInfo;
                 conv->info.invited = std::move(invites);
-                if (receivedInvite) {
+                conv->info.inviteAllContacts = inviteAllContacts;
+                if (newAudience || receivedInvite) {
                     pimpl_->addConvInfo(conv->info);
                     listChanged = true;
                 }
+                if (newAudience && conv->conversation)
+                    feedsToInvite.push_back(conv);
             } else {
                 conv->info = convInfo;
             }
@@ -3253,6 +3276,9 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 removedConversations.emplace_back(convId);
         }
     }
+
+    for (const auto& feed : feedsToInvite)
+        pimpl_->inviteContactsToFeed(feed, pimpl_->accountManager_->getContacts());
 
     // The account left the removed conversations, forfeiting their documents
     // on this device as well. The removal already carried the account's leave
@@ -3820,6 +3846,83 @@ ConversationModule::Impl::canInviteToFeed(const SyncedConversation& conv) const
            != permissions.end();
 }
 
+bool
+ConversationModule::Impl::canServeFeedInvite(const SyncedConversation& conv, const std::string& uri) const
+{
+    if (!canInviteToFeed(conv) || conv.conversation->isMemberBanned(uri))
+        return false;
+    if (!conv.info.inviteAllContacts)
+        return true;
+    auto contact = accountManager_->getContactInfo(uri);
+    return contact && contact->isActive();
+}
+
+void
+ConversationModule::Impl::inviteContactsToFeed(const std::shared_ptr<SyncedConversation>& conv,
+                                               const std::map<dht::InfoHash, Contact>& contacts)
+{
+    std::unique_lock lk(conv->mtx);
+    if (!conv->info.inviteAllContacts || !canInviteToFeed(*conv))
+        return;
+
+    std::vector<std::pair<std::string, TimePoint>> invitations;
+    for (const auto& [id, contact] : contacts) {
+        if (!contact.isActive())
+            continue;
+        auto uri = id.toString();
+        if (uri == username_ || conv->conversation->isMember(uri, true) || conv->conversation->isMemberBanned(uri))
+            continue;
+        // The same contact addition on different devices is the same invitation.
+        auto sent = std::max(conv->info.created, contact.added);
+        auto& previous = conv->info.invited[uri];
+        if (previous >= sent)
+            continue;
+        previous = sent;
+        invitations.emplace_back(std::move(uri), sent);
+    }
+    if (invitations.empty())
+        return;
+    auto publisher = conv->conversation;
+    addConvInfo(conv->info);
+    lk.unlock();
+    needsSyncingCb_({});
+    for (const auto& [uri, sent] : invitations)
+        sendMsgCb_(uri, {}, publisher->generateInvitation(sent), 0);
+}
+
+void
+ConversationModule::inviteNewContactToFeeds(const std::string& uri)
+{
+    auto contact = pimpl_->accountManager_->getContactInfo(uri);
+    if (!contact || !contact->isActive())
+        return;
+    const std::map<dht::InfoHash, Contact> contacts {{dht::InfoHash(uri), *contact}};
+    for (const auto& conv : pimpl_->getSyncedConversations())
+        pimpl_->inviteContactsToFeed(conv, contacts);
+}
+
+bool
+ConversationModule::isPeerAuthorizedForGit(const std::string& convId,
+                                           const std::string& uri,
+                                           const std::string& deviceId) const
+{
+    if (pimpl_->isPeerBanned(uri, deviceId))
+        return false;
+    auto conv = pimpl_->getConversation(convId);
+    if (!conv)
+        return false;
+    std::lock_guard lk(conv->mtx);
+    auto conversation = conv->conversation;
+    if (!conversation)
+        return !conv->info.isRemoved() && conv->info.members.contains(uri);
+    if (!conversation->isPeerAuthorized(uri, deviceId, true))
+        return false;
+    // Only the publisher can authorize a feed invitee; follower replicas
+    // know nothing about the publisher's contact list.
+    return conversation->mode() != ConversationMode::FEED || conversation->isMember(uri)
+           || pimpl_->canServeFeedInvite(*conv, uri);
+}
+
 std::shared_ptr<Conversation>
 ConversationModule::Impl::feedForPendingInvite(const std::string& feedId,
                                                const std::string& uri,
@@ -3829,7 +3932,7 @@ ConversationModule::Impl::feedForPendingInvite(const std::string& feedId,
     if (!conv || isPeerBanned(uri, deviceId))
         return {};
     std::lock_guard lk(conv->mtx);
-    if (!conv->info.invited.contains(uri) || !canInviteToFeed(*conv) || conv->conversation->isMemberBanned(uri)
+    if (!conv->info.invited.contains(uri) || !canServeFeedInvite(*conv, uri)
         || conv->conversation->isDeviceBanned(deviceId))
         return {};
     return conv->conversation;

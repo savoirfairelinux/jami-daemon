@@ -45,9 +45,17 @@ startConversation(const std::string& accountId)
 std::string
 startFeedConversation(const std::string& accountId)
 {
+    return startFeedConversation(accountId, {}, false);
+}
+
+std::string
+startFeedConversation(const std::string& accountId,
+                      const std::map<std::string, std::string>& profile,
+                      bool inviteAllContacts)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto* convModule = acc->convModule(true))
-            return convModule->startConversation(jami::ConversationMode::FEED);
+            return convModule->startConversation(jami::ConversationMode::FEED, {}, profile, inviteAllContacts);
     return {};
 }
 
