@@ -135,7 +135,9 @@ public:
     std::map<std::string, std::string> getAccountDetails() const
     {
         std::lock_guard lock(configurationMutex_);
-        return config().toMap();
+        if (not config_)
+            return {};
+        return config_->toMap();
     }
 
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
