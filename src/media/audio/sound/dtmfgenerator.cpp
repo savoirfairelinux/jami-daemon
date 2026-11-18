@@ -17,8 +17,10 @@
 #include "dtmfgenerator.h"
 #include "libav_deps.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
+#include <cstring>
 
 namespace jami {
 
@@ -92,14 +94,8 @@ DTMFGenerator::getSamples(AVFrame* frame, unsigned char code)
         }
     }
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = frame->nb_samples % sampleRate_;
+    state.offset = 0;
+    copyToneSamples(frame);
 }
 
 /*
@@ -112,14 +108,68 @@ DTMFGenerator::getNextSamples(AVFrame* frame)
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = (state.offset + frame->nb_samples) % sampleRate_;
+    copyToneSamples(frame);
+}
+
+void
+DTMFGenerator::copyToneSamples(AVFrame* frame)
+{
+    if (!frame || !frame->data[0] || frame->nb_samples <= 0)
+        throw DTMFException("Invalid output frame");
+
+    const AVFrame* tone = state.sample;
+    if (!tone || !tone->data[0] || tone->nb_samples <= 0)
+        throw DTMFException("DTMF tone buffer not available");
+
+    const auto outFormat = (AVSampleFormat) frame->format;
+    if (av_get_packed_sample_fmt(outFormat) != av_get_packed_sample_fmt((AVSampleFormat) tone->format))
+        throw DTMFException("Unsupported output sample format");
+
+    const int channels = frame->ch_layout.nb_channels;
+    if (channels <= 0)
+        throw DTMFException("Invalid output channel count");
+
+    const bool planar = av_sample_fmt_is_planar(outFormat);
+    if (planar) {
+        if (!frame->extended_data)
+            throw DTMFException("Invalid output frame");
+        for (int ch = 0; ch < channels; ++ch) {
+            if (!frame->extended_data[ch])
+                throw DTMFException("Invalid output frame");
+        }
+    }
+
+    const auto bps = (size_t) av_get_bytes_per_sample(outFormat);
+    const auto toneSamples = (unsigned) tone->nb_samples;
+    const uint8_t* src = tone->data[0];
+    if (state.offset >= toneSamples)
+        state.offset = 0;
+
+    // The tone buffer is mono: loop over it and duplicate it on every output channel.
+    size_t outPos = 0;
+    auto remaining = (unsigned) frame->nb_samples;
+    while (remaining > 0) {
+        const unsigned count = std::min(remaining, toneSamples - state.offset);
+        const uint8_t* in = src + state.offset * bps;
+        if (planar) {
+            for (int ch = 0; ch < channels; ++ch)
+                std::memcpy(frame->extended_data[ch] + outPos * bps, in, count * bps);
+        } else {
+            uint8_t* out = frame->data[0] + outPos * channels * bps;
+            for (size_t i = 0; i < count; ++i)
+                for (int ch = 0; ch < channels; ++ch)
+                    std::memcpy(out + (i * channels + ch) * bps, in + i * bps, bps);
+        }
+        outPos += count;
+        remaining -= count;
+        state.offset = (state.offset + count) % toneSamples;
+    }
+}
+
+AudioFormat
+DTMFGenerator::getFormat() const
+{
+    return AudioFormat(sampleRate_, 1, tone_.getFormat().sampleFormat);
 }
 
 libjami::FrameBuffer

@@ -1848,13 +1848,15 @@ Manager::playDtmf(char code)
         return;
     }
 
-    // number of data sampling in one pulselen depends on samplerate
-    // size (n sampling) = time_ms * sampling/s
-    //                     ---------------------
-    //                            ms/s
-    unsigned size = (unsigned) ((pulselen * (long) pimpl_->audiodriver_->getSampleRate()) / 1000ul);
-    if (!pimpl_->dtmfBuf_ or pimpl_->dtmfBuf_->getFrameSize() != size)
-        pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(pimpl_->audiodriver_->getFormat(), size);
+    // Generate the tone in the DTMF generator's own (mono) format; the urgent
+    // ring buffer resamples it to the audio layer's format.
+    // size (n sampling) = time_ms * sampling/s / ms/s
+    auto dtmfFormat = pimpl_->dtmfKey_->getFormat();
+    unsigned size = (unsigned) ((pulselen * (long) dtmfFormat.sample_rate) / 1000ul);
+    if (size == 0)
+        return;
+    // Use a fresh frame each time: the previous one may still be queued for playback
+    pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(dtmfFormat, size);
 
     // Handle dtmf
     pimpl_->dtmfKey_->startTone(code);

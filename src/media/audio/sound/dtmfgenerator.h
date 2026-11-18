@@ -90,7 +90,19 @@ public:
      */
     void getNextSamples(AVFrame* frame);
 
+    /**
+     * Format of the generated tones (mono).
+     */
+    AudioFormat getFormat() const;
+
 private:
+    /**
+     * Copy samples of the current tone into frame, starting at the current
+     * offset and looping over the tone buffer as needed.
+     * @throw DTMFException if the frame is not compatible with the tone
+     */
+    void copyToneSamples(AVFrame* frame);
+
     /**
      * Fill tone buffer for a given index of the array of tones.
      * @param index of the tone in the array tones_
