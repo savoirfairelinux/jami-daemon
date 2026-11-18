@@ -1852,9 +1852,11 @@ Manager::playDtmf(char code)
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    unsigned size = (unsigned) ((pulselen * (long) pimpl_->audiodriver_->getSampleRate()) / 1000ul);
-    if (!pimpl_->dtmfBuf_ or pimpl_->dtmfBuf_->getFrameSize() != size)
-        pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(pimpl_->audiodriver_->getFormat(), size);
+    // The DTMF buffer uses the generator format; putUrgent() resamples it for playback.
+    auto format = pimpl_->dtmfKey_->getFormat();
+    unsigned size = (unsigned) ((pulselen * (long) format.sample_rate) / 1000ul);
+    if (!pimpl_->dtmfBuf_ or pimpl_->dtmfBuf_->getFrameSize() != size or pimpl_->dtmfBuf_->getFormat() != format)
+        pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(format, size);
 
     // Handle dtmf
     pimpl_->dtmfKey_->startTone(code);

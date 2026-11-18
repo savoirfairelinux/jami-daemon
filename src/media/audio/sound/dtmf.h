@@ -44,6 +44,11 @@ public:
      */
     bool generateDTMF(AVFrame* frame);
 
+    /**
+     * Format of the frames passed to generateDTMF
+     */
+    AudioFormat getFormat() const { return dtmfgenerator_.getFormat(); }
+
 private:
     char currentTone_;
     char newTone_;

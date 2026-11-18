@@ -90,7 +90,11 @@ public:
      */
     void getNextSamples(AVFrame* frame);
 
+    AudioFormat getFormat() const { return tone_.getFormat(); }
+
 private:
+    void copyTone(AVFrame* frame);
+
     /**
      * Fill tone buffer for a given index of the array of tones.
      * @param index of the tone in the array tones_

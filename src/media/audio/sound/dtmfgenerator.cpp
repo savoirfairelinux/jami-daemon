@@ -17,6 +17,7 @@
 #include "dtmfgenerator.h"
 #include "libav_deps.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
 
@@ -92,14 +93,8 @@ DTMFGenerator::getSamples(AVFrame* frame, unsigned char code)
         }
     }
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = frame->nb_samples % sampleRate_;
+    state.offset = 0;
+    copyTone(frame);
 }
 
 /*
@@ -112,14 +107,33 @@ DTMFGenerator::getNextSamples(AVFrame* frame)
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
-    av_samples_copy(frame->data,
-                    state.sample->data,
-                    0,
-                    state.offset,
-                    frame->nb_samples,
-                    frame->ch_layout.nb_channels,
-                    (AVSampleFormat) frame->format);
-    state.offset = (state.offset + frame->nb_samples) % sampleRate_;
+    copyTone(frame);
+}
+
+/*
+ * Copy the current tone into frame, looping over the tone buffer.
+ * The frame must use the tone format; callers convert it afterwards.
+ */
+void
+DTMFGenerator::copyTone(AVFrame* frame)
+{
+    const AVFrame* tone = state.sample;
+    if (frame->format != tone->format || frame->sample_rate != tone->sample_rate
+        || av_channel_layout_compare(&frame->ch_layout, &tone->ch_layout) != 0)
+        throw DTMFException("Frame format does not match DTMF format");
+
+    for (int pos = 0; pos < frame->nb_samples;) {
+        int count = std::min(frame->nb_samples - pos, tone->nb_samples - static_cast<int>(state.offset));
+        av_samples_copy(frame->data,
+                        tone->data,
+                        pos,
+                        state.offset,
+                        count,
+                        tone->ch_layout.nb_channels,
+                        static_cast<AVSampleFormat>(tone->format));
+        pos += count;
+        state.offset = (state.offset + count) % tone->nb_samples;
+    }
 }
 
 libjami::FrameBuffer
