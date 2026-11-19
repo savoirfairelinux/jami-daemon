@@ -27,8 +27,8 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
-    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
-    virtual void contactMetadataChanged(const std::string& account_id, const std::string& uri, const std::map<std::string, std::string>& metadata){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::vector<uint8_t>>& metadata){}
+    virtual void contactMetadataChanged(const std::string& account_id, const std::string& uri, const std::map<std::string, std::vector<uint8_t>>& metadata){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
@@ -81,10 +81,10 @@ struct Message
 };
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
-bool getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata);
-bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates);
-bool getContactMetadata(const std::string& accountId, const std::string& uri, std::map<std::string, std::string>& metadata);
-bool setContactMetadata(const std::string& accountId, const std::string& uri, const std::map<std::string, std::string>& updates);
+bool getAccountMetadata(const std::string& accountId, std::map<std::string, std::vector<uint8_t>>& metadata);
+bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::vector<uint8_t>>& updates);
+bool getContactMetadata(const std::string& accountId, const std::string& uri, std::map<std::string, std::vector<uint8_t>>& metadata);
+bool setContactMetadata(const std::string& accountId, const std::string& uri, const std::map<std::string, std::vector<uint8_t>>& updates);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 void setAccountActive(const std::string& accountId, bool active);
@@ -256,8 +256,8 @@ public:
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
-    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::string>& metadata){}
-    virtual void contactMetadataChanged(const std::string& account_id, const std::string& uri, const std::map<std::string, std::string>& metadata){}
+    virtual void accountMetadataChanged(const std::string& account_id, const std::map<std::string, std::vector<uint8_t>>& metadata){}
+    virtual void contactMetadataChanged(const std::string& account_id, const std::string& uri, const std::map<std::string, std::vector<uint8_t>>& metadata){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/) {}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}

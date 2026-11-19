@@ -51,29 +51,26 @@ public:
         return libjami::getVolatileAccountDetails(accountID);
     }
 
-    std::tuple<bool, std::map<std::string, std::string>> getAccountMetadata(const std::string& accountID)
+    std::tuple<bool, libjami::MetadataMap> getAccountMetadata(const std::string& accountID)
     {
-        std::map<std::string, std::string> metadata;
+        libjami::MetadataMap metadata;
         const auto success = libjami::getAccountMetadata(accountID, metadata);
         return {success, std::move(metadata)};
     }
 
-    bool setAccountMetadata(const std::string& accountID, const std::map<std::string, std::string>& updates)
+    bool setAccountMetadata(const std::string& accountID, const libjami::MetadataMap& updates)
     {
         return libjami::setAccountMetadata(accountID, updates);
     }
 
-    std::tuple<bool, std::map<std::string, std::string>> getContactMetadata(const std::string& accountID,
-                                                                            const std::string& uri)
+    std::tuple<bool, libjami::MetadataMap> getContactMetadata(const std::string& accountID, const std::string& uri)
     {
-        std::map<std::string, std::string> metadata;
+        libjami::MetadataMap metadata;
         const auto success = libjami::getContactMetadata(accountID, uri, metadata);
         return {success, std::move(metadata)};
     }
 
-    bool setContactMetadata(const std::string& accountID,
-                            const std::string& uri,
-                            const std::map<std::string, std::string>& updates)
+    bool setContactMetadata(const std::string& accountID, const std::string& uri, const libjami::MetadataMap& updates)
     {
         return libjami::setContactMetadata(accountID, uri, updates);
     }

@@ -258,8 +258,8 @@ ContactSerializationTest::testContactMetadata()
 {
     Contact contact;
     contact.added = timePointFromMilliseconds(2000);
-    contact.metadata.entries = {{"label", {1000, std::string(64, 'a'), "Alice"}},
-                                {"empty", {1000, std::string(64, 'a'), ""}}};
+    contact.metadata.entries = {{"label", {1000, std::string(64, 'a'), {0x80, 0, 0xff}}},
+                                {"empty", {1000, std::string(64, 'a'), {}}}};
     CPPUNIT_ASSERT(repack<Contact>(contact).metadata == contact.metadata);
     msgpack::zone zone;
     msgpack::object object(contact, zone);
@@ -277,14 +277,15 @@ ContactSerializationTest::testContactMetadataMerge()
     Contact a, b;
     a.added = timePointFromMilliseconds(2000);
     b.added = timePointFromMilliseconds(1000);
-    a.metadata.entries = {{"label", {1000, std::string(64, 'a'), "Alice"}}};
-    b.metadata.entries = {{"label", {1000, std::string(64, 'b'), "Bob"}},
-                          {"other", {1000, std::string(64, 'b'), "kept"}}};
+    const std::vector<uint8_t> winningLabel {0, 0xff};
+    a.metadata.entries = {{"label", {1000, std::string(64, 'a'), {0, 0x80}}}};
+    b.metadata.entries = {{"label", {1000, std::string(64, 'b'), winningLabel}},
+                          {"other", {1000, std::string(64, 'b'), {1}}}};
     CPPUNIT_ASSERT(!a.update(b)); // Metadata alone is not a contact-state change.
     CPPUNIT_ASSERT(!b.update(a));
     CPPUNIT_ASSERT(b.added == a.added);
     CPPUNIT_ASSERT(a.metadata == b.metadata);
-    CPPUNIT_ASSERT_EQUAL(std::string("Bob"), a.metadata.entries.at("label").value);
+    CPPUNIT_ASSERT(a.metadata.entries.at("label").value == winningLabel);
     Contact removed;
     removed.removed = timePointFromMilliseconds(3000);
     CPPUNIT_ASSERT(a.update(removed));
@@ -407,8 +408,7 @@ ContactSerializationTest::testKnownDeviceMapSurvivesBadEntry()
     legacy.emplace("deviceB", LegacyKnownDeviceUnsigned {"Device B", WRAPPED_NEVER_SYNCED});
 
     std::map<std::string, KnownDeviceData> devices;
-    CPPUNIT_ASSERT_NO_THROW(
-        (devices = repack<std::map<std::string, KnownDeviceData>>(legacy)));
+    CPPUNIT_ASSERT_NO_THROW((devices = repack<std::map<std::string, KnownDeviceData>>(legacy)));
     CPPUNIT_ASSERT_EQUAL(size_t(2), devices.size());
     CPPUNIT_ASSERT_EQUAL(int64_t(1700000001) * 1000, devices.at("deviceA").lastSyncMs);
     CPPUNIT_ASSERT_EQUAL(int64_t(0), devices.at("deviceB").lastSyncMs);

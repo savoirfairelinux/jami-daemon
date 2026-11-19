@@ -121,7 +121,8 @@ Account_factoryTest::testAccountMetadataReadFailure()
     const std::string id = "metadata-read-failure";
     account = std::dynamic_pointer_cast<JamiAccount>(factory.createAccount("RING", id));
     CPPUNIT_ASSERT(account);
-    std::map<std::string, std::string> metadata {{"marker", "unchanged"}};
+    const libjami::MetadataMap marker {{"marker", {0, 0xff}}};
+    auto metadata = marker;
     CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata)); // unavailable
     {
         std::ofstream file(root / "accountMetadata", std::ios::binary);
@@ -130,7 +131,7 @@ Account_factoryTest::testAccountMetadataReadFailure()
     account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
     CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata));
     CPPUNIT_ASSERT(!libjami::getAccountMetadata(id, metadata));
-    CPPUNIT_ASSERT_EQUAL(std::string("unchanged"), metadata.at("marker"));
+    CPPUNIT_ASSERT(metadata == marker);
     const dht::InfoHash peer(std::string(40, 'b'));
     Contact contact;
     contact.removed = nowMs();
@@ -147,17 +148,17 @@ Account_factoryTest::testAccountMetadataReadFailure()
     account->accountManager_ = std::make_shared<MetadataManager>(id, root, true);
     CPPUNIT_ASSERT(libjami::getAccountMetadata(id, metadata)); // healthy empty storage
     CPPUNIT_ASSERT(metadata.empty());
-    metadata = {{"marker", "unchanged"}};
+    metadata = marker;
     CPPUNIT_ASSERT(!libjami::getContactMetadata(id, "invalid", metadata));
     CPPUNIT_ASSERT(!libjami::getContactMetadata(id, peer.toString(), metadata));
-    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", "unknown"}}));
-    CPPUNIT_ASSERT_EQUAL(std::string("unchanged"), metadata.at("marker"));
+    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", {1}}}));
+    CPPUNIT_ASSERT(metadata == marker);
     account->accountManager_->getInfo()->contacts->setContacts({{peer, contact}});
     CPPUNIT_ASSERT(libjami::getContactMetadata(id, peer.toString(), metadata));
     CPPUNIT_ASSERT(metadata.empty());
-    CPPUNIT_ASSERT(libjami::setContactMetadata(id, peer.toString(), {{"label", "saved"}}));
+    CPPUNIT_ASSERT(libjami::setContactMetadata(id, peer.toString(), {{"label", {0, 0xff}}}));
     const auto saved = account->accountManager_->getContactInfo(peer.toString())->metadata;
-    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"", "invalid"}}));
+    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"", {1}}}));
     CPPUNIT_ASSERT(account->accountManager_->getContactInfo(peer.toString())->metadata == saved);
     CPPUNIT_ASSERT(ContactList::contactsFromPath(root).at(peer).metadata == saved);
     std::filesystem::create_directory(root / "contacts.new");
@@ -165,11 +166,11 @@ Account_factoryTest::testAccountMetadataReadFailure()
         std::ofstream blocker(root / "contacts.new" / "blocker");
         blocker << "keep the staging directory in place";
     }
-    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", "must not be saved"}}));
+    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", {2}}}));
     CPPUNIT_ASSERT(account->accountManager_->getContactInfo(peer.toString())->metadata == saved);
     CPPUNIT_ASSERT(ContactList::contactsFromPath(root).at(peer).metadata == saved);
     auto remote = saved;
-    CPPUNIT_ASSERT(remote.update(std::string(64, 'b'), {{"label", "remote"}}));
+    CPPUNIT_ASSERT(remote.update(std::string(64, 'b'), {{"label", {3}}}));
     auto& contacts = *account->accountManager_->getInfo()->contacts;
     CPPUNIT_ASSERT(!contacts.mergeContactMetadata(peer, remote));
     CPPUNIT_ASSERT(contacts.getContactInfo(peer)->metadata == saved);

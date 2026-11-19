@@ -149,7 +149,7 @@ ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
     CPPUNIT_ASSERT(current.ds.metadata.entries.empty());
     CPPUNIT_ASSERT(current.ds.contact_metadata.empty());
     CPPUNIT_ASSERT(!current.affectsList());
-    current.ds.metadata.entries["jami.channels.v1/id/deleted"] = {42, std::string(64, 'a'), "1"};
+    current.ds.metadata.entries["jami.channels.v1/id/deleted"] = {42, std::string(64, 'a'), {'1'}};
     CPPUNIT_ASSERT(!current.affectsList());
     auto oldReader = repack<LegacySyncMsg>(current);
     CPPUNIT_ASSERT(oldReader.p == legacy.p);
@@ -157,7 +157,7 @@ ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
     CPPUNIT_ASSERT(newReader.ds.metadata == current.ds.metadata);
     CPPUNIT_ASSERT(newReader.p == legacy.p);
     const auto peer = dht::InfoHash::get("contact");
-    current.ds.contact_metadata[peer].entries["label"] = {42, std::string(64, 'a'), "private"};
+    current.ds.contact_metadata[peer].entries["label"] = {42, std::string(64, 'a'), {0, 0x80, 0xff}};
     CPPUNIT_ASSERT(!current.affectsList());
     newReader = repack<SyncMsg>(current);
     CPPUNIT_ASSERT(newReader.ds.contact_metadata == current.ds.contact_metadata);
@@ -175,11 +175,11 @@ ConvInfoSerializationTest::testAccountMetadataSyncFrameBoundaries()
     for (size_t size : {size_t(UINT16_MAX) - 1, size_t(UINT16_MAX), size_t(UINT16_MAX) + 1}) {
         SyncMsg sent;
         auto& entry = sent.ds.metadata.entries["jami.channels.v1/id/content"];
-        entry = {1, std::string(64, 'a'), std::string(size - 512, 'v')};
+        entry = {1, std::string(64, 'a'), std::vector<uint8_t>(size - 512, 0xff)};
         msgpack::sbuffer buffer(UINT16_MAX);
         msgpack::pack(buffer, sent);
         CPPUNIT_ASSERT(buffer.size() < size);
-        entry.value.append(size - buffer.size(), 'v');
+        entry.value.resize(entry.value.size() + size - buffer.size(), 0xff);
         buffer.clear();
         msgpack::pack(buffer, sent);
         CPPUNIT_ASSERT_EQUAL(size, buffer.size());
@@ -215,7 +215,7 @@ ConvInfoSerializationTest::testAccountMetadataSyncLargeStream()
         sent.ds.metadata.entries.emplace(std::move(key),
                                          MetadataEntry {timestamp,
                                                         std::string(64, 'a'),
-                                                        std::string(length, static_cast<char>('a' + timestamp % 26))});
+                                                        std::vector<uint8_t>(length, static_cast<uint8_t>(timestamp))});
         remaining -= overhead + length;
     }
     CPPUNIT_ASSERT(sent.ds.metadata.validate());
@@ -231,7 +231,7 @@ ConvInfoSerializationTest::testAccountMetadataSyncLargeStream()
     const std::vector<SyncMsg> expected {repack<SyncMsg>(before), sent, after};
 
     // The production reader sees a byte stream, not multiplexed frame boundaries.
-    // Exercise complete/coalesced objects, full-sized frames, and split headers/strings.
+    // Exercise complete/coalesced objects, full-sized frames, and split headers/buffers.
     msgpack::sbuffer stream(UINT16_MAX);
     msgpack::pack(stream, before);
     msgpack::pack(stream, sent);

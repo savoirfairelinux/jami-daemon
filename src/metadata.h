@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 namespace jami {
 
@@ -19,7 +20,8 @@ struct MetadataEntry
 {
     int64_t timestampMs {0};
     std::string writer; // stable replica identifier (64 lowercase hexadecimal characters)
-    std::string value;
+    // MessagePack writes byte vectors as BIN and also accepts legacy STR values.
+    std::vector<uint8_t> value;
 
     auto stamp() const { return std::tie(timestampMs, writer); }
     bool operator==(const MetadataEntry&) const = default;
@@ -31,7 +33,7 @@ struct MetadataEntry
  */
 struct Metadata
 {
-    using Values = std::map<std::string, std::string>;
+    using Values = std::map<std::string, std::vector<uint8_t>>;
 
     static constexpr size_t MAX_KEY_BYTES = 1024;
     static constexpr size_t MAX_VALUE_BYTES = 65536;

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "metadata.h"
+#include "connectivity/utf8_utils.h"
 #include "jamidht/timestamp.h"
 #include "logger.h"
 
@@ -22,9 +23,10 @@ validWriter(const std::string& writer)
 }
 
 bool
-validValue(const std::string& key, const std::string& value)
+validKeyAndValue(const std::string& key, const std::vector<uint8_t>& value)
 {
-    return !key.empty() && key.size() <= Metadata::MAX_KEY_BYTES && value.size() <= Metadata::MAX_VALUE_BYTES;
+    return !key.empty() && key.size() <= Metadata::MAX_KEY_BYTES && key.find('\0') == std::string::npos
+           && utf8_validate(key) && value.size() <= Metadata::MAX_VALUE_BYTES;
 }
 
 } // namespace
@@ -55,7 +57,7 @@ Metadata::decode(std::string_view packed)
             }
         return nullptr;
     };
-    auto isString = [](const msgpack::object& value) {
+    auto isStringOrBinary = [](const msgpack::object& value) {
         return value.type == msgpack::type::STR || value.type == msgpack::type::BIN;
     };
     try {
@@ -80,7 +82,7 @@ Metadata::decode(std::string_view packed)
                 return std::nullopt;
             }
             timestamp->as<int64_t>();
-            if (!isString(*writer) || !isString(*value)) {
+            if (!isStringOrBinary(*writer) || !isStringOrBinary(*value)) {
                 JAMI_ERROR("Invalid metadata field type");
                 return std::nullopt;
             }
@@ -107,7 +109,7 @@ Metadata::validate() const
     }
     size_t bytes = 0;
     for (const auto& [key, entry] : entries) {
-        if (!validValue(key, entry.value) || entry.timestampMs <= 0 || !validWriter(entry.writer)) {
+        if (!validKeyAndValue(key, entry.value) || entry.timestampMs <= 0 || !validWriter(entry.writer)) {
             JAMI_ERROR("Invalid metadata key, value, or stamp");
             return false;
         }
@@ -128,7 +130,7 @@ Metadata::update(const std::string& writer, const Values& updates)
         return std::nullopt;
     }
     for (const auto& [key, value] : updates)
-        if (!validValue(key, value)) {
+        if (!validKeyAndValue(key, value)) {
             JAMI_ERROR("Invalid metadata key or value");
             return std::nullopt;
         }

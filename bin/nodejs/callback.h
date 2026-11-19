@@ -3,8 +3,10 @@
 #include <napi.h>
 #include <uv.h>
 
+#include "jami/configurationmanager_interface.h"
 #include "jami/networkservice_interface.h"
 
+#include <cstdio>
 #include <queue>
 #include <functional>
 #include <mutex>
@@ -130,6 +132,26 @@ stringMapToJsMap(const std::map<std::string, std::string>& strmap)
     napi_value obj = napiObject();
     for (const auto& [key, value] : strmap)
         napiSetProperty(obj, key, napiString(value));
+    return obj;
+}
+
+inline napi_value
+metadataToJsMap(const libjami::MetadataMap& metadata)
+{
+    napi_value obj = napiObject();
+    for (const auto& [key, bytes] : metadata) {
+        napi_value buffer;
+        if (napi_create_buffer_copy(g_env, bytes.size(), bytes.data(), nullptr, &buffer) != napi_ok) {
+            std::fprintf(stderr, "Cannot create Jami metadata buffer\n");
+            return nullptr;
+        }
+        const napi_property_descriptor
+            property {key.c_str(), nullptr, nullptr, nullptr, nullptr, buffer, napi_default_jsproperty, nullptr};
+        if (napi_define_properties(g_env, obj, 1, &property) != napi_ok) {
+            std::fprintf(stderr, "Cannot add Jami metadata property\n");
+            return nullptr;
+        }
+    }
     return obj;
 }
 
@@ -267,12 +289,14 @@ accountsChanged()
 }
 
 void
-accountMetadataChanged(const std::string& accountId, const std::map<std::string, std::string>& metadata)
+accountMetadataChanged(const std::string& accountId, const libjami::MetadataMap& metadata)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, metadata]() {
-        napi_value args[] = {napiString(accountId), stringMapToJsMap(metadata)};
-        callCallback("AccountMetadataChanged", 2, args);
+        if (auto snapshot = metadataToJsMap(metadata)) {
+            napi_value args[] = {napiString(accountId), snapshot};
+            callCallback("AccountMetadataChanged", 2, args);
+        }
     });
     uv_async_send(&signalAsync);
 }
@@ -289,14 +313,14 @@ accountDetailsChanged(const std::string& accountId, const std::map<std::string, 
 }
 
 void
-contactMetadataChanged(const std::string& accountId,
-                       const std::string& uri,
-                       const std::map<std::string, std::string>& metadata)
+contactMetadataChanged(const std::string& accountId, const std::string& uri, const libjami::MetadataMap& metadata)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, uri, metadata]() {
-        napi_value args[] = {napiString(accountId), napiString(uri), stringMapToJsMap(metadata)};
-        callCallback("ContactMetadataChanged", 3, args);
+        if (auto snapshot = metadataToJsMap(metadata)) {
+            napi_value args[] = {napiString(accountId), napiString(uri), snapshot};
+            callCallback("ContactMetadataChanged", 3, args);
+        }
     });
     uv_async_send(&signalAsync);
 }

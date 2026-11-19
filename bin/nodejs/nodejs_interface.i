@@ -59,6 +59,23 @@ namespace std {
 
 
 %template(Blob) vector<uint8_t>;
+%ignore map<string, vector<uint8_t>>::get;
+%rename(get) map<string, vector<uint8_t>>::getCopy;
+%extend map<string, vector<uint8_t>> {
+    std::vector<uint8_t> getCopy(const std::string& key) const throw (std::out_of_range) {
+        return $self->at(key);
+    }
+
+    std::vector<std::string> keys() const {
+        std::vector<std::string> k;
+        k.reserve($self->size());
+        for (const auto& i : *$self) {
+            k.push_back(i.first);
+        }
+        return k;
+    }
+}
+%template(BlobMap) map<string, vector<uint8_t>>;
 %template(FloatVect) vector<float>;
 }
 
