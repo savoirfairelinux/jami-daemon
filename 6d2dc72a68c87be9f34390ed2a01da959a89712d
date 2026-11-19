@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c0e877c0_b90d2ba9",
+        "filename": "bin/nodejs/callback.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-19T19:48:28Z",
+      "side": 1,
+      "message": "[warning] Line 141: 🟡 `metadataToJsMap` returns `nullptr` on the first N-API failure, and both signal emitters then skip `AccountMetadataChanged`/`ContactMetadataChanged` entirely. This can silently drop metadata-sync notifications for JS clients. Please surface an explicit error path (e.g., dedicated error callback/throw) instead of suppressing the signal, or still emit with a deterministic fallback payload.",
+      "revId": "6d2dc72a68c87be9f34390ed2a01da959a89712d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5edc9e8_e8c605cc",
+        "filename": "bin/nodejs/src/index.ts",
+        "patchSetId": 1
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-19T19:48:28Z",
+      "side": 1,
+      "message": "[warning] Line 130: 🟡 The new `Blob` API exposes `add(byte: number)` but does not enforce byte-range semantics at the API boundary. Values outside `[0,255]` (or non-integers) can be implicitly coerced/truncated when mapped to `uint8_t`, causing silent data corruption. Add explicit validation (integer + range check) in the JS wrapper or SWIG binding and reject invalid input.",
+      "revId": "6d2dc72a68c87be9f34390ed2a01da959a89712d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
