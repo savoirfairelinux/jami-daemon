@@ -16,39 +16,12 @@
  */
 #pragma once
 
-#include "dtmfgenerator.h"
+#include "media/media_buffer.h"
 
-/**
- * @file dtmf.h
- * @brief DMTF library to generate a dtmf sample
- */
+#include <chrono>
+
 namespace jami {
 
-class DTMF
-{
-public:
-    /**
-     * Create a new DTMF.
-     * @param sampleRate frequency of the sample (ex: 8000 hz)
-     */
-    DTMF(unsigned int sampleRate, AVSampleFormat sampleFormat);
-
-    /**
-     * Start the done for th given dtmf
-     * @param code  The DTMF code
-     */
-    void startTone(char code);
-
-    /**
-     * Copy the sound inside the sampling* buffer
-     */
-    bool generateDTMF(AVFrame* frame);
-
-private:
-    char currentTone_;
-    char newTone_;
-
-    DTMFGenerator dtmfgenerator_;
-};
+std::shared_ptr<AudioFrame> makeDtmfPulse(char code, unsigned sampleRate, std::chrono::milliseconds duration);
 
 } // namespace jami
