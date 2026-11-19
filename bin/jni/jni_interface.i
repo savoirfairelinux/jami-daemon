@@ -188,7 +188,8 @@ namespace std {
     }
 }
 %template(Blob) vector<uint8_t>;
-%template(BlobMap) map<string, vector<uint8_t>>;
+// Use the underlying byte type so SWIG resolves the nested Iterator.
+%template(BlobMap) map<string, vector<unsigned char>>;
 %template(FloatVect) vector<float>;
 }
 
