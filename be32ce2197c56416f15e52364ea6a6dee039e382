@@ -33,6 +33,24 @@
       "message": "[warning] Line 65: 🟡 Unsupported audio sample formats are silently accepted: `readMonoSample` returns `0.0` for unknown formats and `writeSample` skips writes unless the packed format is S16/FLT. This can produce silent/corrupted DTMF without any explicit failure. Please validate frame/tone formats up front in `copyToneSamples` (or constructor) and throw `DTMFException` for unsupported formats, or extend conversion support accordingly.",
       "revId": "be32ce2197c56416f15e52364ea6a6dee039e382",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1246e20e_8ff21317",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-11-19T18:28:35Z",
+      "side": 1,
+      "message": "Done in PS4: the hand-rolled conversion was removed. Manager now allocates the DTMF frame in the generator format and putUrgent() resamples it with libswresample. copyTone() throws DTMFException when a frame does not match the tone format, and generateDTMF() returns false instead of producing silent or corrupted audio.",
+      "parentUuid": "5e0a9d36_b2f3d84d",
+      "revId": "be32ce2197c56416f15e52364ea6a6dee039e382",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
