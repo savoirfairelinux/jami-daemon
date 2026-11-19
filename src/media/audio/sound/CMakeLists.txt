@@ -6,8 +6,6 @@ list (APPEND Source_Files__media__audio__sound
       "${CMAKE_CURRENT_SOURCE_DIR}/audiofile.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/dtmf.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/dtmf.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/dtmfgenerator.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/dtmfgenerator.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/tone.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/tone.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/tonelist.cpp"

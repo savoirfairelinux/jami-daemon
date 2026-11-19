@@ -64,7 +64,6 @@ libjami_sources = files(
     'media/audio/ringbufferpool.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',
-    'media/audio/sound/dtmfgenerator.cpp',
     'media/audio/sound/tone.cpp',
     'media/audio/sound/tonelist.cpp',
     'media/audio/tonecontrol.cpp',

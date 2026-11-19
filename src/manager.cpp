@@ -346,12 +346,6 @@ struct Manager::ManagerPimpl
     std::mutex audioDeviceUsersMutex_ {};
     std::map<std::string, unsigned> audioDeviceUsers_ {};
 
-    // Main thread
-    std::unique_ptr<DTMF> dtmfKey_;
-
-    /** Buffer to generate DTMF */
-    std::shared_ptr<AudioFrame> dtmfBuf_;
-
     std::shared_ptr<asio::steady_timer> dtmfTimer_;
 
     // To handle volume control
@@ -416,7 +410,6 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , ioContext_(std::make_shared<asio::io_context>())
     , upnpContext_(std::make_shared<dhtnet::upnp::UPnPContext>(nullptr, Logger::dhtLogger()))
     , toneCtrl_(base.preferences)
-    , dtmfBuf_(std::make_shared<AudioFrame>())
     , ringbufferpool_(new RingBufferPool)
 #ifdef ENABLE_VIDEO
     , videoManager_(nullptr)
@@ -861,8 +854,6 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         if (pimpl_->audiodriver_) {
             auto format = pimpl_->audiodriver_->getFormat();
             pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
-            pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate(),
-                                            getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
 
@@ -1828,17 +1819,14 @@ Manager::playDtmf(char code)
         return;
     }
 
-    // length in milliseconds
-    int pulselen = voipPreferences.getPulseLength();
-
-    if (pulselen == 0) {
+    const std::chrono::milliseconds pulseLength {voipPreferences.getPulseLength()};
+    if (pulseLength.count() == 0) {
         return;
     }
 
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
-    // fast return, no sound, so no dtmf
-    if (not pimpl_->audiodriver_ or not pimpl_->dtmfKey_) {
+    if (not pimpl_->audiodriver_) {
         return;
     }
 
@@ -1848,28 +1836,12 @@ Manager::playDtmf(char code)
         return;
     }
 
-    // number of data sampling in one pulselen depends on samplerate
-    // size (n sampling) = time_ms * sampling/s
-    //                     ---------------------
-    //                            ms/s
-    unsigned size = (unsigned) ((pulselen * (long) pimpl_->audiodriver_->getSampleRate()) / 1000ul);
-    if (!pimpl_->dtmfBuf_ or pimpl_->dtmfBuf_->getFrameSize() != size)
-        pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(pimpl_->audiodriver_->getFormat(), size);
+    auto pulse = makeDtmfPulse(code, pimpl_->audiodriver_->getSampleRate(), pulseLength);
+    if (!pulse)
+        return;
+    pimpl_->audiodriver_->putUrgent(std::move(pulse));
 
-    // Handle dtmf
-    pimpl_->dtmfKey_->startTone(code);
-
-    // copy the sound
-    if (pimpl_->dtmfKey_->generateDTMF(pimpl_->dtmfBuf_->pointer())) {
-        // Put buffer to urgentRingBuffer
-        // put the size in bytes…
-        // so size * 1 channel (mono) * sizeof (bytes for the data)
-        // audiolayer->flushUrgent();
-
-        pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
-    }
-
-    auto dtmfTimer = std::make_unique<asio::steady_timer>(*pimpl_->ioContext_, std::chrono::milliseconds(pulselen));
+    auto dtmfTimer = std::make_unique<asio::steady_timer>(*pimpl_->ioContext_, pulseLength);
     dtmfTimer->async_wait([this, audioGuard, t = dtmfTimer.get()](const asio::error_code& ec) {
         if (ec)
             return;
@@ -2695,7 +2667,6 @@ Manager::audioFormatUsed(AudioFormat format)
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
     pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
-    pimpl_->dtmfKey_.reset(new DTMF(format.sample_rate, format.sampleFormat));
 
     return format;
 }

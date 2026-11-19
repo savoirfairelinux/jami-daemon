@@ -23,6 +23,8 @@
 #include "videomanager_interface.h"
 #include "media/libav_deps.h"
 #include "media/audio/resampler.h"
+#include "media/audio/ringbuffer.h"
+#include "media/audio/sound/dtmf.h"
 
 #include "../test_runner.h"
 
@@ -40,10 +42,12 @@ public:
 private:
     void testAudioFrame();
     void testRematrix();
+    void testDtmfPlaybackFormatChange();
 
     CPPUNIT_TEST_SUITE(ResamplerTest);
     CPPUNIT_TEST(testAudioFrame);
     CPPUNIT_TEST(testRematrix);
+    CPPUNIT_TEST(testDtmfPlaybackFormatChange);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<Resampler> resampler_;
@@ -109,6 +113,36 @@ ResamplerTest::testRematrix()
     ret = resampler_->resample(input->pointer(), output2->pointer());
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
     CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data[0]);
+}
+
+void
+ResamplerTest::testDtmfPlaybackFormatChange()
+{
+    using namespace std::chrono_literals;
+    constexpr auto mono = AudioFormat::MONO();
+    constexpr AudioFormat stereo {mono.sample_rate, 2, AV_SAMPLE_FMT_FLTP};
+
+    auto longPulse = makeDtmfPulse('1', mono.sample_rate, 1250ms);
+    CPPUNIT_ASSERT(longPulse);
+    CPPUNIT_ASSERT_EQUAL(size_t(60000), longPulse->getFrameSize());
+
+    RingBuffer urgent("urgent", mono);
+    urgent.createReadOffset("playback");
+    urgent.put(makeDtmfPulse('1', mono.sample_rate, 20ms));
+    auto original = urgent.get("playback");
+    CPPUNIT_ASSERT(original && original->getFormat() == mono);
+    const auto* pcm = reinterpret_cast<const int16_t*>(original->pointer()->data[0]);
+    CPPUNIT_ASSERT(pcm[0] == 0 && pcm[1] != 0);
+
+    urgent.setFormat(stereo);
+    urgent.put(makeDtmfPulse('1', mono.sample_rate, 20ms));
+    auto converted = urgent.get("playback");
+    CPPUNIT_ASSERT(converted && converted->getFormat() == stereo);
+    CPPUNIT_ASSERT_EQUAL(original->getFrameSize(), converted->getFrameSize());
+    const auto* left = reinterpret_cast<const float*>(converted->pointer()->data[0]);
+    const auto* right = reinterpret_cast<const float*>(converted->pointer()->data[1]);
+    CPPUNIT_ASSERT(left[0] == 0.0f && left[1] != 0.0f);
+    CPPUNIT_ASSERT_EQUAL(left[1], right[1]);
 }
 
 } // namespace test
