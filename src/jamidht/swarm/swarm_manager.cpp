@@ -304,8 +304,8 @@ SwarmManager::precheckLease(const MobileLease& lease) const
 {
     if (lease.format_version != 1 || lease.conversation_id != conversationId_ || lease.conversation_id.empty()
         || lease.conversation_id.size() > MAX_MOBILE_LEASE_IDENTIFIER_SIZE || lease.signature.empty()
-        || lease.signature.size() > MAX_MOBILE_LEASE_SIGNATURE_SIZE || !lease.issuer_id
-        || !mobileLeaseIssuerValidator_ || !mobileLeaseIssuerValidator_(lease.issuer_id))
+        || lease.signature.size() > MAX_MOBILE_LEASE_SIGNATURE_SIZE || !lease.issuer_id || !mobileLeaseIssuerValidator_
+        || !mobileLeaseIssuerValidator_(lease.issuer_id))
         return false;
 
     constexpr auto MAX_CLOCK_SKEW = std::chrono::seconds(5 * 60);
@@ -673,7 +673,9 @@ SwarmManager::scheduleMobileLeaseExpiryInternal()
     auto expiryTime = timePointFromSeconds(nearestExpiry);
     const auto now = std::chrono::system_clock::now();
     constexpr auto MAX_TIMER_DELAY_SECONDS = std::chrono::minutes(1);
-    const auto delay = std::min<std::chrono::system_clock::duration>(expiryTime > now ? expiryTime - now : std::chrono::seconds(0), MAX_TIMER_DELAY_SECONDS);
+    const auto delay = std::min<std::chrono::system_clock::duration>(expiryTime > now ? expiryTime - now
+                                                                                      : std::chrono::seconds(0),
+                                                                     MAX_TIMER_DELAY_SECONDS);
     mobileLeaseExpiryTimer_.expires_after(delay);
     mobileLeaseExpiryTimer_.async_wait([w = weak()](const asio::error_code& ec) {
         if (auto shared = w.lock())

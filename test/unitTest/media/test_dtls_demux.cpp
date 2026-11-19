@@ -91,15 +91,12 @@ void
 DtlsDemuxTest::fingerprintsSupportSha384AndSha512()
 {
     const auto identity = generateDtlsSrtpIdentity();
-    for (const auto& [hash, digest] : {std::pair {"sha-384", GNUTLS_DIG_SHA384},
-                                     std::pair {"sHa-512", GNUTLS_DIG_SHA512}}) {
+    for (const auto& [hash, digest] :
+         {std::pair {"sha-384", GNUTLS_DIG_SHA384}, std::pair {"sHa-512", GNUTLS_DIG_SHA512}}) {
         std::array<unsigned char, 64> raw {};
         size_t rawSize = raw.size();
         CPPUNIT_ASSERT_EQUAL(GNUTLS_E_SUCCESS,
-                             gnutls_x509_crt_get_fingerprint(identity.second->cert,
-                                                             digest,
-                                                             raw.data(),
-                                                             &rawSize));
+                             gnutls_x509_crt_get_fingerprint(identity.second->cert, digest, raw.data(), &rawSize));
         const auto fingerprint = getDtlsFingerprint(*identity.second, hash);
         CPPUNIT_ASSERT_EQUAL(rawSize * 3 - 1, fingerprint.size());
         for (size_t i = 0; i < rawSize; ++i) {

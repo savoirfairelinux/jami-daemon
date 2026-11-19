@@ -286,9 +286,7 @@ caseInsensitiveEqual(std::string_view lhs, std::string_view rhs)
 } // namespace
 
 bool
-DtlsSrtpSession::matches(DtlsSetup setup,
-                         std::string_view fingerprintHash,
-                         std::string_view fingerprint) const
+DtlsSrtpSession::matches(DtlsSetup setup, std::string_view fingerprintHash, std::string_view fingerprint) const
 {
     return localSetup == setup && caseInsensitiveEqual(remoteFingerprintHash, fingerprintHash)
            && caseInsensitiveEqual(remoteFingerprint, fingerprint);

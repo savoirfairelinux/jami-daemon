@@ -145,9 +145,7 @@ protected:
     DtlsSrtpContext getDtlsSrtpContext(dhtnet::IceSocket* rtpSocket)
     {
         if (dtlsSrtpSession_
-            && dtlsSrtpSession_->matches(receive_.dtls_setup,
-                                         send_.dtls_fingerprint_type,
-                                         send_.dtls_fingerprint)) {
+            && dtlsSrtpSession_->matches(receive_.dtls_setup, send_.dtls_fingerprint_type, send_.dtls_fingerprint)) {
             JAMI_DEBUG("Reusing DTLS-SRTP keys after ICE restart");
             if (bundleSocketContext_)
                 SocketPair::setBundleDtlsContext(bundleSocketContext_, dtlsSrtpSession_->context);
@@ -157,22 +155,20 @@ protected:
         if (!bundleSocketContext_ && !rtpSocket)
             throw std::runtime_error("No ICE socket for DTLS-SRTP");
 
-        auto context
-            = bundleSocketContext_
-                  ? SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
-                                                       receive_.dtls_setup,
-                                                       send_.dtls_fingerprint_type,
-                                                       send_.dtls_fingerprint,
-                                                       dtlsCertificate_,
-                                                       dtlsPrivateKey_,
-                                                       dtlsAbort_)
-                  : negotiateDtlsSrtp(*rtpSocket,
-                                     receive_.dtls_setup,
-                                     send_.dtls_fingerprint_type,
-                                     send_.dtls_fingerprint,
-                                     dtlsCertificate_,
-                                     dtlsPrivateKey_,
-                                     dtlsAbort_);
+        auto context = bundleSocketContext_ ? SocketPair::ensureBundleDtlsContext(bundleSocketContext_,
+                                                                                  receive_.dtls_setup,
+                                                                                  send_.dtls_fingerprint_type,
+                                                                                  send_.dtls_fingerprint,
+                                                                                  dtlsCertificate_,
+                                                                                  dtlsPrivateKey_,
+                                                                                  dtlsAbort_)
+                                            : negotiateDtlsSrtp(*rtpSocket,
+                                                                receive_.dtls_setup,
+                                                                send_.dtls_fingerprint_type,
+                                                                send_.dtls_fingerprint,
+                                                                dtlsCertificate_,
+                                                                dtlsPrivateKey_,
+                                                                dtlsAbort_);
         dtlsSrtpSession_ = {
             receive_.dtls_setup,
             send_.dtls_fingerprint_type,

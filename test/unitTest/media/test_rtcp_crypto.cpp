@@ -173,9 +173,18 @@ std::vector<uint8_t>
 genericNack(uint16_t sequence, uint16_t bitmask = 0)
 {
     return {
-        0x81, 205, 0x00, 0x03,
-        0x11, 0x22, 0x33, 0x44,
-        0x11, 0x22, 0x33, 0x44,
+        0x81,
+        205,
+        0x00,
+        0x03,
+        0x11,
+        0x22,
+        0x33,
+        0x44,
+        0x11,
+        0x22,
+        0x33,
+        0x44,
         static_cast<uint8_t>(sequence >> 8),
         static_cast<uint8_t>(sequence),
         static_cast<uint8_t>(bitmask >> 8),
@@ -385,14 +394,10 @@ RtcpCryptoTest::corruptedSrtcpDoesNotEndLiveStream()
     std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
     std::vector<uint8_t> buffer(2048);
     CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN),
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
 
     remote.sendTo(localRtcpPort, protectRtcp(pli));
-    const auto readSize = avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size()));
+    const auto readSize = avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size()));
     CPPUNIT_ASSERT_EQUAL(pli.size(), static_cast<size_t>(readSize));
     CPPUNIT_ASSERT(std::memcmp(buffer.data(), pli.data(), pli.size()) == 0);
 }
@@ -412,17 +417,21 @@ RtcpCryptoTest::rtcpByeDoesNotEndLiveStream()
     socketPair.setReadBlockingMode(true);
 
     const std::vector<uint8_t> bye {
-        0x81, 203, 0x00, 0x01,
-        0x11, 0x22, 0x33, 0x44,
+        0x81,
+        203,
+        0x00,
+        0x01,
+        0x11,
+        0x22,
+        0x33,
+        0x44,
     };
     remoteRtcp.sendTo(localRtcpPort, bye);
 
     std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
     std::vector<uint8_t> buffer(2048);
     CPPUNIT_ASSERT_EQUAL(AVERROR(EAGAIN),
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
 
     const auto firstPli = SocketPair::createRtcpPli(0x11223344, 0x55667788);
     const auto secondPli = SocketPair::createRtcpPli(0x55667788, 0x11223344);
@@ -433,17 +442,13 @@ RtcpCryptoTest::rtcpByeDoesNotEndLiveStream()
     expected.insert(expected.end(), secondPli.begin(), secondPli.end());
     remoteRtcp.sendTo(localRtcpPort, compound);
     CPPUNIT_ASSERT_EQUAL(static_cast<int>(expected.size()),
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
     CPPUNIT_ASSERT(std::memcmp(buffer.data(), expected.data(), expected.size()) == 0);
 
     const auto packet = rtpPacket(42);
     remoteRtp.sendTo(localRtpPort, packet);
     CPPUNIT_ASSERT_EQUAL(static_cast<int>(packet.size()),
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
 }
 
 void
@@ -461,8 +466,14 @@ RtcpCryptoTest::rtcpByeFilteringPreservesMalformedCompoundPackets()
     const auto firstPli = SocketPair::createRtcpPli(0x11223344, 0x55667788);
     const auto secondPli = SocketPair::createRtcpPli(0x55667788, 0x11223344);
     const std::vector<uint8_t> bye {
-        0x81, 203, 0x00, 0x01,
-        0x11, 0x22, 0x33, 0x44,
+        0x81,
+        203,
+        0x00,
+        0x01,
+        0x11,
+        0x22,
+        0x33,
+        0x44,
     };
     auto prefix = firstPli;
     prefix.insert(prefix.end(), bye.begin(), bye.end());
@@ -478,9 +489,7 @@ RtcpCryptoTest::rtcpByeFilteringPreservesMalformedCompoundPackets()
         compound.insert(compound.end(), tail.begin(), tail.end());
         remote.sendTo(localRtcpPort, compound);
         CPPUNIT_ASSERT_EQUAL(static_cast<int>(compound.size()),
-                             avio_read_partial(ioHandle->getContext(),
-                                               buffer.data(),
-                                               static_cast<int>(buffer.size())));
+                             avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
         CPPUNIT_ASSERT(std::memcmp(buffer.data(), compound.data(), compound.size()) == 0);
     }
 }
@@ -547,10 +556,7 @@ RtcpCryptoTest::genericNackRetransmitsRtp()
     // PID 42 plus BLP bit 1 requests sequence 44.
     remoteRtcp.sendTo(localRtcpPort, genericNack(42, 0x0002));
     std::vector<uint8_t> buffer(2048);
-    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
-                                    buffer.data(),
-                                    static_cast<int>(buffer.size()))
-                   > 0);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())) > 0);
     CPPUNIT_ASSERT(remoteRtp.receive() == firstPacket);
     CPPUNIT_ASSERT(remoteRtp.receive() == secondPacket);
 }
@@ -574,17 +580,11 @@ RtcpCryptoTest::missingNackPacketRequestsKeyframe()
 
     remoteRtcp.sendTo(localRtcpPort, genericNack(42));
     std::vector<uint8_t> buffer(2048);
-    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
-                                    buffer.data(),
-                                    static_cast<int>(buffer.size()))
-                   > 0);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())) > 0);
     CPPUNIT_ASSERT_EQUAL(1u, keyframeRequests.load());
 
     remoteRtcp.sendTo(localRtcpPort, genericNack(42));
-    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(),
-                                    buffer.data(),
-                                    static_cast<int>(buffer.size()))
-                   > 0);
+    CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())) > 0);
     CPPUNIT_ASSERT_EQUAL(1u, keyframeRequests.load());
 }
 
@@ -603,16 +603,12 @@ RtcpCryptoTest::stoppedReadIsCancelled()
     std::vector<uint8_t> buffer(2048);
     socketPair.setReadBlockingMode(false);
     CPPUNIT_ASSERT_EQUAL(AVERROR_EXIT,
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
 
     socketPair.setReadBlockingMode(true);
     socketPair.interrupt();
     CPPUNIT_ASSERT_EQUAL(AVERROR_EXIT,
-                         avio_read_partial(ioHandle->getContext(),
-                                           buffer.data(),
-                                           static_cast<int>(buffer.size())));
+                         avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())));
 }
 
 } // namespace test

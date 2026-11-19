@@ -179,7 +179,8 @@ public:
      * @return The created call
      */
     virtual std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                                  const std::vector<libjami::MediaMap>& mediaList) = 0;
+                                                  const std::vector<libjami::MediaMap>& mediaList)
+        = 0;
 
     /**
      * If supported, send a text message from this account.
@@ -211,7 +212,8 @@ public:
                                const std::string& /*avatar*/,
                                const std::string& /*fileType*/,
                                const std::string& /*botOwner*/,
-                               int32_t /*flag*/) = 0;
+                               int32_t /*flag*/)
+        = 0;
 
     vCard::utils::VCardData getProfileVcard() const;
 

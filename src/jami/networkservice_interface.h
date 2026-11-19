@@ -28,9 +28,8 @@
 namespace libjami {
 
 LIBJAMI_PUBLIC std::string addSharedService(const std::string& accountId,
-                                             const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC bool updateSharedService(const std::string& accountId,
-                                         const std::map<std::string, std::string>& details);
+                                            const std::map<std::string, std::string>& details);
+LIBJAMI_PUBLIC bool updateSharedService(const std::string& accountId, const std::map<std::string, std::string>& details);
 LIBJAMI_PUBLIC bool removeSharedService(const std::string& accountId, const std::string& serviceId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getSharedServices(const std::string& accountId);
 LIBJAMI_PUBLIC uint32_t queryPeerServices(const std::string& accountId, const std::string& peerUri);

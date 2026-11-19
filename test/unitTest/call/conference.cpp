@@ -197,16 +197,13 @@ ConferenceTest::testConferenceMediaAnswerPreservesSlots()
         return conference_detail::mediaAnswerForOffer({audio, video}, offer);
     };
 
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {hostAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {hostAudio, hostVideo}));
 
     audio.muted_ = true;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
 
     video.muted_ = true;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, remoteVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, remoteVideo}));
 
     audio.muted_ = false;
     video.muted_ = false;
@@ -217,14 +214,11 @@ ConferenceTest::testConferenceMediaAnswerPreservesSlots()
 
     auto disabledVideo = remoteVideo;
     disabledVideo[libjami::Media::MediaAttributeKey::ENABLED] = FALSE_STR;
-    CPPUNIT_ASSERT(answer({remoteAudio, disabledVideo})
-                   == (std::vector<libjami::MediaMap> {hostAudio, disabledVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, disabledVideo}) == (std::vector<libjami::MediaMap> {hostAudio, disabledVideo}));
     audio.enabled_ = false;
-    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo})
-                   == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
+    CPPUNIT_ASSERT(answer({remoteAudio, remoteVideo}) == (std::vector<libjami::MediaMap> {remoteAudio, hostVideo}));
     audio.enabled_ = true;
-    CPPUNIT_ASSERT(answer({remoteVideo, remoteAudio})
-                   == (std::vector<libjami::MediaMap> {remoteVideo, remoteAudio}));
+    CPPUNIT_ASSERT(answer({remoteVideo, remoteAudio}) == (std::vector<libjami::MediaMap> {remoteVideo, remoteAudio}));
     CPPUNIT_ASSERT(answer({remoteAudio}) == (std::vector<libjami::MediaMap> {hostAudio}));
 }
 

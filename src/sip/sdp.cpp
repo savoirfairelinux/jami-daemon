@@ -543,8 +543,7 @@ findExactRtcpFeedback(unsigned attrCount,
 
         const std::string_view value(attr->value.ptr, static_cast<size_t>(attr->value.slen));
         const auto separator = value.find(' ');
-        if (separator == std::string_view::npos
-            || !parsePayloadTypeToken(value.substr(0, separator), payloadType)) {
+        if (separator == std::string_view::npos || !parsePayloadTypeToken(value.substr(0, separator), payloadType)) {
             continue;
         }
 
@@ -594,9 +593,7 @@ hasAnyRtcpFeedback(const pjmedia_sdp_session* session, unsigned mediaIndex, std:
 }
 
 bool
-hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
-                        unsigned mediaIndex,
-                        std::string_view feedbackType)
+hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session, unsigned mediaIndex, std::string_view feedbackType)
 {
     if (not session || mediaIndex >= session->media_count)
         return false;
@@ -605,10 +602,7 @@ hasAnyExactRtcpFeedback(const pjmedia_sdp_session* session,
     for (unsigned fmtIndex = 0; fmtIndex < media->desc.fmt_count; ++fmtIndex) {
         const auto payloadType = pj_strtoul(&media->desc.fmt[fmtIndex]);
         if (findExactRtcpFeedback(media->attr_count, media->attr, payloadType, feedbackType)
-            || findExactRtcpFeedback(session->attr_count,
-                                     session->attr,
-                                     payloadType,
-                                     feedbackType)) {
+            || findExactRtcpFeedback(session->attr_count, session->attr, payloadType, feedbackType)) {
             return true;
         }
     }
@@ -1278,7 +1272,7 @@ Sdp::getSdpDirectionStr(SdpDirection direction)
 void
 Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDirection direction)
 {
-    static constexpr size_t BUF_SZ = 16*1024 - 1;
+    static constexpr size_t BUF_SZ = 16 * 1024 - 1;
     sip_utils::PoolPtr tmpPool_(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                                "printSdp",
                                                BUF_SZ,
@@ -1517,9 +1511,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         auto* remoteMedia = remoteSession_->media[i];
         const auto bundleOnly = shouldUseBundle()
                                 and pjmedia_sdp_attr_find2(remoteMedia->attr_count,
-                                                          remoteMedia->attr,
-                                                          "bundle-only",
-                                                          nullptr);
+                                                           remoteMedia->attr,
+                                                           "bundle-only",
+                                                           nullptr);
         pjmedia_sdp_media* localMedia;
         if (i < mediaList.size() and mediaList[i].enabled_ and (remoteMedia->desc.port != 0 or bundleOnly)) {
             localMedia = addMediaDescription(mediaList[i]);

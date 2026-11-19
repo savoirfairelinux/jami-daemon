@@ -293,9 +293,7 @@ MobileWakeUpTest::tearDown()
 void
 MobileWakeUpTest::testBlockedResponseWriteDoesNotBlockMaintenance()
 {
-    auto manager = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) {
-        return false;
-    });
+    auto manager = std::make_shared<SwarmManager>(nodeTestIds1.at(0), false, rd, [](auto) { return false; });
     auto channel = std::make_shared<BlockingWriteChannel>(Manager::instance().ioContext(),
                                                           nodeTestIds1.at(1),
                                                           "test1",
@@ -309,9 +307,7 @@ MobileWakeUpTest::testBlockedResponseWriteDoesNotBlockMaintenance()
     msgpack::pack(buffer, request);
     std::vector<uint8_t> packet(buffer.data(), buffer.data() + buffer.size());
 
-    std::thread responseThread([channel, packet = std::move(packet)]() mutable {
-        channel->onRecv(std::move(packet));
-    });
+    std::thread responseThread([channel, packet = std::move(packet)]() mutable { channel->onRecv(std::move(packet)); });
     const auto writeStarted = channel->waitForWrite(5s);
 
     std::promise<void> maintenanceDone;
@@ -693,8 +689,7 @@ int64_t
 nowSeconds()
 {
     return static_cast<int64_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
-            .count());
+        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
 /// A device certificate plus a valid lease binding it to TEST_CONVERSATION_ID.
@@ -838,8 +833,10 @@ MobileWakeUpTest::testLeaseCertificateResolutionFromDht()
     std::atomic_size_t fetches {0};
     std::atomic_bool answerFetch {false};
     auto certificate = mobile.device.second;
-    auto fetcher = [&fetches, &answerFetch, certificate](
-                       const NodeId&, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb) {
+    auto fetcher = [&fetches,
+                    &answerFetch,
+                    certificate](const NodeId&,
+                                 std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb) {
         ++fetches;
         cb(answerFetch ? certificate : nullptr);
     };
@@ -883,7 +880,7 @@ MobileWakeUpTest::testCertificateRequestIsNotAnOracle()
     const auto issuerId = mobile.account.second->getId();
 
     std::map<NodeId, std::shared_ptr<dht::crypto::Certificate>> store {{mobile.id, mobile.device.second},
-                                                                      {strangerId, strangerDevice.second}};
+                                                                       {strangerId, strangerDevice.second}};
     auto desktop = std::make_shared<SwarmManager>(
         nodeTestIds1.at(0),
         false,
@@ -911,8 +908,9 @@ MobileWakeUpTest::testCertificateRequestIsNotAnOracle()
     Message strangerRequest;
     strangerRequest.cert_request = CertRequest {{strangerId}};
     writeMessage(remote, strangerRequest);
-    CPPUNIT_ASSERT(!waitFor([&] { return sink.find([](const Message& m) { return m.cert_response.has_value(); }).has_value(); },
-                            3s));
+    CPPUNIT_ASSERT(
+        !waitFor([&] { return sink.find([](const Message& m) { return m.cert_response.has_value(); }).has_value(); },
+                 3s));
 
     // The certificate of a node whose lease we did accept is legitimate to serve.
     Message mobileRequest;
@@ -968,8 +966,9 @@ MobileWakeUpTest::testUnsolicitedCertificateResponseIsIgnored()
     announcement.is_mobile = true;
     announcement.self_mobile_info = mobile.info();
     writeMessage(remote, announcement);
-    CPPUNIT_ASSERT(waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
-                           CONVERGENCE_TIMEOUT));
+    CPPUNIT_ASSERT(
+        waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
+                CONVERGENCE_TIMEOUT));
     CPPUNIT_ASSERT(!hasVerifiedLease(desktop, mobile.id));
 
     // Answering a request with someone else's certificate resolves nothing.
@@ -1019,8 +1018,9 @@ MobileWakeUpTest::testCertificateRequestTimeoutFallsBackToDht()
     announcement.self_mobile_info = mobile.info();
     writeMessage(remote, announcement);
 
-    CPPUNIT_ASSERT(waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
-                           CONVERGENCE_TIMEOUT));
+    CPPUNIT_ASSERT(
+        waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
+                CONVERGENCE_TIMEOUT));
     CPPUNIT_ASSERT_EQUAL(size_t(0), fetches.load());
 
     // The peer never answers: after CERT_REQUEST_TIMEOUT the DHT takes over.
@@ -1070,8 +1070,9 @@ MobileWakeUpTest::testLocalCertificateSkipsCertificateRequest()
     // The swarm channel's TLS peer certificate is already pinned: this is the
     // common case and it must cost neither a request nor a DHT lookup.
     CPPUNIT_ASSERT(waitFor([&] { return hasVerifiedLease(desktop, mobile.id); }, CONVERGENCE_TIMEOUT));
-    CPPUNIT_ASSERT(!waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
-                            3s));
+    CPPUNIT_ASSERT(
+        !waitFor([&] { return sink.find([](const Message& m) { return m.cert_request.has_value(); }).has_value(); },
+                 3s));
     CPPUNIT_ASSERT_EQUAL(size_t(0), fetches.load());
     desktop->shutdown();
 }
@@ -1188,7 +1189,7 @@ MobileWakeUpTest::testPendingCertificateRequestsAreRetried()
     gossip.response = Response {Query::FOUND, {}, {}, {first.info(), second.info()}};
 
     std::map<NodeId, std::shared_ptr<dht::crypto::Certificate>> store {{first.id, first.device.second},
-                                                                      {second.id, second.device.second}};
+                                                                       {second.id, second.device.second}};
     // Only one request may be outstanding per peer, so resolving both devices
     // takes two gossip rounds; neither may get stuck as "already being fetched".
     for (int round = 0; round < 2; ++round) {

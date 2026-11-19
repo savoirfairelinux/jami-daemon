@@ -435,7 +435,6 @@ SrtpHybridSdpTest::answerFallsBackToSdesWhenOfferHasNoFingerprint()
     CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, slots[0].second.key_exchange);
 }
 
-
 void
 SrtpHybridSdpTest::answerPreservesRejectedMediaSections()
 {
@@ -445,24 +444,24 @@ SrtpHybridSdpTest::answerPreservesRejectedMediaSections()
 
     auto pool = makePool("rejected-media-answer");
     const std::string remoteOffer = "v=0\r\n"
-                                   "o=- 0 0 IN IP4 127.0.0.1\r\n"
-                                   "s=-\r\n"
-                                   "c=IN IP4 127.0.0.1\r\n"
-                                   "t=0 0\r\n"
-                                   "a=group:BUNDLE video audio stopped\r\n"
-                                   "m=video 5006 RTP/SAVPF 120\r\n"
-                                   "a=mid:video\r\n"
-                                   "a=rtpmap:120 H264/90000\r\n"
-                                   "a=crypto:1 UNSUPPORTED inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
-                                   "m=audio 5004 RTP/SAVP 110\r\n"
-                                   "a=mid:audio\r\n"
-                                   "a=rtpmap:110 PCMU/8000\r\n"
-                                   "a=crypto:7 AES_CM_128_HMAC_SHA1_80 "
-                                   "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
-                                   "a=sendrecv\r\n"
-                                   "m=audio 0 RTP/SAVP 8\r\n"
-                                   "a=mid:stopped\r\n"
-                                   "a=rtpmap:8 PCMA/8000\r\n";
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "a=group:BUNDLE video audio stopped\r\n"
+                                    "m=video 5006 RTP/SAVPF 120\r\n"
+                                    "a=mid:video\r\n"
+                                    "a=rtpmap:120 H264/90000\r\n"
+                                    "a=crypto:1 UNSUPPORTED inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
+                                    "m=audio 5004 RTP/SAVP 110\r\n"
+                                    "a=mid:audio\r\n"
+                                    "a=rtpmap:110 PCMU/8000\r\n"
+                                    "a=crypto:7 AES_CM_128_HMAC_SHA1_80 "
+                                    "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
+                                    "a=sendrecv\r\n"
+                                    "m=audio 0 RTP/SAVP 8\r\n"
+                                    "a=mid:stopped\r\n"
+                                    "a=rtpmap:8 PCMA/8000\r\n";
 
     auto* session = parseSdp(pool.get(), remoteOffer);
     CPPUNIT_ASSERT(session);
@@ -532,15 +531,15 @@ SrtpHybridSdpTest::offererMatchesReleaseSelectedSdesSuite()
     // Release peers hardcode the answer to tag 1 / AES-128, regardless of the
     // tag the same suite was offered with.
     const std::string releaseAnswer = "v=0\r\n"
-                                       "o=- 0 0 IN IP4 127.0.0.1\r\n"
-                                       "s=-\r\n"
-                                       "c=IN IP4 127.0.0.1\r\n"
-                                       "t=0 0\r\n"
-                                       "m=audio 5004 RTP/SAVP 104\r\n"
-                                       "a=rtpmap:104 opus/48000/2\r\n"
-                                       "a=crypto:1 AES_CM_128_HMAC_SHA1_80 "
-                                       "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
-                                       "a=sendrecv\r\n";
+                                      "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                      "s=-\r\n"
+                                      "c=IN IP4 127.0.0.1\r\n"
+                                      "t=0 0\r\n"
+                                      "m=audio 5004 RTP/SAVP 104\r\n"
+                                      "a=rtpmap:104 opus/48000/2\r\n"
+                                      "a=crypto:1 AES_CM_128_HMAC_SHA1_80 "
+                                      "inline:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n"
+                                      "a=sendrecv\r\n";
 
     auto* remoteAnswer = parseSdp(pool.get(), releaseAnswer);
     CPPUNIT_ASSERT(remoteAnswer);
@@ -553,8 +552,7 @@ SrtpHybridSdpTest::offererMatchesReleaseSelectedSdesSuite()
     CPPUNIT_ASSERT(not slots.empty());
     CPPUNIT_ASSERT_EQUAL(KeyExchangeProtocol::SDES, slots[0].first.key_exchange);
     CPPUNIT_ASSERT(static_cast<bool>(slots[0].first.crypto));
-    CPPUNIT_ASSERT_EQUAL(std::string("AES_CM_128_HMAC_SHA1_80"),
-                         slots[0].first.crypto.getCryptoSuite());
+    CPPUNIT_ASSERT_EQUAL(std::string("AES_CM_128_HMAC_SHA1_80"), slots[0].first.crypto.getCryptoSuite());
 }
 
 void
@@ -582,8 +580,7 @@ SrtpHybridSdpTest::offerAdvertisesSdesWithDefaultKeyExchange()
     // "no usable local parameters".
     Sdp sdp("default-kx-offer");
     sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
-    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO,
-                                  account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
     sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
     sdp.setSecureMediaKeyExchange(KeyExchangeProtocol::NONE);
 

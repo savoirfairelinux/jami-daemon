@@ -560,7 +560,9 @@ HandoverTest::testStaleIceCallbacks()
     CPPUNIT_ASSERT(before.alice and before.aliceIce);
     auto replacement = Manager::instance().getIceTransportFactory()->createTransport("replacement");
     CPPUNIT_ASSERT(replacement);
-    auto subcall = std::make_shared<SIPCall>(alice_, "retired-subcall", Call::CallType::OUTGOING,
+    auto subcall = std::make_shared<SIPCall>(alice_,
+                                             "retired-subcall",
+                                             Call::CallType::OUTGOING,
                                              before.alice->currentMediaList());
     subcall->setIceMedia(before.aliceIce);
     subcall->parent_ = before.alice;
@@ -745,8 +747,8 @@ HandoverTest::waitForMediaChange(bool held)
             return false;
         // Audio is always offered sendrecv, so an audio-only hold never shows in the peer's peerHold_.
         return state.alice->getState() == (held ? Call::CallState::HOLD : Call::CallState::ACTIVE)
-               and state.alice->getMediaAttributeList().front().hold_ == held
-               and state.aliceIce and state.aliceIce->isRunning() and state.bobIce and state.bobIce->isRunning();
+               and state.alice->getMediaAttributeList().front().hold_ == held and state.aliceIce
+               and state.aliceIce->isRunning() and state.bobIce and state.bobIce->isRunning();
     };
     auto deadline = std::chrono::steady_clock::now() + 30s;
     while (not applied() and std::chrono::steady_clock::now() < deadline)
@@ -781,7 +783,9 @@ HandoverTest::changeMediaWithControlDuringRecovery(bool resume)
     {
         std::lock_guard lock(before.alice->callMutex_);
         before.alice->startRecoveryLocked();
-        auto reply = [controlSucceeded](bool ok) { controlSucceeded->store(ok); };
+        auto reply = [controlSucceeded](bool ok) {
+            controlSucceeded->store(ok);
+        };
         if (resume)
             CPPUNIT_ASSERT(not before.alice->resume(std::move(reply)));
         else
@@ -1226,8 +1230,10 @@ HandoverTest::testIgnoresRequestsOnAbandonedChannel()
 
     // Bob sends requests on the previous channel, as if queued before he
     // followed Alice: none may bring her back to it.
-    auto send = [&](const pjsip_method& method, std::optional<pj_int32_t> cseq,
-                    std::optional<std::uint64_t> generation, std::atomic_int* status) {
+    auto send = [&](const pjsip_method& method,
+                    std::optional<pj_int32_t> cseq,
+                    std::optional<std::uint64_t> generation,
+                    std::atomic_int* status) {
         std::lock_guard lock(before.bob->callMutex_);
         auto* dialog = before.bob->inviteSession_->dlg;
         sip_utils::PJDialogLock dialogLock {dialog};
@@ -1242,7 +1248,10 @@ HandoverTest::testIgnoresRequestsOnAbandonedChannel()
         selector.type = PJSIP_TPSELECTOR_TRANSPORT;
         selector.u.transport = before.bobTransport;
         pjsip_tx_data_set_transport(tdata, &selector);
-        if (pjsip_endpt_send_request(Manager::instance().sipVoIPLink().getEndpoint(), tdata, -1, status,
+        if (pjsip_endpt_send_request(Manager::instance().sipVoIPLink().getEndpoint(),
+                                     tdata,
+                                     -1,
+                                     status,
                                      status ? &storeFinalStatus : nullptr)
             != PJ_SUCCESS)
             return -1;
@@ -1293,11 +1302,17 @@ void
 HandoverTest::testHandoverRequestClassification()
 {
     auto* pool = pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
-                               "handover-classify-test", 4096, 4096, nullptr);
+                                "handover-classify-test",
+                                4096,
+                                4096,
+                                nullptr);
     CPPUNIT_ASSERT(pool);
     pjsip_msg_body body {};
-    auto classify = [&](const pjsip_method& method, bool caller, std::uint64_t current,
-                        std::optional<std::uint64_t> generation, std::optional<std::uint64_t> request,
+    auto classify = [&](const pjsip_method& method,
+                        bool caller,
+                        std::uint64_t current,
+                        std::optional<std::uint64_t> generation,
+                        std::optional<std::uint64_t> request,
                         bool withBody = true) {
         pjsip_tx_data sent {};
         sent.pool = pool;
@@ -1349,8 +1364,7 @@ HandoverTest::testHandoverRequestClassification()
     pjsip_msg_add_hdr(sent.msg, reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(pool, &name, &value)));
     pjsip_rx_data received {};
     received.msg_info.msg = sent.msg;
-    checks.emplace_back("malformed generation",
-                        SIPCall::classifyHandoverRequest(&received, false, 2) == Kind::Invalid);
+    checks.emplace_back("malformed generation", SIPCall::classifyHandoverRequest(&received, false, 2) == Kind::Invalid);
 
     for (const auto* text : {"", "-1", "+1", "1x", " 1", "1 ", "18446744073709551616"}) {
         sent.msg = pjsip_msg_create(pool, PJSIP_REQUEST_MSG);
@@ -1383,7 +1397,10 @@ void
 HandoverTest::testHandoverHeaderValidation()
 {
     auto* pool = pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
-                               "handover-header-test", 4096, 4096, nullptr);
+                                "handover-header-test",
+                                4096,
+                                4096,
+                                nullptr);
     CPPUNIT_ASSERT(pool);
     pjsip_tx_data sent {};
     sent.pool = pool;
@@ -1393,8 +1410,8 @@ HandoverTest::testHandoverHeaderValidation()
     sip_utils::addCallHandoverHeader(&sent);
     pjsip_rx_data received {};
     received.msg_info.msg = sent.msg;
-    bool roundTrip = sip_utils::getHandoverGeneration(&received) == 42
-                     and sip_utils::getHandoverRequest(&received) == 7 and sip_utils::supportsCallHandover(&received);
+    bool roundTrip = sip_utils::getHandoverGeneration(&received) == 42 and sip_utils::getHandoverRequest(&received) == 7
+                     and sip_utils::supportsCallHandover(&received);
     sip_utils::addHandoverGeneration(&sent, 42);
     bool duplicateRejected = not sip_utils::getHandoverGeneration(&received);
     bool malformedRejected = true;
@@ -1418,7 +1435,9 @@ HandoverTest::testRetirementIsPerCall()
     startCall();
     auto before = currentState();
     auto old = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(before.aliceTransport);
-    auto otherCall = std::make_shared<SIPCall>(alice_, "shared-channel-call", Call::CallType::OUTGOING,
+    auto otherCall = std::make_shared<SIPCall>(alice_,
+                                               "shared-channel-call",
+                                               Call::CallType::OUTGOING,
                                                before.alice->currentMediaList());
     otherCall->setSipTransport(old, alice_->getContactHeader(old));
     alice_->networkInterfaceChanged();

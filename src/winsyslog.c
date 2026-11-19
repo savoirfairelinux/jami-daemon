@@ -25,45 +25,43 @@
 #include <stdlib.h>
 
 #ifndef THREAD_SAFE
-static char *loghdr;            /* log file header string */
-static HANDLE loghdl = NULL;    /* handle of event source */
+static char* loghdr;         /* log file header string */
+static HANDLE loghdl = NULL; /* handle of event source */
 #endif
 
-static CHAR *                       //   return error message
-getLastErrorText(                   // converts "Lasr Error" code into text
-    CHAR *pBuf,                     //   message buffer
-    ULONG bufSize)                  //   buffer size
+static CHAR*       //   return error message
+getLastErrorText(  // converts "Lasr Error" code into text
+    CHAR* pBuf,    //   message buffer
+    ULONG bufSize) //   buffer size
 {
     DWORD retSize;
-    LPTSTR pTemp=NULL;
+    LPTSTR pTemp = NULL;
 
     if (bufSize < 16) {
         if (bufSize > 0) {
-           pBuf[0]='\0';
-       }
-       return(pBuf);
-   }
-   retSize=FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|
-       FORMAT_MESSAGE_FROM_SYSTEM|
-       FORMAT_MESSAGE_ARGUMENT_ARRAY,
-       NULL,
-       GetLastError(),
-       LANG_NEUTRAL,
-       (LPTSTR)&pTemp,
-       0,
-       NULL);
-   if (!retSize || pTemp == NULL) {
-        pBuf[0]='\0';
+            pBuf[0] = '\0';
+        }
+        return (pBuf);
     }
-    else {
-        pTemp[strlen(pTemp)-2]='\0'; //remove cr and newline character
-        sprintf(pBuf,"%0.*s (0x%x)",bufSize-16,pTemp,GetLastError());
-        LocalFree((HLOCAL)pTemp);
+    retSize = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                            NULL,
+                            GetLastError(),
+                            LANG_NEUTRAL,
+                            (LPTSTR) &pTemp,
+                            0,
+                            NULL);
+    if (!retSize || pTemp == NULL) {
+        pBuf[0] = '\0';
+    } else {
+        pTemp[strlen(pTemp) - 2] = '\0'; // remove cr and newline character
+        sprintf(pBuf, "%0.*s (0x%x)", bufSize - 16, pTemp, GetLastError());
+        LocalFree((HLOCAL) pTemp);
     }
-    return(pBuf);
+    return (pBuf);
 }
 
-void closelog(void)
+void
+closelog(void)
 {
     DeregisterEventSource(loghdl);
     free(loghdr);
@@ -76,9 +74,10 @@ void closelog(void)
  */
 // TODO: use a real EventIdentifier with a Message Text file ?
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=vs.85%29.aspx
-void syslog(int level, const char* format, ...)
- {
-    CONST CHAR *arr[1];
+void
+syslog(int level, const char* format, ...)
+{
+    CONST CHAR* arr[1];
     char tmp[1024];
 
     va_list arglist;
@@ -88,11 +87,9 @@ void syslog(int level, const char* format, ...)
     vsnprintf(tmp, 1024, format, arglist);
 
     arr[0] = tmp;
-    BOOL err = ReportEvent(loghdl, (unsigned short) level, (unsigned short)level,
-        level, NULL, 1, 0, arr, NULL);
+    BOOL err = ReportEvent(loghdl, (unsigned short) level, (unsigned short) level, level, NULL, 1, 0, arr, NULL);
 
-    if (err == 0)
-    {
+    if (err == 0) {
         CHAR errText[1024];
         puts(getLastErrorText(errText, 1024));
     }
@@ -105,8 +102,9 @@ void syslog(int level, const char* format, ...)
  *      options
  *      facility
  */
- void openlog(const char *ident, int logopt, int facility)
- {
+void
+openlog(const char* ident, int logopt, int facility)
+{
     char tmp[1024];
 
     if (loghdl) {
@@ -114,5 +112,5 @@ void syslog(int level, const char* format, ...)
     }
     loghdl = RegisterEventSource(NULL, ident);
     sprintf(tmp, (logopt & WINLOG_PID) ? "%s[%d]" : "%s", ident, getpid());
-    loghdr = _strdup(tmp);  /* save header for later */
+    loghdr = _strdup(tmp); /* save header for later */
 }

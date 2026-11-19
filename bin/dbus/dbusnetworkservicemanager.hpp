@@ -48,15 +48,14 @@ public:
         return libjami::updateSharedService(accountId, service);
     }
 
-    auto removeSharedService(const std::string& accountId,
-                              const std::string& serviceId) -> decltype(libjami::removeSharedService(accountId,
-                                                                                                      serviceId))
+    auto removeSharedService(const std::string& accountId, const std::string& serviceId)
+        -> decltype(libjami::removeSharedService(accountId, serviceId))
     {
         return libjami::removeSharedService(accountId, serviceId);
     }
 
-    auto queryPeerServices(const std::string& accountId,
-                           const std::string& peerUri) -> decltype(libjami::queryPeerServices(accountId, peerUri))
+    auto queryPeerServices(const std::string& accountId, const std::string& peerUri)
+        -> decltype(libjami::queryPeerServices(accountId, peerUri))
     {
         return libjami::queryPeerServices(accountId, peerUri);
     }
@@ -72,8 +71,8 @@ public:
         return libjami::openServiceTunnel(accountId, peerUri, peerDevice, serviceId, serviceName, localPort);
     }
 
-    auto closeServiceTunnel(const std::string& accountId,
-                            const std::string& tunnelId) -> decltype(libjami::closeServiceTunnel(accountId, tunnelId))
+    auto closeServiceTunnel(const std::string& accountId, const std::string& tunnelId)
+        -> decltype(libjami::closeServiceTunnel(accountId, tunnelId))
     {
         return libjami::closeServiceTunnel(accountId, tunnelId);
     }

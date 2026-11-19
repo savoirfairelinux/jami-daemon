@@ -192,10 +192,9 @@ VideoRtpSession::seedVideoBitrate(unsigned pixels)
         return;
 
     const auto frameRate = videoMixer_ ? videoMixer_->getStream("Video Sender").frameRate.real() : 0;
-    const auto initialBitrate = videoMixer_
-                                    ? static_cast<unsigned>(pixels * frameRate * CONFERENCE_START_BITS_PER_PIXEL
-                                                            / BITS_PER_KILOBIT)
-                                    : static_cast<unsigned>(pixels * 0.001);
+    const auto initialBitrate = videoMixer_ ? static_cast<unsigned>(pixels * frameRate * CONFERENCE_START_BITS_PER_PIXEL
+                                                                    / BITS_PER_KILOBIT)
+                                            : static_cast<unsigned>(pixels * 0.001);
     videoBitrateInfo_.videoBitrateCurrent = std::max(initialBitrate, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
     uncappedVideoBitrateMax_ = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     videoBitrateInfo_.videoBitrateMax = uncappedVideoBitrateMax_;

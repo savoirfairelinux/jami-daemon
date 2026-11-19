@@ -273,7 +273,7 @@ MigrationTest::testExpiredDeviceInSwarm()
             if (accountId == aliceId) {
                 {
                     std::lock_guard lock(mtx);
-                aliceState = state;
+                    aliceState = state;
                 }
                 cv.notify_one();
             }

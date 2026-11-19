@@ -67,10 +67,7 @@ public:
     }
 
     /** Hand the channel over to another owner, leaving it open. */
-    std::shared_ptr<dhtnet::ChannelSocket> release() noexcept
-    {
-        return std::exchange(socket_, nullptr);
-    }
+    std::shared_ptr<dhtnet::ChannelSocket> release() noexcept { return std::exchange(socket_, nullptr); }
 
 private:
     std::shared_ptr<dhtnet::ChannelSocket> socket_ {};

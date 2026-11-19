@@ -474,8 +474,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                       .first;
         } else {
             auto incomingTimestamp = invited != TimePoint {} ? invited : received;
-            auto existingTimestamp = req->second.invited != TimePoint {} ? req->second.invited
-                                                             : req->second.received;
+            auto existingTimestamp = req->second.invited != TimePoint {} ? req->second.invited : req->second.received;
 
             if (incomingTimestamp > existingTimestamp) {
                 req->second.device = peer_device;
@@ -492,11 +491,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
     lk.unlock();
     // Note: call JamiAccount's callback to build ConversationRequest anyway
     if (!confirm)
-        callbacks_.trustRequest(peer_account.toString(),
-                                conversationId,
-                                std::move(payload),
-                                received,
-                                invited);
+        callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received, invited);
     else if (active) {
         // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);
@@ -574,8 +569,7 @@ ContactList::discardTrustRequest(const dht::InfoHash& from, const std::string& c
 {
     std::lock_guard lk(mutex_);
     auto request = trustRequests_.find(from);
-    if (request == trustRequests_.end()
-        || (!conversationId.empty() && request->second.conversationId != conversationId))
+    if (request == trustRequests_.end() || (!conversationId.empty() && request->second.conversationId != conversationId))
         return false;
     const auto invited = request->second.invited != TimePoint {} ? request->second.invited : request->second.received;
     if (invited > declined)

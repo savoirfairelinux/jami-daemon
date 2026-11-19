@@ -23,8 +23,8 @@
                 const std::string_view selected {argv[1]}; \
                 auto findCase = [&](auto&& self, CppUnit::Test* test) -> CppUnit::Test* { \
                     const auto name = test->getName(); \
-                    if (name == selected or (name.size() > selected.size() \
-                                             and std::string_view(name).ends_with(selected))) \
+                    if (name == selected \
+                        or (name.size() > selected.size() and std::string_view(name).ends_with(selected))) \
                         return test; \
                     for (int i = 0; i < test->getChildTestCount(); ++i) { \
                         if (auto* found = self(self, test->getChildTestAt(i))) \

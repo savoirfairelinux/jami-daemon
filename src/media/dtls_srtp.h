@@ -28,16 +28,13 @@ struct DtlsSrtpSession
     std::string remoteFingerprint {};
     DtlsSrtpContext context {};
 
-    bool matches(DtlsSetup setup,
-                 std::string_view fingerprintHash,
-                 std::string_view fingerprint) const;
+    bool matches(DtlsSetup setup, std::string_view fingerprintHash, std::string_view fingerprint) const;
 };
 
 dht::crypto::Identity generateDtlsSrtpIdentity();
 
 // Supports SHA-1, SHA-256, SHA-384 and SHA-512 (case-insensitive).
-std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate,
-                               std::string_view hash = "SHA-256");
+std::string getDtlsFingerprint(const dht::crypto::Certificate& certificate, std::string_view hash = "SHA-256");
 
 // Digest size in bytes, or zero for unsupported fingerprint hash functions.
 size_t getDtlsFingerprintHashSize(std::string_view hash);

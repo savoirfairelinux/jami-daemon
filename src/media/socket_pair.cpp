@@ -857,8 +857,7 @@ SocketPair::ensureBundleDtlsContext(const std::shared_ptr<BundleContext>& bundle
 }
 
 void
-SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext,
-                                 const DtlsSrtpContext& context)
+SocketPair::setBundleDtlsContext(const std::shared_ptr<BundleContext>& bundleContext, const DtlsSrtpContext& context)
 {
     if (!bundleContext)
         throw std::runtime_error("No bundle context for DTLS-SRTP");
@@ -1010,8 +1009,7 @@ SocketPair::cacheSentRtpPacket(const uint8_t* buf, size_t len)
 void
 SocketPair::retransmitNackPackets(const uint8_t* buf, size_t len)
 {
-    if (!buf || len < 16 || buf[1] != RTCP_PT_RTPFB
-        || (buf[0] & 0x1f) != RTCP_RTPFB_GENERIC_NACK) {
+    if (!buf || len < 16 || buf[1] != RTCP_PT_RTPFB || (buf[0] & 0x1f) != RTCP_RTPFB_GENERIC_NACK) {
         return;
     }
 
@@ -1021,12 +1019,11 @@ SocketPair::retransmitNackPackets(const uint8_t* buf, size_t len)
     {
         std::lock_guard lock(sentRtpPacketsMutex_);
         const auto findPacket = [&](uint16_t sequence) {
-            const auto packet = std::find_if(
-                sentRtpPackets_.rbegin(),
-                sentRtpPackets_.rend(),
-                [mediaSsrc, sequence](const auto& cached) {
-                    return cached.ssrc == mediaSsrc && cached.sequence == sequence;
-                });
+            const auto packet = std::find_if(sentRtpPackets_.rbegin(),
+                                             sentRtpPackets_.rend(),
+                                             [mediaSsrc, sequence](const auto& cached) {
+                                                 return cached.ssrc == mediaSsrc && cached.sequence == sequence;
+                                             });
             if (packet != sentRtpPackets_.rend())
                 retransmissions.push_back(packet->payload);
             else
@@ -1967,8 +1964,7 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
             return encryptedSize;
         }
 
-        encryptedPacket.assign(srtpContext_->encryptbuf,
-                               srtpContext_->encryptbuf + encryptedSize);
+        encryptedPacket.assign(srtpContext_->encryptbuf, srtpContext_->encryptbuf + encryptedSize);
         buf = encryptedPacket.data();
         buf_size = encryptedSize;
     }
@@ -1990,9 +1986,8 @@ SocketPair::writeCallback(const uint8_t* buf, int buf_size)
 
     if (ret < 0 && !isRTCP) {
         JAMI_WARNING("Failed to send RTP packet: sequence={}, size={}, error={}",
-                     buf_size >= static_cast<int>(RTP_FIXED_HEADER_SIZE)
-                         ? static_cast<uint16_t>(buf[2] << 8 | buf[3])
-                         : 0,
+                     buf_size >= static_cast<int>(RTP_FIXED_HEADER_SIZE) ? static_cast<uint16_t>(buf[2] << 8 | buf[3])
+                                                                         : 0,
                      buf_size,
                      ret);
     }

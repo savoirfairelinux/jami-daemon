@@ -806,9 +806,8 @@ SIPCall::useRecoveredTransport(const std::shared_ptr<SipTransport>& transport,
     {
         std::lock_guard lk {callMutex_};
         if (not recovering_ or not waitingForRecoveryChannel_ or (attempt and recoveryAttempt_ != *attempt)
-            or not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
-            or not sipTransport_ or not transport or not transport->isConnected()
-            or isRetiredSipTransport(transport->get())
+            or not inviteSession_ or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or not sipTransport_
+            or not transport or not transport->isConnected() or isRetiredSipTransport(transport->get())
             or sipTransport_->deviceId() != transport->deviceId()
             or sipTransport_->peerAccountId() != transport->peerAccountId())
             return false;
@@ -1015,17 +1014,16 @@ SIPCall::requestIceRestart(const std::shared_ptr<SipTransport>& transport)
         JAMI_ERROR("[call:{}] Missing account during SIP recovery", getCallId());
         return;
     }
-    account->getIceOptions(
-        [w = weak(), wtransport = std::weak_ptr(transport), generation = recoveryGeneration_.load()]
-        (dhtnet::IceTransportOptions&& options) mutable {
-            runOnMainThread([w, wtransport, generation, options = std::move(options)]() mutable {
-                if (auto call = w.lock()) {
-                    std::lock_guard lk {call->callMutex_};
-                    if (auto transport = wtransport.lock(); transport and call->sipTransport_ == transport)
-                        call->restartIceAfterRecovery(std::move(options), generation);
-                }
-            });
+    account->getIceOptions([w = weak(), wtransport = std::weak_ptr(transport), generation = recoveryGeneration_.load()](
+                               dhtnet::IceTransportOptions&& options) mutable {
+        runOnMainThread([w, wtransport, generation, options = std::move(options)]() mutable {
+            if (auto call = w.lock()) {
+                std::lock_guard lk {call->callMutex_};
+                if (auto transport = wtransport.lock(); transport and call->sipTransport_ == transport)
+                    call->restartIceAfterRecovery(std::move(options), generation);
+            }
         });
+    });
 }
 
 void
@@ -1059,8 +1057,8 @@ void
 SIPCall::scheduleRecoveryProbeLocked()
 {
     auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext(), std::chrono::milliseconds(500));
-    timer->async_wait([w = weak(), timer, candidate = std::weak_ptr(recoveryCandidate_), request = recoveryRequest_]
-                      (const asio::error_code& ec) {
+    timer->async_wait([w = weak(), timer, candidate = std::weak_ptr(recoveryCandidate_), request = recoveryRequest_](
+                          const asio::error_code& ec) {
         if (ec)
             return;
         runOnMainThread([w, candidate, request] {
@@ -1088,8 +1086,7 @@ SIPCall::restartIceAfterRecovery(dhtnet::IceTransportOptions&& options, std::opt
 {
     std::lock_guard lk {callMutex_};
     if (not recovering_ or waitingForRecoveryChannel_ or not inviteSession_
-        or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED
-        or (generation and *generation != recoveryGeneration_))
+        or inviteSession_->state != PJSIP_INV_STATE_CONFIRMED or (generation and *generation != recoveryGeneration_))
         return;
     // Only use the UPnP port mappings already open: waiting for new ones
     // would delay the offer by seconds on networks refusing them.
@@ -3862,7 +3859,8 @@ SIPCall::startIceMedia()
 }
 
 void
-SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok,
+SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce,
+                       bool ok,
                        std::optional<std::uint64_t> generation)
 {
     std::lock_guard lk {callMutex_};
@@ -3878,7 +3876,8 @@ SIPCall::onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedI
 }
 
 void
-SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok,
+SIPCall::onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce,
+                       bool ok,
                        std::optional<std::uint64_t> generation)
 {
     if (not negotiatedIce)
@@ -4734,22 +4733,24 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     auto optOnInitDone = std::move(iceOptions.onInitDone);
     auto optOnNegoDone = std::move(iceOptions.onNegoDone);
     auto generation = mediaNegotiationGeneration_.load();
-    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
-        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
-            if (cb)
-                cb(ok);
-            if (auto call = w.lock())
-                call->onIceInitDone(ice.lock(), ok, generation);
-        });
-    };
-    iceOptions.onNegoDone = [w = weak(), cb = std::move(optOnNegoDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
-        runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
-            if (cb)
-                cb(ok);
-            if (auto call = w.lock())
-                call->onIceNegoDone(ice.lock(), ok, generation);
-        });
-    };
+    iceOptions.onInitDone =
+        [w = weak(), cb = std::move(optOnInitDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
+            runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
+                if (cb)
+                    cb(ok);
+                if (auto call = w.lock())
+                    call->onIceInitDone(ice.lock(), ok, generation);
+            });
+        };
+    iceOptions.onNegoDone =
+        [w = weak(), cb = std::move(optOnNegoDone), ice = std::weak_ptr(iceMedia), generation](bool ok) {
+            runOnMainThread([w = std::move(w), cb = std::move(cb), ice, generation, ok] {
+                if (cb)
+                    cb(ok);
+                if (auto call = w.lock())
+                    call->onIceNegoDone(ice.lock(), ok, generation);
+            });
+        };
 
     iceOptions.master = master;
     iceOptions.streamsCount = getIceStreamsCount();

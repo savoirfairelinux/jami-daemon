@@ -31,8 +31,9 @@
 
 #include "connectivity/security/memory.h"
 
-struct SRTPCryptoSuite {
-    const char *name;
+struct SRTPCryptoSuite
+{
+    const char* name;
     int master_key_size;
     int master_salt_size;
     int session_key_size;
@@ -50,7 +51,7 @@ static const struct SRTPCryptoSuite ff_srtp_suites[] = {
 };
 
 static const struct SRTPCryptoSuite*
-ff_srtp_get_suite(const char *suite)
+ff_srtp_get_suite(const char* suite)
 {
     size_t i;
 
@@ -67,7 +68,8 @@ ff_srtp_get_key_bits(int key_size)
     return key_size > 0 ? key_size * 8 : 128;
 }
 
-void ff_srtp_free(struct SRTPContext *s)
+void
+ff_srtp_free(struct SRTPContext* s)
 {
     uint8_t zero_buffer[32] = {0}; // WARNING: must be long enough to handle any key length
     static_assert(sizeof(zero_buffer) >= sizeof(s->master_key), "");
@@ -80,7 +82,7 @@ void ff_srtp_free(struct SRTPContext *s)
     // No API to safely erase them, so just re-init with "dummy keys" to sanitize them
     if (s->aes) {
         av_aes_init(s->aes, zero_buffer, ff_srtp_get_key_bits(s->session_key_size), 0);
-        av_freep((void*)&s->aes);
+        av_freep((void*) &s->aes);
     }
     if (s->hmac) {
         av_hmac_init(s->hmac, zero_buffer, sizeof(s->rtp_auth));
@@ -89,8 +91,8 @@ void ff_srtp_free(struct SRTPContext *s)
     jami_secure_memzero(s, sizeof(*s));
 }
 
-static void encrypt_counter(struct AVAES *aes, uint8_t *iv, uint8_t *outbuf,
-                            int outlen)
+static void
+encrypt_counter(struct AVAES* aes, uint8_t* iv, uint8_t* outbuf, int outlen)
 {
     int i, j, outpos;
     for (i = 0, outpos = 0; outpos < outlen; i++) {
@@ -102,10 +104,10 @@ static void encrypt_counter(struct AVAES *aes, uint8_t *iv, uint8_t *outbuf,
     }
 }
 
-static void derive_key(struct AVAES *aes, const uint8_t *salt, int label,
-                       uint8_t *out, int outlen)
+static void
+derive_key(struct AVAES* aes, const uint8_t* salt, int label, uint8_t* out, int outlen)
 {
-    uint8_t input[16] = { 0 };
+    uint8_t input[16] = {0};
     memcpy(input, salt, 14);
     // Key derivation rate assumed to be zero
     input[14 - 7] ^= label;
@@ -113,11 +115,11 @@ static void derive_key(struct AVAES *aes, const uint8_t *salt, int label,
     encrypt_counter(aes, input, out, outlen);
 }
 
-int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
-                       const char *params)
+int
+ff_srtp_set_crypto(struct SRTPContext* s, const char* suite, const char* params)
 {
     uint8_t buf[SRTP_MAX_MASTER_KEY_SIZE + SRTP_MASTER_SALT_SIZE];
-    const struct SRTPCryptoSuite *suite_def;
+    const struct SRTPCryptoSuite* suite_def;
     int expected_params_size;
 
     ff_srtp_free(s);
@@ -125,8 +127,7 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
     // RFC 4568 and RFC 6188.
     suite_def = ff_srtp_get_suite(suite);
     if (!suite_def) {
-        av_log(NULL, AV_LOG_WARNING, "SRTP Crypto suite %s not supported\n",
-                                     suite);
+        av_log(NULL, AV_LOG_WARNING, "SRTP Crypto suite %s not supported\n", suite);
         return AVERROR(EINVAL);
     }
 
@@ -143,7 +144,7 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
         return AVERROR(EINVAL);
     }
     // MKI and lifetime not handled yet
-    s->aes  = av_aes_alloc();
+    s->aes = av_aes_alloc();
     s->hmac = av_hmac_alloc(AV_HMAC_SHA1);
     if (!s->aes || !s->hmac) {
         jami_secure_memzero(buf, sizeof(buf));
@@ -167,8 +168,8 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
     return 0;
 }
 
-static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
-                      uint32_t ssrc)
+static void
+create_iv(uint8_t* iv, const uint8_t* salt, uint64_t index, uint32_t ssrc)
 {
     uint8_t indexbuf[8];
     int i;
@@ -183,7 +184,8 @@ static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
 }
 
 /* RFC 3711 section 3.3.2: reject indexes already received or too old */
-static int replay_check(const struct SRTPReplayList *r, uint64_t index)
+static int
+replay_check(const struct SRTPReplayList* r, uint64_t index)
 {
     uint64_t diff;
     if (!r->initialized || index > r->highest)
@@ -191,11 +193,12 @@ static int replay_check(const struct SRTPReplayList *r, uint64_t index)
     diff = r->highest - index;
     if (diff >= SRTP_REPLAY_WINDOW_SIZE)
         return 0;
-    return !(r->bitmap[diff / 64] & ((uint64_t)1 << (diff % 64)));
+    return !(r->bitmap[diff / 64] & ((uint64_t) 1 << (diff % 64)));
 }
 
 /* Only call once the packet is authenticated */
-static void replay_update(struct SRTPReplayList *r, uint64_t index)
+static void
+replay_update(struct SRTPReplayList* r, uint64_t index)
 {
     uint64_t diff;
     int i;
@@ -206,7 +209,7 @@ static void replay_update(struct SRTPReplayList *r, uint64_t index)
         } else {
             /* Slide the window up by `shift` bits */
             for (i = SRTP_REPLAY_WINDOW_WORDS - 1; i >= 0; i--) {
-                int from = i - (int)(shift / 64);
+                int from = i - (int) (shift / 64);
                 uint64_t v = from >= 0 ? r->bitmap[from] << (shift % 64) : 0;
                 if (shift % 64 && from - 1 >= 0)
                     v |= r->bitmap[from - 1] >> (64 - shift % 64);
@@ -219,18 +222,19 @@ static void replay_update(struct SRTPReplayList *r, uint64_t index)
         return;
     }
     diff = r->highest - index;
-    r->bitmap[diff / 64] |= (uint64_t)1 << (diff % 64);
+    r->bitmap[diff / 64] |= (uint64_t) 1 << (diff % 64);
 }
 
-int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
+int
+ff_srtp_decrypt(struct SRTPContext* s, uint8_t* buf, int* lenptr)
 {
-    uint8_t iv[16] = { 0 }, hmac[20];
+    uint8_t iv[16] = {0}, hmac[20];
     int len = *lenptr;
     int seq_largest = 0;
     uint32_t ssrc, roc = 0;
     uint64_t index = 0;
     int rtcp, hmac_size;
-    struct SRTPReplayList *replay;
+    struct SRTPReplayList* replay;
 
     /* Nothing is handed out unless the packet is fully authenticated */
     *lenptr = 0;
@@ -272,7 +276,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
             seq_largest = seq;
             roc = v;
         }
-        index = seq + (((uint64_t)v) << 16);
+        index = seq + (((uint64_t) v) << 16);
 
         AV_WB32(rocbuf, roc);
         av_hmac_update(s->hmac, rocbuf, 4);
@@ -310,7 +314,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
         int payload_start;
 
         csrc = buf[0] & 0x0f;
-        ext  = buf[0] & 0x10;
+        ext = buf[0] & 0x10;
         ssrc = AV_RB32(buf + 8);
 
         payload_start = 12 + 4 * csrc;
@@ -328,8 +332,8 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 
         /* Authenticated and well-formed: commit the receiver state */
         s->seq_initialized = 1;
-        s->seq_largest     = seq_largest;
-        s->roc             = roc;
+        s->seq_largest = seq_largest;
+        s->roc = roc;
         replay_update(replay, index);
         *lenptr = len;
 
@@ -344,14 +348,14 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
     return 0;
 }
 
-int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
-                    uint8_t *out, int outlen)
+int
+ff_srtp_encrypt(struct SRTPContext* s, const uint8_t* in, int len, uint8_t* out, int outlen)
 {
-    uint8_t iv[16] = { 0 }, hmac[20];
+    uint8_t iv[16] = {0}, hmac[20];
     uint64_t index;
     uint32_t ssrc;
     int rtcp, hmac_size, padding;
-    uint8_t *buf;
+    uint8_t* buf;
 
     if (len < 8)
         return AVERROR_INVALIDDATA;
@@ -386,7 +390,7 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
         if (seq < s->seq_largest)
             s->roc++;
         s->seq_largest = seq;
-        index = seq + (((uint64_t)s->roc) << 16);
+        index = seq + (((uint64_t) s->roc) << 16);
 
         csrc = buf[0] & 0x0f;
         ext = buf[0] & 0x10;
@@ -394,7 +398,7 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
         buf += 12;
         len -= 12;
 
-        buf += (ptrdiff_t)4 * csrc;
+        buf += (ptrdiff_t) 4 * csrc;
         len -= 4 * csrc;
         if (len < 0)
             return AVERROR_INVALIDDATA;
@@ -430,5 +434,5 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
 
     memcpy(buf + len, hmac, hmac_size);
     len += hmac_size;
-    return (int)(buf + len - out);
+    return (int) (buf + len - out);
 }

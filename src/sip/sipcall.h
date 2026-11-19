@@ -71,7 +71,7 @@ namespace jami {
 namespace test {
 class DtlsCallTest;
 class RtcpMuxSdpTest;
-}
+} // namespace test
 
 class Sdp;
 class SIPAccountBase;
@@ -299,8 +299,10 @@ public:
                                const std::string& contact,
                                std::optional<std::uint64_t> attempt);
     // Caller only: move the dialog to the channel of the callee's recovery probe.
-    void followPeerTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contact,
-                             std::uint64_t generation, std::uint64_t request);
+    void followPeerTransport(const std::shared_ptr<SipTransport>& transport,
+                             const std::string& contact,
+                             std::uint64_t generation,
+                             std::uint64_t request);
     void onInviteTransactionEnded();
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
@@ -488,9 +490,11 @@ private:
 
     void setCallMediaLocal();
     void startIceMedia();
-    void onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce, bool ok,
+    void onIceInitDone(const std::shared_ptr<dhtnet::IceTransport>& initializedIce,
+                       bool ok,
                        std::optional<std::uint64_t> generation = std::nullopt);
-    void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool ok,
+    void onIceNegoDone(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce,
+                       bool ok,
                        std::optional<std::uint64_t> generation = std::nullopt);
     void onIceNegoSucceed(const std::shared_ptr<dhtnet::IceTransport>& negotiatedIce, bool fromSubcall = false);
     void setupNegotiatedMedia();
