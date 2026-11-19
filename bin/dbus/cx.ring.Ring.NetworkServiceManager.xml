@@ -7,27 +7,27 @@
             Used to manage exposed network services and tunnels.
         </tp:docstring>
 
-        <method name="getExposedServices" tp:name-for-bindings="getExposedServices">
+        <method name="getSharedServices" tp:name-for-bindings="getSharedServices">
             <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="services" direction="out"/>
         </method>
 
-        <method name="addExposedService" tp:name-for-bindings="addExposedService">
+        <method name="addSharedService" tp:name-for-bindings="addSharedService">
             <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="service" direction="in"/>
             <arg type="s" name="serviceId" direction="out"/>
         </method>
 
-        <method name="updateExposedService" tp:name-for-bindings="updateExposedService">
+        <method name="updateSharedService" tp:name-for-bindings="updateSharedService">
             <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="service" direction="in"/>
             <arg type="b" name="success" direction="out"/>
         </method>
 
-        <method name="removeExposedService" tp:name-for-bindings="removeExposedService">
+        <method name="removeSharedService" tp:name-for-bindings="removeSharedService">
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="serviceId" direction="in"/>
             <arg type="b" name="success" direction="out"/>

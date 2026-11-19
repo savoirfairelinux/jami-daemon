@@ -501,7 +501,7 @@ mapToServiceRecord(const std::map<std::string, std::string>& m)
 } // namespace
 
 std::string
-addExposedService(const std::string& accountId, const std::map<std::string, std::string>& details)
+addSharedService(const std::string& accountId, const std::map<std::string, std::string>& details)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager())
         return acc->serviceManager().addService(mapToServiceRecord(details), acc->rand);
@@ -509,7 +509,7 @@ addExposedService(const std::string& accountId, const std::map<std::string, std:
 }
 
 bool
-updateExposedService(const std::string& accountId, const std::map<std::string, std::string>& details)
+updateSharedService(const std::string& accountId, const std::map<std::string, std::string>& details)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {
         auto rec = mapToServiceRecord(details);
@@ -524,7 +524,7 @@ updateExposedService(const std::string& accountId, const std::map<std::string, s
 }
 
 bool
-removeExposedService(const std::string& accountId, const std::string& serviceId)
+removeSharedService(const std::string& accountId, const std::string& serviceId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {
         acc->closeServerTunnelsForService(serviceId);
@@ -534,7 +534,7 @@ removeExposedService(const std::string& accountId, const std::string& serviceId)
 }
 
 std::vector<std::map<std::string, std::string>>
-getExposedServices(const std::string& accountId)
+getSharedServices(const std::string& accountId)
 {
     std::vector<std::map<std::string, std::string>> out;
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId); acc && acc->hasServiceManager()) {

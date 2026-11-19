@@ -27,12 +27,12 @@
 
 namespace libjami {
 
-LIBJAMI_PUBLIC std::string addExposedService(const std::string& accountId,
+LIBJAMI_PUBLIC std::string addSharedService(const std::string& accountId,
                                              const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC bool updateExposedService(const std::string& accountId,
+LIBJAMI_PUBLIC bool updateSharedService(const std::string& accountId,
                                          const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC bool removeExposedService(const std::string& accountId, const std::string& serviceId);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getExposedServices(const std::string& accountId);
+LIBJAMI_PUBLIC bool removeSharedService(const std::string& accountId, const std::string& serviceId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getSharedServices(const std::string& accountId);
 LIBJAMI_PUBLIC uint32_t queryPeerServices(const std::string& accountId, const std::string& peerUri);
 LIBJAMI_PUBLIC std::string openServiceTunnel(const std::string& accountId,
                                              const std::string& peerUri,

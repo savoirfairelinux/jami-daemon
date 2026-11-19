@@ -31,28 +31,28 @@ public:
 
     ~DBusNetworkServiceManager() { unregisterAdaptor(); }
 
-    auto getExposedServices(const std::string& accountId) -> decltype(libjami::getExposedServices(accountId))
+    auto getSharedServices(const std::string& accountId) -> decltype(libjami::getSharedServices(accountId))
     {
-        return libjami::getExposedServices(accountId);
+        return libjami::getSharedServices(accountId);
     }
 
-    auto addExposedService(const std::string& accountId, const std::map<std::string, std::string>& service)
-        -> decltype(libjami::addExposedService(accountId, service))
+    auto addSharedService(const std::string& accountId, const std::map<std::string, std::string>& service)
+        -> decltype(libjami::addSharedService(accountId, service))
     {
-        return libjami::addExposedService(accountId, service);
+        return libjami::addSharedService(accountId, service);
     }
 
-    auto updateExposedService(const std::string& accountId, const std::map<std::string, std::string>& service)
-        -> decltype(libjami::updateExposedService(accountId, service))
+    auto updateSharedService(const std::string& accountId, const std::map<std::string, std::string>& service)
+        -> decltype(libjami::updateSharedService(accountId, service))
     {
-        return libjami::updateExposedService(accountId, service);
+        return libjami::updateSharedService(accountId, service);
     }
 
-    auto removeExposedService(const std::string& accountId,
-                              const std::string& serviceId) -> decltype(libjami::removeExposedService(accountId,
+    auto removeSharedService(const std::string& accountId,
+                              const std::string& serviceId) -> decltype(libjami::removeSharedService(accountId,
                                                                                                       serviceId))
     {
-        return libjami::removeExposedService(accountId, serviceId);
+        return libjami::removeSharedService(accountId, serviceId);
     }
 
     auto queryPeerServices(const std::string& accountId,

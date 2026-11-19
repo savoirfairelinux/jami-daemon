@@ -34,10 +34,10 @@ namespace libjami {
 
 /* Local-service exposure ("Network Services") */
 
-std::string addExposedService(const std::string& accountId, const std::map<std::string, std::string>& details);
-bool updateExposedService(const std::string& accountId, const std::map<std::string, std::string>& details);
-bool removeExposedService(const std::string& accountId, const std::string& serviceId);
-std::vector<std::map<std::string, std::string>> getExposedServices(const std::string& accountId);
+std::string addSharedService(const std::string& accountId, const std::map<std::string, std::string>& details);
+bool updateSharedService(const std::string& accountId, const std::map<std::string, std::string>& details);
+bool removeSharedService(const std::string& accountId, const std::string& serviceId);
+std::vector<std::map<std::string, std::string>> getSharedServices(const std::string& accountId);
 uint32_t queryPeerServices(const std::string& accountId, const std::string& peerUri);
 std::string openServiceTunnel(const std::string& accountId,
                               const std::string& peerUri,
