@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50031d60_c17d79db",
+        "filename": "src/media/audio/sound/dtmf.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-19T17:09:12Z",
+      "side": 1,
+      "message": "[warning] Line 63: 🟡 `AudioFormat {sampleRate, 1}` relies on the default sample format implicitly. Make the sample format explicit (e.g. `AV_SAMPLE_FMT_S16`) to avoid silent behavior changes if `AudioFormat` defaults are modified later, since this directly affects generated tone amplitude/packing and downstream conversion paths.",
+      "revId": "641bcd8bdee6ea3ea717014d0ceeca1c7078f372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
