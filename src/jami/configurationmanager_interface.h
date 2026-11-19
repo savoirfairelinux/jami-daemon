@@ -44,35 +44,36 @@ struct LIBJAMI_PUBLIC Message
 
 LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
 
-/** Account-private scalar registers, synchronized only with this account's devices.
+using MetadataMap = std::map<std::string, std::vector<uint8_t>>;
+
+/** Account-private binary registers, synchronized only with this account's devices.
  * Updates use existing sync connections without waking disconnected devices.
  * The full state is also sent when a sync connection is established.
  * Returns true on success, including an empty snapshot. Omitted keys are never deleted.
  * Returns false for an unavailable account or corrupt/unreadable storage.
  * The output is unchanged on failure.
  */
-LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata);
+LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, MetadataMap& metadata);
 
 /** Atomically PATCH the supplied keys; unchanged values retain their stamps.
  * Each changed key is stamped with max(Unix time in milliseconds, its previous stamp + 1).
  * Sync merges prefer the higher timestamp, then the lexicographically higher device ID.
- * Keys: 1..1024 UTF-8 bytes; values: 0..65536 UTF-8 bytes; neither may contain NUL.
+ * Keys: 1..1024 UTF-8 bytes without NUL. Values: 0..65536 arbitrary bytes.
+ * An empty value is stored as-is and does not delete the key.
  * At most 16384 stored keys and 4 MiB total (key + value + writer + 64 bytes per entry).
  * Exhausted timestamps are rejected without changing the stored state.
  * Updates are saved before success; power-loss durability is not guaranteed.
  * Returns false for an unavailable account, invalid input, or persistence failure.
  * Successful no-ops return true without emitting AccountMetadataChanged.
  */
-LIBJAMI_PUBLIC bool setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates);
+LIBJAMI_PUBLIC bool setAccountMetadata(const std::string& accountId, const MetadataMap& updates);
 
-/** Account-private registers attached to an existing contact (including removed/banned contacts).
+/** Account-private binary registers attached to an existing contact (including removed/banned contacts).
  * Synchronized only with this account's devices, never shared with the contact.
  * Metadata survives removal and re-addition. Full device syncs and account archives include it.
  * Returns false for unavailable accounts, invalid IDs or unknown contacts; output is unchanged.
  */
-LIBJAMI_PUBLIC bool getContactMetadata(const std::string& accountId,
-                                       const std::string& uri,
-                                       std::map<std::string, std::string>& metadata);
+LIBJAMI_PUBLIC bool getContactMetadata(const std::string& accountId, const std::string& uri, MetadataMap& metadata);
 
 /** PATCH contact registers with the same stamps, limits and merge rules as setAccountMetadata.
  * Saved before success; power-loss durability is not guaranteed.
@@ -80,9 +81,7 @@ LIBJAMI_PUBLIC bool getContactMetadata(const std::string& accountId,
  * Returns false for unknown contacts, invalid input or persistence failure.
  * No-ops do not emit ContactMetadataChanged; effective changes emit the full contact snapshot.
  */
-LIBJAMI_PUBLIC bool setContactMetadata(const std::string& accountId,
-                                       const std::string& uri,
-                                       const std::map<std::string, std::string>& updates);
+LIBJAMI_PUBLIC bool setContactMetadata(const std::string& accountId, const std::string& uri, const MetadataMap& updates);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountId);
 LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId, const std::map<std::string, std::string>& details);
 LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId, bool active, bool shutdownConnections = false);
@@ -423,15 +422,14 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
     struct LIBJAMI_PUBLIC AccountMetadataChanged
     {
         constexpr static const char* name = "AccountMetadataChanged";
-        using cb_type = void(const std::string& /*account_id*/,
-                             const std::map<std::string, std::string>& /*full_snapshot*/);
+        using cb_type = void(const std::string& /*account_id*/, const MetadataMap& /*full_snapshot*/);
     };
     struct LIBJAMI_PUBLIC ContactMetadataChanged
     {
         constexpr static const char* name = "ContactMetadataChanged";
         using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*uri*/,
-                             const std::map<std::string, std::string>& /*full_snapshot*/);
+                             const MetadataMap& /*full_snapshot*/);
     };
     struct LIBJAMI_PUBLIC StunStatusFailed
     {

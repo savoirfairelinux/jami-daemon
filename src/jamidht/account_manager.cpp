@@ -46,7 +46,7 @@ AccountManager::notifyMetadataChanged(const Metadata::Change& change)
 }
 
 bool
-AccountManager::setAccountMetadata(const std::map<std::string, std::string>& updates)
+AccountManager::setAccountMetadata(const Metadata::Values& updates)
 {
     std::lock_guard lock(metadataChangeMutex_);
     if (!info_)

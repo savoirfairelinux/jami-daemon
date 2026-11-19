@@ -85,7 +85,7 @@ getVolatileAccountDetails(const std::string& accountId)
 }
 
 bool
-getAccountMetadata(const std::string& accountId, std::map<std::string, std::string>& metadata)
+getAccountMetadata(const std::string& accountId, MetadataMap& metadata)
 {
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
         if (auto manager = acc->accountManager(); manager && manager->getInfo()) {
@@ -100,7 +100,7 @@ getAccountMetadata(const std::string& accountId, std::map<std::string, std::stri
 }
 
 bool
-setAccountMetadata(const std::string& accountId, const std::map<std::string, std::string>& updates)
+setAccountMetadata(const std::string& accountId, const MetadataMap& updates)
 {
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
         if (auto manager = acc->accountManager())
@@ -109,7 +109,7 @@ setAccountMetadata(const std::string& accountId, const std::map<std::string, std
 }
 
 bool
-getContactMetadata(const std::string& accountId, const std::string& uri, std::map<std::string, std::string>& metadata)
+getContactMetadata(const std::string& accountId, const std::string& uri, MetadataMap& metadata)
 {
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
         if (auto manager = acc->accountManager())
@@ -119,9 +119,7 @@ getContactMetadata(const std::string& accountId, const std::string& uri, std::ma
 }
 
 bool
-setContactMetadata(const std::string& accountId,
-                   const std::string& uri,
-                   const std::map<std::string, std::string>& updates)
+setContactMetadata(const std::string& accountId, const std::string& uri, const MetadataMap& updates)
 {
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
         if (auto manager = acc->accountManager())

@@ -100,9 +100,9 @@ private:
         RecvCb receive;
     };
 
-    std::map<std::string, std::string> readMetadata(const std::string& accountId)
+    libjami::MetadataMap readMetadata(const std::string& accountId)
     {
-        std::map<std::string, std::string> result;
+        libjami::MetadataMap result;
         CPPUNIT_ASSERT(libjami::getAccountMetadata(accountId, result));
         return result;
     }
@@ -191,13 +191,15 @@ AccountArchiveTest::testContactMetadataSync()
                               alice->getUsername(),
                               DeviceId(std::string(64, 'b')));
     lk.unlock();
-    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), {{"label", "local"}, {"empty", ""}}));
+    const libjami::MetadataMap local {{"label", {0x80, 0, 0xff}}, {"empty", {}}};
+    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), local));
     {
         std::unique_lock lock(sent->mutex);
         CPPUNIT_ASSERT(sent->cv.wait_for(lock, 30s, [&] { return sent->received; }));
     }
     CPPUNIT_ASSERT_EQUAL(size_t(1), notifications->size());
-    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), {{"label", "local"}}));
+    CPPUNIT_ASSERT(notifications->back() == local);
+    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), {{"label", local.at("label")}}));
     CPPUNIT_ASSERT_EQUAL(size_t(1), notifications->size());
     auto full = manager->getSyncData();
     CPPUNIT_ASSERT(!full.peers.at(peer).metadata.entries.empty());
@@ -207,11 +209,12 @@ AccountArchiveTest::testContactMetadataSync()
     incoming.contact_metadata[peer] = original;
     auto& entry = incoming.contact_metadata[peer].entries.at("label");
     ++entry.timestampMs;
-    entry.value = "remote";
+    const std::vector<uint8_t> remoteLabel {0x81, 0, 0xff};
+    entry.value = remoteLabel;
     manager->onSyncData(std::move(incoming), disconnected);
     CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
-    CPPUNIT_ASSERT_EQUAL(std::string("remote"), notifications->back().at("label"));
-    CPPUNIT_ASSERT(notifications->back().contains("empty"));
+    CPPUNIT_ASSERT(notifications->back().at("label") == remoteLabel);
+    CPPUNIT_ASSERT(notifications->back().at("empty").empty());
     auto merged = manager->getContactInfo(peer.toString())->metadata;
     DeviceSync stampOnly;
     stampOnly.date = 1;
@@ -224,7 +227,7 @@ AccountArchiveTest::testContactMetadataSync()
     const auto newest = manager->getContactInfo(peer.toString())->metadata;
     DeviceSync invalid;
     invalid.date = 1;
-    invalid.contact_metadata[peer].entries["bad"] = {0, std::string(64, 'a'), "rejected"};
+    invalid.contact_metadata[peer].entries["bad"] = {0, std::string(64, 'a'), {1}};
     const dht::InfoHash other(std::string(40, 'd'));
     invalid.peers[other] = contact;
     manager->onSyncData(std::move(invalid), disconnected);
@@ -232,7 +235,7 @@ AccountArchiveTest::testContactMetadataSync()
     CPPUNIT_ASSERT(manager->getContactInfo(other.toString()));
     CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
     const auto saved = ContactList::contactsFromPath(manager->getInfo()->contacts->path()).at(peer);
-    CPPUNIT_ASSERT_EQUAL(std::string("remote"), saved.metadata.entries.at("label").value);
+    CPPUNIT_ASSERT(saved.metadata.entries.at("label").value == remoteLabel);
     CPPUNIT_ASSERT(saved.removed == contact.removed);
     lk.lock();
     cv.wait_for(lk, 2s, [] { return false; });
@@ -247,14 +250,15 @@ AccountArchiveTest::testContactMetadataArchive()
     auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
     const auto uri = Manager::instance().getAccount<JamiAccount>(bobId)->getUsername();
     alice->accountManager()->addContact(dht::InfoHash(uri));
-    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, uri, {{"label", "private label"}}));
+    const libjami::MetadataMap metadata {{"label", {0, 0x80, 0xff}}, {"empty", {}}};
+    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, uri, metadata));
     alice->accountManager()->removeContact(uri, false);
-    Metadata::Values values;
+    libjami::MetadataMap values;
     CPPUNIT_ASSERT(libjami::getContactMetadata(aliceId, uri, values));
-    CPPUNIT_ASSERT_EQUAL(std::string("private label"), values.at("label"));
+    CPPUNIT_ASSERT(values == metadata);
     alice->accountManager()->addContact(dht::InfoHash(uri));
     CPPUNIT_ASSERT(libjami::getContactMetadata(aliceId, uri, values));
-    CPPUNIT_ASSERT_EQUAL(std::string("private label"), values.at("label"));
+    CPPUNIT_ASSERT(values == metadata);
     const std::filesystem::path path = "contact-metadata-export.gz";
     auto cleanup = std::shared_ptr<void>(nullptr, [path](void*) { std::filesystem::remove(path); });
     CPPUNIT_ASSERT(alice->exportArchive(path.string()));
@@ -268,7 +272,7 @@ AccountArchiveTest::testContactMetadataArchive()
     auto importedId = Manager::instance().addAccount(details);
     wait_for_announcement_of(importedId);
     CPPUNIT_ASSERT(libjami::getContactMetadata(importedId, uri, values));
-    CPPUNIT_ASSERT_EQUAL(std::string("private label"), values.at("label"));
+    CPPUNIT_ASSERT(values == metadata);
     CPPUNIT_ASSERT(
         Manager::instance().getAccount<JamiAccount>(importedId)->accountManager()->getContactInfo(uri)->metadata
         == expected);
@@ -282,7 +286,7 @@ AccountArchiveTest::testAccountMetadataOnlySync()
     auto manager = alice->accountManager();
     const auto device = manager->getInfo()->devicePk->getLongId();
     Metadata metadata;
-    metadata.entries["setting"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), "received"};
+    metadata.entries["setting"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), {0, 0xff}};
     msgpack::sbuffer buffer;
     msgpack::packer<msgpack::sbuffer> packer(buffer);
     packer.pack_map(2);
@@ -302,7 +306,7 @@ AccountArchiveTest::testAccountMetadataOnlySync()
     DeviceSync undated;
     undated.metadata = metadata;
     ++undated.metadata.entries.at("setting").timestampMs;
-    undated.metadata.entries.at("setting").value = "ignored";
+    undated.metadata.entries.at("setting").value = {0, 0x80};
     manager->onSyncData(std::move(undated), device);
     CPPUNIT_ASSERT(manager->accountMetadata().state() == metadata);
     CPPUNIT_ASSERT(manager->getKnownDevices().at(device).last_sync == receipt);
@@ -311,14 +315,14 @@ AccountArchiveTest::testAccountMetadataOnlySync()
 
     DeviceSync invalid;
     invalid.date = 1;
-    invalid.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    invalid.metadata.entries["setting"] = {0, std::string(64, 'a'), {1}};
     const auto failedReceivedAt = AccountManager::clock::now();
     manager->onSyncData(std::move(invalid), device);
     CPPUNIT_ASSERT(manager->getKnownDevices().at(device).last_sync >= failedReceivedAt);
     CPPUNIT_ASSERT(manager->accountMetadata().state() == metadata);
     DeviceSync mixed;
     mixed.date = 1;
-    mixed.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    mixed.metadata.entries["setting"] = {0, std::string(64, 'a'), {1}};
     const dht::InfoHash peer(std::string(40, 'b'));
     Contact contact;
     contact.removed = nowMs();
@@ -342,7 +346,7 @@ AccountArchiveTest::testAccountMetadataFailureDoesNotBlockSync()
 
     SyncMsg mixed;
     mixed.ds.date = 1;
-    mixed.ds.metadata.entries["setting"] = {0, std::string(64, 'a'), "invalid"};
+    mixed.ds.metadata.entries["setting"] = {0, std::string(64, 'a'), {1}};
     ConversationRequest request;
     request.conversationId = std::string(40, 'a');
     request.from = bob->getUsername();
@@ -381,10 +385,11 @@ AccountArchiveTest::testAccountMetadataUpdatesStayConnectedOnly()
     };
     auto sent = std::make_shared<SentMetadata>();
     auto socket = std::make_shared<SyncSocket>();
-    socket->onWrite = [sent](const auto* data, std::size_t length) {
+    const std::vector<uint8_t> updatedValue {0, 0x80, 0xff};
+    socket->onWrite = [sent, updatedValue](const auto* data, std::size_t length) {
         auto msg = msgpack::unpack(reinterpret_cast<const char*>(data), length).get().as<SyncMsg>();
         if (!msg.affectsList() && msg.ds.metadata.entries.count("setting")
-            && msg.ds.metadata.entries.at("setting").value == "changed") {
+            && msg.ds.metadata.entries.at("setting").value == updatedValue) {
             std::lock_guard lock(sent->mutex);
             sent->date = msg.ds.date;
             sent->cv.notify_one();
@@ -393,7 +398,7 @@ AccountArchiveTest::testAccountMetadataUpdatesStayConnectedOnly()
     const DeviceId connected(std::string(64, 'b'));
     sync->cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>(socket), alice->getUsername(), connected);
     lk.unlock();
-    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", "changed"}}));
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", updatedValue}}));
     {
         std::unique_lock lock(sent->mutex);
         CPPUNIT_ASSERT(sent->cv.wait_for(lock, 30s, [&] { return sent->date.has_value(); }));
@@ -401,7 +406,7 @@ AccountArchiveTest::testAccountMetadataUpdatesStayConnectedOnly()
     }
     DeviceSync incoming;
     incoming.date = 1;
-    incoming.metadata.entries["remote"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), "received"};
+    incoming.metadata.entries["remote"] = {toMillisecondsSinceEpoch(nowMs()), std::string(64, 'a'), {0, 0xff}};
     alice->accountManager()->onSyncData(std::move(incoming), disconnected);
     lk.lock();
     cv.wait_for(lk, 2s, [] { return false; });
@@ -414,9 +419,9 @@ void
 AccountArchiveTest::testAccountMetadataArchive()
 {
     auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
-    const std::map<std::string, std::string> metadata {{"jami.channels.v1/channel/name", "Équipe"},
-                                                       {"jami.channels.v1/channel/members/uri", "0"},
-                                                       {"jami.channels.v1/removed/deleted", "1"}};
+    const libjami::MetadataMap metadata {{"jami.channels.v1/channel/name", {0, 0x80, 0xff}},
+                                         {"jami.channels.v1/channel/members/uri", {}},
+                                         {"jami.channels.v1/removed/deleted", {'1'}}};
     CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, metadata));
     CPPUNIT_ASSERT(readMetadata(aliceId) == metadata);
     CPPUNIT_ASSERT(readMetadata(bobId).empty());
@@ -462,7 +467,7 @@ AccountArchiveTest::testAccountMetadataArchiveReadFailure()
     CPPUNIT_ASSERT(std::filesystem::create_directory(root));
     auto cleanup = std::shared_ptr<void>(nullptr, [root](void*) { std::filesystem::remove_all(root); });
     auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
-    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", "value"}}));
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{"setting", {0, 0xff}}}));
     CPPUNIT_ASSERT(alice->exportArchive((root / "archive.gz").string()));
     {
         std::ofstream file(root / "accountMetadata", std::ios::binary);
@@ -509,41 +514,43 @@ AccountArchiveTest::testAccountMetadataSync()
     CPPUNIT_ASSERT(connected());
 
     const std::string key = "jami.channels.v1/channel/name";
+    const std::vector<uint8_t> accountValue {0, 0x80, 0xff};
     auto received = std::make_shared<bool>(false);
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountMetadataChanged>(
-        [this, importedId, key, received](const std::string& id, const std::map<std::string, std::string>& values) {
+        [this, importedId, key, received, accountValue](const std::string& id, const libjami::MetadataMap& values) {
             std::lock_guard guard(mtx);
-            if (id == importedId && values.count(key) && values.at(key) == "Synchronized")
+            if (id == importedId && values.count(key) && values.at(key) == accountValue)
                 *received = true;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     // Signals are synchronous for native handlers; do not hold the fixture mutex while updating.
     lk.unlock();
-    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{key, "Synchronized"}}));
+    CPPUNIT_ASSERT(libjami::setAccountMetadata(aliceId, {{key, accountValue}}));
     lk.lock();
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return *received; }));
-    CPPUNIT_ASSERT_EQUAL(std::string("Synchronized"), readMetadata(importedId).at(key));
+    CPPUNIT_ASSERT(readMetadata(importedId).at(key) == accountValue);
     CPPUNIT_ASSERT(readMetadata(bobId).empty());
+    const std::vector<uint8_t> contactValue {0xff, 0, 0x80};
     auto contactReceived = std::make_shared<bool>(false);
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactMetadataChanged>(
-        [this, importedId, peer, contactReceived](const std::string& id,
-                                                  const std::string& uri,
-                                                  const Metadata::Values& values) {
+        [this, importedId, peer, contactReceived, contactValue](const std::string& id,
+                                                                const std::string& uri,
+                                                                const libjami::MetadataMap& values) {
             std::lock_guard guard(mtx);
             if (id == importedId && uri == peer.toString() && values.contains("label")
-                && values.at("label") == "Synchronized contact")
+                && values.at("label") == contactValue)
                 *contactReceived = true;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     lk.unlock();
-    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), {{"label", "Synchronized contact"}}));
+    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, peer.toString(), {{"label", contactValue}}));
     lk.lock();
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return *contactReceived; }));
-    Metadata::Values contactValues;
+    libjami::MetadataMap contactValues;
     CPPUNIT_ASSERT(libjami::getContactMetadata(importedId, peer.toString(), contactValues));
-    CPPUNIT_ASSERT_EQUAL(std::string("Synchronized contact"), contactValues.at("label"));
+    CPPUNIT_ASSERT(contactValues.at("label") == contactValue);
     CPPUNIT_ASSERT(imported->accountManager()->getContactInfo(peer.toString())->metadata
                    == alice->accountManager()->getContactInfo(peer.toString())->metadata);
     CPPUNIT_ASSERT(!libjami::getContactMetadata(bobId, peer.toString(), contactValues));

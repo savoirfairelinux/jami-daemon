@@ -15,6 +15,15 @@
 #include <thread>
 
 namespace jami::test {
+namespace {
+
+std::vector<uint8_t>
+bytes(std::string_view text)
+{
+    return {text.begin(), text.end()};
+}
+
+} // namespace
 
 class MetadataTest : public CppUnit::TestFixture
 {
@@ -29,7 +38,7 @@ private:
     {
         Metadata state;
         const auto before = toMillisecondsSinceEpoch(nowMs());
-        CPPUNIT_ASSERT(state.update(alice_, {{"name", "first"}, {"other", "value"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"name", bytes("first")}, {"other", bytes("value")}}));
         const auto after = toMillisecondsSinceEpoch(nowMs());
         for (const auto& [key, entry] : state.entries) {
             CPPUNIT_ASSERT(entry.timestampMs >= before);
@@ -41,14 +50,14 @@ private:
     {
         Metadata state;
         const auto future = toMillisecondsSinceEpoch(nowMs()) + 3600000;
-        state.entries["name"] = {future, alice_, "before rollback"};
+        state.entries["name"] = {future, alice_, bytes("before rollback")};
         const auto original = state;
-        CPPUNIT_ASSERT(state.update(alice_, {{"name", "after rollback"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"name", bytes("after rollback")}}));
         CPPUNIT_ASSERT_EQUAL(future + 1, state.entries.at("name").timestampMs);
         const auto stale = state.merge(original);
         CPPUNIT_ASSERT(stale && !stale->changed);
         const auto before = toMillisecondsSinceEpoch(nowMs());
-        CPPUNIT_ASSERT(state.update(alice_, {{"other", "independent"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"other", bytes("independent")}}));
         const auto after = toMillisecondsSinceEpoch(nowMs());
         const auto stamp = state.entries.at("other").timestampMs;
         CPPUNIT_ASSERT(stamp >= before);
@@ -59,31 +68,31 @@ private:
     {
         Metadata state;
         CPPUNIT_ASSERT(state.values().empty());
-        const auto first = state.update(alice_, {{"name", "Président"}, {"empty", ""}});
+        const auto first = state.update(alice_, {{"name", {0x80, 0, 0xff}}, {"empty", {}}});
         CPPUNIT_ASSERT(first && first->changed && first->snapshot);
         CPPUNIT_ASSERT(*first->snapshot == state.values());
         const auto before = state;
-        const auto noop = state.update(alice_, {{"name", "Président"}});
+        const auto noop = state.update(alice_, {{"name", {0x80, 0, 0xff}}});
         CPPUNIT_ASSERT(noop && !noop->changed && !noop->snapshot);
         CPPUNIT_ASSERT(state == before);
-        CPPUNIT_ASSERT(state.update(alice_, {{"other", "second"}}));
-        CPPUNIT_ASSERT(state.update(bob_, {{"name", "renamed"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"other", bytes("second")}}));
+        CPPUNIT_ASSERT(state.update(bob_, {{"name", bytes("renamed")}}));
         CPPUNIT_ASSERT(state.entries.at("name").timestampMs > before.entries.at("name").timestampMs);
-        CPPUNIT_ASSERT_EQUAL(std::string("second"), state.values().at("other"));
+        CPPUNIT_ASSERT(state.values().at("other") == bytes("second"));
         CPPUNIT_ASSERT(state.values().at("empty").empty());
     }
 
     void testDeterministicConcurrentMerge()
     {
         Metadata a, b, c;
-        a.entries = {{"same", {1000, alice_, "Alice"}}, {"only-a", {1000, alice_, "1"}}};
-        b.entries = {{"same", {1000, bob_, "Bob"}}, {"only-b", {1000, bob_, "1"}}};
+        a.entries = {{"same", {1000, alice_, bytes("Alice")}}, {"only-a", {1000, alice_, {'1'}}}};
+        b.entries = {{"same", {1000, bob_, bytes("Bob")}}, {"only-b", {1000, bob_, {'1'}}}};
         const auto as = a;
         const auto bs = b;
         CPPUNIT_ASSERT(a.merge(bs));
         CPPUNIT_ASSERT(b.merge(as));
         CPPUNIT_ASSERT(a == b);
-        CPPUNIT_ASSERT_EQUAL(std::string("Bob"), a.values().at("same"));
+        CPPUNIT_ASSERT(a.values().at("same") == bytes("Bob"));
         CPPUNIT_ASSERT_EQUAL(size_t(3), a.values().size());
         const auto noopA = a.merge(b);
         const auto noopB = b.merge(a);
@@ -92,7 +101,7 @@ private:
         // An offline replica receives changes learned by an intermediary.
         CPPUNIT_ASSERT(c.merge(a));
         CPPUNIT_ASSERT(c == b);
-        CPPUNIT_ASSERT(c.update(alice_, {{"same", "causally newer"}}));
+        CPPUNIT_ASSERT(c.update(alice_, {{"same", bytes("causally newer")}}));
         CPPUNIT_ASSERT(b.merge(c));
         CPPUNIT_ASSERT(a.merge(b));
         CPPUNIT_ASSERT(a == c);
@@ -103,24 +112,24 @@ private:
         Metadata a, b;
         const std::string member = "jami.channels.v1/stable/members/uri";
         const std::string deleted = "jami.channels.v1/stable/deleted";
-        CPPUNIT_ASSERT(a.update(alice_, {{member, "1"}, {"unrelated", "kept"}}));
+        CPPUNIT_ASSERT(a.update(alice_, {{member, {'1'}}, {"unrelated", bytes("kept")}}));
         CPPUNIT_ASSERT(b.merge(a));
         const auto stale = b;
-        CPPUNIT_ASSERT(a.update(alice_, {{member, "0"}, {deleted, "1"}}));
+        CPPUNIT_ASSERT(a.update(alice_, {{member, {'0'}}, {deleted, {'1'}}}));
         CPPUNIT_ASSERT(b.merge(a));
         const auto noop = a.merge(stale);
         CPPUNIT_ASSERT(noop && !noop->changed);
-        CPPUNIT_ASSERT_EQUAL(std::string("0"), b.values().at(member));
-        CPPUNIT_ASSERT_EQUAL(std::string("1"), b.values().at(deleted));
-        CPPUNIT_ASSERT_EQUAL(std::string("kept"), b.values().at("unrelated"));
+        CPPUNIT_ASSERT(b.values().at(member) == bytes("0"));
+        CPPUNIT_ASSERT(b.values().at(deleted) == bytes("1"));
+        CPPUNIT_ASSERT(b.values().at("unrelated") == bytes("kept"));
         CPPUNIT_ASSERT(a == b);
     }
 
     void testStampOnlyMerge()
     {
         Metadata a, b;
-        a.entries["name"] = {1000, alice_, "same"};
-        b.entries["name"] = {1000, bob_, "same"};
+        a.entries["name"] = {1000, alice_, bytes("same")};
+        b.entries["name"] = {1000, bob_, bytes("same")};
         const auto change = a.merge(b);
         CPPUNIT_ASSERT(change && change->changed && !change->snapshot);
         CPPUNIT_ASSERT(a == b);
@@ -129,15 +138,15 @@ private:
     void testMixedMergeSnapshot()
     {
         Metadata state;
-        state.entries = {{"name", {1000, alice_, "same"}}, {"kept", {1000, alice_, "unchanged"}}};
+        state.entries = {{"name", {1000, alice_, bytes("same")}}, {"kept", {1000, alice_, bytes("unchanged")}}};
         Metadata incoming;
-        incoming.entries = {{"name", {2000, bob_, "same"}}, {"empty", {1000, bob_, ""}}};
+        incoming.entries = {{"name", {2000, bob_, bytes("same")}}, {"empty", {1000, bob_, {}}}};
         const auto change = state.merge(incoming);
         CPPUNIT_ASSERT(change && change->changed && change->snapshot);
         CPPUNIT_ASSERT(*change->snapshot == state.values());
-        CPPUNIT_ASSERT_EQUAL(std::string("unchanged"), change->snapshot->at("kept"));
+        CPPUNIT_ASSERT(change->snapshot->at("kept") == bytes("unchanged"));
         CPPUNIT_ASSERT(change->snapshot->at("empty").empty());
-        incoming.entries.at("name") = {1500, alice_, "losing"};
+        incoming.entries.at("name") = {1500, alice_, bytes("losing")};
         const auto noop = state.merge(incoming);
         CPPUNIT_ASSERT(noop && !noop->changed && !noop->snapshot);
     }
@@ -145,14 +154,14 @@ private:
     void testInvalidInputIsAtomic()
     {
         Metadata state;
-        CPPUNIT_ASSERT(state.update(alice_, {{"name", "original"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"name", bytes("original")}}));
         const auto before = state;
-        CPPUNIT_ASSERT(!state.update(alice_, {{"", "bad"}, {"name", "changed"}}));
-        CPPUNIT_ASSERT(!state.update(alice_, {{"name", std::string(65537, 'x')}}));
-        CPPUNIT_ASSERT(!state.update(alice_, {{std::string(1025, 'x'), "v"}}));
-        CPPUNIT_ASSERT(!state.update(alice_, {{"name", "\xc0\xaf"}}));
-        CPPUNIT_ASSERT(!state.update(alice_, {{"name", std::string("x\0y", 3)}}));
-        CPPUNIT_ASSERT(!state.update("not-a-replica", {{"name", "value"}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{"", bytes("bad")}, {"name", bytes("changed")}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{"name", std::vector<uint8_t>(65537, 0xff)}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{std::string(1025, 'x'), {1}}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{"\xc0\xaf", {1}}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{std::string("x\0y", 3), {1}}}));
+        CPPUNIT_ASSERT(!state.update("not-a-replica", {{"name", bytes("value")}}));
         auto invalid = before;
         invalid.entries.at("name").timestampMs = 0;
         CPPUNIT_ASSERT(!state.merge(invalid));
@@ -161,7 +170,7 @@ private:
         CPPUNIT_ASSERT(state == before);
         Metadata::Values oversized;
         for (unsigned i = 0; i < 65; ++i)
-            oversized[std::to_string(i)] = std::string(65536, 'x');
+            oversized[std::to_string(i)] = std::vector<uint8_t>(65536, 0xff);
         CPPUNIT_ASSERT(!state.update(alice_, oversized));
         CPPUNIT_ASSERT(state == before);
     }
@@ -169,15 +178,15 @@ private:
     void testMergeFailureIsAtomic()
     {
         Metadata state;
-        const auto updated = state.update(alice_, {{"name", "original"}});
+        const auto updated = state.update(alice_, {{"name", bytes("original")}});
         CPPUNIT_ASSERT(updated && updated->changed && updated->snapshot);
         const auto before = state;
         auto remote = state;
-        remote.entries["a"] = {1000, alice_, "must not be committed"};
-        remote.entries.at("name").value = "conflicting";
+        remote.entries["a"] = {1000, alice_, bytes("must not be committed")};
+        remote.entries.at("name").value = bytes("conflicting");
         CPPUNIT_ASSERT(!state.merge(remote));
         CPPUNIT_ASSERT(state == before);
-        CPPUNIT_ASSERT_EQUAL(std::string("original"), state.values().at("name"));
+        CPPUNIT_ASSERT(state.values().at("name") == bytes("original"));
     }
 
     void testDecodeInvalidRecords()
@@ -226,25 +235,56 @@ private:
         }
     }
 
+    void testBinaryEncodingAndLegacyDecoding()
+    {
+        Metadata state;
+        state.entries["key"] = {1000, alice_, {0, 0x80, 0xff}};
+
+        msgpack::sbuffer packed;
+        msgpack::pack(packed, state);
+        const auto object = msgpack::unpack(packed.data(), packed.size());
+        using ObjectMap = std::map<std::string, msgpack::object>;
+        const auto entries = object.get().as<ObjectMap>().at("entries").as<ObjectMap>();
+        const auto fields = entries.at("key").as<ObjectMap>();
+        CPPUNIT_ASSERT(fields.at("value").type == msgpack::type::BIN);
+        const auto decoded = Metadata::decode({packed.data(), packed.size()});
+        CPPUNIT_ASSERT(decoded && *decoded == state);
+
+        // Legacy devices and files encoded values as MessagePack strings.
+        msgpack::sbuffer legacy;
+        msgpack::packer<msgpack::sbuffer> packer(legacy);
+        packer.pack_map(1).pack(std::string("entries"));
+        packer.pack_map(1).pack(std::string("key"));
+        packer.pack_map(3)
+            .pack(std::string("timestampMs"))
+            .pack(int64_t(1000))
+            .pack(std::string("writer"))
+            .pack(alice_)
+            .pack(std::string("value"))
+            .pack(std::string("\0\x80\xff", 3));
+        const auto legacyDecoded = Metadata::decode({legacy.data(), legacy.size()});
+        CPPUNIT_ASSERT(legacyDecoded && *legacyDecoded == state);
+    }
+
     void testFutureTimestampAndOverflow()
     {
         Metadata state, remote;
         const auto maximum = std::numeric_limits<int64_t>::max();
-        remote.entries["name"] = {maximum - 1, bob_, "received"};
+        remote.entries["name"] = {maximum - 1, bob_, bytes("received")};
         msgpack::sbuffer packed;
         msgpack::pack(packed, remote);
         const auto decoded = Metadata::decode({packed.data(), packed.size()});
         CPPUNIT_ASSERT(decoded);
         const auto merged = state.merge(*decoded);
         CPPUNIT_ASSERT(merged && merged->changed);
-        CPPUNIT_ASSERT(state.update(alice_, {{"name", "at maximum"}}));
+        CPPUNIT_ASSERT(state.update(alice_, {{"name", bytes("at maximum")}}));
         const auto before = state;
         CPPUNIT_ASSERT_EQUAL(maximum, before.entries.at("name").timestampMs);
-        CPPUNIT_ASSERT(!state.update(alice_, {{"a", "not committed"}, {"name", "overflow"}}));
+        CPPUNIT_ASSERT(!state.update(alice_, {{"a", bytes("not committed")}, {"name", bytes("overflow")}}));
         CPPUNIT_ASSERT(state == before);
-        const auto noop = state.update(alice_, {{"name", "at maximum"}});
+        const auto noop = state.update(alice_, {{"name", bytes("at maximum")}});
         CPPUNIT_ASSERT(noop && !noop->changed && !noop->snapshot);
-        const auto changed = state.update(alice_, {{"other", "still writable"}});
+        const auto changed = state.update(alice_, {{"other", bytes("still writable")}});
         CPPUNIT_ASSERT(changed && changed->changed);
     }
 
@@ -260,6 +300,7 @@ private:
     CPPUNIT_TEST(testMergeFailureIsAtomic);
     CPPUNIT_TEST(testDecodeInvalidRecords);
     CPPUNIT_TEST(testDecodeRequiredFields);
+    CPPUNIT_TEST(testBinaryEncodingAndLegacyDecoding);
     CPPUNIT_TEST(testFutureTimestampAndOverflow);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -321,23 +362,23 @@ private:
     {
         Store store(root_ / "a");
         CPPUNIT_ASSERT(store.values().empty());
-        const auto first = store.update(alice_, {{"name", "Président"}, {"empty", ""}});
+        const auto first = store.update(alice_, {{"name", {0, 0xff, 0x80}}, {"empty", {}}});
         CPPUNIT_ASSERT(first.changed && first.snapshot);
         CPPUNIT_ASSERT(*first.snapshot == store.values());
         const auto before = store.state();
-        const auto noop = store.update(alice_, {{"name", "Président"}});
+        const auto noop = store.update(alice_, {{"name", {0, 0xff, 0x80}}});
         CPPUNIT_ASSERT(!noop.changed && !noop.snapshot);
         CPPUNIT_ASSERT(store.state() == before);
-        store.update(alice_, {{"other", "second"}});
+        store.update(alice_, {{"other", bytes("second")}});
         Store reload(root_ / "a");
         CPPUNIT_ASSERT(reload.values() == store.values());
         CPPUNIT_ASSERT(reload.state() == store.state());
-        reload.update(bob_, {{"name", "renamed"}});
+        reload.update(bob_, {{"name", bytes("renamed")}});
         CPPUNIT_ASSERT(reload.state().entries.at("name").timestampMs > before.entries.at("name").timestampMs);
-        CPPUNIT_ASSERT_EQUAL(std::string("second"), reload.values().at("other"));
+        CPPUNIT_ASSERT(reload.values().at("other") == bytes("second"));
         Metadata remote;
         const auto future = toMillisecondsSinceEpoch(nowMs()) + 3600000;
-        remote.entries["name"] = {future, bob_, "same after merge"};
+        remote.entries["name"] = {future, bob_, bytes("same after merge")};
         const auto merged = reload.merge(remote);
         CPPUNIT_ASSERT(merged.changed && merged.snapshot);
         ++remote.entries.at("name").timestampMs;
@@ -345,7 +386,7 @@ private:
         CPPUNIT_ASSERT(stampOnly.changed && !stampOnly.snapshot);
         Store mergedReload(root_ / "a");
         CPPUNIT_ASSERT(mergedReload.state() == reload.state());
-        mergedReload.update(alice_, {{"name", "after rollback"}});
+        mergedReload.update(alice_, {{"name", bytes("after rollback")}});
         CPPUNIT_ASSERT_EQUAL(future + 2, mergedReload.state().entries.at("name").timestampMs);
     }
 
@@ -358,21 +399,21 @@ private:
         MetadataStore corrupt(root_ / "corrupt");
         CPPUNIT_ASSERT(!corrupt.state());
         CPPUNIT_ASSERT(!corrupt.values());
-        CPPUNIT_ASSERT(!corrupt.update(alice_, {{"name", "lost"}}));
+        CPPUNIT_ASSERT(!corrupt.update(alice_, {{"name", bytes("lost")}}));
         CPPUNIT_ASSERT_EQUAL(uintmax_t(7), std::filesystem::file_size(root_ / "corrupt"));
         MetadataStore missing(root_ / "missing" / "state");
-        CPPUNIT_ASSERT(!missing.update(alice_, {{"name", "lost"}}));
+        CPPUNIT_ASSERT(!missing.update(alice_, {{"name", bytes("lost")}}));
         const auto missingValues = missing.values();
         CPPUNIT_ASSERT(missingValues && missingValues->empty());
         MetadataStore a(root_ / "a");
-        CPPUNIT_ASSERT(a.update(alice_, {{"name", "saved"}}));
+        CPPUNIT_ASSERT(a.update(alice_, {{"name", bytes("saved")}}));
         const auto before = a.state();
         CPPUNIT_ASSERT(before);
         std::filesystem::create_directory(root_ / "a.new");
-        CPPUNIT_ASSERT(!a.update(alice_, {{"name", "not saved"}}));
+        CPPUNIT_ASSERT(!a.update(alice_, {{"name", bytes("not saved")}}));
         CPPUNIT_ASSERT(std::filesystem::create_directory(root_ / "a.new"));
         Metadata remote;
-        remote.entries["other"] = {1000, bob_, "not saved"};
+        remote.entries["other"] = {1000, bob_, bytes("not saved")};
         CPPUNIT_ASSERT(!a.merge(remote));
         CPPUNIT_ASSERT(a.state() == before);
         MetadataStore reload(root_ / "a");
@@ -382,12 +423,12 @@ private:
         const auto emptyValues = blocked.values();
         CPPUNIT_ASSERT(emptyValues && emptyValues->empty());
         std::filesystem::create_directory(root_ / "blocked");
-        CPPUNIT_ASSERT(!blocked.update(alice_, {{"name", "not saved"}}));
+        CPPUNIT_ASSERT(!blocked.update(alice_, {{"name", bytes("not saved")}}));
         CPPUNIT_ASSERT(std::filesystem::is_directory(root_ / "blocked"));
         CPPUNIT_ASSERT(!std::filesystem::exists(root_ / "blocked.new"));
         std::filesystem::remove(root_ / "blocked");
         CPPUNIT_ASSERT(blocked.values() == emptyValues);
-        const auto retried = blocked.update(alice_, {{"name", "retried"}});
+        const auto retried = blocked.update(alice_, {{"name", bytes("retried")}});
         CPPUNIT_ASSERT(retried && retried->changed);
         MetadataStore retry(root_ / "blocked");
         CPPUNIT_ASSERT(retry.state() == blocked.state());
@@ -398,11 +439,11 @@ private:
         Store a(root_ / "a");
         std::thread first([&] {
             for (int i = 0; i < 20; ++i)
-                a.update(alice_, {{"a" + std::to_string(i), "1"}});
+                a.update(alice_, {{"a" + std::to_string(i), {'1'}}});
         });
         std::thread second([&] {
             for (int i = 0; i < 20; ++i)
-                a.update(alice_, {{"b" + std::to_string(i), "1"}});
+                a.update(bob_, {{"b" + std::to_string(i), {'1'}}});
         });
         first.join();
         second.join();
@@ -416,19 +457,19 @@ private:
         MetadataStore store(root_ / "overflow");
         Metadata remote;
         const auto maximum = std::numeric_limits<int64_t>::max();
-        remote.entries["name"] = {maximum - 1, bob_, "received"};
+        remote.entries["name"] = {maximum - 1, bob_, bytes("received")};
         CPPUNIT_ASSERT(store.merge(remote));
-        CPPUNIT_ASSERT(store.update(alice_, {{"name", "at maximum"}}));
+        CPPUNIT_ASSERT(store.update(alice_, {{"name", bytes("at maximum")}}));
         const auto before = store.state();
         CPPUNIT_ASSERT(before);
         CPPUNIT_ASSERT_EQUAL(maximum, before->entries.at("name").timestampMs);
         MetadataStore reloaded(root_ / "overflow");
         CPPUNIT_ASSERT(reloaded.state() == before);
-        CPPUNIT_ASSERT(!reloaded.update(alice_, {{"a", "not committed"}, {"name", "overflow"}}));
+        CPPUNIT_ASSERT(!reloaded.update(alice_, {{"a", bytes("not committed")}, {"name", bytes("overflow")}}));
         CPPUNIT_ASSERT(reloaded.state() == before);
-        const auto noop = reloaded.update(alice_, {{"name", "at maximum"}});
+        const auto noop = reloaded.update(alice_, {{"name", bytes("at maximum")}});
         CPPUNIT_ASSERT(noop && !noop->changed && !noop->snapshot);
-        const auto changed = reloaded.update(alice_, {{"other", "still writable"}});
+        const auto changed = reloaded.update(alice_, {{"other", bytes("still writable")}});
         CPPUNIT_ASSERT(changed && changed->changed);
     }
 

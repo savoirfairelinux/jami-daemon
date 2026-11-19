@@ -188,6 +188,7 @@ namespace std {
     }
 }
 %template(Blob) vector<uint8_t>;
+%template(BlobMap) map<string, vector<uint8_t>>;
 %template(FloatVect) vector<float>;
 }
 

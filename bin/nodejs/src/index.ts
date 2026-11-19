@@ -129,7 +129,10 @@ interface SwigMap<T, U> {
 export type StringVect = SwigVect<string>
 export type StringMap = SwigMap<string, string>
 export type VectMap = SwigVect<StringMap>
-export type Blob = SwigVect<number>
+export interface Blob extends SwigVect<number> {
+  add(byte: number): void
+}
+export type BlobMap = SwigMap<string, Blob>
 
 // ── Conversion helpers ──────────────────────────────────────
 
@@ -189,10 +192,10 @@ export interface JamiSwig {
 
   // Accounts
   getAccountDetails(accountId: string): StringMap
-  getAccountMetadata(accountId: string, metadata: StringMap): boolean
-  setAccountMetadata(accountId: string, updates: StringMap): boolean
-  getContactMetadata(accountId: string, contactId: string, metadata: StringMap): boolean
-  setContactMetadata(accountId: string, contactId: string, updates: StringMap): boolean
+  getAccountMetadata(accountId: string, metadata: BlobMap): boolean
+  setAccountMetadata(accountId: string, updates: BlobMap): boolean
+  getContactMetadata(accountId: string, contactId: string, metadata: BlobMap): boolean
+  setContactMetadata(accountId: string, contactId: string, updates: BlobMap): boolean
   getVolatileAccountDetails(accountId: string): StringMap
   setAccountDetails(accountId: string, details: StringMap): void
   addAccount(details: StringMap): string
@@ -313,6 +316,7 @@ export interface JamiSwig {
   // Constructors for SWIG types
   StringMap: Constructable<StringMap>
   Blob: Constructable<Blob>
+  BlobMap: Constructable<BlobMap>
 }
 
 // ── Native module loader ────────────────────────────────────
