@@ -88,6 +88,8 @@ public:
     virtual void startStream(AudioDeviceType stream);
 
     void destroyAudioLayer();
+    void disposeAudioUnit();
+    void handleRouteChange();
 
     /**
      * Stop the playback and capture streams.
@@ -144,8 +146,9 @@ private:
      */
     int indexRing_;
 
-    AudioUnit ioUnit_;
+    AudioUnit ioUnit_ {nullptr};
     bool inputEnabled_ {false};
+    const void* routeChangeObserver_ {nullptr};
 
     Float64 inSampleRate_;
     UInt32 inChannelsPerFrame_;
