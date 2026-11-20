@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2988fde_54148de4",
+        "filename": "bin/nodejs/callback.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 1101,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T19:32:06Z",
+      "side": 1,
+      "message": "[error] Line 1101: 🔴 The new external-media host lifecycle signals are defined (`externalMediaConferenceHostAnswer/Ready/Failure`) but never registered in `initJami`\u0027s `callEvHandlers` map, so Node.js clients will never receive these callbacks. Add `exportable_callback\u003cCallSignal::ExternalMediaConferenceHostAnswer/Ready/Failure\u003e(bind(...))` entries alongside the other call signals in `initJami` to actually expose the lifecycle events promised by the API.",
+      "revId": "36ccbbc3be388d39da75cf5cfa99a247afb18e4e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
