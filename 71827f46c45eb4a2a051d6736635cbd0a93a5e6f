@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8cfa9afb_9bf87037",
+        "filename": "test/unitTest/media/test_headless_inputs.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T20:50:46Z",
+      "side": 1,
+      "message": "[warning] Line 46: 🟡 The test hard-codes RTP port `50000`, which can collide with concurrent jobs/processes and cause flaky CI failures unrelated to the feature. Use an ephemeral port (`0`) or reserve a free UDP port dynamically before starting the session so binding is deterministic in shared runners.",
+      "revId": "71827f46c45eb4a2a051d6736635cbd0a93a5e6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
