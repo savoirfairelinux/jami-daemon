@@ -32,6 +32,20 @@ dispatch_queue_t audioConfigurationQueueIOS() {
     return queue;
 }
 
+// Whether the client has set the session up for a call. The client sets
+// PlayAndRecord with the call's routing (mode, Bluetooth, speaker override)
+// before audio starts and resets the category when the call ends, so with
+// the current iOS client PlayAndRecord here means the session is the
+// client's. Setting the category again, even unchanged, would reset that
+// routing.
+// TODO: let the client declare through the API that it manages the audio
+// session, instead of inferring it from the category.
+static bool
+isSessionConfiguredByClient(AVAudioSession* session)
+{
+    return session.category == AVAudioSessionCategoryPlayAndRecord;
+}
+
 enum AVSampleFormat
 getFormatFromStreamDescription(const AudioStreamBasicDescription& descr) {
     if(descr.mFormatID == kAudioFormatLinearPCM) {
@@ -140,36 +154,25 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
 
     bool setUpInput = stream == AudioDeviceType::ALL || stream == AudioDeviceType::CAPTURE;
+    AVAudioSession* session = [AVAudioSession sharedInstance];
     NSError* error = nil;
-    AVAudioSessionCategory audioCategory = setUpInput ? AVAudioSessionCategoryPlayAndRecord : AVAudioSessionCategoryPlayback;
-    AVAudioSessionMode mode = setUpInput ? AVAudioSessionModeVoiceChat : AVAudioSessionModeMoviePlayback;
-    AVAudioSessionCategoryOptions options = setUpInput ? AVAudioSessionCategoryOptionAllowBluetooth : AVAudioSessionCategoryOptionMixWithOthers;
-    [[AVAudioSession sharedInstance] setCategory:audioCategory mode: mode options:options error:&error];
-    if (error) {
-        NSLog(@"Initializing audio session failed, %@",[error localizedDescription]);
-        return false;
+    if (!isSessionConfiguredByClient(session)) {
+        AVAudioSessionCategory audioCategory = setUpInput ? AVAudioSessionCategoryPlayAndRecord : AVAudioSessionCategoryPlayback;
+        AVAudioSessionMode mode = setUpInput ? AVAudioSessionModeVoiceChat : AVAudioSessionModeMoviePlayback;
+        AVAudioSessionCategoryOptions options = setUpInput ? AVAudioSessionCategoryOptionAllowBluetooth : AVAudioSessionCategoryOptionMixWithOthers;
+        [session setCategory:audioCategory mode: mode options:options error:&error];
+        if (error) {
+            NSLog(@"Initializing audio session failed, %@",[error localizedDescription]);
+            return false;
+        }
     }
-    [[AVAudioSession sharedInstance] setActive: true withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: &error];
+    [session setActive: true withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: &error];
     if (error) {
         NSLog(@"Set active audio session failed, %@",[error localizedDescription]);
         return false;
     }
-    auto playBackDeviceList = getPlaybackDeviceList();
-    JAMI_DEBUG("Setting playback device: {}", playBackDeviceList[indexOut_]);
-    switch(indexOut_) {
-        case 0:
-            [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
-            break;
-        case 1:
-        case 2:
-            break;
-        case 3:
-            [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
-            break;
-        default:
-            break;
-    }
     setupOutputBus();
+    inputEnabled_ = setUpInput;
     if (setUpInput) {
         setupInputBus();
     }
@@ -333,9 +336,7 @@ CoreLayer::startStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueIOS(), ^{
         JAMI_DEBUG("iOS CoreLayer - Start Stream");
-        auto currentCategory =  [[AVAudioSession sharedInstance] category];
-
-        bool updateStream = currentCategory == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
+        bool updateStream = !inputEnabled_ && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
         if (status_ == Status::Started) {
             if (updateStream)
                 destroyAudioLayer();
@@ -358,6 +359,7 @@ CoreLayer::destroyAudioLayer()
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
+    inputEnabled_ = false;
     [[AVAudioSession sharedInstance] setActive: false withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: nil];
 }
 
@@ -366,8 +368,7 @@ CoreLayer::stopStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueIOS(), ^{
         JAMI_DEBUG("iOS CoreLayer - Stop Stream");
-        auto currentCategory =  [[AVAudioSession sharedInstance] category];
-        bool keepCurrentStream = currentCategory == AVAudioSessionCategoryPlayAndRecord && (stream == AudioDeviceType::PLAYBACK);
+        bool keepCurrentStream = inputEnabled_ && (stream == AudioDeviceType::PLAYBACK);
         if (status_ != Status::Started || keepCurrentStream)
             return;
         status_ = Status::Idle;

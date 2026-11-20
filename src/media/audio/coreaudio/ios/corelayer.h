@@ -145,6 +145,7 @@ private:
     int indexRing_;
 
     AudioUnit ioUnit_;
+    bool inputEnabled_ {false};
 
     Float64 inSampleRate_;
     UInt32 inChannelsPerFrame_;
