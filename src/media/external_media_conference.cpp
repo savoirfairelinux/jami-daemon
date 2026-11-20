@@ -1,4 +1,4 @@
-#include "browser_conference_media.h"
+#include "external_media_conference.h"
 
 #include "conference.h"
 #include "jamidht/jamiaccount.h"
@@ -88,7 +88,7 @@ serializeBrowserAnswer(Sdp& sdp)
 }
 } // namespace
 
-BrowserConferenceMedia::BrowserConferenceMedia(std::shared_ptr<JamiAccount> account,
+ExternalMediaConference::ExternalMediaConference(std::shared_ptr<JamiAccount> account,
                                                std::shared_ptr<Conference> conference,
                                                std::optional<dhtnet::IceTransportOptions> iceOptions)
     : account_(std::move(account))
@@ -97,19 +97,19 @@ BrowserConferenceMedia::BrowserConferenceMedia(std::shared_ptr<JamiAccount> acco
     , timeout_(*Manager::instance().ioContext())
 {}
 
-BrowserConferenceMedia::~BrowserConferenceMedia()
+ExternalMediaConference::~ExternalMediaConference()
 {
     stop();
 }
 
 void
-BrowserConferenceMedia::start(std::string offer, AnswerCb onAnswer, FailureCb onFailure, ReadyCb onReady)
+ExternalMediaConference::start(std::string offer, AnswerCb onAnswer, FailureCb onFailure, ReadyCb onReady)
 {
     {
         std::lock_guard lock(mutex_);
         if (state_ != State::IDLE) {
             if (onFailure)
-                runOnMainThread([cb = std::move(onFailure)] { cb("Browser conference media already started"); });
+                runOnMainThread([cb = std::move(onFailure)] { cb("External media conference already started"); });
             return;
         }
         state_ = State::GATHERING;
@@ -124,7 +124,7 @@ BrowserConferenceMedia::start(std::string offer, AnswerCb onAnswer, FailureCb on
 }
 
 void
-BrowserConferenceMedia::initialize(std::string offer)
+ExternalMediaConference::initialize(std::string offer)
 {
     {
         std::lock_guard lock(mutex_);
@@ -264,7 +264,7 @@ BrowserConferenceMedia::initialize(std::string offer)
 }
 
 void
-BrowserConferenceMedia::armTimeout(std::chrono::seconds duration, std::string reason)
+ExternalMediaConference::armTimeout(std::chrono::seconds duration, std::string reason)
 {
     std::lock_guard lock(mutex_);
     timeout_.expires_after(duration);
@@ -276,7 +276,7 @@ BrowserConferenceMedia::armTimeout(std::chrono::seconds duration, std::string re
 }
 
 void
-BrowserConferenceMedia::onIceInitialized(bool ok)
+ExternalMediaConference::onIceInitialized(bool ok)
 {
     {
         std::lock_guard lock(mutex_);
@@ -377,7 +377,7 @@ BrowserConferenceMedia::onIceInitialized(bool ok)
 }
 
 void
-BrowserConferenceMedia::onIceNegotiated(bool ok)
+ExternalMediaConference::onIceNegotiated(bool ok)
 {
     {
         std::lock_guard lock(mutex_);
@@ -438,7 +438,7 @@ BrowserConferenceMedia::onIceNegotiated(bool ok)
 }
 
 void
-BrowserConferenceMedia::startMedia()
+ExternalMediaConference::startMedia()
 {
     std::lock_guard startLock(mediaStartMtx_);
     std::shared_ptr<AudioRtpSession> audio;
@@ -512,13 +512,13 @@ BrowserConferenceMedia::startMedia()
 }
 
 void
-BrowserConferenceMedia::fail(std::string reason)
+ExternalMediaConference::fail(std::string reason)
 {
     close(!stopRequested_.load(), std::move(reason));
 }
 
 void
-BrowserConferenceMedia::stop()
+ExternalMediaConference::stop()
 {
     stopRequested_.store(true);
     if (Manager::instance().ioContext()->get_executor().running_in_this_thread()) {
@@ -531,7 +531,7 @@ BrowserConferenceMedia::stop()
 }
 
 void
-BrowserConferenceMedia::close(bool notify, std::string reason)
+ExternalMediaConference::close(bool notify, std::string reason)
 {
     std::shared_ptr<AudioRtpSession> audio;
     std::shared_ptr<video::VideoRtpSession> video;

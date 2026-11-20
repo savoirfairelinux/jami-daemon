@@ -37,7 +37,7 @@
 #include "account_const.h"
 #include "common.h"
 #include "conference.h"
-#include "media/browser_conference_media.h"
+#include "media/external_media_conference.h"
 #include "media_const.h"
 #include "media/media_encoder.h"
 #include "media/media_recorder.h"
@@ -272,8 +272,8 @@ ConferenceTest::testBrowserHostAnswersRecvonlyVideo()
     CPPUNIT_ASSERT(offer.find("a=ice-ufrag:browserUfrag\r\n") != std::string::npos);
     CPPUNIT_ASSERT(offer.find("a=candidate:1 1 UDP ") != std::string::npos);
 
-    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference, std::move(iceOptions));
-    std::weak_ptr<BrowserConferenceMedia> weakOwner = owner;
+    auto owner = std::make_shared<ExternalMediaConference>(account, conference, std::move(iceOptions));
+    std::weak_ptr<ExternalMediaConference> weakOwner = owner;
     std::mutex callbackMutex;
     std::condition_variable callbackCv;
     std::string answer;
@@ -348,7 +348,7 @@ ConferenceTest::testBrowserHostRejectsVideoFirstOffer()
 {
     auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto conference = std::make_shared<Conference>(account);
-    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference);
+    auto owner = std::make_shared<ExternalMediaConference>(account, conference);
     const std::string offer = "v=0\r\n"
                               "o=- 0 0 IN IP4 127.0.0.1\r\n"
                               "s=-\r\n"
@@ -396,7 +396,7 @@ ConferenceTest::testBrowserHostRejectsInvalidOffer()
 {
     auto account = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto conference = std::make_shared<Conference>(account);
-    auto owner = std::make_shared<BrowserConferenceMedia>(account, conference);
+    auto owner = std::make_shared<ExternalMediaConference>(account, conference);
     std::mutex callbackMutex;
     std::condition_variable callbackCv;
     std::string error;

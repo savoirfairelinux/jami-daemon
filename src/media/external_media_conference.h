@@ -35,7 +35,7 @@ namespace video {
 class VideoRtpSession;
 }
 
-class BrowserConferenceMedia final : public std::enable_shared_from_this<BrowserConferenceMedia>
+class ExternalMediaConference final : public std::enable_shared_from_this<ExternalMediaConference>
 {
 public:
     using AnswerCb = std::function<void(const std::string&)>;
@@ -44,10 +44,10 @@ public:
 
     // Optional ICE options allow a host-only transport in integration tests;
     // production uses the account's own ICE configuration.
-    BrowserConferenceMedia(std::shared_ptr<JamiAccount> account,
-                           std::shared_ptr<Conference> conference,
-                           std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt);
-    ~BrowserConferenceMedia();
+    ExternalMediaConference(std::shared_ptr<JamiAccount> account,
+                            std::shared_ptr<Conference> conference,
+                            std::optional<dhtnet::IceTransportOptions> iceOptions = std::nullopt);
+    ~ExternalMediaConference();
 
     // AnswerCb reports a fully gathered SDP answer, not ICE/media readiness.
     // The caller must retain this owner until stop() or a failure callback.
