@@ -1032,7 +1032,7 @@ Conference::sendConferenceInfos()
 #endif
 
     // Inform client that layout has changed
-    jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_, confInfo.toVectorMapStringString());
+    jami::emitSignal<libjami::CallSignal::ConferenceInfosUpdated>(id_, confInfo.toVectorMapStringString());
 }
 
 #ifdef ENABLE_VIDEO

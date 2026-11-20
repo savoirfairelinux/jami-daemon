@@ -741,7 +741,7 @@ ConferenceTest::registerSignalHandlers()
                 confChanged = true;
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceInfosUpdated>(
         [=](const std::string&, const std::vector<std::map<std::string, std::string>> participantsInfos) {
             std::lock_guard lock(mtx);
             pInfos_ = participantsInfos;

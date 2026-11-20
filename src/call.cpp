@@ -642,7 +642,7 @@ Call::setConferenceInfo(const std::string& msg)
             createSinks(confInfo_);
 #endif
             // Inform client that layout has changed
-            jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<libjami::CallSignal::ConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = conf_.lock()) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }

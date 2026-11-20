@@ -254,7 +254,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::UpdatePlaybackScale>(bind(&Callback::updatePlaybackScale, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordingStateChanged>(bind(&Callback::recordingStateChanged, callM, _1, _2)),
         exportable_callback<CallSignal::RtcpReportReceived>(bind(&Callback::onRtcpReportReceived, callM, _1, _2)),
-        exportable_callback<CallSignal::OnConferenceInfosUpdated>(bind(&Callback::onConferenceInfosUpdated, callM, _1, _2)),
+        exportable_callback<CallSignal::ConferenceInfosUpdated>(bind(&Callback::conferenceInfosUpdated, callM, _1, _2)),
         exportable_callback<CallSignal::PeerHold>(bind(&Callback::peerHold, callM, _1, _2)),
         exportable_callback<CallSignal::AudioMuted>(bind(&Callback::audioMuted, callM, _1, _2)),
         exportable_callback<CallSignal::VideoMuted>(bind(&Callback::videoMuted, callM, _1, _2)),

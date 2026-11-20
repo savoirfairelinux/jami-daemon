@@ -901,14 +901,13 @@ conferenceRemoved(const std::string& accountId, const std::string& confId)
 }
 
 void
-onConferenceInfosUpdated(const std::string& accountId,
-                         const std::string& confId,
+conferenceInfosUpdated(const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, confId, infos]() {
-        napi_value args[] = {napiString(accountId), napiString(confId), stringMapVecToJsMapArray(infos)};
-        callCallback("OnConferenceInfosUpdated", 3, args);
+    pendingSignals.emplace([confId, infos]() {
+        napi_value args[] = {napiString(confId), stringMapVecToJsMapArray(infos)};
+        callCallback("ConferenceInfosUpdated", 2, args);
     });
     uv_async_send(&signalAsync);
 }

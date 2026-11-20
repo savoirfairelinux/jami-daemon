@@ -45,7 +45,7 @@ getSignalHandlers()
         exported_callback<libjami::CallSignal::AudioMuted>(),
         exported_callback<libjami::CallSignal::VideoOrientationChanged>(),
         exported_callback<libjami::CallSignal::ConnectionUpdate>(),
-        exported_callback<libjami::CallSignal::OnConferenceInfosUpdated>(),
+        exported_callback<libjami::CallSignal::ConferenceInfosUpdated>(),
         exported_callback<libjami::CallSignal::RemoteRecordingChanged>(),
         exported_callback<libjami::CallSignal::MediaNegotiationStatus>(),
 

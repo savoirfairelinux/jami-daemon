@@ -225,7 +225,7 @@ install_signal_primitives(void*)
 
     add_handler<libjami::CallSignal::ConnectionUpdate, const std::string&, int>(handlers, "connection-update");
 
-    add_handler<libjami::CallSignal::OnConferenceInfosUpdated,
+    add_handler<libjami::CallSignal::ConferenceInfosUpdated,
                 const std::string&,
                 const std::vector<std::map<std::string, std::string>>&>(handlers, "conference-infos-updated");
 

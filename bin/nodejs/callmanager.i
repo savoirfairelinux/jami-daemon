@@ -42,7 +42,7 @@ public:
     virtual void recordingStateChanged(const std::string& callId, int code){}
     virtual void recordStateChange(const std::string& callId, int state){}
     virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
-    virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
+    virtual void conferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& callId, bool holding){}
     virtual void audioMuted(const std::string& callId, bool muted){}
     virtual void videoMuted(const std::string& callId, bool muted){}
@@ -171,7 +171,7 @@ public:
     virtual void recordingStateChanged(const std::string& callId, int code){}
     virtual void recordStateChange(const std::string& callId, int state){}
     virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
-    virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
+    virtual void conferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& callId, bool holding){}
     virtual void audioMuted(const std::string& callId, bool muted){}
     virtual void videoMuted(const std::string& callId, bool muted){}

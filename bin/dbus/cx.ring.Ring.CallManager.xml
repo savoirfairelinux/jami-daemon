@@ -990,7 +990,7 @@
             <arg type="b" name="videoMuted" />
         </signal>
 
-        <signal name="onConferenceInfosUpdated" tp:name-for-bindings="onConferenceInfosUpdated">
+        <signal name="conferenceInfosUpdated" tp:name-for-bindings="conferenceInfosUpdated">
             <tp:added version="9.5.0"/>
             <arg type="s" name="confId" />
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="VectorMapStringString"/>

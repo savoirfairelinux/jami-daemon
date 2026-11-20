@@ -388,8 +388,8 @@ private:
                    std::bind(&DBusCallManager::emitRecordingStateChanged, this, _1, _2)),
                exportable_serialized_callback<CallSignal::RtcpReportReceived>(
                    std::bind(&DBusCallManager::emitOnRtcpReportReceived, this, _1, _2)),
-               exportable_serialized_callback<CallSignal::OnConferenceInfosUpdated>(
-                   std::bind(&DBusCallManager::emitOnConferenceInfosUpdated, this, _1, _2)),
+               exportable_serialized_callback<CallSignal::ConferenceInfosUpdated>(
+                   std::bind(&DBusCallManager::emitConferenceInfosUpdated, this, _1, _2)),
                exportable_serialized_callback<CallSignal::PeerHold>(
                    std::bind(&DBusCallManager::emitPeerHold, this, _1, _2)),
                exportable_serialized_callback<CallSignal::AudioMuted>(
