@@ -1009,7 +1009,7 @@ externalMediaDemotionFailure(const std::string& accountId, const std::string& ca
 
 void
 conferenceInfosUpdated(const std::string& confId,
-                       const std::vector<std::map<std::string, std::string>>& infos)
+                         const std::vector<std::map<std::string, std::string>>& infos)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([confId, infos]() {
@@ -1184,8 +1184,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&externalMediaPromotionFailure, _1, _2, _3, _4)),
            exportable_callback<CallSignal::ExternalMediaDemotionAccepted>(
                bind(&externalMediaDemotionAccepted, _1, _2, _3, _4)),
-           exportable_callback<CallSignal::ExternalMediaDemotionReady>(
-               bind(&externalMediaDemotionReady, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaDemotionReady>(bind(&externalMediaDemotionReady, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaDemotionFailure>(
                bind(&externalMediaDemotionFailure, _1, _2, _3, _4))};
 

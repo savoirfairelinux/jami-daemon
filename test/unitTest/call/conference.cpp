@@ -616,7 +616,7 @@ ConferenceTest::testBrowserHostedConferenceRetainsLastParticipant()
     auto original = std::dynamic_pointer_cast<SIPCall>(account->getCall(originalId));
     CPPUNIT_ASSERT(original);
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> layoutHandlers;
-    layoutHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
+    layoutHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceInfosUpdated>(
         [this, peerCallId](const std::string& callId,
                            const std::vector<std::map<std::string, std::string>>& participants) {
             if (callId != peerCallId)
