@@ -21,6 +21,8 @@
 #include "audio/audiolayer.h"
 #include <AudioToolbox/AudioToolbox.h>
 
+#include <memory>
+
 #define checkErr(err) \
     if (err) { \
         JAMI_ERROR("CoreAudio Error: {}", static_cast<long>(err)); \
@@ -88,6 +90,8 @@ public:
     virtual void startStream(AudioDeviceType stream);
 
     void destroyAudioLayer();
+    void disposeAudioUnit();
+    void handleRouteChange();
 
     /**
      * Stop the playback and capture streams.
@@ -144,8 +148,12 @@ private:
      */
     int indexRing_;
 
-    AudioUnit ioUnit_;
+    AudioUnit ioUnit_ {nullptr};
     bool inputEnabled_ {false};
+    const void* routeChangeObserver_ {nullptr};
+    // Cleared on the audio queue when the layer is destroyed, so a route
+    // change delivered late does not reach it.
+    std::shared_ptr<bool> alive_ {std::make_shared<bool>(true)};
 
     Float64 inSampleRate_;
     UInt32 inChannelsPerFrame_;
