@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff48cf6b_34b95b63",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 862,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T19:40:51Z",
+      "side": 1,
+      "message": "[error] Line 862: 🔴 `ensureBundleDtlsContext` now enqueues the DTLS handshake onto `ThreadPool::io()` and then blocks waiting on `dtlsCv_`. This can deadlock when the caller itself is already running on the IO pool (which happens via `ExternalMediaConference::startMedia`), especially with a single/saturated IO worker: the waiting thread consumes the worker that must execute the queued handshake. Please avoid scheduling-and-waiting on the same pool (run negotiation inline when already on an IO worker, or dispatch to a different pool/thread) so progress is guaranteed.",
+      "revId": "c34e3ba7d94ac750e55c231cab9659d7d60a3ca2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
