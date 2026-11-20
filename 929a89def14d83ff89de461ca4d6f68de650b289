@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a341eba_150dbdf4",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 611,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T19:52:57Z",
+      "side": 1,
+      "message": "[error] Line 611: 🔴 In the `AUDIO_VIDEO` branch, `requestId` is used both as the promotion transaction ID and as the lookup key for `externalMediaHosts()-\u003ereadyHost({accountId, requestId})`. That couples two different identities and can make valid video-promotable calls fail whenever the client uses a fresh promotion request ID (which is the normal API pattern). Keep `requestId` for promotion signaling only, and resolve the conference/host via a distinct identifier (or derive it from call/conversation context) before calling `promoteExternalMedia`.",
+      "revId": "929a89def14d83ff89de461ca4d6f68de650b289",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecb77361_31cee53f",
+        "filename": "test/unitTest/call/external_media_call.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 434,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T19:52:57Z",
+      "side": 1,
+      "message": "[warning] Line 434: 🟡 The new video-promotion test validates behavior by calling `aliceCall-\u003epromoteExternalMedia(\"promote\", conference)` directly, which bypasses `libjami::requestExternalMediaPromotion(...)`. This leaves the public API path (including host lookup and request-id wiring) untested, so regressions in the exported interface can slip through. Add a test that exercises `requestExternalMediaPromotion` for an `AUDIO_VIDEO` call through the public API.",
+      "revId": "929a89def14d83ff89de461ca4d6f68de650b289",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
