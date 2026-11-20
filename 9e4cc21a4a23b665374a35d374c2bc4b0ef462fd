@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6c8af73_294bb18e",
+        "filename": "src/sip/sipcall_external_media.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-20T19:35:21Z",
+      "side": 1,
+      "message": "[error] Line 159: 🔴 `ExternalMediaDemotionReady` is emitted while `callMutex_` is still held in `completeExternalMediaDemotion()`. Signal dispatch is synchronous, so a client callback that re-enters call APIs can block on the same mutex and deadlock the call thread. Capture the data under lock, release `callMutex_`, then emit the signal outside the critical section (same pattern as promotion ready/failure reporting).",
+      "revId": "9e4cc21a4a23b665374a35d374c2bc4b0ef462fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
