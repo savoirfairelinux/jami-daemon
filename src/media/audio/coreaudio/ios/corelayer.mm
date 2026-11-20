@@ -69,10 +69,24 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexRing_(pref.getAlsaCardRingtone())
 {
      audioConfigurationQueue = dispatch_queue_create("com.savoirfairelinux.audioConfigurationQueueIOS", DISPATCH_QUEUE_SERIAL);
+    id observer = [[NSNotificationCenter defaultCenter]
+        addObserverForName:AVAudioSessionRouteChangeNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification*) {
+                    dispatch_async(audioConfigurationQueueIOS(), ^{
+                        handleRouteChange();
+                    });
+                }];
+    routeChangeObserver_ = CFBridgingRetain(observer);
 }
 
 CoreLayer::~CoreLayer()
 {
+    if (routeChangeObserver_) {
+        [[NSNotificationCenter defaultCenter] removeObserver:(__bridge id) routeChangeObserver_];
+        CFRelease(routeChangeObserver_);
+    }
     dispatch_sync(audioConfigurationQueueIOS(), ^{
         if (status_ != Status::Started)
             return;
@@ -343,13 +357,43 @@ CoreLayer::startStream(AudioDeviceType stream)
 }
 
 void
-CoreLayer::destroyAudioLayer()
+CoreLayer::disposeAudioUnit()
 {
-    JAMI_DEBUG("iOS CoreLayer - destroy Audio layer");
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
+}
+
+void
+CoreLayer::destroyAudioLayer()
+{
+    JAMI_DEBUG("iOS CoreLayer - destroy Audio layer");
+    disposeAudioUnit();
     [[AVAudioSession sharedInstance] setActive: false withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: nil];
+}
+
+// The unit's formats are set from the hardware when it is initialized, so a
+// route with another sample rate (Bluetooth HFP runs at 16 kHz) needs the unit
+// set up again. The session and its routing are left untouched.
+void
+CoreLayer::handleRouteChange()
+{
+    if (status_ != Status::Started)
+        return;
+    Float64 hardwareRate = [AVAudioSession sharedInstance].sampleRate;
+    if (hardwareRate <= 0
+        || (hardwareRate == outSampleRate_ && (!inputEnabled_ || hardwareRate == inSampleRate_)))
+        return;
+    JAMI_LOG("iOS CoreLayer - hardware sample rate changed from {} to {}, reinitializing audio unit",
+             outSampleRate_,
+             hardwareRate);
+    auto stream = inputEnabled_ ? AudioDeviceType::ALL : AudioDeviceType::PLAYBACK;
+    disposeAudioUnit();
+    if (!initAudioLayerIO(stream) || AudioUnitInitialize(ioUnit_) || AudioOutputUnitStart(ioUnit_)) {
+        JAMI_ERROR("iOS CoreLayer - unable to restart audio unit at {} Hz", hardwareRate);
+        destroyAudioLayer();
+        status_ = Status::Idle;
+    }
 }
 
 void
