@@ -126,7 +126,7 @@ std::vector<unsigned> getActiveCodecList(const std::string& accountID);
 bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password);
 
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
-bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
+bool revokeDevice(const std::string& accountId, const std::string& deviceId, const std::string& scheme, const std::string& password);
 
 uint32_t addDevice(const std::string& accountId, const std::string& uri);
 bool cancelAddDevice(const std::string& accountId, uint32_t op_id);
