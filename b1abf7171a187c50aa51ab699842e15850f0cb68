@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21287e1c_e1af9b78",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 1
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-23T21:20:34Z",
+      "side": 1,
+      "message": "[warning] Line 175: 🟡 `inputEnabled_` is assigned before `setupInputBus()` completes. If input-bus setup fails (or aborts partway through), the state can report input as enabled even though the bus is not actually configured, which then affects `startStream`/`stopStream` decisions. Set `inputEnabled_ \u003d true` only after successful `setupInputBus()`, and ensure it is reset to `false` in teardown (`destroyAudioLayer`).",
+      "revId": "b1abf7171a187c50aa51ab699842e15850f0cb68",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
