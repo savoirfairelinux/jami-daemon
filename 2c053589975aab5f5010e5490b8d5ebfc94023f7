@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6a8d1db3_944b42f8",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 1
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-23T21:21:43Z",
+      "side": 1,
+      "message": "[error] Line 389: 🔴 `handleRouteChange()` disposes the current `ioUnit_` before attempting re-init, and on failure it calls `destroyAudioLayer()`, which disposes `ioUnit_` again unconditionally. If `initAudioLayerIO(stream)` fails, this is a second dispose on an invalid/stale `AudioUnit` handle and can lead to undefined behavior/crash. Make disposal idempotent: guard `disposeAudioUnit()` with `if (ioUnit_)`, reset `ioUnit_ \u003d nullptr` after dispose, and avoid the second dispose path when re-init failed before a new unit was created (or split teardown for session deactivation vs unit disposal).",
+      "revId": "2c053589975aab5f5010e5490b8d5ebfc94023f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
