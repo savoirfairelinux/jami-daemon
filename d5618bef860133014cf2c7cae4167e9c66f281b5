@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61aa26bb_75208663",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-23T16:58:47Z",
+      "side": 1,
+      "message": "[error] Line 157: 🔴 The constructor now unconditionally schedules `channel-\u003eshutdown()` in the `!is_regular_file` / `!stream_.is_open()` error paths, but `channel_` can be null (for example `OutgoingFile(nullptr, ...)` is valid in tests). That can dereference a null pointer on the IO thread and crash. Add a guard (`if (channel_)`) before scheduling, or null-check the captured pointer inside the lambda in both branches.",
+      "revId": "d5618bef860133014cf2c7cae4167e9c66f281b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
