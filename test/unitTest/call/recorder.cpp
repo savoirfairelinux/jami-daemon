@@ -29,6 +29,7 @@
 #include "jami.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "media/media_player.h"
 #include "media_const.h"
 #include "client/videomanager.h"
 
