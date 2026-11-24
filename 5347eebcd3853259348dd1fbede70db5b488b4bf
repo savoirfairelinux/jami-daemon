@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb9744c5_1abd6643",
+        "filename": "src/jamidht/circle_service.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1450,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:58:52Z",
+      "side": 1,
+      "message": "[warning] Line 1450: 🟡 On clone failure in `acceptRequest`, cleanup uses `std::filesystem::remove(shared-\u003eroot_ / circle, error)`, which only removes empty directories. Partial clone artifacts can remain, causing repeated accept attempts to fail or reuse stale state. Use `remove_all` for this path (as done elsewhere in the service) to guarantee cleanup of non-empty clone directories.",
+      "revId": "5347eebcd3853259348dd1fbede70db5b488b4bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
