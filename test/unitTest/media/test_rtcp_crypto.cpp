@@ -19,6 +19,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -37,6 +38,7 @@ extern "C" {
 
 #include "media/media_io_handle.h"
 #include "media/socket_pair.h"
+#include "media/transport_cc.h"
 #include "test_runner.h"
 
 namespace jami {
@@ -106,6 +108,18 @@ private:
     int fd_ {-1};
     uint16_t port_ {};
 };
+
+std::vector<uint8_t>
+createTransportCcFeedback()
+{
+    TransportCcFeedback feedback;
+    feedback.senderSsrc = 0x11223344;
+    feedback.mediaSsrc = 0x55667788;
+    feedback.baseSequenceNumber = 1;
+    feedback.referenceTime = 0x345678;
+    feedback.packets = {{1, TransportCcPacketStatus::SmallDelta, 12}};
+    return createTransportCcFeedbackPacket(feedback);
+}
 
 uint16_t
 reserveEphemeralPort()
@@ -203,6 +217,7 @@ private:
     void genericNackRetransmitsRtp();
     void missingNackPacketRequestsKeyframe();
     void stoppedReadIsCancelled();
+    void rtcpWaitWakesOncePerReport();
 
     CPPUNIT_TEST_SUITE(RtcpCryptoTest);
     CPPUNIT_TEST(srtcpRoundTripProtectsRtcpPackets);
@@ -217,6 +232,7 @@ private:
     CPPUNIT_TEST(genericNackRetransmitsRtp);
     CPPUNIT_TEST(missingNackPacketRequestsKeyframe);
     CPPUNIT_TEST(stoppedReadIsCancelled);
+    CPPUNIT_TEST(rtcpWaitWakesOncePerReport);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -613,6 +629,37 @@ RtcpCryptoTest::stoppedReadIsCancelled()
                          avio_read_partial(ioHandle->getContext(),
                                            buffer.data(),
                                            static_cast<int>(buffer.size())));
+}
+
+void
+RtcpCryptoTest::rtcpWaitWakesOncePerReport()
+{
+    const std::vector<std::vector<uint8_t>> reports {
+        {0x8f, 206,  0x00, 0x05, 0x11, 0x22, 0x33, 0x44, 0x00, 0x00, 0x00, 0x00,
+         'R',  'E',  'M',  'B',  0x01, 0x00, 0x00, 0x00, 0x55, 0x66, 0x77, 0x88},
+        {0x81, 201,  0x00, 0x07, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x00, 0x00, 0x00, 0x00,
+         0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        createTransportCcFeedback(),
+    };
+
+    for (const auto& report : reports) {
+        UdpSocket remote;
+
+        const auto localRtcpPort = reserveEphemeralPort();
+        const dhtnet::IpAddr destination {fmt::format("127.0.0.1:{}", remote.port())};
+
+        SocketPair socketPair(destination, destination, reserveEphemeralPort(), localRtcpPort);
+        socketPair.setReadBlockingMode(true);
+
+        remote.sendTo(localRtcpPort, report);
+
+        std::unique_ptr<MediaIOHandle> ioHandle {socketPair.createIOContext(1500)};
+        std::vector<uint8_t> buffer(2048);
+        CPPUNIT_ASSERT(avio_read_partial(ioHandle->getContext(), buffer.data(), static_cast<int>(buffer.size())) > 0);
+
+        CPPUNIT_ASSERT(socketPair.waitForRTCP(std::chrono::milliseconds(10)));
+        CPPUNIT_ASSERT(!socketPair.waitForRTCP(std::chrono::milliseconds(10)));
+    }
 }
 
 } // namespace test

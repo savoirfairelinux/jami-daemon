@@ -908,10 +908,11 @@ bool
 SocketPair::waitForRTCP(std::chrono::milliseconds interval)
 {
     std::unique_lock lock(rtcpInfo_mutex_);
-    return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
-        return packetState_->interrupted or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty()
-               or not listRtcpTransportCc_.empty();
+    auto received = cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
+        return packetState_->interrupted or rtcpReceivedSinceLastWait_;
     });
+    rtcpReceivedSinceLastWait_ = false;
+    return received;
 }
 
 void
@@ -931,6 +932,7 @@ SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpRRHeader_.emplace_back(*header);
+    rtcpReceivedSinceLastWait_ = true;
 
     cvRtcpPacketReadyToRead_.notify_one();
 }
@@ -955,6 +957,7 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpREMBHeader_.push_back(*header);
+    rtcpReceivedSinceLastWait_ = true;
 
     cvRtcpPacketReadyToRead_.notify_one();
 }
@@ -980,6 +983,7 @@ SocketPair::saveRtcpTransportCcPacket(uint8_t* buf, size_t len)
             listRtcpTransportCcReports_.pop_front();
         listRtcpTransportCcReports_.push_back(std::move(*report));
     }
+    rtcpReceivedSinceLastWait_ = true;
 
     cvRtcpPacketReadyToRead_.notify_one();
 }
