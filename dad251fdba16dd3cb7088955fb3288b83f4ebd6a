@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70ce80b6_c12c95a6",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 3
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T14:36:55Z",
+      "side": 1,
+      "message": "[warning] Line 158: 🟡 `isSessionConfiguredByClient()` infers client ownership from `PlayAndRecord` alone, but this category can remain after this layer’s own capture session (`destroyAudioLayer` deactivates the session but does not restore category). That creates a false positive on later playback-only starts, skipping category/mode/options setup and changing non-call behavior. Track ownership explicitly (e.g., a flag set only when client ownership is known, or when this layer set the category) and only skip `setCategory` when that ownership signal is true.",
+      "revId": "dad251fdba16dd3cb7088955fb3288b83f4ebd6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
