@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6bbd857_ddb8e3e0",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 847,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:26:27Z",
+      "side": 1,
+      "message": "[error] Line 847: 🔴 **Blocking:** `if (!supportsMobileLeases) return` exits response handling for all pre-v3 peers, including non-conversation swarms. This unintentionally drops legacy `response.mobile_nodes` ingestion that was previously allowed outside conversation-scoped mode. It broadens behavior change beyond the stated scope (conversation swarms) and can break mixed-version interoperability. **Fix:** gate this return by conversation scope (e.g., only reject when `!conversationId_.empty()`), or keep processing legacy `mobile_nodes` for non-conversation swarms while still enforcing signed leases for conversation swarms.",
+      "revId": "7ed8f36a5ae22b7e10c40427aa871b564902adfb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
