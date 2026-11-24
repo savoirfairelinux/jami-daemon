@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "292ff96e_04902a50",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 896,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T22:44:22Z",
+      "side": 1,
+      "message": "[error] Line 896: 🔴 The handshake worker thread is started before `dtlsSrtpSession_` is emplaced, but the worker writes through `bundleContext-\u003edtlsSrtpSession_-\u003econtext`. This is a race that can dereference an empty `std::optional` (undefined behavior / crash) under scheduling pressure. Create/emplace the session before launching the thread (or pass/capture the session directly in the task and publish it atomically afterward) so the worker never observes an uninitialized optional.",
+      "revId": "9f86112367e5e6d9ddae0467e624bc5ca9f38220",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
