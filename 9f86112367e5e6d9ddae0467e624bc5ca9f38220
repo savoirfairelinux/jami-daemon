@@ -16,6 +16,24 @@
       "message": "[error] Line 896: 🔴 The handshake worker thread is started before `dtlsSrtpSession_` is emplaced, but the worker writes through `bundleContext-\u003edtlsSrtpSession_-\u003econtext`. This is a race that can dereference an empty `std::optional` (undefined behavior / crash) under scheduling pressure. Create/emplace the session before launching the thread (or pass/capture the session directly in the task and publish it atomically afterward) so the worker never observes an uninitialized optional.",
       "revId": "9f86112367e5e6d9ddae0467e624bc5ca9f38220",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ca1dd3a_e4d0e61d",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 896,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-24T23:03:51Z",
+      "side": 1,
+      "message": "There’s no race: the caller holds dtlsMutex_ through emplace(), and the worker must acquire that same mutex before dereferencing dtlsSrtpSession_.",
+      "parentUuid": "292ff96e_04902a50",
+      "revId": "9f86112367e5e6d9ddae0467e624bc5ca9f38220",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
