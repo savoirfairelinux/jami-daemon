@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee6b7b58_ac168857",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 877,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T16:51:14Z",
+      "side": 1,
+      "message": "[warning] Line 877: 🟡 **Repository-tip discovery may not initialize for already-connected links.** `onRepositoryTip()` only stores callbacks; it does not backfill/mark existing channels for offers. If this hook is registered after links are up, those links may never receive an initial `have` until reconnect or another path touches `repositoryLinks_`. Consider seeding current links into `repositoryLinks_` and scheduling offers when enabling repository-tip handling.",
+      "revId": "915baa5b6d0ccc8f440f91674c6a2dfd298a3fe0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffd43c52_c1ee59fe",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 947,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T16:51:14Z",
+      "side": 1,
+      "message": "[warning] Line 947: 🟡 **Repeated same-tip offers can get permanently ignored after two transient failures.** `onRepositoryMessage()` drops `have` when it equals `link.wanted`, and `repositoryFetchDone()` only retries once (`retried`). After the second failure, `wanted` stays at that tip, so later re-offers of the same tip won’t trigger another fetch. This can leave peers stuck until a newer tip appears. Consider clearing `wanted/requested` (or allowing same-tip reattempts with backoff) when terminal failure is reached.",
+      "revId": "915baa5b6d0ccc8f440f91674c6a2dfd298a3fe0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
