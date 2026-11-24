@@ -19,6 +19,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <atomic>
 #include <condition_variable>
 #include <msgpack.hpp>
 #include <filesystem>
@@ -424,13 +425,16 @@ BootstrapTest::testKeepTrackingOnlyPeer()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto bobUri = bobAccount->getUsername();
 
-    unsigned aliceFailures = 0;
-    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-        aliceData.bootstrap = status;
-        if (status == Conversation::BootstrapStatus::FAILED)
-            ++aliceFailures;
-        cv.notify_one();
-    });
+    // Shared, because the callback can still report a failure after the test
+    // returned: tearing down the accounts aborts pending connection attempts.
+    auto aliceFailures = std::make_shared<std::atomic_uint>(0);
+    aliceAccount->convModule()->onBootstrapStatus(
+        [&, aliceFailures](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            aliceData.bootstrap = status;
+            if (status == Conversation::BootstrapStatus::FAILED)
+                ++*aliceFailures;
+            cv.notify_one();
+        });
 
     std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
@@ -450,8 +454,8 @@ BootstrapTest::testKeepTrackingOnlyPeer()
     // reports his device right away, a device the swarm manager already
     // knows: that must still be retried, hence a second failure.
     Manager::instance().sendRegister(bobData.accountId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return aliceFailures >= 1; }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 90s, [&]() { return aliceFailures >= 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return *aliceFailures >= 1; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 90s, [&]() { return *aliceFailures >= 2; }));
 
     // Every device Alice knows of Bob failed, but he is the only other member:
     // rotating away from him would leave nobody to watch.
