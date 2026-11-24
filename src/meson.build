@@ -36,6 +36,8 @@ libjami_sources = files(
     'jamidht/swarm_certificate.cpp',
     'jamidht/swarm_history.cpp',
     'jamidht/swarm_membership.cpp',
+    'jamidht/circle_policy.cpp',
+    'jamidht/circle_record.cpp',
     'jamidht/jamiaccount.cpp',
     'jamidht/jamiaccount_config.cpp',
     'jamidht/message_channel_handler.cpp',

@@ -1041,6 +1041,17 @@ if(NOT MSVC)
 
         add_test_executable(bootstrap test/unitTest/swarm/bootstrap.cpp)
         add_test_executable(conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
+        add_executable(ut_circle_policy
+            test/unitTest/conversation/circle_policy.cpp
+            src/jamidht/circle_policy.cpp
+            src/jamidht/circle_record.cpp
+        )
+        target_include_directories(ut_circle_policy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_link_libraries(ut_circle_policy PRIVATE PkgConfig::Cppunit PkgConfig::jsoncpp)
+        if(ENABLE_COVERAGE)
+            setup_target_for_coverage(ut_circle_policy)
+        endif()
+        add_test(NAME circle_policy COMMAND ut_circle_policy)
         add_test_executable(simulation test/unitTest/simulation/simulation.cpp)
         add_test_executable(revoke test/unitTest/revoke/revoke.cpp)
         add_test_executable(trust test/unitTest/trust/trust.cpp)

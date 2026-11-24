@@ -321,6 +321,18 @@ test(
     timeout: 1800,
 )
 
+ut_circle_policy = executable(
+    'ut_circle_policy',
+    sources: files(
+        'unitTest/conversation/circle_policy.cpp',
+        '../src/jamidht/circle_policy.cpp',
+        '../src/jamidht/circle_record.cpp',
+    ),
+    include_directories: include_directories('../src'),
+    dependencies: [depcppunit, depjsoncpp],
+)
+test('circle_policy', ut_circle_policy)
+
 ut_commit_message = executable(
     'ut_commit_message',
     sources: files('unitTest/conversation/commit_message.cpp'),
