@@ -23,3 +23,5 @@ Open only the records relevant to your task. Authoring rules:
 | [ADR-012](ADR-012-explicit-swarm-permissions.md) | Make Swarm Permissions Explicit | Accepted | Contemporary | 2026-10 |
 | [ADR-013](ADR-013-retain-feed-invitations-after-leaving.md) | Retain Feed Invitations after Leaving | Accepted | Contemporary | 2026-11-11 |
 | [ADR-014](ADR-014-circle-owned-channel-policy.md) | Circle-Owned Channel Policy | Accepted | Contemporary | 2026-10-22 |
+| [ADR-015](ADR-015-signed-circle-history.md) | Signed Circle History | Accepted | Contemporary | 2026-10-22 |
+| [ADR-016](ADR-016-policy-bound-channel-history.md) | Policy-Bound Channel History | Accepted | Contemporary | 2026-10-23 |
