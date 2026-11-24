@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac06351f_138a0a5d",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 389,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T17:31:48Z",
+      "side": 1,
+      "message": "[warning] Line 389: 🟡 This changes externally observable behavior (normal conference teardown no longer emits `ExternalMediaConferenceHostFailure`) but the patch adds no regression coverage. Add/extend a callmanager signal test that verifies: (1) normal closure emits `ExternalMediaConferenceHostClosed(accountId, requestId, confId)`, and (2) `ExternalMediaConferenceHostFailure` is reserved for actual media errors only.",
+      "revId": "ba971b8b99fe2f3e69eb7f3eb16251a09793a890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
