@@ -552,7 +552,7 @@ CollabTest::testRetiredAnnouncementRejectsClone()
         if (!destination.fetch(device))
             return;
         const auto merged = destination.mergeHistory(device);
-        *retired = std::any_of(merged.begin(), merged.end(), [&](const auto& commit) {
+        *retired = std::any_of(merged.commits.begin(), merged.commits.end(), [&](const auto& commit) {
             return commit.at("id") == removal;
         });
     });

@@ -325,7 +325,7 @@ public:
     std::string diffStats(const std::string& newId, const std::string& oldId) const;
     std::string diffStats(const GitDiff& diff) const;
 
-    std::vector<ConversationCommit> behind(const std::string& from) const;
+    std::optional<std::vector<ConversationCommit>> behind(const std::string& from) const;
     void forEachCommit(PreConditionCb&& preCondition,
                        std::function<void(ConversationCommit&&)>&& emplaceCb,
                        PostConditionCb&& postCondition,
@@ -2438,7 +2438,7 @@ ConversationRepository::Impl::diff(git_repository* repo, const std::string& idNe
     return GitDiff(diff_ptr);
 }
 
-std::vector<ConversationCommit>
+std::optional<std::vector<ConversationCommit>>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
     // Equivalent of `git log HEAD..from`: every commit reachable from `from` that is not
@@ -2449,8 +2449,8 @@ ConversationRepository::Impl::behind(const std::string& from) const
     auto repo = repository();
     if (!repo)
         return {};
-    if (git_reference_name_to_id(&oid_head, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("Unable to get reference for HEAD");
+    if (git_reference_name_to_id(&oid_head, repo.get(), "refs/heads/main") < 0) {
+        JAMI_ERROR("Unable to get reference for main");
         return {};
     }
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
@@ -2464,27 +2464,32 @@ ConversationRepository::Impl::behind(const std::string& from) const
         return {};
     }
     GitRevWalker walker {walker_ptr};
-    if (git_revwalk_push(walker.get(), &oid_remote) < 0 || git_revwalk_hide(walker.get(), &oid_head) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to walk from {} to HEAD", accountId_, id_, from);
+    if (git_revwalk_push(walker.get(), &oid_remote) < 0 || git_revwalk_hide(walker.get(), &oid_head) < 0
+        || git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to walk from {} to main", accountId_, id_, from);
         return {};
     }
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
     std::vector<ConversationCommit> commits;
     git_oid oid;
-    while (!git_revwalk_next(&oid, walker.get())) {
+    int error;
+    while ((error = git_revwalk_next(&oid, walker.get())) == 0) {
         git_commit* commit_ptr = nullptr;
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}",
                          accountId_,
                          id_,
                          git_oid_tostr_s(&oid));
-            break;
+            return std::nullopt;
         }
         GitCommit commit {commit_ptr};
         if (!commits.empty())
             commits.back().linearized_parent = git_oid_tostr_s(&oid);
         commits.emplace_back(parseCommit(repo.get(), commit.get()));
+    }
+    if (error != GIT_ITEROVER) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Incomplete history walk from {}: {}", accountId_, id_, from, error);
+        return std::nullopt;
     }
     return commits;
 }
@@ -3279,10 +3284,9 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
         auto validUserAtCommit = commit.id;
 
         git_oid oid;
-        git_commit* commit_ptr = nullptr;
-        if (git_oid_fromstr(&oid, validUserAtCommit.c_str()) < 0
-            || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_WARNING("Failed to look up commit {}", validUserAtCommit.c_str());
+        if (git_oid_fromstr(&oid, commit.id.c_str()) < 0) {
+            JAMI_WARNING("Invalid commit id {}", commit.id);
+            return false;
         }
         GitBuf sig(new git_buf {});
         GitBuf sig_data(new git_buf {});
@@ -4005,38 +4009,58 @@ ConversationRepository::repack(const std::filesystem::path& path, std::size_t ma
     return removed;
 }
 
-std::vector<std::map<std::string, std::string>>
-ConversationRepository::mergeHistory(const std::string& uri,
-                                     std::function<void(const std::string&)>&& disconnectFromPeerCb)
+MergeHistoryResult
+ConversationRepository::mergeHistory(const std::string& remoteDevice,
+                                      std::function<void(const std::string&)>&& disconnectFromPeerCb,
+                                      std::string_view hint)
 {
-    auto remoteHeadRes = remoteHead(uri);
+    std::unique_lock lkOp(pimpl_->opMtx_);
+    const auto remoteHeadRes = remoteHead(remoteDevice);
     if (remoteHeadRes.empty()) {
-        JAMI_WARNING("[Account {}] [Conversation {}] Unable to get HEAD of {}", pimpl_->accountId_, pimpl_->id_, uri);
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to get HEAD of {}",
+                     pimpl_->accountId_,
+                     pimpl_->id_,
+                     remoteDevice);
         return {};
     }
 
-    // Validate commit
-    auto [newCommits, err] = validFetch(uri);
-    if (newCommits.empty()) {
-        if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
-                       pimpl_->accountId_,
-                       pimpl_->id_,
-                       uri);
-        removeBranchWith(uri);
+    auto incoming = pimpl_->behind(remoteHeadRes);
+    if (incoming)
+        std::reverse(incoming->begin(), incoming->end());
+    if (!incoming || !pimpl_->validCommits(*incoming)) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
+                   pimpl_->accountId_,
+                   pimpl_->id_,
+                   remoteDevice);
+        lkOp.unlock();
+        removeBranchWith(remoteDevice);
         return {};
     }
+    auto& newCommits = *incoming;
+    if (newCommits.empty())
+        return {MergeOutcome::UP_TO_DATE};
 
-    // If validated, merge
-    auto [ok, cid] = merge(remoteHeadRes);
-    if (!ok) {
+    const bool onlyMerges = std::all_of(newCommits.begin(), newCommits.end(), [](const auto& commit) {
+        return commit.parents.size() > 1;
+    });
+    const bool receivedHint = !hint.empty() && std::any_of(newCommits.begin(), newCommits.end(), [hint](const auto& commit) {
+        return commit.id == hint;
+    });
+
+    auto [outcome, cid] = mergeLocked(remoteHeadRes, false, onlyMerges);
+    if (outcome == MergeOutcome::FAILED) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge history with {}",
                    pimpl_->accountId_,
                    pimpl_->id_,
-                   uri);
-        removeBranchWith(uri);
+                   remoteDevice);
+        lkOp.unlock();
+        removeBranchWith(remoteDevice);
         return {};
     }
+    if (outcome == MergeOutcome::REDUNDANT || outcome == MergeOutcome::UP_TO_DATE)
+        return {outcome, {}, receivedHint};
+    lkOp.unlock();
+
     if (!cid.empty()) {
         // A merge commit was generated, should be added in new commits
         auto commit = getCommit(cid);
@@ -4044,18 +4068,21 @@ ConversationRepository::mergeHistory(const std::string& uri,
             newCommits.emplace_back(*commit);
     }
 
-    JAMI_LOG("[Account {}] [Conversation {}] Successfully merged history with {}", pimpl_->accountId_, pimpl_->id_, uri);
+    JAMI_LOG("[Account {}] [Conversation {}] Successfully merged history with {}",
+             pimpl_->accountId_,
+             pimpl_->id_,
+             remoteDevice);
     auto result = convCommitsToMap(newCommits);
     for (auto& commit : result) {
         auto it = commit.find(CommitKey::TYPE);
         if (it != commit.end() && it->second == CommitType::MEMBER) {
             refreshMembers();
 
-            if (commit[CommitKey::ACTION] == CommitAction::BAN)
+            if (commit[CommitKey::ACTION] == CommitAction::BAN && disconnectFromPeerCb)
                 disconnectFromPeerCb(commit[CommitKey::URI]);
         }
     }
-    return result;
+    return {outcome, std::move(result), receivedHint};
 }
 
 std::string
@@ -4184,6 +4211,22 @@ ConversationRepository::hasCommit(const std::string& commitId) const
     return pimpl_->hasCommit(commitId);
 }
 
+bool
+ConversationRepository::hasCommitInHistory(const std::string& commitId) const
+{
+    git_oid oid, head;
+    auto repo = pimpl_->repository();
+    if (!repo || git_oid_fromstr(&oid, commitId.c_str()) < 0
+        || git_reference_name_to_id(&head, repo.get(), "refs/heads/main") < 0)
+        return false;
+    // Most hints name a commit we have not downloaded yet. Avoid an ancestry walk for those.
+    git_commit* commit = nullptr;
+    if (git_commit_lookup(&commit, repo.get(), &oid) < 0)
+        return false;
+    GitCommit target {commit};
+    return git_oid_equal(&head, &oid) || git_graph_descendant_of(repo.get(), &head, &oid) == 1;
+}
+
 std::optional<ConversationCommit>
 ConversationRepository::getCommit(const std::string& commitId) const
 {
@@ -4194,12 +4237,19 @@ std::pair<bool, std::string>
 ConversationRepository::merge(const std::string& merge_id, bool force)
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
+    auto [outcome, commit] = mergeLocked(merge_id, force, false);
+    return {outcome != MergeOutcome::FAILED, std::move(commit)};
+}
+
+std::pair<MergeOutcome, std::string>
+ConversationRepository::mergeLocked(const std::string& merge_id, bool force, bool onlyMerges)
+{
     pimpl_->resetHard();
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
     if (!repo) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge without repo", pimpl_->accountId_, pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     int state = git_repository_state(repo.get());
     if (state != GIT_REPOSITORY_STATE_NONE) {
@@ -4210,7 +4260,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                        pimpl_->accountId_,
                        pimpl_->id_,
                        state);
-            return {false, ""};
+            return {MergeOutcome::FAILED, {}};
         }
     }
     // Checkout main (to do a `git_merge branch`)
@@ -4218,7 +4268,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
         JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: unable to checkout main branch",
                    pimpl_->accountId_,
                    pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
 
     // Then check that merge_id exists
@@ -4228,7 +4278,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                    pimpl_->accountId_,
                    pimpl_->id_,
                    merge_id);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
@@ -4236,7 +4286,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                    pimpl_->accountId_,
                    pimpl_->id_,
                    merge_id);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     GitAnnotatedCommit annotated {annotated_ptr};
 
@@ -4248,15 +4298,36 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
         JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: repository analysis failed",
                    pimpl_->accountId_,
                    pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
 
     // Handle easy merges
     if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
         JAMI_LOG("Already up-to-date");
-        return {true, ""};
-    } else if (analysis & GIT_MERGE_ANALYSIS_UNBORN
-               || (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD && !(preference & GIT_MERGE_PREFERENCE_NO_FASTFORWARD))) {
+        return {MergeOutcome::UP_TO_DATE, {}};
+    }
+
+    bool sameTree = false;
+    if (onlyMerges && !(analysis & GIT_MERGE_ANALYSIS_UNBORN)) {
+        const auto localTree = pimpl_->treeAtCommit(repo.get(), getHead());
+        const auto remoteTree = pimpl_->treeAtCommit(repo.get(), merge_id);
+        if (!localTree || !remoteTree)
+            return {MergeOutcome::FAILED, {}};
+        sameTree = git_oid_equal(git_tree_id(localTree.get()), git_tree_id(remoteTree.get()));
+        // The peer added no conversation commits or tree changes. Joining the two
+        // histories would only give the peer another divergent merge to fetch.
+        if (sameTree && !(analysis & GIT_MERGE_ANALYSIS_FASTFORWARD)) {
+            JAMI_DEBUG("[Account {}] [Conversation {}] Keeping main instead of merging redundant tip {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       merge_id);
+            return {MergeOutcome::REDUNDANT, {}};
+        }
+    }
+
+    if (analysis & GIT_MERGE_ANALYSIS_UNBORN
+        || (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD
+            && (sameTree || !(preference & GIT_MERGE_PREFERENCE_NO_FASTFORWARD)))) {
         if (analysis & GIT_MERGE_ANALYSIS_UNBORN)
             JAMI_LOG("[Account {}] [Conversation {}] Merge analysis result: Unborn", pimpl_->accountId_, pimpl_->id_);
         else
@@ -4272,34 +4343,34 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                            pimpl_->accountId_,
                            pimpl_->id_,
                            err->message);
-            return {false, ""};
+            return {MergeOutcome::FAILED, {}};
         }
-        return {true, ""}; // fast forward so no commit generated;
+        return {sameTree ? MergeOutcome::STRUCTURAL : MergeOutcome::UPDATED, {}};
     }
 
     if (!pimpl_->validateDevice() && !force) {
         JAMI_ERROR("[Account {}] [Conversation {}] Invalid device. Not migrated?", pimpl_->accountId_, pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
 
     // Else we want to check for conflicts
     git_oid head_commit_id;
     if (git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", pimpl_->accountId_, pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo.get(), &head_commit_id) < 0) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit", pimpl_->accountId_, pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     GitCommit head_commit {head_ptr};
 
     git_commit* other__ptr = nullptr;
     if (git_commit_lookup(&other__ptr, repo.get(), &commit_id) < 0) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit", pimpl_->accountId_, pimpl_->id_);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     GitCommit other_commit {other__ptr};
 
@@ -4314,20 +4385,21 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                        pimpl_->accountId_,
                        pimpl_->id_,
                        err->message);
-        return {false, ""};
+        return {MergeOutcome::FAILED, {}};
     }
     GitIndex index {index_ptr};
     if (git_index_has_conflicts(index.get())) {
         JAMI_LOG("Some conflicts were detected during the merge operations. Resolution phase.");
         if (!pimpl_->resolveConflicts(index.get(), merge_id) or !git_add_all(repo.get())) {
             JAMI_ERROR("Merge operation aborted; Unable to automatically resolve conflicts");
-            return {false, ""};
+            return {MergeOutcome::FAILED, {}};
         }
     }
     auto result = pimpl_->createMergeCommit(index.get(), merge_id);
     JAMI_LOG("Merge done between {} and main", merge_id);
 
-    return {!result.empty(), result};
+    const auto outcome = result.empty() ? MergeOutcome::FAILED : MergeOutcome::UPDATED;
+    return {outcome, std::move(result)};
 }
 
 std::string
@@ -4873,20 +4945,6 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
 
     // If vote nok
     return {};
-}
-
-std::pair<std::vector<ConversationCommit>, bool>
-ConversationRepository::validFetch(const std::string& remoteDevice) const
-{
-    auto newCommit = remoteHead(remoteDevice);
-    if (not pimpl_ or newCommit.empty())
-        return {{}, false};
-    auto commitsToValidate = pimpl_->behind(newCommit);
-    std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
-    auto isValid = pimpl_->validCommits(commitsToValidate);
-    if (isValid)
-        return {commitsToValidate, false};
-    return {{}, true};
 }
 
 std::pair<std::vector<ConversationCommit>, bool>

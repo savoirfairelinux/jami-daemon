@@ -114,6 +114,21 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
+enum class MergeOutcome {
+    FAILED,
+    UP_TO_DATE,
+    REDUNDANT, // Validated divergence with no changes to integrate
+    STRUCTURAL, // Fast-forward with only merge commits and no tree change
+    UPDATED,
+};
+
+struct MergeHistoryResult
+{
+    MergeOutcome outcome {MergeOutcome::FAILED};
+    std::vector<std::map<std::string, std::string>> commits {};
+    bool receivedHint {false}; // The hinted commit was in the validated incoming range
+};
+
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
 enum class Permission {
@@ -437,12 +452,14 @@ public:
 
     /**
      * Merge the history of the conversation with another peer
-     * @param uri                    The peer uri
+     * @param remoteDevice           The peer device
      * @param disconnectFromPeerCb   Callback to disconnect from peer when banning
-     * @return                       A vector of media maps representing the merged history
+     * @param hint                   Optional commit id that triggered the fetch
+     * @return                       The outcome and any commits added to local history
      */
-    std::vector<std::map<std::string, std::string>> mergeHistory(
-        const std::string& uri, std::function<void(const std::string&)>&& disconnectFromPeerCb = {});
+    MergeHistoryResult mergeHistory(const std::string& remoteDevice,
+                                    std::function<void(const std::string&)>&& disconnectFromPeerCb = {},
+                                    std::string_view hint = {});
 
     /**
      * Retrieve remote head. Can be useful after a fetch operation
@@ -492,6 +509,8 @@ public:
      * @return true if the commit was found, false if not or if an error occurred
      */
     bool hasCommit(const std::string& commitId) const;
+    /** Check whether the commit is reachable from main, not just downloaded. */
+    bool hasCommitInHistory(const std::string& commitId) const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
 
     /**
@@ -604,13 +623,6 @@ public:
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri, const std::string_view type, const std::string& voteType);
-
-    /**
-     * Validate a fetch with remote device
-     * @param remotedevice
-     * @return the validated commits and if an error occurs
-     */
-    std::pair<std::vector<ConversationCommit>, bool> validFetch(const std::string& remoteDevice) const;
 
     /**
      * Validate a clone
@@ -730,6 +742,7 @@ public:
 
 private:
     ConversationRepository() = delete;
+    std::pair<MergeOutcome, std::string> mergeLocked(const std::string& mergeId, bool force, bool onlyMerges);
     static std::unique_ptr<ConversationRepository> createRepository(const std::shared_ptr<JamiAccount>& account,
                                                                     ConversationMode mode,
                                                                     const std::string& otherMember,

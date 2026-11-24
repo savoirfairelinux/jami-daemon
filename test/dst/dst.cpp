@@ -1205,8 +1205,8 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         assert(!commitId.empty());
         auto repo = receivingAccount.repository.get();
         assert(repo != nullptr);
-        // Don't fetch if the commit is already there.
-        if (repo->hasCommit(commitId)) {
+        // Don't fetch if the commit is already in local history.
+        if (repo->hasCommitInHistory(commitId)) {
             return;
         }
         // Fetch from peer
@@ -1231,7 +1231,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         assert(receivingAccount.devicesWithPendingFetch.contains(deviceId));
         receivingAccount.devicesWithPendingFetch.erase(deviceId);
 
-        auto commits = receivingAccount.repository->mergeHistory(deviceId, [](const std::string&) {});
+        auto commits = receivingAccount.repository->mergeHistory(deviceId, [](const std::string&) {}).commits;
         if (!commits.empty()) {
             // Messages have been found. This announce function should add the messages into the respective RepositoryAccount
             receivingAccount.conversation->announce(commits, false);

@@ -23,7 +23,9 @@ Each conversation is a Git repository managed with libgit2.
 - Every commit is signed by the authoring device. Fetched commits are
   validated (signature, device and member certificates, allowed file
   changes per type) before merging; invalid fetches are discarded.
-- Divergent histories are reconciled with merge commits.
+- Divergent histories are reconciled with merge commits unless all incoming
+  commits are merges and the tips have the same tree. In that case a pull
+  keeps the local tip. True fast-forwards still advance the tip.
 
 ## Consequences
 

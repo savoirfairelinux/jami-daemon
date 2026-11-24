@@ -2558,6 +2558,12 @@ Conversation::hasCommit(const std::string& commitId) const
     return pimpl_->repository_->hasCommit(commitId);
 }
 
+bool
+Conversation::hasCommitInHistory(const std::string& commitId) const
+{
+    return pimpl_->repository_->hasCommitInHistory(commitId);
+}
+
 std::optional<ConversationCommit>
 Conversation::getCommit(const std::string& commitId) const
 {
@@ -2834,7 +2840,8 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                    pimpl_->toString(),
                    deviceId,
                    commitId);
-        cb(false);
+        if (cb)
+            cb(MergeOutcome::FAILED);
         return false;
     }
     JAMI_DEBUG("{} [device {}] Pulling '{:s}'", pimpl_->toString(), deviceId, commitId);
@@ -2872,59 +2879,48 @@ Conversation::Impl::pull(const std::string& deviceId)
             cb = std::move(std::get<1>(elem));
             pullcbs.pop_front();
         }
-        // If recently fetched, the commit can already be there, so no need to do complex operations
-        if (commitId != "" && repo->hasCommit(commitId)) {
-            cb(true);
+        // Downloaded objects may not yet have been validated and integrated.
+        if (!commitId.empty() && repo->hasCommitInHistory(commitId)) {
+            if (cb)
+                cb(MergeOutcome::UP_TO_DATE);
             continue;
         }
         // Pull from remote
         auto fetched = repo->fetch(deviceId);
         if (!fetched) {
-            cb(false);
+            if (cb)
+                cb(MergeOutcome::FAILED);
             continue;
         }
 
-        auto oldHead = repo->getHead();
-
         std::unique_lock lk(writeMtx_);
-        auto commits = repo->mergeHistory(deviceId,
-                                          [this](const std::string& peerUri) { this->disconnectFromPeer(peerUri); });
-        if (!commits.empty()) {
-            announce(commits);
+        const auto oldHead = repo->getHead();
+        auto result = repo->mergeHistory(
+            deviceId, [this](const std::string& peerUri) { this->disconnectFromPeer(peerUri); }, commitId);
+        if (!result.commits.empty()) {
+            announce(result.commits);
+        }
+        const auto newHead = result.commits.empty() ? std::string {} : repo->getHead();
+        if (result.outcome != MergeOutcome::FAILED && !commitId.empty() && !result.receivedHint) {
+            // Another pull can have integrated the hint while this fetch was in flight.
+            // A missing or already integrated hint must not be relayed as a new commit.
+            if (repo->hasCommitInHistory(commitId)) {
+                result.outcome = MergeOutcome::UP_TO_DATE;
+            } else {
+                JAMI_WARNING("Successfully fetched from device {} but didn't receive expected commit {}",
+                             deviceId,
+                             commitId);
+                result.outcome = MergeOutcome::FAILED;
+            }
         }
         lk.unlock();
 
-        bool commitFound = false;
-        if (commitId != "") {
-            // If `commitId` is non-empty, then we were attempting to pull a specific commit.
-            // We need to check if we actually got it; the fact that the fetch above was
-            // successful doesn't guarantee that we did.
-            for (const auto& commit : commits) {
-                if (commit.at("id") == commitId) {
-                    commitFound = true;
-                    break;
-                }
-            }
-        } else {
-            commitFound = true;
-        }
-        if (!commitFound)
-            JAMI_WARNING("Successfully fetched from device {} but didn't receive expected commit {}",
-                         deviceId,
-                         commitId);
-        // WARNING: If its argument is `true`, this callback will attempt to send a message notification
-        //          for commit `commitId` to other members of the swarm. It's important that we only
-        //          send these notifications if we actually have the commit. Otherwise, we can end up
-        //          in a situation where the members of the swarm keep sending notifications to each
-        //          other for a commit that none of them have (note that we are unable to rule this out, as
-        //          nothing prevents a malicious user from intentionally sending a notification with
-        //          a fake commit ID).
         if (cb)
-            cb(commitFound);
+            cb(result.outcome);
 
         // Announce if profile changed
-        if (!commits.empty()) {
-            auto diffStats = repo->diffStats("HEAD", oldHead);
+        if (!newHead.empty()) {
+            auto diffStats = repo->diffStats(newHead, oldHead);
             auto changedFiles = repo->changedFiles(diffStats);
             if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf") != changedFiles.end()) {
                 emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(accountId_,

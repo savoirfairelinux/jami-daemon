@@ -251,7 +251,7 @@ struct ConvInfo
     void msgpack_object(msgpack::object* o, msgpack::zone& z) const;
 };
 
-using OnPullCb = std::function<void(bool fetchOk)>;
+using OnPullCb = std::function<void(MergeOutcome)>;
 using OnLoadMessages = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
@@ -503,6 +503,7 @@ public:
      * @return true if the commit was found, false if not or if an error occurred
      */
     bool hasCommit(const std::string& commitId) const;
+    bool hasCommitInHistory(const std::string& commitId) const;
     /**
      * Retrieve one commit
      * @param   commitId

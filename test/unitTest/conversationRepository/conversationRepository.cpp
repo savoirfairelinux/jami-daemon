@@ -40,6 +40,7 @@
 
 #include <condition_variable>
 #include <array>
+#include <future>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -80,6 +81,8 @@ private:
     void testLogMessages();
     void testMerge();
     void testFFMerge();
+    void testRedundantMergePull();
+    void testMergeOnlyProfileDifference();
     void testDiff();
     void testMergeProfileWithConflict();
     void testValidSignatureForCommit();
@@ -124,6 +127,8 @@ private:
     CPPUNIT_TEST(testLogMessages);               // Passes
     CPPUNIT_TEST(testMerge);                     // Passes
     CPPUNIT_TEST(testFFMerge);                   // Passes
+    CPPUNIT_TEST(testRedundantMergePull);
+    CPPUNIT_TEST(testMergeOnlyProfileDifference);
     CPPUNIT_TEST(testDiff);                      // Passes
     CPPUNIT_TEST(testMergeProfileWithConflict);  // Passes
     CPPUNIT_TEST(testValidSignatureForCommit);   // Passes
@@ -567,6 +572,148 @@ ConversationRepositoryTest::testFFMerge()
     repository->merge(id2);
 
     CPPUNIT_ASSERT(repository->log().size() == 3 /* Initial, commit 1, 2 */);
+}
+
+static void
+setTestRef(git_repository* repo, const char* refName, const std::string& commitId)
+{
+    git_oid oid;
+    CPPUNIT_ASSERT_EQUAL(0, git_oid_fromstr(&oid, commitId.c_str()));
+    git_reference* ref = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_reference_create(&ref, repo, refName, &oid, true, nullptr));
+    git_reference_free(ref);
+}
+
+void
+ConversationRepositoryTest::testRedundantMergePull()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto conversation = std::make_shared<Conversation>(alice, ConversationMode::INVITES_ONLY);
+    auto id = conversation->id();
+    ConversationRepository repository(alice, id);
+    auto path = fileutils::get_data_dir() / aliceId / "conversations" / id;
+    git_repository* localPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&localPtr, path.c_str()));
+    GitRepository local {localPtr};
+
+    constexpr auto mainRef = "refs/heads/main";
+    auto writeOn = [&](const std::string& parent, const char* text) {
+        setTestRef(local.get(), mainRef, parent);
+        auto commit = repository.commitMessage(CommitMessage::text(text).toString());
+        CPPUNIT_ASSERT(!commit.empty());
+        return commit;
+    };
+    auto mergeOn = [&](const std::string& first, const std::string& second) {
+        setTestRef(local.get(), mainRef, first);
+        auto [ok, commit] = repository.merge(second);
+        CPPUNIT_ASSERT(ok && !commit.empty());
+        return commit;
+    };
+
+    const auto a = writeOn(id, "A");
+    const auto b = writeOn(id, "B");
+    const auto c = writeOn(id, "C");
+    const auto ab = mergeOn(a, b);
+    const auto ba = mergeOn(b, a);
+    CPPUNIT_ASSERT(ab != ba);
+    const auto left = mergeOn(ab, c);
+    const auto right = mergeOn(a, mergeOn(b, c));
+    const auto joined = mergeOn(left, right);
+    const auto laterMessage = writeOn(right, "Written on the other merge tip");
+    const auto mergeWithMessage = mergeOn(laterMessage, joined);
+
+    auto peerPath = fileutils::get_data_dir() / bobId / "conversations" / id;
+    std::filesystem::create_directories(peerPath.parent_path());
+    std::filesystem::copy(path, peerPath, std::filesystem::copy_options::recursive);
+    git_repository* peerPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&peerPtr, peerPath.c_str()));
+    GitRepository peer {peerPtr};
+    git_remote* remote = nullptr;
+    constexpr auto peerName = "test-peer";
+    const auto url = fmt::format("file://{}", peerPath.string());
+    CPPUNIT_ASSERT_EQUAL(0, git_remote_create(&remote, local.get(), peerName, url.c_str()));
+    git_remote_free(remote);
+
+    auto pull = [&](const std::string& hint) {
+        auto done = std::make_shared<std::promise<MergeOutcome>>();
+        auto result = done->get_future();
+        CPPUNIT_ASSERT(conversation->pull(peerName, [done](MergeOutcome outcome) { done->set_value(outcome); }, hint));
+        CPPUNIT_ASSERT(result.wait_for(10s) == std::future_status::ready);
+        return result.get();
+    };
+
+    setTestRef(local.get(), mainRef, ab);
+    setTestRef(peer.get(), mainRef, ba);
+    CPPUNIT_ASSERT(pull(ba) == MergeOutcome::REDUNDANT);
+    for (int i = 0; i < 3; ++i)
+        CPPUNIT_ASSERT(pull({}) == MergeOutcome::REDUNDANT);
+    CPPUNIT_ASSERT_EQUAL(ab, repository.getHead());
+    CPPUNIT_ASSERT_EQUAL(size_t(4), repository.log().size());
+
+    // Different immediate parents, but neither side has new messages for the other.
+    setTestRef(local.get(), mainRef, left);
+    setTestRef(peer.get(), mainRef, right);
+    CPPUNIT_ASSERT(pull(right) == MergeOutcome::REDUNDANT);
+    CPPUNIT_ASSERT_EQUAL(left, repository.getHead());
+
+    // An object we have is not necessarily part of the local or fetched history.
+    CPPUNIT_ASSERT(repository.hasCommit(ba));
+    CPPUNIT_ASSERT(pull(ba) == MergeOutcome::FAILED);
+
+    setTestRef(peer.get(), mainRef, joined);
+    CPPUNIT_ASSERT(pull(joined) == MergeOutcome::STRUCTURAL);
+    CPPUNIT_ASSERT_EQUAL(joined, repository.getHead());
+
+    // A merge hint can still carry a new message written on the other branch.
+    setTestRef(peer.get(), mainRef, mergeWithMessage);
+    CPPUNIT_ASSERT(pull(mergeWithMessage) == MergeOutcome::UPDATED);
+    CPPUNIT_ASSERT_EQUAL(mergeWithMessage, repository.getHead());
+    CPPUNIT_ASSERT(repository.hasCommitInHistory(laterMessage));
+    CPPUNIT_ASSERT(repository.hasCommitInHistory(joined));
+    CPPUNIT_ASSERT(pull(laterMessage) == MergeOutcome::UP_TO_DATE);
+}
+
+void
+ConversationRepositoryTest::testMergeOnlyProfileDifference()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(alice);
+    CPPUNIT_ASSERT(repository);
+    auto path = fileutils::get_data_dir() / aliceId / "conversations" / repository->id();
+    git_repository* gitPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&gitPtr, path.c_str()));
+    GitRepository git {gitPtr};
+
+    constexpr auto mainRef = "refs/heads/main";
+    const auto base = repository->updateInfos({{"title", "Base"}});
+    CPPUNIT_ASSERT(!base.empty());
+    const auto a = repository->updateInfos({{"title", "A"}});
+    CPPUNIT_ASSERT(!a.empty());
+    setTestRef(git.get(), mainRef, base);
+    const auto b = repository->updateInfos({{"title", "B"}});
+    CPPUNIT_ASSERT(!b.empty());
+    const auto remoteTip = addMergeCommit(git.get(), alice, a);
+    CPPUNIT_ASSERT(!remoteTip.empty());
+
+    setTestRef(git.get(), mainRef, a);
+    git_checkout_options opts;
+    CPPUNIT_ASSERT_EQUAL(0, git_checkout_options_init(&opts, GIT_CHECKOUT_OPTIONS_VERSION));
+    opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+    CPPUNIT_ASSERT_EQUAL(0, git_checkout_head(git.get(), &opts));
+    const auto localTip = addMergeCommit(git.get(), alice, b);
+    CPPUNIT_ASSERT(!localTip.empty());
+    CPPUNIT_ASSERT(!repository->diffStats(remoteTip, localTip).empty());
+
+    git_remote* remote = nullptr;
+    const auto url = fmt::format("file://{}", path.string());
+    CPPUNIT_ASSERT_EQUAL(0, git_remote_create(&remote, git.get(), "test-peer", url.c_str()));
+    git_remote_free(remote);
+    setTestRef(git.get(), "refs/remotes/test-peer/main", remoteTip);
+
+    const auto result = repository->mergeHistory("test-peer", {}, remoteTip);
+    CPPUNIT_ASSERT(result.outcome == MergeOutcome::UPDATED);
+    CPPUNIT_ASSERT(result.receivedHint);
+    CPPUNIT_ASSERT(repository->hasCommitInHistory(remoteTip));
 }
 
 void
@@ -1288,7 +1435,7 @@ ConversationRepositoryTest::testCommitIsNotBlockedByAStalledFetch()
                        std::make_shared<dhtnet::ChannelSocket>(std::weak_ptr<dhtnet::MultiplexedSocket>(),
                                                                "git://quiet/" + convId,
                                                                1));
-    conv->pull(quiet.toString(), [stall](bool) {
+    conv->pull(quiet.toString(), [stall](MergeOutcome) {
         std::lock_guard lk {stall->mtx};
         stall->pulled = true;
         stall->cv.notify_all();

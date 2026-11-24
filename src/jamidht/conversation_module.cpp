@@ -843,8 +843,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     std::unique_lock lk(conv->mtx);
 
     if (conv->conversation) {
-        // Check if we already have the commit
-        if (not commitId.empty() && conv->conversation->hasCommit(commitId)) {
+        if (!commitId.empty() && conv->conversation->hasCommitInHistory(commitId)) {
             return;
         }
         if (conv->conversation->isRemoving()) {
@@ -901,32 +900,29 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 conversation->sync(
                     peer,
                     deviceId,
-                    [w, conv, conversationId = std::move(conversationId), peer, deviceId, commitId](bool ok) {
+                    [w, conv, conversationId = std::move(conversationId), deviceId, commitId](MergeOutcome outcome) {
                         auto shared = w.lock();
                         if (!shared)
                             return;
 #ifdef LIBJAMI_TEST
                         if (shared->fetchCompletedCbTest_)
-                            shared->fetchCompletedCbTest_(conversationId, commitId, ok);
+                            shared->fetchCompletedCbTest_(conversationId, commitId, outcome != MergeOutcome::FAILED);
 #endif
-                        if (!ok) {
+                        if (outcome == MergeOutcome::FAILED) {
                             JAMI_WARNING("[Account {}] [Conversation {}] Unable to fetch new commit from "
                                          "{}, other peer may be disconnected",
                                          shared->accountId_,
                                          conversationId,
                                          deviceId);
-                            JAMI_LOG("[Account {}] [Conversation {}] Relaunch sync with {}",
-                                     shared->accountId_,
-                                     conversationId,
-                                     deviceId);
                         }
 
                         std::optional<SyncedConversation::DeferredFetch> deferred;
                         {
                             std::lock_guard lk(conv->mtx);
                             deferred = conv->finishFetch(deviceId);
-                            // Notify peers that a new commit is there (DRT)
-                            if (not commitId.empty() && ok && conv->conversation && !conv->info.isRemoved()) {
+                            // Relay only if the hint was integrated and the fetch brought new content or state.
+                            if (outcome == MergeOutcome::UPDATED && !commitId.empty() && conv->conversation
+                                && !conv->info.isRemoved()) {
                                 shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
                             }
                         }
