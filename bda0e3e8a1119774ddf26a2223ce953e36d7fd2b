@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "702544df_fd72b4e3",
+        "filename": "src/jamidht/swarm_history.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:53:25Z",
+      "side": 1,
+      "message": "[error] Line 267: 🔴 `relinearize()` can pick a reaction/edition commit as `anchorId` because the old `commitMsg.reactTo/editedId` guard was dropped. When `oldIt \u003d\u003d list.end()` on a non-displayed commit, `anchorId` is set to that commit id, then chained messages get `linearizedParent` pointing to a hidden commit, which can break client-side placement/order assumptions. Restore the old guard by requiring the candidate anchor to be a chained/displayed message (e.g., pass `reactTo/editedId` info into `visit`, or resolve from `quickAccess` and reject commits with non-empty `REACT_TO`/`EDIT`) before setting `anchorFound`/`anchorId`.",
+      "revId": "bda0e3e8a1119774ddf26a2223ce953e36d7fd2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
