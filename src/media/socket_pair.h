@@ -343,6 +343,7 @@ private:
     std::list<TransportCcFeedback> listRtcpTransportCc_;
     std::list<TransportCcReport> listRtcpTransportCcReports_;
     std::mutex rtcpInfo_mutex_;
+    bool rtcpReceivedSinceLastWait_ {false};
     std::condition_variable cvRtcpPacketReadyToRead_;
     static constexpr unsigned MAX_LIST_SIZE {10};
 
