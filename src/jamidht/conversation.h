@@ -399,6 +399,8 @@ public:
      * @return mobile nodes we are closer to than any connected node
      */
     std::vector<MobileNodeTarget> mobileNodesToNotify() const;
+    // Up to count random members, other than us and banned ones, without a device among peers.
+    std::vector<std::string> unconnectedMembers(const std::vector<NodeId>& peers, size_t count) const;
     /**
      * Check if we're at least connected to one node
      * @return if the DRT is connected

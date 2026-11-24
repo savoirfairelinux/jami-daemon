@@ -27,6 +27,7 @@ using namespace swarm_protocol;
 
 class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
+public:
     using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocketInterface>&)>;
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&, bool noNewSocket)>;
     using ToConnectCb = std::function<bool(const NodeId&)>;
@@ -41,7 +42,6 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using CertificateFetcher
         = std::function<void(const NodeId&, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&&)>;
 
-public:
     explicit SwarmManager(const NodeId& nodeId,
                           bool isMobile,
                           const std::mt19937_64& rand,

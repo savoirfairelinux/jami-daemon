@@ -1571,23 +1571,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     {
         std::lock_guard lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
-        auto members = conversation.memberUris(username_, {MemberRole::BANNED});
-        std::vector<std::string> connectedMembers;
-        // print all members
-        for (const auto& device : devices) {
-            auto cert = acc->certStore().getCertificate(device.toString());
-            if (cert && cert->issuer)
-                connectedMembers.emplace_back(cert->issuer->getId().toString());
-        }
-        std::sort(std::begin(connectedMembers), std::end(connectedMembers));
-        std::set_difference(members.begin(),
-                            members.end(),
-                            connectedMembers.begin(),
-                            connectedMembers.end(),
-                            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
-        std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
-        if (nonConnectedMembers.size() > 2)
-            nonConnectedMembers.resize(2);
+        nonConnectedMembers = conversation.unconnectedMembers(devices, 2);
         if (!conversation.isBootstrapped()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstrapped, save notification", conversation.id());
             // Because we can get some git channels but not bootstrapped, we should keep this

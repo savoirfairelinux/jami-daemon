@@ -22,6 +22,8 @@
 #include "jamidht/collaborative_editing.h"
 #include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
+#include "swarm_history.h"
+#include "swarm_membership.h"
 #include "conversationrepository.h"
 #include "timestamp.h"
 
@@ -329,21 +331,7 @@ ConversationRequest::msgpack_object(msgpack::object* o, msgpack::zone& z) const
         .msgpack_object(o, z);
 }
 
-using MessageList = std::list<std::shared_ptr<libjami::SwarmMessage>>;
-
-struct History
-{
-    // While loading the history, we need to avoid:
-    // - reloading history (can just be ignored)
-    // - adding new commits (should wait for history to be loaded)
-    std::mutex mutex {};
-    std::condition_variable cv {};
-    bool loading {false};
-    MessageList messageList {};
-    std::map<std::string, std::shared_ptr<libjami::SwarmMessage>> quickAccess {};
-    std::map<std::string, std::list<std::shared_ptr<libjami::SwarmMessage>>> pendingEditions {};
-    std::map<std::string, std::list<std::map<std::string, std::string>>> pendingReactions {};
-};
+using History = SwarmHistory;
 
 class Conversation::Impl
 {
@@ -360,60 +348,19 @@ private:
         , accountId_(account->getAccountID())
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
-        , swarmManager_(std::make_shared<SwarmManager>(
-              NodeId(deviceId_),
-              account->isMobile(),
-              Manager::instance().getSeededRandomEngine(),
-              [account = account_](const DeviceId& deviceId) {
-                  if (auto acc = account.lock()) {
-                      return acc->isConnectedWith(deviceId);
-                  }
-                  return false;
-              },
-              repository_->id(),
-              [account = account_, conversationId = repository_->id(), deviceId = NodeId(deviceId_)]()
-                  -> std::optional<MobileNodeInfo> {
-                  auto acc = account.lock();
-                  if (!acc || !acc->isMobile())
-                      return std::nullopt;
-                  const auto& identity = acc->identity();
-                  if (!identity.first || !identity.second || !identity.second->issuer)
-                      return std::nullopt;
-
-                  const auto now = std::chrono::system_clock::now();
-                  const auto certificateExpiry = identity.second->getExpiration();
-                  const auto maximumExpiry = now + MAX_MOBILE_LEASE_DURATION;
-                  const auto expiry = std::min(certificateExpiry, maximumExpiry);
-                  if (expiry <= now)
-                      return std::nullopt;
-
-                  MobileLease lease {1,
-                                     conversationId,
-                                     identity.second->issuer->getId(),
-                                     deviceId,
-                                     toSecondsSinceEpoch(now),
-                                     toSecondsSinceEpoch(expiry),
-                                     {}};
-                  lease.signature = identity.first->sign(mobileLeasePayload(lease));
-                  return MobileNodeInfo {deviceId, std::move(lease)};
-              },
-              [this](const dht::InfoHash& issuerId) {
-                  const auto members
-                      = repository_->memberUris("", {MemberRole::INVITED, MemberRole::BANNED, MemberRole::LEFT});
-                  return members.contains(issuerId.toString());
-              },
-              [account = account_](const NodeId& deviceId) -> std::shared_ptr<dht::crypto::Certificate> {
-                  if (auto acc = account.lock())
-                      return acc->certStore().getCertificate(deviceId.toString());
-                  return {};
-              },
-              [account = account_](const NodeId& deviceId,
-                                   std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb) {
-                  if (auto acc = account.lock())
-                      acc->findCertificate(deviceId, std::move(cb));
-                  else
-                      cb(nullptr);
-              }))
+        , membership_(
+              std::make_shared<SwarmMembership>(account,
+                                                repository_->id(),
+                                                fileutils::get_data_dir() / accountId_ / "conversation_data"
+                                                    / repository_->id() / ConversationDirectories::MOBILE_NODES,
+                                                [this](const dht::InfoHash& issuerId) {
+                                                    const auto members = repository_->memberUris("",
+                                                                                                 {MemberRole::INVITED,
+                                                                                                  MemberRole::BANNED,
+                                                                                                  MemberRole::LEFT});
+                                                    return members.contains(issuerId.toString());
+                                                }))
+        , swarmManager_(membership_->manager())
         , transferManager_(std::make_shared<TransferManager>(accountId_,
                                                              "",
                                                              repository_->id(),
@@ -424,7 +371,6 @@ private:
         , sendingPath_(conversationDataPath_ / ConversationDirectories::SENDING)
         , preferencesPath_(conversationDataPath_ / ConversationDirectories::PREFERENCES)
         , statusPath_(conversationDataPath_ / ConversationDirectories::STATUS)
-        , mobileNodesPath_(conversationDataPath_ / ConversationDirectories::MOBILE_NODES)
         , hostedCallsPath_(conversationDataPath_ / ConversationDirectories::HOSTED_CALLS)
         , activeCallsPath_(conversationDataPath_ / ConversationDirectories::ACTIVE_CALLS)
         , ioContext_(Manager::instance().ioContext())
@@ -433,19 +379,6 @@ private:
         if (!commits.empty())
             initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
-        // Restore mobility knowledge: in a swarm made of mostly mobile
-        // devices, gossip alone is unavailable after a restart (nobody is
-        // connected), so the persisted list is the only way to know which
-        // devices need a wake-up notification.
-        loadMobileNodes();
-        // Self-contained callback: the swarm manager can outlive this Impl
-        // (its timers hold shared_from_this), so do not capture `this`.
-        swarmManager_->onMobileNodeInfosChanged(
-            [path = mobileNodesPath_](const std::vector<MobileNodeInfo>& mobileNodes) {
-                std::lock_guard lk {dhtnet::fileutils::getFileLock(path)};
-                std::ofstream file(path, std::ios::trunc | std::ios::binary);
-                msgpack::pack(file, mobileNodes);
-            });
         setupMemberCallback();
     }
 
@@ -479,7 +412,7 @@ public:
 
     mutable std::string fmtStr_;
 
-    ~Impl() { stopTracking(); }
+    ~Impl() { membership_->stopTracking(); }
 
     /**
      * If, for whatever reason, the daemon is stopped while hosting a conference,
@@ -800,19 +733,8 @@ public:
 #endif
                 {
                     // No active handlers: still notify clients when an edit arrives.
-                    if (const auto editIt = c.find(CommitKey::EDIT); editIt != c.end() && !editIt->second.empty()) {
-                        libjami::SwarmMessage signalMsg;
-                        {
-                            std::lock_guard const lk(loadedHistory_.mutex);
-                            if (auto originalIt = loadedHistory_.quickAccess.find(editIt->second);
-                                originalIt != loadedHistory_.quickAccess.end()) {
-                                signalMsg = *originalIt->second;
-                            }
-                        }
-                        if (!signalMsg.id.empty() && !signalMsg.body.contains(CommitKey::REACT_TO)) {
-                            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, convId, signalMsg);
-                        }
-                    }
+                    if (const auto editIt = c.find(CommitKey::EDIT); editIt != c.end() && !editIt->second.empty())
+                        loadedHistory_.signalEdited(accountId_, convId, editIt->second);
                 }
             }
 
@@ -838,25 +760,6 @@ public:
     {
         std::ofstream file(statusPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, messagesStatus_);
-    }
-
-    void loadMobileNodes()
-    {
-        try {
-            auto file = fileutils::loadFile(mobileNodesPath_);
-            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            try {
-                std::vector<MobileNodeInfo> nodes;
-                oh.get().convert(nodes);
-                swarmManager_->setMobileNodes(nodes);
-            } catch (const std::exception&) {
-                std::vector<NodeId> nodes;
-                oh.get().convert(nodes);
-                swarmManager_->setMobileNodes(nodes);
-            }
-        } catch (const std::exception& e) {
-            return;
-        }
     }
 
     void loadActiveCalls() const
@@ -992,6 +895,7 @@ public:
     const std::string accountId_;
     const std::string userId_;
     const std::string deviceId_;
+    const std::shared_ptr<SwarmMembership> membership_;
     const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
     std::vector<libjami::SwarmMessage> loadMessages(const LogOptions& options, History* optHistory = nullptr);
@@ -1022,30 +926,8 @@ public:
     const std::filesystem::path preferencesPath_ {};
     const std::filesystem::path statusPath_ {};
 
-    // Devices known to be mobile, persisted so that wake-up notifications
-    // can be sent right after a restart, before any DRT gossip is received
-    const std::filesystem::path mobileNodesPath_ {};
-
     OnMembersChanged onMembersChanged_ {};
-    struct TrackedMember
-    {
-        std::set<DeviceId> devices;
-        std::set<DeviceId> failedDevices;
-        std::chrono::steady_clock::time_point trackedSince {std::chrono::steady_clock::now()};
-        bool presenceReported {false};
-    };
-    std::map<std::string, TrackedMember> trackedMembers_;
-    mutable std::mutex trackedMembersMtx_;
-    bool isTracking_ {false};
     void setupMemberCallback();
-    void startTracking(std::weak_ptr<Conversation> w);
-    void stopTracking();
-    void rotateTrackedMembers(const std::string& memberUri = "", const DeviceId& deviceId = {});
-    void monitorConnection(std::weak_ptr<Conversation> w);
-    void onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri = "");
-    void onDeviceOffline(const DeviceId& deviceId, const std::string& memberUri);
-
-    uint64_t presenceDeviceListenerToken_ {0};
 
     // Manage hosted calls on this device
     std::filesystem::path hostedCallsPath_ {};
@@ -1071,13 +953,6 @@ public:
         bool messageReceived = false,
         bool commitFromSelf = false);
 
-    void handleReaction(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
-    void handleEdition(History& history,
-                       const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                       bool messageReceived) const;
-    bool handleMessage(History& history,
-                       const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                       bool messageReceived) const;
     void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message, History& history) const;
     /**
      * After a non fast-forward merge, reorder the newest part of loadedHistory_ so
@@ -1173,242 +1048,10 @@ void
 Conversation::Impl::setupMemberCallback()
 {
     repository_->onMembersChanged([this](const std::set<std::string>& memberUris) {
-        {
-            std::lock_guard lk(trackedMembersMtx_);
-            if (isTracking_) {
-                if (auto acc = account_.lock()) {
-                    for (auto it = trackedMembers_.begin(); it != trackedMembers_.end();) {
-                        if (memberUris.find(it->first) == memberUris.end()) {
-                            acc->presenceManager()->untrackBuddy(it->first);
-                            it = trackedMembers_.erase(it);
-                        } else {
-                            ++it;
-                        }
-                    }
-                }
-            }
-        }
+        membership_->pruneMembers(memberUris);
 
         if (onMembersChanged_)
             onMembersChanged_(memberUris);
-    });
-}
-
-void
-Conversation::Impl::startTracking(std::weak_ptr<Conversation> w)
-{
-    auto acc = account_.lock();
-    if (!acc)
-        return;
-
-    {
-        std::lock_guard lk(trackedMembersMtx_);
-        if (isTracking_)
-            return;
-        isTracking_ = true;
-        presenceDeviceListenerToken_ = acc->presenceManager()->addDeviceListener(
-            [w](const std::string& uri, const DeviceId& deviceId, bool online) {
-                if (auto sthis = w.lock()) {
-                    if (online) {
-                        if (sthis->isMember(uri))
-                            sthis->addKnownDevices({deviceId}, uri);
-                    } else {
-                        sthis->pimpl_->onDeviceOffline(deviceId, uri);
-                    }
-                }
-            });
-    }
-
-    rotateTrackedMembers();
-}
-
-void
-Conversation::Impl::stopTracking()
-{
-    // Collect data under trackedMembersMtx_, then release it before calling
-    // into PresenceManager to avoid lock-ordering inversion with the
-    // PresenceManager mutex (which is held when notifyListeners calls
-    // addKnownDevices, which in turn acquires trackedMembersMtx_).
-    uint64_t token = 0;
-    std::vector<std::string> urisToUntrack;
-    {
-        std::lock_guard lk(trackedMembersMtx_);
-        if (!isTracking_)
-            return;
-        isTracking_ = false;
-        token = presenceDeviceListenerToken_;
-        presenceDeviceListenerToken_ = 0;
-        for (const auto& [uri, _] : trackedMembers_) {
-            urisToUntrack.push_back(uri);
-        }
-        trackedMembers_.clear();
-    }
-
-    auto acc = account_.lock();
-    if (!acc)
-        return;
-
-    if (token) {
-        acc->presenceManager()->removeDeviceListener(token);
-    }
-
-    for (const auto& uri : urisToUntrack) {
-        acc->presenceManager()->untrackBuddy(uri);
-    }
-}
-
-void
-Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const DeviceId& deviceId)
-{
-    auto acc = account_.lock();
-    if (!acc)
-        return;
-
-    std::lock_guard lk(trackedMembersMtx_);
-    if (!isTracking_)
-        return;
-
-    auto members = repository_->members();
-
-    if (!memberUri.empty()) {
-        auto it = trackedMembers_.find(memberUri);
-        if (it == trackedMembers_.end())
-            return;
-        auto& info = it->second;
-        if (deviceId) {
-            JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
-            info.failedDevices.insert(deviceId);
-        } else {
-            JAMI_WARNING("{} Rotating tracked members, {} has no device online", toString(), memberUri);
-        }
-        // std::includes() is vacuously true on an empty second range, so a
-        // member whose devices are still unknown would be dropped on its very
-        // first failure. That set is only filled by addKnownDevices() once
-        // the presence manager reports the member online, while a failure
-        // is reported for any device the DRT happens to try, so it is
-        // routinely empty right after the member was picked. Give presence
-        // time to answer; past that, an empty set means nobody is online
-        // and the member is as good as fully failed.
-        constexpr auto PRESENCE_GRACE = std::chrono::seconds(30);
-        auto presencePending = info.devices.empty() && !info.presenceReported
-                               && std::chrono::steady_clock::now() - info.trackedSince < PRESENCE_GRACE;
-        if (!presencePending
-            && std::includes(info.failedDevices.begin(),
-                             info.failedDevices.end(),
-                             info.devices.begin(),
-                             info.devices.end())) {
-            // Rotating only makes sense if another member can take the slot. In
-            // a one-to-one conversation there is none: dropping the peer would
-            // leave presence watched for nobody, so addKnownDevices() is never
-            // called again and the swarm stays silent until the account reloads.
-            auto replaceable = std::any_of(members.begin(), members.end(), [&](const auto& m) {
-                return m.uri != memberUri && trackedMembers_.find(m.uri) == trackedMembers_.end();
-            });
-            if (replaceable) {
-                acc->presenceManager()->untrackBuddy(it->first);
-                trackedMembers_.erase(it);
-            }
-        }
-    }
-
-    size_t N = members.size();
-    size_t K = std::min(N, 3 + (size_t) std::log2(N));
-
-    // If we are already trying enough devices, don't rotate
-    auto activeDevices = swarmManager_->getActiveNodesCount();
-    if (activeDevices >= 2 * K)
-        return;
-
-    JAMI_WARNING("{} Refreshing tracked members: {}/{} active ({}/{} devices)",
-                 toString(),
-                 trackedMembers_.size(),
-                 K,
-                 activeDevices,
-                 2 * K);
-
-    // Add new members if we have space
-    if (trackedMembers_.size() < K) {
-        std::vector<std::string> candidates;
-        candidates.reserve(N - trackedMembers_.size());
-        for (const auto& m : members) {
-            if (m.uri != memberUri && trackedMembers_.find(m.uri) == trackedMembers_.end()) {
-                candidates.push_back(m.uri);
-            }
-        }
-        if (!candidates.empty()) {
-            std::vector<std::string> chosen;
-            std::sample(candidates.begin(),
-                        candidates.end(),
-                        std::back_inserter(chosen),
-                        K - trackedMembers_.size(),
-                        Manager::instance().getSeededRandomEngine());
-            for (const auto& uri : chosen) {
-                acc->presenceManager()->trackBuddy(uri);
-                trackedMembers_.emplace(uri, TrackedMember {});
-            }
-        }
-    }
-}
-
-void
-Conversation::Impl::onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri)
-{
-    rotateTrackedMembers(memberUri, deviceId);
-}
-
-void
-Conversation::Impl::onDeviceOffline(const DeviceId& deviceId, const std::string& memberUri)
-{
-    // A device that left is neither a target nor a failure to hold against its member.
-    bool lastDevice = false;
-    {
-        std::lock_guard lk(trackedMembersMtx_);
-        auto it = trackedMembers_.find(memberUri);
-        if (it == trackedMembers_.end())
-            return;
-        it->second.presenceReported = true;
-        it->second.devices.erase(deviceId);
-        it->second.failedDevices.erase(deviceId);
-        lastDevice = it->second.devices.empty();
-    }
-    // Nobody left to reach: watch someone else rather than wait for the DRT
-    // to fail on ids it may never retry.
-    if (lastDevice)
-        rotateTrackedMembers(memberUri);
-}
-
-void
-Conversation::Impl::monitorConnection(std::weak_ptr<Conversation> w)
-{
-    if (!swarmManager_->isConnected()) {
-        startTracking(w);
-    }
-
-    swarmManager_->onConnectionChanged([w](bool ok) {
-        dht::ThreadPool::io().run([w, ok] {
-            if (auto sthis = w.lock()) {
-                // Check the current connection state rather than relying on the
-                // captured `ok` value, because the thread pool does not guarantee
-                // execution order. Two rapid state changes (connected then
-                // disconnected) could otherwise cause stopTracking to run after
-                // startTracking, leaving the conversation untracked while the DRT
-                // has no connected nodes.
-                if (sthis->pimpl_->swarmManager_->isConnected()) {
-                    sthis->pimpl_->stopTracking();
-                } else {
-                    sthis->pimpl_->startTracking(w);
-                }
-                if (ok) {
-                    if (sthis->pimpl_->bootstrapCb_)
-                        sthis->pimpl_->bootstrapCb_();
-                }
-#ifdef LIBJAMI_TEST
-                if (sthis->pimpl_->bootstrapCbTest_)
-                    sthis->pimpl_->bootstrapCbTest_(sthis->id(),
-                                                    ok ? BootstrapStatus::SUCCESS : BootstrapStatus::FAILED);
-#endif
-            }
-        });
     });
 }
 
@@ -1489,21 +1132,7 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::getTrackedMembers() const
 {
-    std::vector<std::map<std::string, std::string>> result;
-    std::lock_guard lk(trackedMembersMtx_);
-    for (const auto& [uri, member] : trackedMembers_) {
-        std::map<std::string, std::string> map;
-        map["uri"] = uri;
-        std::string devicesStr;
-        for (const auto& dev : member.devices) {
-            if (!devicesStr.empty())
-                devicesStr += ";";
-            devicesStr += dev.toString();
-        }
-        map["devices"] = devicesStr;
-        result.emplace_back(std::move(map));
-    }
-    return result;
+    return membership_->trackedMembers();
 }
 
 std::vector<std::string>
@@ -1652,175 +1281,6 @@ Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
 }
 
 void
-Conversation::Impl::handleReaction(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const
-{
-    auto it = history.quickAccess.find(sharedCommit->body.at(CommitKey::REACT_TO));
-    auto peditIt = history.pendingEditions.find(sharedCommit->id);
-    if (peditIt != history.pendingEditions.end()) {
-        auto oldBody = sharedCommit->body;
-        sharedCommit->body[CommitKey::BODY] = peditIt->second.front()->body[CommitKey::BODY];
-        if (sharedCommit->body.at(CommitKey::BODY).empty())
-            return;
-        history.pendingEditions.erase(peditIt);
-    }
-    if (it != history.quickAccess.end()) {
-        // A deleted message (its body, or tid for a file, has been emptied by an edition) displays
-        // no reactions.
-        const auto& target = it->second;
-        const std::string& bodyKey = (target->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
-        auto bodyIt = target->body.find(bodyKey);
-        if (bodyIt != target->body.end() && bodyIt->second.empty())
-            return;
-        target->reactions.emplace_back(sharedCommit->body);
-        emitSignal<libjami::ConversationSignal::ReactionAdded>(accountId_,
-                                                               repository_->id(),
-                                                               target->id,
-                                                               sharedCommit->body);
-    } else {
-        history.pendingReactions[sharedCommit->body.at(CommitKey::REACT_TO)].emplace_back(sharedCommit->body);
-    }
-}
-
-void
-Conversation::Impl::handleEdition(History& history,
-                                  const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                                  bool messageReceived) const
-{
-    auto editId = sharedCommit->body.at(CommitKey::EDIT);
-    auto it = history.quickAccess.find(editId);
-    if (it != history.quickAccess.end()) {
-        auto baseCommit = it->second;
-        if (baseCommit) {
-            auto itReact = baseCommit->body.find(CommitKey::REACT_TO);
-            std::string toReplace = (baseCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
-            // An edition need not carry the field it replaces: retiring a
-            // collaborative document says nothing but which commit it retires.
-            // Absent means empty, which is what an edition to nothing already
-            // means everywhere below.
-            std::string body;
-            if (auto itBody = sharedCommit->body.find(toReplace); itBody != sharedCommit->body.end())
-                body = itBody->second;
-            // Edit reaction
-            if (itReact != baseCommit->body.end()) {
-                baseCommit->body[toReplace] = body; // Replace body if pending
-                it = history.quickAccess.find(itReact->second);
-                auto itPending = history.pendingReactions.find(itReact->second);
-                if (it != history.quickAccess.end()) {
-                    baseCommit = it->second; // Base commit
-                    auto itPreviousReact = std::find_if(baseCommit->reactions.begin(),
-                                                        baseCommit->reactions.end(),
-                                                        [&](const auto& reaction) {
-                                                            return reaction.at("id") == editId;
-                                                        });
-                    if (itPreviousReact != baseCommit->reactions.end()) {
-                        (*itPreviousReact)[toReplace] = body;
-                        if (body.empty()) {
-                            baseCommit->reactions.erase(itPreviousReact);
-                            emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_,
-                                                                                     repository_->id(),
-                                                                                     baseCommit->id,
-                                                                                     editId);
-                        }
-                    }
-                } else if (itPending != history.pendingReactions.end()) {
-                    // Else edit if pending
-                    auto itReaction = std::find_if(itPending->second.begin(),
-                                                   itPending->second.end(),
-                                                   [&](const auto& reaction) { return reaction.at("id") == editId; });
-                    if (itReaction != itPending->second.end()) {
-                        (*itReaction)[toReplace] = body;
-                        if (body.empty())
-                            itPending->second.erase(itReaction);
-                    }
-                } else {
-                    // Add to pending edtions
-                    messageReceived ? history.pendingEditions[editId].emplace_front(sharedCommit)
-                                    : history.pendingEditions[editId].emplace_back(sharedCommit);
-                }
-            } else {
-                // Normal message
-                auto editionBody = it->second->body;
-                // Tag the superseded body with the commit id that introduced it, so the
-                // client can look up per-edition plugin overwrites via quickAccess.
-                editionBody["id"] = it->second->latestEditionId.empty() ? it->second->id : it->second->latestEditionId;
-                it->second->editions.emplace(it->second->editions.begin(), std::move(editionBody));
-#ifdef ENABLE_PLUGIN
-                if (const auto boIt = it->second->pluginData.find("bodyOverwrite");
-                    boIt != it->second->pluginData.end()) {
-                    it->second->editions.front()["bodyOverwrite"] = boIt->second;
-                }
-#endif
-                it->second->body[toReplace] = sharedCommit->body[toReplace];
-                it->second->latestEditionId = sharedCommit->id;
-                if (toReplace == CommitKey::TID) {
-                    // Avoid to replace fileId in client
-                    it->second->body["fileId"] = "";
-                }
-                // Remove reactions
-                if (sharedCommit->body.at(toReplace).empty())
-                    it->second->reactions.clear();
-            }
-        }
-    } else {
-        messageReceived ? history.pendingEditions[editId].emplace_front(sharedCommit)
-                        : history.pendingEditions[editId].emplace_back(sharedCommit);
-    }
-}
-
-bool
-Conversation::Impl::handleMessage(History& history,
-                                  const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
-                                  bool messageReceived) const
-{
-    if (messageReceived) {
-        // For a received message, we place it at the beginning of the list
-        if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.begin())->id;
-        history.messageList.emplace_front(sharedCommit);
-    } else {
-        // For a loaded message, we load from newest to oldest
-        // So we change the parent of the last message.
-        if (!history.messageList.empty())
-            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
-        history.messageList.emplace_back(sharedCommit);
-    }
-    // Handle pending reactions/editions
-    auto reactIt = history.pendingReactions.find(sharedCommit->id);
-    if (reactIt != history.pendingReactions.end()) {
-        for (const auto& commitBody : reactIt->second)
-            sharedCommit->reactions.emplace_back(commitBody);
-        history.pendingReactions.erase(reactIt);
-    }
-    auto peditIt = history.pendingEditions.find(sharedCommit->id);
-    if (peditIt != history.pendingEditions.end()) {
-        std::string toReplace = (sharedCommit->type == CommitType::DATA_TRANSFER) ? CommitKey::TID : CommitKey::BODY;
-        // Pending editions are stored newest first: replay them oldest first, as handleEdition would.
-        for (auto it = peditIt->second.rbegin(); it != peditIt->second.rend(); ++it) {
-            const auto& editCommit = *it;
-            // Retiring a collaborative document carries no body: absent means empty.
-            std::string body;
-            if (auto itBody = editCommit->body.find(toReplace); itBody != editCommit->body.end())
-                body = itBody->second;
-            auto editionBody = sharedCommit->body;
-            editionBody["id"] = sharedCommit->latestEditionId.empty() ? sharedCommit->id
-                                                                      : sharedCommit->latestEditionId;
-            sharedCommit->editions.emplace(sharedCommit->editions.begin(), std::move(editionBody));
-            sharedCommit->body[toReplace] = body;
-            sharedCommit->latestEditionId = editCommit->id;
-            if (toReplace == CommitKey::TID)
-                sharedCommit->body["fileId"] = "";
-            if (body.empty())
-                sharedCommit->reactions.clear();
-        }
-        history.pendingEditions.erase(peditIt);
-    }
-    // Announce to client
-    if (messageReceived)
-        emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
-    return !messageReceived;
-}
-
-void
 Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message, History& history) const
 {
     auto parentIt = history.quickAccess.find(message->linearizedParent);
@@ -1849,104 +1309,23 @@ Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& 
 void
 Conversation::Impl::relinearizeAfterMerge(const std::vector<std::map<std::string, std::string>>& commits)
 {
-    auto& history = loadedHistory_;
-
     std::set<std::string> newIds;
     for (const auto& c : commits)
         newIds.emplace(c.at(ConversationMapKeys::ID));
-    if (newIds.empty())
-        return;
-
-    // Walk the log from HEAD, in the order loadMessages() will use, until every
-    // announced commit has been seen plus one more commit, the anchor. Everything
-    // older than the anchor is left alone, so the anchor must also be older than
-    // every message currently shown: commits sharing a timestamp are not guaranteed
-    // to keep their relative order once the graph changes.
-    auto& list = history.messageList;
-    auto oldIt = list.begin();
-    std::set<std::string> visited;
-    std::vector<std::string> order; // newest first, merges excluded
-    size_t remaining = newIds.size();
-    bool anchorFound = false;
-    repository_->log(
-        [&](const auto& id, const auto&, const auto& commit) {
-            if (git_commit_parentcount(commit.get()) <= 1)
-                return CallbackResult::Ok;
-            // A batch of merges alone can still reorder commits sharing a timestamp.
-            if (newIds.erase(id))
-                --remaining;
-            return CallbackResult::Skip;
-        },
-        [&](auto&& cc) { order.emplace_back(std::move(cc.id)); },
-        [&](const auto& id, const auto&, const auto& commit) {
-            while (oldIt != list.end() && visited.count((*oldIt)->id))
-                ++oldIt;
-            // The anchor must follow the affected prefix, not be its last message.
-            const bool isAnchor = remaining == 0 && oldIt == list.end() && commit.commitMsg.reactTo.empty()
-                                  && commit.commitMsg.editedId.empty();
-            visited.emplace(id);
-            if (newIds.erase(id))
-                --remaining;
-            if (remaining != 0)
-                return false;
-            anchorFound = isAnchor;
-            return anchorFound;
-        },
-        "",
-        false);
-    if (remaining != 0)
-        return; // Should not happen: announced commits are always reachable from HEAD
-    std::string anchorId;
-    if (anchorFound) {
-        anchorId = std::move(order.back());
-        order.pop_back();
-    }
-
-    // Only displayed messages are part of the linear chain; reactions and edits are not.
-    auto isChained = [](const libjami::SwarmMessage& m) {
-        auto reactIt = m.body.find(CommitKey::REACT_TO);
-        auto editIt = m.body.find(CommitKey::EDIT);
-        return (reactIt == m.body.end() || reactIt->second.empty())
-               && (editIt == m.body.end() || editIt->second.empty());
-    };
-    std::vector<std::shared_ptr<libjami::SwarmMessage>> chain; // oldest first
-    chain.reserve(order.size());
-    for (auto it = order.rbegin(); it != order.rend(); ++it) {
-        auto q = history.quickAccess.find(*it);
-        if (q != history.quickAccess.end() && isChained(*q->second))
-            chain.emplace_back(q->second);
-    }
-    if (chain.empty())
-        return;
-
-    // These messages are the newest ones in the history: detach them from the front
-    // and put them back in log order.
-    std::set<const libjami::SwarmMessage*> detaching;
-    for (const auto& msg : chain)
-        detaching.emplace(msg.get());
-    for (auto it = list.begin(); it != list.end() && !detaching.empty();) {
-        if (detaching.erase(it->get()))
-            it = list.erase(it);
-        else
-            ++it;
-    }
-    for (const auto& msg : chain)
-        list.emplace_front(msg);
-
-    // Announce the chain from the first message whose predecessor changed, oldest
-    // first: a client that places a message right after its parent needs the whole
-    // tail replayed, since a message may keep its parent while that parent moves.
-    std::vector<libjami::SwarmMessage> moved;
-    const std::string* parentId = &anchorId;
-    for (const auto& msg : chain) {
-        if (!moved.empty() || msg->linearizedParent != *parentId) {
-            msg->linearizedParent = *parentId;
-            moved.emplace_back(*msg);
-        }
-        parentId = &msg->id;
-    }
-    for (const auto& msg : moved)
-        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), msg);
+    // The log is walked in the order loadMessages() uses.
+    loadedHistory_.relinearize(accountId_, repository_->id(), std::move(newIds), [&](const auto& visit) {
+        repository_->log(
+            [&](const auto& id, const auto&, const auto& commit) {
+                if (git_commit_parentcount(commit.get()) <= 1)
+                    return CallbackResult::Ok;
+                visit(id, true);
+                return CallbackResult::Skip;
+            },
+            [](auto&&) {},
+            [&](const auto& id, const auto&, const auto&) { return visit(id, false); },
+            "",
+            false);
+    });
 }
 
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
@@ -2108,17 +1487,8 @@ Conversation::Impl::addToHistory(History& history,
 
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     for (const auto& sharedCommit : sharedCommits) {
-        history.quickAccess[sharedCommit->id] = sharedCommit;
-
-        auto reactToIt = sharedCommit->body.find(CommitKey::REACT_TO);
-        auto editIt = sharedCommit->body.find(CommitKey::EDIT);
-        if (reactToIt != sharedCommit->body.end() && !reactToIt->second.empty()) {
-            handleReaction(history, sharedCommit);
-        } else if (editIt != sharedCommit->body.end() && !editIt->second.empty()) {
-            handleEdition(history, sharedCommit, messageReceived);
-        } else if (handleMessage(history, sharedCommit, messageReceived)) {
+        if (history.add(accountId_, repository_->id(), sharedCommit, messageReceived))
             messages.emplace_back(sharedCommit);
-        }
         rectifyStatus(sharedCommit, history);
     }
 
@@ -2415,25 +1785,22 @@ std::vector<MobileNodeTarget>
 Conversation::mobileNodesToNotify() const
 {
     std::vector<MobileNodeTarget> targets;
-    auto account = pimpl_->account_.lock();
-    if (!account)
-        return targets;
-    for (const auto& info : pimpl_->swarmManager_->getMobileNodeInfosToNotify()) {
-        const auto deviceId = info.id.toString();
-        auto uri = uriFromDevice(deviceId);
-        // A verified lease binds the device to its issuer, so the account URI is
-        // already known without touching the certificate.
-        if (uri.empty() && info.lease)
-            uri = info.lease->issuer_id.toString();
-        if (uri.empty()) {
-            auto cert = account->certStore().getCertificate(deviceId);
-            if (cert && cert->issuer)
-                uri = cert->issuer->getId().toString();
-        }
-        if (!uri.empty() && isPeerAuthorized(uri, deviceId, false))
-            targets.emplace_back(MobileNodeTarget {info.id, std::move(uri)});
-    }
+    for (auto& target :
+         pimpl_->membership_->mobileTargets([this](const std::string& device) { return uriFromDevice(device); },
+                                            [this](const std::string& uri, const std::string& device) {
+                                                return isPeerAuthorized(uri, device, false);
+                                            }))
+        targets.emplace_back(MobileNodeTarget {target.device, std::move(target.member)});
     return targets;
+}
+
+std::vector<std::string>
+Conversation::unconnectedMembers(const std::vector<NodeId>& peers, size_t count) const
+{
+    return pimpl_->membership_->unconnectedMembers(peers,
+                                                   pimpl_->repository_->memberUris(pimpl_->userId_,
+                                                                                   {MemberRole::BANNED}),
+                                                   count);
 }
 
 bool
@@ -2790,10 +2157,7 @@ void
 Conversation::clearCache()
 {
     std::lock_guard lk(pimpl_->loadedHistory_.mutex);
-    pimpl_->loadedHistory_.messageList.clear();
-    pimpl_->loadedHistory_.quickAccess.clear();
-    pimpl_->loadedHistory_.pendingEditions.clear();
-    pimpl_->loadedHistory_.pendingReactions.clear();
+    pimpl_->loadedHistory_.clear();
     {
         std::lock_guard lk(pimpl_->messageStatusMtx_);
         pimpl_->memberToStatus.clear();
@@ -3517,7 +2881,7 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
     // Bootstrap the DRT from currently known devices. Since the per-device
-    // presence monitoring (monitorConnection/startTracking below), callers do
+    // presence monitoring (SwarmMembership::monitor below), callers do
     // not pass any device list here: candidates are injected as members get
     // online, through addKnownDevices() with devices reported by the
     // PresenceManager (i.e. announced on the DHT), and rotated on connection
@@ -3532,7 +2896,28 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
         pimpl_->swarmManager_->setKnownNodes(devices);
     }
 
-    pimpl_->monitorConnection(weak_from_this());
+    pimpl_->membership_->setMembers(
+        [w = weak()] {
+            std::vector<std::string> uris;
+            if (auto sthis = w.lock())
+                for (const auto& member : sthis->pimpl_->repository_->members())
+                    uris.emplace_back(member.uri);
+            return uris;
+        },
+        [w = weak()](const std::string& uri) {
+            auto sthis = w.lock();
+            return sthis && sthis->isMember(uri);
+        });
+    pimpl_->membership_->monitor([w = weak()](bool ok) {
+        if (auto sthis = w.lock()) {
+            if (ok && sthis->pimpl_->bootstrapCb_)
+                sthis->pimpl_->bootstrapCb_();
+#ifdef LIBJAMI_TEST
+            if (sthis->pimpl_->bootstrapCbTest_)
+                sthis->pimpl_->bootstrapCbTest_(sthis->id(), ok ? BootstrapStatus::SUCCESS : BootstrapStatus::FAILED);
+#endif
+        }
+    });
 
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic
     // connectivity change
@@ -3556,24 +2941,7 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
 void
 Conversation::addKnownDevices(const std::vector<DeviceId>& devices, const std::string& memberUri)
 {
-    if (devices.empty())
-        return;
-    if (!memberUri.empty()) {
-        // JAMI_WARNING("{} Adding {} known devices for member {}", pimpl_->toString(), devices.size(), memberUri);
-        std::lock_guard lk(pimpl_->trackedMembersMtx_);
-        auto it = pimpl_->trackedMembers_.find(memberUri);
-        if (it != pimpl_->trackedMembers_.end()) {
-            it->second.presenceReported = true;
-            it->second.devices.insert(devices.begin(), devices.end());
-            // Presence only reports a device once it was absent, so a failure
-            // recorded before this announce says nothing about the device now.
-            for (const auto& device : devices)
-                it->second.failedDevices.erase(device);
-        }
-    } else {
-        JAMI_ERROR("{} Adding {} known devices without member URI", pimpl_->toString(), devices.size());
-    }
-    pimpl_->swarmManager_->setKnownNodes(devices);
+    pimpl_->membership_->addKnownDevices(devices, memberUri);
 }
 
 void
@@ -3607,31 +2975,11 @@ Conversation::onMembersChanged(OnMembersChanged&& cb)
 void
 Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
-    pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
-                                            w = weak()](const std::string& deviceId, ChannelCb&& cb, bool noNewSocket) {
-        if (auto sthis = w.lock()) {
-            auto wrappedCb = [cb = std::move(cb), w, deviceId](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
-                if (auto sthis = w.lock()) {
-                    if (!socket) {
-                        if (auto acc = sthis->pimpl_->account_.lock()) {
-                            auto cert = acc->certStore().getCertificate(deviceId);
-                            if (cert && cert->issuer) {
-                                sthis->pimpl_->onConnectionFailed(DeviceId(deviceId), cert->issuer->getId().toString());
-                            } else {
-                                JAMI_WARNING("{} Unable to get member URI from device ID {}",
-                                             sthis->pimpl_->toString(),
-                                             deviceId);
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-                return cb(socket);
-            };
-            needSocket(sthis->id(), deviceId, std::move(wrappedCb), "application/im-gitmessage-id", noNewSocket);
-        }
-    };
+    pimpl_->membership_->setOpenChannel([needSocket = std::move(needSocket),
+                                         w = weak()](const std::string& deviceId, ChannelCb&& cb, bool noNewSocket) {
+        if (auto sthis = w.lock())
+            needSocket(sthis->id(), deviceId, std::move(cb), "application/im-gitmessage-id", noNewSocket);
+    });
 }
 
 void
@@ -3646,11 +2994,7 @@ Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
     if (!cert || !cert->issuer)
         return;
     auto member = cert->issuer->getId().toString();
-    // The TLS handshake authenticated this certificate: pin it so that any mobile
-    // lease this device gossips can be verified without a lookup.
-    if (auto account = pimpl_->account_.lock())
-        account->certStore().pinCertificate(cert);
-    pimpl_->swarmManager_->addChannel(std::move(channel));
+    pimpl_->membership_->addChannel(std::move(channel));
     dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w = weak_from_this()] {
         auto sthis = w.lock();
         if (auto account = a.lock()) {
