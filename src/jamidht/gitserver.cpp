@@ -19,16 +19,22 @@
 #include "fileutils.h"
 #include "logger.h"
 #include "gittransport.h"
-#include "manager.h"
 #include <opendht/thread_pool.h>
 #include <dhtnet/multiplexed_socket.h>
 #include <fmt/compile.h>
 
+#include <algorithm>
+#include <atomic>
 #include <charconv>
 #include <ctime>
+#include <exception>
 #include <fstream>
 #include <git2.h>
 #include <iomanip>
+#include <map>
+#include <sstream>
+#include <string_view>
+#include <vector>
 
 using namespace std::string_view_literals;
 constexpr auto FLUSH_PKT = "0000"sv;
@@ -46,12 +52,18 @@ public:
     Impl(const std::string& accountId,
          const std::string& repositoryId,
          const std::string& repository,
-         const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
+         const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+         std::function<std::optional<std::string>()> grant = {},
+         bool guarded = false)
         : accountId_(accountId)
         , repositoryId_(repositoryId)
         , repository_(repository)
         , socket_(socket)
+        , grant_(std::move(grant))
+        , guarded_(guarded)
     {
+        if (!authorized())
+            return;
         // JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created",
         //            accountId_, repositoryId_, fmt::ptr(this));
         // Check at least if repository is correct
@@ -85,6 +97,9 @@ public:
         dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
     }
     bool parseOrder(std::string_view buf = {});
+    bool authorized();
+    bool write(const uint8_t* data, size_t size, std::error_code& error);
+    bool permittedWant() const;
 
     void sendReferenceCapabilities(bool sendVersion = false);
     bool NAK();
@@ -109,11 +124,73 @@ public:
     std::string cachedPkt_ {};
     std::atomic_bool isDestroying_ {false};
     onFetchedCb onFetchedCb_ {};
+    std::function<std::optional<std::string>()> grant_;
+    // Guarded servers only expose the verified head granted for this session.
+    std::string grantedHead_;
+    bool guarded_ {false};
+    std::atomic_bool denied_ {false};
 };
+
+bool
+GitServer::Impl::authorized()
+{
+    if (isDestroying_ || denied_)
+        return false;
+    if (!guarded_)
+        return true;
+    try {
+        if (const auto head = grant_ ? grant_() : std::nullopt) {
+            grantedHead_ = *head;
+            return true;
+        }
+    } catch (const std::exception&) {
+    }
+    denied_ = true;
+    dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+    return false;
+}
+
+bool
+GitServer::Impl::write(const uint8_t* data, size_t size, std::error_code& error)
+{
+    if (!authorized()) {
+        error = std::make_error_code(std::errc::permission_denied);
+        return false;
+    }
+    socket_->write(data, size, error);
+    return !error;
+}
+
+bool
+GitServer::Impl::permittedWant() const
+{
+    if (!guarded_)
+        return true;
+    if (wantedReference_.size() != 40 || advertisedHead_.empty()
+        || !std::all_of(wantedReference_.begin(), wantedReference_.end(), [](char character) {
+               return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
+           }))
+        return false;
+    git_repository* raw = nullptr;
+    if (git_repository_open(&raw, repository_.c_str()) < 0)
+        return false;
+    GitRepository repo(raw);
+    git_oid wanted {}, advertised {}, current {};
+    if (git_oid_fromstr(&wanted, wantedReference_.c_str()) < 0
+        || git_oid_fromstr(&advertised, advertisedHead_.c_str()) < 0
+        || git_oid_fromstr(&current, grantedHead_.c_str()) < 0)
+        return false;
+    auto reachable = [&](const git_oid& head) {
+        return git_oid_equal(&head, &wanted) || git_graph_descendant_of(repo.get(), &head, &wanted) == 1;
+    };
+    return reachable(advertised) && reachable(current);
+}
 
 bool
 GitServer::Impl::parseOrder(std::string_view buf)
 {
+    if (!authorized())
+        return false;
     std::string pkt = std::move(cachedPkt_);
     if (!buf.empty())
         pkt += buf;
@@ -122,25 +199,36 @@ GitServer::Impl::parseOrder(std::string_view buf)
     // Reference: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L51
     // The first four bytes define the length of the packet and 0000 is a FLUSH pkt
 
+    if (pkt.size() < 4) {
+        cachedPkt_ = std::move(pkt);
+        return false;
+    }
     unsigned int pkt_len = 0;
     auto [p, ec] = std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
-    if (ec != std::errc()) {
+    if (ec != std::errc() || p != pkt.data() + 4 || (pkt_len && pkt_len < 4) || pkt_len > 65520) {
         JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to parse packet size",
                    accountId_,
                    repositoryId_,
                    fmt::ptr(this));
+        denied_ = true;
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+        return false;
     }
-    if (pkt_len != pkt.size()) {
-        // Store next packet part
-        if (pkt_len == 0) {
-            // FLUSH_PKT
-            pkt_len = 4;
-        }
-        cachedPkt_ = pkt.substr(pkt_len);
+    if (!pkt_len)
+        pkt_len = 4;
+    if (pkt.size() < pkt_len) {
+        cachedPkt_ = std::move(pkt);
+        return false;
     }
+    cachedPkt_ = pkt.substr(pkt_len);
 
     auto pack = std::string_view(pkt).substr(4, pkt_len - 4);
     if (pack == DONE_CMD) {
+        if (!permittedWant()) {
+            denied_ = true;
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+            return false;
+        }
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
         // not do multi-ack, just send ACK + pack file
@@ -265,6 +353,8 @@ toGitHex(size_t value)
 void
 GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 {
+    if (!authorized())
+        return;
     // Get references
     // First, get the HEAD reference
     // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
@@ -286,7 +376,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     std::error_code ec;
     if (sendVersion) {
         constexpr auto toSend = "000eversion 1\0"sv;
-        socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
+        write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
         if (ec) {
             JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                          accountId_,
@@ -299,16 +389,21 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         }
     }
 
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, rep.get(), "HEAD") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for HEAD",
-                   accountId_,
-                   repositoryId_,
-                   fmt::ptr(this));
-        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
-        return;
+    std::string currentHead;
+    if (guarded_) {
+        currentHead = grantedHead_;
+    } else {
+        git_oid commit_id;
+        if (git_reference_name_to_id(&commit_id, rep.get(), "HEAD") < 0) {
+            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for HEAD",
+                       accountId_,
+                       repositoryId_,
+                       fmt::ptr(this));
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
+            return;
+        }
+        currentHead = git_oid_tostr_s(&commit_id);
     }
-    std::string_view currentHead = git_oid_tostr_s(&commit_id);
     advertisedHead_ = currentHead;
 
     // Send references
@@ -318,9 +413,13 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 
     // Now, add other references
     git_strarray refs;
-    if (git_reference_list(&refs, rep.get()) == 0) {
+    if (guarded_) {
+        constexpr auto main = "refs/heads/main"sv;
+        packet << toGitHex(6 + currentHead.size() + main.size()) << currentHead << " " << main << "\n";
+    } else if (git_reference_list(&refs, rep.get()) == 0) {
         for (std::size_t i = 0; i < refs.count; ++i) {
             std::string_view ref = refs.strings[i];
+            git_oid commit_id;
             if (git_reference_name_to_id(&commit_id, rep.get(), ref.data()) < 0) {
                 JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for {}",
                              accountId_,
@@ -329,18 +428,18 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                              ref);
                 continue;
             }
-            currentHead = git_oid_tostr_s(&commit_id);
+            std::string_view refHead = git_oid_tostr_s(&commit_id);
 
-            packet << toGitHex(6 /* size + space + \n */ + currentHead.size() + ref.size());
-            packet << currentHead << " " << ref << "\n";
+            packet << toGitHex(6 /* size + space + \n */ + refHead.size() + ref.size());
+            packet << refHead << " " << ref << "\n";
         }
+        git_strarray_dispose(&refs);
     }
-    git_strarray_dispose(&refs);
 
     // And add FLUSH
     packet << FLUSH_PKT;
     auto toSend = packet.str();
-    socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
+    write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
     if (ec) {
         JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                      accountId_,
@@ -376,7 +475,7 @@ GitServer::Impl::ACKCommon()
         auto toSend = fmt::format(FMT_COMPILE("{:04x}ACK {} continue\n"),
                                   18 + common_.size() /* size + ACK + space * 2 + continue + \n */,
                                   common_);
-        socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+        write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                          accountId_,
@@ -398,7 +497,7 @@ GitServer::Impl::ACKFirst()
         auto toSend = fmt::format(FMT_COMPILE("{:04x}ACK {}\n"),
                                   9 + common_.size() /* size + ACK + space + \n */,
                                   common_);
-        socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+        write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                          accountId_,
@@ -418,7 +517,7 @@ GitServer::Impl::NAK()
 {
     std::error_code ec;
     // NAK
-    socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
+    write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
     if (ec) {
         JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                      accountId_,
@@ -435,6 +534,8 @@ GitServer::Impl::NAK()
 void
 GitServer::Impl::sendPackData()
 {
+    if (!authorized() || !permittedWant())
+        return;
     git_repository* repo_ptr;
     if (git_repository_open(&repo_ptr, repository_.c_str()) != 0) {
         JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open {}",
@@ -526,7 +627,7 @@ GitServer::Impl::sendPackData()
         toSendData.push_back(0x1);
         toSendData.insert(toSendData.end(), data.ptr + sent, data.ptr + sent + pkt_size);
 
-        socket_->write(reinterpret_cast<const unsigned char*>(toSendData.data()), toSendData.size(), ec);
+        write(reinterpret_cast<const unsigned char*>(toSendData.data()), toSendData.size(), ec);
         if (ec) {
             JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                          accountId_,
@@ -543,7 +644,7 @@ GitServer::Impl::sendPackData()
     toSendData = {};
 
     // And finish by a little FLUSH
-    socket_->write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
+    write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
     if (ec) {
         JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}",
                      accountId_,
@@ -604,6 +705,14 @@ GitServer::~GitServer()
     stop();
     pimpl_.reset();
 }
+
+GitServer::GitServer(const std::string& accountId,
+                     const std::string& repositoryId,
+                     const std::shared_ptr<dhtnet::ChannelSocketInterface>& client,
+                     const std::filesystem::path& repository,
+                     std::function<std::optional<std::string>()> grant)
+    : pimpl_(std::make_unique<Impl>(accountId, repositoryId, repository.string(), client, std::move(grant), true))
+{}
 
 void
 GitServer::setOnFetched(const onFetchedCb& cb)

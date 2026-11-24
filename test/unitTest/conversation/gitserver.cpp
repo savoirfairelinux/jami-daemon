@@ -29,12 +29,15 @@
 #include <filesystem>
 #include <git2.h>
 #include <mutex>
+#include <random>
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include "fileutils.h"
 #include "jamidht/gitserver.h"
+#include "jamidht/circle_fetch.h"
+#include "jamidht/circle_module.h"
 
 #include "../../test_runner.h"
 
@@ -79,6 +82,8 @@ public:
         // Not mutex_: the server writes its answers from within the receive callback.
         std::lock_guard lk(writeMutex_);
         written_.insert(written_.end(), buf, buf + len);
+        if (writeObserver_)
+            writeObserver_(buf, len);
         return len;
     }
     std::size_t read(ValueType*, std::size_t, std::error_code& ec) override
@@ -132,6 +137,12 @@ public:
         return written_;
     }
 
+    void observeWrites(std::function<void(const uint8_t*, size_t)> observer)
+    {
+        std::lock_guard lock(writeMutex_);
+        writeObserver_ = std::move(observer);
+    }
+
 private:
     mutable std::mutex mutex_ {};
     mutable std::mutex writeMutex_ {};
@@ -140,7 +151,80 @@ private:
     RecvCb recvCb_ {};
     dhtnet::OnShutdownCb shutdownCb_ {};
     std::vector<uint8_t> written_ {};
+    std::function<void(const uint8_t*, size_t)> writeObserver_;
     std::string name_ {"git://fake/conversation"};
+    std::chrono::steady_clock::time_point start_ {std::chrono::steady_clock::now()};
+};
+
+/**
+ * Client end of an in-memory channel: writes feed the server socket, and the
+ * server's answers are buffered for blocking reads, like a dhtnet channel.
+ */
+class PipeSocket : public dhtnet::ChannelSocketInterface
+{
+public:
+    explicit PipeSocket(std::shared_ptr<FakeChannelSocket> server)
+        : server_(std::move(server))
+    {
+        server_->observeWrites([this](const uint8_t* data, size_t size) {
+            std::lock_guard lock(mutex_);
+            buffer_.insert(buffer_.end(), data, data + size);
+            cv_.notify_all();
+        });
+    }
+    ~PipeSocket() { server_->observeWrites({}); }
+
+    void shutdown() override
+    {
+        std::lock_guard lock(mutex_);
+        closed_ = true;
+        cv_.notify_all();
+    }
+    void setOnRecv(RecvCb&&) override {}
+    bool isReliable() const override { return true; }
+    bool isInitiator() const override { return true; }
+    int maxPayload() const override { return 0; }
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override
+    {
+        std::unique_lock lock(mutex_);
+        cv_.wait_for(lock, timeout, [this] { return !buffer_.empty() || closed_; });
+        if (buffer_.empty())
+            ec = std::make_error_code(std::errc::connection_aborted);
+        return static_cast<int>(buffer_.size());
+    }
+    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override
+    {
+        ec = {};
+        server_->onRecv(std::vector<uint8_t>(buf, buf + len));
+        return len;
+    }
+    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override
+    {
+        ec = {};
+        std::lock_guard lock(mutex_);
+        const auto size = std::min(len, buffer_.size());
+        std::copy_n(buffer_.begin(), size, buf);
+        buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(size));
+        return size;
+    }
+
+    dhtnet::DeviceId deviceId() const override { return {}; }
+    const std::string& name() const override { return name_; }
+    uint16_t channel() const override { return 43; }
+    void onReady(dhtnet::ChannelReadyCb&&) override {}
+    void onShutdown(dhtnet::OnShutdownCb&&) override {}
+    void onRecv(std::vector<uint8_t>&&) override {}
+    uint64_t txBytes() const override { return 0; }
+    uint64_t rxBytes() const override { return 0; }
+    std::chrono::steady_clock::time_point getStartTime() const override { return start_; }
+
+private:
+    std::shared_ptr<FakeChannelSocket> server_;
+    mutable std::mutex mutex_;
+    mutable std::condition_variable cv_;
+    std::vector<uint8_t> buffer_;
+    bool closed_ {false};
+    std::string name_ {"git://fake/circles"};
     std::chrono::steady_clock::time_point start_ {std::chrono::steady_clock::now()};
 };
 
@@ -159,6 +243,14 @@ private:
     void testStopIsIdempotent();
     void testPackOnlyHasMissingObjects();
     void testPackIgnoresUnknownHaves();
+    void testGuardedServerDeniesOutput();
+    void testGuardedServerRevocation();
+    void testGuardedServerRejectsUnreachableWant();
+    void testFragmentedAdvertisementRequest();
+    void testMountedCircleServing();
+    void testGuardedPackTransfer();
+    void testRevocationDuringPack();
+    void testCircleFetchOverChannel();
 
     CPPUNIT_TEST_SUITE(GitServerTest);
     CPPUNIT_TEST(testStopShutsDownChannel);
@@ -166,9 +258,18 @@ private:
     CPPUNIT_TEST(testStopIsIdempotent);
     CPPUNIT_TEST(testPackOnlyHasMissingObjects);
     CPPUNIT_TEST(testPackIgnoresUnknownHaves);
+    CPPUNIT_TEST(testGuardedServerDeniesOutput);
+    CPPUNIT_TEST(testGuardedServerRevocation);
+    CPPUNIT_TEST(testGuardedServerRejectsUnreachableWant);
+    CPPUNIT_TEST(testFragmentedAdvertisementRequest);
+    CPPUNIT_TEST(testMountedCircleServing);
+    CPPUNIT_TEST(testGuardedPackTransfer);
+    CPPUNIT_TEST(testRevocationDuringPack);
+    CPPUNIT_TEST(testCircleFetchOverChannel);
     CPPUNIT_TEST_SUITE_END();
 
     std::pair<std::string, std::string> writeHistory();
+    void publishHead(const std::string& id);
     uint32_t fetchPackObjectCount(const std::string& want, const std::string& have);
 
     // GitServer derives the repository path from the account and conversation
@@ -292,6 +393,22 @@ pktLine(std::string_view payload)
     return {line.begin(), line.end()};
 }
 
+std::function<std::optional<std::string>()>
+granted(std::string head)
+{
+    return [head = std::move(head)]() -> std::optional<std::string> {
+        return head;
+    };
+}
+
+std::function<std::optional<std::string>()>
+grantedWhile(const bool& allowed, std::string head)
+{
+    return [&allowed, head = std::move(head)]() -> std::optional<std::string> {
+        return allowed ? std::optional<std::string>(head) : std::nullopt;
+    };
+}
+
 } // namespace
 
 std::pair<std::string, std::string>
@@ -360,6 +477,217 @@ GitServerTest::fetchPackObjectCount(const std::string& want, const std::string& 
     // "PACK", the version, then the number of objects, in network order
     CPPUNIT_ASSERT(pack.size() >= 12 && std::equal(pack.begin(), pack.begin() + 4, "PACK"));
     return (uint32_t(pack[8]) << 24) | (uint32_t(pack[9]) << 16) | (uint32_t(pack[10]) << 8) | pack[11];
+}
+
+void
+GitServerTest::publishHead(const std::string& id)
+{
+    git_repository* raw = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&raw, repoPath_.string().c_str()) == 0);
+    GitRepository repository(raw);
+    git_oid oid {};
+    CPPUNIT_ASSERT(git_oid_fromstr(&oid, id.c_str()) == 0);
+    git_reference* referenceRaw = nullptr;
+    CPPUNIT_ASSERT(git_reference_create(&referenceRaw, repository.get(), "refs/heads/main", &oid, 1, "test") == 0);
+    GitReference reference(referenceRaw);
+    CPPUNIT_ASSERT(git_repository_set_head(repository.get(), "refs/heads/main") == 0);
+}
+
+void
+GitServerTest::testGuardedServerDeniesOutput()
+{
+    const auto [first, second] = writeHistory();
+    publishHead(second);
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer server(accountId_, conversationId_, socket, repoPath_, []() -> std::optional<std::string> {
+        return std::nullopt;
+    });
+    CPPUNIT_ASSERT(socket->waitForShutdown(10s));
+    CPPUNIT_ASSERT(socket->written().empty());
+}
+
+void
+GitServerTest::testGuardedServerRevocation()
+{
+    const auto [first, second] = writeHistory();
+    publishHead(second);
+    bool allowed = true;
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer server(accountId_, conversationId_, socket, repoPath_, grantedWhile(allowed, second));
+    socket->onRecv(pktLine("git-upload-pack /circles/v1/test"));
+    const auto before = socket->written();
+    CPPUNIT_ASSERT(!before.empty());
+    allowed = false;
+    socket->onRecv(pktLine(fmt::format("want {}\n", second)));
+    socket->onRecv(pktLine("done\n"));
+    CPPUNIT_ASSERT(socket->waitForShutdown(10s));
+    CPPUNIT_ASSERT(socket->written() == before);
+}
+
+void
+GitServerTest::testGuardedServerRejectsUnreachableWant()
+{
+    const auto [first, second] = writeHistory();
+    publishHead(second);
+    git_repository* raw = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&raw, repoPath_.string().c_str()) == 0);
+    GitRepository repository(raw);
+    git_oid oid {};
+    CPPUNIT_ASSERT(git_oid_fromstr(&oid, second.c_str()) == 0);
+    git_reference* referenceRaw = nullptr;
+    CPPUNIT_ASSERT(git_reference_create(&referenceRaw, repository.get(), "refs/heads/private", &oid, 1, "test") == 0);
+    GitReference reference(referenceRaw);
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer server(accountId_, conversationId_, socket, repoPath_, granted(first));
+    socket->onRecv(pktLine("git-upload-pack /circles/v1/test"));
+    const auto before = socket->written();
+    const std::string advertised(before.begin(), before.end());
+    CPPUNIT_ASSERT(advertised.find("refs/heads/private") == std::string::npos);
+    CPPUNIT_ASSERT(advertised.find(first) != std::string::npos);
+    CPPUNIT_ASSERT(advertised.find(second) == std::string::npos);
+    socket->onRecv(pktLine(fmt::format("want {}\n", second)));
+    socket->onRecv(pktLine("done\n"));
+    CPPUNIT_ASSERT(socket->waitForShutdown(10s));
+    CPPUNIT_ASSERT(socket->written() == before);
+}
+
+void
+GitServerTest::testFragmentedAdvertisementRequest()
+{
+    const auto [first, second] = writeHistory();
+    publishHead(second);
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer server(accountId_, conversationId_, socket, repoPath_, granted(second));
+    const auto request = pktLine("git-upload-pack /circles/v1/test");
+    socket->onRecv({request.begin(), request.begin() + 2});
+    CPPUNIT_ASSERT(socket->written().empty());
+    socket->onRecv({request.begin() + 2, request.begin() + 6});
+    CPPUNIT_ASSERT(socket->written().empty());
+    socket->onRecv({request.begin() + 6, request.end()});
+    const auto output = socket->written();
+    CPPUNIT_ASSERT(!output.empty());
+    CPPUNIT_ASSERT(std::string(output.begin(), output.end()).find(second) != std::string::npos);
+}
+
+void
+GitServerTest::testMountedCircleServing()
+{
+    const auto account = dht::crypto::generateIdentity("serving-account", {}, 2048, true);
+    const auto identity = dht::crypto::generateIdentity("serving-device", account, 2048, false);
+    const auto peerAccount = dht::crypto::generateIdentity("invited-account", {}, 2048, true);
+    const auto peer = dht::crypto::generateIdentity("invited-device", peerAccount, 2048, false);
+    const auto path = repoPath_ / "circle.git";
+    const auto circle = CircleRepository::create(path, identity);
+    CPPUNIT_ASSERT(circle);
+    const auto member = peerAccount.second->getId().toString();
+    CPPUNIT_ASSERT(circle->append(identity, InviteCircleMember {member}));
+    CircleModule runtime(identity, [](const auto&) { return true; });
+    CPPUNIT_ASSERT(runtime.mountCircle(path, circle->id()));
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    const auto session = runtime.open("circles/v1/" + circle->id(), peer.second, [socket] { socket->shutdown(); });
+    CPPUNIT_ASSERT(session);
+    GitServer server(accountId_, circle->id(), socket, session->repository, [session] { return session->grant(); });
+    socket->onRecv(pktLine("git-upload-pack /circles/v1/" + circle->id()));
+    const auto before = socket->written();
+    CPPUNIT_ASSERT(!before.empty());
+    const auto ban = circle->moderate(identity, {CircleModerationAction::BAN_MEMBER, member});
+    CPPUNIT_ASSERT(ban && ban->resolution);
+    CPPUNIT_ASSERT(runtime.refresh(circle->id()));
+    CPPUNIT_ASSERT(socket->isShutdown());
+    socket->onRecv(pktLine(fmt::format("want {}\n", circle->head())));
+    CPPUNIT_ASSERT(socket->written() == before);
+}
+
+void
+GitServerTest::testGuardedPackTransfer()
+{
+    const auto [first, second] = writeHistory();
+    publishHead(second);
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    GitServer server(accountId_, conversationId_, socket, repoPath_, granted(second));
+    socket->onRecv(pktLine("git-upload-pack /circles/v1/test"));
+    socket->onRecv(pktLine(fmt::format("want {}\n", second)));
+    socket->onRecv(pktLine(fmt::format("have {}\n", first)));
+    socket->onRecv({'0', '0', '0', '0'});
+    socket->onRecv(pktLine("done\n"));
+    const auto output = socket->written();
+    const std::string_view magic = "PACK";
+    const auto found = std::search(output.begin(), output.end(), magic.begin(), magic.end());
+    CPPUNIT_ASSERT(found != output.end() && std::distance(found, output.end()) >= 12);
+    const auto count = (uint32_t(found[8]) << 24) | (uint32_t(found[9]) << 16) | (uint32_t(found[10]) << 8) | found[11];
+    CPPUNIT_ASSERT_EQUAL(uint32_t(4), count);
+    CPPUNIT_ASSERT(!socket->isShutdown());
+}
+
+void
+GitServerTest::testRevocationDuringPack()
+{
+    const auto [first, second] = writeHistory();
+    git_repository* raw = nullptr;
+    CPPUNIT_ASSERT(git_repository_open(&raw, repoPath_.string().c_str()) == 0);
+    GitRepository repository(raw);
+    std::string large(200000, 'x');
+    std::mt19937 random(17);
+    for (auto& character : large)
+        character = static_cast<char>(random() & 0xff);
+    git_oid parent {};
+    CPPUNIT_ASSERT(git_oid_fromstr(&parent, second.c_str()) == 0);
+    const auto latest = writeCommit(repository.get(),
+                                    writeTree(repository.get(),
+                                              {{"large", writeBlob(repository.get(), large), GIT_FILEMODE_BLOB}}),
+                                    &parent);
+    const std::string head = git_oid_tostr_s(&latest);
+    publishHead(head);
+    bool allowed = true;
+    unsigned chunks = 0;
+    const auto socket = std::make_shared<FakeChannelSocket>();
+    socket->observeWrites([&](const uint8_t* data, size_t size) {
+        if (size > 5 && data[4] == 1) {
+            ++chunks;
+            allowed = false;
+        }
+    });
+    GitServer server(accountId_, conversationId_, socket, repoPath_, grantedWhile(allowed, head));
+    socket->onRecv(pktLine("git-upload-pack /circles/v1/test"));
+    socket->onRecv(pktLine(fmt::format("want {}\n", head)));
+    socket->onRecv(pktLine("done\n"));
+    CPPUNIT_ASSERT(socket->waitForShutdown(10s));
+    CPPUNIT_ASSERT(chunks == 1);
+    CPPUNIT_ASSERT(socket->written().size() < large.size());
+}
+
+void
+GitServerTest::testCircleFetchOverChannel()
+{
+    const auto account = dht::crypto::generateIdentity("origin-account", {}, 2048, true);
+    const auto origin = dht::crypto::generateIdentity("origin-device", account, 2048, false);
+    const auto peerAccount = dht::crypto::generateIdentity("fetch-account", {}, 2048, true);
+    const auto peer = dht::crypto::generateIdentity("fetch-device", peerAccount, 2048, false);
+    const auto circlePath = repoPath_ / "origin.git";
+    auto created = CircleRepository::create(circlePath, origin);
+    CPPUNIT_ASSERT(created && created->append(origin, InviteCircleMember {peerAccount.second->getId().toString()}));
+    const auto circle = created->id();
+    created.reset();
+    CircleModule serving(origin, [](const auto&) { return true; });
+    CircleModule fetching(peer, [](const auto&) { return true; });
+    CPPUNIT_ASSERT(serving.mountCircle(circlePath, circle));
+    const auto route = "circles/v1/" + circle;
+    const auto download = [&](const std::filesystem::path& repository, std::string_view ref) {
+        const auto server = std::make_shared<FakeChannelSocket>();
+        const auto client = std::make_shared<PipeSocket>(server);
+        const auto session = serving.open(route, peer.second, [server] { server->shutdown(); });
+        if (!session)
+            return std::optional<std::string>();
+        GitServer gitServer(accountId_, circle, server, session->repository, [session] { return session->grant(); });
+        return downloadCircleRoute(repository, "origin", route, client, ref);
+    };
+    const auto clonePath = repoPath_ / "clone.git";
+    CPPUNIT_ASSERT(fetching.clone(route, clonePath, circle, download));
+    CPPUNIT_ASSERT(fetching.circle(circle)->head() == serving.circle(circle)->head());
+    const auto update = serving.circle(circle)->append(origin, SetCircleRole {"writer", {{Permission::Text}, {}}});
+    CPPUNIT_ASSERT(update && fetching.fetch(route, download).head == *update);
+    CPPUNIT_ASSERT(fetching.circle(circle)->policy() == serving.circle(circle)->policy());
+    CPPUNIT_ASSERT(fetching.fetch(route, download).status == CircleFetchStatus::UNCHANGED);
 }
 
 void

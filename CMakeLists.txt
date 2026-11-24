@@ -1052,6 +1052,31 @@ if(NOT MSVC)
             setup_target_for_coverage(ut_circle_policy)
         endif()
         add_test(NAME circle_policy COMMAND ut_circle_policy)
+        add_executable(ut_circle_repository
+            test/unitTest/conversation/circle_repository.cpp
+            src/base64.cpp
+            src/jamidht/circle_module.cpp
+            src/jamidht/circlerepository.cpp
+            src/jamidht/circle_policy.cpp
+            src/jamidht/circle_record.cpp
+            src/jamidht/git_utils.cpp
+            src/jamidht/swarm_certificate.cpp
+        )
+        target_include_directories(ut_circle_repository PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_compile_definitions(ut_circle_repository PRIVATE MSGPACK_NO_BOOST)
+        target_link_libraries(ut_circle_repository PRIVATE
+            PkgConfig::Cppunit
+            PkgConfig::opendht
+            PkgConfig::gnutls
+            PkgConfig::fmt
+            PkgConfig::git2
+            PkgConfig::jsoncpp
+            PkgConfig::simdutf
+        )
+        if(ENABLE_COVERAGE)
+            setup_target_for_coverage(ut_circle_repository)
+        endif()
+        add_test(NAME circle_repository COMMAND ut_circle_repository)
         add_test_executable(simulation test/unitTest/simulation/simulation.cpp)
         add_test_executable(revoke test/unitTest/revoke/revoke.cpp)
         add_test_executable(trust test/unitTest/trust/trust.cpp)

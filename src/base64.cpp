@@ -16,7 +16,6 @@
  */
 
 #include "base64.h"
-#include "connectivity/sip_utils.h"
 
 #include <simdutf.h>
 

@@ -17,7 +17,9 @@
 #pragma once
 
 #include <functional>
+#include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "def.h"
@@ -47,6 +49,14 @@ public:
     GitServer(const std::string& accountId,
               const std::string& conversationId,
               const std::shared_ptr<dhtnet::ChannelSocketInterface>& client);
+    /**
+     * Serve a verified repository head while grant() returns it; an empty result revokes the session.
+     */
+    GitServer(const std::string& accountId,
+              const std::string& repositoryId,
+              const std::shared_ptr<dhtnet::ChannelSocketInterface>& client,
+              const std::filesystem::path& repository,
+              std::function<std::optional<std::string>()> grant);
     ~GitServer();
 
     /**

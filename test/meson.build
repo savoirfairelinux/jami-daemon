@@ -333,6 +333,24 @@ ut_circle_policy = executable(
 )
 test('circle_policy', ut_circle_policy)
 
+ut_circle_repository = executable(
+    'ut_circle_repository',
+    sources: files(
+        'unitTest/conversation/circle_repository.cpp',
+        '../src/base64.cpp',
+        '../src/jamidht/circle_module.cpp',
+        '../src/jamidht/circlerepository.cpp',
+        '../src/jamidht/circle_policy.cpp',
+        '../src/jamidht/circle_record.cpp',
+        '../src/jamidht/git_utils.cpp',
+        '../src/jamidht/swarm_certificate.cpp',
+    ),
+    include_directories: include_directories('../src'),
+    cpp_args: ['-DMSGPACK_NO_BOOST'],
+    dependencies: [depcppunit, depopendht, depgnutls, depfmt, deplibgit2, depjsoncpp, depsimdutf],
+)
+test('circle_repository', ut_circle_repository)
+
 ut_commit_message = executable(
     'ut_commit_message',
     sources: files('unitTest/conversation/commit_message.cpp'),
