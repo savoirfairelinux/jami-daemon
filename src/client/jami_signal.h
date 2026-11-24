@@ -21,6 +21,7 @@
 #endif
 
 #include "callmanager_interface.h"
+#include "circle_interface.h"
 #include "configurationmanager_interface.h"
 #include "conversation_interface.h"
 #include "networkservice_interface.h"

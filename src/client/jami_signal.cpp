@@ -168,6 +168,13 @@ getSignalHandlers()
         exported_callback<libjami::ConversationSignal::CollaborativeAttachmentAdded>(),
         exported_callback<libjami::ConversationSignal::CollaborativeDocumentReplicated>(),
 
+        /* Circle */
+        exported_callback<libjami::CircleSignal::CircleRequestReceived>(),
+        exported_callback<libjami::CircleSignal::CircleReady>(),
+        exported_callback<libjami::CircleSignal::CircleUpdated>(),
+        exported_callback<libjami::CircleSignal::CircleRemoved>(),
+        exported_callback<libjami::CircleSignal::CircleChannelReady>(),
+
 #ifdef ENABLE_PLUGIN
         exported_callback<libjami::PluginSignal::WebViewMessageReceived>(),
 #endif

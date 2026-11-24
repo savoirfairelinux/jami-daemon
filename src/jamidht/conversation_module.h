@@ -18,6 +18,7 @@
 
 #include "jami.h"
 #include "jamidht/account_manager.h"
+#include "jamidht/circle_info.h"
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jami_contact.h"
@@ -55,7 +56,11 @@ struct SyncMsg
      * }}
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
-    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
+    // Circles and circle invitations. Only append fields: older devices ignore extra ones.
+    std::map<std::string, CircleInfo> ci;
+    std::map<std::string, CircleRequest> cir;
+
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms, ci, cir)
 
     /**
      * Whether this message carries contact/conversation *list* state, i.e.

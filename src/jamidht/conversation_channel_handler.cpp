@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "jamidht/conversation_channel_handler.h"
+#include "jamidht/circle_module.h"
 
 namespace jami {
 
@@ -43,6 +44,13 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return false;
+    const auto routeStart = name.find('/', 6);
+    const auto route = routeStart == std::string::npos ? std::string() : name.substr(routeStart + 1);
+    if (CircleModule::reserved(route)) {
+        const auto circles = acc->circleModule(true);
+        return name.starts_with("git://") && name.substr(6, routeStart - 6) == acc->currentDeviceId() && circles
+               && circles->authorize(route, *cert);
+    }
     // Pre-check before acceptance. Sometimes, another device can start a conversation
     // which is still not synced. So, here we decline channel's request in this case
     // to avoid the other device to want to sync with us if we are not ready.

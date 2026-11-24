@@ -1040,6 +1040,7 @@ if(NOT MSVC)
         endmacro()
 
         add_test_executable(bootstrap test/unitTest/swarm/bootstrap.cpp)
+        add_test_executable(circle_sync test/unitTest/conversation/circle_sync.cpp)
         add_test_executable(conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
         add_executable(ut_circle_policy
             test/unitTest/conversation/circle_policy.cpp

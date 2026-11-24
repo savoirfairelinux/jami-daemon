@@ -16,9 +16,25 @@
  */
 
 #include "swarm_channel_handler.h"
+#include "jamidht/circle_module.h"
+#include "jamidht/circle_service.h"
 #include "jamidht/jamiaccount.h"
 
 namespace jami {
+
+namespace {
+
+// The swarm of swarm://<swarm>: a conversation id or a circles/v1/<id> route.
+std::string_view
+swarmOf(std::string_view name)
+{
+    constexpr std::string_view scheme = "swarm://";
+    if (name.starts_with(scheme))
+        name.remove_prefix(scheme.size());
+    return name;
+}
+
+} // namespace
 
 SwarmChannelHandler::SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
@@ -53,6 +69,11 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
     if (!cert || !cert->issuer || !acc)
         return false;
 
+    if (const auto swarm = swarmOf(name); CircleModule::reserved(swarm)) {
+        const auto circles = acc->circleService(true);
+        return circles && circles->authorizeSwarmChannel(swarm, *cert);
+    }
+
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
     auto* convModule = acc->convModule(true);
@@ -73,6 +94,15 @@ SwarmChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                              const std::string& uri,
                              std::shared_ptr<dhtnet::ChannelSocket> socket)
 {
+    if (const auto swarm = swarmOf(uri); CircleModule::reserved(swarm)) {
+        const auto acc = account_.lock();
+        const auto circles = acc ? acc->circleService(true) : nullptr;
+        if (circles)
+            circles->addSwarmChannel(swarm, std::move(socket));
+        else if (socket)
+            socket->shutdown();
+        return;
+    }
     auto sep = uri.find_last_of('/');
     auto conversationId = uri.substr(sep + 1);
     if (auto acc = account_.lock()) {

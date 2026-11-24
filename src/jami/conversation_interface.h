@@ -101,7 +101,8 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMe
 LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,
                                                                    const std::string& conversationId);
 
-// Message send/load
+// Message send/load. The id of a joined circle channel is a conversation id for these, clearCache
+// and getConversationPermissions (see circle_interface.h).
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
                                 const std::string& conversationId,
                                 const std::string& message,

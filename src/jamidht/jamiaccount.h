@@ -80,6 +80,9 @@ struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
+class CircleModule;
+class CircleService;
+struct CircleFetchResult;
 class PresenceManager;
 namespace test {
 class Account_factoryTest;
@@ -507,6 +510,25 @@ public:
      * @return conversationModule instance
      */
     ConversationModule* convModule(bool noCreation = false);
+    std::shared_ptr<CircleModule> circleModule(bool noCreation = false);
+    std::shared_ptr<CircleService> circleService(bool noCreation = false);
+    /**
+     * Downloads a peer device's head for a mounted circle or channel route and accepts it.
+     * Fetch a channel's circle first so the policies its new content references are known.
+     */
+    void fetchCircleRoute(const std::string& route,
+                          const std::string& deviceId,
+                          std::function<void(CircleFetchResult)> done);
+    /**
+     * Clones a circle or channel route from a peer device into a new path, then mounts it.
+     */
+    void cloneCircleRoute(const std::string& route,
+                          const std::string& deviceId,
+                          const std::filesystem::path& path,
+                          const std::string& circle,
+                          std::function<void(bool)> done);
+    // Opens a swarm:// routing table channel for a conversation or a circle route.
+    void openSwarmChannel(const std::string& swarm, const std::string& deviceId, ChannelCb&& cb, bool noNewSocket);
     SyncModule* syncModule();
 
     /**
@@ -699,6 +721,10 @@ private:
                                   ChannelCb&& cb,
                                   const std::string& type,
                                   bool noNewSocket = false);
+    void connectCircleRoute(const std::string& route,
+                            const std::string& deviceId,
+                            std::function<bool(CircleModule&, const std::shared_ptr<dhtnet::ChannelSocket>&)> run,
+                            std::function<void(bool)> done);
     void onConversationNeedSwarmSocket(const std::string& convId,
                                        const std::string& deviceId,
                                        ChannelCb&& cb,
@@ -1043,6 +1069,9 @@ private:
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
     std::unique_ptr<ConversationModule> convModule_;
+    std::shared_ptr<CircleModule> circleModule_;
+    std::string circleModuleDevice_;
+    std::shared_ptr<CircleService> circleService_;
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
     std::shared_ptr<CollaborativeEditing> collaborativeEditing_;

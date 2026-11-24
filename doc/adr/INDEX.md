@@ -25,3 +25,5 @@ Open only the records relevant to your task. Authoring rules:
 | [ADR-014](ADR-014-circle-owned-channel-policy.md) | Circle-Owned Channel Policy | Accepted | Contemporary | 2026-10-22 |
 | [ADR-015](ADR-015-signed-circle-history.md) | Signed Circle History | Accepted | Contemporary | 2026-10-22 |
 | [ADR-016](ADR-016-policy-bound-channel-history.md) | Policy-Bound Channel History | Accepted | Contemporary | 2026-10-23 |
+| [ADR-017](ADR-017-verified-circle-sync.md) | Verified Circle Sync | Accepted | Contemporary | 2026-11-09 |
+| [ADR-018](ADR-018-circle-catalogue-and-client-api.md) | Circle Catalogue and Client API | Accepted | Contemporary | 2026-11-09 |

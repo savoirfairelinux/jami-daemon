@@ -34,6 +34,9 @@
 #include "jamidht/channeled_transport.h"
 #include "jamidht/collaborative_editing.h"
 #include "conversation_channel_handler.h"
+#include "circle_fetch.h"
+#include "circle_module.h"
+#include "circle_service.h"
 #include "sync_channel_handler.h"
 #include "ydoc_channel_handler.h"
 #include "message_channel_handler.h"
@@ -385,6 +388,8 @@ JamiAccount::shutdownConnections()
     if (convModule_) {
         convModule_->shutdownConnections();
     }
+    if (const auto circles = circleService(true))
+        circles->shutdownConnections();
 
     std::lock_guard lk(sipConnsMtx_);
     sipConns_.clear();
@@ -1337,6 +1342,8 @@ JamiAccount::onContactRemoved(const std::string& uri, bool banned)
         return;
     dht::ThreadPool::io().run([w = weak(), uri, banned] {
         if (auto shared = w.lock()) {
+            if (const auto circles = shared->circleModule(true))
+                circles->revalidate();
             // Erase linked conversation's requests
             if (auto* convModule = shared->convModule(true))
                 convModule->removeContact(uri, banned);
@@ -1414,6 +1421,12 @@ JamiAccount::onKnownDevicesChanged(const std::map<DeviceId, KnownDevice>& device
         auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
         ids.emplace(std::move(id), std::move(label));
     }
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto shared = w.lock()) {
+            if (const auto circles = shared->circleModule(true))
+                circles->revalidate();
+        }
+    });
     runOnMainThread([id = getAccountID(), devices = std::move(ids)] {
         emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
     });
@@ -1535,6 +1548,7 @@ JamiAccount::onAuthenticationSuccess(bool migrating,
     {
         std::lock_guard lk(moduleMtx_);
         convModule_.reset();
+        circleService_.reset();
     }
 
     if (migrating)
@@ -1659,6 +1673,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 {
                     std::lock_guard lk(moduleMtx_);
                     convModule_.reset();
+                    circleService_.reset();
                 }
                 convModule();
             } else {
@@ -2373,8 +2388,11 @@ JamiAccount::onAccountDeviceAnnounced()
 
         // Bootstrap at the end to avoid to be long to load.
         dht::ThreadPool::io().run([w = weak()] {
-            if (auto shared = w.lock())
+            if (auto shared = w.lock()) {
                 shared->convModule()->bootstrap();
+                if (const auto circles = shared->circleService())
+                    circles->bootstrap();
+            }
         });
         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
     }
@@ -2423,6 +2441,8 @@ JamiAccount::onNewDeviceConnection(const std::shared_ptr<dht::crypto::Certificat
         // so it can decide whether to open a swarm channel over the new connection.
         if (auto* cm = shared->convModule())
             cm->addKnownDevice(peerId, deviceId);
+        if (const auto circles = shared->circleService(true))
+            circles->addKnownDevice(peerId, deviceId);
 
         // Proactively refresh the service cache for this device.
         {
@@ -2479,6 +2499,10 @@ JamiAccount::onICERequest(const DeviceId& deviceId)
                        != dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
                 auto* conversationModule = convModule(true);
                 res = conversationModule && conversationModule->isPeerAuthorizedByConversation(*cert);
+                if (!res) {
+                    if (const auto circles = circleModule(true))
+                        res = circles->authorizeAny(*cert);
+                }
             }
             if (!res) {
                 JAMI_WARNING("[Account {}] [Auth] Discarding ICE request from unauthorized peer {}.",
@@ -2549,6 +2573,49 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
         if (name == "sip") {
             cacheSIPConnection(std::move(channel), peerId, deviceId);
         } else if (name.find("git://") == 0) {
+            const auto routeStart = name.find('/', 6);
+            const auto route = routeStart == std::string::npos ? std::string() : name.substr(routeStart + 1);
+            if (CircleModule::reserved(route)) {
+                if (channel->isInitiator())
+                    return;
+                const auto circles = circleModule(true);
+                if (name.substr(6, routeStart - 6) != currentDeviceId() || !circles) {
+                    channel->shutdown();
+                    return;
+                }
+                const auto session = circles->open(route, cert, [channel] {
+                    dht::ThreadPool::io().run([channel] { channel->shutdown(); });
+                });
+                if (!session) {
+                    channel->shutdown();
+                    return;
+                }
+                auto server = std::make_unique<GitServer>(accountID_,
+                                                          session->id,
+                                                          channel,
+                                                          session->repository,
+                                                          [session] { return session->grant(); });
+                server->setOnFetched([weak = weak(), route = session->route](const std::string& commit) {
+                    if (const auto account = weak.lock()) {
+                        if (const auto circles = account->circleService(true))
+                            circles->onServed(route, commit);
+                    }
+                });
+                const dht::Value::Id serverId = ValueIdDist()(rand);
+                {
+                    std::lock_guard lock(gitServersMtx_);
+                    gitServers_[serverId] = std::move(server);
+                }
+                channel->onShutdown([weak = weak(), serverId](const std::error_code&) {
+                    runOnMainThread([weak, serverId] {
+                        if (const auto account = weak.lock()) {
+                            std::lock_guard lock(account->gitServersMtx_);
+                            account->gitServers_.erase(serverId);
+                        }
+                    });
+                });
+                return;
+            }
             auto sep = name.find_last_of('/');
             auto conversationId = name.substr(sep + 1);
             auto targetDevice = name.substr(6, sep - 6);
@@ -2790,18 +2857,26 @@ JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
                                            const std::string& /*type*/,
                                            bool noNewSocket)
 {
-    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<ChannelCb&&>(cb), noNewSocket] {
+    openSwarmChannel(convId, deviceId, std::move(cb), noNewSocket);
+}
+
+void
+JamiAccount::openSwarmChannel(const std::string& swarm, const std::string& deviceId, ChannelCb&& cb, bool noNewSocket)
+{
+    dht::ThreadPool::io().run([w = weak(), swarm, deviceId, cb = std::move(cb), noNewSocket] {
         auto shared = w.lock();
         if (!shared)
             return;
-        auto* cm = shared->convModule();
+        // Circle peers are checked against the circle policy once connected.
+        const bool circle = CircleModule::reserved(swarm);
+        auto* cm = circle ? nullptr : shared->convModule();
         std::shared_lock lkCM(shared->connManagerMtx_);
-        if (!shared->connectionManager_ || !cm || cm->isDeviceBanned(convId, deviceId)) {
+        if (!shared->connectionManager_ || (!circle && (!cm || cm->isDeviceBanned(swarm, deviceId)))) {
             asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
             return;
         }
         DeviceId device(deviceId);
-        auto swarmUri = fmt::format("swarm://{}", convId);
+        auto swarmUri = fmt::format("swarm://{}", swarm);
         dhtnet::ConnectDeviceOptions opts;
         opts.connType = "";
         opts.noNewSocket = noNewSocket;
@@ -2886,6 +2961,112 @@ JamiAccount::convModule(bool noCreation)
             autoLoadConversations_);
     }
     return convModule_.get();
+}
+
+std::shared_ptr<CircleModule>
+JamiAccount::circleModule(bool noCreation)
+{
+    const auto device = currentDeviceId();
+    std::lock_guard lock(moduleMtx_);
+    if (circleModule_ && circleModuleDevice_ != device) {
+        circleModule_.reset();
+        circleModuleDevice_.clear();
+    }
+    if (!circleModule_ && !noCreation && accountManager() && id_.first && id_.second) {
+        circleModuleDevice_ = device;
+        circleModule_ = std::make_shared<CircleModule>(id_, [weak = weak(), device](const auto& certificate) {
+            const auto account = weak.lock();
+            if (!account || !account->accountManager() || !certificate.issuer || account->currentDeviceId() != device)
+                return false;
+            const auto manager = account->accountManager();
+            if (manager->getCertificateStatus(certificate.getLongId().toString())
+                    == dhtnet::tls::TrustStore::PermissionStatus::BANNED
+                || manager->getCertificateStatus(certificate.issuer->getId().toString())
+                       == dhtnet::tls::TrustStore::PermissionStatus::BANNED)
+                return false;
+            return manager->isAllowed(certificate, true);
+        });
+    }
+    return circleModule_;
+}
+
+std::shared_ptr<CircleService>
+JamiAccount::circleService(bool noCreation)
+{
+    std::lock_guard lock(moduleMtx_);
+    if (!circleService_ && !noCreation && accountManager() && !currentDeviceId().empty())
+        circleService_ = std::make_shared<CircleService>(shared(), idPath_ / "circles");
+    return circleService_;
+}
+
+void
+JamiAccount::connectCircleRoute(const std::string& route,
+                                const std::string& deviceId,
+                                std::function<bool(CircleModule&, const std::shared_ptr<dhtnet::ChannelSocket>&)> run,
+                                std::function<void(bool)> done)
+{
+    const auto circles = CircleModule::reserved(route) ? circleModule() : nullptr;
+    std::shared_lock lock(connManagerMtx_);
+    if (!circles || !connectionManager_) {
+        lock.unlock();
+        done(false);
+        return;
+    }
+    connectionManager_->connectDevice(DeviceId(deviceId),
+                                      fmt::format("git://{}/{}", deviceId, route),
+                                      [w = weak(),
+                                       deviceId,
+                                       run = std::move(run),
+                                       done = std::move(done)](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                               const DeviceId&) {
+                                          // The download blocks on the channel, so it runs off the connection callback.
+                                          dht::ThreadPool::io().run([w, deviceId, run, done, socket] {
+                                              const auto shared = w.lock();
+                                              const auto circles = shared ? shared->circleModule(true) : nullptr;
+                                              const bool succeeded = socket && circles
+                                                                     && socket->deviceId().toString() == deviceId
+                                                                     && run(*circles, socket);
+                                              if (socket)
+                                                  socket->shutdown();
+                                              done(succeeded);
+                                          });
+                                      });
+}
+
+void
+JamiAccount::fetchCircleRoute(const std::string& route,
+                              const std::string& deviceId,
+                              std::function<void(CircleFetchResult)> done)
+{
+    auto result = std::make_shared<CircleFetchResult>();
+    connectCircleRoute(
+        route,
+        deviceId,
+        [route, deviceId, result](CircleModule& circles, const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+            *result = circles.fetch(route, [&](const std::filesystem::path& repository, std::string_view ref) {
+                return downloadCircleRoute(repository, deviceId, route, socket, ref);
+            });
+            return result->status != CircleFetchStatus::FAILED;
+        },
+        [result, done = std::move(done)](bool) { done(*result); });
+}
+
+void
+JamiAccount::cloneCircleRoute(const std::string& route,
+                              const std::string& deviceId,
+                              const std::filesystem::path& path,
+                              const std::string& circle,
+                              std::function<void(bool)> done)
+{
+    connectCircleRoute(
+        route,
+        deviceId,
+        [route, deviceId, path, circle](CircleModule& circles, const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+            return circles.clone(route, path, circle, [&](const std::filesystem::path& repository, std::string_view ref) {
+                return downloadCircleRoute(repository, deviceId, route, socket, ref);
+            });
+        },
+        std::move(done));
 }
 
 SyncModule*
@@ -3058,6 +3239,8 @@ JamiAccount::connectivityChanged()
 
     if (auto* cm = convModule())
         cm->connectivityChanged();
+    if (const auto circles = circleService(true))
+        circles->connectivityChanged();
     dht_->connectivityChanged();
     {
         std::shared_lock lkCM(connManagerMtx_);
@@ -3191,6 +3374,8 @@ JamiAccount::setCertificateStatus(const std::string& cert_id, dhtnet::tls::Trust
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
         findCertificate(cert_id);
+        if (const auto circles = circleModule(true))
+            circles->revalidate();
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
                                                                           cert_id,
                                                                           dhtnet::tls::TrustStore::statusToStr(status));
@@ -3206,6 +3391,8 @@ JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local) : false;
     if (done) {
         findCertificate(cert->getLongId().toString());
+        if (const auto circles = circleModule(true))
+            circles->revalidate();
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
                                                                           cert->getLongId().toString(),
                                                                           dhtnet::tls::TrustStore::statusToStr(status));
@@ -4390,6 +4577,19 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
             return true;
         }
         convModule()->onConversationRequest(from, json);
+        return true;
+    } else if (m.first == CircleService::MIME_TYPE_HEAD) {
+        // Pulling the announced head blocks on the network.
+        dht::ThreadPool::io().run([w = weak(), from, payload = m.second] {
+            if (auto shared = w.lock()) {
+                if (const auto circles = shared->circleService())
+                    circles->onHeadAnnounced(from, payload);
+            }
+        });
+        return true;
+    } else if (m.first == CircleService::MIME_TYPE_INVITE) {
+        if (const auto circles = circleService())
+            circles->onInvitation(from, m.second);
         return true;
     } else if (m.first == MIME_TYPE_IM_COMPOSING) {
         try {

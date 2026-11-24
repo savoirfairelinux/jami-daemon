@@ -3,6 +3,7 @@ libjami_includedirs = include_directories('..', 'jami', 'media', 'jamidht/eth')
 libjami_sources = files(
     'client/callmanager.cpp',
     'client/configurationmanager.cpp',
+    'client/circle_interface.cpp',
     'client/conversation_interface.cpp',
     'client/datatransfer.cpp',
     'client/jami_signal.cpp',
@@ -39,6 +40,7 @@ libjami_sources = files(
     'jamidht/circle_policy.cpp',
     'jamidht/circle_fetch.cpp',
     'jamidht/circle_module.cpp',
+    'jamidht/circle_service.cpp',
     'jamidht/circle_record.cpp',
     'jamidht/circlerepository.cpp',
     'jamidht/jamiaccount.cpp',
@@ -327,6 +329,7 @@ if get_option('interfaces').contains('library')
         'jami/call_const.h',
         'jami/callmanager_interface.h',
         'jami/configurationmanager_interface.h',
+        'jami/circle_interface.h',
         'jami/conversation_interface.h',
         'jami/datatransfer_interface.h',
         'jami/def.h',

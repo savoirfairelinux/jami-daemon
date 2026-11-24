@@ -351,6 +351,21 @@ ut_circle_repository = executable(
 )
 test('circle_repository', ut_circle_repository)
 
+ut_circle_sync = executable(
+    'ut_circle_sync',
+    sources: files('unitTest/conversation/circle_sync.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library,
+)
+test(
+    'circle_sync',
+    ut_circle_sync,
+    workdir: ut_workdir,
+    is_parallel: false,
+    timeout: 1800,
+)
+
 ut_commit_message = executable(
     'ut_commit_message',
     sources: files('unitTest/conversation/commit_message.cpp'),

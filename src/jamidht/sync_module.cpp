@@ -18,6 +18,7 @@
 #include "sync_module.h"
 
 #include "jamidht/conversation_module.h"
+#include "jamidht/circle_service.h"
 #include "jamidht/archive_account_manager.h"
 #include "fileutils.h"
 
@@ -237,6 +238,21 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
+        // Sync circles and circle invitations
+        if (const auto circles = acc->circleService(true)) {
+            SyncMsg msg;
+            msg.ci = circles->circles();
+            msg.cir = circles->requests();
+            if (!msg.ci.empty() || !msg.cir.empty()) {
+                msgpack::pack(buffer, msg);
+                socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+                if (ec) {
+                    JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                    return false;
+                }
+            }
+        }
+        buffer.clear();
 
     } else {
         msgpack::pack(buffer, *syncMsg);
@@ -296,6 +312,14 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                 if (auto cm = account->convModule(true))
                     cm->onSyncData(msg, peerId, device.toString());
+            if (!msg.ci.empty() || !msg.cir.empty()) {
+                // Cloning from the other device blocks on the network.
+                dht::ThreadPool::io().run([w = std::weak_ptr(account), msg = std::move(msg), device] {
+                    const auto account = w.lock();
+                    if (const auto circles = account ? account->circleService() : nullptr)
+                        circles->onSyncData(msg.ci, msg.cir, device.toString());
+                });
+            }
         } catch (const std::exception& e) {
             JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
                          account->getAccountID(),

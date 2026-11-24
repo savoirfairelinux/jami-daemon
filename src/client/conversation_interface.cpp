@@ -26,10 +26,67 @@
 
 #include "logger.h"
 #include "manager.h"
+#include "client/jami_signal.h"
+#include "jamidht/circle_service.h"
 #include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/collaborative_editing.h"
 #include "jamidht/conversation_module.h"
+
+#include <opendht/thread_pool.h>
+
+namespace {
+
+// Joined circle channels hold their messages like conversations do, and share their message API.
+std::shared_ptr<jami::CircleService>
+channelService(const std::shared_ptr<jami::JamiAccount>& account, const std::string& id)
+{
+    const auto circles = account->circleService();
+    return circles && circles->isChannel(id) ? circles : nullptr;
+}
+
+// Reading and writing a channel validates its history: neither runs on the caller's thread.
+void
+sendChannelMessage(const std::shared_ptr<jami::CircleService>& circles,
+                   const std::string& accountId,
+                   const std::string& channel,
+                   jami::CommitMessage&& message)
+{
+    dht::ThreadPool::io().run([weak = std::weak_ptr(circles), accountId, channel, message = std::move(message)] {
+        const auto circles = weak.lock();
+        if (circles && !circles->sendMessage(channel, message))
+            jami::emitSignal<libjami::ConversationSignal::OnConversationError>(accountId,
+                                                                               channel,
+                                                                               jami::ECOMMIT,
+                                                                               "Unable to write to the channel");
+    });
+}
+
+uint32_t
+loadChannel(const std::shared_ptr<jami::JamiAccount>& account,
+            const std::shared_ptr<jami::CircleService>& circles,
+            const std::string& channel,
+            const std::string& from,
+            const std::string& to,
+            size_t count)
+{
+    const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(account->rand);
+    dht::ThreadPool::io().run(
+        [weak = std::weak_ptr(circles), id, accountId = account->getAccountID(), channel, from, to, count] {
+            if (const auto circles = weak.lock())
+                jami::emitSignal<libjami::ConversationSignal::SwarmLoaded>(id,
+                                                                           accountId,
+                                                                           channel,
+                                                                           circles->loadMessages(channel,
+                                                                                                 from,
+                                                                                                 to,
+                                                                                                 count),
+                                                                           circles->permissions(channel));
+        });
+    return id;
+}
+
+} // namespace
 
 namespace libjami {
 
@@ -189,9 +246,12 @@ getConversationMembers(const std::string& accountId, const std::string& conversa
 std::vector<std::string>
 getConversationPermissions(const std::string& accountId, const std::string& conversationId)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (const auto circles = channelService(acc, conversationId))
+            return circles->permissions(conversationId);
         if (auto* convModule = acc->convModule(true))
             return convModule->getConversationPermissions(conversationId);
+    }
     return {};
 }
 
@@ -203,7 +263,17 @@ sendMessage(const std::string& accountId,
             const std::string& commitId,
             const int32_t& flag)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (const auto circles = channelService(acc, conversationId)) {
+            if (flag >= 0 && flag <= 2)
+                sendChannelMessage(circles,
+                                   accountId,
+                                   conversationId,
+                                   flag == 0   ? jami::CommitMessage::text(message, commitId)
+                                   : flag == 1 ? jami::CommitMessage::edit(message, commitId)
+                                               : jami::CommitMessage::reaction(message, commitId));
+            return;
+        }
         if (auto* convModule = acc->convModule(true)) {
             if (flag == 0 /* Reply or simple commit */) {
                 convModule->sendMessage(conversationId, message, commitId);
@@ -213,6 +283,7 @@ sendMessage(const std::string& accountId,
                 convModule->reactToMessage(conversationId, message, commitId);
             }
         }
+    }
 }
 
 uint32_t
@@ -221,9 +292,12 @@ loadConversation(const std::string& accountId,
                  const std::string& fromMessage,
                  size_t n)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (const auto circles = channelService(acc, conversationId))
+            return loadChannel(acc, circles, conversationId, fromMessage, {}, n);
         if (auto* convModule = acc->convModule(true))
             return convModule->loadConversation(conversationId, fromMessage, n);
+    }
     return 0;
 }
 
@@ -233,9 +307,12 @@ loadSwarmUntil(const std::string& accountId,
                const std::string& fromMessage,
                const std::string& toMessage)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (const auto circles = channelService(acc, conversationId))
+            return loadChannel(acc, circles, conversationId, fromMessage, toMessage, 0);
         if (auto* convModule = acc->convModule(true))
             return convModule->loadSwarmUntil(conversationId, fromMessage, toMessage);
+    }
     return 0;
 }
 
@@ -255,9 +332,12 @@ countInteractions(const std::string& accountId,
 void
 clearCache(const std::string& accountId, const std::string& conversationId)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto* convModule = acc->convModule(true))
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (const auto circles = channelService(acc, conversationId))
+            circles->clearCache(conversationId);
+        else if (auto* convModule = acc->convModule(true))
             convModule->clearCache(conversationId);
+    }
 }
 
 uint32_t
