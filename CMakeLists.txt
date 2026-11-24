@@ -741,6 +741,7 @@ if(NOT MSVC)
             COMMAND ${SWIG_EXECUTABLE} -v -c++ -javascript -napi -o jami_wrapper.cpp nodejs_interface.i
             DEPENDS
             ${NODEJS_INTERFACE_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/circle.i
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
         )
 

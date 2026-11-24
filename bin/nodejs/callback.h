@@ -5,6 +5,7 @@
 
 #include "jami/configurationmanager_interface.h"
 #include "jami/networkservice_interface.h"
+#include "jami/circle_interface.h"
 
 #include <cstdio>
 #include <queue>
@@ -973,8 +974,10 @@ externalMediaPromotionFailure(const std::string& accountId,
 }
 
 void
-externalMediaDemotionAccepted(const std::string& accountId, const std::string& callId,
-                              const std::string& requestId, const std::string& sdpAnswer)
+externalMediaDemotionAccepted(const std::string& accountId,
+                              const std::string& callId,
+                              const std::string& requestId,
+                              const std::string& sdpAnswer)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, requestId, sdpAnswer]() {
@@ -996,8 +999,10 @@ externalMediaDemotionReady(const std::string& accountId, const std::string& call
 }
 
 void
-externalMediaDemotionFailure(const std::string& accountId, const std::string& callId,
-                             const std::string& requestId, const std::string& reason)
+externalMediaDemotionFailure(const std::string& accountId,
+                             const std::string& callId,
+                             const std::string& requestId,
+                             const std::string& reason)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, requestId, reason]() {
@@ -1008,8 +1013,7 @@ externalMediaDemotionFailure(const std::string& accountId, const std::string& ca
 }
 
 void
-conferenceInfosUpdated(const std::string& confId,
-                       const std::vector<std::map<std::string, std::string>>& infos)
+conferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([confId, infos]() {
@@ -1138,6 +1142,41 @@ serviceTunnelClosed(const std::string& accountId, const std::string& tunnelId, c
     uv_async_send(&signalAsync);
 }
 
+void
+circleRequestReceived(const std::string& accountId,
+                      const std::string& circleId,
+                      std::map<std::string, std::string> request)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, circleId, request = std::move(request)] {
+        napi_value args[] = {napiString(accountId), napiString(circleId), stringMapToJsMap(request)};
+        callCallback("CircleRequestReceived", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+circleChanged(const char* signal, const std::string& accountId, const std::string& circleId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([signal, accountId, circleId] {
+        napi_value args[] = {napiString(accountId), napiString(circleId)};
+        callCallback(signal, 2, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+circleChannelReady(const std::string& accountId, const std::string& circleId, const std::string& channelId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, circleId, channelId] {
+        napi_value args[] = {napiString(accountId), napiString(circleId), napiString(channelId)};
+        callCallback("CircleChannelReady", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
 // Daemon initialization
 
 void
@@ -1184,8 +1223,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&externalMediaPromotionFailure, _1, _2, _3, _4)),
            exportable_callback<CallSignal::ExternalMediaDemotionAccepted>(
                bind(&externalMediaDemotionAccepted, _1, _2, _3, _4)),
-           exportable_callback<CallSignal::ExternalMediaDemotionReady>(
-               bind(&externalMediaDemotionReady, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaDemotionReady>(bind(&externalMediaDemotionReady, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaDemotionFailure>(
                bind(&externalMediaDemotionFailure, _1, _2, _3, _4))};
 
@@ -1257,12 +1295,21 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
         exportable_callback<ServiceSignal::TunnelClosed>(bind(&serviceTunnelClosed, _1, _2, _3)),
     };
 
+    const std::map<std::string, SharedCallback> circleHandlers = {
+        exportable_callback<libjami::CircleSignal::CircleRequestReceived>(circleRequestReceived),
+        exportable_callback<libjami::CircleSignal::CircleReady>(bind(circleChanged, "CircleReady", _1, _2)),
+        exportable_callback<libjami::CircleSignal::CircleUpdated>(bind(circleChanged, "CircleUpdated", _1, _2)),
+        exportable_callback<libjami::CircleSignal::CircleRemoved>(bind(circleChanged, "CircleRemoved", _1, _2)),
+        exportable_callback<libjami::CircleSignal::CircleChannelReady>(circleChannelReady),
+    };
+
     if (!libjami::init(static_cast<libjami::InitFlag>(flags)))
         return;
 
     registerSignalHandlers(configEvHandlers);
     registerSignalHandlers(callEvHandlers);
     registerSignalHandlers(conversationHandlers);
+    registerSignalHandlers(circleHandlers);
     registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(presenceEvHandlers);
     registerSignalHandlers(networkServiceEvHandlers);

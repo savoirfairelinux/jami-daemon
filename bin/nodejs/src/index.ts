@@ -103,6 +103,11 @@ export enum JamiSignal {
   ConversationRequestDeclined = 'ConversationRequestDeclined',
   ConversationReady = 'ConversationReady',
   ConversationRemoved = 'ConversationRemoved',
+  CircleRequestReceived = 'CircleRequestReceived',
+  CircleReady = 'CircleReady',
+  CircleUpdated = 'CircleUpdated',
+  CircleRemoved = 'CircleRemoved',
+  CircleChannelReady = 'CircleChannelReady',
   ConversationMemberEvent = 'ConversationMemberEvent',
   OnConversationError = 'OnConversationError',
   ConferenceInfosUpdated = 'ConferenceInfosUpdated',
@@ -133,7 +138,7 @@ export interface ExternalMediaConferenceSignals {
 // ── Generic SWIG collection types ───────────────────────────
 
 export interface Constructable<T> {
-  new (): T
+  new(): T
 }
 
 interface SwigVect<T> {
@@ -261,6 +266,26 @@ export interface JamiSwig {
   // Default moderators
   getDefaultModerators(accountId: string): StringVect
   setDefaultModerator(accountId: string, uri: string, state: boolean): void
+
+  createCircle(accountId: string, defaults?: string): string
+  getCircles(accountId: string): StringVect
+  removeCircle(accountId: string, circleId: string, successor?: string): boolean
+  inviteCircleMember(accountId: string, circleId: string, memberUri: string): boolean
+  banCircleMember(accountId: string, circleId: string, memberUri: string): boolean
+  unbanCircleMember(accountId: string, circleId: string, memberUri: string): boolean
+  getCircleMembers(accountId: string, circleId: string): VectMap
+  getCircleRequests(accountId: string): VectMap
+  acceptCircleRequest(accountId: string, circleId: string): void
+  declineCircleRequest(accountId: string, circleId: string): void
+  getCirclePolicy(accountId: string, circleId: string): string
+  updateCirclePolicy(accountId: string, circleId: string, change: string): boolean
+  getCircleProfile(accountId: string, circleId: string, channelId?: string): StringMap
+  updateCircleProfile(accountId: string, circleId: string, profile: StringMap, channelId?: string): boolean
+  createCircleChannel(accountId: string, circleId: string, access?: string): string
+  archiveCircleChannel(accountId: string, circleId: string, channelId: string): boolean
+  getCircleChannels(accountId: string, circleId: string): VectMap
+  joinCircleChannel(accountId: string, circleId: string, channelId: string): void
+  leaveCircleChannel(accountId: string, circleId: string, channelId: string): void
 
   // Conversations
   startConversation(accountId: string): string

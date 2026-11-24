@@ -212,6 +212,7 @@ namespace std {
 %include "videomanager.i"
 %include "plugin_manager_interface.i"
 %include "conversation.i"
+%include "circle.i"
 %include "networkservicemanager.i"
 
 #include "jami/callmanager_interface.h"
@@ -356,6 +357,14 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ServiceSignal::TunnelClosed>(bind(&NetworkServiceCallback::serviceTunnelClosed, nsMgr, _1, _2, _3)),
     };
 
+    const std::map<std::string, SharedCallback> circleHandlers = {
+      exportable_callback<libjami::CircleSignal::CircleRequestReceived>(bind(&ConversationCallback::circleRequestReceived, convM, _1, _2, _3)),
+      exportable_callback<libjami::CircleSignal::CircleReady>(bind(&ConversationCallback::circleReady, convM, _1, _2)),
+      exportable_callback<libjami::CircleSignal::CircleUpdated>(bind(&ConversationCallback::circleUpdated, convM, _1, _2)),
+      exportable_callback<libjami::CircleSignal::CircleRemoved>(bind(&ConversationCallback::circleRemoved, convM, _1, _2)),
+      exportable_callback<libjami::CircleSignal::CircleChannelReady>(bind(&ConversationCallback::circleChannelReady, convM, _1, _2, _3)),
+    };
+
     if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_SYSLOG)))
         return;
 
@@ -365,6 +374,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(videoEvHandlers);
     registerSignalHandlers(conversationHandlers);
+    registerSignalHandlers(circleHandlers);
     registerSignalHandlers(networkServiceEvHandlers);
 
     libjami::start();

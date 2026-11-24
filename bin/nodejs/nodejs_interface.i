@@ -91,6 +91,7 @@ namespace std {
 %include "callmanager.i"
 %include "videomanager.i"
 %include "conversation.i"
+%include "../jni/circle.i"
 %include "datatransfer.i"
 %include "networkservicemanager.i"
 

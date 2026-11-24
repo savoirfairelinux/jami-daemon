@@ -20,6 +20,7 @@
 #include <configurationmanager_interface.h>
 #include <datatransfer_interface.h>
 #include <conversation_interface.h>
+#include <circle_interface.h>
 
 class DBusConfigurationManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::ConfigurationManager_adaptor>
 {
@@ -618,6 +619,105 @@ public:
         return uint32_t(libjami::cancelDataTransfer(accountId, conversationId, fileId));
     }
 
+    std::string createCircle(const std::string& accountId, const std::string& defaults)
+    {
+        return libjami::createCircle(accountId, defaults);
+    }
+
+    std::vector<std::string> getCircles(const std::string& accountId) { return libjami::getCircles(accountId); }
+
+    bool removeCircle(const std::string& accountId, const std::string& circleId, const std::string& successor)
+    {
+        return libjami::removeCircle(accountId, circleId, successor);
+    }
+
+    bool inviteCircleMember(const std::string& accountId, const std::string& circleId, const std::string& memberUri)
+    {
+        return libjami::inviteCircleMember(accountId, circleId, memberUri);
+    }
+
+    bool banCircleMember(const std::string& accountId, const std::string& circleId, const std::string& memberUri)
+    {
+        return libjami::banCircleMember(accountId, circleId, memberUri);
+    }
+
+    bool unbanCircleMember(const std::string& accountId, const std::string& circleId, const std::string& memberUri)
+    {
+        return libjami::unbanCircleMember(accountId, circleId, memberUri);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCircleMembers(const std::string& accountId,
+                                                                     const std::string& circleId)
+    {
+        return libjami::getCircleMembers(accountId, circleId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCircleRequests(const std::string& accountId)
+    {
+        return libjami::getCircleRequests(accountId);
+    }
+
+    void acceptCircleRequest(const std::string& accountId, const std::string& circleId)
+    {
+        libjami::acceptCircleRequest(accountId, circleId);
+    }
+
+    void declineCircleRequest(const std::string& accountId, const std::string& circleId)
+    {
+        libjami::declineCircleRequest(accountId, circleId);
+    }
+
+    std::string getCirclePolicy(const std::string& accountId, const std::string& circleId)
+    {
+        return libjami::getCirclePolicy(accountId, circleId);
+    }
+
+    bool updateCirclePolicy(const std::string& accountId, const std::string& circleId, const std::string& change)
+    {
+        return libjami::updateCirclePolicy(accountId, circleId, change);
+    }
+
+    std::map<std::string, std::string> getCircleProfile(const std::string& accountId,
+                                                        const std::string& circleId,
+                                                        const std::string& channelId)
+    {
+        return libjami::getCircleProfile(accountId, circleId, channelId);
+    }
+
+    bool updateCircleProfile(const std::string& accountId,
+                             const std::string& circleId,
+                             const std::map<std::string, std::string>& profile,
+                             const std::string& channelId)
+    {
+        return libjami::updateCircleProfile(accountId, circleId, profile, channelId);
+    }
+
+    std::string createCircleChannel(const std::string& accountId, const std::string& circleId, const std::string& access)
+    {
+        return libjami::createCircleChannel(accountId, circleId, access);
+    }
+
+    bool archiveCircleChannel(const std::string& accountId, const std::string& circleId, const std::string& channelId)
+    {
+        return libjami::archiveCircleChannel(accountId, circleId, channelId);
+    }
+
+    std::vector<std::map<std::string, std::string>> getCircleChannels(const std::string& accountId,
+                                                                      const std::string& circleId)
+    {
+        return libjami::getCircleChannels(accountId, circleId);
+    }
+
+    void joinCircleChannel(const std::string& accountId, const std::string& circleId, const std::string& channelId)
+    {
+        libjami::joinCircleChannel(accountId, circleId, channelId);
+    }
+
+    void leaveCircleChannel(const std::string& accountId, const std::string& circleId, const std::string& channelId)
+    {
+        libjami::leaveCircleChannel(accountId, circleId, channelId);
+    }
+
     std::string startConversation(const std::string& accountId) { return libjami::startConversation(accountId); }
 
     void acceptConversationRequest(const std::string& accountId, const std::string& conversationId)
@@ -917,6 +1017,7 @@ private:
         using libjami::AudioSignal;
         using libjami::DataTransferSignal;
         using libjami::ConversationSignal;
+        using libjami::CircleSignal;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         // Configuration event handlers
@@ -1088,6 +1189,20 @@ private:
                 std::bind(&DBusConfigurationManager::emitConversationPreferencesUpdated, this, _1, _2, _3)),
         };
 
+        const std::map<std::string, SharedCallback> circleHandlers = {
+            exportable_serialized_callback<CircleSignal::CircleRequestReceived>(
+                std::bind(&DBusConfigurationManager::emitCircleRequestReceived, this, _1, _2, _3)),
+            exportable_serialized_callback<CircleSignal::CircleReady>(
+                std::bind(&DBusConfigurationManager::emitCircleReady, this, _1, _2)),
+            exportable_serialized_callback<CircleSignal::CircleUpdated>(
+                std::bind(&DBusConfigurationManager::emitCircleUpdated, this, _1, _2)),
+            exportable_serialized_callback<CircleSignal::CircleRemoved>(
+                std::bind(&DBusConfigurationManager::emitCircleRemoved, this, _1, _2)),
+            exportable_serialized_callback<CircleSignal::CircleChannelReady>(
+                std::bind(&DBusConfigurationManager::emitCircleChannelReady, this, _1, _2, _3)),
+        };
+
+        libjami::registerSignalHandlers(circleHandlers);
         libjami::registerSignalHandlers(configEvHandlers);
         libjami::registerSignalHandlers(audioEvHandlers);
         libjami::registerSignalHandlers(dataXferEvHandlers);

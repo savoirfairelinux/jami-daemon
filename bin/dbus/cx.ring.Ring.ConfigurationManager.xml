@@ -2866,5 +2866,135 @@
             </arg>
             <tp:docstring>Signal triggered when a log is done in the daemon.</tp:docstring>
         </signal>
+        <method name="createCircle">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="defaults" direction="in"/>
+            <arg type="s" name="circleId" direction="out"/>
+        </method>
+        <method name="getCircles">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="as" name="circles" direction="out"/>
+        </method>
+        <method name="removeCircle">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="successor" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="inviteCircleMember">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="memberUri" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="banCircleMember">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="memberUri" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="unbanCircleMember">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="memberUri" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="getCircleMembers">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="aa{ss}" name="members" direction="out"/>
+        </method>
+        <method name="getCircleRequests">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="aa{ss}" name="requests" direction="out"/>
+        </method>
+        <method name="acceptCircleRequest">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+        </method>
+        <method name="declineCircleRequest">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+        </method>
+        <method name="getCirclePolicy">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="policy" direction="out"/>
+        </method>
+        <method name="updateCirclePolicy">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="change" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="getCircleProfile">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="channelId" direction="in"/>
+            <arg type="a{ss}" name="profile" direction="out"/>
+        </method>
+        <method name="updateCircleProfile">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="a{ss}" name="profile" direction="in"/>
+            <arg type="s" name="channelId" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="createCircleChannel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="access" direction="in"/>
+            <arg type="s" name="channelId" direction="out"/>
+        </method>
+        <method name="archiveCircleChannel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="channelId" direction="in"/>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+        <method name="getCircleChannels">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="aa{ss}" name="channels" direction="out"/>
+        </method>
+        <method name="joinCircleChannel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="channelId" direction="in"/>
+        </method>
+        <method name="leaveCircleChannel">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="circleId" direction="in"/>
+            <arg type="s" name="channelId" direction="in"/>
+        </method>
+        <signal name="circleRequestReceived">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="MapStringString"/>
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="circleId"/>
+            <arg type="a{ss}" name="request"/>
+        </signal>
+        <signal name="circleReady">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="circleId"/>
+        </signal>
+        <signal name="circleUpdated">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="circleId"/>
+        </signal>
+        <signal name="circleRemoved">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="circleId"/>
+        </signal>
+        <signal name="circleChannelReady">
+            <arg type="s" name="accountId"/>
+            <arg type="s" name="circleId"/>
+            <arg type="s" name="channelId"/>
+        </signal>
     </interface>
 </node>

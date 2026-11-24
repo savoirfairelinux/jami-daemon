@@ -1,6 +1,7 @@
 nodejs_wrapper_target = custom_target('nodejs.wrapper',
     command: [progswig, '-v', '-c++', '-javascript', '-napi', '-o', '@OUTPUT@', '@INPUT@'],
     input: 'nodejs_interface.i',
+    depend_files: '../jni/circle.i',
     output: 'nodejs_wrapper.cpp'
 )
 
