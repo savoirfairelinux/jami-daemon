@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f71cb0e_116368f2",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T14:21:15Z",
+      "side": 1,
+      "message": "[warning] Line 91: 🟡 `disposeAudioUnit()` and `handleRouteChange()` were added in the public API, but both are internal lifecycle helpers. Exposing them weakens invariants (external callers can dispose/reinit outside the queue/expected state flow). Move both declarations to `private` to keep ownership and threading guarantees encapsulated.",
+      "revId": "001d555e9c64d6ae0d635f1f68f0ead1b28b71da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30a59c55_bbfa6bde",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T14:21:15Z",
+      "side": 1,
+      "message": "[error] Line 75: 🔴 The route-change observer block captures `this` and enqueues `handleRouteChange()` asynchronously. During destruction, `removeObserver`/`CFRelease` do not synchronize with an already in-flight notification callback, so a callback can still enqueue work after teardown starts, causing use-after-free on `this`. Add a teardown guard (`std::atomic\u003cbool\u003e shuttingDown_` set before observer removal, checked in the notification block before `dispatch_async` and again in `handleRouteChange`), and ensure destructor drains/cancels pending route-change work before object memory is reclaimed.",
+      "revId": "001d555e9c64d6ae0d635f1f68f0ead1b28b71da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
