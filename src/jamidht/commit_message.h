@@ -17,10 +17,15 @@
 
 #pragma once
 
-#include "json_utils.h"
+#include "permission.h"
 
+#include <json/json.h>
+
+#include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace jami {
 
@@ -80,16 +85,6 @@ constexpr const char* const REMOVE {"remove"};
 constexpr const char* const BAN {"ban"};
 constexpr const char* const UNBAN {"unban"};
 } // namespace CommitAction
-
-// Values are persisted in initial commits; keep them stable.
-enum class ConversationMode : int {
-    ONE_TO_ONE = 0,
-    ADMIN_INVITES_ONLY = 1,
-    INVITES_ONLY = 2,
-    PUBLIC = 3,
-    DOCUMENT = 4,
-    FEED = 5
-};
 
 /*
  * Jami conversations are stored as git repositories. Most of the information is contained
@@ -419,5 +414,22 @@ struct CommitMessage
     std::string toString() const;
     static std::optional<CommitMessage> fromString(const std::string& str);
 };
+
+// Permission to post text content; edits and deletions depend on their target instead.
+inline Permission
+textPermission(const CommitMessage& message)
+{
+    return !message.reactTo.empty()   ? Permission::Reaction
+           : !message.replyTo.empty() ? Permission::TextReply
+                                      : Permission::Text;
+}
+
+// A history entry as clients receive it: the message fields with id, parents, author, type and
+// timestamp. A merge has no message; an entry that is neither has nothing to show.
+std::optional<std::map<std::string, std::string>> historyEntryMap(const std::string& id,
+                                                                  const std::vector<std::string>& parents,
+                                                                  const std::string& author,
+                                                                  int64_t timestamp,
+                                                                  const CommitMessage* message);
 
 } // namespace jami

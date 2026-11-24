@@ -17,6 +17,7 @@
 
 #include "commit_message.h"
 
+#include "json_utils.h"
 #include "string_utils.h"
 
 namespace jami {
@@ -136,6 +137,42 @@ CommitMessage::fromString(const std::string& str)
         return std::nullopt;
     }
     return msg;
+}
+
+std::optional<std::map<std::string, std::string>>
+historyEntryMap(const std::string& id,
+                const std::vector<std::string>& parents,
+                const std::string& author,
+                int64_t timestamp,
+                const CommitMessage* message)
+{
+    std::string type;
+    std::map<std::string, std::string> entry;
+    if (parents.size() > 1) {
+        type = CommitType::MERGE;
+    } else if (message) {
+        const auto json = message->toJson();
+        for (const auto& name : json.getMemberNames()) {
+            if (name == CommitKey::TYPE)
+                type = json[name].asString();
+            else
+                entry.insert({name, json[name].asString()});
+        }
+    }
+    if (type.empty())
+        return std::nullopt;
+    std::string joined;
+    for (const auto& parent : parents) {
+        if (!joined.empty())
+            joined += ",";
+        joined += parent;
+    }
+    entry["id"] = id;
+    entry["parents"] = joined;
+    entry["author"] = author;
+    entry["type"] = type;
+    entry["timestamp"] = std::to_string(timestamp);
+    return entry;
 }
 
 } // namespace jami

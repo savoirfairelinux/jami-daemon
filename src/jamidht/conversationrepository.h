@@ -19,6 +19,7 @@
 #include "vcard.h"
 #include "git_def.h"
 #include "jamidht/commit_message.h"
+#include "jamidht/permission.h"
 
 #include <opendht/default_types.h>
 
@@ -114,128 +115,6 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
-enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
-
-enum class Permission {
-    Text,
-    TextReply,
-    File,
-    FileReply,
-    Reaction,
-    Call,
-    HostConference,
-    Edit,
-    Delete,
-    DeleteFile,
-    CreateDocument,
-    DeleteDocument,
-    UpdateDocument,
-    AddDocumentAttachment,
-    Join,
-    Leave,
-    AddMember,
-    BanUnbanMember,
-    UpdateProfile,
-    Count,
-};
-
-constexpr bool
-hasPermission(ConversationMode mode, MemberRole role, Permission permission) noexcept
-{
-    if (role == MemberRole::INVITED) {
-        switch (mode) {
-        case ConversationMode::ONE_TO_ONE:
-        case ConversationMode::INVITES_ONLY:
-        case ConversationMode::DOCUMENT:
-        case ConversationMode::FEED:
-            return permission == Permission::Join;
-        default:
-            return false;
-        }
-    }
-    if (role != MemberRole::ADMIN && role != MemberRole::MEMBER)
-        return false;
-
-    switch (mode) {
-    case ConversationMode::ONE_TO_ONE:
-        switch (permission) {
-        case Permission::Text:
-        case Permission::TextReply:
-        case Permission::File:
-        case Permission::FileReply:
-        case Permission::Reaction:
-        case Permission::Call:
-        case Permission::Edit:
-        case Permission::Delete:
-        case Permission::DeleteFile:
-        case Permission::CreateDocument:
-        case Permission::DeleteDocument:
-        case Permission::Leave:
-        case Permission::AddMember:
-            return true;
-        default:
-            return false;
-        }
-    case ConversationMode::INVITES_ONLY:
-        switch (permission) {
-        case Permission::Text:
-        case Permission::TextReply:
-        case Permission::File:
-        case Permission::FileReply:
-        case Permission::Reaction:
-        case Permission::HostConference:
-        case Permission::Edit:
-        case Permission::Delete:
-        case Permission::DeleteFile:
-        case Permission::CreateDocument:
-        case Permission::DeleteDocument:
-        case Permission::Leave:
-        case Permission::AddMember:
-            return true;
-        case Permission::BanUnbanMember:
-        case Permission::UpdateProfile:
-            return role == MemberRole::ADMIN;
-        default:
-            return false;
-        }
-    case ConversationMode::FEED:
-        switch (permission) {
-        case Permission::Leave:
-            return role == MemberRole::MEMBER;
-        case Permission::Text:
-        case Permission::File:
-        case Permission::AddMember:
-        case Permission::BanUnbanMember:
-        case Permission::UpdateProfile:
-            return role == MemberRole::ADMIN;
-        case Permission::TextReply:
-        case Permission::FileReply:
-        case Permission::Reaction:
-        case Permission::Edit:
-        case Permission::Delete:
-        case Permission::DeleteFile:
-            return true;
-        default:
-            return false;
-        }
-    case ConversationMode::DOCUMENT:
-        switch (permission) {
-        case Permission::UpdateDocument:
-        case Permission::AddDocumentAttachment:
-        case Permission::Leave:
-        case Permission::AddMember:
-            return true;
-        case Permission::BanUnbanMember:
-        case Permission::UpdateProfile:
-            return role == MemberRole::ADMIN;
-        default:
-            return false;
-        }
-    default:
-        return false;
-    }
-}
-
 constexpr auto PERMISSION_NAME_TABLE = std::to_array<std::pair<Permission, std::string_view>>({
     {Permission::Text, "text"},
     {Permission::TextReply, "textReply"},
@@ -256,6 +135,11 @@ constexpr auto PERMISSION_NAME_TABLE = std::to_array<std::pair<Permission, std::
     {Permission::AddMember, "addMember"},
     {Permission::BanUnbanMember, "banUnbanMember"},
     {Permission::UpdateProfile, "updateProfile"},
+    {Permission::ReadChannel, "readChannel"},
+    {Permission::ManageChannels, "manageChannels"},
+    {Permission::ManageRoles, "manageRoles"},
+    {Permission::AssignRoles, "assignRoles"},
+    {Permission::ModerateConference, "moderateConference"},
 });
 
 static_assert(PERMISSION_NAME_TABLE.size() == static_cast<size_t>(Permission::Count),

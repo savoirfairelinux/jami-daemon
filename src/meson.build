@@ -32,6 +32,8 @@ libjami_sources = files(
     'jamidht/eth/libdevcore/SHA3.cpp',
     'jamidht/eth/libdevcrypto/Common.cpp',
     'jamidht/gitserver.cpp',
+    'jamidht/git_utils.cpp',
+    'jamidht/swarm_certificate.cpp',
     'jamidht/jamiaccount.cpp',
     'jamidht/jamiaccount_config.cpp',
     'jamidht/message_channel_handler.cpp',

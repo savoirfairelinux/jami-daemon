@@ -23,11 +23,6 @@
 
 using namespace std::string_view_literals;
 
-// Inactivity timeout for a git fetch. The read no longer runs with
-// ConversationRepository::opMtx_ held, so a peer that goes quiet costs this
-// fetch and nothing else on the conversation.
-constexpr auto P2P_READ_TIMEOUT = std::chrono::days(1);
-
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
 #ifdef LIBJAMI_TEST
@@ -115,6 +110,19 @@ sendCmd(P2PStream* s)
 }
 
 int
+limitFetchSize(const git_indexer_progress* stats, void*)
+{
+    if (stats->received_bytes > MAX_FETCH_SIZE) {
+        JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
+                   stats->received_bytes,
+                   stats->received_objects,
+                   stats->total_objects);
+        return -1;
+    }
+    return 0;
+}
+
+int
 P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen, size_t* read)
 {
     *read = 0;
@@ -137,7 +145,7 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         return -1;
 
     std::error_code ec;
-    auto datalen = sock->waitForData(P2P_READ_TIMEOUT, ec);
+    auto datalen = sock->waitForData(fs->timeout, ec);
     if (ec && ec != asio::error::eof) {
         auto reason = fmt::format("channel closed ({})", ec.message());
         JAMI_WARNING("[git] {}: {}, ending stream", fs->url, reason);

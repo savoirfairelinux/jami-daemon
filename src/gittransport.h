@@ -17,6 +17,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -37,6 +38,13 @@ class ChannelSocketInterface;
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
+// Default inactivity timeout for a git fetch. The read no longer runs with
+// ConversationRepository::opMtx_ held, so a peer that goes quiet costs this
+// fetch and nothing else on the conversation.
+constexpr std::chrono::milliseconds P2P_READ_TIMEOUT = std::chrono::days(1);
+// A larger pack is abnormal.
+constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024};
+
 struct P2PStream
 {
     git_smart_subtransport_stream base;
@@ -44,6 +52,7 @@ struct P2PStream
 
     std::string cmd {};
     std::string url {};
+    std::chrono::milliseconds timeout {P2P_READ_TIMEOUT};
     unsigned sent_command : 1;
 };
 
@@ -100,6 +109,11 @@ extern P2PStallHookHolder P2P_STALL_HOOK;
  * @return 0 on success
  */
 int sendCmd(P2PStream* s);
+
+/**
+ * Transfer progress callback aborting packs larger than MAX_FETCH_SIZE
+ */
+int limitFetchSize(const git_indexer_progress* stats, void* payload);
 
 /**
  * Read on a channel socket

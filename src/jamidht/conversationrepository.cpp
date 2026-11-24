@@ -16,6 +16,8 @@
  */
 
 #include "conversationrepository.h"
+#include "git_utils.h"
+#include "swarm_certificate.h"
 
 #include "account_const.h"
 #include "base64.h"
@@ -61,7 +63,6 @@
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
-constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 // Packs a conversation may hold before the smallest are merged, like git's gc.autoPackLimit
 constexpr std::size_t MAX_PACKS {50};
 // Packs merged together at most. Looking an object up goes through all the
@@ -87,37 +88,6 @@ as_view(const git_blob* blob)
 {
     return std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
 }
-/**
- * Check that a certificate stored under devices/<deviceId>.crt is the certificate of
- * that device: the file name must be the id of the embedded public key.
- */
-inline bool
-isCertificateOfDevice(const dht::crypto::Certificate& cert, std::string_view deviceId)
-{
-    return cert.getLongId().to_view() == deviceId;
-}
-
-/**
- * Check that deviceCert was issued by the holder of memberCert's key, i.e. that its
- * signature verifies with memberCert's public key, and that memberCert is the
- * certificate of memberUri.
- * @note Issuer chains embedded in the certificates are ignored (they are not
- * authenticated) and validity periods are checked against the commit time by the caller.
- */
-bool
-isDeviceOfMember(const dht::crypto::Certificate& deviceCert,
-                 const dht::crypto::Certificate& memberCert,
-                 std::string_view memberUri)
-{
-    if (not deviceCert.cert or not memberCert.cert)
-        return false;
-    if (memberCert.getId().toString() != memberUri)
-        return false;
-    unsigned result = 0;
-    auto err = gnutls_x509_crt_verify(deviceCert.cert, &memberCert.cert, 1, GNUTLS_VERIFY_DISABLE_TIME_CHECKS, &result);
-    return err == GNUTLS_E_SUCCESS and not(result & GNUTLS_CERT_INVALID);
-}
-
 inline std::string_view
 as_view(const GitObject& blob)
 {
@@ -613,61 +583,16 @@ public:
         auto tree = treeAtCommit(repo.get(), commitId);
         if (!tree)
             return {};
-        auto deviceFile = fmt::format("devices/{}.crt", deviceId);
-        auto blob_device = fileAtTree(deviceFile, tree);
-        if (!blob_device) {
-            JAMI_ERROR("{} announced but not found", deviceId);
-            return {};
-        }
-        try {
-            auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
-            auto uri = verifiedUriFromDeviceCert(deviceCert, deviceId, tree);
-            if (uri.empty())
-                JAMI_ERROR("[Account {}] [Conversation {}] Device certificate {} is not issued by a member of the "
-                           "conversation",
-                           accountId_,
-                           id_,
-                           deviceId);
-            return uri;
-        } catch (const std::exception& e) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to load certificate for device {}: {}",
+        auto identity = readDeviceIdentity(repo.get(), tree.get(), deviceId, {}, {"members", "admins"});
+        if (!identity) {
+            JAMI_ERROR("[Account {}] [Conversation {}] Device {} is not a verified device of a member of the "
+                       "conversation",
                        accountId_,
                        id_,
-                       deviceId,
-                       e.what());
+                       deviceId);
             return {};
         }
-    }
-
-    /**
-     * Resolve the member owning a device certificate found in a tree, verifying the
-     * signature of the device certificate with the member certificate stored in the tree.
-     * @return the member URI, or an empty string if the chain is unable to be verified
-     */
-    std::string verifiedUriFromDeviceCert(const dht::crypto::Certificate& deviceCert,
-                                          std::string_view deviceId,
-                                          const GitTree& tree) const
-    {
-        if (!isCertificateOfDevice(deviceCert, deviceId))
-            return {};
-        auto uri = deviceCert.getIssuerUID();
-        if (uri.empty()) {
-            if (deviceCert.issuer)
-                uri = deviceCert.issuer->getId().toString();
-            if (uri.empty())
-                return {};
-        }
-        auto blob_member = memberCertificate(uri, tree);
-        if (!blob_member)
-            return {};
-        try {
-            auto memberCert = dht::crypto::Certificate(as_view(blob_member));
-            if (!isDeviceOfMember(deviceCert, memberCert, uri))
-                return {};
-        } catch (const std::exception&) {
-            return {};
-        }
-        return uri;
+        return identity->memberId;
     }
 
     /**
@@ -895,19 +820,15 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account,
         name = deviceId;
     name = std::regex_replace(name, regex_display_name, "");
 
-    git_signature* sig_ptr = nullptr;
     git_index* index_ptr = nullptr;
-    git_oid tree_id, commit_id;
+    git_oid tree_id;
     git_tree* tree_ptr = nullptr;
 
-    // Sign commit's buffer
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        if (git_signature_new(&sig_ptr, deviceId.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-            JAMI_ERROR("Unable to create a commit signature.");
-            return {};
-        }
+    GitSignature sig = git::makeSignature(name, deviceId);
+    if (!sig) {
+        JAMI_ERROR("Unable to create a commit signature.");
+        return {};
     }
-    GitSignature sig {sig_ptr};
 
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
         JAMI_ERROR("Unable to open the repository index");
@@ -926,37 +847,27 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account,
     }
     GitTree tree {tree_ptr};
 
-    git_buf to_sign = {};
-    if (git_commit_create_buffer(
-            &to_sign, repo.get(), sig.get(), sig.get(), nullptr, message.toString().c_str(), tree.get(), 0, nullptr)
-        < 0) {
-        JAMI_ERROR("Unable to create initial buffer");
-        return {};
-    }
-
-    std::string signed_str = base64::encode(account->identity().first->sign((const uint8_t*) to_sign.ptr, to_sign.size));
-
-    // git commit -S
-    if (git_commit_create_with_signature(&commit_id, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
-        git_buf_dispose(&to_sign);
+    const auto commit_id = git::createSignedCommit(repo.get(),
+                                                   sig.get(),
+                                                   tree.get(),
+                                                   {},
+                                                   message.toString(),
+                                                   *account->identity().first);
+    if (!commit_id) {
         JAMI_ERROR("Unable to sign the initial commit");
         return {};
     }
-    git_buf_dispose(&to_sign);
 
     // Move commit to main branch
     git_commit* commit = nullptr;
-    if (git_commit_lookup(&commit, repo.get(), &commit_id) == 0) {
+    if (git_commit_lookup(&commit, repo.get(), &*commit_id) == 0) {
         git_reference* ref = nullptr;
         git_branch_create(&ref, repo.get(), "main", commit, true);
         git_commit_free(commit);
         git_reference_free(ref);
     }
 
-    auto commit_str = git_oid_tostr_s(&commit_id);
-    if (commit_str)
-        return commit_str;
-    return {};
+    return git::oidString(&*commit_id);
 }
 
 //////////////////////////////////
@@ -970,17 +881,11 @@ ConversationRepository::Impl::signature()
         return nullptr;
     }
 
-    git_signature* sig_ptr = nullptr;
-    // Sign commit's buffer
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId_.c_str(), std::time(nullptr), 0) < 0) {
-        // Maybe the display name is invalid (like " ") - try without
-        int err = git_signature_new(&sig_ptr, deviceId_.c_str(), deviceId_.c_str(), std::time(nullptr), 0);
-        if (err < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create a commit signature: {}", accountId_, id_, err);
-            return nullptr;
-        }
-    }
-    return GitSignature(sig_ptr);
+    // Maybe the display name is invalid (like " "): the device ID is used instead
+    auto sig = git::makeSignature(name, deviceId_);
+    if (!sig)
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to create a commit signature", accountId_, id_);
+    return sig;
 }
 
 std::string
@@ -1055,43 +960,20 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     }
     GitTree tree {tree_ptr};
 
-    // Commit
-    git_buf to_sign = {};
-    // The last argument of git_commit_create_buffer is of type
-    // 'const git_commit **' in all versions of libgit2 except 1.8.0,
-    // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
-    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
-    git_commit* const parents_ptr[2] {parents[0].get(), parents[1].get()};
-#else
-    const git_commit* parents_ptr[2] {parents[0].get(), parents[1].get()};
-#endif
-    if (git_commit_create_buffer(
-            &to_sign, repo.get(), sig.get(), sig.get(), nullptr, commitMsg.c_str(), tree.get(), 2, &parents_ptr[0])
-        < 0) {
-        const git_error* err = giterr_last();
-        if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create commit buffer: {}",
-                       accountId_,
-                       id_,
-                       err->message);
-        return {};
-    }
-
     auto account = account_.lock();
     if (!account)
         return {};
-    // git commit -S
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf);
-    git_oid commit_oid;
-    if (git_commit_create_with_signature(&commit_oid, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
-        git_buf_dispose(&to_sign);
+    const auto signedCommit = git::createSignedCommit(repo.get(),
+                                                      sig.get(),
+                                                      tree.get(),
+                                                      {parents[0].get(), parents[1].get()},
+                                                      commitMsg,
+                                                      *account->identity().first);
+    if (!signedCommit) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to sign commit", accountId_, id_);
         return {};
     }
-    git_buf_dispose(&to_sign);
+    const git_oid commit_oid = *signedCommit;
 
     auto commit_str = git_oid_tostr_s(&commit_oid);
     if (commit_str) {
@@ -1989,55 +1871,21 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     if (not tree)
         return false;
 
-    // Check that /devices/userDevice.crt exists
-    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
-    auto blob_device = fileAtTree(deviceFile, tree);
-    if (!blob_device) {
-        JAMI_ERROR("{} announced but not found", deviceFile);
-        return false;
-    }
-    std::shared_ptr<dht::crypto::Certificate> deviceCert, parentCert;
-    try {
-        deviceCert = std::make_shared<dht::crypto::Certificate>(as_view(blob_device));
-    } catch (const std::exception& e) {
-        JAMI_ERROR("Unable to parse {}: {}", deviceFile, e.what());
-        return false;
-    }
-    if (!isCertificateOfDevice(*deviceCert, userDevice)) {
-        JAMI_ERROR("{} belongs to another key", deviceFile);
-        return false;
-    }
-    auto userUri = deviceCert->getIssuerUID();
-    if (userUri.empty()) {
-        JAMI_ERROR("{} got no issuer UID", deviceFile);
-        if (not hasPinnedCert) {
-            return false;
-        } else {
-            // Uses pinned certificate if one.
-            userUri = cert->issuer->getId().toString();
-        }
-    }
-
-    // Check that /(members|admins)/userUri.crt exists
-    auto blob_parent = memberCertificate(userUri, tree);
-    if (not blob_parent) {
-        JAMI_ERROR("Certificate not found for {}", userUri);
-        return false;
-    }
-
-    try {
-        parentCert = std::make_shared<dht::crypto::Certificate>(as_view(blob_parent));
-    } catch (const std::exception& e) {
-        JAMI_ERROR("Unable to parse certificate of {}: {}", userUri, e.what());
-        return false;
-    }
-
     // The issuer UID is a plain string chosen by whoever built the device certificate:
     // the device MUST be proven to be issued by the member's key.
-    if (!isDeviceOfMember(*deviceCert, *parentCert, userUri)) {
-        JAMI_ERROR("Device {} is not certified by {}", userDevice, userUri);
+    auto identity = readDeviceIdentity(repo.get(), tree.get(), userDevice, {}, {"members", "admins"});
+    if (!identity && hasPinnedCert)
+        identity = readDeviceIdentity(repo.get(),
+                                      tree.get(),
+                                      userDevice,
+                                      cert->issuer->getId().toString(),
+                                      {"members", "admins"});
+    if (!identity) {
+        JAMI_ERROR("Device {} is not certified by a member at commit {}", userDevice, commitId);
         return false;
     }
+    const auto& deviceCert = identity->device;
+    const auto& parentCert = identity->member;
 
     // Check that certificates were still valid
     git_oid oid;
@@ -2059,20 +1907,15 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     }
 
     //  Verify the signature (git verify-commit)
-    auto pk = base64::decode(std::string_view(sig.ptr, sig.size));
-    bool valid_signature = deviceCert->getPublicKey().checkSignature(reinterpret_cast<const uint8_t*>(sig_data.ptr),
-                                                                     sig_data.size,
-                                                                     pk.data(),
-                                                                     pk.size());
-
-    if (!valid_signature) {
+    if (!git::checkSignature(deviceCert->getPublicKey(),
+                             std::string_view(sig_data.ptr, sig_data.size),
+                             std::string_view(sig.ptr, sig.size))) {
         JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
         return false;
     }
 
     if (not hasPinnedCert) {
         // Pin the verified chain, dropping any unauthenticated chain embedded in the file
-        deviceCert->issuer = parentCert;
         acc->certStore().pinCertificate(deviceCert);
     }
     return true;
@@ -2331,33 +2174,17 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
         return {};
     }
 
-    git_buf to_sign = {};
-    // The last argument of git_commit_create_buffer is of type
-    // 'const git_commit **' in all versions of libgit2 except 1.8.0,
-    // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
-    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
-    git_commit* const head_ref[1] = {head_commit.get()};
-#else
-    const git_commit* head_ref[1] = {head_commit.get()};
-#endif
-    if (git_commit_create_buffer(
-            &to_sign, repo.get(), sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0])
-        < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to create commit buffer", accountId_, id_);
-        return {};
-    }
-
-    // git commit -S
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf);
-    if (git_commit_create_with_signature(&commit_id, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+    const auto signedCommit = git::createSignedCommit(repo.get(),
+                                                      sig.get(),
+                                                      tree.get(),
+                                                      {head_commit.get()},
+                                                      msg,
+                                                      *account->identity().first);
+    if (!signedCommit) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to sign commit", accountId_, id_);
-        git_buf_dispose(&to_sign);
         return {};
     }
-    git_buf_dispose(&to_sign);
+    commit_id = *signedCommit;
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
@@ -2752,9 +2579,7 @@ ConversationRepository::Impl::isAuthorizedCommit(const std::string& uri,
         return false;
     }
     if (message.type == CommitType::TEXT)
-        return allowed(!message.reactTo.empty()   ? Permission::Reaction
-                       : !message.replyTo.empty() ? Permission::TextReply
-                                                  : Permission::Text);
+        return allowed(textPermission(message));
     if (message.type == CommitType::DATA_TRANSFER)
         return allowed(message.replyTo.empty() ? Permission::File : Permission::FileReply);
     if (message.type == CommitType::CALL_HISTORY)
@@ -2947,46 +2772,19 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
         JAMI_ERROR("[Account {}] [Conversation {}] Invalid author ID for commit {}", accountId_, id_, commit.id);
         return std::nullopt;
     }
-    std::string parents;
-    auto parentsSize = commit.parents.size();
-    for (std::size_t i = 0; i < parentsSize; ++i) {
-        parents += commit.parents[i];
-        if (i != parentsSize - 1)
-            parents += ",";
-    }
-    std::string type {};
-    if (parentsSize > 1)
-        type = CommitType::MERGE;
-    std::string body {};
-    std::map<std::string, std::string> message;
-    if (type.empty()) {
-        Json::Value cm = commit.commitMsg.toJson();
-        for (auto const& id : cm.getMemberNames()) {
-            if (id == CommitKey::TYPE) {
-                type = cm[id].asString();
-                continue;
-            }
-            message.insert({id, cm[id].asString()});
-        }
-    }
-    if (type.empty()) {
+    auto message = historyEntryMap(commit.id, commit.parents, commit.authorId, commit.timestamp, &commit.commitMsg);
+    if (!message)
         return std::nullopt;
-    } else if (type == CommitType::DATA_TRANSFER) {
+    if ((*message)["type"] == CommitType::DATA_TRANSFER) {
         // Avoid the client to do the concatenation
-        auto tid = message[CommitKey::TID];
+        auto tid = (*message)[CommitKey::TID];
         if (not tid.empty()) {
-            message["fileId"] = getFileId(commit.id, tid, message[CommitKey::DISPLAY_NAME]);
+            (*message)["fileId"] = getFileId(commit.id, tid, (*message)[CommitKey::DISPLAY_NAME]);
         } else {
-            message["fileId"] = "";
+            (*message)["fileId"] = "";
         }
     }
-    message["id"] = commit.id;
-    message["parents"] = parents;
-    message["linearizedParent"] = commit.linearized_parent;
-    message["author"] = commit.authorId;
-    message["type"] = type;
-    message["timestamp"] = std::to_string(commit.timestamp);
-
+    (*message)["linearizedParent"] = commit.linearized_parent;
     return message;
 }
 
@@ -3217,17 +3015,7 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
 
     git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
     opts.fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
-    opts.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
-        // If a pack is more than MAX_FETCH_SIZE, it's abnormal.
-        if (stats->received_bytes > MAX_FETCH_SIZE) {
-            JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                       stats->received_bytes,
-                       stats->received_objects,
-                       stats->total_objects);
-            return -1;
-        }
-        return 0;
-    };
+    opts.fetch_opts.callbacks.transfer_progress = limitFetchSize;
 
     JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {} (staging {})",
                account->getAccountID(),
@@ -3842,21 +3630,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     // not already exist, and the entry is erased only by that worker as it
     // exits, all under pullcbsMtx_. Further requests for a device already being
     // fetched are queued behind it rather than starting a second fetch.
-    fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
-        // Uncomment to get advancment
-        // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
-        //     stats->received_bytes/1024);
-        // If a pack is more than 256Mb, it's anormal.
-        if (stats->received_bytes > MAX_FETCH_SIZE) {
-            JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                       stats->received_bytes,
-                       stats->received_objects,
-                       stats->total_objects);
-            return -1;
-        }
-        return 0;
-    };
+    fetch_opts.callbacks.transfer_progress = limitFetchSize;
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {
