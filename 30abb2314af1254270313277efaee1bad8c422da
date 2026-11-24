@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c38dc57_4c6c38a9",
+        "filename": "src/jamidht/circle_policy.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:55:39Z",
+      "side": 1,
+      "message": "[error] Line 222: 🔴 `CirclePolicy::isValid()` only checks identifiers for emptiness (e.g., member URI/role/channel IDs) while the record parser enforces strict formats. This allows malformed IDs to enter policy snapshots when `CirclePolicy` is built or mutated through non-record code paths, creating inconsistent behavior between in-memory policy evaluation and record-based validation. Add shared identifier validators (same constraints as record parsing) and enforce them in `isValid()` plus mutation paths (`SetCircleRole`, `InviteCircleMember`, `RegisterCircleChannel`, etc.) to keep invariants uniform.",
+      "revId": "30abb2314af1254270313277efaee1bad8c422da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
