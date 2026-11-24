@@ -16,6 +16,7 @@
  */
 
 #include "swarm_manager.h"
+#include "jamidht/conversationrepository.h"
 #include "jamidht/timestamp.h"
 #include <dhtnet/multiplexed_socket.h>
 #include <dhtnet/channel_utils.h>
@@ -208,12 +209,18 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
             emit = routing_table.isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
             added = routing_table.addNode(channel, bucket);
+            if (added && currentTip_)
+                repositoryLinks_.insert_or_assign(channel->deviceId(), RepositoryLink {channel});
         }
         if (added) {
             std::error_code ec;
             resetNodeExpiry(ec, channel, id_);
         }
         receiveMessage(channel);
+        if (added) {
+            std::lock_guard lock(mutex);
+            scheduleRepositoryOffers();
+        }
         if (emit && onConnectionChanged_) {
             // If it's the first channel we add, we're now connected!
             JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
@@ -263,6 +270,7 @@ SwarmManager::shutdown()
         if (state.timer)
             state.timer->cancel();
     outstandingCertRequests_.clear();
+    repositoryLinks_.clear();
     routing_table.shutdownAllNodes();
 }
 
@@ -851,6 +859,163 @@ SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
     }
 }
 
+static void
+sendRepositoryMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, RepositoryTip tip)
+{
+    Message message;
+    message.repository_tip = std::move(tip);
+    msgpack::sbuffer buffer;
+    msgpack::pack(buffer, message);
+    std::error_code ec;
+    if (socket->write(reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size(), ec) != buffer.size() || ec) {
+        JAMI_WARNING("Unable to send swarm repository tip to {}: {}", socket->deviceId(), ec.message());
+        socket->shutdown();
+    }
+}
+
+void
+SwarmManager::onRepositoryTip(std::function<std::string()> currentTip, FetchHistory fetch)
+{
+    std::lock_guard lock(mutex);
+    currentTip_ = std::move(currentTip);
+    fetchHistory_ = std::move(fetch);
+}
+
+void
+SwarmManager::offerRepositoryTip()
+{
+    std::lock_guard lock(mutex);
+    for (auto& [id, link] : repositoryLinks_)
+        link.dirty = true;
+    scheduleRepositoryOffers();
+}
+
+void
+SwarmManager::scheduleRepositoryOffers()
+{
+    if (repositoryLinks_.empty() || repositoryOffersScheduled_)
+        return;
+    repositoryOffersScheduled_ = true;
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto shared = w.lock())
+            shared->sendRepositoryOffers();
+    });
+}
+
+void
+SwarmManager::sendRepositoryOffers()
+{
+    for (;;) {
+        std::vector<std::shared_ptr<dhtnet::ChannelSocketInterface>> targets;
+        std::function<std::string()> currentTip;
+        {
+            std::lock_guard lock(mutex);
+            for (auto& [id, link] : repositoryLinks_) {
+                if (std::exchange(link.dirty, false))
+                    if (auto socket = link.socket.lock())
+                        targets.emplace_back(std::move(socket));
+            }
+            if (targets.empty()) {
+                repositoryOffersScheduled_ = false;
+                return;
+            }
+            currentTip = currentTip_;
+        }
+        // Clear dirty before reading main so a concurrent publication queues another pass.
+        const auto tip = currentTip();
+        if (tip.empty())
+            continue;
+        for (const auto& socket : targets) {
+            {
+                std::lock_guard lock(mutex);
+                const auto link = repositoryLinks_.find(socket->deviceId());
+                if (link == repositoryLinks_.end() || link->second.socket.lock() != socket
+                    || link->second.offered == tip || link->second.wanted == tip)
+                    continue;
+                link->second.offered = tip;
+                link->second.awaitingAck = true;
+            }
+            sendRepositoryMessage(socket, {tip, {}});
+        }
+    }
+}
+
+void
+SwarmManager::onRepositoryMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                                  const RepositoryTip& msg)
+{
+    if ((!msg.have.empty() && !isConversationId(msg.have)) || (!msg.ack.empty() && !isConversationId(msg.ack))) {
+        JAMI_WARNING("Ignoring malformed repository tip from {}", socket->deviceId());
+        return;
+    }
+    {
+        std::lock_guard lock(mutex);
+        const auto it = repositoryLinks_.find(socket->deviceId());
+        if (it == repositoryLinks_.end() || it->second.socket.lock() != socket)
+            return;
+        auto& link = it->second;
+        if (link.awaitingAck && msg.ack == link.offered)
+            link.awaitingAck = false;
+        if (msg.have.empty() || msg.have == link.wanted)
+            return;
+        link.wanted = msg.have;
+        link.retried = false;
+    }
+    fetchRepositoryTip(socket);
+}
+
+void
+SwarmManager::fetchRepositoryTip(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
+{
+    std::string tip;
+    FetchHistory fetch;
+    {
+        std::lock_guard lock(mutex);
+        const auto it = repositoryLinks_.find(socket->deviceId());
+        if (it == repositoryLinks_.end() || it->second.socket.lock() != socket || it->second.fetching
+            || it->second.wanted == it->second.requested)
+            return;
+        it->second.fetching = true;
+        tip = it->second.requested = it->second.wanted;
+        fetch = fetchHistory_;
+    }
+    dht::ThreadPool::io().run([w = weak(), socket = std::weak_ptr(socket), tip, fetch = std::move(fetch)] {
+        if (auto source = socket.lock())
+            fetch(source->deviceId(), tip, [w, socket, tip](bool ok) {
+                if (auto shared = w.lock())
+                    if (auto source = socket.lock())
+                        shared->repositoryFetchDone(source, tip, ok);
+            });
+    });
+}
+
+void
+SwarmManager::repositoryFetchDone(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                                  const std::string& tip,
+                                  bool ok)
+{
+    bool fetchAgain;
+    {
+        std::lock_guard lock(mutex);
+        const auto it = repositoryLinks_.find(socket->deviceId());
+        if (it == repositoryLinks_.end() || it->second.socket.lock() != socket || !it->second.fetching
+            || it->second.requested != tip)
+            return;
+        auto& link = it->second;
+        link.fetching = false;
+        fetchAgain = link.wanted != tip;
+        if (!fetchAgain && !ok && !link.retried) {
+            // Retry failed work once. There is no timer or traffic on an idle link.
+            link.requested.clear();
+            link.retried = fetchAgain = true;
+        }
+    }
+    if (ok)
+        sendRepositoryMessage(socket, {{}, tip});
+    if (fetchAgain)
+        fetchRepositoryTip(socket);
+}
+
 void
 SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
@@ -860,6 +1025,9 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
             auto socket = wsocket.lock();
             if (!shared || !socket)
                 return std::make_error_code(std::errc::operation_canceled);
+
+            if (msg.repository_tip)
+                shared->onRepositoryMessage(socket, *msg.repository_tip);
 
             auto validMobileAnnouncement = msg.v < 3 || shared->conversationId_.empty();
             if (msg.self_mobile_info && msg.self_mobile_info->id == socket->deviceId()) {
@@ -904,11 +1072,20 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
             return std::error_code();
         }));
 
-    socket->onShutdown([w = weak(), deviceId = socket->deviceId()](const std::error_code&) {
-        dht::ThreadPool::io().run([w, deviceId] {
+    socket->onShutdown([w = weak(), deviceId = socket->deviceId(), closed = std::weak_ptr(socket)](const std::error_code&) {
+        dht::ThreadPool::io().run([w, deviceId, closed] {
             auto shared = w.lock();
             if (shared && !shared->isShutdown_) {
-                shared->removeNode(deviceId);
+                std::unique_lock lock(shared->mutex);
+                const auto link = shared->repositoryLinks_.find(deviceId);
+                if (link != shared->repositoryLinks_.end()
+                    && (link->second.socket.owner_before(closed) || closed.owner_before(link->second.socket)))
+                    return;
+                if (shared->isConnectedWith(deviceId)) {
+                    shared->removeNodeInternal(deviceId);
+                    lock.unlock();
+                    shared->maintainBuckets();
+                }
             }
         });
     });
@@ -978,6 +1155,7 @@ SwarmManager::tryConnect(const NodeId& nodeId, bool noNewSocket)
 void
 SwarmManager::removeNodeInternal(const NodeId& nodeId)
 {
+    repositoryLinks_.erase(nodeId);
     routing_table.removeNode(nodeId);
 }
 
@@ -1102,6 +1280,7 @@ SwarmManager::deleteNode(const std::vector<NodeId>& nodes)
         std::lock_guard lock(mutex);
         auto mobileNodes = routing_table.getKnownMobileNodes();
         for (const auto& node : nodes) {
+            repositoryLinks_.erase(node);
             routing_table.deleteNode(node);
             mobileNodesChanged |= mobileNodeLeases_.erase(node) != 0;
             mobileNodesChanged |= legacyMobileNodeExpiries_.erase(node) != 0;

@@ -98,12 +98,14 @@ private:
     void testDisplayedOnLoad();
     void testSwarmLoadedPermissions();
     void testCallHistoryQueuedDuringFetch();
+    void testUnhintedPullDiscoversMessageOnConnectedPeer();
 
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
     CPPUNIT_TEST(testSyncFetch);
     CPPUNIT_TEST(testSyncAfterDisconnection);
     CPPUNIT_TEST(testDisplayedOnLoad);
     CPPUNIT_TEST(testCallHistoryQueuedDuringFetch);
+    CPPUNIT_TEST(testUnhintedPullDiscoversMessageOnConnectedPeer);
     CPPUNIT_TEST(testSwarmLoadedPermissions);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -724,6 +726,73 @@ ConversationFetchSentTest::testCallHistoryQueuedDuringFetch()
     CPPUNIT_ASSERT(waitFor(10s, [&]() {
         return getMsgStatus(bobData, secondCommitId, aliceUri) == libjami::Account::MessageStates::SENT;
     }));
+}
+
+void
+ConversationFetchSentTest::testUnhintedPullDiscoversMessageOnConnectedPeer()
+{
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carla = Manager::instance().getAccount<JamiAccount>(carlaId);
+    add_confirmed_contact(bobId, aliceId);
+    add_confirmed_contact(carlaId, aliceId);
+    connectSignals();
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return carlaData.deviceAnnounced; }));
+
+    const auto id = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, id, bob->getUsername());
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, id);
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return bobData.conversationId == id; }));
+    libjami::addConversationMember(aliceId, id, carla->getUsername());
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return carlaData.requestReceived; }));
+    libjami::acceptConversationRequest(carlaId, id);
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return carlaData.conversationId == id; }));
+
+    auto aliceConv = alice->convModule()->getConversation(id);
+    auto carlaConv = carla->convModule()->getConversation(id);
+    CPPUNIT_ASSERT(aliceConv && carlaConv);
+    const auto carlaDevice = DeviceId(std::string(carla->currentDeviceId()));
+    aliceConv->connectNode(carlaDevice);
+    const auto aliceConnectedToCarla = [&] {
+        const auto devices = aliceConv->peersToSyncWith();
+        return std::find(devices.begin(), devices.end(), carlaDevice) != devices.end();
+    };
+    CPPUNIT_ASSERT(waitFor(20s, aliceConnectedToCarla));
+
+    // Bob cannot send a notification or serve a network pull. Alice gets his
+    // signed commit from a local Git remote with no hint; Carla only has Alice.
+    Manager::instance().sendRegister(bobId, false);
+    CPPUNIT_ASSERT(waitFor(30s, [&] { return bobData.stopped; }));
+    ConversationRepository origin(bob, id);
+    const auto message = origin.commitMessage(CommitMessage::text("Learned without a hint").toString());
+    CPPUNIT_ASSERT(!message.empty());
+    CPPUNIT_ASSERT(!carlaConv->hasCommitInHistory(message));
+
+    const auto alicePath = fileutils::get_data_dir() / aliceId / "conversations" / id;
+    const auto bobPath = fileutils::get_data_dir() / bobId / "conversations" / id;
+    git_repository* repoPtr = nullptr;
+    CPPUNIT_ASSERT_EQUAL(0, git_repository_open(&repoPtr, alicePath.c_str()));
+    GitRepository git {repoPtr};
+    git_remote* remotePtr = nullptr;
+    constexpr auto remoteName = "offline-origin";
+    const auto url = fmt::format("file://{}", bobPath.string());
+    CPPUNIT_ASSERT_EQUAL(0, git_remote_create(&remotePtr, git.get(), remoteName, url.c_str()));
+    GitRemote remote {remotePtr};
+
+    auto done = std::make_shared<std::promise<MergeOutcome>>();
+    auto result = done->get_future();
+    CPPUNIT_ASSERT(aliceConv->pull(remoteName, [done](MergeOutcome outcome) { done->set_value(outcome); }));
+    CPPUNIT_ASSERT(result.wait_for(10s) == std::future_status::ready);
+    CPPUNIT_ASSERT(result.get() == MergeOutcome::UPDATED);
+    CPPUNIT_ASSERT(waitFor(10s, [&] {
+        return std::any_of(carlaData.messages.begin(), carlaData.messages.end(), [&](const auto& m) {
+            return m.id == message;
+        });
+    }));
+    CPPUNIT_ASSERT(carlaConv->hasCommitInHistory(message));
+    CPPUNIT_ASSERT(aliceConnectedToCarla());
 }
 
 void

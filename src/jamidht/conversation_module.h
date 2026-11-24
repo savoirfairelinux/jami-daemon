@@ -619,6 +619,11 @@ public:
      * @param socket
      */
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
+    void fetchSwarmTip(const std::string& conversationId,
+                       const std::string& peer,
+                       const std::string& deviceId,
+                       const std::string& tip,
+                       std::function<void(bool)> done);
     /**
      * Notify conversations that a new device is connected.
      * This allows the DRT to decide whether to open a swarm channel.

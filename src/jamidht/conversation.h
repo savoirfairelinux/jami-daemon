@@ -343,6 +343,7 @@ public:
      * @param channel       Related channel
      */
     void addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel);
+    void offerRepositoryTip();
 
     /**
      * Get conversation's id

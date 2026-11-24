@@ -112,6 +112,14 @@ struct CertResponse
     MSGPACK_DEFINE_MAP(certificates);
 };
 
+struct RepositoryTip
+{
+    std::string have;
+    std::string ack;
+
+    MSGPACK_DEFINE_MAP(have, ack);
+};
+
 struct Message
 {
     int v = version;
@@ -121,7 +129,8 @@ struct Message
     std::optional<Response> response;
     std::optional<CertRequest> cert_request;
     std::optional<CertResponse> cert_response;
-    MSGPACK_DEFINE_MAP(v, is_mobile, self_mobile_info, request, response, cert_request, cert_response);
+    std::optional<RepositoryTip> repository_tip;
+    MSGPACK_DEFINE_MAP(v, is_mobile, self_mobile_info, request, response, cert_request, cert_response, repository_tip);
 };
 
 }; // namespace swarm_protocol

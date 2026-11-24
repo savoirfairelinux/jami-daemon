@@ -4047,6 +4047,7 @@ ConversationRepository::mergeHistory(const std::string& remoteDevice,
         return commit.id == hint;
     });
 
+    const auto oldHead = onlyMerges ? getHead() : std::string {};
     auto [outcome, cid] = mergeLocked(remoteHeadRes, false, onlyMerges);
     if (outcome == MergeOutcome::FAILED) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge history with {}",
@@ -4059,6 +4060,14 @@ ConversationRepository::mergeHistory(const std::string& remoteDevice,
     }
     if (outcome == MergeOutcome::REDUNDANT || outcome == MergeOutcome::UP_TO_DATE)
         return {outcome, {}, receivedHint};
+    bool contentChanged = !onlyMerges;
+    if (onlyMerges && outcome == MergeOutcome::UPDATED) {
+        if (auto repo = pimpl_->repository()) {
+            const auto before = pimpl_->treeAtCommit(repo.get(), oldHead);
+            const auto after = pimpl_->treeAtCommit(repo.get(), cid.empty() ? remoteHeadRes : cid);
+            contentChanged = before && after && !git_oid_equal(git_tree_id(before.get()), git_tree_id(after.get()));
+        }
+    }
     lkOp.unlock();
 
     if (!cid.empty()) {
@@ -4082,7 +4091,7 @@ ConversationRepository::mergeHistory(const std::string& remoteDevice,
                 disconnectFromPeerCb(commit[CommitKey::URI]);
         }
     }
-    return {outcome, std::move(result), receivedHint};
+    return {outcome, std::move(result), receivedHint, contentChanged};
 }
 
 std::string

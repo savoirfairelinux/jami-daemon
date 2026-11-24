@@ -131,6 +131,8 @@ public:
     void tearDown();
 
 private:
+    void testRepositoryTipExchange();
+
     std::mt19937_64 rd {dht::crypto::getSeededRandomEngine<std::mt19937_64>()};
 
     // ################# LIVE NETWORK HARNESS #################//
@@ -227,6 +229,7 @@ private:
     void testWakeUpCoverageAfterMassMobileShutdown();
 
     CPPUNIT_TEST_SUITE(MobileWakeUpTest);
+    CPPUNIT_TEST(testRepositoryTipExchange);
     CPPUNIT_TEST(testNotifyWithoutConnectedNodes);
     CPPUNIT_TEST(testMobileProtocolCompatibility);
     CPPUNIT_TEST(testBlockedResponseWriteDoesNotBlockMaintenance);
@@ -773,6 +776,87 @@ hasVerifiedLease(const std::shared_ptr<SwarmManager>& manager, const NodeId& id)
 }
 
 } // namespace
+
+void
+MobileWakeUpTest::testRepositoryTipExchange()
+{
+    auto manager = createManager(nodeTestIds1.at(0), false);
+    auto local = makeChannel(nodeTestIds1.at(1));
+    auto remote = makeChannel(nodeTestIds1.at(0));
+    MessageSink sink;
+    sink.attach(remote);
+    dhtnet::ChannelSocketTest::link(local, remote);
+
+    const auto initial = std::string(40, 'a');
+    const auto first = std::string(40, 'b');
+    const auto skipped = std::string(40, 'c');
+    const auto latest = std::string(40, 'd');
+    struct Requests
+    {
+        std::mutex mutex;
+        std::vector<std::pair<std::string, std::function<void(bool)>>> pending;
+    };
+    auto requests = std::make_shared<Requests>();
+    manager->onRepositoryTip([initial] { return initial; },
+                             [requests](const auto&, const auto& tip, auto done) {
+                                 std::lock_guard lock(requests->mutex);
+                                 requests->pending.emplace_back(tip, std::move(done));
+                             });
+    manager->addChannel(local);
+    CPPUNIT_ASSERT(waitFor([&] {
+        return sink.find([&](const Message& m) { return m.repository_tip && m.repository_tip->have == initial; })
+            .has_value();
+    }, 5s));
+
+    auto offer = [&](const std::string& tip) {
+        Message msg;
+        msg.repository_tip = RepositoryTip {tip, {}};
+        writeMessage(remote, msg);
+    };
+    auto complete = [&](size_t index, const std::string& expected, bool ok) {
+        CPPUNIT_ASSERT(waitFor([&] {
+            std::lock_guard lock(requests->mutex);
+            return requests->pending.size() > index;
+        }, 5s));
+        std::function<void(bool)> done;
+        {
+            std::lock_guard lock(requests->mutex);
+            CPPUNIT_ASSERT_EQUAL(expected, requests->pending.at(index).first);
+            done = std::move(requests->pending.at(index).second);
+        }
+        done(ok);
+    };
+    auto acked = [&](const std::string& tip) {
+        return sink.find([&](const Message& m) { return m.repository_tip && m.repository_tip->ack == tip; }).has_value();
+    };
+    offer(first);
+    CPPUNIT_ASSERT(waitFor([&] {
+        std::lock_guard lock(requests->mutex);
+        return requests->pending.size() == 1;
+    }, 5s));
+    CPPUNIT_ASSERT(!acked(first));
+    offer(skipped);
+    offer(latest);
+    // A response to this frame proves both preceding offers have been read.
+    Message barrier;
+    barrier.request = Request {Query::FIND, 1, nodeTestIds1.at(1)};
+    writeMessage(remote, barrier);
+    CPPUNIT_ASSERT(waitFor([&] {
+        return sink.find([](const Message& m) { return m.response.has_value(); }).has_value();
+    }, 5s));
+
+    complete(0, first, true);
+    complete(1, latest, false);
+    CPPUNIT_ASSERT(!acked(latest));
+    complete(2, latest, true);
+    CPPUNIT_ASSERT(waitFor([&] { return acked(first) && acked(latest); }, 5s));
+    offer(latest);
+    CPPUNIT_ASSERT(!waitFor([&] {
+        std::lock_guard lock(requests->mutex);
+        return requests->pending.size() > 3;
+    }, 1s));
+    manager->shutdown();
+}
 
 void
 MobileWakeUpTest::testLeaseCertificateResolutionFromPeer()

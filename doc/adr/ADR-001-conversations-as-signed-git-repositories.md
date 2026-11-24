@@ -26,6 +26,10 @@ Each conversation is a Git repository managed with libgit2.
 - Divergent histories are reconciled with merge commits unless all incoming
   commits are merges and the tips have the same tree. In that case a pull
   keeps the local tip. True fast-forwards still advance the tip.
+- Connected peers offer their `main` tip on link-up and when accepted history
+  or tree state changes, including after a pull without a notification. The
+  receiver acknowledges an integrated or verified redundant tip. There is no
+  discovery polling, and structural-only merges do not prompt new offers.
 
 ## Consequences
 

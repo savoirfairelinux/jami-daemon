@@ -42,6 +42,9 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
         = std::function<void(const NodeId&, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&&)>;
 
 public:
+    using FetchHistory
+        = std::function<void(const NodeId&, const std::string&, std::function<void(bool)>)>;
+
     explicit SwarmManager(const NodeId& nodeId,
                           bool isMobile,
                           const std::mt19937_64& rand,
@@ -90,6 +93,9 @@ public:
      * @param channel
      */
     void addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel);
+
+    void onRepositoryTip(std::function<std::string()> currentTip, FetchHistory fetch);
+    void offerRepositoryTip();
 
     /**
      * Remove channel from routing table
@@ -353,6 +359,14 @@ private:
      */
     void receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
 
+    void scheduleRepositoryOffers(); // Requires mutex
+    void sendRepositoryOffers();
+    void onRepositoryMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const RepositoryTip& msg);
+    void fetchRepositoryTip(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
+    void repositoryFetchDone(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                             const std::string& tip,
+                             bool ok);
+
     /**
      * Reset node's timer expiry
      * @param ec
@@ -382,6 +396,22 @@ private:
     std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+    struct RepositoryLink
+    {
+        std::weak_ptr<dhtnet::ChannelSocketInterface> socket;
+        std::string offered {};
+        std::string wanted {};
+        std::string requested {};
+        bool dirty {true};
+        bool awaitingAck {false};
+        bool fetching {false};
+        bool retried {false};
+    };
+    std::map<NodeId, RepositoryLink> repositoryLinks_;
+    std::function<std::string()> currentTip_;
+    FetchHistory fetchHistory_;
+    bool repositoryOffersScheduled_ {false};
+
     std::map<NodeId, MobileLease> mobileNodeLeases_;
     std::map<NodeId, int64_t> legacyMobileNodeExpiries_;
 

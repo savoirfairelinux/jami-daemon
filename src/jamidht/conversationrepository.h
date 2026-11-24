@@ -127,6 +127,7 @@ struct MergeHistoryResult
     MergeOutcome outcome {MergeOutcome::FAILED};
     std::vector<std::map<std::string, std::string>> commits {};
     bool receivedHint {false}; // The hinted commit was in the validated incoming range
+    bool contentChanged {false};
 };
 
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };

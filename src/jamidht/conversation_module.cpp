@@ -80,6 +80,7 @@ struct SyncedConversation
         std::string peer;
         std::string deviceId;
         std::string commitId;
+        std::function<void(bool)> onTipFetched;
     };
 
     std::mutex mtx;
@@ -102,7 +103,8 @@ struct SyncedConversation
     unsigned validationFailures {0};
     ConvInfo info;
     std::unique_ptr<PendingConversationFetch> pending;
-    std::map<std::string, DeferredFetch> deferredFetches;
+    // Keep a legacy notification and a swarm tip independent: neither may erase the other.
+    std::map<std::pair<std::string, bool>, DeferredFetch> deferredFetches;
     std::shared_ptr<Conversation> conversation;
 
     // Requires mtx. Shared by clone registration and clone installation.
@@ -202,22 +204,15 @@ struct SyncedConversation
             pending.reset();
     }
 
-    void deferFetch(const std::string& peer, const std::string& deviceId, const std::string& commitId)
-    {
-        // conversation mtx must be locked
-        deferredFetches[deviceId] = {peer, deviceId, commitId};
-    }
-
-    std::optional<DeferredFetch> finishFetch(const std::string& deviceId)
+    std::vector<DeferredFetch> finishFetch(const std::string& deviceId)
     {
         // conversation mtx must be locked
         stopFetch(deviceId);
-        auto deferred = deferredFetches.find(deviceId);
-        if (deferred == deferredFetches.end())
-            return std::nullopt;
-        auto request = std::move(deferred->second);
-        deferredFetches.erase(deferred);
-        return request;
+        std::vector<DeferredFetch> requests;
+        for (bool swarm : {false, true})
+            if (auto deferred = deferredFetches.extract({deviceId, swarm}))
+                requests.emplace_back(std::move(deferred.mapped()));
+        return requests;
     }
 
     void clearFetches()
@@ -299,6 +294,7 @@ public:
                          const std::string& deviceId,
                          const std::string& conversationId,
                          const std::string& commitId = "");
+    void fetchFromDevice(const std::shared_ptr<SyncedConversation>& conv, SyncedConversation::DeferredFetch request);
     /**
      * Handle events to receive new commits
      */
@@ -843,103 +839,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     std::unique_lock lk(conv->mtx);
 
     if (conv->conversation) {
-        if (!commitId.empty() && conv->conversation->hasCommitInHistory(commitId)) {
-            return;
-        }
-        if (conv->conversation->isRemoving()) {
-            JAMI_WARNING("[Account {}] [Conversation {}] conversaton is being removed", accountId_, conversationId);
-            return;
-        }
-        if (!conv->conversation->isPeerAuthorized(peer, deviceId, true)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] device {} is not authorized for {}",
-                         accountId_,
-                         conversationId,
-                         deviceId,
-                         peer);
-            return;
-        }
-
-        // Retrieve current last message
-        auto lastMessageId = conv->conversation->lastCommitId();
-        if (lastMessageId.empty()) {
-            JAMI_ERROR("[Account {}] [Conversation {}] No message detected. This is a bug", accountId_, conversationId);
-            return;
-        }
-
-        if (!conv->startFetch(deviceId)) {
-            conv->deferFetch(peer, deviceId, commitId);
-            JAMI_WARNING("[Account {}] [Conversation {}] Already fetching from {}, deferring commit {}",
-                         accountId_,
-                         conversationId,
-                         deviceId,
-                         commitId);
-            return;
-        }
-
-        syncCnt.fetch_add(1);
-        onNeedSocket_(
-            conversationId,
-            deviceId,
-            [w = weak(), conv, conversationId, peer = std::move(peer), deviceId, commitId = std::move(commitId)](
-                const auto& channel) {
-                auto sthis = w.lock();
-                auto acc = sthis ? sthis->account_.lock() : nullptr;
-                std::unique_lock lk(conv->mtx);
-                auto conversation = conv->conversation;
-                if (!channel || !acc || !conversation) {
-                    auto deferred = conv->finishFetch(deviceId);
-                    lk.unlock();
-                    if (sthis && deferred)
-                        sthis->fetchNewCommits(deferred->peer, deferred->deviceId, conversationId, deferred->commitId);
-                    if (sthis && sthis->syncCnt.fetch_sub(1) == 1)
-                        emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(sthis->accountId_);
-                    return false;
-                }
-                conversation->addGitSocket(channel->deviceId(), channel);
-                lk.unlock();
-                conversation->sync(
-                    peer,
-                    deviceId,
-                    [w, conv, conversationId = std::move(conversationId), deviceId, commitId](MergeOutcome outcome) {
-                        auto shared = w.lock();
-                        if (!shared)
-                            return;
-#ifdef LIBJAMI_TEST
-                        if (shared->fetchCompletedCbTest_)
-                            shared->fetchCompletedCbTest_(conversationId, commitId, outcome != MergeOutcome::FAILED);
-#endif
-                        if (outcome == MergeOutcome::FAILED) {
-                            JAMI_WARNING("[Account {}] [Conversation {}] Unable to fetch new commit from "
-                                         "{}, other peer may be disconnected",
-                                         shared->accountId_,
-                                         conversationId,
-                                         deviceId);
-                        }
-
-                        std::optional<SyncedConversation::DeferredFetch> deferred;
-                        {
-                            std::lock_guard lk(conv->mtx);
-                            deferred = conv->finishFetch(deviceId);
-                            // Relay only if the hint was integrated and the fetch brought new content or state.
-                            if (outcome == MergeOutcome::UPDATED && !commitId.empty() && conv->conversation
-                                && !conv->info.isRemoved()) {
-                                shared->sendMessageNotification(*conv->conversation, false, commitId, deviceId);
-                            }
-                        }
-                        if (deferred)
-                            shared->fetchNewCommits(deferred->peer,
-                                                    deferred->deviceId,
-                                                    conversationId,
-                                                    deferred->commitId);
-                        if (shared->syncCnt.fetch_sub(1) == 1) {
-                            emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(shared->accountId_);
-                        }
-                    },
-                    commitId);
-                return true;
-            },
-            "",
-            false);
+        lk.unlock();
+        fetchFromDevice(conv, {peer, deviceId, commitId, {}});
     } else {
         if (oldReq != std::nullopt)
             return;
@@ -958,6 +859,95 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                      conversationId);
         sendMsgCb_(peer, {}, std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}}, 0);
     }
+}
+
+void
+ConversationModule::Impl::fetchFromDevice(const std::shared_ptr<SyncedConversation>& conv,
+                                          SyncedConversation::DeferredFetch request)
+{
+    const auto deviceId = request.deviceId;
+    const bool swarm = bool(request.onTipFetched);
+    std::unique_lock lock(conv->mtx);
+    const auto conversationId = conv->info.id;
+    auto conversation = conv->conversation;
+    if (!conversation || conv->info.isRemoved() || conversation->isRemoving()
+        || !conversation->isPeerAuthorized(request.peer, deviceId, true)) {
+        JAMI_DEBUG("[Account {}] [Conversation {}] Cannot sync with {}: no authorized live replica",
+                   accountId_,
+                   conversationId,
+                   deviceId);
+        lock.unlock();
+        if (swarm)
+            request.onTipFetched(false);
+        return;
+    }
+    if (!request.commitId.empty() && conversation->hasCommitInHistory(request.commitId)) {
+        lock.unlock();
+        if (swarm)
+            request.onTipFetched(true);
+        return;
+    }
+    if (!conv->startFetch(deviceId)) {
+        conv->deferredFetches.insert_or_assign({deviceId, swarm}, std::move(request));
+        return;
+    }
+    syncCnt.fetch_add(1);
+    lock.unlock();
+
+    onNeedSocket_(
+        conversationId,
+        deviceId,
+        [w = weak(), conv, conversation, conversationId, request = std::move(request)](const auto& channel) {
+            auto done = [w, conv, conversation, conversationId, request](MergeOutcome outcome) {
+                auto shared = w.lock();
+                const bool ok = outcome != MergeOutcome::FAILED;
+                if (!shared) {
+                    if (request.onTipFetched)
+                        request.onTipFetched(false);
+                    return;
+                }
+#ifdef LIBJAMI_TEST
+                if (!request.onTipFetched && shared->fetchCompletedCbTest_)
+                    shared->fetchCompletedCbTest_(conversationId, request.commitId, ok);
+#endif
+                if (!ok)
+                    JAMI_WARNING("[Account {}] [Conversation {}] Unable to sync with {}",
+                                 shared->accountId_,
+                                 conversationId,
+                                 request.deviceId);
+                std::vector<SyncedConversation::DeferredFetch> deferred;
+                bool live;
+                {
+                    std::lock_guard lock(conv->mtx);
+                    live = conv->conversation == conversation && !conv->info.isRemoved();
+                    deferred = conv->finishFetch(request.deviceId);
+                    if (live && !request.onTipFetched && outcome == MergeOutcome::UPDATED && !request.commitId.empty())
+                        shared->sendMessageNotification(*conversation, false, request.commitId, request.deviceId);
+                }
+                for (auto& next : deferred)
+                    shared->fetchFromDevice(conv, std::move(next));
+                if (shared->syncCnt.fetch_sub(1) == 1)
+                    emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(shared->accountId_);
+                if (request.onTipFetched)
+                    request.onTipFetched(ok && live);
+            };
+            bool accepted = false;
+            if (channel && !w.expired()) {
+                std::lock_guard lock(conv->mtx);
+                if (conv->conversation == conversation && !conv->info.isRemoved() && !conversation->isRemoving()) {
+                    conversation->addGitSocket(channel->deviceId(), channel);
+                    accepted = true;
+                }
+            }
+            if (!accepted) {
+                done(MergeOutcome::FAILED);
+                return false;
+            }
+            conversation->sync(request.peer, request.deviceId, std::move(done), request.commitId);
+            return true;
+        },
+        "",
+        false);
 }
 
 void
@@ -1542,6 +1532,8 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     auto commit = commitId == "" ? conversation.lastCommitId() : commitId;
     if (bootstrapReplay && conversation.lastCommitId() != commit)
         return;
+    if (!commitId.empty() && deviceId.empty() && !bootstrapReplay)
+        conversation.offerRepositoryTip();
     Json::Value message;
     message["id"] = conversation.id();
     message["commit"] = commit;
@@ -4569,6 +4561,19 @@ void
 ConversationModule::addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     pimpl_->withConversation(conversationId, [&](auto& conv) { conv.addSwarmChannel(std::move(channel)); });
+}
+
+void
+ConversationModule::fetchSwarmTip(const std::string& conversationId,
+                                  const std::string& peer,
+                                  const std::string& deviceId,
+                                  const std::string& tip,
+                                  std::function<void(bool)> done)
+{
+    if (auto conv = pimpl_->getConversation(conversationId))
+        pimpl_->fetchFromDevice(conv, {peer, deviceId, tip, std::move(done)});
+    else
+        done(false);
 }
 
 void

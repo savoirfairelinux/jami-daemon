@@ -2900,6 +2900,8 @@ Conversation::Impl::pull(const std::string& deviceId)
         if (!result.commits.empty()) {
             announce(result.commits);
         }
+        if (result.contentChanged)
+            swarmManager_->offerRepositoryTip();
         const auto newHead = result.commits.empty() ? std::string {} : repo->getHead();
         if (result.outcome != MergeOutcome::FAILED && !commitId.empty() && !result.receivedHint) {
             // Another pull can have integrated the hint while this fetch was in flight.
@@ -3603,12 +3605,34 @@ Conversation::onMembersChanged(OnMembersChanged&& cb)
 void
 Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
+    pimpl_->swarmManager_->onRepositoryTip(
+        [w = weak()] {
+            if (auto self = w.lock())
+                return self->pimpl_->repository_->getHead();
+            return std::string {};
+        },
+        [w = weak()](const NodeId& source, const std::string& tip, std::function<void(bool)> done) {
+            if (auto self = w.lock())
+                if (auto account = self->pimpl_->account_.lock())
+                    if (auto module = account->convModule(true)) {
+                        const auto device = source.toString();
+                        const auto peer = self->uriFromDevice(device);
+                        if (!peer.empty())
+                            return module->fetchSwarmTip(self->id(), peer, device, tip, std::move(done));
+                        JAMI_WARNING("{} Unable to resolve swarm tip source {}", self->pimpl_->toString(), device);
+                    }
+            done(false);
+        });
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
                                             w = weak()](const std::string& deviceId, ChannelCb&& cb, bool noNewSocket) {
         if (auto sthis = w.lock()) {
             auto wrappedCb = [cb = std::move(cb), w, deviceId](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
                 if (auto sthis = w.lock()) {
-                    if (!socket) {
+                    if (socket) {
+                        if (auto acc = sthis->pimpl_->account_.lock())
+                            if (auto cert = socket->peerCertificate())
+                                acc->certStore().pinCertificate(cert);
+                    } else {
                         if (auto acc = sthis->pimpl_->account_.lock()) {
                             auto cert = acc->certStore().getCertificate(deviceId);
                             if (cert && cert->issuer) {
@@ -3653,6 +3677,12 @@ Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
             account->sendProfile(sthis->id(), member, deviceId.toString());
         }
     });
+}
+
+void
+Conversation::offerRepositoryTip()
+{
+    pimpl_->swarmManager_->offerRepositoryTip();
 }
 
 uint32_t
