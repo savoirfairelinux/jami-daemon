@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3379d6ab_503711ed",
+        "filename": "src/jamidht/atomic_file.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:56:44Z",
+      "side": 1,
+      "message": "[error] Line 58: 🔴 `writeAtomic` uses `std::filesystem::rename(tmp, path)` as if it were a cross-platform atomic replace. On Windows this call fails when `path` already exists, so every subsequent state save fails after the first write. That breaks persisted verified-state/channel-state caching and disables the intended incremental replay path on MSVC builds. Use a replace-capable atomic move on Windows (or an existing project helper that guarantees replace semantics) and keep the same all-or-nothing visibility guarantee.",
+      "revId": "625ddb9b252f0b3d629edb5d4c50f2914c21e163",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a9ac98c_b7a0c4dd",
+        "filename": "src/jamidht/circlerepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:56:44Z",
+      "side": 1,
+      "message": "[warning] 🟡 `validateChannelHistory` can return `PENDING_DEPENDENCY` with `missingPolicies \u003d {circle.head}` when `HistoryValidator::run()` fails without `invalid` set, even if the actual unresolved dependencies are different policy commits. This makes diagnostics/retry behavior inaccurate. Build `missingPolicies` from the unresolved `policies` map (and root authorization if still pending) in this path as well, so callers get the real missing commits.",
+      "revId": "625ddb9b252f0b3d629edb5d4c50f2914c21e163",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
