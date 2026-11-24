@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98767c06_5a9ccca4",
+        "filename": ".agents/skills/commit/SKILL.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:27:19Z",
+      "side": 1,
+      "message": "[error] Line 15: 🔴 The recommended trailer format is malformed for standard Git/GitHub parsing (`Co-authored-by` is expected as `Name \u003cemail\u003e`). Please change this guidance to require a valid identity format (for example, `Co-authored-by: GPT-5.3-Codex \u003cnoreply@example.com\u003e` or the project-approved noreply address), otherwise co-author attribution tooling and trailer parsing can fail.",
+      "revId": "218999ad63939fc9c1c25c5200c9f3b9a8335a2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a599dc2_64fb1938",
+        "filename": ".vscode/settings.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-24T19:27:19Z",
+      "side": 1,
+      "message": "[warning] Line 11: 🟡 This instruction text is now inconsistent with `SKILL.md` (here it says only model name, while `SKILL.md` says model name and optionally version) and remains ambiguous about the required trailer syntax. Please align both locations to one exact, valid trailer template so generated commit messages are deterministic.",
+      "revId": "218999ad63939fc9c1c25c5200c9f3b9a8335a2f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
