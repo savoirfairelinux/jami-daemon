@@ -41,6 +41,7 @@ getSignalHandlers()
         exported_callback<libjami::CallSignal::ExternalMediaConferenceHostAnswer>(),
         exported_callback<libjami::CallSignal::ExternalMediaConferenceHostReady>(),
         exported_callback<libjami::CallSignal::ExternalMediaConferenceHostFailure>(),
+        exported_callback<libjami::CallSignal::ExternalMediaConferenceHostClosed>(),
         exported_callback<libjami::CallSignal::ExternalMediaPromotionAccepted>(),
         exported_callback<libjami::CallSignal::ExternalMediaPromotionReady>(),
         exported_callback<libjami::CallSignal::ExternalMediaPromotionFailure>(),

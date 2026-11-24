@@ -83,6 +83,7 @@ export enum JamiSignal {
   ExternalMediaConferenceHostAnswer = 'ExternalMediaConferenceHostAnswer',
   ExternalMediaConferenceHostReady = 'ExternalMediaConferenceHostReady',
   ExternalMediaConferenceHostFailure = 'ExternalMediaConferenceHostFailure',
+  ExternalMediaConferenceHostClosed = 'ExternalMediaConferenceHostClosed',
   ExternalMediaPromotionAccepted = 'ExternalMediaPromotionAccepted',
   ExternalMediaPromotionReady = 'ExternalMediaPromotionReady',
   ExternalMediaPromotionFailure = 'ExternalMediaPromotionFailure',
@@ -122,6 +123,7 @@ export interface ExternalMediaConferenceSignals {
   [JamiSignal.ExternalMediaConferenceHostAnswer]: [accountId: string, requestId: string, conferenceId: string, sdp: string]
   [JamiSignal.ExternalMediaConferenceHostReady]: [accountId: string, requestId: string, conferenceId: string]
   [JamiSignal.ExternalMediaConferenceHostFailure]: [accountId: string, requestId: string, error: string]
+  [JamiSignal.ExternalMediaConferenceHostClosed]: [accountId: string, requestId: string, conferenceId: string]
   [JamiSignal.ExternalMediaPromotionAccepted]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionReady]: [accountId: string, callId: string, requestId: string]
   [JamiSignal.ExternalMediaPromotionFailure]: [accountId: string, callId: string, requestId: string, reason: string]

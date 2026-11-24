@@ -361,6 +361,11 @@ struct LIBJAMI_PUBLIC CallSignal
         constexpr static const char* name = "ExternalMediaConferenceHostFailure";
         using cb_type = void(const std::string&, const std::string&, const std::string&);
     };
+    struct LIBJAMI_PUBLIC ExternalMediaConferenceHostClosed
+    {
+        constexpr static const char* name = "ExternalMediaConferenceHostClosed";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
     struct LIBJAMI_PUBLIC ExternalMediaPromotionAccepted
     {
         constexpr static const char* name = "ExternalMediaPromotionAccepted";

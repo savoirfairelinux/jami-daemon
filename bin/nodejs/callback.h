@@ -937,6 +937,17 @@ externalMediaConferenceHostFailure(const std::string& accountId, const std::stri
 }
 
 void
+externalMediaConferenceHostClosed(const std::string& accountId, const std::string& requestId, const std::string& confId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, requestId, confId]() {
+        napi_value args[] = {napiString(accountId), napiString(requestId), napiString(confId)};
+        callCallback("ExternalMediaConferenceHostClosed", 3, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 externalMediaPromotionAccepted(const std::string& accountId, const std::string& callId, const std::string& requestId)
 {
     std::lock_guard lock(pendingSignalsLock);
@@ -1177,6 +1188,8 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&externalMediaConferenceHostReady, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaConferenceHostFailure>(
                bind(&externalMediaConferenceHostFailure, _1, _2, _3)),
+           exportable_callback<CallSignal::ExternalMediaConferenceHostClosed>(
+               bind(&externalMediaConferenceHostClosed, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaPromotionAccepted>(
                bind(&externalMediaPromotionAccepted, _1, _2, _3)),
            exportable_callback<CallSignal::ExternalMediaPromotionReady>(bind(&externalMediaPromotionReady, _1, _2, _3)),

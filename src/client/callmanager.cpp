@@ -386,7 +386,7 @@ externalMediaConferenceRemoved(const std::string& accountId, const std::string& 
     auto host = externalMediaHosts()->takeConference(accountId, confId);
     if (host.media) {
         host.media->stop();
-        jami::emitSignal<CallSignal::ExternalMediaConferenceHostFailure>(accountId, host.requestId, "Conference closed");
+        jami::emitSignal<CallSignal::ExternalMediaConferenceHostClosed>(accountId, host.requestId, confId);
     }
 }
 
