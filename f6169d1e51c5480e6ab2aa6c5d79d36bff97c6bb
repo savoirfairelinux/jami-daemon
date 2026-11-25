@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecada4b8_16d0a5cb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 3511,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T23:13:00Z",
+      "side": 1,
+      "message": "This I/O worker queues RTP stop jobs on the same pool and then waits for them. If all workers are doing this, none can run the stop jobs and call teardown stalls. Please avoid waiting on work queued to the same pool.",
+      "revId": "f6169d1e51c5480e6ab2aa6c5d79d36bff97c6bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
