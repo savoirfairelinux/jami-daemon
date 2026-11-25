@@ -94,7 +94,11 @@ VPX_CONF := \
 ifdef HAVE_IOS
     VPX_CONF += \
         --disable-runtime-cpu-detect \
-        --disable-neon # Disable NEON to prevent crashes on iOS devices A11 and prior
+        --enable-neon \
+        --disable-neon-dotprod \
+        --disable-neon-i8mm \
+        --disable-sve \
+        --disable-sve2
 endif
 
 ifndef HAVE_WIN32
