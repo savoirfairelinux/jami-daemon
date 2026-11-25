@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbfe194a_ff4bfc07",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 2734,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:57:00Z",
+      "side": 1,
+      "message": "[warning] Line 2734: 🟡 The new `conversationAdded` DBus signal is missing a `\u003ctp:added version\u003d\"...\"/\u003e` tag, while nearby signals track introduction version. Add it to keep API versioning/documentation consistent for downstream consumers and bindings that rely on Telepathy metadata.",
+      "revId": "03a6210efaab3414c746022fb0eb426b92357b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bdb40bd2_b7b202b1",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 832,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:57:00Z",
+      "side": 1,
+      "message": "[warning] Line 832: 🟡 `CPPUNIT_ASSERT(listedOnAdd-\u003eload())` checks an async signal side effect immediately after `acceptConversationRequest`, which can race and make this test flaky under load. Wait on a condition (or poll with timeout) tied to the `ConversationAdded` callback before asserting, so the test synchronizes on the actual event delivery.",
+      "revId": "03a6210efaab3414c746022fb0eb426b92357b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
