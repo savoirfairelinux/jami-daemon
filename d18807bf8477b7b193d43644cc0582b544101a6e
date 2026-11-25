@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e6811c8_2e16a2ec",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 874,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:57:48Z",
+      "side": 1,
+      "message": "[warning] Line 874: 🟡 `std::promise::set_value()` is called unconditionally in the `ConversationAdded` callback. If that signal is emitted more than once for the same `(accountId, convId)` (e.g. re-sync/retry paths), the second call throws `std::future_error` and can make this test flaky. Guard the fulfillment with `std::once_flag`/`std::atomic\u003cbool\u003e` so duplicate events are ignored safely.",
+      "revId": "d18807bf8477b7b193d43644cc0582b544101a6e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
