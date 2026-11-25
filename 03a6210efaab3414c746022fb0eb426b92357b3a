@@ -20,6 +20,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3343d523_3669e637",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3682,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T23:06:11Z",
+      "side": 1,
+      "message": "conversationInfos() takes conv-\u003emtx before conversationsRequestsMtx_, but onSyncData() takes them in the reverse order. Chance of deadlock?",
+      "range": {
+        "startLine": 3682,
+        "startChar": 0,
+        "endLine": 3682,
+        "endChar": 2
+      },
+      "revId": "03a6210efaab3414c746022fb0eb426b92357b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d64b68bf_eb259dff",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 1
