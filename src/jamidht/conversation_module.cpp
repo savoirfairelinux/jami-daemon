@@ -2015,6 +2015,9 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         needsSyncingCb_({});
         return;
     }
+    // Share the list change even if the inviter is offline and cloning must wait.
+    if (added)
+        needsSyncingCb_({});
     accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
         auto sthis = w.lock();
         auto deviceId = pk->getLongId().toString();

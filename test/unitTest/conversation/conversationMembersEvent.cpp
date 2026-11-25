@@ -21,6 +21,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <future>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -83,6 +84,7 @@ public:
     void testAddOfflineMemberThenConnects();
     void testAddAcceptOfflineThenConnects();
     void testFeedAcceptOfflineThenConnects();
+    void testSyncFeedAcceptanceBeforeClone();
     void testGetMembers();
     void testRemoveMember();
     void testRemovedMemberDoesNotReceiveMessageFromAdmin();
@@ -143,6 +145,7 @@ private:
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
     CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
     CPPUNIT_TEST(testFeedAcceptOfflineThenConnects);
+    CPPUNIT_TEST(testSyncFeedAcceptanceBeforeClone);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromAdmin);
@@ -836,6 +839,55 @@ ConversationMembersEventTest::acceptOfflineThenConnects(bool feed)
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+}
+
+void
+ConversationMembersEventTest::testSyncFeedAcceptanceBeforeClone()
+{
+    add_confirmed_contact(bobId, aliceId);
+    connectSignals();
+
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    const auto convId = libjami::startFeedConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bob->getUsername());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bob->getTrustRequests().empty());
+
+    const auto archive = std::filesystem::current_path() / "bob.gz";
+    CPPUNIT_ASSERT(bob->exportArchive(archive.string()));
+    auto details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PATH] = archive.string();
+    bob2Id = Manager::instance().addAccount(details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return bob2Data.deviceAnnounced && !libjami::getConversationRequests(bob2Id).empty();
+    }));
+    CPPUNIT_ASSERT_EQUAL(convId, libjami::getConversationRequests(bob2Id).front().at("id"));
+
+    auto added = std::make_shared<std::promise<void>>();
+    auto addedOnBob2 = added->get_future();
+    libjami::registerSignalHandlers(
+        {libjami::exportable_callback<libjami::ConversationSignal::ConversationAdded>(
+            [added, bob2Id = bob2Id, convId](const std::string& accountId, const std::string& id) {
+                if (accountId == bob2Id && id == convId)
+                    added->set_value();
+            })});
+    Manager::instance().sendRegister(aliceId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.stopped; }));
+
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(addedOnBob2.wait_for(15s) == std::future_status::ready);
+    CPPUNIT_ASSERT(libjami::getConversationRequests(bob2Id).empty());
+    CPPUNIT_ASSERT(!bob->convModule()->getConversation(convId));
+    auto bob2 = Manager::instance().getAccount<JamiAccount>(bob2Id);
+    CPPUNIT_ASSERT(!bob2->convModule()->getConversation(convId));
+
+    Manager::instance().sendRegister(aliceId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] {
+        return bobData.conversationId == convId && bob2Data.conversationId == convId;
+    }));
 }
 
 void
