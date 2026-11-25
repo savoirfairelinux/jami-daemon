@@ -1078,6 +1078,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitConversationRequestReceived, this, _1, _2, _3)),
             exportable_serialized_callback<ConversationSignal::ConversationRequestDeclined>(
                 std::bind(&DBusConfigurationManager::emitConversationRequestDeclined, this, _1, _2)),
+            exportable_serialized_callback<ConversationSignal::ConversationRequestAccepted>(
+                std::bind(&DBusConfigurationManager::emitConversationRequestAccepted, this, _1, _2)),
             exportable_serialized_callback<ConversationSignal::ConversationReady>(
                 std::bind(&DBusConfigurationManager::emitConversationReady, this, _1, _2)),
             exportable_serialized_callback<ConversationSignal::ConversationRemoved>(

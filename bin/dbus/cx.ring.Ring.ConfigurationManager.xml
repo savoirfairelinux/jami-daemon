@@ -2732,6 +2732,15 @@
             </arg>
         </signal>
 
+        <signal name="conversationRequestAccepted" tp:name-for-bindings="conversationRequestAccepted">
+            <tp:docstring>
+               Notify clients when an accepted request enters the conversation list,
+               possibly before its repository is ready.
+            </tp:docstring>
+            <arg type="s" name="account_id"/>
+            <arg type="s" name="conversation_id"/>
+        </signal>
+
         <signal name="conversationReady" tp:name-for-bindings="conversationReady">
             <tp:added version="10.0.0"/>
             <tp:docstring>
