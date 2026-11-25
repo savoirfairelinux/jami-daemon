@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4aae4eb_3ed3c583",
+        "filename": "contrib/src/vpx/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:20:34Z",
+      "side": 1,
+      "message": "[error] Line 96: 🔴 `--enable-neon` is applied unconditionally under `HAVE_IOS`, which also covers simulator builds in many setups. On non-ARM simulator targets, forcing NEON can make libvpx configure/build fail. Gate NEON to ARM iOS device targets only (reuse an existing ARM/arch condition), and keep simulator/non-ARM iOS builds without NEON.",
+      "revId": "80cba4dc18c2b3ff27b4a3f3f611d9971e716093",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
