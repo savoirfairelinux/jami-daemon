@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9ce5598_3cace7c8",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 991,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:58:29Z",
+      "side": 1,
+      "message": "[error] Line 991: 🔴 `ut_library` no longer gets feature macros (`ENABLE_VIDEO`, `ENABLE_PLUGIN`, and `ENABLE_HWACCEL`), while `${PROJECT_NAME}`, `jamid`, and `dst_library` do. Any test TU in `ut_library` compiling headers with feature-gated class members can now see a different layout/ABI than the library. Add `${JAMI_FEATURE_DEFINITIONS}` to `target_compile_definitions(ut_library ...)` (same pattern as `dst_library`) to restore consistency.",
+      "revId": "0cad53af9eaaed6d17b9e410702ed997b5365b97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
