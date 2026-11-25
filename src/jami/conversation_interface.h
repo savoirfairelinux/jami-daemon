@@ -100,6 +100,13 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMe
                                                                                       const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::string& accountId,
                                                                    const std::string& conversationId);
+/**
+ * List contacts invited to a feed by this account who have not subscribed yet.
+ * Only the publisher's devices track these invitations; other accounts get an
+ * empty list. Each entry has "uri" and "invitedMs" (milliseconds since epoch).
+ */
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& accountId,
+                                                                                  const std::string& conversationId);
 
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,

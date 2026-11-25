@@ -2293,6 +2293,19 @@
             <arg type="s" name="conversationId" direction="in"/>
         </method>
 
+        <method name="getFeedInvitations" tp:name-for-bindings="getFeedInvitations">
+            <tp:added version="17.0.0"/>
+            <tp:docstring>
+               Get contacts invited to a feed by the account who have not subscribed yet.
+               Each entry contains "uri" and "invitedMs" (milliseconds since epoch).
+               Empty unless the account can invite members to the feed.
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="invitations" direction="out"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+        </method>
+
         <method name="getConversationConnectivity" tp:name-for-bindings="getConversationConnectivity">
             <tp:added version="16.0.0"/>
             <tp:docstring>

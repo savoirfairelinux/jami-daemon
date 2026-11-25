@@ -444,6 +444,12 @@ public:
      */
     std::vector<std::string> getConversationPermissions(const std::string& conversationId) const;
     /**
+     * Get feed invitations sent by this account that are still pending
+     * @param conversationId
+     * @return maps with "uri" and "invitedMs", empty if not a feed this account can invite to
+     */
+    std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& conversationId) const;
+    /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId
      * @param interactionId     "" for getting the whole history

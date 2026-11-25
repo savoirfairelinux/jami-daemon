@@ -3579,6 +3579,23 @@ ConversationModule::getConversationPermissions(const std::string& conversationId
                                     [&](const auto& conv) { return conv.permissions(pimpl_->username_); });
 }
 
+std::vector<std::map<std::string, std::string>>
+ConversationModule::getFeedInvitations(const std::string& conversationId) const
+{
+    std::vector<std::map<std::string, std::string>> invitations;
+    auto conv = pimpl_->getConversation(conversationId);
+    if (!conv)
+        return invitations;
+    std::lock_guard lk(conv->mtx);
+    for (const auto& [uri, sent] : conv->info.invited) {
+        // canServeFeedInvite also drops banned peers and, for all-contacts feeds, removed contacts.
+        if (!pimpl_->canServeFeedInvite(*conv, uri) || conv->conversation->isMember(uri))
+            continue;
+        invitations.push_back({{"uri", uri}, {"invitedMs", std::to_string(toMillisecondsSinceEpoch(sent))}});
+    }
+    return invitations;
+}
+
 uint32_t
 ConversationModule::countInteractions(const std::string& convId,
                                       const std::string& toId,

@@ -82,6 +82,7 @@ struct SwarmMessage
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
   std::vector<std::string> getConversationPermissions(const std::string& accountId, const std::string& conversationId);
+  std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& accountId, const std::string& conversationId);
 
   // Collaborative editing
   std::string createCollaborativeDocument(const std::string& accountId, const std::string& conversationId, const std::string& name, const std::string& mimeType);

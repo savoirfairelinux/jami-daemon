@@ -20,6 +20,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <set>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -546,6 +547,14 @@ ConversationMembersEventTest::testFeedInviteDoesNotAddMember()
     CPPUNIT_ASSERT(!std::filesystem::exists(invited / bobUri));
     CPPUNIT_ASSERT(!std::filesystem::exists(invited / carlaUri));
     CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationMembers(aliceId, convId).size());
+    auto invitations = libjami::getFeedInvitations(aliceId, convId);
+    CPPUNIT_ASSERT_EQUAL(size_t {2}, invitations.size());
+    std::set<std::string> invitedUris;
+    for (const auto& invitation : invitations) {
+        invitedUris.emplace(invitation.at("uri"));
+        CPPUNIT_ASSERT(std::stoll(invitation.at("invitedMs")) > 0);
+    }
+    CPPUNIT_ASSERT((std::set<std::string> {bobUri, carlaUri}) == invitedUris);
     CPPUNIT_ASSERT(module->mayServeFeed(convId, bobUri, bobDevice));
     CPPUNIT_ASSERT_EQUAL(head, feed->lastCommitId());
     using Status = dhtnet::tls::TrustStore::PermissionStatus;
@@ -572,6 +581,11 @@ ConversationMembersEventTest::testFeedInviteDoesNotAddMember()
     CPPUNIT_ASSERT(feed->isMember(bobUri));
     CPPUNIT_ASSERT(!feed->isMember(carlaUri, true));
     CPPUNIT_ASSERT_EQUAL(size_t {2}, libjami::getConversationMembers(aliceId, convId).size());
+    // Declining is local to the invitee, so Carla stays pending for the publisher.
+    invitations = libjami::getFeedInvitations(aliceId, convId);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, invitations.size());
+    CPPUNIT_ASSERT_EQUAL(carlaUri, invitations.front().at("uri"));
+    CPPUNIT_ASSERT(libjami::getFeedInvitations(bobId, convId).empty());
 }
 
 void
@@ -607,6 +621,9 @@ ConversationMembersEventTest::testFeedInvitesAllContacts()
     libjami::addContact(aliceId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaData.requestReceived; }));
     CPPUNIT_ASSERT_EQUAL(head, module->getConversation(convId)->lastCommitId());
+    auto invitations = libjami::getFeedInvitations(aliceId, convId);
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, invitations.size());
+    CPPUNIT_ASSERT_EQUAL(carlaUri, invitations.front().at("uri"));
 
     // Simulate an interrupted clone, after the publisher staged the ADD.
     std::optional<bool> authorized;
@@ -624,6 +641,8 @@ ConversationMembersEventTest::testFeedInvitesAllContacts()
     CPPUNIT_ASSERT(!module->mayServeFeed(convId, carlaUri, carlaDevice));
     CPPUNIT_ASSERT(!module->isPeerAuthorizedForGit(convId, carlaUri, carlaDevice));
     CPPUNIT_ASSERT(module->isPeerAuthorizedForGit(convId, bobUri, std::string(bob->currentDeviceId())));
+    // Removing a contact revokes its pending invitation to an all-contacts feed.
+    CPPUNIT_ASSERT(libjami::getFeedInvitations(aliceId, convId).empty());
 }
 
 void

@@ -701,6 +701,12 @@ public:
         return libjami::getConversationPermissions(accountId, conversationId);
     }
 
+    std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& accountId,
+                                                                       const std::string& conversationId)
+    {
+        return libjami::getFeedInvitations(accountId, conversationId);
+    }
+
     std::vector<std::map<std::string, std::string>> getConversationConnectivity(const std::string& accountId,
                                                                                 const std::string& conversationId)
     {

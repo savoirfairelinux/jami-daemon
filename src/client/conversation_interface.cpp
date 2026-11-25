@@ -195,6 +195,15 @@ getConversationPermissions(const std::string& accountId, const std::string& conv
     return {};
 }
 
+std::vector<std::map<std::string, std::string>>
+getFeedInvitations(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true))
+            return convModule->getFeedInvitations(conversationId);
+    return {};
+}
+
 // Message send/load
 void
 sendMessage(const std::string& accountId,
