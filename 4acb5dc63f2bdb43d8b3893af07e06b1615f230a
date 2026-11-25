@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "705eab40_72625569",
+        "filename": "src/media/socket_pair.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 915,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T13:42:11Z",
+      "side": 1,
+      "message": "[error] Line 915: 🔴 `rtcpPending_` is cleared unconditionally by the first waiter, which can drop notifications when multiple RTCP packets/checkers are in play: one thread can consume the flag while another checker still has unread RTCP relevant to it, and subsequent `waitForRTCP()` calls may block until timeout/new traffic. Use a monotonic event counter (or per-checker sequence) instead of a single bool, or clear pending only after the corresponding RTCP queues are drained under the same lock.",
+      "revId": "4acb5dc63f2bdb43d8b3893af07e06b1615f230a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
