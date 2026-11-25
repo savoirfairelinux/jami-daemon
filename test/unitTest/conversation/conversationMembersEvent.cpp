@@ -77,6 +77,7 @@ public:
     void testRemoveConversationWithMember();
     void testFeedInviteDoesNotAddMember();
     void testFeedInvitesAllContacts();
+    void testFeedAudienceCanBeSwitched();
     void testFeedFollowerCanResubscribe();
     void testAddMember();
     void testMemberAddedNoBadFile();
@@ -135,6 +136,7 @@ private:
     CPPUNIT_TEST(testRemoveConversationWithMember);
     CPPUNIT_TEST(testFeedInviteDoesNotAddMember);
     CPPUNIT_TEST(testFeedInvitesAllContacts);
+    CPPUNIT_TEST(testFeedAudienceCanBeSwitched);
     CPPUNIT_TEST(testFeedFollowerCanResubscribe);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testMemberAddedNoBadFile);
@@ -643,6 +645,49 @@ ConversationMembersEventTest::testFeedInvitesAllContacts()
     CPPUNIT_ASSERT(module->isPeerAuthorizedForGit(convId, bobUri, std::string(bob->currentDeviceId())));
     // Removing a contact revokes its pending invitation to an all-contacts feed.
     CPPUNIT_ASSERT(libjami::getFeedInvitations(aliceId, convId).empty());
+}
+
+void
+ConversationMembersEventTest::testFeedAudienceCanBeSwitched()
+{
+    add_confirmed_contact(bobId, aliceId);
+    connectSignals();
+    auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bob = Manager::instance().getAccount<JamiAccount>(bobId);
+    const auto bobUri = bob->getUsername();
+    const auto bobDevice = std::string(bob->currentDeviceId());
+    auto module = alice->convModule();
+    const auto convId = libjami::startFeedConversation(aliceId);
+    auto inviteAllContacts = [&] {
+        return libjami::conversationInfos(aliceId, convId)["inviteAllContacts"] == "true";
+    };
+    CPPUNIT_ASSERT_EQUAL(std::string("false"), libjami::conversationInfos(aliceId, convId)["inviteAllContacts"]);
+    CPPUNIT_ASSERT(!libjami::setFeedInviteAllContacts(bobId, convId, true));
+
+    CPPUNIT_ASSERT(libjami::setFeedInviteAllContacts(aliceId, convId, true));
+    CPPUNIT_ASSERT(inviteAllContacts());
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getFeedInvitations(aliceId, convId).size());
+
+    // Switching back must not revive an all-contacts invitation to a removed contact.
+    libjami::removeContact(aliceId, bobUri, false);
+    CPPUNIT_ASSERT(libjami::setFeedInviteAllContacts(aliceId, convId, false));
+    CPPUNIT_ASSERT(!inviteAllContacts());
+    CPPUNIT_ASSERT(!module->mayServeFeed(convId, bobUri, bobDevice));
+    CPPUNIT_ASSERT(libjami::getFeedInvitations(aliceId, convId).empty());
+
+    // An older snapshot from another publisher device must not restore all contacts.
+    auto stale = ConversationModule::convInfos(aliceId).at(convId);
+    stale.inviteAllContacts = true;
+    stale.audienceUpdated -= 1ms;
+    SyncMsg staleSync;
+    staleSync.c.emplace(convId, stale);
+    module->onSyncData(staleSync, alice->getUsername(), "");
+    CPPUNIT_ASSERT(!inviteAllContacts());
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(module->mayServeFeed(convId, bobUri, bobDevice));
+    CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getFeedInvitations(aliceId, convId).size());
 }
 
 void

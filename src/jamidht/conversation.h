@@ -69,6 +69,7 @@ static constexpr const char* RECEIVED_MS {"receivedMs"};
 static constexpr const char* DECLINED_MS {"declinedMs"};
 static constexpr const char* INVITED {"invited"};
 static constexpr const char* INVITE_ALL_CONTACTS {"inviteAllContacts"};
+static constexpr const char* AUDIENCE_UPDATED {"audienceUpdated"};
 } // namespace ConversationMapKeys
 
 namespace ConversationDirectories {
@@ -188,6 +189,8 @@ struct ConvInfo
     // staging a repository invitation when the peer first clones.
     std::map<std::string, TimePoint> invited {};
     bool inviteAllContacts {false};
+    // When inviteAllContacts last changed; the latest change wins across devices.
+    TimePoint audienceUpdated {};
 
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
@@ -216,6 +219,7 @@ struct ConvInfo
         int64_t createdMs = toMillisecondsSinceEpoch(created);
         int64_t removedMs = toMillisecondsSinceEpoch(removed);
         int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+        int64_t audienceUpdatedValue = toMillisecondsSinceEpoch(audienceUpdated);
         std::map<std::string, int64_t> invitedMs;
         for (const auto& [uri, t] : invited)
             invitedMs[uri] = toMillisecondsSinceEpoch(t);
@@ -244,7 +248,9 @@ struct ConvInfo
                                        ConversationMapKeys::INVITED,
                                        invitedMs,
                                        ConversationMapKeys::INVITE_ALL_CONTACTS,
-                                       inviteAllContacts)
+                                       inviteAllContacts,
+                                       ConversationMapKeys::AUDIENCE_UPDATED,
+                                       audienceUpdatedValue)
             .msgpack_pack(pk);
     }
     void msgpack_unpack(const msgpack::object& o);

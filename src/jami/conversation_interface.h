@@ -107,6 +107,9 @@ LIBJAMI_PUBLIC std::vector<std::string> getConversationPermissions(const std::st
  */
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& accountId,
                                                                                   const std::string& conversationId);
+LIBJAMI_PUBLIC bool setFeedInviteAllContacts(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             bool inviteAllContacts);
 
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,

@@ -99,6 +99,8 @@ ConvInfo::ConvInfo(const Json::Value& json)
     if (json.isMember(ConversationMapKeys::MODE))
         mode = static_cast<ConversationMode>(json[ConversationMapKeys::MODE].asInt());
     inviteAllContacts = json[ConversationMapKeys::INVITE_ALL_CONTACTS].asBool();
+    if (json.isMember(ConversationMapKeys::AUDIENCE_UPDATED))
+        audienceUpdated = timePointFromMilliseconds(json[ConversationMapKeys::AUDIENCE_UPDATED].asLargestInt());
     if (json.isMember(ConversationMapKeys::INVITED)) {
         const auto& invitedJson = json[ConversationMapKeys::INVITED];
         for (const auto& uri : invitedJson.getMemberNames())
@@ -130,6 +132,8 @@ ConvInfo::toJson() const
     json[ConversationMapKeys::MODE] = static_cast<int>(mode);
     if (inviteAllContacts)
         json[ConversationMapKeys::INVITE_ALL_CONTACTS] = true;
+    if (audienceUpdated != TimePoint {})
+        json[ConversationMapKeys::AUDIENCE_UPDATED] = Json::Int64(toMillisecondsSinceEpoch(audienceUpdated));
     if (!parent.empty())
         json[ConversationMapKeys::PARENT] = parent;
     if (!invited.empty()) {
@@ -150,6 +154,7 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
     std::optional<int64_t> createdMs, removedMs, erasedMs;
     std::map<std::string, int64_t> invitedMs;
     inviteAllContacts = false;
+    audienceUpdated = {};
     for (uint32_t i = 0; i < o.via.map.size; ++i) {
         const auto& kv = o.via.map.ptr[i];
         if (kv.key.type != msgpack::type::STR)
@@ -181,6 +186,8 @@ ConvInfo::msgpack_unpack(const msgpack::object& o)
             kv.val.convert(invitedMs);
         else if (key == ConversationMapKeys::INVITE_ALL_CONTACTS)
             kv.val.convert(inviteAllContacts);
+        else if (key == ConversationMapKeys::AUDIENCE_UPDATED)
+            audienceUpdated = timePointFromMilliseconds(kv.val.as<int64_t>());
     }
     created = resolveTimePoint(createdMs, createdSec);
     removed = resolveTimePoint(removedMs, removedSec);
@@ -199,6 +206,7 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
     int64_t createdMs = toMillisecondsSinceEpoch(created);
     int64_t removedMs = toMillisecondsSinceEpoch(removed);
     int64_t erasedMs = toMillisecondsSinceEpoch(erased);
+    int64_t audienceUpdatedValue = toMillisecondsSinceEpoch(audienceUpdated);
     std::map<std::string, int64_t> invitedMs;
     for (const auto& [uri, t] : invited)
         invitedMs[uri] = toMillisecondsSinceEpoch(t);
@@ -227,7 +235,9 @@ ConvInfo::msgpack_object(msgpack::object* o, msgpack::zone& z) const
                                    ConversationMapKeys::INVITED,
                                    invitedMs,
                                    ConversationMapKeys::INVITE_ALL_CONTACTS,
-                                   inviteAllContacts)
+                                   inviteAllContacts,
+                                   ConversationMapKeys::AUDIENCE_UPDATED,
+                                   audienceUpdatedValue)
         .msgpack_object(o, z);
 }
 

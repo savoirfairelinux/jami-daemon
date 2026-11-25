@@ -707,6 +707,13 @@ public:
         return libjami::getFeedInvitations(accountId, conversationId);
     }
 
+    bool setFeedInviteAllContacts(const std::string& accountId,
+                                  const std::string& conversationId,
+                                  const bool& inviteAllContacts)
+    {
+        return libjami::setFeedInviteAllContacts(accountId, conversationId, inviteAllContacts);
+    }
+
     std::vector<std::map<std::string, std::string>> getConversationConnectivity(const std::string& accountId,
                                                                                 const std::string& conversationId)
     {

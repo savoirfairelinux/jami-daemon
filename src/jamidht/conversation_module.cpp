@@ -2727,6 +2727,8 @@ ConversationModule::startConversation(ConversationMode mode,
     conv->info.created = nowMs();
     conv->info.mode = mode;
     conv->info.inviteAllContacts = mode == ConversationMode::FEED && inviteAllContacts;
+    if (mode == ConversationMode::FEED)
+        conv->info.audienceUpdated = conv->info.created;
     conv->info.members.emplace(pimpl_->username_);
     if (otherMember)
         conv->info.members.emplace(otherMember.toString());
@@ -3210,8 +3212,18 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 // Other publisher devices may have invited different contacts,
                 // or sent their snapshot before this device's last invitation.
                 auto invites = std::move(conv->info.invited);
-                const bool newAudience = convInfo.inviteAllContacts && !conv->info.inviteAllContacts;
-                const bool inviteAllContacts = convInfo.inviteAllContacts || conv->info.inviteAllContacts;
+                auto inviteAllContacts = conv->info.inviteAllContacts;
+                auto audienceUpdated = conv->info.audienceUpdated;
+                if (convInfo.audienceUpdated > audienceUpdated) {
+                    inviteAllContacts = convInfo.inviteAllContacts;
+                    audienceUpdated = convInfo.audienceUpdated;
+                } else if (convInfo.audienceUpdated == audienceUpdated) {
+                    // Devices that predate audience changes never turn it off.
+                    inviteAllContacts = inviteAllContacts || convInfo.inviteAllContacts;
+                }
+                const bool newAudience = inviteAllContacts && !conv->info.inviteAllContacts;
+                const bool audienceChanged = inviteAllContacts != conv->info.inviteAllContacts
+                                             || audienceUpdated != conv->info.audienceUpdated;
                 bool receivedInvite = false;
                 for (const auto& [uri, sent] : convInfo.invited) {
                     if (auto& previous = invites[uri]; sent > previous) {
@@ -3222,7 +3234,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->info = convInfo;
                 conv->info.invited = std::move(invites);
                 conv->info.inviteAllContacts = inviteAllContacts;
-                if (newAudience || receivedInvite) {
+                conv->info.audienceUpdated = audienceUpdated;
+                if (audienceChanged || receivedInvite) {
                     pimpl_->addConvInfo(conv->info);
                     listChanged = true;
                 }
@@ -3689,6 +3702,8 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
                 infos[ConversationMapKeys::REMOVED] = std::to_string(toSecondsSinceEpoch(conv->info.removed));
                 infos[ConversationMapKeys::REMOVED_MS] = std::to_string(toMillisecondsSinceEpoch(conv->info.removed));
             }
+            if (pimpl_->canInviteToFeed(*conv))
+                infos[ConversationMapKeys::INVITE_ALL_CONTACTS] = conv->info.inviteAllContacts ? "true" : "false";
             return infos;
         } else
             return md;
@@ -3868,8 +3883,12 @@ ConversationModule::Impl::canServeFeedInvite(const SyncedConversation& conv, con
 {
     if (!canInviteToFeed(conv) || conv.conversation->isMemberBanned(uri))
         return false;
-    if (!conv.info.inviteAllContacts)
-        return true;
+    if (!conv.info.inviteAllContacts) {
+        // Invitations sent before switching away from all contacts remain limited to contacts.
+        auto invited = conv.info.invited.find(uri);
+        if (invited == conv.info.invited.end() || invited->second >= conv.info.audienceUpdated)
+            return true;
+    }
     auto contact = accountManager_->getContactInfo(uri);
     return contact && contact->isActive();
 }
@@ -3905,6 +3924,28 @@ ConversationModule::Impl::inviteContactsToFeed(const std::shared_ptr<SyncedConve
     needsSyncingCb_({});
     for (const auto& [uri, sent] : invitations)
         sendMsgCb_(uri, {}, publisher->generateInvitation(sent), 0);
+}
+
+bool
+ConversationModule::setFeedInviteAllContacts(const std::string& conversationId, bool inviteAllContacts)
+{
+    auto conv = pimpl_->getConversation(conversationId);
+    if (!conv)
+        return false;
+    {
+        std::lock_guard lk(conv->mtx);
+        if (!pimpl_->canInviteToFeed(*conv))
+            return false;
+        if (conv->info.inviteAllContacts == inviteAllContacts)
+            return true;
+        conv->info.inviteAllContacts = inviteAllContacts;
+        conv->info.audienceUpdated = nowMs();
+        pimpl_->addConvInfo(conv->info);
+    }
+    pimpl_->needsSyncingCb_({});
+    if (inviteAllContacts)
+        pimpl_->inviteContactsToFeed(conv, pimpl_->accountManager_->getContacts());
+    return true;
 }
 
 void

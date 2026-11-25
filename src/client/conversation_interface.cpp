@@ -204,6 +204,15 @@ getFeedInvitations(const std::string& accountId, const std::string& conversation
     return {};
 }
 
+bool
+setFeedInviteAllContacts(const std::string& accountId, const std::string& conversationId, bool inviteAllContacts)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto* convModule = acc->convModule(true))
+            return convModule->setFeedInviteAllContacts(conversationId, inviteAllContacts);
+    return false;
+}
+
 // Message send/load
 void
 sendMessage(const std::string& accountId,

@@ -450,6 +450,12 @@ public:
      */
     std::vector<std::map<std::string, std::string>> getFeedInvitations(const std::string& conversationId) const;
     /**
+     * Switch a feed between inviting all contacts and only selected contacts.
+     * Invitations already sent are kept, but those sent to all contacts stay limited to contacts.
+     * @return false if the account cannot invite members to the feed
+     */
+    bool setFeedInviteAllContacts(const std::string& conversationId, bool inviteAllContacts);
+    /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId
      * @param interactionId     "" for getting the whole history
