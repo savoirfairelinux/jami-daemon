@@ -591,7 +591,7 @@ public:
     void bootstrap(const std::string& convId);
     void fallbackClone(const asio::error_code& ec, const std::string& conversationId);
 
-    void cloneConversationFrom(const ConversationRequest& request);
+    void cloneConversationFrom(const ConversationRequest& request, bool notifyAccepted = false);
 
     void cloneConversationFrom(const std::string& conversationId, const std::string& uri);
 
@@ -1936,7 +1936,7 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 }
 
 void
-ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& request)
+ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& request, bool notifyAccepted)
 {
     auto memberHash = dht::InfoHash(request.from);
     if (!memberHash) {
@@ -1979,8 +1979,11 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     lk.unlock();
     if (request.mode() == ConversationMode::FEED) {
         std::lock_guard lkRequests(conversationsRequestsMtx_);
+        notifyAccepted = notifyAccepted && conversationsRequests_.contains(request.conversationId);
         rmConversationRequest(request.conversationId);
     }
+    if (notifyAccepted)
+        emitSignal<libjami::ConversationSignal::ConversationRequestAccepted>(accountId_, request.conversationId);
     if (!commitId.empty()) {
         bootstrap(request.conversationId);
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, request.conversationId);
@@ -2658,7 +2661,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
         pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     pimpl_->accountManager_->acceptTrustRequest(request->from, true);
-    pimpl_->cloneConversationFrom(*request);
+    pimpl_->cloneConversationFrom(*request, true);
 }
 
 void
