@@ -274,8 +274,8 @@ void
 FileTransferTest::testOutgoingTransferFailureLifecycle()
 {
     std::vector<std::pair<std::string, int>> events;
-    std::map<std::string, std::shared_ptr<CallbackWrapperBase>> handlers;
-    handlers.insert(exportable_callback<libjami::DataTransferSignal::OutgoingFileTransferEvent>(
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
+    handlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::OutgoingFileTransferEvent>(
         [&](const std::string&, const std::string&, const std::string&, const std::string& transferId, int code) {
             std::lock_guard guard(mtx);
             events.emplace_back(transferId, code);
