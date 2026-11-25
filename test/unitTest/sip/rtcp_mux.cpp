@@ -2,7 +2,9 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <algorithm>
 #include <array>
+#include <set>
 #include "jami.h"
 #include "manager.h"
 #include "connectivity/sip_utils.h"
@@ -138,6 +140,21 @@ parseSdp(pj_pool_t* pool, const std::string& rawSdp)
     return session;
 }
 
+std::vector<std::shared_ptr<SystemCodecInfo>>
+selectVideoCodecs(const std::vector<std::shared_ptr<SystemCodecInfo>>& available,
+                  std::initializer_list<std::string_view> names)
+{
+    std::vector<std::shared_ptr<SystemCodecInfo>> selected;
+    for (const auto name : names) {
+        const auto codec = std::find_if(available.begin(), available.end(), [name](const auto& candidate) {
+            return candidate->name == name;
+        });
+        CPPUNIT_ASSERT_MESSAGE(std::string(name) + " codec is not available", codec != available.end());
+        selected.emplace_back(*codec);
+    }
+    return selected;
+}
+
 } // namespace
 
 class RtcpMuxSdpTest : public CppUnit::TestFixture
@@ -185,6 +202,10 @@ private:
     void offerAdvertisesPliAndFirForVideoOnly();
     void offerAdvertisesH264PacketizationMode1();
     void answerUsesOfferedH264PayloadForFmtp();
+    void answerKeepsPayloadTypesUniqueForUnofferedCodecs();
+    void answerDropsUnofferedCodecsWhenOfferFillsDynamicRange();
+    void answerDeclinesVideoWhenNoCodecFits();
+    void reofferNumbersVideoAfterDeclinedAnswer();
     void answerNegotiatesPliAndFir();
     void answerSkipsPliAndFirWhenOfferDoesNot();
     void answerPreservesRemoteBundleMidAndExtmap();
@@ -217,6 +238,10 @@ private:
     CPPUNIT_TEST(offerAdvertisesPliAndFirForVideoOnly);
     CPPUNIT_TEST(offerAdvertisesH264PacketizationMode1);
     CPPUNIT_TEST(answerUsesOfferedH264PayloadForFmtp);
+    CPPUNIT_TEST(answerKeepsPayloadTypesUniqueForUnofferedCodecs);
+    CPPUNIT_TEST(answerDropsUnofferedCodecsWhenOfferFillsDynamicRange);
+    CPPUNIT_TEST(answerDeclinesVideoWhenNoCodecFits);
+    CPPUNIT_TEST(reofferNumbersVideoAfterDeclinedAnswer);
     CPPUNIT_TEST(answerNegotiatesPliAndFir);
     CPPUNIT_TEST(answerSkipsPliAndFirWhenOfferDoesNot);
     CPPUNIT_TEST(answerPreservesRemoteBundleMidAndExtmap);
@@ -560,6 +585,273 @@ RtcpMuxSdpTest::offerAdvertisesH264PacketizationMode1()
             h264FmtpHasPacketizationMode1 = true;
     }
     CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), h264FmtpHasPacketizationMode1);
+}
+
+void
+RtcpMuxSdpTest::answerKeepsPayloadTypesUniqueForUnofferedCodecs()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("vp8-only-offer");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                  selectVideoCodecs(account_->getActiveAccountCodecInfoList(MEDIA_VIDEO),
+                                                    {"H264", "VP8"}));
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+
+    auto pool = makePool("vp8-only-offer");
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "m=video 5004 RTP/SAVP 96\r\n"
+                                    "a=rtpmap:96 VP8/90000\r\n";
+
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({video}));
+
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(1u, localSession->media_count);
+    const auto* localVideo = localSession->media[0];
+    CPPUNIT_ASSERT_EQUAL(2u, localVideo->desc.fmt_count);
+    std::set<unsigned long> payloadTypes;
+    for (unsigned i = 0; i < localVideo->desc.fmt_count; ++i)
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession),
+                               payloadTypes.insert(pj_strtoul(&localVideo->desc.fmt[i])).second);
+    CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), pj_strtoul(&localVideo->desc.fmt[0]) != 96);
+
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+
+    auto* activeLocalSession = sdp.getActiveLocalSdpSession();
+    CPPUNIT_ASSERT(activeLocalSession);
+    const auto answer = printSdp(activeLocalSession);
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("m=video 4000 RTP/SAVP 96\r\n") != std::string::npos);
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("a=rtpmap:96 VP8/90000\r\n") != std::string::npos);
+}
+
+void
+RtcpMuxSdpTest::answerDropsUnofferedCodecsWhenOfferFillsDynamicRange()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("full-dynamic-range-offer");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                  selectVideoCodecs(account_->getActiveAccountCodecInfoList(MEDIA_VIDEO),
+                                                    {"H264", "VP8"}));
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+    sdp.enableBundle(true);
+
+    std::string formats;
+    std::string rtpmaps = "a=rtpmap:96 VP8/90000\r\n";
+    for (unsigned payloadType = 96; payloadType < 128; ++payloadType) {
+        formats += " " + std::to_string(payloadType);
+        if (payloadType != 96)
+            rtpmaps += fmt::format("a=rtpmap:{} X-UNKNOWN-{}/90000\r\n", payloadType, payloadType);
+    }
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "a=group:BUNDLE 0\r\n"
+                                    "m=video 5004 RTP/SAVP"
+                                    + formats
+                                    + "\r\n"
+                                      "a=mid:0\r\n"
+                                      "a=rtcp-mux\r\n"
+                                    + rtpmaps;
+
+    auto pool = makePool("full-dynamic-range-offer");
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({video}));
+
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    const auto* localVideo = localSession->media[0];
+    std::set<unsigned long> payloadTypes;
+    for (unsigned i = 0; i < localVideo->desc.fmt_count; ++i) {
+        const auto payloadType = pj_strtoul(&localVideo->desc.fmt[i]);
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), payloadType < 128);
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), payloadTypes.insert(payloadType).second);
+    }
+    CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), payloadTypes.count(96));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(printSdp(localSession), 1u, localVideo->desc.fmt_count);
+
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+    const auto answer = printSdp(sdp.getActiveLocalSdpSession());
+    CPPUNIT_ASSERT_MESSAGE(answer, answer.find("a=rtpmap:96 VP8/90000\r\n") != std::string::npos);
+}
+
+void
+RtcpMuxSdpTest::answerDeclinesVideoWhenNoCodecFits()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("no-video-codec-fits");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO, account_->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+    sdp.enableBundle(true);
+
+    std::string videoFormats;
+    std::string videoRtpmaps;
+    for (unsigned payloadType = 96; payloadType < 128; ++payloadType) {
+        if (payloadType == 101 or payloadType == 104)
+            continue;
+        videoFormats += " " + std::to_string(payloadType);
+        videoRtpmaps += fmt::format("a=rtpmap:{} X-UNKNOWN-{}/90000\r\n", payloadType, payloadType);
+    }
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "a=group:BUNDLE 0 1\r\n"
+                                    "m=audio 5004 RTP/SAVP 104 101\r\n"
+                                    "a=mid:0\r\n"
+                                    "a=rtcp-mux\r\n"
+                                    "a=rtpmap:104 opus/48000/2\r\n"
+                                    "a=rtpmap:101 telephone-event/8000\r\n"
+                                    "m=video 5004 RTP/SAVP"
+                                    + videoFormats
+                                    + "\r\n"
+                                      "a=mid:1\r\n"
+                                      "a=rtcp-mux\r\n"
+                                    + videoRtpmaps;
+
+    auto pool = makePool("no-video-codec-fits");
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = true;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio, video}));
+
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(2u, localSession->media_count);
+    const auto* declinedVideo = localSession->media[1];
+    CPPUNIT_ASSERT_EQUAL(0u, static_cast<unsigned>(declinedVideo->desc.port));
+    CPPUNIT_ASSERT(declinedVideo->desc.fmt_count > 0);
+    for (unsigned i = 0; i < declinedVideo->attr_count; ++i) {
+        const auto name = sip_utils::as_view(declinedVideo->attr[i]->name);
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), name == "mid" or name == "inactive");
+    }
+    CPPUNIT_ASSERT(hasMediaAttributeValue(declinedVideo, "mid", "1"));
+
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+    auto* activeLocalSession = sdp.getActiveLocalSdpSession();
+    CPPUNIT_ASSERT(activeLocalSession);
+    CPPUNIT_ASSERT(activeLocalSession->media[0]->desc.port != 0);
+    CPPUNIT_ASSERT_EQUAL(0u, static_cast<unsigned>(activeLocalSession->media[1]->desc.port));
+}
+
+void
+RtcpMuxSdpTest::reofferNumbersVideoAfterDeclinedAnswer()
+{
+    CPPUNIT_ASSERT(account_);
+
+    Sdp sdp("reoffer-after-declined-video");
+    sdp.setPublishedIP("127.0.0.1", pj_AF_INET());
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_AUDIO, account_->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+    sdp.setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                  selectVideoCodecs(account_->getActiveAccountCodecInfoList(MEDIA_VIDEO),
+                                                    {"H264", "VP8"}));
+    sdp.setLocalPublishedAudioPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.setLocalPublishedVideoPorts(TEST_AUDIO_RTP_PORT, 0);
+    sdp.enableRtcpMux(true);
+    sdp.enableBundle(true);
+
+    std::string videoFormats;
+    std::string videoRtpmaps;
+    for (unsigned payloadType = 96; payloadType < 128; ++payloadType) {
+        if (payloadType == 101 or payloadType == 104)
+            continue;
+        videoFormats += " " + std::to_string(payloadType);
+        videoRtpmaps += payloadType == 96 ? std::string("a=rtpmap:96 VP8/90000\r\n")
+                                          : fmt::format("a=rtpmap:{} X-UNKNOWN-{}/90000\r\n", payloadType, payloadType);
+    }
+    const std::string remoteOffer = "v=0\r\n"
+                                    "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                                    "s=-\r\n"
+                                    "c=IN IP4 127.0.0.1\r\n"
+                                    "t=0 0\r\n"
+                                    "a=group:BUNDLE 0 1\r\n"
+                                    "m=audio 5004 RTP/SAVP 104 101\r\n"
+                                    "a=mid:0\r\n"
+                                    "a=rtcp-mux\r\n"
+                                    "a=rtpmap:104 opus/48000/2\r\n"
+                                    "a=rtpmap:101 telephone-event/8000\r\n"
+                                    "m=video 5004 RTP/SAVP"
+                                    + videoFormats
+                                    + "\r\n"
+                                      "a=mid:1\r\n"
+                                      "a=rtcp-mux\r\n"
+                                    + videoRtpmaps;
+
+    auto pool = makePool("reoffer-after-declined-video");
+    auto* session = parseSdp(pool.get(), remoteOffer);
+    CPPUNIT_ASSERT(session);
+    sdp.setReceivedOffer(session);
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    audio.label_ = "audio_0";
+    audio.enabled_ = true;
+
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+    video.label_ = "video_0";
+    video.enabled_ = false;
+
+    CPPUNIT_ASSERT(sdp.processIncomingOffer({audio, video}));
+    CPPUNIT_ASSERT(sdp.startNegotiation());
+    const auto* previousLocalSession = sdp.getActiveLocalSdpSession();
+    CPPUNIT_ASSERT(previousLocalSession);
+    CPPUNIT_ASSERT_EQUAL(0u, static_cast<unsigned>(previousLocalSession->media[1]->desc.port));
+
+    video.enabled_ = true;
+    CPPUNIT_ASSERT(sdp.createOffer({audio, video}, previousLocalSession));
+
+    auto* localSession = sdp.getLocalSdpSession();
+    CPPUNIT_ASSERT(localSession);
+    CPPUNIT_ASSERT_EQUAL(2u, localSession->media_count);
+    const auto* localVideo = localSession->media[1];
+    CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), localVideo->desc.port != 0);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(printSdp(localSession), 2u, localVideo->desc.fmt_count);
+    std::set<unsigned> payloadTypes;
+    for (unsigned i = 0; i < localVideo->desc.fmt_count; ++i) {
+        const auto payloadType = static_cast<unsigned>(pj_strtoul(&localVideo->desc.fmt[i]));
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), payloadType >= 96 and payloadType < 128);
+        CPPUNIT_ASSERT_MESSAGE(printSdp(localSession), payloadTypes.insert(payloadType).second);
+    }
+    CPPUNIT_ASSERT(hasMediaAttributeValue(localVideo, "mid", "1"));
 }
 
 void
