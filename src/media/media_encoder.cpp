@@ -637,6 +637,19 @@ MediaEncoder::print_sdp()
     return result;
 }
 
+static int
+vp8ThreadCount(int width, int height, int cores)
+{
+    const auto pixels = width * height;
+    if (pixels >= 1920 * 1080 and cores > 8)
+        return 8;
+    if (pixels > 640 * 480 and cores >= 6)
+        return 3;
+    if (pixels > 640 * 480 and cores >= 3)
+        return 2;
+    return 1;
+}
+
 AVCodecContext*
 MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 {
@@ -644,7 +657,11 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 
     const auto* encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
-    encoderCtx->thread_count = std::min(static_cast<int>(std::thread::hardware_concurrency()), is_video ? 16 : 4);
+    const auto cores = static_cast<int>(std::thread::hardware_concurrency());
+    if (outputCodec->id == AV_CODEC_ID_VP8)
+        encoderCtx->thread_count = vp8ThreadCount(videoOpts_.width, videoOpts_.height, cores);
+    else
+        encoderCtx->thread_count = std::min(cores, is_video ? 16 : 4);
     JAMI_LOG("[{}] Using {} threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {
