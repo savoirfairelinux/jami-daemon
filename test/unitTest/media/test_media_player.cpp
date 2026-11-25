@@ -24,6 +24,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavutil/time.h>
 }
 
 #include "jami.h"
@@ -214,20 +215,22 @@ MediaPlayerTest::testSeekWhilePlaying()
     cv.wait_for(lk, 5s);
     mediaPlayer->pause(false);
 
-    int64_t startTime = mediaPlayer->getPlayerPosition();
+    const auto checkSeek = [&](int64_t target) {
+        const auto beforeSeek = av_gettime();
+        CPPUNIT_ASSERT(mediaPlayer->seekToTime(target));
+        const auto position = mediaPlayer->getPlayerPosition();
+        const auto elapsed = av_gettime() - beforeSeek;
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 10000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 10000, 50));
+        CPPUNIT_ASSERT(!mediaPlayer->isPaused());
+        // Playback can advance after the seek, but it must not land before the target.
+        CPPUNIT_ASSERT(position >= target);
+        CPPUNIT_ASSERT(position <= target + elapsed);
+    };
 
-    startTime = mediaPlayer->getPlayerPosition();
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime - 5000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime - 5000, 50));
-
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(10000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 10000, 50));
-
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
+    checkSeek(mediaPlayer->getPlayerPosition() + 10000);
+    checkSeek(mediaPlayer->getPlayerPosition() - 5000);
+    checkSeek(10000);
+    checkSeek(0);
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_LOG("End testSeekWhilePlaying");
