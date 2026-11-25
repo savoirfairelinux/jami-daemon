@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36d3d733_43491f57",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1807,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T22:19:52Z",
+      "side": 1,
+      "message": "An SDP-bearing 183 now triggers ExternalMediaDemotionAccepted before the return-to-direct re-INVITE succeeds. The existing completion guard only checks that the original dialog is CONFIRMED, so if browser ICE connects first, we can tear down the conference before the peer accepts the switch. Can we cache the provisional SDP but wait for a final 2xx for the same CSeq before signaling demotion acceptance? The final response may not repeat the SDP.",
+      "range": {
+        "startLine": 1803,
+        "startChar": 3,
+        "endLine": 1807,
+        "endChar": 79
+      },
+      "revId": "8a0299f5d872863a0eb3ea93caebd88267ae3e6c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
