@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d593f133_56c70a87",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1527,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T22:25:28Z",
+      "side": 1,
+      "message": "The initial offer still accepts a single audio stream with an empty label, but a re-offer now rejects that same stream. Resume and input switching reuse the existing media attributes, so a call can connect successfully and then fail when it tries to send a re-INVITE. Can we assign a stable label when the stream is created and add a regression test that re-offers it?",
+      "revId": "07f13f9d73de061018bce418d675230dc69d80fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
