@@ -486,6 +486,13 @@ struct LIBJAMI_PUBLIC ConversationSignal
         constexpr static const char* name = "ConversationRequestDeclined";
         using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */);
     };
+    // The conversation entered getConversations() and any matching request is gone.
+    // The repository may not be usable until ConversationReady.
+    struct LIBJAMI_PUBLIC ConversationAdded
+    {
+        constexpr static const char* name = "ConversationAdded";
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /*conversationId*/);
+    };
     struct LIBJAMI_PUBLIC ConversationReady
     {
         constexpr static const char* name = "ConversationReady";

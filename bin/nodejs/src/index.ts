@@ -101,6 +101,7 @@ export enum JamiSignal {
   ConversationProfileUpdated = 'ConversationProfileUpdated',
   ConversationRequestReceived = 'ConversationRequestReceived',
   ConversationRequestDeclined = 'ConversationRequestDeclined',
+  ConversationAdded = 'ConversationAdded',
   ConversationReady = 'ConversationReady',
   ConversationRemoved = 'ConversationRemoved',
   ConversationMemberEvent = 'ConversationMemberEvent',

@@ -384,11 +384,23 @@ public:
         return conv->info.mode == ConversationMode::ONE_TO_ONE || !conv->info.isRemoved();
     }
 
-    void addConvInfo(const ConvInfo& info)
+    static bool isListedConversation(const ConvInfo& info)
+    {
+        // Collaborative documents are listed through the collaborative-editing API.
+        return !info.isRemoved() && info.mode != ConversationMode::DOCUMENT;
+    }
+
+    bool addConvInfo(const ConvInfo& info, bool updateExisting = true)
     {
         std::lock_guard lk(convInfosMtx_);
+        const auto it = convInfos_.find(info.id);
+        const bool added = isListedConversation(info)
+                           && (it == convInfos_.end() || !isListedConversation(it->second));
+        if (!added && !updateExisting)
+            return false;
         convInfos_[info.id] = info;
         saveConvInfos();
+        return added;
     }
 
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
@@ -525,6 +537,16 @@ public:
         saveMetadata();
         conversationsRequests_.erase(id);
         saveConvRequests();
+    }
+
+    void notifyConversationAdded(const std::string& id)
+    {
+        {
+            std::lock_guard lk(conversationsRequestsMtx_);
+            if (conversationsRequests_.contains(id))
+                rmConversationRequest(id);
+        }
+        emitSignal<libjami::ConversationSignal::ConversationAdded>(accountId_, id);
     }
 
     std::weak_ptr<JamiAccount> account_;
@@ -758,6 +780,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     auto conv = getConversation(conversationId);
     {
         bool needReclone = false;
+        bool added = false;
         std::unique_lock lkInfos(convInfosMtx_);
 
         auto itConvInfo = convInfos_.find(conversationId);
@@ -778,19 +801,21 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     if (!conv->conversation) {
                         conv->info.created = nowMs();
                         conv->info.erased = TimePoint {};
-                        convInfos_[conversationId] = conv->info;
+                        itConvInfo->second = conv->info;
                         saveConvInfos();
                         needReclone = true;
+                        added = isListedConversation(conv->info);
                     }
                 }
 
                 lkInfos.unlock();
 
+                if (added)
+                    notifyConversationAdded(conversationId);
                 if (needReclone && conv) {
-                    {
-                        std::unique_lock lkSynced(conv->mtx);
+                    std::unique_lock lkSynced(conv->mtx);
+                    if (!added || !conv->info.isRemoved())
                         cloneConversation(deviceId, peer, conv);
-                    }
                 }
 
                 return;
@@ -1946,6 +1971,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
     auto conv = startConversation(request.conversationId);
     std::unique_lock lk(conv->mtx);
     std::string commitId;
+    bool added = false;
     // Explicit (or auto-accepted) request: the peer just told us to clone, don't sit on a
     // backoff armed by earlier failures.
     conv->resetCloneRetry();
@@ -1955,7 +1981,7 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.members.emplace(username_);
         conv->info.members.emplace(request.from);
         conv->info.mode = request.mode();
-        addConvInfo(conv->info);
+        added = addConvInfo(conv->info);
     } else if (conv->info.mode != ConversationMode::ONE_TO_ONE && conv->info.isRemoved()) {
         if (conv->info.mode == ConversationMode::FEED && conv->conversation && conv->conversation->isRemoving()) {
             // Reuse the repository so the leave commit still reaches peers.
@@ -1972,12 +1998,14 @@ ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& reque
         conv->info.created = conv->info.mode == ConversationMode::FEED ? std::max(nowMs(), conv->info.removed + 1ms)
                                                                        : nowMs();
         conv->info.erased = TimePoint {};
-        addConvInfo(conv->info);
+        added = addConvInfo(conv->info);
     }
     if (!commitId.empty())
         sendMessageNotification(*conv->conversation, false, commitId);
     lk.unlock();
-    if (request.mode() == ConversationMode::FEED) {
+    if (added) {
+        notifyConversationAdded(request.conversationId);
+    } else if (request.mode() == ConversationMode::FEED) {
         std::lock_guard lkRequests(conversationsRequestsMtx_);
         rmConversationRequest(request.conversationId);
     }
@@ -2435,13 +2463,8 @@ ConversationModule::getConversations() const
     std::lock_guard lk(pimpl_->convInfosMtx_);
     result.reserve(pimpl_->convInfos_.size());
     for (const auto& [key, conv] : pimpl_->convInfos_) {
-        if (conv.isRemoved())
-            continue;
-        // Collaborative documents are swarms, not conversations: the clients
-        // list them per conversation through the collaborative-editing API.
-        if (conv.mode == ConversationMode::DOCUMENT)
-            continue;
-        result.emplace_back(key);
+        if (Impl::isListedConversation(conv))
+            result.emplace_back(key);
     }
     return result;
 }
@@ -2731,9 +2754,11 @@ ConversationModule::startConversation(ConversationMode mode,
     if (otherMember)
         conv->info.members.emplace(otherMember.toString());
     conv->conversation = conversation;
-    addConvInfo(conv->info);
+    const bool added = pimpl_->addConvInfo(conv->info);
     lk.unlock();
 
+    if (added)
+        pimpl_->notifyConversationAdded(convId);
     pimpl_->needsSyncingCb_({});
     emitSignal<libjami::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
     if (mode == ConversationMode::FEED && inviteAllContacts)
@@ -3206,6 +3231,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
+            bool updateInfo = false;
             if (convInfo.mode == ConversationMode::FEED) {
                 // Other publisher devices may have invited different contacts,
                 // or sent their snapshot before this device's last invitation.
@@ -3222,10 +3248,8 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                 conv->info = convInfo;
                 conv->info.invited = std::move(invites);
                 conv->info.inviteAllContacts = inviteAllContacts;
-                if (newAudience || receivedInvite) {
-                    pimpl_->addConvInfo(conv->info);
-                    listChanged = true;
-                }
+                updateInfo = newAudience || receivedInvite;
+                listChanged |= updateInfo;
                 if (newAudience && conv->conversation)
                     feedsToInvite.push_back(conv);
             } else {
@@ -3233,6 +3257,15 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             }
             if (convInfo.mode == ConversationMode::FEED && conv->conversation && conv->conversation->isRemoving())
                 pimpl_->removeRepositoryImpl(*conv, false, true);
+            // Publish new list entries before starting a clone, even if it is deferred.
+            if (pimpl_->addConvInfo(conv->info, updateInfo || (!conv->conversation && deviceId.empty()))) {
+                listChanged = true;
+                lk.unlock();
+                pimpl_->notifyConversationAdded(convId);
+                lk.lock();
+                if (conv->info.isRemoved())
+                    continue;
+            }
             if (!conv->conversation) {
                 if (isNewConv)
                     listChanged = true;
@@ -3242,7 +3275,6 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                     // In this case, information is from JAMS
                     // JAMS does not store the conversation itself, so we
                     // must use information to clone the conversation
-                    addConvInfo(conv->info);
                     toClone.emplace_back(convId);
                 }
             } else if (conv->info.mode == ConversationMode::ONE_TO_ONE) {

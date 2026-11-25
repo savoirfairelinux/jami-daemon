@@ -19,6 +19,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <atomic>
 #include <condition_variable>
 #include <string>
 #include <fstream>
@@ -81,6 +82,7 @@ public:
     void testMemberAddedNoBadFile();
     void testAddOfflineMemberThenConnects();
     void testAddAcceptOfflineThenConnects();
+    void testFeedAcceptOfflineThenConnects();
     void testGetMembers();
     void testRemoveMember();
     void testRemovedMemberDoesNotReceiveMessageFromAdmin();
@@ -126,6 +128,7 @@ public:
     std::condition_variable cv;
 
     void connectSignals();
+    void acceptOfflineThenConnects(bool feed);
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
@@ -139,6 +142,7 @@ private:
     CPPUNIT_TEST(testMemberAddedNoBadFile);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
     CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
+    CPPUNIT_TEST(testFeedAcceptOfflineThenConnects);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromAdmin);
@@ -788,25 +792,47 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
 void
 ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
 {
+    acceptOfflineThenConnects(false);
+}
+
+void
+ConversationMembersEventTest::testFeedAcceptOfflineThenConnects()
+{
+    acceptOfflineThenConnects(true);
+}
+
+void
+ConversationMembersEventTest::acceptOfflineThenConnects(bool feed)
+{
     add_confirmed_contact(bobId, aliceId);
     connectSignals();
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    libjami::startConversation(aliceId);
+    const auto convId = feed ? libjami::startFeedConversation(aliceId) : libjami::startConversation(aliceId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return !aliceData.conversationId.empty(); }));
 
-    libjami::addConversationMember(aliceId, aliceData.conversationId, bobUri);
+    const auto listedOnAdd = std::make_shared<std::atomic_bool>(false);
+    libjami::registerSignalHandlers(
+        {libjami::exportable_callback<libjami::ConversationSignal::ConversationAdded>(
+            [listedOnAdd, bobId = bobId, convId](const std::string& accountId, const std::string& id) {
+                if (accountId != bobId || id != convId)
+                    return;
+                const auto conversations = libjami::getConversations(accountId);
+                *listedOnAdd = std::find(conversations.begin(), conversations.end(), id) != conversations.end()
+                               && libjami::getConversationRequests(accountId).empty();
+            })});
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return bobData.requestReceived; }));
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceData.stopped; }));
 
-    // Accepts
-    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
-
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(listedOnAdd->load());
+    CPPUNIT_ASSERT(bobData.conversationId.empty());
+    CPPUNIT_ASSERT_EQUAL("true"s, libjami::conversationInfos(bobId, convId).at("syncing"));
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));

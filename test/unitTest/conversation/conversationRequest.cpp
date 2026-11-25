@@ -601,8 +601,16 @@ ConversationRequestTest::testSyncLeftFeedInvitation()
     msg.c[left.id] = left;
     msg.cr[left.id] = invitation;
 
+    const auto additions = std::make_shared<std::atomic_int>(0);
+    libjami::registerSignalHandlers(
+        {libjami::exportable_callback<libjami::ConversationSignal::ConversationAdded>(
+            [additions, bobId = bobId, convId = left.id](const std::string& accountId, const std::string& id) {
+                if (accountId == bobId && id == convId)
+                    ++*additions;
+            })});
     module->onSyncData(msg, bobUri, "");
     CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
+    CPPUNIT_ASSERT_EQUAL(0, additions->load());
     module->onSyncData(msg, bobUri, "");
     CPPUNIT_ASSERT_EQUAL(size_t {1}, libjami::getConversationRequests(bobId).size());
     auto stale = msg;
@@ -624,7 +632,10 @@ ConversationRequestTest::testSyncLeftFeedInvitation()
     SyncMsg accepted;
     accepted.c[left.id] = active;
     module->onSyncData(accepted, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(1, additions->load());
+    module->onSyncData(accepted, bobUri, "");
     module->onSyncData(msg, bobUri, "");
+    CPPUNIT_ASSERT_EQUAL(1, additions->load());
     CPPUNIT_ASSERT(libjami::getConversationRequests(bobId).empty());
 }
 

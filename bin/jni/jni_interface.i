@@ -337,6 +337,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::ConversationProfileUpdated>(bind(&ConversationCallback::conversationProfileUpdated, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&ConversationCallback::conversationRequestReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestDeclined>(bind(&ConversationCallback::conversationRequestDeclined, convM, _1, _2)),
+        exportable_callback<ConversationSignal::ConversationAdded>(bind(&ConversationCallback::conversationAdded, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationReady>(bind(&ConversationCallback::conversationReady, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationRemoved>(bind(&ConversationCallback::conversationRemoved, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&ConversationCallback::conversationMemberEvent, convM, _1, _2, _3, _4)),

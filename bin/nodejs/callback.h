@@ -837,6 +837,17 @@ conversationRequestDeclined(const std::string& accountId, const std::string& con
 }
 
 void
+conversationAdded(const std::string& accountId, const std::string& conversationId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId]() {
+        napi_value args[] = {napiString(accountId), napiString(conversationId)};
+        callCallback("ConversationAdded", 2, args);
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 conversationReady(const std::string& accountId, const std::string& conversationId)
 {
     std::lock_guard lock(pendingSignalsLock);
@@ -1257,6 +1268,7 @@ initJami(napi_env env, napi_value callbackMap, uint16_t flags = libjami::LIBJAMI
                bind(&conversationRequestReceived, _1, _2, _3)),
            exportable_callback<ConversationSignal::ConversationRequestDeclined>(
                bind(&conversationRequestDeclined, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationAdded>(bind(&conversationAdded, _1, _2)),
            exportable_callback<ConversationSignal::ConversationReady>(bind(&conversationReady, _1, _2)),
            exportable_callback<ConversationSignal::ConversationRemoved>(bind(&conversationRemoved, _1, _2)),
            exportable_callback<ConversationSignal::ConversationMemberEvent>(
