@@ -189,6 +189,12 @@ public:
     void restartMediaSender() override;
     std::shared_ptr<SystemCodecInfo> getAudioCodec() const override;
     std::shared_ptr<SystemCodecInfo> getVideoCodec() const override;
+    /**
+     * Send device orientation through SIP INFO
+     * @param streamIdx  The stream to rotate
+     * @param rotation   Device orientation (0/90/180/270) (counterclockwise)
+     */
+    void setVideoOrientation(int streamIdx, int rotation) override;
     void sendKeyframe(int streamIdx = -1) override;
     bool isIceEnabled() const override;
     std::map<std::string, std::string> getDetails() const override;
@@ -455,13 +461,6 @@ private:
     void sendVoiceActivity(std::string_view streamId, bool state);
 
     void resetTransport(std::shared_ptr<dhtnet::IceTransport>&& transport);
-
-    /**
-     * Send device orientation through SIP INFO
-     * @param streamIdx  The stream to rotate
-     * @param rotation   Device orientation (0/90/180/270) (counterclockwise)
-     */
-    void setVideoOrientation(int streamIdx, int rotation) override;
 
     mutable std::mutex transportMtx_ {};
 
