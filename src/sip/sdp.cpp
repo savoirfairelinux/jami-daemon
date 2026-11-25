@@ -94,6 +94,19 @@ findOfferedPayloadType(const pjmedia_sdp_media* media, std::string_view codecNam
     return std::nullopt;
 }
 
+static bool
+isOfferedPayloadType(const pjmedia_sdp_media* media, unsigned payloadType)
+{
+    if (not media)
+        return false;
+
+    for (unsigned i = 0; i < media->desc.fmt_count; ++i) {
+        if (pj_strtoul(&media->desc.fmt[i]) == payloadType)
+            return true;
+    }
+    return false;
+}
+
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , publishedIpAddr_()
@@ -863,8 +876,18 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
     }
 
     unsigned dynamic_payload = 96;
+    const auto nextFreeDynamicPayloadType = [&](unsigned start) -> std::optional<unsigned> {
+        for (auto payloadType = std::max(96u, start); payloadType < 128; ++payloadType) {
+            if (not isOfferedPayloadType(codecTemplate, payloadType)
+                and not(useBundle and isBundlePayloadTypeUsed(payloadType)))
+                return payloadType;
+        }
+        return std::nullopt;
+    };
 
-    for (unsigned i = 0; i < med->desc.fmt_count; i++) {
+    const auto codecCount = med->desc.fmt_count;
+    unsigned fmtIndex = 0;
+    for (unsigned i = 0; i < codecCount; i++) {
         pjmedia_sdp_rtpmap rtpmap;
         rtpmap.param.slen = 0;
 
@@ -891,24 +914,28 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
                 rtpmap.clock_rate = accountAudioCodec->audioformat.sample_rate;
 
         } else {
-            // FIXME: get this key from header
-            payload = useBundle ? nextBundleDynamicPayloadType(dynamic_payload) : dynamic_payload;
-            dynamic_payload = payload + 1;
             enc_name = video_codec_list_[i]->name;
             rtpmap.clock_rate = 90000;
         }
 
-        if (const auto offeredPayload = findOfferedPayloadType(codecTemplate, enc_name, rtpmap.clock_rate))
+        if (const auto offeredPayload = findOfferedPayloadType(codecTemplate, enc_name, rtpmap.clock_rate)) {
             payload = *offeredPayload;
+        } else if (type == MediaType::MEDIA_VIDEO) {
+            const auto freePayload = nextFreeDynamicPayloadType(dynamic_payload);
+            if (not freePayload)
+                continue;
+            payload = *freePayload;
+            dynamic_payload = payload + 1;
+        }
 
         auto payloadStr = std::to_string(payload);
         auto pjPayload = sip_utils::CONST_PJ_STR(payloadStr);
-        pj_strdup(memPool_.get(), &med->desc.fmt[i], &pjPayload);
+        pj_strdup(memPool_.get(), &med->desc.fmt[fmtIndex], &pjPayload);
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads
         // are entirely defined in the RFC 3351
-        rtpmap.pt = med->desc.fmt[i];
+        rtpmap.pt = med->desc.fmt[fmtIndex];
         rtpmap.enc_name = sip_utils::CONST_PJ_STR(enc_name);
 
         pjmedia_sdp_attr* attr;
@@ -933,6 +960,16 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr,
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), value.c_str(), NULL);
         }
 #endif
+        ++fmtIndex;
+    }
+    med->desc.fmt_count = fmtIndex;
+    if (fmtIndex == 0 and codecTemplate) {
+        auto* declined = pjmedia_sdp_media_clone_deactivate(memPool_.get(), codecTemplate);
+        if (not declined)
+            throw SdpException("Unable to create rejected media description");
+        if (auto mid = getMidValue(codecTemplate); not mid.empty())
+            addMidAttribute(declined, mid);
+        return declined;
     }
 
     if (type == MediaType::MEDIA_AUDIO) {
