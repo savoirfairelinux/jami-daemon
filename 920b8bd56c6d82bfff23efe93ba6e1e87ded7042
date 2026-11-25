@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5a2d223_cc66044c",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 2356,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T23:16:06Z",
+      "side": 1,
+      "message": "This enables resizing without enforcing the peer’s `imageattr recv` sizes or ranges, so the encoder can send a resolution the peer did not advertise. Please constrain resizing to those limits. This also depends on 37136 for in-place encoder reopen and should not land before it.",
+      "revId": "920b8bd56c6d82bfff23efe93ba6e1e87ded7042",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
