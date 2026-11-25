@@ -431,18 +431,21 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
+# Keep feature-dependent class definitions consistent across targets.
+set(JAMI_FEATURE_DEFINITIONS)
 if (JAMI_VIDEO)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_VIDEO)
+    list(APPEND JAMI_FEATURE_DEFINITIONS ENABLE_VIDEO)
     if (JAMI_VIDEO_ACCEL)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_HWACCEL)
+        list(APPEND JAMI_FEATURE_DEFINITIONS ENABLE_HWACCEL)
     endif()
     if (JAMI_DBUS)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SHM)
+        list(APPEND JAMI_FEATURE_DEFINITIONS ENABLE_SHM)
     endif()
 endif()
 if (JAMI_PLUGIN)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
+    list(APPEND JAMI_FEATURE_DEFINITIONS ENABLE_PLUGIN)
 endif()
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${JAMI_FEATURE_DEFINITIONS})
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_AAUDIO)
 elseif (APPLE)
@@ -896,12 +899,7 @@ if(NOT MSVC)
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
-        if (JAMI_VIDEO)
-            target_compile_definitions(jamid PRIVATE ENABLE_VIDEO ENABLE_SHM)
-        endif()
-        if (JAMI_PLUGIN)
-            target_compile_definitions(jamid PRIVATE ENABLE_PLUGIN)
-        endif()
+        target_compile_definitions(jamid PRIVATE ${JAMI_FEATURE_DEFINITIONS})
         install (TARGETS jamid DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 
         # Install service file
@@ -939,13 +937,8 @@ if(NOT MSVC)
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
             LIBJAMI_TEST
+            ${JAMI_FEATURE_DEFINITIONS}
         )
-        if (JAMI_PLUGIN)
-            target_compile_definitions(dst_library PUBLIC ENABLE_PLUGIN)
-        endif()
-        if (JAMI_VIDEO)
-            target_compile_definitions(dst_library PUBLIC ENABLE_VIDEO)
-        endif()
         # Deterministic simulation testing CLI tool
         add_executable(jamidst test/dst/main.cpp)
         target_link_libraries(jamidst PRIVATE dst_library)
@@ -1000,16 +993,6 @@ if(NOT MSVC)
             MSGPACK_NO_BOOST
             LIBJAMI_TEST
         )
-        if (JAMI_PLUGIN)
-            target_compile_definitions(ut_library PUBLIC ENABLE_PLUGIN)
-        endif()
-        if (JAMI_VIDEO)
-            target_compile_definitions(ut_library PUBLIC ENABLE_VIDEO)
-            if (JAMI_VIDEO_ACCEL)
-                target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HWACCEL)
-            endif()
-        endif()
-
         # Setup coverage for test library
         if(ENABLE_COVERAGE)
             setup_target_for_coverage(ut_library)
