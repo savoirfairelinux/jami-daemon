@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48ab547a_d7f744bb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 21
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T23:11:41Z",
+      "side": 1,
+      "message": " relies on the SDP slot mapping introduced by 37126.",
+      "revId": "3a056be9abf1d926752a9d88f6861c4ed4a62175",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
