@@ -20,6 +20,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d64b68bf_eb259dff",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3713,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-11-25T22:57:17Z",
+      "side": 1,
+      "message": "ConversationAdded now lets clients query conversationInfos() before cloning starts. For a conversation learned from another device with no saved invitation metadata, this branch returns an empty map even though conv-\u003einfo.mode is already known. Can we return that mode and syncing\u003dtrue for listed conversations without a repository? That lets clients classify the entry immediately while still waiting for ConversationReady to load history.",
+      "range": {
+        "startLine": 3669,
+        "startChar": 0,
+        "endLine": 3713,
+        "endChar": 1
+      },
+      "revId": "03a6210efaab3414c746022fb0eb426b92357b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bdb40bd2_b7b202b1",
         "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
         "patchSetId": 1
