@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34569b12_22425bc6",
+        "filename": "test/unitTest/conversation/conversationMembersEvent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 827,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T18:02:36Z",
+      "side": 1,
+      "message": "[warning] Line 827: 🟡 `acceptedId` is written from a signal callback and asserted immediately on the test thread without synchronization/waiting. If callback delivery is asynchronous (as in other tests in this suite), this can race and make the test flaky or undefined. Guard `acceptedId` with the existing mutex and wait on `cv` for `ConversationRequestAccepted` before asserting equality.",
+      "revId": "e4d7e5e238edb4f4fb6ce6cbfcc03ee8d406a188",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
