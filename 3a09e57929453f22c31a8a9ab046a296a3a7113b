@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d560d4e_604defe5",
+        "filename": "test/unitTest/media/test_media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:32:33Z",
+      "side": 1,
+      "message": "[warning] Line 222: 🟡 The new assertions improve tolerance handling, but this test still exercises seeks while playback is running (`isPaused()\u003d\u003dfalse`) and does not cover the paused-\u003eseek-\u003eresume path described in the change intent. Add a dedicated case that pauses, seeks, waits briefly while still paused, resumes, and verifies position does not regress by the paused duration.",
+      "revId": "3a09e57929453f22c31a8a9ab046a296a3a7113b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ef3572f_9c985613",
+        "filename": "test/unitTest/media/test_media_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-25T19:32:33Z",
+      "side": 1,
+      "message": "[warning] Line 223: 🟡 `elapsed` is computed with `av_gettime()`, which is wall-clock based and can jump due to system time adjustments, making this bound occasionally flaky. Use a monotonic source (e.g., `av_gettime_relative()`/`std::chrono::steady_clock`) for elapsed-time measurement in the test.",
+      "revId": "3a09e57929453f22c31a8a9ab046a296a3a7113b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
