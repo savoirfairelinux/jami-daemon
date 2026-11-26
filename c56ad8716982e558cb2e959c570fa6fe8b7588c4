@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c85cc6f_fe8ac105",
+        "filename": "bin/nodejs/nodejs_interface.i",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T21:17:37Z",
+      "side": 1,
+      "message": "[error] Line 62: 🔴 `%ignore map\u003cstring, vector\u003cuint8_t\u003e\u003e::get;` can also suppress the newly added `%extend ... get(...)` wrapper, which would leave `get` missing at runtime while TypeScript now requires it. The previous `getCopy` + `%rename(get)` pattern avoided this collision. Please either keep that pattern or explicitly clear the ignore before defining the extended `get`, and cover it with a Node binding test.",
+      "revId": "c56ad8716982e558cb2e959c570fa6fe8b7588c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26cddef6_4b7ba843",
+        "filename": "bin/nodejs/src/index.ts",
+        "patchSetId": 2
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T21:17:37Z",
+      "side": 1,
+      "message": "[warning] Line 157: 🟡 `BlobMap` no longer extends `SwigMap\u003cstring, Blob\u003e`, so callers that relied on the generic map surface can lose type compatibility after this change. Prefer `interface BlobMap extends SwigMap\u003cstring, Blob\u003e { ... }` and then add the SWIG-specific `has_key` declaration, so existing map typing continues to work.",
+      "revId": "c56ad8716982e558cb2e959c570fa6fe8b7588c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
