@@ -33,6 +33,7 @@
 #endif
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
+#include "plugin/mediastreamsubject.h"
 #endif
 #include "noncopyable.h"
 
@@ -469,7 +470,7 @@ private:
      * Call Streams and some typedefs
      */
     using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
-    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+    using MediaStreamSubject = PluginMediaStreamSubject;
 
     /**
      * @brief createCallAVStream

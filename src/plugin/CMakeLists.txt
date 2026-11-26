@@ -26,6 +26,7 @@ list (APPEND Source_Files__plugin
       "${CMAKE_CURRENT_SOURCE_DIR}/pluginmanager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/pluginpreferencesutils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/streamdata.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/mediastreamsubject.h"
 )
 
 set (Source_Files__plugin ${Source_Files__plugin} PARENT_SCOPE)

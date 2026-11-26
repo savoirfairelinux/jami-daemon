@@ -232,8 +232,10 @@ public:
      **/
     ~PublishMapSubject() { detached(nullptr); }
 
-private:
+protected:
     F map_;
+
+private:
     Observable<T1>* obs_ = nullptr;
 };
 
