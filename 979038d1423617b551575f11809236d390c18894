@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53b7d8a3_fc301107",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3218,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T16:30:26Z",
+      "side": 1,
+      "message": "[warning] Line 3218: 🟡 When `audienceUpdated` timestamps are equal, resolving with `inviteAllContacts \u003d inviteAllContacts || convInfo.inviteAllContacts` can unexpectedly re-enable all-contacts mode and expand audience. This is privacy-sensitive state; use a deterministic tie-breaker that cannot widen access implicitly (for example, device-id ordering, or keep current value unless an explicit newer update exists).",
+      "revId": "979038d1423617b551575f11809236d390c18894",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dca36461_90e3d878",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3887,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T16:30:26Z",
+      "side": 1,
+      "message": "[warning] Line 3887: 🟡 In selected-contacts mode (`!inviteAllContacts`), returning `true` when `invited` has no entry (`invited \u003d\u003d end`) makes authorization permissive by default. Even if upstream checks usually filter this, this weakens defense-in-depth and can allow serving without explicit post-switch invite state. Prefer requiring an explicit invite at/after `audienceUpdated`, and keep any legacy compatibility path narrowly scoped.",
+      "revId": "979038d1423617b551575f11809236d390c18894",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
