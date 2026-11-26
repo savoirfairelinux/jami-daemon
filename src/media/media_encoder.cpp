@@ -1280,7 +1280,7 @@ MediaEncoder::applyVideoBitrateTarget(uint64_t br)
 
     // Pre-encoded packets: the source resolution is not ours to change, and
     // resetting the stream would break remote decoders mid-flight.
-    if (passthrough_)
+    if (passthrough_ or not adaptiveResolution_)
         return false;
 
     const auto [targetWidth, targetHeight] = targetVideoSize(br);

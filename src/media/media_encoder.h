@@ -96,6 +96,7 @@ public:
      * control the source and resetting the stream breaks remote decoders.
      */
     void setPassthrough(bool passthrough) { passthrough_ = passthrough; }
+    void setAdaptiveResolution(bool adaptive) { adaptiveResolution_ = adaptive; }
 
 #ifdef ENABLE_VIDEO
     int encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe, int64_t frame_number);
@@ -135,6 +136,7 @@ public:
 private:
     NON_COPYABLE(MediaEncoder);
     bool passthrough_ {false};
+    bool adaptiveResolution_ {true};
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);

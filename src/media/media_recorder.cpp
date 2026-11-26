@@ -488,6 +488,7 @@ MediaRecorder::initRecord()
 
         MediaDescription args;
         args.mode = RateMode::CQ;
+        encoder_->setAdaptiveResolution(false);
         encoder_->setOptions(videoStream);
         encoder_->setOptions(args);
 
