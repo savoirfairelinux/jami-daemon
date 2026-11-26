@@ -33,6 +33,23 @@
       "message": "Addressed in this patchset.",
       "revId": "544c62f1e280a3e3a6fbf83ba23b7501228dc27b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31fd33bc_acb250c3",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:51:13Z",
+      "side": 1,
+      "message": "[warning] Line 171: 🟡 `std::stoull(mediaHandlerIdStr)` is used without validating full consumption, so malformed values like `\"123abc\"` are accepted as `123` and may resolve to an unintended handler. Parse with a `size_t pos` out-parameter and reject unless `pos \u003d\u003d mediaHandlerIdStr.size()` before using the id.",
+      "revId": "544c62f1e280a3e3a6fbf83ba23b7501228dc27b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
