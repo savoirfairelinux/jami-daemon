@@ -33,6 +33,23 @@
       "message": "Addressed in this patchset.",
       "revId": "f157d49cd6f089f21cbcb001e152779f99fb02f3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a6d4988_489ee117",
+        "filename": "src/plugin/mediastreamsubject.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:34:12Z",
+      "side": 1,
+      "message": "[warning] Line 64: 🟡 `static_cast\u003cconst libjami::VideoFrame\u0026\u003e(*frame)` assumes every hardware-backed `MediaFrame` is a `VideoFrame`; that is an unchecked downcast and becomes undefined behavior if a non-video frame with `hw_frames_ctx` reaches this path. Guard this with a runtime type check (e.g., `dynamic_cast`/frame-type discriminator) and only call `transferToMainMemory` for confirmed video frames; otherwise skip or forward through the non-hw path safely.",
+      "revId": "f157d49cd6f089f21cbcb001e152779f99fb02f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
