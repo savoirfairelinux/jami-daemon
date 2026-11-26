@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dec39292_7b9a9914",
+        "filename": "src/observer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:29:28Z",
+      "side": 1,
+      "message": "[warning] Line 198: 🟡 This template-level null filtering changes behavior for every `PublishMapSubject\u003c*, T2*\u003e`, not just plugin frame forwarding. If any existing observer path uses `nullptr` as a sentinel (end-of-stream, reset, etc.), those events will now be silently dropped. Scope this guard to the plugin/video use case (or add an explicit policy flag) instead of applying it globally in the generic observer utility.",
+      "revId": "127b12265f4ddc3e06953dbe8bef286b992c11b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c89aa4b2_f3418b00",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:29:28Z",
+      "side": 1,
+      "message": "[warning] Line 445: 🟡 `transferToMainMemory(..., AV_PIX_FMT_NV12)` hard-codes the software pixel format and may fail or force unintended conversion on platforms/codecs whose expected CPU format is different. Prefer deriving the target format from decoder context/frame metadata (or preserving native software format) so plugin delivery remains robust across backends.",
+      "revId": "127b12265f4ddc3e06953dbe8bef286b992c11b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
