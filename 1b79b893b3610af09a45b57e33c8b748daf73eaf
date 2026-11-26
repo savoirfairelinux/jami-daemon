@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "876bb722_4f09ded6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3501,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T13:48:13Z",
+      "side": 1,
+      "message": "[warning] Line 3501: 🟡 `displayedTokensMtx_` is held while calling `messageEngine_.sendMessage(...)`. That call can trigger non-trivial work (queueing/connect requests/callback paths), so keeping the mutex locked here increases contention and creates lock-ordering risk if future code paths re-enter token bookkeeping. Capture the current token under lock, release the lock before `sendMessage`, then re-lock only to store the returned token.",
+      "revId": "1b79b893b3610af09a45b57e33c8b748daf73eaf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac46b961_21b301de",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 945,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T13:48:13Z",
+      "side": 1,
+      "message": "[warning] Line 945: 🟡 `displayedTokens_` is append-only and never pruned, so each historical `conversation/member` pair is kept indefinitely. On long-lived accounts this can grow without bound. Remove entries once the refreshed receipt is no longer pending (or on conversation/member teardown), or use an eviction strategy keyed to active conversations.",
+      "revId": "1b79b893b3610af09a45b57e33c8b748daf73eaf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
