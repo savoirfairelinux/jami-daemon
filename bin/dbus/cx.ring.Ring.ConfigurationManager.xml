@@ -48,8 +48,8 @@
         </signal>
 
         <method name="getContactMetadata" tp:name-for-bindings="getContactMetadata">
-            <tp:docstring>Read account-private binary registers for an existing contact, including removed contacts.
-                Returns success false for unavailable accounts or unknown contacts.</tp:docstring>
+            <tp:docstring>Read account-private binary registers for an active contact.
+                Returns success false for unavailable accounts or unknown, removed or banned contacts.</tp:docstring>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="uri" direction="in"/>
             <arg type="b" name="success" direction="out"/>
@@ -60,8 +60,9 @@
         <method name="setContactMetadata" tp:name-for-bindings="setContactMetadata">
             <tp:docstring>PATCH contact registers with the same limits and stamps as account metadata.
                 Saved before success, shared only with this account's devices on existing connections.
-                Registers survive contact removal and are included in archives and full syncs.
-                Returns false for unknown contacts, invalid input or persistence failure.</tp:docstring>
+                Removing or banning the contact discards its registers without a contactMetadataChanged
+                signal; re-adding starts empty. Registers are included in archives and full syncs.
+                Returns false for unknown, removed or banned contacts, invalid input or persistence failure.</tp:docstring>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="uri" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringByteArray"/>

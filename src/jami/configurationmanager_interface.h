@@ -68,17 +68,19 @@ LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, MetadataMap
  */
 LIBJAMI_PUBLIC bool setAccountMetadata(const std::string& accountId, const MetadataMap& updates);
 
-/** Account-private binary registers attached to an existing contact (including removed/banned contacts).
+/** Account-private binary registers attached to an active contact.
  * Synchronized only with this account's devices, never shared with the contact.
- * Metadata survives removal and re-addition. Full device syncs and account archives include it.
- * Returns false for unavailable accounts, invalid IDs or unknown contacts; output is unchanged.
+ * Removing or banning the contact discards its metadata without emitting ContactMetadataChanged;
+ * re-adding starts empty. Full device syncs and account archives include it.
+ * Returns false for unavailable accounts, invalid IDs, unknown, removed or banned contacts;
+ * output is unchanged.
  */
 LIBJAMI_PUBLIC bool getContactMetadata(const std::string& accountId, const std::string& uri, MetadataMap& metadata);
 
 /** PATCH contact registers with the same stamps, limits and merge rules as setAccountMetadata.
  * Saved before success; power-loss durability is not guaranteed.
  * Uses existing sync connections without waking disconnected devices.
- * Returns false for unknown contacts, invalid input or persistence failure.
+ * Returns false for unknown, removed or banned contacts, invalid input or persistence failure.
  * No-ops do not emit ContactMetadataChanged; effective changes emit the full contact snapshot.
  */
 LIBJAMI_PUBLIC bool setContactMetadata(const std::string& accountId, const std::string& uri, const MetadataMap& updates);

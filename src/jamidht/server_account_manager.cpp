@@ -526,12 +526,13 @@ ServerAccountManager::syncDevices()
                     if (not json.isArray()) {
                         JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
+                        std::map<dht::InfoHash, Contact> contacts;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
-                            Contact contact(e);
-                            this_->info_->contacts->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
+                            contacts.insert_or_assign(dht::InfoHash {e["uri"].asString()}, Contact(e));
                         }
-                        this_->info_->contacts->saveContacts();
+                        if (!this_->info_->contacts->mergeContacts(contacts))
+                            JAMI_ERROR("[Account {}] [Auth] Cannot save server contacts", this_->accountId_);
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Error when iterating contact list: {}", e.what());

@@ -89,26 +89,31 @@ ContactList::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
 bool
 ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::string& conversationId)
 {
+    std::lock_guard notificationLock(notificationMutex_);
     std::unique_lock lk(mutex_);
     JAMI_WARNING("[Account {}] [Contacts] addContact: {}, conversation: {}", accountId_, h, conversationId);
     auto c = contacts_.find(h);
-    if (c == contacts_.end())
-        c = contacts_.emplace(h, Contact {}).first;
-    else if (c->second.isActive() and c->second.confirmed == confirmed && c->second.conversationId == conversationId)
+    Contact next;
+    if (c != contacts_.end() && c->second.isActive()) {
+        if (c->second.confirmed == confirmed && c->second.conversationId == conversationId)
+            return false;
+        // conversationId is not reconciled by Contact::merge, so it is written directly.
+        next = c->second;
+        next.confirmed |= confirmed;
+        next.conversationId = conversationId;
+    } else {
+        Contact addition;
+        addition.added = nextEventTime(c == contacts_.end() ? nullptr : &c->second);
+        addition.confirmed = confirmed;
+        addition.conversationId = conversationId;
+        next = Contact::merge(c == contacts_.end() ? addition : c->second, addition);
+    }
+    if (!storeContactsLocked({{h, next}}))
         return false;
-    if (!c->second.isActive())
-        c->second.added = nowMs();
-    // NOTE: because we can re-add a contact after removing it
-    // we should reset removed (as not removed anymore). This fix isActive()
-    // if addContact is called just after removeContact within the same instant
-    c->second.removed = TimePoint {};
-    c->second.conversationId = conversationId;
-    c->second.confirmed |= confirmed;
     auto hStr = h.toString();
-    trust_->setCertificateStatus(hStr, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
-    saveContacts();
+    updateTrustStatus(h, next);
     lk.unlock();
-    callbacks_.contactAdded(hStr, c->second.confirmed);
+    callbacks_.contactAdded(hStr, next.confirmed);
     return true;
 }
 
@@ -128,23 +133,23 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
 bool
 ContactList::removeContact(const dht::InfoHash& h, bool ban)
 {
+    std::lock_guard notificationLock(notificationMutex_);
     std::unique_lock lk(mutex_);
     JAMI_WARNING("[Account {}] [Contacts] removeContact: {} (banned: {})", accountId_, h, ban);
     auto c = contacts_.find(h);
-    if (c == contacts_.end())
-        c = contacts_.emplace(h, Contact {}).first;
-    c->second.removed = nowMs();
-    c->second.confirmed = false;
-    c->second.banned = ban;
-    if (!ban)
-        c->second.conversationId.clear();
+    Contact removal;
+    removal.removed = nextEventTime(c == contacts_.end() ? nullptr : &c->second);
+    removal.banned = ban;
+    // A ban keeps the conversation so that unblocking reuses it; a plain removal unlinks it.
+    if (ban && c != contacts_.end())
+        removal.conversationId = c->second.conversationId;
+    const auto next = Contact::merge(c == contacts_.end() ? removal : c->second, removal);
+    if (!storeContactsLocked({{h, next}}))
+        return false;
     auto uri = h.toString();
-    trust_->setCertificateStatus(uri,
-                                 ban ? dhtnet::tls::TrustStore::PermissionStatus::BANNED
-                                     : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED);
+    updateTrustStatus(h, next);
     if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
-    saveContacts();
     lk.unlock();
 #ifdef ENABLE_PLUGIN
     auto filename = path_.filename().string();
@@ -198,65 +203,123 @@ ContactList::getContactInfo(const dht::InfoHash& h) const
 std::optional<Metadata::Change>
 ContactList::setContactMetadata(const dht::InfoHash& h, const std::string& writer, const Metadata::Values& updates)
 {
-    std::lock_guard changeLock(metadataChangeMutex_);
+    std::lock_guard notificationLock(notificationMutex_);
     std::unique_lock lk(mutex_);
     const auto c = contacts_.find(h);
-    if (c == contacts_.end()) {
-        JAMI_WARNING("[Account {}] Cannot update metadata for unknown contact {}", accountId_, h);
+    if (c == contacts_.end() || !c->second.isActive()) {
+        JAMI_WARNING("[Account {}] Cannot update metadata for unknown or inactive contact {}", accountId_, h);
         return std::nullopt;
     }
-    auto next = c->second.metadata;
-    auto change = next.update(writer, updates);
-    if (!change || !commitMetadata(h, std::move(next), *change))
+    auto next = c->second;
+    auto change = next.metadata.update(writer, updates);
+    if (!change)
         return std::nullopt;
-    auto metadata = c->second.metadata;
+    auto changes = storeContactsLocked({{h, std::move(next)}});
+    if (!changes)
+        return std::nullopt;
     lk.unlock();
-    notifyMetadataChanged(h, metadata, *change);
-    return change;
-}
-
-std::optional<Metadata::Change>
-ContactList::mergeContactMetadata(const dht::InfoHash& h, const Metadata& remote)
-{
-    std::lock_guard changeLock(metadataChangeMutex_);
-    std::unique_lock lk(mutex_);
-    const auto c = contacts_.find(h);
-    if (c == contacts_.end()) {
-        JAMI_WARNING("[Account {}] Cannot merge metadata for unknown contact {}", accountId_, h);
-        return std::nullopt;
-    }
-    auto next = c->second.metadata;
-    auto change = next.merge(remote);
-    if (!change || !commitMetadata(h, std::move(next), *change))
-        return std::nullopt;
-    auto metadata = c->second.metadata;
-    lk.unlock();
-    notifyMetadataChanged(h, metadata, *change);
+    notifyContactChanges(*changes);
     return change;
 }
 
 bool
-ContactList::commitMetadata(const dht::InfoHash& h, Metadata&& next, const Metadata::Change& change)
+ContactList::mergeContacts(const std::map<dht::InfoHash, Contact>& copies)
 {
-    if (!change.changed)
-        return true;
-    auto& metadata = contacts_.at(h).metadata;
-    auto previous = std::move(metadata);
-    metadata = std::move(next);
-    if (!saveContactMetadata()) {
-        metadata = std::move(previous);
-        return false;
+    std::lock_guard notificationLock(notificationMutex_);
+    std::unique_lock lk(mutex_);
+    std::map<dht::InfoHash, Contact> next;
+    for (const auto& [id, copy] : copies) {
+        if (!id || !copy.isMergeable()) {
+            JAMI_WARNING("[Account {}] [Contacts] Ignoring invalid contact {}", accountId_, id);
+            continue;
+        }
+        const auto c = contacts_.find(id);
+        next.emplace(id, Contact::merge(c == contacts_.end() ? copy : c->second, copy));
     }
+    auto changes = storeContactsLocked(next);
+    if (!changes)
+        return false;
+    bool trustRequestsChanged = false;
+    for (const auto& change : *changes)
+        if (change.lifecycleChanged())
+            trustRequestsChanged |= trustRequests_.erase(change.id) > 0;
+    if (trustRequestsChanged)
+        saveTrustRequests();
+    lk.unlock();
+    notifyContactChanges(*changes);
     return true;
 }
 
-void
-ContactList::notifyMetadataChanged(const dht::InfoHash& h, const Metadata& metadata, const Metadata::Change& change)
+TimePoint
+ContactList::nextEventTime(const Contact* contact)
 {
-    if (change.changed && callbacks_.metadataChanged)
-        callbacks_.metadataChanged(h, metadata);
-    if (change.snapshot)
-        emitSignal<libjami::ConfigurationSignal::ContactMetadataChanged>(accountId_, h.toString(), *change.snapshot);
+    const auto now = nowMs();
+    if (!contact)
+        return now;
+    // Use a later second than the previous event: daemons that store seconds only (older than commit
+    // 5d4ce4c0e) would otherwise see both events at the same time and could keep either.
+    const auto previous = std::chrono::floor<std::chrono::seconds>(std::max(contact->added, contact->removed));
+    return std::max(now, TimePoint(previous + std::chrono::seconds(1)));
+}
+
+std::optional<std::vector<ContactList::ContactChange>>
+ContactList::storeContactsLocked(const std::map<dht::InfoHash, Contact>& next)
+{
+    std::vector<ContactChange> changes;
+    for (const auto& [id, contact] : next) {
+        const auto c = contacts_.find(id);
+        if (c != contacts_.end() && c->second == contact)
+            continue;
+        changes.push_back({id, c == contacts_.end() ? std::nullopt : std::optional(c->second), contact});
+    }
+    if (changes.empty())
+        return changes;
+    for (const auto& change : changes)
+        contacts_[change.id] = change.after;
+    if (!saveContactsAtomically()) {
+        for (const auto& change : changes) {
+            if (change.before)
+                contacts_[change.id] = *change.before;
+            else
+                contacts_.erase(change.id);
+        }
+        return std::nullopt;
+    }
+    return changes;
+}
+
+bool
+ContactList::ContactChange::lifecycleChanged() const
+{
+    // Compare events, not only the derived state: a newer addition of an active contact or a removal
+    // of an unknown peer must be reported like the local action that produced it.
+    return !before || before->added != after.added || before->removed != after.removed
+           || after.hasDifferentState(*before);
+}
+
+void
+ContactList::notifyContactChanges(const std::vector<ContactChange>& changes)
+{
+    for (const auto& change : changes) {
+        const auto uri = change.id.toString();
+        if (change.lifecycleChanged()) {
+            updateTrustStatus(change.id, change.after);
+            if (change.after.isActive())
+                callbacks_.contactAdded(uri, change.after.confirmed);
+            else
+                callbacks_.contactRemoved(uri, change.after.banned);
+        }
+        // Removal clears metadata silently: ContactRemoved already implies it.
+        if (!change.after.isActive() || (change.before && change.before->metadata == change.after.metadata))
+            continue;
+        if (callbacks_.metadataChanged)
+            callbacks_.metadataChanged(change.id, change.after);
+        auto values = change.after.metadata.values();
+        const auto previous = change.before && change.before->isActive() ? change.before->metadata.values()
+                                                                         : Metadata::Values {};
+        if (values != previous)
+            emitSignal<libjami::ConfigurationSignal::ContactMetadataChanged>(accountId_, uri, values);
+    }
 }
 
 std::map<dht::InfoHash, Contact>
@@ -273,68 +336,16 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
              accountId_,
              contacts_.size(),
              contacts.size());
-    contacts_ = contacts;
+    contacts_.clear();
+    for (const auto& [id, contact] : contacts)
+        if (id && contact.isMergeable())
+            updateTrustStatus(id, contacts_[id] = Contact::merge(contact, contact));
     saveContacts();
+    const auto stored = contacts_;
     // Set contacts is used when creating a new device, so just announce new contacts
-    for (auto& peer : contacts)
+    for (auto& peer : stored)
         if (peer.second.isActive())
             callbacks_.contactAdded(peer.first.toString(), peer.second.confirmed);
-}
-
-void
-ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool emit)
-{
-    std::lock_guard changeLock(metadataChangeMutex_);
-    if (not id) {
-        JAMI_ERROR("[Account {}] [Contacts] updateContact: invalid contact ID", accountId_);
-        return;
-    }
-    std::unique_lock lk(mutex_);
-    bool stateChanged {false};
-    auto c = contacts_.find(id);
-    const auto previousMetadata = c == contacts_.end() ? Metadata {} : c->second.metadata;
-    if (c == contacts_.end()) {
-        // JAMI_LOG("[Contacts] New contact: {}", id);
-        c = contacts_.emplace(id, contact).first;
-        if (!c->second.metadata.validate())
-            c->second.metadata = {};
-        stateChanged = c->second.isActive() or c->second.isBanned();
-    } else {
-        // JAMI_LOG("[Contacts] Updated contact: {}", id);
-        stateChanged = c->second.update(contact);
-    }
-    Metadata::Change change;
-    change.changed = c->second.metadata != previousMetadata;
-    if (change.changed && emit) {
-        if (saveContactMetadata()) {
-            auto values = c->second.metadata.values();
-            if (values != previousMetadata.values())
-                change.snapshot = std::move(values);
-        } else {
-            c->second.metadata = previousMetadata;
-            change.changed = false;
-        }
-    }
-    const auto updated = c->second;
-    if (stateChanged) {
-        if (trustRequests_.erase(id) > 0)
-            saveTrustRequests();
-    }
-    lk.unlock();
-    if (emit)
-        notifyMetadataChanged(id, updated.metadata, change);
-    if (stateChanged) {
-        if (updated.isActive()) {
-            trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
-            if (emit)
-                callbacks_.contactAdded(id.toString(), updated.confirmed);
-        } else {
-            if (updated.banned)
-                trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::BANNED);
-            if (emit)
-                callbacks_.contactRemoved(id.toString(), updated.banned);
-        }
-    }
 }
 
 std::map<dht::InfoHash, Contact>
@@ -357,8 +368,28 @@ ContactList::loadContacts()
 {
     auto contacts = contactsFromPath(path_);
     JAMI_WARNING("[Account {}] [Contacts] Loaded {} contacts", accountId_, contacts.size());
-    for (auto& peer : contacts)
-        updateContact(peer.first, peer.second, false);
+    std::lock_guard lk(mutex_);
+    for (const auto& [id, stored] : contacts) {
+        if (!id || !stored.isMergeable()) {
+            JAMI_WARNING("[Account {}] [Contacts] Ignoring invalid stored contact {}", accountId_, id);
+            continue;
+        }
+        // Merging a contact with itself restores the invariants of data written by older versions.
+        updateTrustStatus(id, contacts_[id] = Contact::merge(stored, stored));
+    }
+}
+
+void
+ContactList::updateTrustStatus(const dht::InfoHash& id, const Contact& contact)
+{
+    // A list built without an account certificate has no trust store.
+    if (!trust_)
+        return;
+    using Status = dhtnet::tls::TrustStore::PermissionStatus;
+    trust_->setCertificateStatus(id.toString(),
+                                 contact.isActive()   ? Status::ALLOWED
+                                 : contact.isBanned() ? Status::BANNED
+                                                      : Status::UNDEFINED);
 }
 
 void
@@ -371,7 +402,7 @@ ContactList::saveContacts() const
 }
 
 bool
-ContactList::saveContactMetadata() const
+ContactList::saveContactsAtomically() const
 {
     JAMI_LOG("[Account {}] [Contacts] saving {} contacts", accountId_, contacts_.size());
     std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
@@ -475,8 +506,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                       .first;
         } else {
             auto incomingTimestamp = invited != TimePoint {} ? invited : received;
-            auto existingTimestamp = req->second.invited != TimePoint {} ? req->second.invited
-                                                             : req->second.received;
+            auto existingTimestamp = req->second.invited != TimePoint {} ? req->second.invited : req->second.received;
 
             if (incomingTimestamp > existingTimestamp) {
                 req->second.device = peer_device;
@@ -493,11 +523,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
     lk.unlock();
     // Note: call JamiAccount's callback to build ConversationRequest anyway
     if (!confirm)
-        callbacks_.trustRequest(peer_account.toString(),
-                                conversationId,
-                                std::move(payload),
-                                received,
-                                invited);
+        callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received, invited);
     else if (active) {
         // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);
@@ -575,8 +601,7 @@ ContactList::discardTrustRequest(const dht::InfoHash& from, const std::string& c
 {
     std::lock_guard lk(mutex_);
     auto request = trustRequests_.find(from);
-    if (request == trustRequests_.end()
-        || (!conversationId.empty() && request->second.conversationId != conversationId))
+    if (request == trustRequests_.end() || (!conversationId.empty() && request->second.conversationId != conversationId))
         return false;
     const auto invited = request->second.invited != TimePoint {} ? request->second.invited : request->second.received;
     if (invited > declined)

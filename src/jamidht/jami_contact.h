@@ -81,6 +81,54 @@ struct Contact
     bool isActive() const { return added > removed; }
     bool isBanned() const { return not isActive() and banned; }
 
+    /**
+     * Precondition of merge(), weaker than isValid().
+     *
+     * Contacts that violate isValid() are expected in practice and still carry information that
+     * must not be lost, mainly their addition and removal times. For example:
+     * - an active contact with `banned` set, written by older versions that did not clear the
+     *   flag when re-adding a banned contact;
+     * - a contact removed without a ban that still has a `conversationId`, written by versions
+     *   older than commit e0119430d, which kept it on removal;
+     * - a removed contact that is still `confirmed` or linked to a conversation, because a daemon
+     *   older than commit 5d4ce4c0e (which still stores seconds) truncated its timestamps and made
+     *   `added == removed`.
+     * They come from stored contact lists, account archives and other devices. Rejecting them
+     * would drop stored contacts (and their bans) or stop additions and removals from propagating,
+     * so they are merged instead: merge() keeps their timestamps and clears only the fields that
+     * violate an invariant. Those fields describe an addition or removal that is no longer the
+     * latest, so no information about the contact's current state is lost.
+     *
+     * A copy is rejected only if it carries nothing to merge: no addition or removal time (what
+     * a malformed entry decodes to; `added` alone may be unset, since removing or banning an
+     * unknown peer creates a contact that was never added), or metadata that is not well formed
+     * (the decoders fall back to empty metadata, so this only guards contacts built in memory).
+     */
+    bool isMergeable() const { return (added != TimePoint {} || removed != TimePoint {}) && metadata.validate(); }
+
+    /**
+     * Whether the contact satisfies every invariant. Contacts produced by merge() always do. Each field belongs to the
+     * latest addition or the latest removal, and must be empty while that event is not the current one:
+     * - isMergeable();
+     * - removed: the time of the current removal, so unset while active (clients rely on "removed" being 0 in the
+     *   details of active contacts);
+     * - confirmed: the peer accepted our request for the current addition, so only while active;
+     * - metadata: written about the current addition, so only while active; removal discards it;
+     * - banned: the current removal is a ban, so only while inactive;
+     * - conversationId: the conversation of the current addition, or the one kept as evidence by a
+     *   ban, so empty for a contact removed without a ban.
+     */
+    bool isValid() const
+    {
+        if (!isMergeable())
+            return false;
+        if (isActive())
+            return removed == TimePoint {} && !banned;
+        return !confirmed && metadata.entries.empty() && (banned || conversationId.empty());
+    }
+
+    bool operator==(const Contact&) const = default;
+
     Contact() = default;
     Contact(const Json::Value& json)
     {
@@ -105,25 +153,51 @@ struct Contact
     }
 
     /**
-     * Update this contact using other known contact information,
-     * return true if contact state was changed.
+     * Merges two copies of the same contact, e.g. from different devices. Both must be mergeable;
+     * the result is always valid (see isValid()).
+     * The latest addition and the latest removal win; a tie means removed. If the result is active,
+     * its removal time is reset: every known removal is older than the addition, so it can never
+     * affect a later merge. Every other field belongs to one of these events and is combined only
+     * among the copies of that event:
+     * - confirmed (ORed) and metadata (register-merged) belong to the current addition, and are
+     *   cleared if the contact is inactive;
+     * - banned (ORed) belongs to the current removal, and is cleared if the contact is active;
+     * - conversationId belongs to the current addition, or to the current removal if it is a ban,
+     *   and is cleared for other removed contacts.
+     * So a removal discards metadata, and copies of an earlier addition never leak into a later one.
+     * The result is the same whatever the order of the copies, except that `local` wins
+     * conversationId ties (it is changed locally without advancing a timestamp) and keeps its
+     * registers if they conflict.
+     *
+     * merge(x, x) == x only if x is valid. Otherwise it normalizes x: the latest event is kept and
+     * every field violating an invariant is cleared, i.e. removed if x is active, confirmed and
+     * metadata if x is inactive, banned if x is active, and conversationId if x is removed without a
+     * ban. Merging a contact with itself is how contacts loaded from storage or archives are repaired.
      */
-    bool update(const Contact& c)
+    static Contact merge(const Contact& local, const Contact& remote)
     {
-        const auto copy = *this;
-        if (!metadata.merge(c.metadata))
-            JAMI_WARNING("Cannot merge contact metadata; retaining local registers");
-        auto isMoreRecent = std::max(c.added, c.removed) > std::max(added, removed);
-        if (isMoreRecent) {
-            added = c.added;
-            removed = c.removed;
-            banned = c.banned;
-            conversationId = c.conversationId;
-            confirmed = c.confirmed;
-        } else if (isActive() && added == c.added) {
-            confirmed = confirmed or c.confirmed;
+        Contact result;
+        result.added = std::max(local.added, remote.added);
+        result.removed = std::max(local.removed, remote.removed);
+        const bool localAddition = local.added == result.added;
+        const bool remoteAddition = remote.added == result.added;
+        if (result.isActive()) {
+            result.removed = {};
+            result.confirmed = (localAddition && local.confirmed) || (remoteAddition && remote.confirmed);
+            result.conversationId = localAddition ? local.conversationId : remote.conversationId;
+            result.metadata = localAddition ? local.metadata : remote.metadata;
+            if (localAddition && remoteAddition && !result.metadata.merge(remote.metadata))
+                JAMI_WARNING("Cannot merge contact metadata; retaining local registers");
+        } else {
+            const bool localBan = local.removed == result.removed && local.banned;
+            const bool remoteBan = remote.removed == result.removed && remote.banned;
+            result.banned = localBan || remoteBan;
+            if (localBan)
+                result.conversationId = local.conversationId;
+            else if (remoteBan)
+                result.conversationId = remote.conversationId;
         }
-        return hasDifferentState(copy);
+        return result;
     }
 
     bool hasDifferentState(const Contact& other) const
@@ -370,9 +444,7 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     Metadata metadata;
-    // Incremental registers only; full syncs carry metadata in peers.
-    std::map<dht::InfoHash, Metadata> contact_metadata;
-    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata, contact_metadata)
+    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata)
 };
 
 struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>

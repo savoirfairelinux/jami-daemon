@@ -78,7 +78,7 @@ AccountManager::getContactMetadata(const std::string& uri, Metadata::Values& met
         return false;
     }
     const auto contact = info_->contacts->getContactInfo(id);
-    if (!contact || !contact->metadata.validate())
+    if (!contact || !contact->isActive() || !contact->metadata.validate())
         return false;
     metadata = contact->metadata.values();
     return true;
@@ -152,15 +152,10 @@ AccountManager::onSyncData(DeviceSync&& sync, const DeviceId& device)
     }
 
     // Sync contacts
-    if (!sync.peers.empty()) {
-        for (const auto& peer : sync.peers) {
-            info_->contacts->updateContact(peer.first, peer.second);
-        }
-        info_->contacts->saveContacts();
-    }
-    for (const auto& [id, metadata] : sync.contact_metadata)
-        if (!info_->contacts->mergeContactMetadata(id, metadata))
-            JAMI_WARNING("[Account {}] Cannot merge contact metadata for {}; continuing sync", accountId_, id);
+    if (!sync.peers.empty() && !info_->contacts->mergeContacts(sync.peers))
+        JAMI_WARNING("[Account {}] [device {}] Cannot save synced contacts; continuing sync",
+                     accountId_,
+                     device.to_view());
 
     // Sync trust requests
     // Pass through the sender-embedded invite timestamp (tr.second.invited) so a second device

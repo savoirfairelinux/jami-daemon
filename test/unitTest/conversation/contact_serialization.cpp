@@ -94,7 +94,8 @@ private:
     // isActive() distinguishes events within the same second
     void testContactIsActiveMsResolution();
     void testContactMetadata();
-    void testContactMetadataMerge();
+    void testContactMergeProperties();
+    void testContactMergeScenarios();
     // Same backward-compatibility checks for TrustRequest
     void testTrustRequestLegacyToNew();
     void testTrustRequestNewToLegacy();
@@ -119,7 +120,8 @@ private:
     CPPUNIT_TEST(testContactToMapStaysSeconds);
     CPPUNIT_TEST(testContactIsActiveMsResolution);
     CPPUNIT_TEST(testContactMetadata);
-    CPPUNIT_TEST(testContactMetadataMerge);
+    CPPUNIT_TEST(testContactMergeProperties);
+    CPPUNIT_TEST(testContactMergeScenarios);
     CPPUNIT_TEST(testTrustRequestLegacyToNew);
     CPPUNIT_TEST(testTrustRequestNewToLegacy);
     CPPUNIT_TEST(testTrustRequestMsgpackRoundtrip);
@@ -258,8 +260,8 @@ ContactSerializationTest::testContactMetadata()
 {
     Contact contact;
     contact.added = timePointFromMilliseconds(2000);
-    contact.metadata.entries = {{"label", {1000, std::string(64, 'a'), {0x80, 0, 0xff}}},
-                                {"empty", {1000, std::string(64, 'a'), {}}}};
+    contact.metadata.entries = {{"label", {2000, std::string(64, 'a'), {0x80, 0, 0xff}}},
+                                {"empty", {2000, std::string(64, 'a'), {}}}};
     CPPUNIT_ASSERT(repack<Contact>(contact).metadata == contact.metadata);
     msgpack::zone zone;
     msgpack::object object(contact, zone);
@@ -271,30 +273,119 @@ ContactSerializationTest::testContactMetadata()
     CPPUNIT_ASSERT(!contact.toMap().contains("metadata"));
 }
 
-void
-ContactSerializationTest::testContactMetadataMerge()
+namespace {
+
+const std::string writerA(64, 'a');
+const std::string writerB(64, 'b');
+
+Contact
+makeContact(int64_t addedMs,
+            int64_t removedMs,
+            bool confirmed = false,
+            bool banned = false,
+            std::string conversationId = {},
+            std::map<std::string, MetadataEntry> metadata = {})
 {
-    Contact a, b;
-    a.added = timePointFromMilliseconds(2000);
-    b.added = timePointFromMilliseconds(1000);
-    const std::vector<uint8_t> winningLabel {0, 0xff};
-    a.metadata.entries = {{"label", {1000, std::string(64, 'a'), {0, 0x80}}}};
-    b.metadata.entries = {{"label", {1000, std::string(64, 'b'), winningLabel}},
-                          {"other", {1000, std::string(64, 'b'), {1}}}};
-    CPPUNIT_ASSERT(!a.update(b)); // Metadata alone is not a contact-state change.
-    CPPUNIT_ASSERT(!b.update(a));
-    CPPUNIT_ASSERT(b.added == a.added);
-    CPPUNIT_ASSERT(a.metadata == b.metadata);
-    CPPUNIT_ASSERT(a.metadata.entries.at("label").value == winningLabel);
-    Contact removed;
-    removed.removed = timePointFromMilliseconds(3000);
-    CPPUNIT_ASSERT(a.update(removed));
-    CPPUNIT_ASSERT(a.metadata == b.metadata); // Legacy removal cannot erase metadata.
-    CPPUNIT_ASSERT(!a.isActive());
-    auto invalid = b;
-    invalid.metadata.entries.at("label").timestampMs = 0;
-    CPPUNIT_ASSERT(!a.update(invalid));
-    CPPUNIT_ASSERT(a.metadata == b.metadata);
+    Contact contact;
+    contact.added = timePointFromMilliseconds(addedMs);
+    contact.removed = timePointFromMilliseconds(removedMs);
+    contact.confirmed = confirmed;
+    contact.banned = banned;
+    contact.conversationId = std::move(conversationId);
+    contact.metadata.entries = std::move(metadata);
+    return contact;
+}
+
+} // namespace
+
+void
+ContactSerializationTest::testContactMergeProperties()
+{
+    // Copies of one contact's history as different devices may hold it. Copies of the same
+    // addition share its conversation, as conversationId ties are resolved in favour of the local copy.
+    const std::vector<Contact> copies {
+        makeContact(1000, 0, false, false, "first", {{"k", {1100, writerA, {1}}}}),
+        makeContact(1000, 0, true, false, "first", {{"k", {1200, writerB, {2}}}, {"j", {1100, writerB, {3}}}}),
+        makeContact(1000, 2000),
+        makeContact(1000, 2000, false, true),
+        makeContact(2000, 0, true, false, "tied", {{"m", {2100, writerA, {5}}}}),
+        makeContact(3000, 0, false, false, "second", {{"k", {3100, writerA, {4}}}}),
+        makeContact(0, 2500, false, true),
+    };
+    for (const auto& a : copies) {
+        CPPUNIT_ASSERT(a.isValid());
+        CPPUNIT_ASSERT(Contact::merge(a, a) == a);
+        for (const auto& b : copies) {
+            const auto ab = Contact::merge(a, b);
+            CPPUNIT_ASSERT(ab.isValid());
+            CPPUNIT_ASSERT(ab == Contact::merge(b, a));
+            CPPUNIT_ASSERT(Contact::merge(ab, b) == ab);
+            for (const auto& c : copies)
+                CPPUNIT_ASSERT(Contact::merge(ab, c) == Contact::merge(a, Contact::merge(b, c)));
+        }
+    }
+}
+
+void
+ContactSerializationTest::testContactMergeScenarios()
+{
+    const auto active = makeContact(1000, 0, true, false, "conv", {{"k", {1100, writerA, {1}}}});
+
+    // Removal discards metadata and confirmation, and a stale copy cannot restore them.
+    const auto removed = Contact::merge(active, makeContact(0, 2000));
+    CPPUNIT_ASSERT(!removed.isActive());
+    CPPUNIT_ASSERT(removed.metadata.entries.empty());
+    CPPUNIT_ASSERT(!removed.confirmed);
+    CPPUNIT_ASSERT(removed.conversationId.empty());
+    CPPUNIT_ASSERT(Contact::merge(removed, active) == removed);
+
+    // Re-adding starts empty: registers of the earlier addition never enter the new one.
+    const auto readded = makeContact(3000, 0, false, false, "new", {{"j", {3100, writerB, {2}}}});
+    CPPUNIT_ASSERT(Contact::merge(active, readded) == readded);
+    CPPUNIT_ASSERT(Contact::merge(removed, readded) == readded); // The older removal time is reset.
+    CPPUNIT_ASSERT(Contact::merge(Contact::merge(removed, readded), active).metadata == readded.metadata);
+
+    // Within an addition, confirmation is sticky and registers are merged.
+    const auto other = makeContact(1000, 0, false, false, "conv", {{"j", {1200, writerB, {3}}}});
+    const auto merged = Contact::merge(other, active);
+    CPPUNIT_ASSERT(merged.confirmed);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), merged.metadata.entries.size());
+
+    // A ban wins over a plain removal at the same time; an addition at the same time as a removal loses.
+    CPPUNIT_ASSERT(Contact::merge(makeContact(1000, 2000), makeContact(1000, 2000, false, true)).isBanned());
+    CPPUNIT_ASSERT(!Contact::merge(makeContact(2000, 0), makeContact(1000, 2000)).isActive());
+
+    // The local copy wins conversationId ties and keeps its registers if they cannot be merged.
+    auto conflicting = active;
+    conflicting.conversationId = "other";
+    conflicting.metadata.entries.at("k").value = {9};
+    const auto local = Contact::merge(active, conflicting);
+    CPPUNIT_ASSERT_EQUAL(active.conversationId, local.conversationId);
+    CPPUNIT_ASSERT(local.metadata == active.metadata);
+
+    // Each invariant violation is detected and repaired by merging a contact with itself,
+    // which keeps the latest event and clears the offending field.
+    auto stale = [](Contact c, auto&& change) {
+        change(c);
+        return c;
+    };
+    const std::vector<Contact> invalid {
+        stale(removed, [&](Contact& c) { c.confirmed = true; }),
+        stale(removed, [&](Contact& c) { c.metadata = active.metadata; }),
+        stale(removed, [&](Contact& c) { c.conversationId = "conv"; }),
+        stale(active, [&](Contact& c) { c.banned = true; }),
+        stale(active, [&](Contact& c) { c.removed = timePointFromMilliseconds(500); }),
+    };
+    for (const auto& contact : invalid) {
+        CPPUNIT_ASSERT(contact.isMergeable() && !contact.isValid());
+        const auto normalized = Contact::merge(contact, contact);
+        CPPUNIT_ASSERT(normalized.isValid());
+        CPPUNIT_ASSERT(normalized.added == contact.added && normalized.isActive() == contact.isActive());
+    }
+    CPPUNIT_ASSERT(Contact::merge(invalid[0], invalid[0]) == removed);
+    CPPUNIT_ASSERT(Contact::merge(invalid[3], invalid[3]) == active);
+    CPPUNIT_ASSERT(Contact::merge(invalid[4], invalid[4]) == active);
+    CPPUNIT_ASSERT(!Contact {}.isMergeable());
 }
 
 void

@@ -1300,10 +1300,10 @@ JamiAccount::setupAccountCallbacks()
             onConversationRequestAccepted(conversationId, deviceId);
         },
         [this](const std::string& uri, const std::string& convFromReq) { onContactConfirmed(uri, convFromReq); },
-        [this](const dht::InfoHash& uri, const Metadata& metadata) {
+        [this](const dht::InfoHash& uri, const Contact& contact) {
             auto msg = std::make_shared<SyncMsg>();
             msg->ds.date = AccountManager::clock::now().time_since_epoch().count();
-            msg->ds.contact_metadata.emplace(uri, metadata);
+            msg->ds.peers.emplace(uri, contact);
             conversationNeedsSyncing(std::move(msg));
         }};
 }

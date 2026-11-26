@@ -60,16 +60,18 @@ struct SyncMsg
 
     /**
      * Whether this message carries contact/conversation *list* state, i.e.
-     * contacts, devices, trust requests, conversations or conversation
-     * requests. Propagating such a change may require (re)connecting to
-     * devices that are not currently connected. Metadata-only messages
-     * (account/contact registers `ds.metadata`/`ds.contact_metadata`, preferences `p`, read/fetched status `ms`,
-     * deprecated last-displayed `ld`) return false and only need to ride existing connections.
+     * devices, trust requests, conversations or conversation requests.
+     * Propagating such a change may require (re)connecting to devices that are
+     * not currently connected. Other messages (account registers `ds.metadata`,
+     * contacts `ds.peers`, preferences `p`, read/fetched status `ms`, deprecated
+     * last-displayed `ld`) return false and only need to ride existing connections.
+     *
+     * Contacts in `ds.peers` are merged, so a message carrying only the contacts
+     * that changed is safe. Additions and removals reach disconnected devices
+     * independently: ContactList reports them through contactAdded/contactRemoved,
+     * which bump the sync version (JamiAccount::onSyncListChanged).
      */
-    bool affectsList() const
-    {
-        return !ds.devices.empty() || !ds.peers.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty();
-    }
+    bool affectsList() const { return !ds.devices.empty() || !ds.trust_requests.empty() || !c.empty() || !cr.empty(); }
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
