@@ -160,9 +160,11 @@ private:
     // Here we store their references in order to make them interact with MediaHandlers.
     // For easy access they are mapped with the call they belong to.
     std::map<std::string, std::list<std::pair<const StreamData, AVSubjectSPtr>>> callAVsubjects_;
-    // Protects callAVsubjects_: media streams are created from media start
-    // tasks running on the thread pool while calls are torn down from the
-    // signaling thread. Recursive because createAVSubject() toggles handlers.
+    // Protects callMediaHandlers_, callAVsubjects_ and mediaHandlerToggled_:
+    // media streams are created from media start tasks running on the thread
+    // pool, calls are torn down from the signaling thread and plugins are
+    // (un)loaded from the client thread. Recursive because createAVSubject()
+    // and unregisterMediaHandler toggle handlers.
     std::recursive_mutex avSubjectsMtx_;
 
     // Component that stores MediaHandlers' status for each existing call.

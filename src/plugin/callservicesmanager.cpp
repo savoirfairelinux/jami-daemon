@@ -34,6 +34,7 @@ CallServicesManager::CallServicesManager(PluginManager& pluginManager)
 
 CallServicesManager::~CallServicesManager()
 {
+    std::lock_guard lk(avSubjectsMtx_);
     callMediaHandlers_.clear();
     callAVsubjects_.clear();
     mediaHandlerToggled_.clear();
@@ -94,6 +95,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     // registerMediaHandler may be called by the PluginManager upon loading a plugin.
     auto registerMediaHandler = [this](void* data, std::mutex& pmMtx_) {
         std::lock_guard lk(pmMtx_);
+        std::lock_guard avLk(avSubjectsMtx_);
         CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
         if (!ptr)
@@ -109,22 +111,26 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     // unregisterMediaHandler may be called by the PluginManager while unloading.
     auto unregisterMediaHandler = [this](void* data, std::mutex& pmMtx_) {
         std::lock_guard lk(pmMtx_);
+        std::lock_guard avLk(avSubjectsMtx_);
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
                                       [data](CallMediaHandlerPtr& handler) { return (handler.get() == data); });
 
         if (handlerIt != callMediaHandlers_.end()) {
+            const auto handlerId = (uintptr_t) handlerIt->get();
             for (auto& toggledList : mediaHandlerToggled_) {
-                auto handlerId = std::find_if(toggledList.second.begin(),
-                                              toggledList.second.end(),
-                                              [handlerIt](std::pair<uintptr_t, bool> handlerIdPair) {
-                                                  return handlerIdPair.first == (uintptr_t) handlerIt->get()
-                                                         && handlerIdPair.second;
-                                              });
-                // If MediaHandler is attempting to destroy one which is currently in use, we deactivate it.
-                if (handlerId != toggledList.second.end())
-                    toggleCallMediaHandler((*handlerId).first, toggledList.first, false);
+                auto it = toggledList.second.find(handlerId);
+                // If the MediaHandler being destroyed is currently in use, we deactivate it.
+                if (it != toggledList.second.end() && it->second)
+                    toggleCallMediaHandler(handlerId, toggledList.first, false);
             }
+            // Always detach before destruction so that no frame observer
+            // outlives the plugin code that is about to be unloaded.
+            (*handlerIt)->detach();
+            // Drop per-call state of this handler: its address may be reused by
+            // a later allocation and must not inherit a stale toggle state.
+            for (auto& toggledList : mediaHandlerToggled_)
+                toggledList.second.erase(handlerId);
             callMediaHandlers_.erase(handlerIt);
         }
         return true;
@@ -137,6 +143,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 std::vector<std::string>
 CallServicesManager::getCallMediaHandlers()
 {
+    std::lock_guard lk(avSubjectsMtx_);
     std::vector<std::string> res;
     res.reserve(callMediaHandlers_.size());
     for (const auto& mediaHandler : callMediaHandlers_) {
@@ -160,7 +167,14 @@ CallServicesManager::toggleCallMediaHandler(const std::string& mediaHandlerId,
 std::map<std::string, std::string>
 CallServicesManager::getCallMediaHandlerDetails(const std::string& mediaHandlerIdStr)
 {
-    auto mediaHandlerId = std::stoull(mediaHandlerIdStr);
+    uintptr_t mediaHandlerId;
+    try {
+        mediaHandlerId = std::stoull(mediaHandlerIdStr);
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Invalid media handler id '{}': {}", mediaHandlerIdStr, e.what());
+        return {};
+    }
+    std::lock_guard lk(avSubjectsMtx_);
     for (auto& mediaHandler : callMediaHandlers_) {
         if ((uintptr_t) mediaHandler.get() == mediaHandlerId) {
             return mediaHandler->getCallMediaHandlerDetails();
@@ -202,6 +216,7 @@ CallServicesManager::isAttached(const CallMediaHandlerPtr& mediaHandler)
 std::vector<std::string>
 CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     std::vector<std::string> ret;
     const auto& it = mediaHandlerToggled_.find(callId);
     if (it != mediaHandlerToggled_.end())
@@ -214,6 +229,7 @@ CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
 bool
 CallServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     bool status {true};
     for (auto& mediaHandler : callMediaHandlers_) {
         if (mediaHandler->id().find(rootPath) != std::string::npos) {
@@ -229,6 +245,7 @@ CallServicesManager::setPreference(const std::string& key, const std::string& va
 void
 CallServicesManager::clearCallHandlerMaps(const std::string& callId)
 {
+    std::lock_guard lk(avSubjectsMtx_);
     mediaHandlerToggled_.erase(callId);
 }
 
