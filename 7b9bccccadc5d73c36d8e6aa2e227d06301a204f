@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fea6b72_30322743",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T20:30:37Z",
+      "side": 1,
+      "message": "[warning] Line 334: 🟡 `setContacts()` no longer updates the trust store state for restored contacts. Previously `updateContact(..., emit\u003dfalse)` still set ALLOWED/BANNED on lifecycle state, but now only callbacks are emitted. On freshly provisioned/restored devices this can leave active/banned peers with stale/undefined certificate permission until a later lifecycle change. Mirror `loadContacts()` behavior here by setting trust status from each normalized stored contact before notifications.",
+      "revId": "7b9bccccadc5d73c36d8e6aa2e227d06301a204f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58893ce9_8a3d82e5",
+        "filename": "src/jamidht/jami_contact.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 393,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T20:30:37Z",
+      "side": 1,
+      "message": "[error] Line 393: 🔴 Removing `contact_metadata` from `DeviceSync` breaks mixed-version device sync: older clients still send incremental metadata updates in that field, and this version will silently drop them. That can cause permanent metadata divergence until some unrelated full-contact update happens. Keep backward-compatible decoding (e.g., retain an optional `contact_metadata` field for deserialization) and merge it in `AccountManager::onSyncData` as a fallback when present.",
+      "revId": "7b9bccccadc5d73c36d8e6aa2e227d06301a204f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
