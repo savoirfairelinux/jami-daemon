@@ -943,6 +943,10 @@ private:
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
+    // Token of the queued read receipt of each member of each conversation ("conversation/member")
+    std::mutex displayedTokensMtx_ {};
+    std::map<std::string, uint64_t> displayedTokens_ {};
+
     mutable std::mutex sipConnsMtx_ {};
     struct SipConnection
     {

@@ -3483,8 +3483,28 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri, const std::
     auto sendMessage = status == (int) libjami::Account::MessageStates::DISPLAYED && isReadReceiptEnabled();
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
-    if (sendMessage)
-        sendInstantMessage(uri.authority(), {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
+    if (sendMessage) {
+        std::map<std::string, std::string> payload {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}};
+        if (conversationId.empty()) {
+            sendInstantMessage(uri.authority(), payload);
+            return true;
+        }
+        // Queue the receipt in the message engine so it is sent once the member is reachable,
+        // instead of only if a channel happens to be open right now. A newer receipt replaces
+        // the one still waiting for the same member and conversation.
+        for (const auto& m : convModule()->getConversationMembers(conversationId)) {
+            const auto& member = m.at("uri");
+            if (member == getUsername()) {
+                // Our other devices get the status through the conversation sync.
+                auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+                this->sendMessage(member, "", payload, token, false, true);
+                continue;
+            }
+            std::lock_guard lk(displayedTokensMtx_);
+            auto& token = displayedTokens_[conversationId + '/' + member];
+            token = messageEngine_.sendMessage(member, "", payload, token);
+        }
+    }
     return true;
 }
 

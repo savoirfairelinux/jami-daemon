@@ -34,6 +34,15 @@
 namespace jami {
 namespace im {
 
+// Conversation announcements and read receipts are not messages of their own for the client:
+// their delivery changes no message status.
+static bool
+isSilent(const std::map<std::string, std::string>& payloads)
+{
+    return payloads.find("application/im-gitmessage-id") != payloads.end()
+           || payloads.find("message/imdn+xml") != payloads.end();
+}
+
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::filesystem::path& path)
     : account_(acc)
     , savePath_(path)
@@ -149,7 +158,7 @@ MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, b
     // avoid locking while calling callback
     for (const auto& p : pending) {
         JAMI_DEBUG("[Account {:s}] [message {:d}] Reattempt sending", account_.getAccountID(), p.token);
-        if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
+        if (!isSilent(p.payloads))
             emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
                 "",
@@ -194,7 +203,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
 
     auto f = std::find_if(p->second.begin(), p->second.end(), [&](const Message& m) { return m.token == token; });
     if (f != p->second.end()) {
-        auto emit = f->payloads.find("application/im-gitmessage-id") == f->payloads.end();
+        auto emit = !isSilent(f->payloads);
         if (f->status == MessageStatus::SENDING) {
             if (ok) {
                 f->status = MessageStatus::SENT;
