@@ -81,6 +81,12 @@ struct Contact
     bool isActive() const { return added > removed; }
     bool isBanned() const { return not isActive() and banned; }
 
+    /** At least one of added/removed is set (added is unset for a contact banned before being added),
+     * and metadata is valid. Other constraints between fields are enforced by merge(). */
+    bool isValid() const { return (added != TimePoint {} || removed != TimePoint {}) && metadata.validate(); }
+
+    bool operator==(const Contact&) const = default;
+
     Contact() = default;
     Contact(const Json::Value& json)
     {
@@ -105,25 +111,42 @@ struct Contact
     }
 
     /**
-     * Update this contact using other known contact information,
-     * return true if contact state was changed.
+     * Merges two copies of the same contact, e.g. from different devices.
+     * The latest addition and the latest removal win; a tie means removed. Every other field belongs
+     * to one of these events and is combined only among the copies of that event:
+     * - confirmed (ORed) and metadata (register-merged) belong to the current addition, and are
+     *   cleared if the contact is inactive;
+     * - banned (ORed) belongs to the current removal, and is cleared if the contact is active;
+     * - conversationId belongs to the current addition, or to the current removal if it is a ban,
+     *   and is cleared for other removed contacts.
+     * So a removal discards metadata, and copies of an earlier addition never leak into a later one.
+     * The result is the same whatever the order of the copies, except that `local` wins
+     * conversationId ties (it is changed locally without advancing a timestamp) and keeps its
+     * registers if they conflict. Merging a contact with itself normalizes it.
      */
-    bool update(const Contact& c)
+    static Contact merge(const Contact& local, const Contact& remote)
     {
-        const auto copy = *this;
-        if (!metadata.merge(c.metadata))
-            JAMI_WARNING("Cannot merge contact metadata; retaining local registers");
-        auto isMoreRecent = std::max(c.added, c.removed) > std::max(added, removed);
-        if (isMoreRecent) {
-            added = c.added;
-            removed = c.removed;
-            banned = c.banned;
-            conversationId = c.conversationId;
-            confirmed = c.confirmed;
-        } else if (isActive() && added == c.added) {
-            confirmed = confirmed or c.confirmed;
+        Contact result;
+        result.added = std::max(local.added, remote.added);
+        result.removed = std::max(local.removed, remote.removed);
+        const bool localAddition = local.added == result.added;
+        const bool remoteAddition = remote.added == result.added;
+        if (result.isActive()) {
+            result.confirmed = (localAddition && local.confirmed) || (remoteAddition && remote.confirmed);
+            result.conversationId = localAddition ? local.conversationId : remote.conversationId;
+            result.metadata = localAddition ? local.metadata : remote.metadata;
+            if (localAddition && remoteAddition && !result.metadata.merge(remote.metadata))
+                JAMI_WARNING("Cannot merge contact metadata; retaining local registers");
+        } else {
+            const bool localBan = local.removed == result.removed && local.banned;
+            const bool remoteBan = remote.removed == result.removed && remote.banned;
+            result.banned = localBan || remoteBan;
+            if (localBan)
+                result.conversationId = local.conversationId;
+            else if (remoteBan)
+                result.conversationId = remote.conversationId;
         }
-        return hasDifferentState(copy);
+        return result;
     }
 
     bool hasDifferentState(const Contact& other) const
@@ -370,9 +393,7 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     Metadata metadata;
-    // Incremental registers only; full syncs carry metadata in peers.
-    std::map<dht::InfoHash, Metadata> contact_metadata;
-    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata, contact_metadata)
+    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests, metadata)
 };
 
 struct TrustRequestMsg : public dht::EncryptedValue<TrustRequestMsg>

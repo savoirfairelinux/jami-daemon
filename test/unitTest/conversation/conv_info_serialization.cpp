@@ -147,7 +147,7 @@ ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
     auto current = repack<SyncMsg>(legacy);
     CPPUNIT_ASSERT(current.p == legacy.p);
     CPPUNIT_ASSERT(current.ds.metadata.entries.empty());
-    CPPUNIT_ASSERT(current.ds.contact_metadata.empty());
+    CPPUNIT_ASSERT(current.ds.peers.empty());
     CPPUNIT_ASSERT(!current.affectsList());
     current.ds.metadata.entries["jami.channels.v1/id/deleted"] = {42, std::string(64, 'a'), {'1'}};
     CPPUNIT_ASSERT(!current.affectsList());
@@ -157,16 +157,18 @@ ConvInfoSerializationTest::testAccountMetadataSyncCompatibility()
     CPPUNIT_ASSERT(newReader.ds.metadata == current.ds.metadata);
     CPPUNIT_ASSERT(newReader.p == legacy.p);
     const auto peer = dht::InfoHash::get("contact");
-    current.ds.contact_metadata[peer].entries["label"] = {42, std::string(64, 'a'), {0, 0x80, 0xff}};
+    auto& contact = current.ds.peers[peer];
+    contact.added = timePointFromMilliseconds(1000);
+    contact.confirmed = true;
+    contact.metadata.entries["label"] = {1042, std::string(64, 'a'), {0, 0x80, 0xff}};
+    // Contacts are merged and their additions/removals wake devices on their own.
     CPPUNIT_ASSERT(!current.affectsList());
     newReader = repack<SyncMsg>(current);
-    CPPUNIT_ASSERT(newReader.ds.contact_metadata == current.ds.contact_metadata);
+    CPPUNIT_ASSERT(newReader.ds.peers == current.ds.peers);
     oldReader = repack<LegacySyncMsg>(current);
-    CPPUNIT_ASSERT(oldReader.ds.peers.empty());
-    current.ds.peers[dht::InfoHash::get("contact")].confirmed = true;
+    CPPUNIT_ASSERT(oldReader.ds.peers.at(peer).confirmed);
+    current.ds.devices[dht::PkId::get("device")] = KnownDeviceSync {"device"};
     CPPUNIT_ASSERT(current.affectsList());
-    oldReader = repack<LegacySyncMsg>(current);
-    CPPUNIT_ASSERT(oldReader.ds.peers.at(dht::InfoHash::get("contact")).confirmed);
 }
 
 void

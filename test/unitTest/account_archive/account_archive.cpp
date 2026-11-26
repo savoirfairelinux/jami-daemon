@@ -153,7 +153,7 @@ AccountArchiveTest::testContactMetadataSync()
     auto manager = alice->accountManager();
     const dht::InfoHash peer(std::string(40, 'c'));
     Contact contact;
-    contact.removed = nowMs();
+    contact.added = nowMs();
     manager->getInfo()->contacts->setContacts({{peer, contact}});
     auto notifications = std::make_shared<std::vector<Metadata::Values>>();
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactMetadataChanged>(
@@ -179,7 +179,8 @@ AccountArchiveTest::testContactMetadataSync()
     auto socket = std::make_shared<SyncSocket>();
     socket->onWrite = [sent, peer](const auto* data, std::size_t length) {
         const auto msg = msgpack::unpack(reinterpret_cast<const char*>(data), length).get().as<SyncMsg>();
-        if (msg.ds.contact_metadata.contains(peer)) {
+        // Incremental update: only the changed contact. Full-state pushes also list devices.
+        if (msg.ds.peers.size() == 1 && msg.ds.peers.contains(peer) && msg.ds.devices.empty()) {
             CPPUNIT_ASSERT(!msg.affectsList());
             CPPUNIT_ASSERT(msg.ds.date != 0);
             std::lock_guard lock(sent->mutex);
@@ -203,11 +204,10 @@ AccountArchiveTest::testContactMetadataSync()
     CPPUNIT_ASSERT_EQUAL(size_t(1), notifications->size());
     auto full = manager->getSyncData();
     CPPUNIT_ASSERT(!full.peers.at(peer).metadata.entries.empty());
-    const auto original = full.peers.at(peer).metadata;
     DeviceSync incoming;
     incoming.date = 1;
-    incoming.contact_metadata[peer] = original;
-    auto& entry = incoming.contact_metadata[peer].entries.at("label");
+    incoming.peers[peer] = full.peers.at(peer);
+    auto& entry = incoming.peers[peer].metadata.entries.at("label");
     ++entry.timestampMs;
     const std::vector<uint8_t> remoteLabel {0x81, 0, 0xff};
     entry.value = remoteLabel;
@@ -215,11 +215,10 @@ AccountArchiveTest::testContactMetadataSync()
     CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
     CPPUNIT_ASSERT(notifications->back().at("label") == remoteLabel);
     CPPUNIT_ASSERT(notifications->back().at("empty").empty());
-    auto merged = manager->getContactInfo(peer.toString())->metadata;
     DeviceSync stampOnly;
     stampOnly.date = 1;
-    stampOnly.contact_metadata[peer] = merged;
-    ++stampOnly.contact_metadata[peer].entries.at("label").timestampMs;
+    stampOnly.peers[peer] = *manager->getContactInfo(peer.toString());
+    ++stampOnly.peers[peer].metadata.entries.at("label").timestampMs;
     manager->onSyncData(std::move(stampOnly), disconnected);
     CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
     manager->onSyncData(std::move(full), disconnected); // Stale full sync cannot overwrite newer registers.
@@ -227,21 +226,41 @@ AccountArchiveTest::testContactMetadataSync()
     const auto newest = manager->getContactInfo(peer.toString())->metadata;
     DeviceSync invalid;
     invalid.date = 1;
-    invalid.contact_metadata[peer].entries["bad"] = {0, std::string(64, 'a'), {1}};
+    invalid.peers[peer] = *manager->getContactInfo(peer.toString());
+    invalid.peers[peer].metadata.entries["bad"] = {0, std::string(64, 'a'), {1}};
     const dht::InfoHash other(std::string(40, 'd'));
-    invalid.peers[other] = contact;
+    Contact removedOther;
+    removedOther.removed = nowMs();
+    invalid.peers[other] = removedOther;
     manager->onSyncData(std::move(invalid), disconnected);
     CPPUNIT_ASSERT(manager->getContactInfo(peer.toString())->metadata == newest);
     CPPUNIT_ASSERT(manager->getContactInfo(other.toString()));
     CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
     const auto saved = ContactList::contactsFromPath(manager->getInfo()->contacts->path()).at(peer);
     CPPUNIT_ASSERT(saved.metadata.entries.at("label").value == remoteLabel);
-    CPPUNIT_ASSERT(saved.removed == contact.removed);
+    CPPUNIT_ASSERT(saved.added == contact.added);
     lk.lock();
     cv.wait_for(lk, 2s, [] { return false; });
     CPPUNIT_ASSERT_EQUAL(version, sync->currentVersion());
     CPPUNIT_ASSERT(!sync->isConnected(disconnected));
     CPPUNIT_ASSERT(!sync->needsSync(disconnected));
+    lk.unlock();
+
+    // Removal discards metadata without a metadata signal; stale peers cannot restore it.
+    auto stale = *manager->getContactInfo(peer.toString());
+    manager->removeContact(peer.toString(), false);
+    libjami::MetadataMap values;
+    CPPUNIT_ASSERT(!libjami::getContactMetadata(aliceId, peer.toString(), values));
+    CPPUNIT_ASSERT(manager->getContactInfo(peer.toString())->metadata.entries.empty());
+    DeviceSync stalePeer;
+    stalePeer.date = 1;
+    stalePeer.peers[peer] = stale;
+    manager->onSyncData(std::move(stalePeer), disconnected);
+    CPPUNIT_ASSERT(manager->getContactInfo(peer.toString())->metadata.entries.empty());
+    CPPUNIT_ASSERT(
+        ContactList::contactsFromPath(manager->getInfo()->contacts->path()).at(peer).metadata.entries.empty());
+    CPPUNIT_ASSERT_EQUAL(size_t(2), notifications->size());
+    lk.lock();
 }
 
 void
@@ -254,9 +273,12 @@ AccountArchiveTest::testContactMetadataArchive()
     CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, uri, metadata));
     alice->accountManager()->removeContact(uri, false);
     libjami::MetadataMap values;
-    CPPUNIT_ASSERT(libjami::getContactMetadata(aliceId, uri, values));
-    CPPUNIT_ASSERT(values == metadata);
+    CPPUNIT_ASSERT(!libjami::getContactMetadata(aliceId, uri, values));
+    CPPUNIT_ASSERT(!libjami::setContactMetadata(aliceId, uri, metadata));
     alice->accountManager()->addContact(dht::InfoHash(uri));
+    CPPUNIT_ASSERT(libjami::getContactMetadata(aliceId, uri, values));
+    CPPUNIT_ASSERT(values.empty());
+    CPPUNIT_ASSERT(libjami::setContactMetadata(aliceId, uri, metadata));
     CPPUNIT_ASSERT(libjami::getContactMetadata(aliceId, uri, values));
     CPPUNIT_ASSERT(values == metadata);
     const std::filesystem::path path = "contact-metadata-export.gz";
@@ -492,7 +514,7 @@ AccountArchiveTest::testAccountMetadataSync()
     auto alice = Manager::instance().getAccount<JamiAccount>(aliceId);
     const dht::InfoHash peer(std::string(40, 'c'));
     Contact contact;
-    contact.removed = nowMs();
+    contact.added = nowMs();
     alice->accountManager()->getInfo()->contacts->setContacts({{peer, contact}});
     CPPUNIT_ASSERT(alice->exportArchive("metadata-sync.gz"));
     auto details = libjami::getAccountTemplate("RING");
