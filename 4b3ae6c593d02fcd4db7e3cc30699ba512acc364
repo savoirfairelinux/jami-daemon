@@ -33,6 +33,40 @@
       "message": "Addressed in this patchset.",
       "revId": "4b3ae6c593d02fcd4db7e3cc30699ba512acc364",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "824f5364_40620089",
+        "filename": "src/media/media_buffer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:39:20Z",
+      "side": 1,
+      "message": "[error] Line 28: 🔴 `getValidAVFrame()` treats any non-null `data[0]` as valid, but hardware-backed frames (`hw_frames_ctx !\u003d nullptr`) can have non-null `data[0]` while still being non-CPU-accessible. Forwarding those raw frames to plugin handlers reintroduces crash risk/regression from the removed plugin-specific download path. Reject hardware frames here (or convert to software memory before notify) so plugins only receive CPU-readable frames.",
+      "revId": "4b3ae6c593d02fcd4db7e3cc30699ba512acc364",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9cfe089_f43b2d8d",
+        "filename": "src/observer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:39:20Z",
+      "side": 1,
+      "message": "[warning] Line 205: 🟡 Output null-filtering is incomplete: `update()` drops null mapped outputs only for raw pointers (`std::is_pointer_v\u003cT2\u003e`), not for `std::shared_ptr` outputs. That conflicts with the stated intent to drop null outputs and leaves inconsistent behavior across specializations. Extend the check to `is_shared_ptr\u003cT2\u003e::value` (same pattern as input) to make null-output handling consistent.",
+      "revId": "4b3ae6c593d02fcd4db7e3cc30699ba512acc364",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
