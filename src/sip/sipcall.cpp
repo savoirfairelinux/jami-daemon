@@ -48,6 +48,9 @@
 #include <chrono>
 #include <libavutil/display.h>
 #include <video/sinkclient.h>
+#ifdef ENABLE_HWACCEL
+#include "video/accel.h"
+#endif
 #endif
 #include "audio/ringbufferpool.h"
 
@@ -429,7 +432,28 @@ SIPCall::createCallAVStreams()
 
     auto baseId = getCallId();
     auto mediaMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
-        return m->pointer();
+        if (!m)
+            return nullptr;
+        auto* frame = m->pointer();
+#if defined(ENABLE_VIDEO) && defined(ENABLE_HWACCEL)
+        // Plugins work on frames in main memory and are unable to handle
+        // hardware surfaces. Download hardware-decoded frames in place so
+        // that plugin modifications are still seen by the next observers.
+        if (frame && frame->hw_frames_ctx) {
+            try {
+                auto swFrame = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m),
+                                                                          AV_PIX_FMT_NV12);
+                if (!swFrame || !swFrame->pointer())
+                    return nullptr;
+                av_frame_unref(frame);
+                av_frame_move_ref(frame, swFrame->pointer());
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Unable to transfer hardware frame for plugins: {}", e.what());
+                return nullptr;
+            }
+        }
+#endif
+        return frame;
     };
 
     std::lock_guard lk(avStreamsMtx_);

@@ -24,6 +24,7 @@
 #include <list>
 #include <mutex>
 #include <functional>
+#include <type_traits>
 
 #ifndef __DEBUG__ // this is only defined on plugins build for debugging
 #include "logger.h"
@@ -192,7 +193,20 @@ public:
         : map_ {f}
     {}
 
-    void update(Observable<T1>*, const T1& t) override { this->notify(map_(t)); }
+    void update(Observable<T1>*, const T1& t) override
+    {
+        // Mapping may be expensive (e.g. GPU to CPU transfers), skip it when
+        // nobody listens.
+        if (this->getObserversCount() == 0)
+            return;
+        auto mapped = map_(t);
+        if constexpr (std::is_pointer_v<T2>) {
+            // Never forward null pointers to observers (e.g. plugins).
+            if (!mapped)
+                return;
+        }
+        this->notify(mapped);
+    }
 
     /**
      * @brief attached
