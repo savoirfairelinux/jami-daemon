@@ -155,7 +155,13 @@ export type VectMap = SwigVect<StringMap>
 export interface Blob extends SwigVect<number> {
   add(byte: number): void
 }
-export type BlobMap = SwigMap<string, Blob>
+export interface BlobMap {
+  keys(): SwigVect<string>
+  // eslint-disable-next-line camelcase -- SWIG method name
+  has_key(key: string): boolean
+  get(key: string): Blob
+  set(key: string, value: Blob): void
+}
 
 // ── Conversion helpers ──────────────────────────────────────
 

@@ -60,9 +60,8 @@ namespace std {
 
 %template(Blob) vector<uint8_t>;
 %ignore map<string, vector<uint8_t>>::get;
-%rename(get) map<string, vector<uint8_t>>::getCopy;
 %extend map<string, vector<uint8_t>> {
-    std::vector<uint8_t> getCopy(const std::string& key) const throw (std::out_of_range) {
+    std::vector<uint8_t> get(const std::string& key) const throw (std::out_of_range) {
         return $self->at(key);
     }
 
