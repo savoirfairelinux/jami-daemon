@@ -16,6 +16,23 @@
       "message": "Addressed in this patchset.",
       "revId": "47ff382e8ff13dc44e8a5f45b340a181b2745e94",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d6fc94b_442cdce6",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1196
+      },
+      "writtenOn": "2026-11-26T08:55:10Z",
+      "side": 1,
+      "message": "[warning] Line 169: 🟡 `std::stoull` still accepts non-canonical inputs for this ID format (notably leading whitespace and an optional sign), so malformed external IDs can still map to unintended `uintptr_t` values. Parse strictly as decimal digits only (e.g. `std::from_chars`), require full consumption, and reject any sign/whitespace before comparing against handler addresses.",
+      "revId": "47ff382e8ff13dc44e8a5f45b340a181b2745e94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
