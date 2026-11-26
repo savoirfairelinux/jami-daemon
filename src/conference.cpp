@@ -391,7 +391,7 @@ Conference::createConfAVStreams()
     std::string accountId = getAccountId();
 
     auto audioMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
-        return std::static_pointer_cast<AudioFrame>(m)->pointer();
+        return getValidAVFrame(m);
     };
 
     // Preview and Received

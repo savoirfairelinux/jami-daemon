@@ -429,7 +429,7 @@ SIPCall::createCallAVStreams()
 
     auto baseId = getCallId();
     auto mediaMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
-        return m->pointer();
+        return getValidAVFrame(m);
     };
 
     std::lock_guard lk(avStreamsMtx_);

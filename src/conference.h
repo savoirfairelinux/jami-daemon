@@ -503,7 +503,7 @@ private:
      **/
     std::function<AVFrame*(const std::shared_ptr<jami::MediaFrame>&)> pluginVideoMap_ =
         [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
-        return std::static_pointer_cast<VideoFrame>(m)->pointer();
+        return getValidAVFrame(m);
     };
 #endif // ENABLE_VIDEO
 

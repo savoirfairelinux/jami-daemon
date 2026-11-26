@@ -24,6 +24,7 @@
 #include <list>
 #include <mutex>
 #include <functional>
+#include <type_traits>
 
 #ifndef __DEBUG__ // this is only defined on plugins build for debugging
 #include "logger.h"
@@ -182,6 +183,13 @@ private:
 
 /*=== PublishMapSubject ====================================================*/
 
+template<typename T>
+struct is_shared_ptr : std::false_type
+{};
+template<typename T>
+struct is_shared_ptr<std::shared_ptr<T>> : std::true_type
+{};
+
 template<typename T1, typename T2>
 class PublishMapSubject : public Observer<T1>, public Observable<T2>
 {
@@ -192,7 +200,20 @@ public:
         : map_ {f}
     {}
 
-    void update(Observable<T1>*, const T1& t) override { this->notify(map_(t)); }
+    void update(Observable<T1>*, const T1& t) override
+    {
+        // Never forward null data to observers (e.g. plugins), which expect a valid object.
+        if constexpr (std::is_pointer_v<T1> || is_shared_ptr<T1>::value) {
+            if (!t)
+                return;
+        }
+        auto mapped = map_(t);
+        if constexpr (std::is_pointer_v<T2>) {
+            if (!mapped)
+                return;
+        }
+        this->notify(mapped);
+    }
 
     /**
      * @brief attached

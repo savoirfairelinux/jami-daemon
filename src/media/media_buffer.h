@@ -31,6 +31,12 @@ using MediaFrame = libjami::MediaFrame;
 using AudioFrame = libjami::AudioFrame;
 using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
+/**
+ * Return the underlying AVFrame of a media frame, or nullptr if the frame
+ * is null or holds no data buffer.
+ */
+AVFrame* getValidAVFrame(const std::shared_ptr<MediaFrame>& frame);
+
 #ifdef ENABLE_VIDEO
 
 using VideoFrame = libjami::VideoFrame;

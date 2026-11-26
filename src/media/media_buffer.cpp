@@ -23,6 +23,15 @@
 
 namespace jami {
 
+AVFrame*
+getValidAVFrame(const std::shared_ptr<MediaFrame>& frame)
+{
+    if (!frame)
+        return nullptr;
+    auto* avframe = frame->pointer();
+    return (avframe && avframe->data[0]) ? avframe : nullptr;
+}
+
 #ifdef ENABLE_VIDEO
 
 //=== HELPERS ==================================================================
