@@ -42,7 +42,7 @@ public:
     using OnAcceptConversation = std::function<void(const std::string&, const std::string&)>;
     using OnConfirmation = std::function<void(const std::string&, const std::string&)>;
     using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;
-    using OnMetadataChanged = std::function<void(const dht::InfoHash&, const Metadata&)>;
+    using OnMetadataChanged = std::function<void(const dht::InfoHash&, const Contact&)>;
 
     struct OnChangeCallback
     {
@@ -77,7 +77,13 @@ public:
     std::optional<Metadata::Change> setContactMetadata(const dht::InfoHash& h,
                                                        const std::string& writer,
                                                        const Metadata::Values& updates);
-    std::optional<Metadata::Change> mergeContactMetadata(const dht::InfoHash& h, const Metadata& remote);
+
+    /**
+     * Merges copies of contacts received from other devices or the account server into the list
+     * with Contact::merge(). Invalid copies are ignored. Changes are saved before clients and
+     * other devices are notified. Returns false if the changes cannot be saved.
+     */
+    bool mergeContacts(const std::map<dht::InfoHash, Contact>& copies);
 
     bool setCertificateStatus(const std::string& cert_id, const dhtnet::tls::TrustStore::PermissionStatus status);
 
@@ -101,11 +107,9 @@ public:
 
     std::map<dht::InfoHash, Contact> getContacts() const;
     void setContacts(const std::map<dht::InfoHash, Contact>&);
-    void updateContact(const dht::InfoHash&, const Contact&, bool emit = true);
 
     static std::map<dht::InfoHash, Contact> contactsFromPath(const std::filesystem::path& path);
 
-    /** Should be called only after updateContact */
     void saveContacts() const;
 
     const std::filesystem::path& path() const { return path_; }
@@ -150,7 +154,9 @@ private:
     const std::string accountId_;
     const std::filesystem::path path_;
     mutable std::mutex mutex_;
-    std::recursive_mutex metadataChangeMutex_;
+    // Serializes additions, removals, merges and metadata updates with their notifications, so that
+    // clients and other devices observe them in order (e.g. no metadata signal after ContactRemoved).
+    std::recursive_mutex notificationMutex_;
     std::map<dht::InfoHash, Contact> contacts_;
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
     std::map<dht::InfoHash, KnownDevice> knownDevicesLegacy_;
@@ -166,10 +172,24 @@ private:
 
     OnChangeCallback callbacks_;
 
+    struct ContactChange
+    {
+        dht::InfoHash id;
+        std::optional<Contact> before;
+        Contact after;
+        bool lifecycleChanged() const;
+    };
+
     void loadContacts();
-    bool commitMetadata(const dht::InfoHash& h, Metadata&& next, const Metadata::Change& change);
-    void notifyMetadataChanged(const dht::InfoHash& h, const Metadata& metadata, const Metadata::Change& change);
-    bool saveContactMetadata() const;
+    /** Allows active contacts and bans banned ones in the trust store. */
+    void updateTrustStatus(const dht::InfoHash& id, const Contact& contact);
+    /** Time for a new local addition or removal, in a later second than every event known for the contact. */
+    static TimePoint nextEventTime(const Contact* contact);
+    /** mutex_ held. Replaces contacts and saves them; on failure, restores the previous state. */
+    std::optional<std::vector<ContactChange>> storeContactsLocked(const std::map<dht::InfoHash, Contact>& next);
+    /** mutex_ not held. */
+    void notifyContactChanges(const std::vector<ContactChange>& changes);
+    bool saveContactsAtomically() const;
     void loadTrustRequests();
 
     void loadKnownDevices();

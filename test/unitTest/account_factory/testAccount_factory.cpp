@@ -93,7 +93,12 @@ Account_factoryTest::testAccountMetadataReadFailure()
             if (available) {
                 info_ = std::make_unique<AccountInfo>();
                 info_->deviceId = std::string(64, 'a');
-                info_->contacts = std::make_unique<ContactList>(id, nullptr, path, OnChangeCallback {});
+                OnChangeCallback callbacks;
+                callbacks.contactAdded = [](const std::string&, bool) {
+                };
+                callbacks.contactRemoved = [](const std::string&, bool) {
+                };
+                info_->contacts = std::make_unique<ContactList>(id, nullptr, path, std::move(callbacks));
             }
         }
         void initAuthentication(std::string,
@@ -154,6 +159,11 @@ Account_factoryTest::testAccountMetadataReadFailure()
     CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", {1}}}));
     CPPUNIT_ASSERT(metadata == marker);
     account->accountManager_->getInfo()->contacts->setContacts({{peer, contact}});
+    CPPUNIT_ASSERT(!libjami::getContactMetadata(id, peer.toString(), metadata)); // removed
+    CPPUNIT_ASSERT(!libjami::setContactMetadata(id, peer.toString(), {{"label", {1}}}));
+    CPPUNIT_ASSERT(metadata == marker);
+    contact.added = contact.removed + std::chrono::milliseconds(1);
+    account->accountManager_->getInfo()->contacts->setContacts({{peer, contact}});
     CPPUNIT_ASSERT(libjami::getContactMetadata(id, peer.toString(), metadata));
     CPPUNIT_ASSERT(metadata.empty());
     CPPUNIT_ASSERT(libjami::setContactMetadata(id, peer.toString(), {{"label", {0, 0xff}}}));
@@ -172,13 +182,13 @@ Account_factoryTest::testAccountMetadataReadFailure()
     auto remote = saved;
     CPPUNIT_ASSERT(remote.update(std::string(64, 'b'), {{"label", {3}}}));
     auto& contacts = *account->accountManager_->getInfo()->contacts;
-    CPPUNIT_ASSERT(!contacts.mergeContactMetadata(peer, remote));
-    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->metadata == saved);
-    CPPUNIT_ASSERT(ContactList::contactsFromPath(root).at(peer).metadata == saved);
     contact.metadata = remote;
-    contacts.updateContact(peer, contact);
+    CPPUNIT_ASSERT(!contacts.mergeContacts({{peer, contact}}));
     CPPUNIT_ASSERT(contacts.getContactInfo(peer)->metadata == saved);
     CPPUNIT_ASSERT(ContactList::contactsFromPath(root).at(peer).metadata == saved);
+    CPPUNIT_ASSERT(!contacts.removeContact(peer, false));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->isActive());
+    CPPUNIT_ASSERT(ContactList::contactsFromPath(root).at(peer).isActive());
     std::filesystem::remove(root / "contacts.new" / "blocker");
     std::filesystem::remove(root / "contacts.new");
     std::filesystem::create_directory(root / "accountMetadata");

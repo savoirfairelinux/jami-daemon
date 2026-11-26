@@ -434,19 +434,25 @@ SyncHistoryTest::testContactReadditionUpdatesAddedDate()
     const auto removed = *contacts.getContactInfo(peer);
     CPPUNIT_ASSERT(removed.added == original.added);
     CPPUNIT_ASSERT(!removed.isActive());
+    CPPUNIT_ASSERT(removed.conversationId.empty());
     CPPUNIT_ASSERT(contacts.addContact(peer, false, "replacement"));
     const auto readded = *contacts.getContactInfo(peer);
-    CPPUNIT_ASSERT(readded.added > original.added);
+    // Re-adding uses a later second than the removal, so that daemons storing seconds order them.
+    CPPUNIT_ASSERT(toSecondsSinceEpoch(readded.added) > toSecondsSinceEpoch(removed.removed));
     CPPUNIT_ASSERT(readded.removed == TimePoint {});
     CPPUNIT_ASSERT(readded.isActive());
 
-    auto offline = original;
-    offline.update(readded);
+    auto offline = Contact::merge(original, readded);
     CPPUNIT_ASSERT(offline.added == readded.added);
     CPPUNIT_ASSERT_EQUAL(readded.conversationId, offline.conversationId);
-    offline.update(original);
+    offline = Contact::merge(offline, original);
     CPPUNIT_ASSERT(offline.added == readded.added);
     CPPUNIT_ASSERT_EQUAL(readded.conversationId, offline.conversationId);
+
+    // Unlike a plain removal, a ban keeps the conversation so that unblocking reuses it.
+    CPPUNIT_ASSERT(contacts.removeContact(peer, true));
+    CPPUNIT_ASSERT(contacts.getContactInfo(peer)->isBanned());
+    CPPUNIT_ASSERT_EQUAL(readded.conversationId, contacts.getContactInfo(peer)->conversationId);
 }
 
 void
@@ -522,8 +528,7 @@ SyncHistoryTest::checkContactLinkSync(bool removalFirst)
 
     auto legacy = *contact;
     legacy.added = contact->added + 1ms;
-    auto received = *contact;
-    received.update(legacy);
+    auto received = Contact::merge(*contact, legacy);
     CPPUNIT_ASSERT(received.added == legacy.added);
     alice->removeContact(peer.toString(), false);
     module->onSyncData(replacement, alice->getUsername(), {});
