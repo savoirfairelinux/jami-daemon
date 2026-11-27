@@ -16,6 +16,24 @@
       "message": "[warning] Line 141: 🟡 This change should be accompanied by a regression test for the block/unblock/remove lifecycle: verify blocking preserves `conversationId`, unblocking reuses it, and full contact removal clears it. Without coverage, this behavior is subtle and likely to regress.",
       "revId": "f93e01782ee2a213a8b017e76c1edfd11f245df2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6cdcedf8_56197770",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-11-27T15:09:24Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "55c6bed2_0347c1f9",
+      "revId": "f93e01782ee2a213a8b017e76c1edfd11f245df2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
