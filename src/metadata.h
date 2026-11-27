@@ -37,8 +37,11 @@ struct Metadata
 
     static constexpr size_t MAX_KEY_BYTES = 1024;
     static constexpr size_t MAX_VALUE_BYTES = 65536;
-    static constexpr size_t MAX_ENTRIES = 16384;
-    static constexpr size_t MAX_STATE_BYTES = 4 * 1024 * 1024;
+    // Keys are defined statically by clients, never derived from user data, so a small cap is enough.
+    // It bounds the state without a total size limit, which two valid states could exceed when merged.
+    static constexpr size_t MAX_ENTRIES = 64;
+    // Upper bound on the MessagePack encoding of a valid state, to reject oversized input before decoding.
+    static constexpr size_t MAX_ENCODED_BYTES = 128 + MAX_ENTRIES * (MAX_KEY_BYTES + MAX_VALUE_BYTES + 256);
 
     struct Change
     {

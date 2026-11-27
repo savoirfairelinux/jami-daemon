@@ -168,11 +168,27 @@ private:
         invalid.entries.at("name").timestampMs = -1;
         CPPUNIT_ASSERT(!state.merge(invalid));
         CPPUNIT_ASSERT(state == before);
-        Metadata::Values oversized;
-        for (unsigned i = 0; i < 65; ++i)
-            oversized[std::to_string(i)] = std::vector<uint8_t>(65536, 0xff);
-        CPPUNIT_ASSERT(!state.update(alice_, oversized));
+        Metadata::Values tooMany;
+        for (unsigned i = 0; i < Metadata::MAX_ENTRIES; ++i)
+            tooMany[std::to_string(i)] = {1};
+        CPPUNIT_ASSERT(!state.update(alice_, tooMany)); // With "name", one key too many.
         CPPUNIT_ASSERT(state == before);
+    }
+
+    void testFullStateRoundTrip()
+    {
+        // The largest valid state has no total size limit, and still decodes after encoding.
+        Metadata state;
+        Metadata::Values largest;
+        for (unsigned i = 0; i < Metadata::MAX_ENTRIES; ++i)
+            largest[std::string(Metadata::MAX_KEY_BYTES - 2, 'k') + std::to_string(10 + i)]
+                = std::vector<uint8_t>(Metadata::MAX_VALUE_BYTES, 0xff);
+        CPPUNIT_ASSERT(state.update(alice_, largest));
+        msgpack::sbuffer packed;
+        msgpack::pack(packed, state);
+        CPPUNIT_ASSERT(packed.size() <= Metadata::MAX_ENCODED_BYTES);
+        const auto decoded = Metadata::decode({packed.data(), packed.size()});
+        CPPUNIT_ASSERT(decoded && *decoded == state);
     }
 
     void testMergeFailureIsAtomic()
@@ -297,6 +313,7 @@ private:
     CPPUNIT_TEST(testStampOnlyMerge);
     CPPUNIT_TEST(testMixedMergeSnapshot);
     CPPUNIT_TEST(testInvalidInputIsAtomic);
+    CPPUNIT_TEST(testFullStateRoundTrip);
     CPPUNIT_TEST(testMergeFailureIsAtomic);
     CPPUNIT_TEST(testDecodeInvalidRecords);
     CPPUNIT_TEST(testDecodeRequiredFields);

@@ -60,7 +60,7 @@ LIBJAMI_PUBLIC bool getAccountMetadata(const std::string& accountId, MetadataMap
  * Sync merges prefer the higher timestamp, then the lexicographically higher device ID.
  * Keys: 1..1024 UTF-8 bytes without NUL. Values: 0..65536 arbitrary bytes.
  * An empty value is stored as-is and does not delete the key.
- * At most 16384 stored keys and 4 MiB total (key + value + writer + 64 bytes per entry).
+ * At most 64 stored keys. Keys must be defined statically by clients, never derived from user data.
  * Exhausted timestamps are rejected without changing the stored state.
  * Updates are saved before success; power-loss durability is not guaranteed.
  * Returns false for an unavailable account, invalid input, or persistence failure.

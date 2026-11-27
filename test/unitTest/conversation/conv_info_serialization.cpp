@@ -204,24 +204,18 @@ void
 ConvInfoSerializationTest::testAccountMetadataSyncLargeStream()
 {
     SyncMsg sent;
-    size_t remaining = Metadata::MAX_STATE_BYTES;
-    while (remaining) {
-        auto key = "jami.channels.v1/" + std::to_string(sent.ds.metadata.entries.size()) + "/content";
-        // Match the store's conservative serialized-size accounting.
-        const auto overhead = key.size() + 64 + 64;
-        CPPUNIT_ASSERT(remaining >= overhead);
-        const auto length = std::min(Metadata::MAX_VALUE_BYTES, remaining - overhead);
-        const auto timestamp = static_cast<int64_t>(sent.ds.metadata.entries.size()) + 1;
-        sent.ds.metadata.entries.emplace(std::move(key),
+    for (size_t i = 0; i < Metadata::MAX_ENTRIES; ++i) {
+        const auto timestamp = static_cast<int64_t>(i) + 1;
+        sent.ds.metadata.entries.emplace("key" + std::to_string(i),
                                          MetadataEntry {timestamp,
                                                         std::string(64, 'a'),
-                                                        std::vector<uint8_t>(length, static_cast<uint8_t>(timestamp))});
-        remaining -= overhead + length;
+                                                        std::vector<uint8_t>(Metadata::MAX_VALUE_BYTES,
+                                                                             static_cast<uint8_t>(timestamp))});
     }
     CPPUNIT_ASSERT(sent.ds.metadata.validate());
     msgpack::sbuffer large(UINT16_MAX);
     msgpack::pack(large, sent);
-    CPPUNIT_ASSERT(large.size() > Metadata::MAX_STATE_BYTES - Metadata::MAX_VALUE_BYTES);
+    CPPUNIT_ASSERT(large.size() > Metadata::MAX_ENTRIES * Metadata::MAX_VALUE_BYTES);
 
     LegacySyncMsg before;
     before.p["conversation"]["color"] = "blue";

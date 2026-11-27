@@ -30,7 +30,7 @@ MetadataStore::load() const
         JAMI_ERROR("Cannot read metadata file size at {}: {}", path_, ec.message());
         return false;
     }
-    if (!size || size > Metadata::MAX_STATE_BYTES + 128) {
+    if (!size || size > Metadata::MAX_ENCODED_BYTES) {
         JAMI_ERROR("Invalid metadata file size at {}: {}", path_, size);
         return false;
     }

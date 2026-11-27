@@ -43,7 +43,7 @@ Metadata::values() const
 std::optional<Metadata>
 Metadata::decode(std::string_view packed)
 {
-    if (packed.size() > MAX_STATE_BYTES + 128) {
+    if (packed.size() > MAX_ENCODED_BYTES) {
         JAMI_ERROR("Metadata is too large");
         return std::nullopt;
     }
@@ -107,15 +107,9 @@ Metadata::validate() const
         JAMI_ERROR("Too many metadata keys");
         return false;
     }
-    size_t bytes = 0;
     for (const auto& [key, entry] : entries) {
         if (!validKeyAndValue(key, entry.value) || entry.timestampMs <= 0 || !validWriter(entry.writer)) {
             JAMI_ERROR("Invalid metadata key, value, or stamp");
-            return false;
-        }
-        bytes += key.size() + entry.value.size() + entry.writer.size() + 64;
-        if (bytes > MAX_STATE_BYTES) {
-            JAMI_ERROR("Metadata is too large");
             return false;
         }
     }
